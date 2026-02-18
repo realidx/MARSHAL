@@ -1,3 +1,7 @@
+html {
+    scroll-behavior: smooth;
+}
+
 :root {
     --primary-color: #b31b1b;
     /* Academic Red */
@@ -17,6 +21,7 @@ body {
     background-color: var(--bg-color);
     margin: 0;
     padding: 0;
+    padding-top: 52px;
 }
 
 .container {
@@ -80,6 +85,17 @@ h1 {
     margin-top: 10px;
 }
 
+.authors a,
+main a:not(.btn) {
+    color: #3273dc;
+    text-decoration: none;
+}
+
+.authors a:hover,
+main a:not(.btn):hover {
+    text-decoration: underline;
+}
+
 .links {
     display: flex;
     justify-content: center;
@@ -100,7 +116,7 @@ h1 {
     font-weight: 600;
     transition: background-color 0.3s ease;
     /* Ensure uniform black border */
-    border: 1px solid #000;
+    border: none;
 }
 
 .btn:hover {
@@ -130,34 +146,56 @@ section {
     /* Reduced from 40px */
     border-top: 1px solid var(--border-color);
     /* Single separator line */
+    scroll-margin-top: 52px;
 }
 
 section:first-of-type {
     border-top: none;
-    padding-top: 0;
+    padding-top: 20px;
 }
 
 h2 {
     font-size: 2rem;
     /* border-bottom: 2px solid var(--primary-color); Removed to avoid double lines */
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-    /* Reduced from 30px */
+    /* padding-top: 10px; */
+    margin-top: 10px;
+    /* padding-bottom: 1px; */
+    margin-bottom: 1px;
     color: var(--primary-color);
 }
 
 h3 {
     font-size: 1.5rem;
-    margin-top: 30px;
+    margin-top: 15px;
     margin-bottom: 15px;
     color: #444;
     border-left: 4px solid var(--primary-color);
     padding-left: 10px;
 }
 
-/* Player 1 specific header border */
-#player1-column h3 {
-    border-left-color: #597481;
+h4 {
+    font-size: 1.15rem;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: #555;
+    font-weight: 600;
+}
+
+/* Player column labels */
+.player-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #444;
+    text-align: center;
+    margin: 0 0 8px 0;
+}
+
+#player1-column .player-label {
+    color: #597481;
+}
+
+#player0-column .player-label {
+    color: var(--primary-color);
 }
 
 /* Overview */
@@ -234,6 +272,8 @@ table {
     border-collapse: collapse;
     font-size: 0.9rem;
     border: 1px solid var(--border-color);
+    border-top: 2px solid var(--text-color);
+    border-bottom: 2px solid var(--text-color);
 }
 
 th,
@@ -247,8 +287,10 @@ th {
     background-color: var(--light-gray);
     color: var(--text-color);
     font-weight: 700;
-    border-bottom: 2px solid var(--primary-color);
-    /* Red accent */
+}
+
+thead tr:last-child th {
+    border-bottom: 1.5px solid var(--text-color);
 }
 
 .section-header td {
@@ -265,10 +307,34 @@ th {
 }
 
 .setting-row td {
-    border-top: 2px solid var(--primary-color);
+    border-top: 1.5px solid var(--text-color);
 }
 
 /* Citation */
+.citation-block {
+    position: relative;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.08);
+    border: none;
+    border-radius: 5px;
+    padding: 5px 8px;
+    cursor: pointer;
+    color: #555;
+    font-size: 0.85rem;
+    transition: background 0.15s ease, color 0.15s ease;
+    z-index: 1;
+}
+
+.copy-btn:hover {
+    background: rgba(0, 0, 0, 0.15);
+    color: #1a1a1a;
+}
+
 pre {
     background-color: var(--light-gray);
     padding: 20px;
@@ -280,6 +346,15 @@ pre {
 }
 
 /* Footer */
+footer a {
+    color: #3273dc;
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
 footer {
     text-align: center;
     padding: 20px 0;
@@ -353,7 +428,7 @@ footer {
     border-color: var(--primary-color);
 }
 
-.player-column.active h3 {
+.player-column.active .player-label {
     color: var(--primary-color);
 }
 
@@ -362,7 +437,7 @@ footer {
     border-color: #597481;
 }
 
-#player1-column.active h3 {
+#player1-column.active .player-label {
     color: #597481;
 }
 
@@ -465,4 +540,308 @@ footer {
 
 .qualitative-table td:not(:first-child) strong {
     color: var(--primary-color);
+}
+
+/* ============================================
+   Navigation Bars
+   ============================================ */
+
+/* Global nav (visible before scrolling past header) */
+.nav-global {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 52px;
+    background: rgba(251, 251, 253, 0.92);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.nav-global.hidden {
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.nav-global-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 24px;
+}
+
+.nav-global-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.nav-global-links a {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #444;
+    text-decoration: none;
+    padding: 5px 14px;
+    border-radius: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+}
+
+.nav-global-links a:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: #1a1a1a;
+}
+
+.nav-global-links a.active {
+    background: rgba(0, 0, 0, 0.08);
+    color: #b31b1b;
+    font-weight: 600;
+}
+
+/* Sticky nav (visible after scrolling past header) */
+.nav-sticky-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 52px;
+    background: rgba(251, 251, 253, 0.92);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-sticky-bar.visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.nav-sticky-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+}
+
+.nav-sticky-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.nav-sticky-links a {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #444;
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+}
+
+.nav-sticky-links a:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: #1a1a1a;
+}
+
+.nav-sticky-links a.active {
+    background: rgba(0, 0, 0, 0.06);
+    color: #b31b1b;
+    font-weight: 600;
+}
+
+/* Project title + dropdown (shared between both navs) */
+.nav-title-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.nav-sticky-title {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: background 0.15s ease;
+    cursor: pointer;
+}
+
+.nav-sticky-title:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: #1a1a1a;
+}
+
+.nav-title-chevron {
+    font-size: 0.7rem;
+    transition: transform 0.25s ease;
+    color: #888;
+}
+
+.nav-title-wrapper:hover .nav-title-chevron,
+.nav-title-wrapper.open .nav-title-chevron {
+    transform: rotate(180deg);
+}
+
+/* Dropdown panel */
+.nav-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 360px;
+    background: rgba(251, 251, 253, 0.98);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    padding: 12px 8px 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100;
+}
+
+.nav-title-wrapper:hover .nav-dropdown,
+.nav-title-wrapper.open .nav-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.nav-dropdown-header {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0 8px 8px;
+}
+
+.nav-project-card {
+    display: block;
+    padding: 8px 10px;
+    border-radius: 7px;
+    text-decoration: none;
+    transition: background 0.15s ease;
+}
+
+.nav-project-card:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.nav-project-card-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+}
+
+.nav-project-card-title.active-project {
+    color: #b31b1b;
+}
+
+.nav-project-card-desc {
+    font-size: 0.75rem;
+    color: #777;
+    line-height: 1.4;
+}
+
+/* Mobile nav toggle */
+.nav-mobile-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #444;
+    padding: 4px 8px;
+    transition: transform 0.3s ease;
+}
+
+.nav-mobile-toggle.active {
+    transform: rotate(90deg);
+}
+
+@media (max-width: 768px) {
+    .nav-mobile-toggle {
+        display: block;
+    }
+
+    .nav-sticky-links {
+        display: none;
+        position: absolute;
+        top: 52px;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        background: rgba(251, 251, 253, 0.98);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 8px 0;
+    }
+
+    .nav-sticky-links.mobile-open {
+        display: flex;
+    }
+
+    .nav-sticky-links a {
+        padding: 10px 24px;
+        border-radius: 0;
+        font-size: 0.95rem;
+    }
+}
+
+/* Back-to-top button */
+.scroll-top {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #333;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease, background 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.scroll-top.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.scroll-top:hover {
+    background: var(--primary-color);
+    transform: translateY(-4px);
 }

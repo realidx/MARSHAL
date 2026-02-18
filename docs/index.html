@@ -14,6 +14,52 @@
 
 <body>
 
+    <!-- Global Navigation (visible before scrolling past header) -->
+    <nav class="nav-global" id="navGlobal">
+        <div class="nav-global-content">
+            <div class="nav-global-links">
+                <a href="https://vs-bench.github.io/" target="_blank">VS-Bench</a>
+                <a href="#" class="active" onclick="window.scrollTo({top:0,behavior:'smooth'}); return false;">MARSHAL</a>
+                <a href="https://wideseek-r1.github.io/" target="_blank">WideSeek-R1</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sticky Navigation Bar (visible after scrolling past header) -->
+    <nav class="nav-sticky-bar" id="navStickyBar">
+        <div class="nav-sticky-content">
+            <div class="nav-title-wrapper" id="navTitleWrapperSticky">
+                <a class="nav-sticky-title" href="#">MARSHAL <i class="fas fa-chevron-down nav-title-chevron"></i></a>
+                <div class="nav-dropdown">
+                    <div class="nav-dropdown-header">Explore Projects</div>
+                    <a class="nav-project-card" href="https://vs-bench.github.io/" target="_blank">
+                        <div class="nav-project-card-title">VS-Bench</div>
+                        <div class="nav-project-card-desc">Evaluating VLMs for Strategic Abilities in Multi-Agent Environments</div>
+                    </a>
+                    <a class="nav-project-card" href="#" onclick="window.scrollTo({top:0,behavior:'smooth'}); return false;">
+                        <div class="nav-project-card-title active-project">MARSHAL</div>
+                        <div class="nav-project-card-desc">Incentivizing Multi-Agent Reasoning via Self-Play with Strategic LLMs</div>
+                    </a>
+                    <a class="nav-project-card" href="https://wideseek-r1.github.io/" target="_blank">
+                        <div class="nav-project-card-title">WideSeek-R1</div>
+                        <div class="nav-project-card-desc">Exploring Width Scaling for Broad Information Seeking via Multi-Agent RL</div>
+                    </a>
+                </div>
+            </div>
+            <div class="nav-sticky-links" id="navStickyLinks">
+                <a href="#overview">Overview</a>
+                <a href="#method">Method</a>
+                <a href="#results">Results</a>
+                <a href="#pattern-analysis">Analysis</a>
+                <a href="#ablation">Ablation</a>
+                <a href="#citation">Citation</a>
+            </div>
+            <button class="nav-mobile-toggle" id="navMobileToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
     <header>
         <div class="container header-image-container">
             <img src="static/images/header.jpg" alt="MARSHAL Header" class="header-image">
@@ -29,15 +75,17 @@
 
             <div class="authors">
                 <p>
-                    Huining Yuan<sup>1*</sup>, Zelai Xu<sup>1*</sup>, Zheyue Tan<sup>2</sup>, Xiangmin Yi<sup>1</sup>,
+                    Huining Yuan<sup>1*</sup>, <a href="https://nicsefc.ee.tsinghua.edu.cn/people/ZelaiXu" target="_blank">Zelai Xu</a><sup>1*</sup>, Zheyue Tan<sup>2</sup>, Xiangmin Yi<sup>1</sup>,
                     <br>
-                    Mo Guang<sup>3</sup>, Kaiwen Long<sup>3</sup>, Haojia Hui<sup>3</sup>, Boxun Li<sup>4</sup>, Xinlei
-                    Chen<sup>1</sup>, Bo Zhao<sup>2</sup>, <br>
-                    Xiao-Ping Zhang<sup>1†</sup>, Chao Yu<sup>1†</sup>, Yu Wang<sup>1†</sup>
+                    Mo Guang<sup>3</sup>, Kaiwen Long<sup>3</sup>, Haojia Hui<sup>3</sup>, Boxun Li<sup>4</sup>, <a href="https://chen-xinlei.com/" target="_blank">Xinlei Chen</a><sup>1</sup>, Bo Zhao<sup>2</sup>, <br>
+                    <a href="https://sites.google.com/view/xiaopingzhang" target="_blank">Xiao-Ping Zhang</a><sup>1†</sup>, <a href="https://nicsefc.ee.tsinghua.edu.cn/people/ChaoYu" target="_blank">Chao Yu</a><sup>1†</sup>, <a href="https://nicsefc.ee.tsinghua.edu.cn/people/YuWang" target="_blank">Yu Wang</a><sup>1†</sup>
                 </p>
                 <p class="affiliations">
                     <sup>1</sup>Tsinghua University, <sup>2</sup>Aalto University, <sup>3</sup>Li Auto Inc.,
                     <sup>4</sup>Infinigence-AI
+                </p>
+                <p class="affiliations" style="color: #333;">
+                    <sup>*</sup>Equal contribution. &nbsp;&nbsp;<sup>†</sup>Corresponding authors.
                 </p>
             </div>
 
@@ -90,15 +138,12 @@
                     </ul>
                 </div>
                 <div class="overview-image">
-                    <img src="static/images/results_overview.svg" alt="MARSHAL Performance Radar Chart">
-                    <p class="caption"><strong>Evaluation of MARSHAL and two baselines on strategic games and
-                            reasoning benchmarks.</strong></p>
+                    <img src="static/images/results_overview.png" alt="MARSHAL Performance Radar Chart">
+                    <p class="caption"><strong>Figure 1: Evaluation of MARSHAL and two baselines on strategic games and reasoning benchmarks.</strong></p>
                 </div>
             </div>
-        </section>
 
-        <section id="replay">
-            <h2>Game Replay</h2>
+            <h3>Game Replay</h3>
             <p>
                 Click 'Next Step' to view a self-play demonstration of the MARSHAL agent in Tic-Tac-Toe. Observe the
                 agent's reasoning process regarding game states and strategies as it controls both Player 1 (X) and
@@ -108,7 +153,7 @@
             <div id="replay-container" class="replay-container">
                 <!-- Player 0 (Left) -->
                 <div class="player-column" id="player0-column">
-                    <h3>Player 0 (X)</h3>
+                    <p class="player-label">Player 0 (X)</p>
                     <div class="chat-box" id="player0-content">
                         <span class="placeholder-text">Click 'Next Step' to start replay...<br>Player 0
                             reasoning...</span>
@@ -129,7 +174,7 @@
 
                 <!-- Player 1 (Right) -->
                 <div class="player-column" id="player1-column">
-                    <h3>Player 1 (O)</h3>
+                    <p class="player-label">Player 1 (O)</p>
                     <div class="chat-box" id="player1-content">
                         <span class="placeholder-text">Click 'Next Step' to start replay...<br>Player 1
                             reasoning...</span>
@@ -143,13 +188,13 @@
 
             <h3>Algorithmic Design</h3>
             <p>
-                We introduce two modifications to GRPO [1] for multi-agent self-play: a <strong>turn-level advantage
+                We introduce two modifications to GRPO for multi-agent self-play: a <strong>turn-level advantage
                     estimator</strong> for fine-grained credit assignment, and <strong>agent-specific advantage
                     normalization</strong> to stabilize training across heterogeneous roles.
             </p>
             <div class="method-image">
-                <img src="static/images/method_overview.svg" alt="MARSHAL Method Overview">
-                <p class="caption"><strong>Overview of MARSHAL.</strong> Left column: generating player
+                <img src="static/images/method_overview.png" alt="MARSHAL Method Overview">
+                <p class="caption"><strong>Figure 2: Overview of MARSHAL.</strong> Left column: generating player
                     trajectories through self-play in strategic games. Middle column: naive advantage estimation by
                     GRPO. Right column: advantage estimation by MARSHAL for accurate credit assignment in multi-turn,
                     multi-agent setting.</p>
@@ -171,7 +216,7 @@
             </ul>
             <div class="method-image">
                 <img src="static/images/game_icons.jpg" alt="Game Selection Icons">
-                <p class="caption"><strong>Game selection.</strong> From left to right, Tic-Tac-Toe, Kuhn Poker, Hanabi,
+                <p class="caption"><strong>Figure 3: Game selection.</strong> From left to right, Tic-Tac-Toe, Kuhn Poker, Hanabi,
                     Connect Four, Leduc Hold'em.</p>
             </div>
 
@@ -191,7 +236,7 @@
 
         <section id="results">
             <h2>Main Results</h2>
-            <p>Based on Qwen3-4B [2], we train two model types: specialist agents on single games (<em>Tic-Tac-Toe</em>,
+            <p>Based on Qwen3-4B, we train two model types: specialist agents on single games (<em>Tic-Tac-Toe</em>,
                 <em>Kuhn Poker</em>, <em>Mini Hanabi</em>) and a generalist agent on all three simultaneously.
             </p>
 
@@ -204,15 +249,15 @@
             </p>
             <div class="results-group">
                 <div class="result-item">
-                    <img src="static/images/game_results.svg" alt="Game Performance">
-                    <p class="caption"><strong>Average normalized game returns.</strong></p>
+                    <img src="static/images/game_results.png" alt="Game Performance">
+                    <p class="caption"><strong>Figure 4: Average normalized game returns.</strong></p>
                 </div>
             </div>
 
             <h3>Generalization to Multi-Agent Systems</h3>
             <p>
                 We evaluate the transfer of capabilities to reasoning benchmarks within multi-agent systems, including
-                the competitive <strong>MAD</strong> [3] and cooperative <strong>AutoGen</strong> [4]. In
+                the competitive <strong>MAD</strong> and cooperative <strong>AutoGen</strong>. In
                 MAD, the generalist agent improves by <strong>3.51%</strong> on average. Notably, it
                 achieves striking gains on challenging benchmarks, including <strong>+6.57%</strong> on GPQA-Diamond in
                 MAD and <strong>+10.00%</strong> on AIME in AutoGen.
@@ -465,7 +510,7 @@
                 </table>
             </div>
             <p class="caption">
-                <strong>Evaluation results on downstream reasoning benchmarks within multi-agent systems.</strong>
+                <strong>Table 1: Evaluation results on downstream reasoning benchmarks within multi-agent systems.</strong>
             </p>
         </section>
 
@@ -501,7 +546,7 @@
                                 <code>&lt;think&gt;<br>Okay, so I need to figure out the minimum number of... The affirmative side just argued for 4. <strong>As the negative side assistant, I should</strong> try to find an alternative solution and convince the judge...<br>&lt;/think&gt;</code>
                             </td>
                         </tr>
-                        <tr>
+                        <tr class="setting-row">
                             <td><strong>Intent Recognition</strong></td>
                             <td>
                                 <em>The Hanabi specialist infers the intent behind a teammate's ambiguous hint.</em><br>
@@ -517,19 +562,19 @@
                 </table>
             </div>
             <p class="caption">
-                <strong>Qualitative analysis of emergent reasoning patterns.</strong>
+                <strong>Table 2: Qualitative analysis of emergent reasoning patterns.</strong>
             </p>
 
             <h3>Quantitative</h3>
             <p>
-                Following the taxomony of <em>Cemri et al. (2025)</em> [5], failure mode analysis on GPQA-Diamond shows
+                Following the taxomony of <a href="https://arxiv.org/abs/2503.13657" target="_blank">Cemri et al. (2025)</a>, failure mode analysis on GPQA-Diamond shows
                 a <strong>11.5%</strong> reduction in Inter-Agent Misalignment. This confirms that MARSHAL agents
                 actively listen to peers and maintain focus, validating game-theoretic self-play cultivates transferable
                 multi-agent reasoning skills.
             </p>
             <div class="failure-analysis">
-                <img src="static/images/failure_mode.svg" alt="Failure Mode Analysis">
-                <p class="caption"><strong>Percentage of different failure modes in GPQA-Diamond.</strong></p>
+                <img src="static/images/failure_mode.png" alt="Failure Mode Analysis">
+                <p class="caption"><strong>Figure 5: Percentage of different failure modes in GPQA-Diamond.</strong></p>
             </div>
 
         </section>
@@ -562,7 +607,7 @@
                     </thead>
                     <tbody>
                         <!-- Tic-Tac-Toe -->
-                        <tr class="highlight-row">
+                        <tr class="highlight-row setting-row">
                             <td><strong>MARSHAL (Tic-Tac-Toe)</strong></td>
                             <td>75.30 / 32.10</td>
                             <td>74.15 / 3.42</td>
@@ -581,7 +626,7 @@
                             <td><u>12.22</u></td>
                         </tr>
                         <!-- Kuhn Poker -->
-                        <tr class="highlight-row">
+                        <tr class="highlight-row setting-row">
                             <td><strong>MARSHAL (Kuhn Poker)</strong></td>
                             <td>69.85 / 25.50</td>
                             <td>79.04 / 22.49</td>
@@ -603,7 +648,7 @@
                 </table>
             </div>
             <p class="caption">
-                <strong>Generalization comparison between MARSHAL (self-play) and its fixed-opponent variant.</strong>
+                <strong>Table 3: Generalization comparison between MARSHAL (self-play) and its fixed-opponent variant.</strong>
                 For competitive games, entries indicate <em>first-move / second-move</em>
                 returns. Underlined scores indicate performance degradation compared to the standard MARSHAL model.
             </p>
@@ -634,7 +679,7 @@
                     </thead>
                     <tbody>
                         <!-- Tic-Tac-Toe -->
-                        <tr class="highlight-row">
+                        <tr class="highlight-row setting-row">
                             <td><strong>MARSHAL (Tic-Tac-Toe)</strong></td>
                             <td>75.30 / 32.10</td>
                             <td>74.15 / 3.42</td>
@@ -662,7 +707,7 @@
                             <td><u>21.72</u></td>
                         </tr>
                         <!-- Kuhn Poker -->
-                        <tr class="highlight-row">
+                        <tr class="highlight-row setting-row">
                             <td><strong>MARSHAL (Kuhn Poker)</strong></td>
                             <td>69.85 / 25.50</td>
                             <td>79.04 / 22.49</td>
@@ -690,7 +735,7 @@
                             <td><u>22.42</u></td>
                         </tr>
                         <!-- Hanabi -->
-                        <tr class="highlight-row">
+                        <tr class="highlight-row setting-row">
                             <td><strong>MARSHAL (Hanabi)</strong></td>
                             <td>71.90 / 7.35</td>
                             <td>72.52 / 9.29</td>
@@ -721,21 +766,19 @@
                 </table>
             </div>
             <p class="caption">
-                <strong>Ablation results for algorithmic design.</strong> For competitive games, entries indicate
+                <strong>Table 4: Ablation results for algorithmic design.</strong> For competitive games, entries indicate
                 <em>first-move / second-move</em> returns. Underlined scores indicate performance degradation compared
                 to the standard MARSHAL model.
             </p>
-        </section>
 
-        <section id="scaling">
-            <h2>Scaling to Larger Models</h2>
+            <h3>Scaling to Larger Models</h3>
             <p>
                 We extended training to the larger <strong>Qwen3-8B</strong> model. Results demonstrate that MARSHAL
                 scales stably, consistently unlocking cooperative and competitive reasoning capabilities at larger
                 scales.
             </p>
 
-            <h3>Strategic Ability (8B)</h3>
+            <h4>Strategic Ability (8B)</h4>
             <div class="table-container">
                 <table>
                     <thead>
@@ -772,10 +815,10 @@
                 </table>
             </div>
             <p class="caption">
-                <strong>Strategic ability comparison on the larger Qwen3-8B.</strong>
+                <strong>Table 5: Strategic ability comparison on the larger Qwen3-8B.</strong>
             </p>
 
-            <h3>Generalization to MAS (8B)</h3>
+            <h4>Generalization to MAS (8B)</h4>
             <div class="table-container">
                 <table>
                     <thead>
@@ -818,7 +861,7 @@
                             <td class="highlight-row"><strong>53.54</strong></td>
                         </tr>
                         <!-- AutoGen -->
-                        <tr>
+                        <tr class="setting-row">
                             <td rowspan="2" style="vertical-align: middle; font-weight: bold;">AutoGen</td>
                             <td>Qwen3-8B</td>
                             <td>79.68</td>
@@ -845,43 +888,130 @@
                 </table>
             </div>
             <p class="caption">
-                <strong>Generalization to multi-agent systems using the larger Qwen3-8B.</strong>
+                <strong>Table 6: Generalization to multi-agent systems using the larger Qwen3-8B.</strong>
             </p>
         </section>
 
         <section id="citation">
             <h2>Citation</h2>
-            <pre><code>@misc{yuan2025marshal,
-      title={MARSHAL: Incentivizing Multi-Agent Reasoning via Self-Play with Strategic LLMs}, 
-      author={Huining Yuan and Zelai Xu and Zheyue Tan and Xiangmin Yi and Mo Guang and Kaiwen Long and Haojia Hui and Boxun Li and Xinlei Chen and Bo Zhao and Xiao-Ping Zhang and Chao Yu and Yu Wang},
-      year={2025},
-      eprint={2510.15414},
-      archivePrefix={arXiv},
-      primaryClass={cs.AI},
-      url={https://arxiv.org/abs/2510.15414}, 
+            <div class="citation-block">
+                <button class="copy-btn" id="copyBibtex" title="Copy BibTeX">
+                    <i class="fas fa-clone"></i>
+                </button>
+                <pre><code id="bibtex-code">@article{yuan2025marshal,
+  title={MARSHAL: Incentivizing Multi-Agent Reasoning via Self-Play with Strategic LLMs},
+  author={Yuan, Huining and Xu, Zelai and Tan, Zheyue and Yi, Xiangmin and Guang, Mo and Long, Kaiwen and Hui, Haojia and Li, Boxun and Chen, Xinlei and Zhao, Bo and others},
+  journal={arXiv preprint arXiv:2510.15414},
+  year={2025}
 }</code></pre>
-        </section>
-
-        <section id="references">
-            <h2>References</h2>
-            <p class="reference-item">[1] Shao, Zhihong, et al. "Deepseekmath: Pushing the limits of mathematical
-                reasoning in open language models." arXiv:2402.03300.</p>
-            <p class="reference-item">[2] Yang, An, et al. "Qwen3 technical report." arXiv:2505.09388.</p>
-            <p class="reference-item">[3] Liang, Tian, et al. "Encouraging divergent thinking in large language models
-                through multi-agent debate." EMNLP 2024.</p>
-            <p class="reference-item">[4] Wu, Qingyun, et al. "Autogen: Enabling next-gen llm applications via
-                multi-agent conversation." COLM 2024.</p>
-            <p class="reference-item">[5] Cemri, Mert, et al. "Why do multi-agent llm systems fail?." NeurIPS 2025.</p>
+            </div>
         </section>
 
     </main>
 
     <footer>
-        <p>&copy; 2025 MARSHAL Project. All rights reserved.</p>
+        <p>&copy; 2025 MARSHAL Project, licensed under
+        <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.</p>
     </footer>
 
     <script src="static/js/game_data.js"></script>
     <script src="static/js/replay.js"></script>
+
+    <!-- Back-to-top button -->
+    <button class="scroll-top" id="scrollTop" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <script>
+    (function () {
+        var navGlobal = document.getElementById('navGlobal');
+        var navBar = document.getElementById('navStickyBar');
+        var scrollTopBtn = document.getElementById('scrollTop');
+        var header = document.querySelector('header');
+        var sectionIds = ['overview', 'method', 'results', 'pattern-analysis', 'ablation', 'citation'];
+
+        function updateNav() {
+            var heroBottom = header ? header.offsetTop + header.offsetHeight : 300;
+            if (window.scrollY > heroBottom - 60) {
+                navBar.classList.add('visible');
+                navGlobal.classList.add('hidden');
+            } else {
+                navBar.classList.remove('visible');
+                navGlobal.classList.remove('hidden');
+            }
+
+            // Highlight active section in TOC
+            var links = document.querySelectorAll('.nav-sticky-links a');
+            var current = '';
+            sectionIds.forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el && window.scrollY >= el.offsetTop - 80) {
+                    current = id;
+                }
+            });
+            links.forEach(function (link) {
+                link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+            });
+        }
+
+        function updateScrollTop() {
+            scrollTopBtn.classList.toggle('visible', window.scrollY > 500);
+        }
+
+        window.addEventListener('scroll', updateNav, { passive: true });
+        window.addEventListener('scroll', updateScrollTop, { passive: true });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            document.querySelectorAll('.nav-title-wrapper').forEach(function (wrapper) {
+                if (!wrapper.contains(e.target)) {
+                    wrapper.classList.remove('open');
+                }
+            });
+        });
+
+        // Mobile toggle
+        var mobileToggle = document.getElementById('navMobileToggle');
+        var navLinks = document.getElementById('navStickyLinks');
+        if (mobileToggle && navLinks) {
+            mobileToggle.addEventListener('click', function () {
+                this.classList.toggle('active');
+                navLinks.classList.toggle('mobile-open');
+            });
+            navLinks.querySelectorAll('a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    mobileToggle.classList.remove('active');
+                    navLinks.classList.remove('mobile-open');
+                });
+            });
+        }
+
+        // Scroll to top
+        if (scrollTopBtn) {
+            scrollTopBtn.addEventListener('click', function () {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
+        // Initial state
+        updateNav();
+        updateScrollTop();
+
+        // Copy BibTeX button
+        var copyBtn = document.getElementById('copyBibtex');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', function () {
+                var text = document.getElementById('bibtex-code').innerText;
+                navigator.clipboard.writeText(text).then(function () {
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(function () {
+                        copyBtn.innerHTML = '<i class="fas fa-clone"></i>';
+                    }, 2000);
+                });
+            });
+        }
+    })();
+    </script>
 </body>
 
 </html>
