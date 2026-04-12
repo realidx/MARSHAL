@@ -7,6 +7,11 @@ html {
     /* Academic Red */
     --accent-color: #801313;
     /* Darker Red */
+    --nav-project-title-color: #1a1a1a;
+    --award-bg-soft: color-mix(in srgb, white 99%, var(--primary-color) 1%);
+    --award-bg: color-mix(in srgb, white 93%, var(--primary-color) 7%);
+    --award-border: color-mix(in srgb, white 64%, var(--primary-color) 36%);
+    --award-shadow: color-mix(in srgb, transparent 90%, var(--primary-color) 10%);
     --bg-color: #ffffff;
     --text-color: #333;
     --light-gray: #f8f9fa;
@@ -73,6 +78,25 @@ h1 {
     margin-bottom: 20px;
     line-height: 1.2;
     color: var(--text-color);
+}
+
+.paper-status-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    gap: 8px;
+    margin: 0 auto 18px;
+    padding: 8px 18px;
+    border: 1px solid var(--award-border);
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--award-bg-soft) 0%, var(--award-bg) 100%);
+    box-shadow: 0 8px 20px var(--award-shadow);
+    color: var(--primary-color);
+    font-size: 0.84rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1;
 }
 
 .authors {
@@ -752,21 +776,58 @@ footer {
     background: rgba(0, 0, 0, 0.05);
 }
 
+.nav-project-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
 .nav-project-card-title {
     font-size: 0.82rem;
     font-weight: 600;
-    color: #1a1a1a;
+    color: var(--nav-project-title-color);
     margin-bottom: 2px;
 }
 
+.nav-project-card-header .nav-project-card-title {
+    margin-bottom: 0;
+}
+
 .nav-project-card-title.active-project {
-    color: #b31b1b;
+    color: var(--primary-color);
+}
+
+.nav-project-card-venue {
+    --nav-project-venue-accent: var(--nav-project-title-color);
+    --nav-project-venue-bg-soft: color-mix(in srgb, white 99%, var(--nav-project-venue-accent) 1%);
+    --nav-project-venue-bg: color-mix(in srgb, white 93%, var(--nav-project-venue-accent) 7%);
+    --nav-project-venue-border: color-mix(in srgb, white 64%, var(--nav-project-venue-accent) 36%);
+    --nav-project-venue-shadow: color-mix(in srgb, transparent 90%, var(--nav-project-venue-accent) 10%);
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 3px 8px;
+    border: 1px solid var(--nav-project-venue-border);
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--nav-project-venue-bg-soft) 0%, var(--nav-project-venue-bg) 100%);
+    box-shadow: 0 2px 8px var(--nav-project-venue-shadow);
+    color: var(--nav-project-venue-accent);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
 }
 
 .nav-project-card-desc {
     font-size: 0.75rem;
     color: #777;
     line-height: 1.4;
+}
+
+.nav-project-card-title.active-project + .nav-project-card-venue {
+    --nav-project-venue-accent: var(--primary-color);
 }
 
 /* Mobile nav toggle */
@@ -812,6 +873,15 @@ footer {
         padding: 10px 24px;
         border-radius: 0;
         font-size: 0.95rem;
+    }
+
+    .paper-status-badge {
+        max-width: 100%;
+        margin: 0 auto 16px;
+        padding: 8px 14px;
+        font-size: 0.76rem;
+        line-height: 1.3;
+        white-space: normal;
     }
 }
 
