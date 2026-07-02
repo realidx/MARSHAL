@@ -41,7 +41,7 @@ logging_steps: 1
 eval_steps: 10
 resume_from_checkpoint: false
 
-rollout_batch_size: 96
+rollout_batch_size: 1
 sequence_length: 2048
 
 reward_clip: 20
@@ -58,7 +58,7 @@ pretrain: /home/e/e1300530/models/Qwen3-4B/
 
 actor_infer:
   model_args:
-    flash_attn: fa2
+    attn_implementation: sdpa
     disable_gradient_checkpointing: true
     dtype: fp16
   generating_args:
@@ -74,6 +74,7 @@ actor_infer:
     strategy_name: vllm
     strategy_config:
       gpu_memory_utilization: 0.95
+      max_model_len: 2048
       block_size: 16
       load_format: auto # should set 'auto' here, because default load_format is 'dummy'
   device_mapping: list(range(0,1))
