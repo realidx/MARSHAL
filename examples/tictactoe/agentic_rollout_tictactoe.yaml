@@ -33,7 +33,7 @@ track_with: tensorboard
 tracker_kwargs:
   log_dir: ./runs/tensorboard
 
-num_gpus_per_node: 8
+num_gpus_per_node: 1
 
 max_steps: 1
 save_steps: 10000
@@ -42,7 +42,7 @@ eval_steps: 10
 resume_from_checkpoint: false
 
 rollout_batch_size: 96
-sequence_length: 32768
+sequence_length: 2048
 
 reward_clip: 20
 advantage_clip: 10.0
@@ -60,9 +60,9 @@ actor_infer:
   model_args:
     flash_attn: fa2
     disable_gradient_checkpointing: true
-    dtype: bf16
+    dtype: fp16
   generating_args:
-    max_new_tokens: 4096 # single-turn response length
+    max_new_tokens: 256 # single-turn response length
     top_p: 0.99
     top_k: 100
     num_beams: 1
@@ -73,16 +73,16 @@ actor_infer:
   strategy_args:
     strategy_name: vllm
     strategy_config:
-      gpu_memory_utilization: 0.8
+      gpu_memory_utilization: 0.95
       block_size: 16
       load_format: auto # should set 'auto' here, because default load_format is 'dummy'
-  device_mapping: list(range(0,8))
+  device_mapping: list(range(0,1))
 
 enable_response_mask: True
 action_sep: "||"
 use_turn_scores: False # important to GAE when applying token-level rewards to token-level advantages. If False, will take the sum of scores as the reward for the last turn.
 enable_think: True # False -> no think RL
-max_actions_per_traj: 50
+max_actions_per_traj: 5
 
 custom_envs:
   TicTacToe:
@@ -112,9 +112,9 @@ custom_envs:
 
 train_env_manager:
   format_penalty: 0.05 # sokoban env penalty_for_step=-0.1
-  max_env_num_per_worker: 32
-  env_groups: 96
+  max_env_num_per_worker: 1
+  env_groups: 1
   # under the same group, the env config and env seed are ensured to be equal
   group_size: 1
-  tags: [TicTacToe, TicTacToe-first-100, TicTacToe-second-100]
-  n_groups: [32, 32, 32] # If not set, all env names divide nums equally. Under the same group, the env config and env seed (prompt) are equal in each generation
+  tags: [ TicTacToe-first-100]
+  n_groups: [1] # If not set, all env names divide nums equally. Under the same group, the env config and env seed (prompt) are equal in each generation
