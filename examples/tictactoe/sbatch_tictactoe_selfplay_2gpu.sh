@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=marshal-tictactoe-2gpu
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:h100-47:2
+#SBATCH --gres=gpu:h100-96:2
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=24
 #SBATCH --mem=0
