@@ -324,10 +324,13 @@ class TicTacToe(BaseDiscreteActionEnv):
 
         # convert matplotlib figure to numpy array, avoid file I/O
         fig.canvas.draw()
-        buf = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-        buf = buf.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-        plt.close(fig)
-        image = Image.fromarray(buf)
+        if hasattr(fig.canvas, "tostring_rgb"):
+            buf = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+            buf = buf.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+            image = Image.fromarray(buf)
+        else:
+            rgba = np.asarray(fig.canvas.buffer_rgba())
+            image = Image.fromarray(rgba[:, :, :3].copy())
         plt.close(fig)
         return image
 
