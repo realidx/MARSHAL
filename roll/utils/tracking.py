@@ -1,4 +1,5 @@
 import json
+from fnmatch import fnmatch
 from typing import Optional, Dict, Any
 
 import torch
@@ -60,6 +61,8 @@ class WandbTracker(BaseTracker):
         log_dir = kwargs.pop("log_dir", None)
         api_key = kwargs.pop("api_key", None)
         settings = kwargs.pop("settings", {"console": "off"})
+        self.metric_allowlist = kwargs.pop("metric_allowlist", None)
+        self.metric_denylist = kwargs.pop("metric_denylist", None)
         import wandb
         if api_key:
             wandb.login(key=api_key)
@@ -68,10 +71,23 @@ class WandbTracker(BaseTracker):
         self.run.config.update(config, allow_val_change=True)
 
     def log(self, values: dict, step: Optional[int], **kwargs):
+        values = self._filter_metrics(values)
+        if not values:
+            return
         self.run.log(values, step=step, **kwargs)
 
     def finish(self):
         self.run.finish()
+
+    def _filter_metrics(self, values: dict) -> dict:
+        filtered = {}
+        for key, value in values.items():
+            if self.metric_allowlist and not any(fnmatch(key, pattern) for pattern in self.metric_allowlist):
+                continue
+            if self.metric_denylist and any(fnmatch(key, pattern) for pattern in self.metric_denylist):
+                continue
+            filtered[key] = value
+        return filtered
 
 
 class SwanlabTracker(BaseTracker):

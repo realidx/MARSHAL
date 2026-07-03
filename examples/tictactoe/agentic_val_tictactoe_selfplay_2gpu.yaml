@@ -19,20 +19,37 @@ output_dir: /mnt/public/algm/tanzheyue/rl/rl_examples/exps/${exp_name}/output
 system_envs:
   USE_MODELSCOPE: "1"
 
-#track_with: wandb
-#tracker_kwargs:
-#  api_key:
-#  project: roll-agentic
-#  name: ${exp_name}_sokoban
-#  notes: "agentic_pipeline"
-#  tags:
-#    - agentic
-#    - roll
-#    - baseline
-
-track_with: tensorboard
+track_with: wandb
 tracker_kwargs:
-  log_dir: /mnt/public/algm/tanzheyue/rl/rl_examples/exps/${exp_name}/tensorboard_logs
+  project: marshal-tictactoe
+  name: ${exp_name}_2gpu
+  notes: "2-GPU tic-tac-toe method debug"
+  tags:
+    - agentic
+    - tictactoe
+    - qwen3-4b
+    - 2gpu
+  log_dir: ./wandb
+  metric_allowlist:
+    - "val/score/*"
+    - "val/env/*/success"
+    - "val/env/*/draw"
+    - "val/env/*/player_*_return"
+    - "val/env/*/player_*_lose_for_wrong_format"
+    - "val/env/*/player_*_lose_for_overlong_response"
+    - "val/env/*/player_*_lose_for_overlong_sequence"
+    - "actor/total_loss"
+    - "actor/pg_loss"
+    - "actor/kl_loss"
+    - "actor/approxkl"
+    - "actor/policykl"
+    - "actor/clipfrac"
+    - "actor/ratio_*"
+    - "actor/lr"
+    - "tokens/*"
+    - "system/step"
+    - "system/tps*"
+    - "system/*/tps*"
 
 num_gpus_per_node: 2
 
@@ -43,7 +60,7 @@ eval_steps: 5
 resume_from_checkpoint: false
 
 rollout_batch_size: 32
-val_batch_size: 30
+val_batch_size: 16
 sequence_length: 4096
 
 # reward_clip: 10
@@ -99,11 +116,11 @@ actor_infer:
     disable_gradient_checkpointing: true
     dtype: bf16
   generating_args:
-    max_new_tokens: 512 # single-turn response length
+    max_new_tokens: 128 # single-turn response length
     top_p: 0.99
     top_k: 100
     num_beams: 1
-    temperature: 0.6
+    temperature: 0.2
     num_return_sequences: 1
   data_args:
     template: qwen3
@@ -133,7 +150,7 @@ reference:
 enable_response_mask: True
 action_sep: "||"
 use_turn_scores: True # important to GAE when applying token-level rewards to token-level advantages. If False, will take the sum of scores as the reward for the last turn.
-enable_think: True # False -> no think RL
+enable_think: False # False -> no think RL
 max_actions_per_traj: 10
 reward_normalization:
   grouping: tags # 可以tags(env_type)/traj_group_id(group)/batch(rollout_batch)... group_by计算reward/adv
@@ -301,23 +318,12 @@ train_env_manager:
 
 val_env_manager:
   max_env_num_per_worker: 4
-  env_groups: 30
+  env_groups: 16
   group_size: 1
   tags: [
     TicTacToe-first-100, 
     TicTacToe-second-100, 
     TicTacToe-first-1000, 
-    TicTacToe-second-1000,
-    Connect4-first-100,
-    Connect4-second-100,
-    Connect4-first-1000,
-    Connect4-second-1000,
-    KuhnPoker-first,
-    KuhnPoker-second,
-    LeducPoker-first,
-    LeducPoker-second,
-    MiniHanabi,
-    SimpleHanabi,
-    FullHanabi
+    TicTacToe-second-1000
   ]
-  n_groups: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] #
+  n_groups: [4, 4, 4, 4] #
