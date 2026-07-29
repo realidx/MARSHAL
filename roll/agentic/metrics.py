@@ -30,6 +30,14 @@ def aggregate_minimax_decision_metrics(
         valid_records = [record for record in records if float(record.get("valid", 0.0)) > 0]
         valid_count = len(valid_records)
         invalid_count = decision_count - valid_count
+        format_valid_count = sum(float(record.get("format_valid", 1.0)) for record in records)
+        semantic_valid_count = sum(
+            float(record.get("semantic_action_valid", record.get("valid", 0.0)))
+            for record in records
+        )
+        recovered_count = sum(float(record.get("action_recovered", 0.0)) for record in records)
+        near_limit_count = sum(float(record.get("near_generation_limit", 0.0)) for record in records)
+        truncated_count = sum(float(record.get("response_truncated", 0.0)) for record in records)
         optimal_count = sum(float(record["optimal"]) for record in valid_records)
         regret_sum = sum(float(record["regret"]) for record in valid_records)
         spread_sum = sum(float(record["spread"]) for record in valid_records)
@@ -38,6 +46,11 @@ def aggregate_minimax_decision_metrics(
         metrics[f"{prefix}/valid_action_count"] = float(valid_count)
         metrics[f"{prefix}/invalid_action_count"] = float(invalid_count)
         metrics[f"{prefix}/valid_action_rate"] = float(valid_count) / decision_count if decision_count else 0.0
+        metrics[f"{prefix}/format_valid_rate"] = format_valid_count / decision_count if decision_count else 0.0
+        metrics[f"{prefix}/semantic_action_valid_rate"] = semantic_valid_count / decision_count if decision_count else 0.0
+        metrics[f"{prefix}/action_recovered_rate"] = recovered_count / decision_count if decision_count else 0.0
+        metrics[f"{prefix}/near_generation_limit_rate"] = near_limit_count / decision_count if decision_count else 0.0
+        metrics[f"{prefix}/response_truncation_rate"] = truncated_count / decision_count if decision_count else 0.0
         metrics[f"{prefix}/optimal_action_count"] = float(optimal_count)
         metrics[f"{prefix}/optimal_action_rate"] = optimal_count / valid_count if valid_count else 0.0
         metrics[f"{prefix}/normalized_regret_sum"] = regret_sum

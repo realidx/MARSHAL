@@ -380,3 +380,5 @@ Tic-Tac-Toe is a clean proof-of-concept, not sufficient evidence for a general c
 The strongest defensible conclusion from the initial study is therefore conditional:
 
 > If exact minimax-shaped game training produces measurable prospective reasoning in game rollouts, and the same change predicts controlled improvements in mathematical reasoning, then game environments provide evidence of being useful training grounds for a reusable thinking-ahead strategy.
+
+

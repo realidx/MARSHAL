@@ -10,6 +10,11 @@ from roll.agentic.env.tictactoe.minimax import (
     precomputed_evaluator,
     terminal_utility,
 )
+from roll.agentic.tictactoe_protocol import (
+    action_to_string,
+    recover_action,
+    string_to_action,
+)
 from roll.agentic.utils import all_seed
 from roll.agentic.env.base import BaseDiscreteActionEnv
 from textwrap import dedent
@@ -240,15 +245,16 @@ class TicTacToe(BaseDiscreteActionEnv):
             "2. In each of your turns:\n"
             "   a. The game state demonstrates the current board with a three-line text grid, where 'X' and 'O' are the marks of the two players, and '_' represents empty cells.\n"
             "   b. You need to chose an action to place your mark in an empty cell, based on the given game state and the history of your decisions.\n"
-            f"   c. All legal actions for the current turn are provided in the format of `<{mark}({{row}},{{column}})>`, where `{mark}` is your mark, "
+            f"   c. All legal actions for the current turn are provided in the format of `{mark}({{row}},{{column}})`, where `{mark}` is your mark, "
             "and {row} and {column} are integers indicating the row and column of the cell to place your mark."
         )
         FORMAT_PROMPT = "<answer>{your chosen action}</answer>"
-        FORMAT_PROMPT_EXAMPLE = f"<answer><{mark}(0,0)></answer>"
+        FORMAT_PROMPT_EXAMPLE = f"<answer>{mark}(0,0)</answer>"
         instructions = (
             f"Always choose only one action from the legal actions and output `{FORMAT_PROMPT}` with no extra text after you finish the thinking process. "
             f"For example, `{FORMAT_PROMPT_EXAMPLE}`. "
-            "Strictly follow the above format and keep your thinking process concise. Responses that do not follow the format will result in immediate loss of the game."
+            "Strictly follow the above format and keep your thinking process concise. "
+            "A formatting mistake receives a separate formatting penalty."
         )
         user_prompt = (
             f"GAME RULES:\n{rules}\n\n"
@@ -273,16 +279,13 @@ class TicTacToe(BaseDiscreteActionEnv):
     def _action_to_string(self, player_id, action):
         if isinstance(action, str):
             return action
-        mark = "X" if player_id == 0 else "O"
-        row = action // 3
-        column = action % 3
-        return f"<{mark}({row},{column})>"
+        return action_to_string(player_id, action)
 
     def _string_to_action(self, action_str):
-        mark = action_str[1]
-        row = int(action_str[3])
-        column = int(action_str[5])
-        return row * 3 + column
+        return string_to_action(action_str)
+
+    def recover_action(self, response: str, legal_actions: Dict[int, str]) -> Optional[str]:
+        return recover_action(response, legal_actions)
 
     def _get_info(self):
         if self.state is None or not self.state.is_terminal():

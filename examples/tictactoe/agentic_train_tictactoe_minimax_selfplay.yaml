@@ -23,6 +23,12 @@ whiten_rewards: false
 whiten_advantages: false
 advantage_norm: ~
 
+# Smoke-test reasoning budget. Keep the total multi-turn context at 32,768;
+# only the maximum generation length of each decision is reduced.
+actor_infer:
+  generating_args:
+    max_new_tokens: 2046
+
 # Keep KL as a separate loss rather than mixing it into the shaped reward.
 add_token_level_kl: false
 use_kl_loss: true

@@ -5,7 +5,15 @@ def test_minimax_metrics_use_decisions_not_episode_sums():
     records = [
         [
             {"valid": 1.0, "optimal": 1.0, "regret": 0.0, "spread": 0.5},
-            {"valid": 1.0, "optimal": 0.0, "regret": 0.75, "spread": 1.5},
+            {
+                "valid": 1.0,
+                "optimal": 0.0,
+                "regret": 0.75,
+                "spread": 1.5,
+                "format_valid": 0.0,
+                "semantic_action_valid": 1.0,
+                "action_recovered": 1.0,
+            },
         ],
         [
             {"valid": 1.0, "optimal": 1.0, "regret": 0.25, "spread": 1.0},
@@ -19,6 +27,11 @@ def test_minimax_metrics_use_decisions_not_episode_sums():
     assert metrics[f"{prefix}/decision_count"] == 4
     assert metrics[f"{prefix}/valid_action_count"] == 3
     assert metrics[f"{prefix}/valid_action_rate"] == 0.75
+    assert metrics[f"{prefix}/format_valid_rate"] == 0.75
+    assert metrics[f"{prefix}/semantic_action_valid_rate"] == 0.75
+    assert metrics[f"{prefix}/action_recovered_rate"] == 0.25
+    assert metrics[f"{prefix}/near_generation_limit_rate"] == 0.0
+    assert metrics[f"{prefix}/response_truncation_rate"] == 0.0
     assert metrics[f"{prefix}/optimal_action_count"] == 2
     assert metrics[f"{prefix}/optimal_action_rate"] == 2 / 3
     assert metrics[f"{prefix}/normalized_regret_mean"] == 1 / 3

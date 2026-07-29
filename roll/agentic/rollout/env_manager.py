@@ -18,6 +18,7 @@ from tensordict import TensorDict
 from transformers import AutoTokenizer, PreTrainedTokenizer, ProcessorMixin
 
 from roll.agentic.env import REGISTERED_ENVS, REGISTERED_ENV_CONFIGS
+from roll.agentic.response_parsing import generation_limit_status
 from roll.distributed.scheduler.generate_scheduler import GlobalCounter, RequestScheduler
 from roll.distributed.scheduler.protocol import DataProto
 from roll.pipeline.agentic.agentic_config import EnvManagerConfig, AgenticConfig
@@ -339,18 +340,45 @@ class EnvManager:
 
         # execute actions in env
         current_player = self.rollout_cache['current_player']
+        legal_actions = self.rollout_cache["history"][-1]["legal_actions"]
         valid_actions, lose_for_wrong_format = self._extract_map_valid_actions(
-            entry, 
-            env_input["actions"], 
-            self.rollout_cache["history"][-1]["legal_actions"]
+            entry,
+            env_input["actions"],
+            legal_actions,
         )
-        if lose_for_wrong_format or overlong_response or overlong_sequence:
+        format_valid = env_input["envelope_valid"] and not lose_for_wrong_format
+        action_recovered = False
+        if lose_for_wrong_format:
+            recover_action = getattr(entry["env"], "recover_action", None)
+            recovered_action = (
+                recover_action(env_input["llm_raw_response"], legal_actions)
+                if callable(recover_action)
+                else None
+            )
+            if recovered_action is not None:
+                valid_actions = [recovered_action]
+                action_recovered = True
+
+        semantic_action_valid = len(valid_actions) == 1
+        if not semantic_action_valid or overlong_response or overlong_sequence:
             execute_results = entry["env"].get_losing_state(current_player, overlong_response, overlong_sequence)
-            format_reward = min(self.worker_config.format_penalty, 0)
         else:
             with self.thread_lock:
                 execute_results = entry["env"].step(valid_actions[0])
-            format_reward = max(self.worker_config.format_penalty, 0)
+        format_reward = (
+            max(self.worker_config.format_penalty, 0)
+            if format_valid
+            else min(self.worker_config.format_penalty, 0)
+        )
+        execute_results[0]["info"].update(
+            {
+                "format_valid": float(format_valid),
+                "semantic_action_valid": float(semantic_action_valid),
+                "action_recovered": float(action_recovered),
+                "near_generation_limit": float(env_input["near_generation_limit"]),
+                "response_truncated": float(overlong_response or overlong_sequence),
+            }
+        )
 
         # log the processed env state
         self._log_env_state(
@@ -503,18 +531,28 @@ class EnvManager:
         env_id = env_ids[0]
         response = responses[0]
         token_length = token_lengths[0]
-        llm_response, actions = self._parse_response(response)
+        llm_response, actions, envelope_valid = self._parse_response(response)
         env_input = {
             "env_id": env_id,
             "llm_raw_response": response,
             "llm_response": llm_response,
             "actions": actions,
+            "envelope_valid": envelope_valid,
             # (tzy) use the token length information to compute length penalty reward.
             "current_sequence_length": current_sequence_length,
             "token_length": token_length,
             "token_left": self.pipeline_config.sequence_length - current_sequence_length - token_length,
         }
-        overlong_response = True if token_length >= 4096 else False
+        generation_limit = self.worker_config.generating_args.max_new_tokens
+        # vLLM may trim an exhausted thinking rollout slightly below the
+        # configured cap to append </think>. Treat a near-cap response as
+        # truncated only when it still lacks a complete answer envelope.
+        near_generation_limit, overlong_response = generation_limit_status(
+            response,
+            token_length,
+            generation_limit,
+        )
+        env_input["near_generation_limit"] = near_generation_limit
         overlong_sequence = True if env_input["token_left"] <= 1000 else False
         return env_input, overlong_response, overlong_sequence
 
@@ -722,6 +760,11 @@ class EnvManager:
                 "player_id": player_id,
                 "action": turn.get("actions", ""),
                 "valid": float(decision_info["minimax_valid_action"]),
+                "format_valid": float(decision_info.get("format_valid", 1.0)),
+                "semantic_action_valid": float(decision_info.get("semantic_action_valid", 1.0)),
+                "action_recovered": float(decision_info.get("action_recovered", 0.0)),
+                "near_generation_limit": float(decision_info.get("near_generation_limit", 0.0)),
+                "response_truncated": float(decision_info.get("response_truncated", 0.0)),
             }
             if record["valid"]:
                 record.update(
@@ -1042,13 +1085,14 @@ class EnvManager:
         text = text.replace("<|im_end|>\n", "<|im_end|>")
         return [text], [messages]
 
-    def _parse_response(self, response: str) -> List:
+    def _parse_response(self, response: str) -> Tuple[str, List[str], bool]:
         pattern = (
             r"^<think>(.*?)</think>\s*<answer>(.*?)</answer>$"
             if self.pipeline_config.enable_think
             else r"^<answer>(.*?)</answer>$"
         )
         match = re.search(pattern, response, re.DOTALL)
+        envelope_valid = match is not None
         if not match:
             think_content, action_content, actions = "INVALID", "INVALID", []  # 如何更好的处理invalid response?
             # print(f"Invalid response format: {response}")
@@ -1078,7 +1122,7 @@ class EnvManager:
             if self.pipeline_config.enable_think
             else f"<answer>{action_content}</answer>"
         )
-        return llm_response, actions
+        return llm_response, actions, envelope_valid
 
     def start_input_queue_process(self):
         def process_input_queue(input_queue):
