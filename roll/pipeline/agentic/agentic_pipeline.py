@@ -7,6 +7,7 @@ import torch
 from codetiming import Timer
 from ray.util.timer import _Timer
 
+from roll.agentic.metrics import aggregate_minimax_decision_metrics
 from roll.agentic.rollout.rollout_scheduler import RolloutScheduler
 from roll.distributed.executor.cluster import Cluster
 from roll.distributed.scheduler.protocol import DataProto
@@ -136,6 +137,12 @@ class AgenticPipeline(BasePipeline):
                     eval_metrics["score/mean"] = torch.mean(eval_score).detach().item()
                     eval_metrics["score/max"] = torch.max(eval_score).detach().item()
                     eval_metrics["score/min"] = torch.min(eval_score).detach().item()
+                    eval_metrics.update(
+                        aggregate_minimax_decision_metrics(
+                            eval_batch.non_tensor_batch["minimax_decision_records"],
+                            eval_batch.non_tensor_batch["tags"],
+                        )
+                    )
                     metrics.update({f"val/{k}": v for k, v in eval_metrics.items()})
 
                     # dump eval_batch
@@ -154,8 +161,26 @@ class AgenticPipeline(BasePipeline):
                     responses = self.tokenizer.batch_decode(response_ids, skip_special_tokens=True)
                     episode_scores = eval_batch.non_tensor_batch["episode_scores"].tolist()
                     llm_raw_text_list = eval_batch.non_tensor_batch["llm_raw_text_list"].tolist()
-                    for prompt, prompt_id, response, response_id, episode_score, llm_raw_text in zip(
-                        prompts, prompt_ids, responses, response_ids, episode_scores, llm_raw_text_list
+                    minimax_decision_records = eval_batch.non_tensor_batch["minimax_decision_records"].tolist()
+                    tags = eval_batch.non_tensor_batch["tags"].tolist()
+                    for (
+                        prompt,
+                        prompt_id,
+                        response,
+                        response_id,
+                        episode_score,
+                        llm_raw_text,
+                        decision_records,
+                        tag,
+                    ) in zip(
+                        prompts,
+                        prompt_ids,
+                        responses,
+                        response_ids,
+                        episode_scores,
+                        llm_raw_text_list,
+                        minimax_decision_records,
+                        tags,
                     ):
                         generate_res.append(
                             {
@@ -163,10 +188,18 @@ class AgenticPipeline(BasePipeline):
                                 "response": response,
                                 "episode_score": episode_score,
                                 "llm_raw_text": llm_raw_text,
+                                "tag": tag,
+                                "minimax_decision_records": decision_records,
                             }
                         )
                     logger.info(f"Printing 10 items of eval_batch:")
                     logger.info(json.dumps(generate_res[:10], ensure_ascii=False))
+                    eval_output_dir = os.path.join(os.environ["ROLL_OUTPUT_DIR"], "eval")
+                    os.makedirs(eval_output_dir, exist_ok=True)
+                    eval_output_path = os.path.join(eval_output_dir, f"step-{global_step}.jsonl")
+                    with open(eval_output_path, "w", encoding="utf-8") as eval_output:
+                        for item in generate_res:
+                            eval_output.write(json.dumps(item, ensure_ascii=False) + "\n")
 
                     if self.pipeline_config.render_save_dir:
                         self.executor.submit(
@@ -186,6 +219,12 @@ class AgenticPipeline(BasePipeline):
                     batch.non_tensor_batch.pop("frames")
                 metrics["time/rollout"] = rollout_timer.last
                 metrics.update(reduce_metrics(batch.meta_info.pop("metrics", {})))
+                metrics.update(
+                    aggregate_minimax_decision_metrics(
+                        batch.non_tensor_batch["minimax_decision_records"],
+                        batch.non_tensor_batch["tags"],
+                    )
+                )
                 batch.meta_info["global_step"] = global_step
 
                 with Timer(name="cal_ref_log_probs", logger=None) as cal_timer:

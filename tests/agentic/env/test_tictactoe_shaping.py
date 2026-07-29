@@ -39,3 +39,32 @@ def test_environment_shaped_rewards_telescope():
             2 * canonical_return - initial_values[perspective],
             abs_tol=1e-12,
         )
+
+
+def test_invalid_response_is_not_canonical_game_utility():
+    env = TicTacToe(
+        TicTacToeConfig(
+            built_in_opponent="none",
+            reward_mode="minimax_shaped",
+            minimax_discount=0.9,
+            precompute_minimax=True,
+        )
+    )
+    env.reset(seed=0)
+    env.step(0)
+
+    board = env._render_text()
+    values_before = [
+        env.minimax_evaluator.value(
+            tuple(0 if cell == "_" else 1 if cell == "X" else -1 for cell in board.replace("\n", "")),
+            perspective,
+        )
+        for perspective in (0, 1)
+    ]
+    result = env.get_losing_state(player_id=1)[0]
+
+    assert result["info"]["canonical_reward_player_0"] == 0.0
+    assert result["info"]["canonical_reward_player_1"] == 0.0
+    assert result["info"]["winner"] == -1
+    assert result["info"]["minimax_valid_action"] == 0.0
+    assert result["rewards"] == [-values_before[0], -values_before[1]]

@@ -349,13 +349,20 @@ class TicTacToe(BaseDiscreteActionEnv):
                 self.minimax_evaluator.value(board, perspective)
                 for perspective in (0, 1)
             ]
-            canonical_rewards = [-1.0, 1.0] if player_id == 0 else [1.0, -1.0]
-            reward = [
-                2 * canonical_rewards[perspective] - before_values[perspective]
-                for perspective in (0, 1)
-            ]
+            # A malformed response is an artificial truncation, not a legal
+            # Tic-Tac-Toe terminal outcome. Close the shaping potential while
+            # keeping canonical game utility at zero. EnvManager adds any
+            # formatting/length penalty separately as auxiliary_reward.
+            canonical_rewards = [0.0, 0.0]
+            reward = [-before_values[perspective] for perspective in (0, 1)]
             info.update(
                 {
+                    "player_0_return": 0.0,
+                    "player_1_return": 0.0,
+                    "winner": -1,
+                    "player_0_success": False,
+                    "player_1_success": False,
+                    "draw": False,
                     "canonical_reward_player_0": canonical_rewards[0],
                     "canonical_reward_player_1": canonical_rewards[1],
                     "shaped_reward_player_0": reward[0],
@@ -363,6 +370,7 @@ class TicTacToe(BaseDiscreteActionEnv):
                     "minimax_value_player_0": before_values[0],
                     "minimax_value_player_1": before_values[1],
                     "minimax_valid_action": 0.0,
+                    "artificial_truncation": 1.0,
                 }
             )
 

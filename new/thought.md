@@ -70,6 +70,8 @@ The initial study is deliberately restricted to Tic-Tac-Toe. It assumes:
 
 Intermediate environment rewards are zero. Any auxiliary reward used by the software environment, such as a positive reward for a draw or a formatting penalty, must be kept separate from the canonical game utility used in the formulation below.
 
+A malformed or overlong model response is an artificial truncation rather than a legal Tic-Tac-Toe outcome. For such a transition, the canonical game reward is zero and the shaping potential is closed with \(V_i(s_{\mathrm{artificial\ terminal}})=0\). Formatting penalties are recorded separately as auxiliary rewards, and malformed trajectories are excluded from claims and metrics concerning preservation of the canonical Tic-Tac-Toe objective.
+
 Because the game can be solved exactly, the continuation value has no estimation uncertainty. No confidence term is needed. Imperfect-information games and approximate search are outside the scope of the initial study.
 
 ## 6. Exact Depth-Sensitive Minimax Values
@@ -302,6 +304,8 @@ D_t
 This quantity lies in \([0,1]\) when \(D_t>0\). Define \(\mathcal R_t=0\) when \(D_t=0\), because all legal actions are then equivalent under the evaluator.
 
 These measures are for analysis and reporting. They are not additional training rewards.
+
+Only valid generated game actions enter the regret, decision-spread, and optimal-action statistics. Reporting retains one diagnostic record per generated decision and uses the total number of valid decisions as the denominator; it does not average episode-level sums.
 
 ## 11. Experimental Design
 

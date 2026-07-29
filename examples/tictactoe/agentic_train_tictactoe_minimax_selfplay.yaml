@@ -20,6 +20,7 @@ reward_normalization:
   method: identity
   separate_norm_for_selfplay: false
 whiten_rewards: false
+whiten_advantages: false
 advantage_norm: ~
 
 # Keep KL as a separate loss rather than mixing it into the shaped reward.
@@ -62,7 +63,8 @@ custom_envs:
       precompute_minimax: true
 
 train_env_manager:
-  format_penalty: 0.0
+  # Invalid formatting is an auxiliary penalty, not canonical game utility.
+  format_penalty: -1.0
   enable_length_penalty: false
 
 val_env_manager:

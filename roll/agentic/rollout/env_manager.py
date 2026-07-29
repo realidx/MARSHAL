@@ -274,6 +274,7 @@ class EnvManager:
                 "tag": entry["tag"],
                 "penalty": 0,
                 "frames": [],
+                "terminal_info": {},
                 "is_self_play": is_self_play,
                 "current_player": current_player,
             }
@@ -700,6 +701,41 @@ class EnvManager:
             [[turn.get("transition_rewards", [turn["reward"]]) for turn in self.rollout_cache[history_key]]],
             dtype=object,
         )
+        llm_inputs.non_tensor_batch["auxiliary_rewards"] = np.array(
+            [[turn.get("auxiliary_reward", 0.0) for turn in self.rollout_cache[history_key]]],
+            dtype=object,
+        )
+        transition_infos = np.empty(1, dtype=object)
+        transition_infos[0] = [
+            turn.get("transition_infos", [turn.get("info", {})])
+            for turn in self.rollout_cache[history_key]
+        ]
+        llm_inputs.non_tensor_batch["transition_infos"] = transition_infos
+
+        minimax_decision_records = []
+        for turn_index, turn in enumerate(self.rollout_cache[history_key]):
+            decision_info = turn.get("decision_info", turn.get("info", {}))
+            if "minimax_valid_action" not in decision_info:
+                continue
+            record = {
+                "turn_index": turn_index,
+                "player_id": player_id,
+                "action": turn.get("actions", ""),
+                "valid": float(decision_info["minimax_valid_action"]),
+            }
+            if record["valid"]:
+                record.update(
+                    {
+                        "spread": float(decision_info["minimax_decision_spread"]),
+                        "regret": float(decision_info["minimax_normalized_regret"]),
+                        "optimal": float(decision_info["minimax_optimal_action"]),
+                    }
+                )
+            minimax_decision_records.append(record)
+        decision_records_array = np.empty(1, dtype=object)
+        decision_records_array[0] = minimax_decision_records
+        llm_inputs.non_tensor_batch["minimax_decision_records"] = decision_records_array
+
         if turn_returns is not None:
             llm_inputs.non_tensor_batch["game_step_returns"] = np.array(turn_returns, dtype=object)
         llm_inputs.non_tensor_batch["episode_scores"] = np.array(episode_scores, dtype=object)
@@ -712,12 +748,18 @@ class EnvManager:
             "num_actions": status.num_actions,
         }
         
-        # Calculate metrics
+        # Calculate generic per-trajectory metrics from the decisions generated
+        # by this player's tokens. Minimax diagnostics are aggregated from
+        # decision records after batch collection so rates use a global
+        # valid-action denominator rather than episode sums.
         custom_metric = {}
         for turn in self.rollout_cache[history_key]:
-            for k, v in turn.get("info", {}).items():
+            decision_info = turn.get("decision_info", turn.get("info", {}))
+            for k, v in decision_info.items():
                 if k == "success":
                     env_metric[k] = float(v)
+                    continue
+                if k.startswith("minimax_"):
                     continue
                 if isinstance(v, str):
                     continue
@@ -728,6 +770,14 @@ class EnvManager:
         for k, v in custom_metric.items():
             # env_metric[k] = np.sum(v) / len(player_rollout_cache['history'])
             env_metric[k] = np.sum(v)
+
+        # Terminal outcome information belongs to the episode, not to whichever
+        # player happened to generate the final action. Attach it once to both
+        # fixed-player rollouts without overwriting their decision diagnostics.
+        for k, v in self.rollout_cache.get("terminal_info", {}).items():
+            if k.startswith("minimax_") or isinstance(v, str):
+                continue
+            env_metric[k] = float(v)
 
         if len(self.rollout_cache[history_key]) > 0:
             self.rollout_cache[history_key][-1]["metrics"] = custom_metric
@@ -778,6 +828,8 @@ class EnvManager:
                     history[-1][k] += v
                 elif k == "transition_rewards" and k in history[-1]:
                     history[-1][k].extend(v)
+                elif k == "transition_infos" and k in history[-1]:
+                    history[-1][k].extend(v)
                 elif k == "auxiliary_reward" and k in history[-1]:
                     history[-1][k] += v
                 else:
@@ -817,6 +869,7 @@ class EnvManager:
             if turn['done']:
                 self.env_entry["status"].terminated = True
                 self.env_entry["status"].truncated = not turn['info'].get("success", False)
+                self.rollout_cache["terminal_info"] = turn["info"]
             if self.env_entry["status"].step >= self.env_entry["max_actions_per_traj"] and not turn['done']:
                 self.env_entry["status"].truncated = True
                 self.env_entry["status"].terminated = True
@@ -828,6 +881,8 @@ class EnvManager:
                 "transition_rewards": [turn['rewards'][current_player]],
                 "auxiliary_reward": 0.0,
                 "info": turn['info'],
+                "decision_info": turn['info'],
+                "transition_infos": [turn['info']],
                 "actions_left": actions_left,
             }
             next_state_entry = {
@@ -864,7 +919,7 @@ class EnvManager:
                     self._update_player_history(opponent_player, {
                         "reward": turn['rewards'][opponent_player],
                         "transition_rewards": [turn['rewards'][opponent_player]],
-                        "info": turn['info'],
+                        "transition_infos": [turn['info']],
                     }, None)
                 
                 # If episode continues, give next player the next state
