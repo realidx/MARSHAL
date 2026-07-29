@@ -1,0 +1,79 @@
+defaults:
+  - agentic_val_tictactoe_selfplay
+  - _self_
+
+# Exact perfect-information shaping experiment. The inherited configuration
+# retains the existing model/distributed settings and evaluation opponents.
+exp_name: "tictactoe_minimax_shaped_selfplay"
+
+adv_estimator: reinforce
+use_turn_scores: true
+
+# gamma remains one at token level. game_step_discount is applied only at
+# environment-transition boundaries.
+gamma: 1.0
+game_step_discount: 0.9
+
+# Preserve the raw shaped reward before computing return-to-go.
+reward_normalization:
+  grouping: tags
+  method: identity
+  separate_norm_for_selfplay: false
+whiten_rewards: false
+advantage_norm: ~
+
+# Keep KL as a separate loss rather than mixing it into the shaped reward.
+add_token_level_kl: false
+use_kl_loss: true
+
+custom_envs:
+  TicTacToe:
+    env_type: tictactoe
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      reward_mode: minimax_shaped
+      minimax_discount: ${game_step_discount}
+      precompute_minimax: true
+
+  # Keep evaluation rewards unchanged while reporting the same exact regret
+  # diagnostics against the built-in opponents.
+  TicTacToe-first-100:
+    env_config:
+      minimax_diagnostics: true
+      minimax_discount: ${game_step_discount}
+      precompute_minimax: true
+  TicTacToe-second-100:
+    env_config:
+      minimax_diagnostics: true
+      minimax_discount: ${game_step_discount}
+      precompute_minimax: true
+  TicTacToe-first-1000:
+    env_config:
+      minimax_diagnostics: true
+      minimax_discount: ${game_step_discount}
+      precompute_minimax: true
+  TicTacToe-second-1000:
+    env_config:
+      minimax_diagnostics: true
+      minimax_discount: ${game_step_discount}
+      precompute_minimax: true
+
+train_env_manager:
+  format_penalty: 0.0
+  enable_length_penalty: false
+
+val_env_manager:
+  format_penalty: 0.0
+  enable_length_penalty: false
+  max_env_num_per_worker: 32
+  env_groups: 128
+  group_size: 1
+  tags:
+    - TicTacToe-first-100
+    - TicTacToe-second-100
+    - TicTacToe-first-1000
+    - TicTacToe-second-1000
+  n_groups: [32, 32, 32, 32]

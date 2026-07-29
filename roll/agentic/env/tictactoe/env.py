@@ -3,6 +3,13 @@ import numpy as np
 import os
 import random
 from roll.agentic.env.tictactoe.config import TicTacToeConfig
+from roll.agentic.env.tictactoe.minimax import (
+    ExactTicTacToeEvaluator,
+    board_from_string,
+    is_terminal,
+    precomputed_evaluator,
+    terminal_utility,
+)
 from roll.agentic.utils import all_seed
 from roll.agentic.env.base import BaseDiscreteActionEnv
 from textwrap import dedent
@@ -22,6 +29,20 @@ class TicTacToe(BaseDiscreteActionEnv):
         self.built_in_opponent = config.built_in_opponent
         self.opponent_player = config.opponent_player
         self.include_opponent_turn = config.include_opponent_turn
+        self.reward_mode = config.reward_mode
+        if self.reward_mode not in ("environment", "minimax_shaped"):
+            raise ValueError(
+                f"Unsupported Tic-Tac-Toe reward_mode {self.reward_mode!r}; "
+                "expected 'environment' or 'minimax_shaped'"
+            )
+        self.use_minimax = self.reward_mode == "minimax_shaped" or config.minimax_diagnostics
+        self.minimax_evaluator = None
+        if self.use_minimax:
+            self.minimax_evaluator = (
+                precomputed_evaluator(config.minimax_discount)
+                if config.precompute_minimax
+                else ExactTicTacToeEvaluator(config.minimax_discount)
+            )
 
         BaseDiscreteActionEnv.__init__(self)
 
@@ -117,13 +138,73 @@ class TicTacToe(BaseDiscreteActionEnv):
         if self.state is None or self.state.is_terminal():
             raise RuntimeError("Cannot apply action on a terminal state.")
 
+        if self.use_minimax:
+            acting_player = self.current_player
+            before_board = board_from_string(str(self.state))
+            before_values = [
+                self.minimax_evaluator.value(before_board, player)
+                for player in (0, 1)
+            ]
+            acting_action_values = self.minimax_evaluator.action_values(before_board, acting_player)
+
         self.state.apply_action(action)
         observation = self.render()
-        rewards = self.state.rewards()
         done = self.state.is_terminal()
         info = self._get_info()
-        if info != {}:
-            rewards = [0.1 if reward == 0 else reward for reward in rewards]
+
+        if not self.use_minimax:
+            rewards = list(self.state.rewards())
+            if info:
+                rewards = [0.1 if reward == 0 else reward for reward in rewards]
+            return observation, rewards, done, info
+
+        after_board = board_from_string(str(self.state))
+        canonical_rewards = [
+            terminal_utility(after_board, player) if is_terminal(after_board) else 0.0
+            for player in (0, 1)
+        ]
+        after_values = [
+            self.minimax_evaluator.value(after_board, player)
+            for player in (0, 1)
+        ]
+        shaped_rewards = [
+            2 * canonical_rewards[player]
+            + self.config.minimax_discount * after_values[player]
+            - before_values[player]
+            for player in (0, 1)
+        ]
+
+        if self.reward_mode == "minimax_shaped":
+            rewards = shaped_rewards
+        else:
+            rewards = list(self.state.rewards())
+            if info:
+                rewards = [0.1 if reward == 0 else reward for reward in rewards]
+
+        chosen_q = acting_action_values[action]
+        action_values = tuple(acting_action_values.values())
+        decision_spread = max(action_values) - min(action_values)
+        regret = (
+            (before_values[acting_player] - chosen_q) / decision_spread
+            if decision_spread > 0
+            else 0.0
+        )
+        regret = min(max(regret, 0.0), 1.0)
+        info.update(
+            {
+                "canonical_reward_player_0": canonical_rewards[0],
+                "canonical_reward_player_1": canonical_rewards[1],
+                "shaped_reward_player_0": shaped_rewards[0],
+                "shaped_reward_player_1": shaped_rewards[1],
+                "minimax_value_player_0": before_values[0],
+                "minimax_value_player_1": before_values[1],
+                "minimax_chosen_q": chosen_q,
+                "minimax_decision_spread": decision_spread,
+                "minimax_normalized_regret": regret,
+                "minimax_optimal_action": float(abs(chosen_q - before_values[acting_player]) < 1e-9),
+                "minimax_valid_action": 1.0,
+            }
+        )
         return observation, rewards, done, info
 
     def _opponent_step(self):
@@ -209,6 +290,7 @@ class TicTacToe(BaseDiscreteActionEnv):
         returns = self.state.returns()
         winner = int(np.argmax(returns)) if returns[0] != returns[1] else -1
         return {
+            "success": True,
             "player_0_return": returns[0],
             "player_1_return": returns[1],
             "winner": winner,
@@ -229,6 +311,7 @@ class TicTacToe(BaseDiscreteActionEnv):
         if player_id == 0:
             reward = [-1 - 10, 0]
             info = {
+                "success": False,
                 "player_0_return": -1,
                 "player_1_return": 1,
                 "winner": 1,
@@ -245,6 +328,7 @@ class TicTacToe(BaseDiscreteActionEnv):
         else:
             reward = [0, -1 - 10]
             info = {
+                "success": False,
                 "player_0_return": 1,
                 "player_1_return": -1,
                 "winner": 0,
@@ -258,6 +342,30 @@ class TicTacToe(BaseDiscreteActionEnv):
                 "player_1_success": False,
                 "draw": False,
             }
+
+        if self.reward_mode == "minimax_shaped":
+            board = board_from_string(str(self.state))
+            before_values = [
+                self.minimax_evaluator.value(board, perspective)
+                for perspective in (0, 1)
+            ]
+            canonical_rewards = [-1.0, 1.0] if player_id == 0 else [1.0, -1.0]
+            reward = [
+                2 * canonical_rewards[perspective] - before_values[perspective]
+                for perspective in (0, 1)
+            ]
+            info.update(
+                {
+                    "canonical_reward_player_0": canonical_rewards[0],
+                    "canonical_reward_player_1": canonical_rewards[1],
+                    "shaped_reward_player_0": reward[0],
+                    "shaped_reward_player_1": reward[1],
+                    "minimax_value_player_0": before_values[0],
+                    "minimax_value_player_1": before_values[1],
+                    "minimax_valid_action": 0.0,
+                }
+            )
+
         execute_results = [{
             'current_player': player_id,
             'action': '',

@@ -43,6 +43,10 @@ class EnvManagerConfig(WorkerConfig):
         default=-1, metadata={"help": "The maximum number of trajectories that each environment can rollout."}
     )
     format_penalty: float = field(default=0, metadata={"help": "Format penalty value."})
+    enable_length_penalty: bool = field(
+        default=True,
+        metadata={"help": "Whether to add the built-in response-length reward/penalty."},
+    )
     worker_cls: Optional[str] = field(
         default="roll.pipeline.agentic.environment_worker.EnvironmentWorker",
         metadata={"help": "The class of the worker."},
@@ -84,6 +88,10 @@ class AgenticConfig(BaseConfig):
         metadata={
             "help": "Important to GAE when applying token-level rewards to token-level advantages. If False, will take the sum of scores as the reward for the last turn."
         },
+    )
+    game_step_discount: Optional[float] = field(
+        default=None,
+        metadata={"help": "Discount once per environment transition. Requires turn scores and REINFORCE/GRPO."},
     )
     enable_think: bool = field(default=True, metadata={"help": "False -> no think RL"})
     reward_normalization: RewardNormalizationConfig = field(
@@ -189,6 +197,14 @@ class AgenticConfig(BaseConfig):
 
     def __post_init__(self):
         BaseConfig.__post_init__(self)
+
+        if self.game_step_discount is not None:
+            if not 0 < self.game_step_discount <= 1:
+                raise ValueError("game_step_discount must be in (0, 1]")
+            if not self.use_turn_scores:
+                raise ValueError("game_step_discount requires use_turn_scores=True")
+            if self.adv_estimator == "gae":
+                raise ValueError("game_step_discount currently supports only reinforce/grpo, not GAE")
 
         if (
             self.actor_train.model_args.model_name_or_path is None

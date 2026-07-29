@@ -11,6 +11,7 @@ from roll.pipeline.agentic.agentic_config import AgenticConfig
 from roll.pipeline.rlvr.rlvr_config import RLVRConfig
 from roll.utils.kl_controller import AdaptiveKLController
 from roll.utils.logging import get_logger
+from roll.utils.returns import compute_reinforce_return
 
 
 logger = get_logger()
@@ -371,20 +372,6 @@ def concatenate_input_and_output(input_ids, output_ids, num_return_sequences):
     )
     sequences = torch.cat((repeated_input_ids, output_ids), dim=1)
     return sequences
-
-
-def compute_reinforce_return(token_level_rewards: torch.Tensor, gamma: torch.Tensor, lambd: torch.Tensor):
-    with torch.no_grad():
-        advantages_reversed = []
-        gen_len = token_level_rewards.shape[-1]
-        cumulative_reward = 0
-        for t in reversed(range(gen_len)):
-            local_reward = token_level_rewards[:, t] if t < gen_len else 0.0
-            cumulative_reward = local_reward + gamma * cumulative_reward
-            advantages_reversed.append(cumulative_reward)
-        advantages = torch.stack(advantages_reversed[::-1], dim=1)
-        returns = advantages
-    return advantages, returns
 
 
 def compute_gae_advantage_return(
@@ -1010,7 +997,17 @@ def compute_advantage(
     # data.batch['token_level_rewards'] = token_level_rewards
     token_level_rewards = token_level_rewards * response_mask
     data.batch["token_level_rewards"] = token_level_rewards
+    continuation_discounts = None
+    if "continuation_discounts" in data.batch:
+        continuation_discounts = data.batch["continuation_discounts"][:, 1:].float()
+        if continuation_discounts.shape != token_level_rewards.shape:
+            raise ValueError(
+                "Shifted continuation_discounts must match token_level_rewards, "
+                f"got {continuation_discounts.shape} and {token_level_rewards.shape}"
+            )
     if adv_estimator == "gae":
+        if continuation_discounts is not None and not torch.all(continuation_discounts == gamma):
+            raise ValueError("Environment-step continuation discounts are not implemented for GAE")
         values = data.batch["values"].float()
         data.batch["values"] = values * response_mask
         advantages, returns = compute_gae_advantage_return(
@@ -1018,12 +1015,18 @@ def compute_advantage(
         )
     elif adv_estimator == "reinforce":
         advantages, returns = compute_reinforce_return(
-            token_level_rewards=token_level_rewards, gamma=gamma, lambd=lambd
+            token_level_rewards=token_level_rewards,
+            gamma=gamma,
+            lambd=lambd,
+            continuation_discounts=continuation_discounts,
         )
     elif adv_estimator == "grpo":
         # NOTE: For grpo, remember to manually setting AgenticConfig.reward_normalization to mean_std
         advantages, returns = compute_reinforce_return(
-            token_level_rewards=token_level_rewards, gamma=gamma, lambd=lambd
+            token_level_rewards=token_level_rewards,
+            gamma=gamma,
+            lambd=lambd,
+            continuation_discounts=continuation_discounts,
         )
     else:
         raise NotImplementedError

@@ -9,6 +9,10 @@ class TicTacToeConfig:
     built_in_opponent: str = "mcts"
     opponent_player: int = 1
     include_opponent_turn: str = "full"
+    reward_mode: str = "environment"
+    minimax_discount: float = 0.9
+    precompute_minimax: bool = False
+    minimax_diagnostics: bool = False
     
     # mcts config
     uct_c: float = 2.0                   

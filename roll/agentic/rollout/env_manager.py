@@ -74,6 +74,8 @@ def get_masks_and_scores(
     tokenizer: AutoTokenizer,
     all_scores: List[List[float]] = None,
     use_turn_scores: bool = False,
+    all_turn_steps: Optional[List[List[int]]] = None,
+    game_step_discount: Optional[float] = None,
 ):
     """
     input_ids: shape (bsz, seq_len)
@@ -119,6 +121,7 @@ def get_masks_and_scores(
     
     # 新增：记录每个turn结尾位置的变量
     turn_end_positions = torch.zeros_like(input_ids, dtype=torch.bool)
+    continuation_discounts = torch.ones_like(input_ids, dtype=torch.float32)
     
     if use_turn_scores:
         for idx, scores in enumerate(zip_longest(*all_scores, fillvalue=0)):
@@ -130,13 +133,40 @@ def get_masks_and_scores(
             # 记录当前turn的结尾位置
             turn_end_positions = turn_end_positions | reward_position
             score_tensor[reward_position] = scores
+            if game_step_discount is not None:
+                if all_turn_steps is None:
+                    raise ValueError("all_turn_steps is required when game_step_discount is set")
+                turn_steps = torch.tensor(
+                    tuple(zip_longest(*all_turn_steps, fillvalue=1))[idx],
+                    dtype=torch.float32,
+                    device=input_ids.device,
+                )
+                continuation_discounts[reward_position] = game_step_discount ** turn_steps
     else:
         scores = [sum(i) for i in all_scores]
         score_tensor[:, -1] = torch.tensor(scores, dtype=torch.float32)
         # 在非turn_scores模式下，所有turn的结尾位置都在序列末尾
         turn_end_positions[:, -1] = True
 
-    return non_prompt_mask, score_tensor, response_mask, turn_end_positions
+    return non_prompt_mask, score_tensor, response_mask, turn_end_positions, continuation_discounts
+
+
+def compute_game_step_turn_returns(
+    turn_scores: List[float],
+    turn_steps: List[int],
+    discount: float,
+) -> List[float]:
+    """Compute diagnostic return-to-go values at player decision boundaries."""
+    if len(turn_scores) != len(turn_steps):
+        raise ValueError("turn_scores and turn_steps must have the same length")
+    returns_reversed = []
+    continuation = 0.0
+    for score, step_count in reversed(tuple(zip(turn_scores, turn_steps))):
+        if step_count < 1:
+            raise ValueError(f"Each player turn must span at least one environment step, got {step_count}")
+        continuation = score + discount**step_count * continuation
+        returns_reversed.append(continuation)
+    return list(reversed(returns_reversed))
 
 
 class EnvManager:
@@ -192,6 +222,16 @@ class EnvManager:
         self.env_entry = copy.deepcopy(self.env_config)
         self.env_entry["env"] = REGISTERED_ENVS[self.env_entry["env_class"]](self.env_entry["config"])
         self.env_entry["status"] = EnvStatus()
+        env_reward_mode = getattr(self.env_entry["env"], "reward_mode", None)
+        env_discount = getattr(getattr(self.env_entry["env"], "config", None), "minimax_discount", None)
+        if env_reward_mode == "minimax_shaped":
+            if self.pipeline_config.game_step_discount is None:
+                raise ValueError("minimax_shaped rewards require game_step_discount")
+            if abs(self.pipeline_config.game_step_discount - env_discount) > 1e-12:
+                raise ValueError(
+                    "game_step_discount must match the Tic-Tac-Toe minimax_discount "
+                    f"({self.pipeline_config.game_step_discount} != {env_discount})"
+                )
 
         self.request_counter = GlobalCounter.options(
             name=f"EnvManagerRequestCounter",
@@ -541,17 +581,48 @@ class EnvManager:
             batch_size=input_ids.shape[0],
         )
         try:
-            scores = [[i["reward"] for i in self.rollout_cache[history_key]]]
+            if self.pipeline_config.game_step_discount is None:
+                scores = [[i["reward"] for i in self.rollout_cache[history_key]]]
+                turn_steps = None
+            else:
+                discount = self.pipeline_config.game_step_discount
+                transition_rewards = [
+                    turn.get("transition_rewards", [turn["reward"]])
+                    for turn in self.rollout_cache[history_key]
+                ]
+                scores = [[
+                    sum(discount ** offset * reward for offset, reward in enumerate(rewards))
+                    + turn.get("auxiliary_reward", 0.0)
+                    for turn, rewards in zip(self.rollout_cache[history_key], transition_rewards)
+                ]]
+                turn_steps = [[len(rewards) for rewards in transition_rewards]]
         except:
             print("rollout_cache: ", self.rollout_cache)
             print("history_key: ", history_key)
             raise ValueError("reward not found in rollout_cache")
         # print("scores: ", scores)
-        episode_scores = [sum(i) for i in scores]
+        if self.pipeline_config.game_step_discount is None:
+            turn_returns = None
+            episode_scores = [sum(i) for i in scores]
+        else:
+            turn_returns = [
+                compute_game_step_turn_returns(
+                    sample_scores,
+                    sample_steps,
+                    self.pipeline_config.game_step_discount,
+                )
+                for sample_scores, sample_steps in zip(scores, turn_steps)
+            ]
+            episode_scores = [returns[0] if returns else 0.0 for returns in turn_returns]
         penalty = self.rollout_cache["penalty"]
 
-        non_prompt_mask, score_tensor, response_mask, turn_end_positions = get_masks_and_scores(
-            input_ids, self.tokenizer, scores, use_turn_scores=self.pipeline_config.use_turn_scores
+        non_prompt_mask, score_tensor, response_mask, turn_end_positions, continuation_discounts = get_masks_and_scores(
+            input_ids,
+            self.tokenizer,
+            scores,
+            use_turn_scores=self.pipeline_config.use_turn_scores,
+            all_turn_steps=turn_steps,
+            game_step_discount=self.pipeline_config.game_step_discount,
         )
         non_prompt_mask = torch.logical_and(non_prompt_mask, attention_mask)
         response_mask = torch.logical_and(response_mask, attention_mask)
@@ -567,6 +638,11 @@ class EnvManager:
         non_prompt_mask = pad_to_length(non_prompt_mask, length=self.pipeline_config.sequence_length, pad_value=0)
         score_tensor = pad_to_length(score_tensor, length=self.pipeline_config.sequence_length, pad_value=0)
         turn_end_positions = pad_to_length(turn_end_positions, length=self.pipeline_config.sequence_length, pad_value=0)
+        continuation_discounts = pad_to_length(
+            continuation_discounts,
+            length=self.pipeline_config.sequence_length,
+            pad_value=1,
+        )
 
         llm_inputs.batch.update(
             {
@@ -610,6 +686,8 @@ class EnvManager:
         llm_inputs.batch["prompt_mask"] = prompt_mask
         llm_inputs.batch["scores"] = score_tensor
         llm_inputs.batch["turn_end_positions"] = turn_end_positions
+        if self.pipeline_config.game_step_discount is not None:
+            llm_inputs.batch["continuation_discounts"] = continuation_discounts
         # for llm raw response
         llm_raw_text_list, _ = self._format_messages(
             prepare_for_update=True, 
@@ -618,6 +696,12 @@ class EnvManager:
         )
         # print("llm_raw_text_list: ", llm_raw_text_list)
         llm_inputs.non_tensor_batch["turn_scores"] = np.array(scores, dtype=object)
+        llm_inputs.non_tensor_batch["transition_rewards"] = np.array(
+            [[turn.get("transition_rewards", [turn["reward"]]) for turn in self.rollout_cache[history_key]]],
+            dtype=object,
+        )
+        if turn_returns is not None:
+            llm_inputs.non_tensor_batch["game_step_returns"] = np.array(turn_returns, dtype=object)
         llm_inputs.non_tensor_batch["episode_scores"] = np.array(episode_scores, dtype=object)
         llm_inputs.non_tensor_batch["llm_raw_text_list"] = np.array(llm_raw_text_list, dtype=object)
 
@@ -692,6 +776,10 @@ class EnvManager:
             for k, v in num_actions_info.items():
                 if k == "reward" and k in history[-1]:
                     history[-1][k] += v
+                elif k == "transition_rewards" and k in history[-1]:
+                    history[-1][k].extend(v)
+                elif k == "auxiliary_reward" and k in history[-1]:
+                    history[-1][k] += v
                 else:
                     history[-1][k] = v
         if next_state_entry is not None:
@@ -737,6 +825,8 @@ class EnvManager:
             num_actions_info = {
                 "actions": turn['action'],
                 "reward": turn['rewards'][current_player],
+                "transition_rewards": [turn['rewards'][current_player]],
+                "auxiliary_reward": 0.0,
                 "info": turn['info'],
                 "actions_left": actions_left,
             }
@@ -746,8 +836,14 @@ class EnvManager:
                 "legal_actions": turn['legal_actions'],
             }
             if idx == 0 and env_input is not None:
-                length_penalty = self.compute_length_penalty(env_input["token_length"])
-                num_actions_info['reward'] += format_reward + length_penalty
+                length_penalty = (
+                    self.compute_length_penalty(env_input["token_length"])
+                    if self.worker_config.enable_length_penalty
+                    else 0.0
+                )
+                auxiliary_reward = format_reward + length_penalty
+                num_actions_info['reward'] += auxiliary_reward
+                num_actions_info['auxiliary_reward'] += auxiliary_reward
                 num_actions_info.update({
                     'llm_response': env_input["llm_response"], 
                     'llm_raw_response': env_input["llm_raw_response"], 
@@ -767,6 +863,7 @@ class EnvManager:
                 if len(self.rollout_cache[f"player_{opponent_player}_history"]) > 0:
                     self._update_player_history(opponent_player, {
                         "reward": turn['rewards'][opponent_player],
+                        "transition_rewards": [turn['rewards'][opponent_player]],
                         "info": turn['info'],
                     }, None)
                 
