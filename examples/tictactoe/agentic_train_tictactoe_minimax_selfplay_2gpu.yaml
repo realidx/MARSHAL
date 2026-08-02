@@ -48,7 +48,9 @@ actor_infer:
   strategy_args:
     strategy_config:
       gpu_memory_utilization: 0.8
-      max_model_len: 2048
+      # Full-history generation now matches the context reconstructed for the
+      # policy update, so retain the same total context capacity as training.
+      max_model_len: 8192
       block_size: 16
       load_format: auto
   device_mapping: list(range(0,2))

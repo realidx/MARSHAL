@@ -31,7 +31,9 @@ actor_infer:
     max_new_tokens: 600
     stop: ["</answer>"]
     include_stop_str_in_output: true
-markovian_turn_context: true
+# Keep rollout generation and policy-update contexts identical. A correct
+# current-state-only trainer must emit each decision as a separate sample.
+markovian_turn_context: false
 enable_think: false
 use_reason_answer_format: true
 
@@ -78,8 +80,11 @@ custom_envs:
 train_env_manager:
   # Invalid formatting is an auxiliary penalty, not canonical game utility.
   format_penalty: -0.1
-  minimax_optimal_length_bonus_beta: 0.1
-  minimax_optimal_length_bonus_budget: 600
+  # No length pressure through 200 tokens; linearly increase the penalty to
+  # -0.1 between 200 and the 600-token generation cap.
+  minimax_length_penalty_beta: 0.1
+  minimax_length_soft_budget: 200
+  minimax_length_hard_budget: 600
   max_invalid_retries_per_decision: 1
   enable_length_penalty: false
 

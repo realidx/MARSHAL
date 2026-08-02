@@ -1,3 +1,4 @@
+import pytest
 import torch
 from threading import Lock
 from types import SimpleNamespace
@@ -39,6 +40,21 @@ def test_markovian_generation_selects_only_the_current_state():
     assert history[0]["llm_raw_response"] == "private reasoning"
 
 
+def test_markovian_training_context_fails_instead_of_silently_mismatching_rollout():
+    history = [
+        {"state": "old", "llm_raw_response": "private reasoning", "reward": 0.0},
+        {"state": "current", "legal_actions": {0: "X(0,0)"}},
+    ]
+
+    with pytest.raises(ValueError, match="on-policy training sample"):
+        select_prompt_history(
+            history,
+            prepare_for_update=True,
+            use_raw_llm_response=False,
+            markovian_turn_context=True,
+        )
+
+
 class _ChatTokenizer:
     def apply_chat_template(self, messages, add_generation_prompt, tokenize):
         suffix = "<assistant>" if add_generation_prompt else ""
@@ -65,7 +81,7 @@ def test_rollout_formatting_excludes_nullable_terminal_state_for_raw_text():
     manager = EnvManager.__new__(EnvManager)
     manager.rollout_cache = {"history": [decision, terminal_state]}
     manager.pipeline_config = SimpleNamespace(
-        markovian_turn_context=True, enable_think=True, use_reason_answer_format=False
+        markovian_turn_context=False, enable_think=True, use_reason_answer_format=False
     )
     manager.env_entry = {"env": _PromptEnv()}
     manager.processor = None
@@ -247,8 +263,9 @@ def test_failed_generation_closes_episode_and_records_masked_artificial_turn():
     )
     manager.worker_config = SimpleNamespace(
         enable_length_penalty=False,
-        minimax_optimal_length_bonus_beta=0.1,
-        minimax_optimal_length_bonus_budget=600,
+        minimax_length_penalty_beta=0.1,
+        minimax_length_soft_budget=200,
+        minimax_length_hard_budget=600,
         format_penalty=-0.1,
         strategy_args=None,
     )
@@ -279,20 +296,23 @@ def test_retry_boundary_stops_future_return():
     assert returns == [-0.1, 0.5]
 
 
-def test_minimax_optimal_conciseness_bonus_matches_formula():
+def test_minimax_soft_length_penalty_matches_formula():
     manager = EnvManager.__new__(EnvManager)
     manager.worker_config = SimpleNamespace(
-        minimax_optimal_length_bonus_beta=0.1,
-        minimax_optimal_length_bonus_budget=600,
+        minimax_length_penalty_beta=0.1,
+        minimax_length_soft_budget=200,
+        minimax_length_hard_budget=600,
     )
     optimal = {"minimax_valid_action": 1.0, "minimax_optimal_action": 1.0}
     suboptimal = {"minimax_valid_action": 1.0, "minimax_optimal_action": 0.0}
 
-    assert abs(manager.compute_minimax_optimal_length_bonus(50, optimal, True) - 0.0916666667) < 1e-9
-    assert manager.compute_minimax_optimal_length_bonus(300, optimal, True) == 0.05
-    assert manager.compute_minimax_optimal_length_bonus(600, optimal, True) == 0.0
-    assert manager.compute_minimax_optimal_length_bonus(50, suboptimal, True) == 0.0
-    assert manager.compute_minimax_optimal_length_bonus(50, optimal, False) == 0.0
+    assert manager.compute_minimax_length_penalty(50, optimal, True) == 0.0
+    assert manager.compute_minimax_length_penalty(200, optimal, True) == 0.0
+    assert manager.compute_minimax_length_penalty(300, optimal, True) == -0.025
+    assert manager.compute_minimax_length_penalty(600, optimal, True) == -0.1
+    assert manager.compute_minimax_length_penalty(900, optimal, True) == -0.1
+    assert manager.compute_minimax_length_penalty(300, suboptimal, True) == -0.025
+    assert manager.compute_minimax_length_penalty(300, optimal, False) == 0.0
 
 
 
@@ -301,8 +321,9 @@ def test_retry_logging_is_zero_step_and_does_not_update_opponent_history():
     manager.internal_lock = Lock()
     manager.worker_config = SimpleNamespace(
         enable_length_penalty=False,
-        minimax_optimal_length_bonus_beta=0.1,
-        minimax_optimal_length_bonus_budget=600,
+        minimax_length_penalty_beta=0.1,
+        minimax_length_soft_budget=200,
+        minimax_length_hard_budget=600,
     )
     manager.env_entry = {"status": EnvStatus(), "max_actions_per_traj": 9}
     initial = {"player": 0, "state": "___\n___\n___", "legal_actions": {0: "X(0,0)"}}

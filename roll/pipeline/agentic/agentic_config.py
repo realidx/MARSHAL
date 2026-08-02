@@ -43,13 +43,17 @@ class EnvManagerConfig(WorkerConfig):
         default=-1, metadata={"help": "The maximum number of trajectories that each environment can rollout."}
     )
     format_penalty: float = field(default=0, metadata={"help": "Format penalty value."})
-    minimax_optimal_length_bonus_beta: float = field(
+    minimax_length_penalty_beta: float = field(
         default=0.0,
-        metadata={"help": "Conciseness bonus scale for legal minimax-optimal actions."},
+        metadata={"help": "Maximum soft length penalty for valid minimax decisions."},
     )
-    minimax_optimal_length_bonus_budget: int = field(
+    minimax_length_soft_budget: int = field(
+        default=200,
+        metadata={"help": "Valid responses at or below this token budget receive no length penalty."},
+    )
+    minimax_length_hard_budget: int = field(
         default=600,
-        metadata={"help": "Token budget used to scale the minimax-optimal conciseness bonus."},
+        metadata={"help": "Valid responses at or above this budget receive the maximum length penalty."},
     )
     max_invalid_retries_per_decision: int = field(
         default=0,

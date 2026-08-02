@@ -174,6 +174,11 @@ def select_prompt_history(
     markovian_turn_context: bool,
 ) -> List[Dict]:
     """Select history without mutating the rollout cache."""
+    if prepare_for_update and markovian_turn_context:
+        raise ValueError(
+            "markovian_turn_context cannot reconstruct an on-policy training sample; "
+            "disable it or emit each decision as a separate rollout"
+        )
     selected = history
     if prepare_for_update and selected and "reward" not in selected[-1]:
         selected = selected[:-1]
@@ -391,18 +396,23 @@ class EnvManager:
             reward *= self.length_reward_scale["lower"]  # scale to make it comparable with the winning rewards
 
         return reward
-    def compute_minimax_optimal_length_bonus(
+
+
+    def compute_minimax_length_penalty(
         self, token_length: int, decision_info: Dict, valid_action: bool
     ) -> float:
-        beta = float(self.worker_config.minimax_optimal_length_bonus_beta)
-        budget = int(self.worker_config.minimax_optimal_length_bonus_budget)
-        if beta <= 0 or budget <= 0 or not valid_action:
+        """Penalize only the portion of a valid response above a soft budget."""
+        beta = float(self.worker_config.minimax_length_penalty_beta)
+        soft_budget = int(self.worker_config.minimax_length_soft_budget)
+        hard_budget = int(self.worker_config.minimax_length_hard_budget)
+        if beta <= 0 or not valid_action:
             return 0.0
         if not bool(decision_info.get("minimax_valid_action", False)):
             return 0.0
-        if not bool(decision_info.get("minimax_optimal_action", False)):
-            return 0.0
-        return beta * max(0.0, 1.0 - float(token_length) / budget)
+        if hard_budget <= soft_budget:
+            raise ValueError("minimax_length_hard_budget must exceed minimax_length_soft_budget")
+        excess_fraction = (float(token_length) - soft_budget) / (hard_budget - soft_budget)
+        return -beta * min(1.0, max(0.0, excess_fraction))
 
 
     def step(self, llm_output: DataProto, current_sequence_length: int):
@@ -1001,7 +1011,7 @@ class EnvManager:
                     "decision_index": int(turn.get("decision_index", 0)),
                     "retry_scheduled": bool(turn.get("retry_scheduled", False)),
                     "auxiliary_reward": float(turn.get("auxiliary_reward", 0.0)),
-                    "conciseness_bonus": float(turn.get("conciseness_bonus", 0.0)),
+                    "soft_length_penalty": float(turn.get("soft_length_penalty", 0.0)),
                     "return_boundary": bool(turn.get("return_boundary", False)),
                 }
             )
@@ -1174,14 +1184,14 @@ class EnvManager:
                     if self.worker_config.enable_length_penalty
                     else 0.0
                 )
-                conciseness_bonus = self.compute_minimax_optimal_length_bonus(
+                soft_length_penalty = self.compute_minimax_length_penalty(
                     env_input["token_length"], turn["info"], env_input["valid_action"]
                 )
-                auxiliary_reward = format_reward + legacy_length_penalty + conciseness_bonus
+                auxiliary_reward = format_reward + legacy_length_penalty + soft_length_penalty
                 num_actions_info["reward"] += auxiliary_reward
                 num_actions_info["auxiliary_reward"] += auxiliary_reward
                 num_actions_info["return_boundary"] = not env_input["valid_action"]
-                num_actions_info["conciseness_bonus"] = conciseness_bonus
+                num_actions_info["soft_length_penalty"] = soft_length_penalty
                 num_actions_info.update({
                     "llm_response": env_input["llm_response"],
                     "llm_raw_response": env_input["llm_raw_response"],
