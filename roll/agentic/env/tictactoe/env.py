@@ -230,39 +230,37 @@ class TicTacToe(BaseDiscreteActionEnv):
             raise ValueError(f"Invalid prompt mode: {mode}")
 
     def _get_prefix_prompt(self, think=True, player_id=0):
-        system_prompt = "You are an AI agent that makes optimal decisions to win in the game of tic-tac-toe."
-        rules = (
-            "1. Tic-tac-toe is a two-player board game played on a three-by-three grid. "
-            "The grid is 0-indexed, where (0,0) is the top-left corner and (2,2) is the bottom-right corner.\n"
-            "2. Two players take turns placing their marks X and O in empty cells of the grid.\n"
-            "3. The player who first places three of their marks in a horizontal, vertical, or diagonal line wins.\n"
-            "4. If all cells are filled and no player wins, the game ends in a draw."
-        )
-        mark = "O" if player_id == 1 else "X"
-        opponent_mark = "O" if mark == "X" else "X"
-        information = (
-            f"1. Your mark is {mark}. You are competing with another player controlling the mark {opponent_mark}.\n"
-            "2. In each of your turns:\n"
-            "   a. The game state demonstrates the current board with a three-line text grid, where 'X' and 'O' are the marks of the two players, and '_' represents empty cells.\n"
-            "   b. You need to chose an action to place your mark in an empty cell, based on the given game state and the history of your decisions.\n"
-            f"   c. All legal actions for the current turn are provided in the format of `{mark}({{row}},{{column}})`, where `{mark}` is your mark, "
-            "and {row} and {column} are integers indicating the row and column of the cell to place your mark."
-        )
-        FORMAT_PROMPT = "<answer>{your chosen action}</answer>"
-        FORMAT_PROMPT_EXAMPLE = f"<answer>{mark}(0,0)</answer>"
-        instructions = (
-            f"Always choose only one action from the legal actions and output `{FORMAT_PROMPT}` with no extra text after you finish the thinking process. "
-            f"For example, `{FORMAT_PROMPT_EXAMPLE}`. "
-            "Strictly follow the above format and keep your thinking process concise. "
-            "A formatting mistake receives a separate formatting penalty."
-        )
+        system_prompt = "You are playing Tic-Tac-Toe."
         user_prompt = (
-            f"GAME RULES:\n{rules}\n\n"
-            f"PLAYER INFORMATION:\n{information}\n\n"
-            f"RESPONSE INSTRUCTIONS:\n{instructions}\n\n"
+            "Choose exactly one legal move that maximizes your final game outcome:\n"
+            "win is better than draw, and draw is better than loss.\n\n"
+            "Analyze the strategy as concisely as possible and choose exactly one legal action.\n"
+            "Do not enumerate every legal move or the complete game tree.\n\n"
+            "Output exactly:\n"
+            "<reason>one brief reason</reason>\n"
+            "<answer><SYMBOL(row,column)></answer>\n\n"
+            "Do not output anything else."
         )
-        prefix_prompt = {"system": system_prompt, "user": user_prompt}
-        return prefix_prompt
+        return {"system": system_prompt, "user": user_prompt}
+
+    def format_turn_prompt(self, state, legal_actions, player_id=0):
+        """Format one Markovian decision using a compact board representation."""
+        mark = "O" if player_id == 1 else "X"
+        rows = [row.strip() for row in str(state).splitlines() if row.strip()]
+        if len(rows) == 3 and all(len(row) == 3 for row in rows):
+            board_rows = [
+                f"{row_index} {' '.join(row.replace('_', '.'))}"
+                for row_index, row in enumerate(rows)
+            ]
+            board = "  0 1 2\n" + "\n".join(board_rows)
+        else:
+            board = str(state).replace("_", ".")
+        legal_moves = ", ".join((legal_actions or {}).values())
+        return (
+            f"\n\nYou are player {mark}.\n\n"
+            f"Board:\n{board}\n\n"
+            f"Legal moves:\n{legal_moves}"
+        )
 
     def get_all_actions(self):
         return self._get_legal_actions(self.current_player)
@@ -308,6 +306,44 @@ class TicTacToe(BaseDiscreteActionEnv):
             "draw": winner == -1,
         }
 
+    def get_retry_state(self, player_id: int = 0, hit_token_limit: bool = False):
+        """Return an unchanged board with an interface-only corrective prompt."""
+        if hit_token_limit:
+            corrective_prompt = (
+                "Your previous response reached the generation limit before producing "
+                "a complete answer. The board has not changed. Commit to one legal "
+                "action now and finish the answer before further analysis."
+            )
+        else:
+            corrective_prompt = (
+                "Your previous response could not be executed because it did not "
+                "contain exactly one legal action.\n\n"
+                "The board has not changed, and it is still your turn.\n"
+                "Choose exactly one action from the legal-action list and finish with:\n"
+                "<answer>...</answer>"
+            )
+        observation = f"{corrective_prompt}\n\nCurrent board:\n{self.render()}"
+        info = {
+            "retry_attempt": 1.0,
+            "generation_limit_retry": float(hit_token_limit),
+            "minimax_valid_action": 0.0,
+            "canonical_reward_player_0": 0.0,
+            "canonical_reward_player_1": 0.0,
+            "shaped_reward_player_0": 0.0,
+            "shaped_reward_player_1": 0.0,
+            "game_transition": 0.0,
+        }
+        return [{
+            "current_player": player_id,
+            "action": "",
+            "rewards": [0.0, 0.0],
+            "done": False,
+            "info": info,
+            "next_player": player_id,
+            "observation": observation,
+            "legal_actions": self.get_all_actions(),
+        }]
+
     def get_losing_state(self, player_id: int=0, overlong_response: bool=False, overlong_sequence: bool=False):
         observation = self.render()
         done = True
@@ -346,36 +382,27 @@ class TicTacToe(BaseDiscreteActionEnv):
                 "draw": False,
             }
 
-        if self.reward_mode == "minimax_shaped":
-            board = board_from_string(str(self.state))
-            before_values = [
-                self.minimax_evaluator.value(board, perspective)
-                for perspective in (0, 1)
-            ]
-            # A malformed response is an artificial truncation, not a legal
-            # Tic-Tac-Toe terminal outcome. Close the shaping potential while
-            # keeping canonical game utility at zero. EnvManager adds any
-            # formatting/length penalty separately as auxiliary_reward.
-            canonical_rewards = [0.0, 0.0]
-            reward = [-before_values[perspective] for perspective in (0, 1)]
-            info.update(
-                {
-                    "player_0_return": 0.0,
-                    "player_1_return": 0.0,
-                    "winner": -1,
-                    "player_0_success": False,
-                    "player_1_success": False,
-                    "draw": False,
-                    "canonical_reward_player_0": canonical_rewards[0],
-                    "canonical_reward_player_1": canonical_rewards[1],
-                    "shaped_reward_player_0": reward[0],
-                    "shaped_reward_player_1": reward[1],
-                    "minimax_value_player_0": before_values[0],
-                    "minimax_value_player_1": before_values[1],
-                    "minimax_valid_action": 0.0,
-                    "artificial_truncation": 1.0,
-                }
-            )
+        # Invalid output is not a game outcome or transition. EnvManager adds
+        # the auxiliary invalid penalty and stops return propagation here.
+        reward = [0.0, 0.0]
+        info.update(
+            {
+                "success": False,
+                "player_0_return": 0.0,
+                "player_1_return": 0.0,
+                "winner": -1,
+                "player_0_success": False,
+                "player_1_success": False,
+                "draw": False,
+                "artificial_truncation": 1.0,
+                "game_transition": 0.0,
+                "shaped_reward_player_0": 0.0,
+                "shaped_reward_player_1": 0.0,
+            }
+        )
+        info.setdefault("minimax_valid_action", 0.0)
+        info.setdefault("canonical_reward_player_0", 0.0)
+        info.setdefault("canonical_reward_player_1", 0.0)
 
         execute_results = [{
             'current_player': player_id,

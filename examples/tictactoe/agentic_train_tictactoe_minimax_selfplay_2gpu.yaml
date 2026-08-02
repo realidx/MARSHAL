@@ -1,0 +1,76 @@
+defaults:
+  - agentic_train_tictactoe_minimax_selfplay
+  - _self_
+
+exp_name: "tictactoe_minimax_shaped_selfplay_2gpu"
+
+output_dir: ${oc.env:ROLL_OUTPUT_DIR}
+logging_dir: ${oc.env:ROLL_LOG_DIR}
+track_with: tensorboard
+tracker_kwargs:
+  log_dir: ${oc.env:ROLL_OUTPUT_DIR}/tensorboard
+
+# Two H100-96GB GPUs on one node. Rollout, reference inference,
+# and actor training reuse the same devices through the onload/offload lifecycle.
+num_gpus_per_node: 2
+
+max_steps: 200
+save_steps: 1000000
+logging_steps: 1
+eval_steps: 20
+resume_from_checkpoint: false
+
+# Two player trajectories are emitted for a completed self-play game.
+rollout_batch_size: 32
+val_batch_size: 32
+sequence_length: 8192
+max_actions_per_traj: 10
+
+actor_train:
+  training_args:
+    per_device_train_batch_size: 1
+    gradient_accumulation_steps: 4
+  strategy_args:
+    strategy_config:
+      tensor_model_parallel_size: 2
+      pipeline_model_parallel_size: 1
+  device_mapping: list(range(0,2))
+  infer_batch_size: 1
+
+actor_infer:
+  generating_args:
+    max_new_tokens: 600
+    top_p: 0.8
+    top_k: 20
+    num_beams: 1
+    temperature: 0.7
+    num_return_sequences: 1
+  strategy_args:
+    strategy_config:
+      gpu_memory_utilization: 0.8
+      max_model_len: 2048
+      block_size: 16
+      load_format: auto
+  device_mapping: list(range(0,2))
+
+reference:
+  device_mapping: list(range(0,2))
+  infer_batch_size: 1
+
+train_env_manager:
+  max_env_num_per_worker: 16
+  env_groups: 16
+  group_size: 1
+  tags: [TicTacToe]
+  n_groups: [16]
+
+val_env_manager:
+  max_env_num_per_worker: 32
+  env_groups: 32
+  group_size: 1
+  tags:
+    - TicTacToe-first-100
+    - TicTacToe-second-100
+    - TicTacToe-first-1000
+    - TicTacToe-second-1000
+  n_groups: [8, 8, 8, 8]

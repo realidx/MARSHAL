@@ -1,0 +1,24 @@
+defaults:
+  - agentic_train_tictactoe_minimax_selfplay_2gpu_no_reasoning
+  - _self_
+
+exp_name: "tictactoe_minimax_shaped_selfplay_1gpu_no_reasoning"
+num_gpus_per_node: 1
+
+actor_train:
+  strategy_args:
+    strategy_config:
+      sequence_parallel: false
+      tensor_model_parallel_size: 1
+  device_mapping: list(range(0,1))
+
+actor_infer:
+  strategy_args:
+    strategy_config:
+      # H100-47 is a scheduler share of a 96GB physical GPU. Avoid having
+      # vLLM reserve memory belonging to the other share.
+      gpu_memory_utilization: 0.4
+  device_mapping: list(range(0,1))
+
+reference:
+  device_mapping: list(range(0,1))

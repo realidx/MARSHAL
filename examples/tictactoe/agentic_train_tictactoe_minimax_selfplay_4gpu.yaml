@@ -1,0 +1,17 @@
+defaults:
+  - agentic_train_tictactoe_minimax_selfplay_2gpu
+  - _self_
+
+exp_name: "tictactoe_minimax_shaped_selfplay_4gpu"
+
+# Four physical A100-80GB GPUs on four x86 nodes. Actor training uses two
+# tensor-parallel ranks per replica and two data-parallel replicas.
+actor_train:
+  device_mapping: list(range(0,4))
+
+# Rollout and reference computation use four independent GPU workers.
+actor_infer:
+  device_mapping: list(range(0,4))
+
+reference:
+  device_mapping: list(range(0,4))

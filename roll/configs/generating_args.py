@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -49,6 +49,14 @@ class GeneratingArguments:
     num_return_sequences: Optional[int] = field(
         default=1,
         metadata={"help": "The number of independently computed returned sequences for each element in the batch."},
+    )
+    stop: Optional[List[str]] = field(
+        default=None,
+        metadata={"help": "Text strings that stop generation."},
+    )
+    include_stop_str_in_output: bool = field(
+        default=False,
+        metadata={"help": "Whether a matched text stop remains in the generated response."},
     )
 
     def to_dict(self) -> Dict[str, Any]:

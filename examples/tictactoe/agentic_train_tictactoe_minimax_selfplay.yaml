@@ -5,6 +5,8 @@ defaults:
 # Exact perfect-information shaping experiment. The inherited configuration
 # retains the existing model/distributed settings and evaluation opponents.
 exp_name: "tictactoe_minimax_shaped_selfplay"
+pretrain: /home/e/e1300530/models/Qwen3-4B-Instruct-2507/
+
 
 adv_estimator: reinforce
 use_turn_scores: true
@@ -23,11 +25,15 @@ whiten_rewards: false
 whiten_advantages: false
 advantage_norm: ~
 
-# Per-decision reasoning budget. The smoke test showed that shorter limits
-# truncate otherwise valid Tic-Tac-Toe decisions.
+# Concise non-thinking reason/answer protocol; capped responses are never force-completed.
 actor_infer:
   generating_args:
-    max_new_tokens: 4096
+    max_new_tokens: 600
+    stop: ["</answer>"]
+    include_stop_str_in_output: true
+markovian_turn_context: true
+enable_think: false
+use_reason_answer_format: true
 
 # Keep KL as a separate loss rather than mixing it into the shaped reward.
 add_token_level_kl: false
@@ -41,6 +47,7 @@ custom_envs:
     env_config:
       built_in_opponent: none
       render_mode: text
+      response_token_limit: 600
       reward_mode: minimax_shaped
       minimax_discount: ${game_step_discount}
       precompute_minimax: true
@@ -70,7 +77,10 @@ custom_envs:
 
 train_env_manager:
   # Invalid formatting is an auxiliary penalty, not canonical game utility.
-  format_penalty: -1.0
+  format_penalty: -0.1
+  minimax_optimal_length_bonus_beta: 0.1
+  minimax_optimal_length_bonus_budget: 600
+  max_invalid_retries_per_decision: 1
   enable_length_penalty: false
 
 val_env_manager:

@@ -67,4 +67,44 @@ def test_invalid_response_is_not_canonical_game_utility():
     assert result["info"]["canonical_reward_player_1"] == 0.0
     assert result["info"]["winner"] == -1
     assert result["info"]["minimax_valid_action"] == 0.0
-    assert result["rewards"] == [-values_before[0], -values_before[1]]
+    assert result["rewards"] == [0.0, 0.0]
+    assert result["info"]["game_transition"] == 0.0
+
+
+def test_retry_state_preserves_board_player_and_zero_rewards():
+    env = TicTacToe(
+        TicTacToeConfig(
+            built_in_opponent="none",
+            reward_mode="minimax_shaped",
+            minimax_discount=0.9,
+            precompute_minimax=True,
+        )
+    )
+    env.reset(seed=0)
+    env.step(0)
+    board_before = env.render()
+    player_before = env.current_player
+
+    retry = env.get_retry_state(player_id=player_before, hit_token_limit=False)[0]
+
+    assert env.render() == board_before
+    assert env.current_player == player_before
+    assert retry["next_player"] == player_before
+    assert retry["rewards"] == [0.0, 0.0]
+    assert retry["done"] is False
+    assert retry["info"]["retry_attempt"] == 1.0
+    assert retry["info"]["canonical_reward_player_0"] == 0.0
+    assert retry["info"]["canonical_reward_player_1"] == 0.0
+    assert "could not be executed" in retry["observation"]
+    assert "exactly one legal action" in retry["observation"]
+
+    cap_retry = env.get_retry_state(player_id=player_before, hit_token_limit=True)[0]
+    assert "reached the generation limit" in cap_retry["observation"]
+    assert "Commit to one legal action" in cap_retry["observation"]
+
+
+def test_exhausted_invalid_response_is_marked_artificial_truncation():
+    env = TicTacToe(TicTacToeConfig(built_in_opponent="none"))
+    env.reset(seed=0)
+    result = env.get_losing_state(player_id=0)[0]
+    assert result["info"]["artificial_truncation"] == 1.0

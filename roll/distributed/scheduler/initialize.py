@@ -42,12 +42,19 @@ def start_ray_cluster():
         logger.info("Ray cluster already initialized")
         return False
 
+    ray_num_gpus = os.environ.get("RAY_NUM_GPUS_PER_NODE")
+    gpu_arg = ""
+    if ray_num_gpus is not None:
+        if not ray_num_gpus.isdigit() or int(ray_num_gpus) < 0:
+            raise ValueError(f"RAY_NUM_GPUS_PER_NODE must be a non-negative integer, got {ray_num_gpus!r}")
+        gpu_arg = f" --num-gpus={int(ray_num_gpus)}"
+
     if rank == 0:
-        cmd = f"ray start --head --port={master_port} --node-name={node_name}"
+        cmd = f"ray start --head --port={master_port} --node-name={node_name}{gpu_arg}"
     else:
         # fix: 处理大规模下可能会出现的head/worker node创建顺序不一致问题
         time.sleep(5)
-        cmd = f"ray start --address={master_addr}:{master_port} --node-name={node_name}"
+        cmd = f"ray start --address={master_addr}:{master_port} --node-name={node_name}{gpu_arg}"
 
     logger.info(f"Starting ray cluster: {cmd}")
     ret = subprocess.run(cmd, shell=True, capture_output=True)

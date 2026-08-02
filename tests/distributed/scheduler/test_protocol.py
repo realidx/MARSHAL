@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from tensordict import TensorDict
 
-from roll.distributed.scheduler.protocol import DataProto, custom_np_concatenate
+from roll.distributed.scheduler.protocol import DataProto, DataProtoItem, collate_fn, custom_np_concatenate
 
 
 @pytest.fixture
@@ -116,5 +116,63 @@ def test_np_concat():
     print(t.shape)
 
 
+def test_collate_fn_preserves_ragged_nested_metadata_as_objects():
+    items = [
+        DataProtoItem(
+            batch=TensorDict({"value": torch.tensor(1)}, batch_size=[]),
+            non_tensor_batch={"decision_records": [[1, 2], [3, 4]]},
+        ),
+        DataProtoItem(
+            batch=TensorDict({"value": torch.tensor(2)}, batch_size=[]),
+            non_tensor_batch={"decision_records": [[5, 6]]},
+        ),
+    ]
+
+    result = collate_fn(items)
+
+    records = result.non_tensor_batch["decision_records"]
+    assert records.shape == (2,)
+    assert records.dtype == object
+    assert records[0] == [[1, 2], [3, 4]]
+    assert records[1] == [[5, 6]]
+
+
 if __name__ == "__main__":
     pytest.main()
+
+
+def test_ray_start_uses_explicit_gpu_count(monkeypatch):
+    from roll.distributed.scheduler import initialize
+
+    monkeypatch.setenv("RAY_NUM_GPUS_PER_NODE", "2")
+    monkeypatch.setattr(initialize, "get_driver_rank", lambda: 0)
+    monkeypatch.setattr(initialize, "get_driver_world_size", lambda: 1)
+    monkeypatch.setattr(initialize, "get_driver_master_addr", lambda: "localhost")
+    monkeypatch.setattr(initialize, "get_driver_master_port", lambda: 12345)
+    monkeypatch.setattr(initialize, "get_driver_node_name", lambda: "node")
+    monkeypatch.setattr(initialize, "is_ray_cluster_running", lambda: False)
+    commands = []
+
+    def fake_run(command, **kwargs):
+        commands.append(command)
+        return type("Result", (), {"returncode": 0})()
+
+    monkeypatch.setattr(initialize.subprocess, "run", fake_run)
+
+    assert initialize.start_ray_cluster() is True
+    assert commands == ["ray start --head --port=12345 --node-name=node --num-gpus=2"]
+
+
+def test_ray_start_rejects_invalid_explicit_gpu_count(monkeypatch):
+    from roll.distributed.scheduler import initialize
+
+    monkeypatch.setenv("RAY_NUM_GPUS_PER_NODE", "two")
+    monkeypatch.setattr(initialize, "get_driver_rank", lambda: 0)
+    monkeypatch.setattr(initialize, "get_driver_world_size", lambda: 1)
+    monkeypatch.setattr(initialize, "get_driver_master_addr", lambda: "localhost")
+    monkeypatch.setattr(initialize, "get_driver_master_port", lambda: 12345)
+    monkeypatch.setattr(initialize, "get_driver_node_name", lambda: "node")
+    monkeypatch.setattr(initialize, "is_ray_cluster_running", lambda: False)
+
+    with pytest.raises(ValueError, match="RAY_NUM_GPUS_PER_NODE"):
+        initialize.start_ray_cluster()

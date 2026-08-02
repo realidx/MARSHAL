@@ -103,6 +103,9 @@ class HfInferStrategy(InferenceStrategy):
         num_microbatches = max(batch_size // micro_batch_size, 1)
         micro_batches = batch.chunk(chunks=num_microbatches)
 
+        hf_generation_config = dict(generation_config)
+        hf_generation_config.pop("stop", None)
+        hf_generation_config.pop("include_stop_str_in_output", None)
         output_list = []
         for data in micro_batches:
             input_ids = data.batch["input_ids"]  # (bs, prompt_length)
@@ -121,7 +124,7 @@ class HfInferStrategy(InferenceStrategy):
                     # DataProto.to('cuda') in upper frame not work for non_tensor_batch
                     forward_args[key] = torch.concat(multi_modal_data[key], dim=0).to(input_ids.device)
             output = self.model.generate(
-                input_ids=input_ids, attention_mask=attention_mask, use_cache=True, **forward_args, **generation_config
+                input_ids=input_ids, attention_mask=attention_mask, use_cache=True, **forward_args, **hf_generation_config
             )
             [output_list.append(output_tensor) for output_tensor in output]
         output = pad_sequence(output_list, batch_first=True, padding_value=generation_config["pad_token_id"])

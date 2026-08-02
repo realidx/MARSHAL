@@ -18,7 +18,7 @@ from tensordict import TensorDict
 from transformers import AutoTokenizer, PreTrainedTokenizer, ProcessorMixin
 
 from roll.agentic.env import REGISTERED_ENVS, REGISTERED_ENV_CONFIGS
-from roll.agentic.response_parsing import generation_limit_status
+from roll.agentic.response_parsing import generation_limit_status, has_closed_answer
 from roll.distributed.scheduler.generate_scheduler import GlobalCounter, RequestScheduler
 from roll.distributed.scheduler.protocol import DataProto
 from roll.pipeline.agentic.agentic_config import EnvManagerConfig, AgenticConfig
@@ -61,6 +61,8 @@ class EnvStatus:
     truncated: bool = False  # done but not success
     terminated: bool = False  # done and success
     num_actions: int = 0  # current action step (single action)
+    generation_attempts: int = 0
+    retry_attempts: int = 0
     rewards: List[float] = field(default_factory=list)  # rewards for each turn
     seed: Optional[int] = None  # what seed is used to reset this environment
     step: int = 0  # current step (single step)
@@ -76,6 +78,7 @@ def get_masks_and_scores(
     all_scores: List[List[float]] = None,
     use_turn_scores: bool = False,
     all_turn_steps: Optional[List[List[int]]] = None,
+    all_return_boundaries: Optional[List[List[bool]]] = None,
     game_step_discount: Optional[float] = None,
 ):
     """
@@ -143,6 +146,17 @@ def get_masks_and_scores(
                     device=input_ids.device,
                 )
                 continuation_discounts[reward_position] = game_step_discount ** turn_steps
+                if all_return_boundaries is not None:
+                    return_boundaries = torch.tensor(
+                        tuple(zip_longest(*all_return_boundaries, fillvalue=False))[idx],
+                        dtype=torch.bool,
+                        device=input_ids.device,
+                    )
+                    continuation_discounts[reward_position] = torch.where(
+                        return_boundaries,
+                        torch.zeros_like(turn_steps),
+                        continuation_discounts[reward_position],
+                    )
     else:
         scores = [sum(i) for i in all_scores]
         score_tensor[:, -1] = torch.tensor(scores, dtype=torch.float32)
@@ -152,20 +166,63 @@ def get_masks_and_scores(
     return non_prompt_mask, score_tensor, response_mask, turn_end_positions, continuation_discounts
 
 
+
+def select_prompt_history(
+    history: List[Dict],
+    prepare_for_update: bool,
+    use_raw_llm_response: bool,
+    markovian_turn_context: bool,
+) -> List[Dict]:
+    """Select history without mutating the rollout cache."""
+    selected = history
+    if prepare_for_update and selected and "reward" not in selected[-1]:
+        selected = selected[:-1]
+    if not prepare_for_update and markovian_turn_context:
+        selected = selected[-1:]
+    return selected
+
+
+def mask_untrainable_response_turns(
+    input_ids: torch.Tensor,
+    response_mask: torch.Tensor,
+    non_prompt_mask: torch.Tensor,
+    tokenizer: AutoTokenizer,
+    turn_indices: List[int],
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Mask assistant turns that were synthesized by the runtime."""
+    if not turn_indices:
+        return response_mask, non_prompt_mask
+    assistant_start_token = tokenizer.encode("<|im_start|>assistant\n")[0]
+    turn_indicators = torch.cumsum(input_ids == assistant_start_token, dim=-1)
+    for turn_index in turn_indices:
+        turn_indicator = turn_index * 2 + 3
+        synthetic_turn = turn_indicators == turn_indicator
+        response_mask[synthetic_turn] = False
+        non_prompt_mask[synthetic_turn] = False
+    return response_mask, non_prompt_mask
+
+
 def compute_game_step_turn_returns(
     turn_scores: List[float],
     turn_steps: List[int],
     discount: float,
+    return_boundaries: Optional[List[bool]] = None,
 ) -> List[float]:
     """Compute diagnostic return-to-go values at player decision boundaries."""
     if len(turn_scores) != len(turn_steps):
         raise ValueError("turn_scores and turn_steps must have the same length")
+    if return_boundaries is None:
+        return_boundaries = [False] * len(turn_scores)
+    if len(return_boundaries) != len(turn_scores):
+        raise ValueError("return_boundaries and turn_scores must have the same length")
     returns_reversed = []
     continuation = 0.0
-    for score, step_count in reversed(tuple(zip(turn_scores, turn_steps))):
-        if step_count < 1:
-            raise ValueError(f"Each player turn must span at least one environment step, got {step_count}")
-        continuation = score + discount**step_count * continuation
+    for score, step_count, stop_return in reversed(
+        tuple(zip(turn_scores, turn_steps, return_boundaries))
+    ):
+        if step_count < 0:
+            raise ValueError(f"Environment step count cannot be negative, got {step_count}")
+        continuation = score if stop_return else score + discount**step_count * continuation
         returns_reversed.append(continuation)
     return list(reversed(returns_reversed))
 
@@ -278,6 +335,7 @@ class EnvManager:
                 "terminal_info": {},
                 "is_self_play": is_self_play,
                 "current_player": current_player,
+                "invalid_retries_for_decision": 0,
             }
 
         seed = self.group_seed + self.episode_id
@@ -333,6 +391,19 @@ class EnvManager:
             reward *= self.length_reward_scale["lower"]  # scale to make it comparable with the winning rewards
 
         return reward
+    def compute_minimax_optimal_length_bonus(
+        self, token_length: int, decision_info: Dict, valid_action: bool
+    ) -> float:
+        beta = float(self.worker_config.minimax_optimal_length_bonus_beta)
+        budget = int(self.worker_config.minimax_optimal_length_bonus_budget)
+        if beta <= 0 or budget <= 0 or not valid_action:
+            return 0.0
+        if not bool(decision_info.get("minimax_valid_action", False)):
+            return 0.0
+        if not bool(decision_info.get("minimax_optimal_action", False)):
+            return 0.0
+        return beta * max(0.0, 1.0 - float(token_length) / budget)
+
 
     def step(self, llm_output: DataProto, current_sequence_length: int):
         env_input, overlong_response, overlong_sequence = self.get_env_input(llm_output, current_sequence_length)
@@ -360,15 +431,40 @@ class EnvManager:
                 action_recovered = True
 
         semantic_action_valid = len(valid_actions) == 1
-        if not semantic_action_valid or overlong_response or overlong_sequence:
-            execute_results = entry["env"].get_losing_state(current_player, overlong_response, overlong_sequence)
+        env_input["valid_action"] = (
+            format_valid and semantic_action_valid and not overlong_response and not overlong_sequence
+        )
+        env_input["overlong_response"] = overlong_response
+        env_input["overlong_sequence"] = overlong_sequence
+        retry_attempt_index = int(self.rollout_cache.get("invalid_retries_for_decision", 0))
+        env_input["retry_attempt_index"] = retry_attempt_index
+        env_input["decision_index"] = int(entry["status"].num_actions)
+        entry["status"].generation_attempts += 1
+        invalid_response = not env_input["valid_action"]
+        if invalid_response:
+            max_retries = int(self.worker_config.max_invalid_retries_per_decision)
+            if retry_attempt_index < max_retries:
+                execute_results = entry["env"].get_retry_state(
+                    current_player,
+                    hit_token_limit=bool(env_input["hit_token_limit"]),
+                )
+                self.rollout_cache["invalid_retries_for_decision"] = retry_attempt_index + 1
+                entry["status"].retry_attempts += 1
+                env_input["retry_scheduled"] = True
+            else:
+                execute_results = entry["env"].get_losing_state(
+                    current_player, overlong_response, overlong_sequence
+                )
+                env_input["retry_scheduled"] = False
         else:
             with self.thread_lock:
                 execute_results = entry["env"].step(valid_actions[0])
+            self.rollout_cache["invalid_retries_for_decision"] = 0
+            env_input["retry_scheduled"] = False
         format_reward = (
-            max(self.worker_config.format_penalty, 0)
-            if format_valid
-            else min(self.worker_config.format_penalty, 0)
+            min(self.worker_config.format_penalty, 0.0)
+            if invalid_response
+            else max(self.worker_config.format_penalty, 0.0)
         )
         execute_results[0]["info"].update(
             {
@@ -399,20 +495,7 @@ class EnvManager:
                 self.rollout_cache["frames"].append(frame)
         return entry["status"]
 
-    def generate(self, env_output: Dict):
-        lm_input: DataProto = self.get_lm_input(env_output, prepare_for_update=False)
-
-        current_sequence_length = lm_input.batch["input_ids"].shape[1]
-        token_left = self.pipeline_config.sequence_length - current_sequence_length
-        generation_config = self.worker_config.generating_args.to_dict()
-        generation_config["max_new_tokens"] = max(min(generation_config["max_new_tokens"], token_left), 1)
-        if generation_config["max_new_tokens"] <= 1:
-            self.logger.warning(
-                f"sequence_length = {self.pipeline_config.sequence_length} input_ids length = {lm_input.batch['input_ids'].shape[1]},"
-                f"maybe you should increase the response_length"
-            )
-            return None, current_sequence_length
-
+    def _generate_once(self, lm_input: DataProto, generation_config: Dict) -> Optional[DataProto]:
         gen_batch = lm_input.pop(
             batch_keys=["input_ids", "attention_mask", "position_ids"],
             non_tensor_batch_keys=(["multi_modal_data"] if "multi_modal_data" in lm_input.non_tensor_batch else []),
@@ -425,11 +508,34 @@ class EnvManager:
         lm_output: DataProto = ray.get(self.generate_scheduler.generate_one_request.remote(data=gen_batch))
 
         if lm_output is not None:
-            # 未被abort
             gen_batch.meta_info.pop("generation_config")
             lm_input = lm_input.repeat(repeat_times=generation_config["num_return_sequences"])
             lm_output.union(lm_input)
-        return lm_output, current_sequence_length
+        return lm_output
+
+    def _generation_context_limit(self) -> int:
+        strategy_args = getattr(self.pipeline_config.actor_infer, "strategy_args", None)
+        strategy_config = getattr(strategy_args, "strategy_config", None) or {}
+        max_model_len = strategy_config.get("max_model_len", self.pipeline_config.sequence_length)
+        return min(int(max_model_len), int(self.pipeline_config.sequence_length))
+
+    def generate(self, env_output: Dict):
+        lm_input: DataProto = self.get_lm_input(env_output, prepare_for_update=False)
+        current_sequence_length = lm_input.batch["input_ids"].shape[1]
+        token_left = self._generation_context_limit() - current_sequence_length
+        generation_config = self.worker_config.generating_args.to_dict()
+        generation_config["max_new_tokens"] = max(
+            min(generation_config["max_new_tokens"], token_left),
+            1,
+        )
+
+        if generation_config["max_new_tokens"] <= 1:
+            self.logger.warning(
+                f"inference sequence limit = {self._generation_context_limit()} input_ids length = {current_sequence_length}"
+            )
+            return None, current_sequence_length
+
+        return self._generate_once(lm_input, generation_config), current_sequence_length
 
     def run_rollout_loop(self, data: DataProto):
         """
@@ -458,6 +564,8 @@ class EnvManager:
             status = EnvStatus(truncated=True, terminated=True)
             if lm_output is not None:
                 status: EnvStatus = self.step(lm_output, current_sequence_length)
+            else:
+                status = self._terminate_failed_generation(current_sequence_length)
 
             if status.done and self.running:
                 rollouts = self.formulate_rollouts()
@@ -481,6 +589,51 @@ class EnvManager:
                 env_output = self.reset()
 
         self.process_input_queue_thread.join()
+
+    def _terminate_failed_generation(self, current_sequence_length: int) -> EnvStatus:
+        """Close an episode when no model response can be generated.
+
+        The empty assistant turn is retained only to align the artificial
+        terminal reward with the conversation. It is masked from policy
+        training because the model did not generate it.
+        """
+        current_player = self.rollout_cache["current_player"]
+        execute_results = self.env_entry["env"].get_losing_state(
+            current_player,
+            overlong_response=False,
+            overlong_sequence=True,
+        )
+        execute_results[0]["info"].update(
+            {
+                "format_valid": 0.0,
+                "semantic_action_valid": 0.0,
+                "action_recovered": 0.0,
+                "near_generation_limit": 0.0,
+                "response_truncated": 1.0,
+                "generation_failed": 1.0,
+            }
+        )
+        env_input = {
+            "llm_response": "",
+            "llm_raw_response": "",
+            "current_sequence_length": current_sequence_length,
+            "token_length": 0,
+            "token_left": self._generation_context_limit() - current_sequence_length,
+            "effective_max_new_tokens": 0,
+            "hit_token_limit": False,
+            "has_closing_answer_tag": False,
+            "valid_action": False,
+            "overlong_response": False,
+            "overlong_sequence": True,
+            "skip_policy_response": True,
+        }
+        self._log_env_state(
+            execute_results=execute_results,
+            current_player=current_player,
+            format_reward=min(self.worker_config.format_penalty, 0.0),
+            env_input=env_input,
+        )
+        return self.env_entry["status"]
 
     def get_lm_input(self, env_output, prepare_for_update: bool) -> DataProto:
         llm_input_texts, messages_list = self._format_messages(
@@ -522,10 +675,11 @@ class EnvManager:
             responses = lm_output.non_tensor_batch["response_texts"]
             token_lengths = list(map(lambda x: len(self.tokenizer.encode(x)) + 1, responses))  # + 1 for eos token
 
-        responses = [
-            "<think>\n" + response if self.pipeline_config.enable_think else "<answer>" + response
-            for response in responses
-        ]  # The LLM generation does not include <think> tags. Add them back here.
+        if not self.pipeline_config.use_reason_answer_format:
+            responses = [
+                "<think>\n" + response if self.pipeline_config.enable_think else "<answer>" + response
+                for response in responses
+            ]
 
         env_ids = lm_output.non_tensor_batch["env_ids"]
         env_id = env_ids[0]
@@ -541,19 +695,25 @@ class EnvManager:
             # (tzy) use the token length information to compute length penalty reward.
             "current_sequence_length": current_sequence_length,
             "token_length": token_length,
-            "token_left": self.pipeline_config.sequence_length - current_sequence_length - token_length,
+            "token_left": self._generation_context_limit() - current_sequence_length - token_length,
         }
-        generation_limit = self.worker_config.generating_args.max_new_tokens
-        # vLLM may trim an exhausted thinking rollout slightly below the
-        # configured cap to append </think>. Treat a near-cap response as
-        # truncated only when it still lacks a complete answer envelope.
-        near_generation_limit, overlong_response = generation_limit_status(
+        effective_max_new_tokens = max(
+            min(
+                self.worker_config.generating_args.max_new_tokens,
+                self._generation_context_limit() - current_sequence_length,
+            ),
+            1,
+        )
+        hit_token_limit, overlong_response = generation_limit_status(
             response,
             token_length,
-            generation_limit,
+            effective_max_new_tokens,
         )
-        env_input["near_generation_limit"] = near_generation_limit
-        overlong_sequence = True if env_input["token_left"] <= 1000 else False
+        env_input["effective_max_new_tokens"] = effective_max_new_tokens
+        env_input["near_generation_limit"] = hit_token_limit
+        env_input["hit_token_limit"] = hit_token_limit
+        env_input["has_closing_answer_tag"] = has_closed_answer(response)
+        overlong_sequence = env_input["token_left"] < 0
         return env_input, overlong_response, overlong_sequence
 
     def formulate_rollouts(self):
@@ -619,6 +779,10 @@ class EnvManager:
             },
             batch_size=input_ids.shape[0],
         )
+        return_boundaries = [[
+            bool(turn.get("return_boundary", False))
+            for turn in self.rollout_cache[history_key]
+        ]]
         try:
             if self.pipeline_config.game_step_discount is None:
                 scores = [[i["reward"] for i in self.rollout_cache[history_key]]]
@@ -649,8 +813,11 @@ class EnvManager:
                     sample_scores,
                     sample_steps,
                     self.pipeline_config.game_step_discount,
+                    sample_boundaries,
                 )
-                for sample_scores, sample_steps in zip(scores, turn_steps)
+                for sample_scores, sample_steps, sample_boundaries in zip(
+                    scores, turn_steps, return_boundaries
+                )
             ]
             episode_scores = [returns[0] if returns else 0.0 for returns in turn_returns]
         penalty = self.rollout_cache["penalty"]
@@ -661,7 +828,20 @@ class EnvManager:
             scores,
             use_turn_scores=self.pipeline_config.use_turn_scores,
             all_turn_steps=turn_steps,
+            all_return_boundaries=return_boundaries,
             game_step_discount=self.pipeline_config.game_step_discount,
+        )
+        untrainable_turn_indices = [
+            turn_index
+            for turn_index, turn in enumerate(self.rollout_cache[history_key])
+            if turn.get("skip_policy_response", False)
+        ]
+        response_mask, non_prompt_mask = mask_untrainable_response_turns(
+            input_ids,
+            response_mask,
+            non_prompt_mask,
+            self.tokenizer,
+            untrainable_turn_indices,
         )
         non_prompt_mask = torch.logical_and(non_prompt_mask, attention_mask)
         response_mask = torch.logical_and(response_mask, attention_mask)
@@ -789,7 +969,49 @@ class EnvManager:
         env_metric = {
             "success": float(status.terminated and (not status.truncated)),
             "num_actions": status.num_actions,
+            "generation_attempts": status.generation_attempts,
+            "retry_attempts": status.retry_attempts,
         }
+        preflight_turn_records = []
+        for turn_index, turn in enumerate(self.rollout_cache[history_key]):
+            if "llm_raw_response" not in turn:
+                continue
+            decision_info = turn.get("decision_info", turn.get("info", {}))
+            preflight_turn_records.append(
+                {
+                    "turn_index": turn_index,
+                    "player_id": player_id,
+                    "board": turn.get("state", ""),
+                    "legal_actions": turn.get("legal_actions", {}),
+                    "parsed_action": turn.get("actions", ""),
+                    "raw_response": turn["llm_raw_response"],
+                    "processed_response": turn.get("llm_response", ""),
+                    "token_length": int(turn.get("token_length", 0)),
+                    "effective_max_new_tokens": int(turn.get("effective_max_new_tokens", 0)),
+                    "hit_token_limit": bool(turn.get("hit_token_limit", False)),
+                    "has_closing_answer_tag": bool(turn.get("has_closing_answer_tag", False)),
+                    "valid_action": bool(turn.get("valid_action", False)),
+                    "overlong_response": bool(turn.get("overlong_response", False)),
+                    "overlong_sequence": bool(turn.get("overlong_sequence", False)),
+                    "missing_answer": not bool(turn.get("has_closing_answer_tag", False)),
+                    "capped_without_answer": bool(turn.get("hit_token_limit", False)) and not bool(turn.get("has_closing_answer_tag", False)),
+                    "minimax_valid_action": bool(decision_info.get("minimax_valid_action", False)),
+                    "minimax_optimal_action": bool(decision_info.get("minimax_optimal_action", False)),
+                    "retry_attempt_index": int(turn.get("retry_attempt_index", 0)),
+                    "decision_index": int(turn.get("decision_index", 0)),
+                    "retry_scheduled": bool(turn.get("retry_scheduled", False)),
+                    "auxiliary_reward": float(turn.get("auxiliary_reward", 0.0)),
+                    "conciseness_bonus": float(turn.get("conciseness_bonus", 0.0)),
+                    "return_boundary": bool(turn.get("return_boundary", False)),
+                }
+            )
+        preflight_records_array = np.empty(1, dtype=object)
+        preflight_records_array[0] = preflight_turn_records
+        llm_inputs.non_tensor_batch["preflight_turn_records"] = preflight_records_array
+        terminal_info_array = np.empty(1, dtype=object)
+        terminal_info_array[0] = self.rollout_cache.get("terminal_info", {})
+        llm_inputs.non_tensor_batch["terminal_info"] = terminal_info_array
+
         
         # Calculate generic per-trajectory metrics from the decisions generated
         # by this player's tokens. Minimax diagnostics are aggregated from
@@ -901,81 +1123,112 @@ class EnvManager:
             # print(f"Invalid actions: {actions}, mapped actions: {mapped_actions}, legal actions: {legal_actions}")
         return mapped_actions, lose_for_wrong_format
 
-    def _log_env_state(self, execute_results: Tuple[Dict], current_player: int, format_reward: float=0, env_input: Dict=None):
-        assert execute_results[0]['current_player'] == current_player, f"current_player: {current_player}, execute_results: {execute_results}"
+    def _log_env_state(
+        self, execute_results: Tuple[Dict], current_player: int, format_reward: float = 0, env_input: Dict = None
+    ):
+        assert execute_results[0]["current_player"] == current_player, (
+            f"current_player: {current_player}, execute_results: {execute_results}"
+        )
         for idx, turn in enumerate(execute_results):
-            current_player = turn['current_player']
-            # Update status
-            self.env_entry["status"].step += 1
-            self.env_entry["status"].num_actions += 1
-            self.env_entry["status"].rewards.append(turn['rewards'])
-            if turn['done']:
+            current_player = turn["current_player"]
+            is_retry = bool(turn["info"].get("retry_attempt", 0.0))
+            is_artificial_truncation = bool(turn["info"].get("artificial_truncation", 0.0))
+            is_game_transition = not is_retry and not is_artificial_truncation
+
+            if is_game_transition:
+                self.env_entry["status"].step += 1
+                self.env_entry["status"].num_actions += 1
+                self.env_entry["status"].rewards.append(turn["rewards"])
+            if turn["done"]:
                 self.env_entry["status"].terminated = True
-                self.env_entry["status"].truncated = not turn['info'].get("success", False)
+                self.env_entry["status"].truncated = not turn["info"].get("success", False)
                 self.rollout_cache["terminal_info"] = turn["info"]
-            if self.env_entry["status"].step >= self.env_entry["max_actions_per_traj"] and not turn['done']:
+            if (
+                is_game_transition
+                and self.env_entry["status"].step >= self.env_entry["max_actions_per_traj"]
+                and not turn["done"]
+            ):
                 self.env_entry["status"].truncated = True
                 self.env_entry["status"].terminated = True
-            
+
             actions_left = self.env_entry["max_actions_per_traj"] - self.env_entry["status"].num_actions
             num_actions_info = {
-                "actions": turn['action'],
-                "reward": turn['rewards'][current_player],
-                "transition_rewards": [turn['rewards'][current_player]],
+                "actions": turn["action"],
+                "reward": turn["rewards"][current_player] if is_game_transition else 0.0,
+                "transition_rewards": [turn["rewards"][current_player]] if is_game_transition else [],
                 "auxiliary_reward": 0.0,
-                "info": turn['info'],
-                "decision_info": turn['info'],
-                "transition_infos": [turn['info']],
+                "return_boundary": False,
+                "info": turn["info"],
+                "decision_info": turn["info"],
+                "transition_infos": [turn["info"]] if is_game_transition else [],
                 "actions_left": actions_left,
             }
             next_state_entry = {
-                "player": turn['next_player'],
-                "state": turn['observation'],
-                "legal_actions": turn['legal_actions'],
+                "player": turn["next_player"],
+                "state": turn["observation"],
+                "legal_actions": turn["legal_actions"],
             }
             if idx == 0 and env_input is not None:
-                length_penalty = (
+                legacy_length_penalty = (
                     self.compute_length_penalty(env_input["token_length"])
                     if self.worker_config.enable_length_penalty
                     else 0.0
                 )
-                auxiliary_reward = format_reward + length_penalty
-                num_actions_info['reward'] += auxiliary_reward
-                num_actions_info['auxiliary_reward'] += auxiliary_reward
+                conciseness_bonus = self.compute_minimax_optimal_length_bonus(
+                    env_input["token_length"], turn["info"], env_input["valid_action"]
+                )
+                auxiliary_reward = format_reward + legacy_length_penalty + conciseness_bonus
+                num_actions_info["reward"] += auxiliary_reward
+                num_actions_info["auxiliary_reward"] += auxiliary_reward
+                num_actions_info["return_boundary"] = not env_input["valid_action"]
+                num_actions_info["conciseness_bonus"] = conciseness_bonus
                 num_actions_info.update({
-                    'llm_response': env_input["llm_response"], 
-                    'llm_raw_response': env_input["llm_raw_response"], 
-                    'current_sequence_length': env_input["current_sequence_length"], 
-                    'token_length': env_input["token_length"], 
-                    'token_left': env_input["token_left"], 
+                    "llm_response": env_input["llm_response"],
+                    "llm_raw_response": env_input["llm_raw_response"],
+                    "current_sequence_length": env_input["current_sequence_length"],
+                    "token_length": env_input["token_length"],
+                    "token_left": env_input["token_left"],
+                    "effective_max_new_tokens": env_input["effective_max_new_tokens"],
+                    "hit_token_limit": env_input["hit_token_limit"],
+                    "has_closing_answer_tag": env_input["has_closing_answer_tag"],
+                    "valid_action": env_input["valid_action"],
+                    "overlong_response": env_input["overlong_response"],
+                    "overlong_sequence": env_input["overlong_sequence"],
+                    "skip_policy_response": env_input.get("skip_policy_response", False),
+                    "retry_attempt_index": int(env_input.get("retry_attempt_index", 0)),
+                    "decision_index": int(env_input.get("decision_index", 0)),
+                    "retry_scheduled": bool(env_input.get("retry_scheduled", False)),
                 })
-        
-            # 保护历史记录更新操作
+
             with self.internal_lock:
-                # Update main history and player-specific histories
-                self._update_player_history(None, num_actions_info, next_state_entry)  # main history only gets state
-                self._update_player_history(current_player, num_actions_info, None)  # current player gets action/reward
-                
-                # Update opponent's history with reward and info
-                opponent_player = 1 - current_player
-                if len(self.rollout_cache[f"player_{opponent_player}_history"]) > 0:
-                    self._update_player_history(opponent_player, {
-                        "reward": turn['rewards'][opponent_player],
-                        "transition_rewards": [turn['rewards'][opponent_player]],
-                        "transition_infos": [turn['info']],
-                    }, None)
-                
-                # If episode continues, give next player the next state
+                self._update_player_history(None, num_actions_info, next_state_entry)
+                self._update_player_history(current_player, num_actions_info, None)
+
+                if is_game_transition:
+                    opponent_player = 1 - current_player
+                    if len(self.rollout_cache[f"player_{opponent_player}_history"]) > 0:
+                        self._update_player_history(
+                            opponent_player,
+                            {
+                                "reward": turn["rewards"][opponent_player],
+                                "transition_rewards": [turn["rewards"][opponent_player]],
+                                "transition_infos": [turn["info"]],
+                            },
+                            None,
+                        )
+
                 if not self.env_entry["status"].terminated and not self.env_entry["status"].truncated:
-                    self._update_player_history(turn['next_player'], None, next_state_entry)
+                    self._update_player_history(turn["next_player"], None, next_state_entry)
 
     def _format_messages(self, prepare_for_update: bool, use_raw_llm_response: bool, player_id: int = 0):
         history_key = "history"
 
-        if "reward" not in self.rollout_cache[history_key][-1] and (not use_raw_llm_response and prepare_for_update):
-            # when prepare for update, we do not add the state from the n+1 turn to the trajectory
-            # print(f"removing last state from history: {env_output['history'][-1]}")
-            self.rollout_cache[history_key] = self.rollout_cache[history_key][:-1]
+        prompt_history = select_prompt_history(
+            self.rollout_cache[history_key],
+            prepare_for_update=prepare_for_update,
+            use_raw_llm_response=use_raw_llm_response,
+            markovian_turn_context=self.pipeline_config.markovian_turn_context,
+        )
 
         prefix_prompt = self.env_entry["env"].get_prompt(
             mode="prefix", 
@@ -987,7 +1240,7 @@ class EnvManager:
             {"role": "user", "content": prefix_prompt["user"]},
         ]
 
-        for idx, content in enumerate(self.rollout_cache[history_key]):
+        for idx, content in enumerate(prompt_history):
             if messages[-1]["role"] != "user":
                 # ensure the last message is user message.
                 messages.append({"role": "user", "content": ""})
@@ -995,6 +1248,9 @@ class EnvManager:
             # Original logic for single-agent mode against built-in opponent
             turn_idx = idx + 1
             is_opponent_turn = content["player"] != player_id
+            state = content.get("state")
+            legal_actions = content.get("legal_actions") or {}
+            chosen_action = content.get("actions", "")
             if is_opponent_turn:
                 if self.env_entry["env"].include_opponent_turn == "full":
                     turn_idx_content = (
@@ -1017,29 +1273,38 @@ class EnvManager:
                 elif self.env_entry["env"].include_opponent_turn == "none":
                     continue
             else:
-                turn_idx_content = (
-                    f"Information of Turn-{turn_idx}:\n\n"
-                    "This is your turn. The game state and legal actions for this turn are provided below. "
-                    "Please choose your action and strictly follow the given output format in the response instructions.\n\n"
-                )
+                turn_formatter = getattr(self.env_entry["env"], "format_turn_prompt", None)
+                if callable(turn_formatter) and state is not None:
+                    turn_idx_content = turn_formatter(
+                        state=state,
+                        legal_actions=legal_actions,
+                        player_id=player_id,
+                    )
+                    state = None
+                else:
+                    turn_idx_content = (
+                        f"Information of Turn-{turn_idx}:\n\n"
+                        "This is your turn. The game state and legal actions for this turn are provided below. "
+                        "Please choose your action and strictly follow the given output format in the response instructions.\n\n"
+                    )
             messages[-1]["content"] += turn_idx_content
-            if "state" in content:
+            if state is not None:
                 if is_opponent_turn:
                     if self.env_entry["env"].include_opponent_turn == "full":
                         messages[-1]["content"] += (
-                            f"GAME STATE:\n{content['state']}\n\n"
-                            f"LEGAL ACTIONS:\n{', '.join(content['legal_actions'].values())}.\n\n"
+                            f"GAME STATE:\n{state}\n\n"
+                            f"LEGAL ACTIONS:\n{', '.join(legal_actions.values())}.\n\n"
                         )
                     elif self.env_entry["env"].include_opponent_turn == "action_full":
                         messages[-1]["content"] += (
-                            f"LEGAL ACTIONS:\n{', '.join(content['legal_actions'].values())}.\n\n"
+                            f"LEGAL ACTIONS:\n{', '.join(legal_actions.values())}.\n\n"
                         )
-                    if len(content['actions']) > 0:
-                        messages[-1]["content"] += f"CHOSEN ACTION:\n{content['actions']}\n"
+                    if chosen_action:
+                        messages[-1]["content"] += f"CHOSEN ACTION:\n{chosen_action}\n"
                 else:
                     messages[-1]["content"] += (
-                        f"GAME STATE:\n{content['state']}\n\n"
-                        f"LEGAL ACTIONS:\n{', '.join(content['legal_actions'].values())}.\n\n"
+                        f"GAME STATE:\n{state}\n\n"
+                        f"LEGAL ACTIONS:\n{', '.join(legal_actions.values())}.\n\n"
                     )
             if "llm_raw_response" in content and not is_opponent_turn:
                 messages.append(
@@ -1074,7 +1339,7 @@ class EnvManager:
                     prompt_messages, add_generation_prompt=False, tokenize=False
                 )
             text = text[len(prompt_text) :]
-        if not prepare_for_update:
+        if not prepare_for_update and not self.pipeline_config.use_reason_answer_format:
             if self.pipeline_config.enable_think:
                 text += "<think>\n"  # force the LLM to think before answering
             else:
@@ -1086,6 +1351,9 @@ class EnvManager:
         return [text], [messages]
 
     def _parse_response(self, response: str) -> Tuple[str, List[str], bool]:
+        if self.pipeline_config.use_reason_answer_format:
+            return self._parse_reason_answer_response(response)
+
         pattern = (
             r"^<think>(.*?)</think>\s*<answer>(.*?)</answer>$"
             if self.pipeline_config.enable_think
@@ -1122,6 +1390,45 @@ class EnvManager:
             if self.pipeline_config.enable_think
             else f"<answer>{action_content}</answer>"
         )
+        return llm_response, actions, envelope_valid
+
+    def _parse_reason_answer_response(self, response: str) -> Tuple[str, List[str], bool]:
+        reason_match = re.search(r"<reason>(.*?)</reason>", response, re.DOTALL | re.IGNORECASE)
+        answer_match = re.search(r"<answer>(.*?)</answer>", response, re.DOTALL | re.IGNORECASE)
+        full_match = re.fullmatch(
+            r"\s*<reason>(.*?)</reason>\s*<answer>(.*?)</answer>\s*",
+            response,
+            re.DOTALL | re.IGNORECASE,
+        )
+
+        reason_content = reason_match.group(1).strip() if reason_match else ""
+        action_content = answer_match.group(1).strip() if answer_match else "INVALID"
+        envelope_valid = full_match is not None
+
+        if answer_match is None:
+            actions = []
+        else:
+            for special_token in self.pipeline_config.special_token_list:
+                action_content = action_content.replace(special_token, "").strip()
+                reason_content = reason_content.replace(special_token, "").strip()
+
+            actions = [
+                action.strip()
+                for action in action_content.split(self.pipeline_config.action_sep)
+                if action.strip()
+            ]
+            envelope_valid = envelope_valid and len(actions) == 1
+            if len(actions) > 1:
+                actions = actions[:1]
+                action_content = actions[0]
+
+        if reason_match is not None:
+            llm_response = (
+                f"<reason>{reason_content}</reason>"
+                f"<answer>{action_content}</answer>"
+            )
+        else:
+            llm_response = f"<answer>{action_content}</answer>"
         return llm_response, actions, envelope_valid
 
     def start_input_queue_process(self):

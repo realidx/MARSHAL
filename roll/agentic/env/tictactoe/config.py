@@ -13,6 +13,7 @@ class TicTacToeConfig:
     minimax_discount: float = 0.9
     precompute_minimax: bool = False
     minimax_diagnostics: bool = False
+    response_token_limit: int = 600
     
     # mcts config
     uct_c: float = 2.0                   

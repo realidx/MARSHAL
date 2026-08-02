@@ -109,7 +109,13 @@ def collate_fn(x: list["DataProtoItem"]):
     batch = torch.stack(batch).contiguous()
     non_tensor_batch = list_of_dict_to_dict_of_list(non_tensor_batch)
     for key, val in non_tensor_batch.items():
-        non_tensor_batch[key] = np.array(val, dtype=object)
+        # np.array(..., dtype=object) still recursively infers shapes.  That can
+        # fail for ragged nested metadata (for example, a variable number of
+        # decision records per sample).  Allocate the outer batch dimension
+        # explicitly so each sample remains one opaque Python object.
+        object_array = np.empty(len(val), dtype=object)
+        object_array[:] = val
+        non_tensor_batch[key] = object_array
     return DataProto(batch=batch, non_tensor_batch=non_tensor_batch, meta_info=meta_info)
 
 

@@ -1,13 +1,18 @@
-from roll.agentic.response_parsing import generation_limit_status
+from roll.agentic.response_parsing import generation_limit_status, has_closed_answer
 
 
-def test_4096_token_limit_detects_incomplete_near_cap_responses():
-    assert generation_limit_status("<think>unfinished", 4096, 4096) == (True, True)
-    assert generation_limit_status("<think>trimmed</think>", 4080, 4096) == (True, True)
-    assert generation_limit_status("<think>short", 4079, 4096) == (False, False)
+def test_600_token_limit_only_counts_an_actual_cap_hit():
+    assert generation_limit_status("<reason>unfinished", 599, 600) == (False, False)
+    assert generation_limit_status("<reason>unfinished", 600, 600) == (True, True)
 
 
-def test_4096_token_limit_does_not_mark_a_closed_answer_truncated():
-    response = "<think>long</think><answer>O(0,0)</answer>"
+def test_cap_hit_with_a_closed_answer_is_not_invalidated():
+    response = "<reason>blocks the fork</reason><answer>O(0,0)</answer>"
 
-    assert generation_limit_status(response, 4096, 4096) == (True, False)
+    assert generation_limit_status(response, 600, 600) == (True, False)
+
+
+def test_closed_answer_requires_both_answer_tags_at_the_end():
+    assert has_closed_answer("<reason>wins now</reason><answer>X(1,1)</answer>")
+    assert not has_closed_answer("<reason>done</reason></answer>")
+    assert not has_closed_answer("<answer>X(1,1)</answer> trailing")

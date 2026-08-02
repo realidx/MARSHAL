@@ -23,12 +23,9 @@ def string_to_action(action_str: str) -> int:
 def recover_action(response: str, legal_actions: Dict[int, str]) -> Optional[str]:
     """Recover one unambiguous legal move while preserving format invalidity."""
     answer_match = re.search(r"<answer>(.*?)</answer>", response, re.DOTALL | re.IGNORECASE)
-    if answer_match is not None:
-        candidate_text = answer_match.group(1)
-    elif "</think>" in response.lower():
-        candidate_text = re.split(r"</think>", response, maxsplit=1, flags=re.IGNORECASE)[1]
-    else:
-        candidate_text = response
+    if answer_match is None:
+        return None
+    candidate_text = answer_match.group(1)
 
     matches = re.findall(
         r"<?\s*([XO])\s*\(\s*([0-2])\s*,\s*([0-2])\s*\)\s*>?",

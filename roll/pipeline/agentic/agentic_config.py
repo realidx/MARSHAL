@@ -43,6 +43,18 @@ class EnvManagerConfig(WorkerConfig):
         default=-1, metadata={"help": "The maximum number of trajectories that each environment can rollout."}
     )
     format_penalty: float = field(default=0, metadata={"help": "Format penalty value."})
+    minimax_optimal_length_bonus_beta: float = field(
+        default=0.0,
+        metadata={"help": "Conciseness bonus scale for legal minimax-optimal actions."},
+    )
+    minimax_optimal_length_bonus_budget: int = field(
+        default=600,
+        metadata={"help": "Token budget used to scale the minimax-optimal conciseness bonus."},
+    )
+    max_invalid_retries_per_decision: int = field(
+        default=0,
+        metadata={"help": "Maximum same-state retries after an unexecutable response."},
+    )
     enable_length_penalty: bool = field(
         default=True,
         metadata={"help": "Whether to add the built-in response-length reward/penalty."},
@@ -94,11 +106,28 @@ class AgenticConfig(BaseConfig):
         metadata={"help": "Discount once per environment transition. Requires turn scores and REINFORCE/GRPO."},
     )
     enable_think: bool = field(default=True, metadata={"help": "False -> no think RL"})
+    use_reason_answer_format: bool = field(
+        default=False,
+        metadata={"help": "Require a concise <reason> block followed by a structured <answer> block."},
+    )
+    markovian_turn_context: bool = field(
+        default=False,
+        metadata={"help": "Generate each action from only the current environment state, without prior turns."},
+    )
     reward_normalization: RewardNormalizationConfig = field(
         default_factory=RewardNormalizationConfig, metadata={"help": "Reward normalization configuration."}
     )
     special_token_list: List[str] = field(
-        default_factory=lambda: ["<think>", "</think>", "<answer>", "</answer>", "<|im_start|>", "<|im_end|>"],
+        default_factory=lambda: [
+            "<think>",
+            "</think>",
+            "<reason>",
+            "</reason>",
+            "<answer>",
+            "</answer>",
+            "<|im_start|>",
+            "<|im_end|>",
+        ],
         metadata={"help": "Special tokens."},
     )
     max_steps_per_traj: int = field(default=10, metadata={"help": "Max steps per trajectory."})

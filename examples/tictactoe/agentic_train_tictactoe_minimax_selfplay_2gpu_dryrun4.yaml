@@ -1,0 +1,26 @@
+defaults:
+  - agentic_train_tictactoe_minimax_selfplay_2gpu
+  - _self_
+
+exp_name: "tictactoe_minimax_shaped_selfplay_2gpu_dryrun4"
+
+# Exercise evaluation, rollout, reference log-probs, actor log-probs, and one
+# optimizer update without writing a checkpoint.
+max_steps: 4
+eval_steps: 4
+rollout_batch_size: 8
+val_batch_size: 8
+
+actor_train:
+  training_args:
+    warmup_steps: 0
+
+train_env_manager:
+  max_env_num_per_worker: 4
+  env_groups: 4
+  n_groups: [4]
+
+val_env_manager:
+  max_env_num_per_worker: 8
+  env_groups: 8
+  n_groups: [2, 2, 2, 2]

@@ -52,3 +52,12 @@ def test_grouped_turn_rewards_match_flat_environment_step_return():
     )
     expected = sum(discount**step * reward for step, reward in enumerate(transition_rewards))
     assert torch.isclose(returns[0, 0], torch.tensor(expected))
+
+
+def test_zero_continuation_discount_stops_future_rewards():
+    rewards = torch.tensor([[-0.1, 0.5]])
+    continuation_discounts = torch.tensor([[0.0, 0.9]])
+    returns, _ = compute_reinforce_return(
+        rewards, gamma=1.0, lambd=1.0, continuation_discounts=continuation_discounts
+    )
+    assert torch.allclose(returns, torch.tensor([[-0.1, 0.5]]))

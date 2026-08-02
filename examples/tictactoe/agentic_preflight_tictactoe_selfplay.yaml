@@ -1,0 +1,75 @@
+defaults:
+  - agentic_train_tictactoe_minimax_selfplay
+  - _self_
+
+exp_name: "tictactoe_generation_preflight"
+
+# Generation only: AgenticRolloutPipeline never constructs an optimizer or
+# updates model weights. Run 50 complete self-play games, emitted as two player
+# trajectories per completed game.
+max_steps: 1
+rollout_batch_size: 100
+sequence_length: 8192
+num_gpus_per_node: 1
+
+track_with: tensorboard
+tracker_kwargs:
+  log_dir: ${oc.env:ROLL_OUTPUT_DIR}/tensorboard
+
+# BaseConfig counts every inherited worker mapping even though the rollout-only
+# pipeline constructs only actor_infer. Keep unused roles local to this node.
+actor_train:
+  device_mapping: list(range(0,1))
+
+reference:
+  device_mapping: list(range(0,1))
+
+actor_infer:
+  model_args:
+    flash_attn: fa2
+    disable_gradient_checkpointing: true
+    dtype: bf16
+  generating_args:
+    max_new_tokens: 600
+    top_p: 0.8
+    top_k: 20
+    num_beams: 1
+    temperature: 0.7
+    num_return_sequences: 1
+  strategy_args:
+    strategy_name: vllm
+    strategy_config:
+      gpu_memory_utilization: 0.8
+      max_model_len: 2048
+      block_size: 16
+      load_format: auto
+  device_mapping: list(range(0,1))
+
+enable_think: false
+max_actions_per_traj: 10
+
+custom_envs:
+  TicTacToe:
+    env_type: tictactoe
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      response_token_limit: 600
+      reward_mode: environment
+      minimax_diagnostics: true
+      minimax_discount: ${game_step_discount}
+      precompute_minimax: true
+
+train_env_manager:
+  max_invalid_retries_per_decision: 1
+  format_penalty: -0.1
+  minimax_optimal_length_bonus_beta: 0.1
+  minimax_optimal_length_bonus_budget: 600
+  enable_length_penalty: false
+  max_env_num_per_worker: 50
+  env_groups: 50
+  group_size: 1
+  tags: [TicTacToe]
+  n_groups: [50]

@@ -103,39 +103,6 @@ class VllmStrategy(InferenceStrategy):
             master_port=self.worker.master_port,
         )
 
-        reasoning_stop_str = (
-            "\n\nConsidering the limited time by the user, "
-            "I have to give the solution based on the thinking directly now.\n</think>\n\n"
-        )
-        self.thinking_stop_tokens = [
-            271,
-            82796,
-            279,
-            7199,
-            882,
-            553,
-            279,
-            1196,
-            11,
-            358,
-            614,
-            311,
-            2968,
-            279,
-            6291,
-            3118,
-            389,
-            279,
-            7274,
-            5961,
-            1431,
-            624,
-            151668,
-            271,
-        ]
-
-        # self.tokenizer.encode(reasoning_stop_str)
-
     def op_compute_log_probs(self, logits: torch.Tensor, input_ids: torch.Tensor, attention_mask: torch.Tensor):
         """
         vllm实现compute log probs在这里实现即可
@@ -157,54 +124,6 @@ class VllmStrategy(InferenceStrategy):
             )
 
         vllm_outputs = self.model.generate(sampling_params=sampling_params, use_tqdm=False, **vllm_input_args)
-
-        # Support thinking budget (https://github.com/QwenLM/Qwen3/pull/1481).
-        # Iterate all outputs and check if there are any outputs exceeding the thinking budget.
-        # If so, we will trim the outputs to the thinking budget and regenerate the outputs, with the thinking stop str.
-        max_tokens = sampling_params.max_tokens
-        answer_token_length = 11  #  `<answer>X({i},{j})</answer><|im_end|>`
-        tokens_to_keep = max_tokens - len(self.thinking_stop_tokens) - answer_token_length
-
-        to_regenerate_idxes = []
-        to_regenerate_token_ids = []
-        for output_idx, vllm_output in enumerate(vllm_outputs):
-            for response_idx, output in enumerate(vllm_output.outputs):
-                if len(output.token_ids) >= max_tokens:  # I think equal is enough, # but we use >= to be safe
-                    if 151668 not in output.token_ids:  # </think> token id
-
-                        # trim the output to the thinking budget, new output will be generated and added later.
-                        response_prefix = output.token_ids[:tokens_to_keep] + self.thinking_stop_tokens
-                        output.token_ids = response_prefix
-
-                        # prompt for regenerating the output with the thinking stop str
-                        prompt_token_ids = vllm_output.prompt_token_ids + response_prefix
-                        to_regenerate_idxes.append((output_idx, response_idx))
-                        to_regenerate_token_ids.append(prompt_token_ids)
-                        print(f"Output {output_idx}, Response {response_idx} exceeded thinking budget.")
-
-        if None: # to_regenerate_token_ids:
-            regenerate_sampling_params = copy.deepcopy(sampling_params)
-            regenerate_sampling_params.max_tokens = (
-                answer_token_length  # 11 is the length of directly output the result
-            )
-            regenerate_sampling_params.n = 1  # only regenerate one respectively
-
-            print(f"Regenerating {len(to_regenerate_token_ids)} outputs due to thinking budget exceeded.")
-
-            # Regenerate the outputs with the thinking stop str
-            regenerate_vllm_outputs = self.model.generate(
-                prompt_token_ids=to_regenerate_token_ids,
-                sampling_params=regenerate_sampling_params,
-                use_tqdm=False,
-            )
-            for (output_idx, response_idx), regenerated_output in zip(to_regenerate_idxes, regenerate_vllm_outputs):
-                vllm_outputs[output_idx].outputs[response_idx].token_ids += regenerated_output.outputs[0].token_ids
-
-                # Keep consistent with the original output format. May not be necessary.
-                vllm_outputs[output_idx].outputs[response_idx].text = self.tokenizer.decode(
-                    vllm_outputs[output_idx].outputs[response_idx].token_ids,
-                    skip_special_tokens=True,
-                )
 
         # (bs * num_return_sequences, max_response_len)
         output_ids = gather_outputs_to_pad_tensor(
@@ -367,6 +286,8 @@ def create_sampling_params_for_vllm(gen_kwargs):
         return SamplingParams(
             max_tokens=gen_kwargs["max_new_tokens"],
             stop_token_ids=gen_kwargs["eos_token_id"],
+            stop=gen_kwargs.get("stop"),
+            include_stop_str_in_output=gen_kwargs.get("include_stop_str_in_output", False),
             repetition_penalty=gen_kwargs["repetition_penalty"],
             n=gen_kwargs["num_return_sequences"],
             best_of=gen_kwargs["num_beams"],
@@ -379,6 +300,8 @@ def create_sampling_params_for_vllm(gen_kwargs):
         top_p=gen_kwargs["top_p"],
         top_k=gen_kwargs["top_k"],
         stop_token_ids=gen_kwargs["eos_token_id"],
+        stop=gen_kwargs.get("stop"),
+        include_stop_str_in_output=gen_kwargs.get("include_stop_str_in_output", False),
         repetition_penalty=gen_kwargs["repetition_penalty"],
         n=gen_kwargs["num_return_sequences"],
         logprobs=0,
@@ -396,6 +319,7 @@ def compare_sampling_params(params1: SamplingParams, params2: SamplingParams) ->
         "stop_token_ids",
         "presence_penalty",
         "frequency_penalty",
+        "include_stop_str_in_output",
         "repetition_penalty",
         "min_p",
         "best_of",
