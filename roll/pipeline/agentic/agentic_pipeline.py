@@ -31,6 +31,24 @@ from roll.utils.logging import get_logger
 logger = get_logger()
 
 
+def maybe_dump_debug_batch(batch: Any, output_dir: str, global_step: int, enabled: bool) -> bool:
+    """Persist a post-advantage batch only when explicitly enabled."""
+    if not enabled:
+        return False
+
+    import pickle
+    import time
+
+    output_path = os.path.join(output_dir, "debug", f"batch-{global_step}.pkl")
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    start = time.time()
+    logger.info(f"Dumping batch to {output_path} at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+    with open(output_path, "wb") as f:
+        pickle.dump(batch, f)
+    logger.info(f"Batch dumped to {output_path}, took {time.time() - start:.2f} seconds")
+    return True
+
+
 class AgenticPipeline(BasePipeline):
     def __init__(self, pipeline_config: AgenticConfig):
         super().__init__(pipeline_config)
@@ -106,6 +124,91 @@ class AgenticPipeline(BasePipeline):
             self.set_checkpoint_clusters(self.actor_train)
 
         self.running = {}
+
+    def _run_evaluation(self, global_step: int) -> Dict[str, float]:
+        batch = DataProto()
+        batch.meta_info = {"global_step": global_step, "is_offload_states": False}
+        eval_batch = self.val_rollout_scheduler.get_batch(batch, self.pipeline_config.val_batch_size)
+        eval_metrics = reduce_metrics(eval_batch.meta_info.get("metrics", {}))
+        eval_score = eval_batch.batch["scores"].sum(-1)
+        eval_metrics["score/mean"] = torch.mean(eval_score).detach().item()
+        eval_metrics["score/max"] = torch.max(eval_score).detach().item()
+        eval_metrics["score/min"] = torch.min(eval_score).detach().item()
+        eval_metrics.update(
+            aggregate_minimax_decision_metrics(
+                eval_batch.non_tensor_batch["minimax_decision_records"],
+                eval_batch.non_tensor_batch["tags"],
+            )
+        )
+
+        prompt_mask = eval_batch.batch["prompt_mask"]
+        non_prompt_mask = eval_batch.batch["non_prompt_mask"]
+        input_ids = eval_batch.batch["input_ids"]
+        prompt_ids = torch.where(
+            prompt_mask.bool(), input_ids, torch.full_like(input_ids, self.tokenizer.pad_token_id)
+        )
+        response_ids = torch.where(
+            non_prompt_mask.bool(), input_ids, torch.full_like(input_ids, self.tokenizer.pad_token_id)
+        )
+
+        prompts = self.tokenizer.batch_decode(prompt_ids, skip_special_tokens=True)
+        responses = self.tokenizer.batch_decode(response_ids, skip_special_tokens=True)
+        generate_res = []
+        for prompt, response, episode_score, llm_raw_text, decision_records, tag in zip(
+            prompts,
+            responses,
+            eval_batch.non_tensor_batch["episode_scores"].tolist(),
+            eval_batch.non_tensor_batch["llm_raw_text_list"].tolist(),
+            eval_batch.non_tensor_batch["minimax_decision_records"].tolist(),
+            eval_batch.non_tensor_batch["tags"].tolist(),
+        ):
+            generate_res.append(
+                {
+                    "prompt": prompt,
+                    "response": response,
+                    "episode_score": episode_score,
+                    "llm_raw_text": llm_raw_text,
+                    "tag": tag,
+                    "minimax_decision_records": decision_records,
+                }
+            )
+
+        logger.info("Printing 10 items of eval_batch:")
+        logger.info(json.dumps(generate_res[:10], ensure_ascii=False))
+        eval_output_dir = os.path.join(os.environ["ROLL_OUTPUT_DIR"], "eval")
+        os.makedirs(eval_output_dir, exist_ok=True)
+        eval_output_path = os.path.join(eval_output_dir, f"step-{global_step}.jsonl")
+        with open(eval_output_path, "w", encoding="utf-8") as eval_output:
+            for item in generate_res:
+                eval_output.write(json.dumps(item, ensure_ascii=False) + "\n")
+
+        if self.pipeline_config.render_save_dir:
+            self.executor.submit(
+                dump_rollout_render,
+                save_dir=self.pipeline_config.render_save_dir,
+                step=global_step,
+                frames=eval_batch.non_tensor_batch["frames"],
+                env_ids=eval_batch.non_tensor_batch["env_ids"],
+                tags=eval_batch.non_tensor_batch["tags"],
+                episode_scores=eval_batch.non_tensor_batch["episode_scores"],
+            )
+        del eval_batch
+        return {f"val/{key}": value for key, value in eval_metrics.items()}
+
+    def _run_final_evaluation(self) -> None:
+        if not self.pipeline_config.eval_at_end:
+            return
+
+        final_step = self.pipeline_config.max_steps
+        logger.info(f"final evaluation at step {final_step} start...")
+        if self.pipeline_config.adv_estimator == "gae":
+            self.critic.offload_states(blocking=True)
+        self.actor_train.offload_states(blocking=True)
+        metrics = self.model_update(final_step)
+        metrics.update(self._run_evaluation(final_step))
+        self.tracker.log(values=metrics, step=final_step)
+        logger.info(json.dumps(metrics, ensure_ascii=False))
+        logger.info(f"final evaluation at step {final_step} finished")
 
     @torch.no_grad()
     def run(self):
@@ -324,19 +427,12 @@ class AgenticPipeline(BasePipeline):
                         )
                     metrics["time/compute_adv"] = compute_adv_timer.last
 
-                    # (DEBUG) Dump data to log dir
-                    output_dir = os.environ["ROLL_OUTPUT_DIR"]
-                    output_path = os.path.join(output_dir, "debug", f"batch-{global_step}.pkl")
-                    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-                    with open(output_path, "wb") as f:
-                        import pickle
-                        import time
-
-                        start = time.time()
-                        logger.info(f"Dumping batch to {output_path} at {time.strftime('%Y-%m-%d %H:%M:%S')}")
-                        pickle.dump(batch, f)
-                    logger.info(f"Batch dumped to {output_path}, took {time.time() - start:.2f} seconds")
+                    maybe_dump_debug_batch(
+                        batch=batch,
+                        output_dir=os.environ["ROLL_OUTPUT_DIR"],
+                        global_step=global_step,
+                        enabled=self.pipeline_config.dump_debug_batches,
+                    )
 
                 metrics["time/adv"] = timer.last
 
@@ -409,6 +505,7 @@ class AgenticPipeline(BasePipeline):
             logger.info(f"pipeline step {global_step} finished")
             global_step += 1
             logger.info(f"epoch {global_step} finished")
+        self._run_final_evaluation()
         logger.info("pipeline complete!")
 
 

@@ -25,15 +25,20 @@ whiten_rewards: false
 whiten_advantages: false
 advantage_norm: ~
 
+# Give every generated attempt approximately equal policy-loss weight,
+# independent of response length.
+loss_agg_mode: seq-mean-token-mean
+
 # Concise non-thinking reason/answer protocol; capped responses are never force-completed.
 actor_infer:
   generating_args:
     max_new_tokens: 600
     stop: ["</answer>"]
     include_stop_str_in_output: true
-# Keep rollout generation and policy-update contexts identical. A correct
-# current-state-only trainer must emit each decision as a separate sample.
-markovian_turn_context: false
+# Generate and train each decision from the current state only. Training emits
+# each generation attempt (including a failed attempt and its retry) as a
+# separate on-policy sample using the exact generation-message snapshot.
+markovian_turn_context: true
 enable_think: false
 use_reason_answer_format: true
 

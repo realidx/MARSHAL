@@ -28,6 +28,26 @@ from roll.utils.functionals import (
 from roll.utils.offload_states import OffloadStateType
 
 
+def masked_ppo_clip_fractions(
+    clipped_low: torch.Tensor,
+    clipped_high: torch.Tensor,
+    response_mask: torch.Tensor,
+) -> Dict[str, float]:
+    """Compute PPO clipping rates over generated response tokens only."""
+    clipped = clipped_low + clipped_high
+    return {
+        "actor/ppo_ratio_high_clipfrac": masked_mean(
+            clipped_high, response_mask
+        ).detach().item(),
+        "actor/ppo_ratio_low_clipfrac": masked_mean(
+            clipped_low, response_mask
+        ).detach().item(),
+        "actor/ppo_ratio_clipfrac": masked_mean(
+            clipped, response_mask
+        ).detach().item(),
+    }
+
+
 class ActorWorker(Worker):
     def __init__(self, worker_config: WorkerConfig):
         super().__init__(worker_config=worker_config)
@@ -302,9 +322,7 @@ class ActorWorker(Worker):
             total_loss = total_loss - entropy_loss * self.pipeline_config.entropy_loss_coef
 
         pg_metrics = {
-            "actor/ppo_ratio_high_clipfrac": clipped_high.mean().detach().item(),
-            "actor/ppo_ratio_low_clipfrac": clipped_low.mean().detach().item(),
-            "actor/ppo_ratio_clipfrac": clipped.mean().detach().item(),
+            **masked_ppo_clip_fractions(clipped_low, clipped_high, response_mask),
             "actor/ratio_mean": masked_mean(ratio, response_mask, dim=-1).mean().detach().item(),
             "actor/ratio_max": torch.max(ratio * response_mask).detach().item(),
             "actor/ratio_min": torch.min(ratio * response_mask + (1 - response_mask) * 1e10).detach().item(),

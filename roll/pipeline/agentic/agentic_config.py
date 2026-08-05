@@ -98,6 +98,14 @@ class AgenticConfig(BaseConfig):
     val_env_manager: EnvManagerConfig = field(default_factory=EnvManagerConfig)
     enable_response_mask: bool = field(default=True, metadata={"help": "Whether to mask the response."})
     render_save_dir: str = field(default=None, metadata={"help": "Directory to save rendered frames."})
+    dump_debug_batches: bool = field(
+        default=True,
+        metadata={"help": "Whether to pickle each post-advantage training batch under ROLL_OUTPUT_DIR/debug."},
+    )
+    eval_at_end: bool = field(
+        default=False,
+        metadata={"help": "Run an evaluation-only pass after the final optimizer update."},
+    )
     action_sep: str = field(default="||", metadata={"help": "Action separator."})
     use_turn_scores: bool = field(
         default=False,

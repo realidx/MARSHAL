@@ -2,7 +2,10 @@ import numpy as np
 import torch
 
 from roll.distributed.scheduler.protocol import DataProto
-from roll.pipeline.base_worker import ActorWorker as BaseActorWorker
+from roll.pipeline.base_worker import (
+    ActorWorker as BaseActorWorker,
+    masked_ppo_clip_fractions,
+)
 from roll.utils.functionals import masked_mean, agg_loss, compute_approx_kl
 
 
@@ -102,9 +105,7 @@ class ActorWorker(BaseActorWorker):
             metrics['actor/negative_tis_loss'] = negative_tis_loss.detach().item() if torch.is_tensor(negative_tis_loss) else negative_tis_loss
 
         pg_metrics = {
-            "actor/ppo_ratio_high_clipfrac": clipped_high.mean().detach().item(),
-            "actor/ppo_ratio_low_clipfrac": clipped_low.mean().detach().item(),
-            "actor/ppo_ratio_clipfrac": clipped.mean().detach().item(),
+            **masked_ppo_clip_fractions(clipped_low, clipped_high, response_mask),
             "actor/ratio_mean": masked_mean(ratio, response_mask, dim=-1).mean().detach().item(),
             "actor/ratio_max": torch.max(ratio * response_mask).detach().item(),
             "actor/ratio_min": torch.min(ratio * response_mask + (1 - response_mask) * 1e10).detach().item(),

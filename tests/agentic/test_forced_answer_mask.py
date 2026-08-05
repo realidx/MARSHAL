@@ -370,3 +370,95 @@ def test_retry_logging_is_zero_step_and_does_not_update_opponent_history():
     assert manager.rollout_cache["history"][0]["return_boundary"] is True
     assert len(manager.rollout_cache["player_0_history"]) == 2
     assert manager.rollout_cache["player_1_history"] == [opponent]
+
+
+def test_markovian_attempt_uses_saved_retry_prompt_without_failed_reasoning():
+    manager = EnvManager.__new__(EnvManager)
+    manager.processor = None
+    manager.tokenizer = _ChatTokenizer()
+    turn = {
+        "generation_messages": [
+            {"role": "system", "content": "system"},
+            {
+                "role": "user",
+                "content": "The board has not changed. Choose X(0,0).",
+            },
+        ],
+        "llm_raw_response": "<reason>retry</reason><answer>X(0,0)</answer>",
+    }
+
+    texts, messages = manager._format_markovian_attempt(turn)
+
+    assert "private failed reasoning" not in texts[0]
+    assert messages[0][1]["content"].startswith("The board has not changed")
+    assert messages[0][-1] == {
+        "role": "assistant",
+        "content": turn["llm_raw_response"],
+    }
+
+
+def test_markovian_attempt_returns_stop_at_retry_boundary():
+    manager = EnvManager.__new__(EnvManager)
+    manager.pipeline_config = SimpleNamespace(game_step_discount=0.9)
+    history = [
+        {
+            "reward": -0.1,
+            "transition_rewards": [],
+            "auxiliary_reward": -0.1,
+            "return_boundary": True,
+        },
+        {
+            "reward": 1.0,
+            "transition_rewards": [1.0],
+            "auxiliary_reward": 0.0,
+            "return_boundary": False,
+        },
+    ]
+
+    assert manager._compute_player_turn_returns(history) == pytest.approx([-0.1, 1.0])
+
+
+def test_markovian_training_emits_failed_attempt_and_retry_as_separate_samples():
+    manager = EnvManager.__new__(EnvManager)
+    manager.mode = "train"
+    manager.pipeline_config = SimpleNamespace(
+        markovian_turn_context=True,
+        game_step_discount=0.9,
+    )
+    failed = {
+        "reward": -0.1,
+        "transition_rewards": [],
+        "auxiliary_reward": -0.1,
+        "return_boundary": True,
+        "llm_raw_response": "failed",
+    }
+    retry = {
+        "reward": 1.0,
+        "transition_rewards": [1.0],
+        "auxiliary_reward": 0.0,
+        "return_boundary": False,
+        "llm_raw_response": "retry",
+    }
+    manager.rollout_cache = {
+        "is_self_play": True,
+        "current_player": 0,
+        "player_0_history": [failed, retry],
+        "player_1_history": [],
+    }
+    manager.internal_lock = Lock()
+    manager.num_states = [0, 0]
+    manager._formulate_markovian_attempt_rollout = (
+        lambda player_id, turn_index, turn, turn_return: {
+            "player_id": player_id,
+            "turn_index": turn_index,
+            "response": turn["llm_raw_response"],
+            "return": turn_return,
+        }
+    )
+
+    rollouts = manager.formulate_rollouts()
+
+    assert rollouts == [
+        {"player_id": 0, "turn_index": 0, "response": "failed", "return": -0.1},
+        {"player_id": 0, "turn_index": 1, "response": "retry", "return": 1.0},
+    ]

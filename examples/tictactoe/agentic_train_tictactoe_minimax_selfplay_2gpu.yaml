@@ -18,9 +18,11 @@ max_steps: 200
 save_steps: 1000000
 logging_steps: 1
 eval_steps: 20
+eval_at_end: true
 resume_from_checkpoint: false
+dump_debug_batches: false
 
-# Two player trajectories are emitted for a completed self-play game.
+# Markovian training emits one sample per generation attempt.
 rollout_batch_size: 32
 val_batch_size: 32
 sequence_length: 8192
@@ -48,9 +50,9 @@ actor_infer:
   strategy_args:
     strategy_config:
       gpu_memory_utilization: 0.8
-      # Full-history generation now matches the context reconstructed for the
-      # policy update, so retain the same total context capacity as training.
-      max_model_len: 8192
+      # Full Tic-Tac-Toe inference histories, including occasional retries,
+      # fit within this budget; reconstructed trainer trajectories retain 8192.
+      max_model_len: 4096
       block_size: 16
       load_format: auto
   device_mapping: list(range(0,2))

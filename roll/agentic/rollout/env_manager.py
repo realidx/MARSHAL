@@ -581,8 +581,11 @@ class EnvManager:
                 rollouts = self.formulate_rollouts()
                 for rollout in rollouts:
                     traj_group_id = f"{self.env_entry['group_id']}_{self.episode_id}_{self.group_seed}"
+                    sample_suffix = rollout.non_tensor_batch.get("sample_suffix")
+                    if sample_suffix is not None:
+                        traj_group_id = f"{traj_group_id}{sample_suffix[0]}"
                     # For self-play, append player info to trajectory group ID
-                    if len(rollouts) > 1:  # Self-play mode
+                    elif len(rollouts) > 1:  # Self-play mode
                         player_id = rollout.non_tensor_batch.get("group_ids", [""])[0].split("_p")[-1]
                         if player_id.isdigit():
                             traj_group_id = f"{traj_group_id}_p{player_id}"
@@ -696,12 +699,19 @@ class EnvManager:
         response = responses[0]
         token_length = token_lengths[0]
         llm_response, actions, envelope_valid = self._parse_response(response)
+        generation_messages = copy.deepcopy(lm_output.non_tensor_batch["messages_list"][0])
+        if isinstance(generation_messages, np.ndarray):
+            generation_messages = generation_messages.tolist()
         env_input = {
             "env_id": env_id,
             "llm_raw_response": response,
             "llm_response": llm_response,
             "actions": actions,
             "envelope_valid": envelope_valid,
+            # Preserve the exact prompt messages used for this generation. A
+            # Markovian training rollout is built from this snapshot instead
+            # of reconstructing a different, full-episode conversation.
+            "generation_messages": generation_messages,
             # (tzy) use the token length information to compute length penalty reward.
             "current_sequence_length": current_sequence_length,
             "token_length": token_length,
@@ -742,6 +752,37 @@ class EnvManager:
         
         # 保护rollout_cache的读取
         with self.internal_lock:
+            if self.mode == "train" and self.pipeline_config.markovian_turn_context:
+                rollouts = []
+                player_ids = (
+                    [0, 1]
+                    if self.rollout_cache["is_self_play"]
+                    else [self.rollout_cache["current_player"]]
+                )
+                for player_id in player_ids:
+                    history_key = f"player_{player_id}_history"
+                    player_history = self.rollout_cache[history_key]
+                    if not player_history:
+                        continue
+                    turn_returns = self._compute_player_turn_returns(player_history)
+                    for turn_index, (turn, turn_return) in enumerate(
+                        zip(player_history, turn_returns)
+                    ):
+                        if "llm_raw_response" not in turn or turn.get(
+                            "skip_policy_response", False
+                        ):
+                            continue
+                        rollouts.append(
+                            self._formulate_markovian_attempt_rollout(
+                                player_id=player_id,
+                                turn_index=turn_index,
+                                turn=turn,
+                                turn_return=turn_return,
+                            )
+                        )
+                    self.num_states[player_id] += len(player_history)
+                return rollouts
+
             if self.rollout_cache["is_self_play"]:
                 # Self-play mode
                 rollouts = []
@@ -755,15 +796,221 @@ class EnvManager:
                 # Single agent mode - return single rollout
                 return [self._formulate_single_rollout(player_id=self.rollout_cache["current_player"])]
 
+
+    def _compute_player_turn_returns(self, player_history: List[Dict]) -> List[float]:
+        """Return the existing game-step return assigned to each generated attempt."""
+        if self.pipeline_config.game_step_discount is None:
+            return [float(turn["reward"]) for turn in player_history]
+
+        discount = self.pipeline_config.game_step_discount
+        transition_rewards = [
+            turn.get("transition_rewards", [turn["reward"]]) for turn in player_history
+        ]
+        turn_scores = [
+            sum(discount ** offset * reward for offset, reward in enumerate(rewards))
+            + turn.get("auxiliary_reward", 0.0)
+            for turn, rewards in zip(player_history, transition_rewards)
+        ]
+        return compute_game_step_turn_returns(
+            turn_scores=turn_scores,
+            turn_steps=[len(rewards) for rewards in transition_rewards],
+            discount=discount,
+            return_boundaries=[bool(turn.get("return_boundary", False)) for turn in player_history],
+        )
+
+    def _format_markovian_attempt(self, turn: Dict) -> Tuple[List[str], List[List[Dict]]]:
+        """Format one response with the exact messages used to generate it."""
+        if not turn.get("generation_messages"):
+            raise ValueError("Markovian attempt is missing its generation_messages snapshot")
+        messages = copy.deepcopy(turn["generation_messages"])
+        messages.append({"role": "assistant", "content": turn["llm_raw_response"]})
+        if self.processor:
+            text = self.processor.apply_chat_template(messages, add_generation_prompt=False, tokenize=False)
+        else:
+            text = self.tokenizer.apply_chat_template(messages, add_generation_prompt=False, tokenize=False)
+        return [text.replace("<|im_end|>\n", "<|im_end|>")], [messages]
+
+    def _formulate_markovian_attempt_rollout(
+        self,
+        player_id: int,
+        turn_index: int,
+        turn: Dict,
+        turn_return: float,
+    ) -> DataProto:
+        """Create one on-policy training sample for one generation attempt."""
+        llm_input_texts, messages_list = self._format_markovian_attempt(turn)
+        inputs = self.tokenizer(
+            llm_input_texts, return_tensors="pt", padding=True, padding_side="left", truncation=False
+        )
+        input_ids, attention_mask = inputs.input_ids, inputs.attention_mask
+        position_ids = attention_mask.cumsum(dim=-1)
+
+        non_prompt_mask, score_tensor, response_mask, turn_end_positions, _ = get_masks_and_scores(
+            input_ids,
+            self.tokenizer,
+            [[turn_return]],
+            use_turn_scores=True,
+        )
+        non_prompt_mask = torch.logical_and(non_prompt_mask, attention_mask)
+        response_mask = torch.logical_and(response_mask, attention_mask)
+        response_length = response_mask.sum(dim=-1).float().mean().item()
+
+        sequence_length = self.pipeline_config.sequence_length
+        input_ids = pad_to_length(input_ids, length=sequence_length, pad_value=self.tokenizer.pad_token_id)
+        attention_mask = pad_to_length(attention_mask, length=sequence_length, pad_value=0)
+        position_ids = pad_to_length(position_ids, length=sequence_length, pad_value=0)
+        response_mask = pad_to_length(response_mask, length=sequence_length, pad_value=0)
+        non_prompt_mask = pad_to_length(non_prompt_mask, length=sequence_length, pad_value=0)
+        score_tensor = pad_to_length(score_tensor, length=sequence_length, pad_value=0)
+        turn_end_positions = pad_to_length(turn_end_positions, length=sequence_length, pad_value=0)
+
+        prompt_start = non_prompt_mask.int().argmax(dim=1)
+        no_response = ~non_prompt_mask.any(dim=1)
+        prompt_start[no_response] = non_prompt_mask.size(1)
+        positions = torch.arange(sequence_length, device=non_prompt_mask.device).unsqueeze(0)
+        prompt_mask = positions < prompt_start.unsqueeze(1)
+
+        llm_inputs = DataProto()
+        llm_inputs.batch = TensorDict(
+            {
+                "input_ids": input_ids,
+                "attention_mask": attention_mask,
+                "position_ids": position_ids,
+                "penalty": torch.tensor([self.rollout_cache["penalty"]], dtype=torch.float32),
+                "llm_response_mask": response_mask,
+                "non_prompt_mask": non_prompt_mask,
+                "response_mask": response_mask if self.pipeline_config.enable_response_mask else non_prompt_mask,
+                "prompt_mask": prompt_mask,
+                "scores": score_tensor,
+                "turn_end_positions": turn_end_positions,
+            },
+            batch_size=input_ids.shape[0],
+        )
+
+        env_id = self.rollout_cache["env_id"]
+        group_id = self.rollout_cache["group_id"]
+        sample_suffix = f"_p{player_id}_a{turn_index}"
+        decision_info = turn.get("decision_info", turn.get("info", {}))
+        decision_record = self._make_minimax_decision_record(turn, player_id, turn_index)
+        preflight_record = self._make_preflight_turn_record(turn, player_id, turn_index)
+
+        llm_inputs.non_tensor_batch.update(
+            {
+                "env_ids": np.array([f"{env_id}{sample_suffix}"], dtype=object),
+                "group_ids": np.array([f"{group_id}_p{player_id}"], dtype=object),
+                "sample_suffix": np.array([sample_suffix], dtype=object),
+                "messages_list": np.array(messages_list, dtype=object),
+                "tags": np.array([self.rollout_cache["tag"]], dtype=object),
+                "frames": self._object_row([]),
+                "turn_scores": self._object_row([turn_return]),
+                "transition_rewards": self._object_row(
+                    [turn.get("transition_rewards", [turn["reward"]])]
+                ),
+                "auxiliary_rewards": self._object_row([turn.get("auxiliary_reward", 0.0)]),
+                "minimax_decision_records": self._object_row(
+                    [decision_record] if decision_record else []
+                ),
+                "preflight_turn_records": self._object_row([preflight_record]),
+                "terminal_info": self._object_row(self.rollout_cache.get("terminal_info", {})),
+                "game_step_returns": self._object_row([turn_return]),
+                "episode_scores": np.array([turn_return], dtype=object),
+                "llm_raw_text_list": np.array([turn["llm_raw_response"]], dtype=object),
+                "transition_infos": self._object_row(
+                    [turn.get("transition_infos", [turn.get("info", {})])]
+                ),
+            }
+        )
+
+        tag = self.env_entry["tag"]
+        metrics = {
+            f"env/{tag}/response_length": response_length,
+            f"env/{tag}/response_length_per_turn": float(turn.get("token_length", 0)),
+            f"env/{tag}/response_length_player_{player_id}": response_length,
+        }
+        for key, value in decision_info.items():
+            if key.startswith("minimax_") or key == "success" or isinstance(value, str):
+                continue
+            metrics[f"env/{tag}/{key}"] = float(value)
+        llm_inputs.meta_info = {"metrics": metrics}
+        return llm_inputs
+
+    @staticmethod
+    def _object_row(value) -> np.ndarray:
+        result = np.empty(1, dtype=object)
+        result[0] = value
+        return result
+
+    @staticmethod
+    def _make_minimax_decision_record(
+        turn: Dict, player_id: int, turn_index: int
+    ) -> Optional[Dict]:
+        info = turn.get("decision_info", turn.get("info", {}))
+        if "minimax_valid_action" not in info:
+            return None
+        record = {
+            "turn_index": turn_index,
+            "player_id": player_id,
+            "action": turn.get("actions", ""),
+            "valid": float(info["minimax_valid_action"]),
+            "format_valid": float(info.get("format_valid", 1.0)),
+            "semantic_action_valid": float(info.get("semantic_action_valid", 1.0)),
+            "action_recovered": float(info.get("action_recovered", 0.0)),
+            "near_generation_limit": float(info.get("near_generation_limit", 0.0)),
+            "response_truncated": float(info.get("response_truncated", 0.0)),
+        }
+        if record["valid"]:
+            record.update(
+                {
+                    "spread": float(info["minimax_decision_spread"]),
+                    "regret": float(info["minimax_normalized_regret"]),
+                    "optimal": float(info["minimax_optimal_action"]),
+                }
+            )
+        return record
+
+    @staticmethod
+    def _make_preflight_turn_record(turn: Dict, player_id: int, turn_index: int) -> Dict:
+        info = turn.get("decision_info", turn.get("info", {}))
+        return {
+            "turn_index": turn_index,
+            "player_id": player_id,
+            "board": turn.get("state", ""),
+            "legal_actions": turn.get("legal_actions", {}),
+            "parsed_action": turn.get("actions", ""),
+            "raw_response": turn["llm_raw_response"],
+            "processed_response": turn.get("llm_response", ""),
+            "token_length": int(turn.get("token_length", 0)),
+            "effective_max_new_tokens": int(turn.get("effective_max_new_tokens", 0)),
+            "hit_token_limit": bool(turn.get("hit_token_limit", False)),
+            "has_closing_answer_tag": bool(turn.get("has_closing_answer_tag", False)),
+            "valid_action": bool(turn.get("valid_action", False)),
+            "overlong_response": bool(turn.get("overlong_response", False)),
+            "overlong_sequence": bool(turn.get("overlong_sequence", False)),
+            "missing_answer": not bool(turn.get("has_closing_answer_tag", False)),
+            "capped_without_answer": bool(turn.get("hit_token_limit", False))
+            and not bool(turn.get("has_closing_answer_tag", False)),
+            "minimax_valid_action": bool(info.get("minimax_valid_action", False)),
+            "minimax_optimal_action": bool(info.get("minimax_optimal_action", False)),
+            "retry_attempt_index": int(turn.get("retry_attempt_index", 0)),
+            "decision_index": int(turn.get("decision_index", 0)),
+            "retry_scheduled": bool(turn.get("retry_scheduled", False)),
+            "auxiliary_reward": float(turn.get("auxiliary_reward", 0.0)),
+            "soft_length_penalty": float(turn.get("soft_length_penalty", 0.0)),
+            "return_boundary": bool(turn.get("return_boundary", False)),
+        }
+
     def _formulate_single_rollout(self, player_id=0):
         """Generate a single rollout trajectory, optionally for a specific player in self-play mode"""
         is_self_play = self.rollout_cache["is_self_play"]
         history_key = f"player_{player_id}_history"
             
         llm_input_texts, messages_list = self._format_messages(
-            prepare_for_update=True, 
-            use_raw_llm_response=False, 
+            prepare_for_update=True,
+            use_raw_llm_response=False,
             player_id=player_id,
+            force_full_history_for_reporting=(
+                self.mode != "train" and self.pipeline_config.markovian_turn_context
+            ),
         )
         # # DEBUG
         # print(f"=====================DEBUG Begin=====================\n")
@@ -919,9 +1166,12 @@ class EnvManager:
             llm_inputs.batch["continuation_discounts"] = continuation_discounts
         # for llm raw response
         llm_raw_text_list, _ = self._format_messages(
-            prepare_for_update=True, 
+            prepare_for_update=True,
             use_raw_llm_response=True,
             player_id=player_id,
+            force_full_history_for_reporting=(
+                self.mode != "train" and self.pipeline_config.markovian_turn_context
+            ),
         )
         # print("llm_raw_text_list: ", llm_raw_text_list)
         llm_inputs.non_tensor_batch["turn_scores"] = np.array(scores, dtype=object)
@@ -1205,6 +1455,7 @@ class EnvManager:
                     "overlong_response": env_input["overlong_response"],
                     "overlong_sequence": env_input["overlong_sequence"],
                     "skip_policy_response": env_input.get("skip_policy_response", False),
+                    "generation_messages": copy.deepcopy(env_input.get("generation_messages", [])),
                     "retry_attempt_index": int(env_input.get("retry_attempt_index", 0)),
                     "decision_index": int(env_input.get("decision_index", 0)),
                     "retry_scheduled": bool(env_input.get("retry_scheduled", False)),
@@ -1230,14 +1481,23 @@ class EnvManager:
                 if not self.env_entry["status"].terminated and not self.env_entry["status"].truncated:
                     self._update_player_history(turn["next_player"], None, next_state_entry)
 
-    def _format_messages(self, prepare_for_update: bool, use_raw_llm_response: bool, player_id: int = 0):
+    def _format_messages(
+        self,
+        prepare_for_update: bool,
+        use_raw_llm_response: bool,
+        player_id: int = 0,
+        force_full_history_for_reporting: bool = False,
+    ):
         history_key = "history"
 
         prompt_history = select_prompt_history(
             self.rollout_cache[history_key],
             prepare_for_update=prepare_for_update,
             use_raw_llm_response=use_raw_llm_response,
-            markovian_turn_context=self.pipeline_config.markovian_turn_context,
+            markovian_turn_context=(
+                self.pipeline_config.markovian_turn_context
+                and not force_full_history_for_reporting
+            ),
         )
 
         prefix_prompt = self.env_entry["env"].get_prompt(

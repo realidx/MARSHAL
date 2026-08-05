@@ -46,7 +46,9 @@ class AgenticRolloutPipeline(BasePipeline):
             env_manager_config=self.pipeline_config.train_env_manager,
             resource_manager=self.resource_manager,
             infer_cluster=self.actor_infer,
-            mode="train",
+            # Generation-only validation must keep episode-level rollouts.
+            # It still uses train_env_manager so retry behavior is validated.
+            mode="preflight",
         )
 
         self.actor_infer.initialize(pipeline_config=self.pipeline_config, blocking=True)
