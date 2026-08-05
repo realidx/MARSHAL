@@ -9,6 +9,7 @@ from roll.agentic.rollout.env_manager import (
     select_prompt_history,
     mask_untrainable_response_turns,
     compute_game_step_turn_returns,
+    distribute_token_local_length_penalty,
 )
 
 
@@ -312,7 +313,25 @@ def test_minimax_soft_length_penalty_matches_formula():
     assert manager.compute_minimax_length_penalty(600, optimal, True) == -0.1
     assert manager.compute_minimax_length_penalty(900, optimal, True) == -0.1
     assert manager.compute_minimax_length_penalty(300, suboptimal, True) == -0.025
-    assert manager.compute_minimax_length_penalty(300, optimal, False) == 0.0
+    assert manager.compute_minimax_length_penalty(300, optimal, False) == -0.025
+    assert manager.compute_minimax_length_penalty(600, {}, False) == -0.1
+
+
+def test_soft_length_penalty_is_placed_only_after_budget_and_preserves_sum():
+    scores = torch.tensor([[0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
+    response_mask = torch.ones_like(scores, dtype=torch.bool)
+
+    result = distribute_token_local_length_penalty(
+        score_tensor=scores,
+        response_mask=response_mask,
+        soft_budget=2,
+        sequence_penalties=[-0.1],
+    )
+
+    assert result[0, :2].tolist() == [0.0, 0.0]
+    assert result[0, 2:5].tolist() == pytest.approx([-0.025, -0.025, -0.025])
+    assert result[0, 5].item() == pytest.approx(0.975)
+    assert result.sum().item() == pytest.approx(0.9)
 
 
 
@@ -390,6 +409,8 @@ def test_markovian_attempt_uses_saved_retry_prompt_without_failed_reasoning():
     texts, messages = manager._format_markovian_attempt(turn)
 
     assert "private failed reasoning" not in texts[0]
+    assert texts[0].endswith(turn["llm_raw_response"])
+    assert "<|im_end|>" not in texts[0]
     assert messages[0][1]["content"].startswith("The board has not changed")
     assert messages[0][-1] == {
         "role": "assistant",
@@ -416,6 +437,27 @@ def test_markovian_attempt_returns_stop_at_retry_boundary():
     ]
 
     assert manager._compute_player_turn_returns(history) == pytest.approx([-0.1, 1.0])
+
+
+def test_future_auxiliary_penalty_does_not_change_earlier_game_return():
+    manager = EnvManager.__new__(EnvManager)
+    manager.pipeline_config = SimpleNamespace(game_step_discount=0.9)
+    history = [
+        {
+            "reward": 0.5,
+            "transition_rewards": [0.5],
+            "auxiliary_reward": 0.0,
+            "return_boundary": False,
+        },
+        {
+            "reward": -0.1,
+            "transition_rewards": [],
+            "auxiliary_reward": -0.1,
+            "return_boundary": False,
+        },
+    ]
+
+    assert manager._compute_player_turn_returns(history) == pytest.approx([0.5, -0.1])
 
 
 def test_markovian_training_emits_failed_attempt_and_retry_as_separate_samples():

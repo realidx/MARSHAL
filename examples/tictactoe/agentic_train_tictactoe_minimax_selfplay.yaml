@@ -83,12 +83,14 @@ custom_envs:
       precompute_minimax: true
 
 train_env_manager:
-  # Invalid formatting is an auxiliary penalty, not canonical game utility.
-  format_penalty: -0.1
-  # No length pressure through 200 tokens; linearly increase the penalty to
-  # -0.1 between 200 and the 600-token generation cap.
+  # Invalid output is an auxiliary control failure, not canonical game utility.
+  # Keep it substantially stronger than the length regularizer but on the same
+  # order as the minimax game signal.
+  format_penalty: -1.0
+  # For every attempt, valid or invalid: no length pressure through 400 tokens;
+  # then apply token-local costs that sum linearly to -0.1 at the 600-token cap.
   minimax_length_penalty_beta: 0.1
-  minimax_length_soft_budget: 200
+  minimax_length_soft_budget: 400
   minimax_length_hard_budget: 600
   max_invalid_retries_per_decision: 1
   enable_length_penalty: false

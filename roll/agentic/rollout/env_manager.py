@@ -232,6 +232,27 @@ def compute_game_step_turn_returns(
     return list(reversed(returns_reversed))
 
 
+def distribute_token_local_length_penalty(
+    score_tensor: torch.Tensor,
+    response_mask: torch.Tensor,
+    soft_budget: int,
+    sequence_penalties: List[float],
+) -> torch.Tensor:
+    """Place a sequence length penalty on generated tokens beyond a soft budget."""
+    result = score_tensor.clone()
+    token_ordinals = torch.cumsum(response_mask.long(), dim=-1)
+    eligible = response_mask.bool() & (token_ordinals > soft_budget)
+    for row, penalty in enumerate(sequence_penalties):
+        if penalty == 0:
+            continue
+        positions = eligible[row]
+        count = int(positions.sum().item())
+        if count == 0:
+            raise ValueError("non-zero length penalty has no response tokens beyond the soft budget")
+        result[row, positions] += float(penalty) / count
+    return result
+
+
 class EnvManager:
     def __init__(
         self,
@@ -401,13 +422,12 @@ class EnvManager:
     def compute_minimax_length_penalty(
         self, token_length: int, decision_info: Dict, valid_action: bool
     ) -> float:
-        """Penalize only the portion of a valid response above a soft budget."""
+        """Penalize response length independently of action validity or quality."""
+        del decision_info, valid_action
         beta = float(self.worker_config.minimax_length_penalty_beta)
         soft_budget = int(self.worker_config.minimax_length_soft_budget)
         hard_budget = int(self.worker_config.minimax_length_hard_budget)
-        if beta <= 0 or not valid_action:
-            return 0.0
-        if not bool(decision_info.get("minimax_valid_action", False)):
+        if beta <= 0:
             return 0.0
         if hard_budget <= soft_budget:
             raise ValueError("minimax_length_hard_budget must exceed minimax_length_soft_budget")
@@ -759,6 +779,7 @@ class EnvManager:
                     if self.rollout_cache["is_self_play"]
                     else [self.rollout_cache["current_player"]]
                 )
+                attempts = []
                 for player_id in player_ids:
                     history_key = f"player_{player_id}_history"
                     player_history = self.rollout_cache[history_key]
@@ -772,15 +793,26 @@ class EnvManager:
                             "skip_policy_response", False
                         ):
                             continue
-                        rollouts.append(
-                            self._formulate_markovian_attempt_rollout(
-                                player_id=player_id,
-                                turn_index=turn_index,
-                                turn=turn,
-                                turn_return=turn_return,
-                            )
+                        attempts.append(
+                            (player_id, turn_index, turn, turn_return)
                         )
                     self.num_states[player_id] += len(player_history)
+                attempts.sort(
+                    key=lambda item: (
+                        int(item[2].get("decision_index", item[1])),
+                        int(item[2].get("retry_attempt_index", 0)),
+                        item[0],
+                    )
+                )
+                for player_id, turn_index, turn, turn_return in attempts:
+                    rollouts.append(
+                        self._formulate_markovian_attempt_rollout(
+                            player_id=player_id,
+                            turn_index=turn_index,
+                            turn=turn,
+                            turn_return=turn_return,
+                        )
+                    )
                 return rollouts
 
             if self.rollout_cache["is_self_play"]:
@@ -798,7 +830,7 @@ class EnvManager:
 
 
     def _compute_player_turn_returns(self, player_history: List[Dict]) -> List[float]:
-        """Return the existing game-step return assigned to each generated attempt."""
+        """Combine game return-to-go with auxiliary reward from the same attempt."""
         if self.pipeline_config.game_step_discount is None:
             return [float(turn["reward"]) for turn in player_history]
 
@@ -806,28 +838,32 @@ class EnvManager:
         transition_rewards = [
             turn.get("transition_rewards", [turn["reward"]]) for turn in player_history
         ]
-        turn_scores = [
+        game_turn_scores = [
             sum(discount ** offset * reward for offset, reward in enumerate(rewards))
-            + turn.get("auxiliary_reward", 0.0)
-            for turn, rewards in zip(player_history, transition_rewards)
+            for rewards in transition_rewards
         ]
-        return compute_game_step_turn_returns(
-            turn_scores=turn_scores,
+        game_returns = compute_game_step_turn_returns(
+            turn_scores=game_turn_scores,
             turn_steps=[len(rewards) for rewards in transition_rewards],
             discount=discount,
             return_boundaries=[bool(turn.get("return_boundary", False)) for turn in player_history],
         )
+        return [
+            game_return + float(turn.get("auxiliary_reward", 0.0))
+            for game_return, turn in zip(game_returns, player_history)
+        ]
 
     def _format_markovian_attempt(self, turn: Dict) -> Tuple[List[str], List[List[Dict]]]:
         """Format one response with the exact messages used to generate it."""
         if not turn.get("generation_messages"):
             raise ValueError("Markovian attempt is missing its generation_messages snapshot")
         messages = copy.deepcopy(turn["generation_messages"])
-        messages.append({"role": "assistant", "content": turn["llm_raw_response"]})
         if self.processor:
-            text = self.processor.apply_chat_template(messages, add_generation_prompt=False, tokenize=False)
+            prompt_text = self.processor.apply_chat_template(messages, add_generation_prompt=True, tokenize=False)
         else:
-            text = self.tokenizer.apply_chat_template(messages, add_generation_prompt=False, tokenize=False)
+            prompt_text = self.tokenizer.apply_chat_template(messages, add_generation_prompt=True, tokenize=False)
+        text = prompt_text + turn["llm_raw_response"]
+        messages.append({"role": "assistant", "content": turn["llm_raw_response"]})
         return [text.replace("<|im_end|>\n", "<|im_end|>")], [messages]
 
     def _formulate_markovian_attempt_rollout(
@@ -845,14 +881,22 @@ class EnvManager:
         input_ids, attention_mask = inputs.input_ids, inputs.attention_mask
         position_ids = attention_mask.cumsum(dim=-1)
 
+        soft_length_penalty = float(turn.get("soft_length_penalty", 0.0))
+        base_turn_return = turn_return - soft_length_penalty
         non_prompt_mask, score_tensor, response_mask, turn_end_positions, _ = get_masks_and_scores(
             input_ids,
             self.tokenizer,
-            [[turn_return]],
+            [[base_turn_return]],
             use_turn_scores=True,
         )
         non_prompt_mask = torch.logical_and(non_prompt_mask, attention_mask)
         response_mask = torch.logical_and(response_mask, attention_mask)
+        score_tensor = distribute_token_local_length_penalty(
+            score_tensor=score_tensor,
+            response_mask=response_mask,
+            soft_budget=int(self.worker_config.minimax_length_soft_budget),
+            sequence_penalties=[soft_length_penalty],
+        )
         response_length = response_mask.sum(dim=-1).float().mean().item()
 
         sequence_length = self.pipeline_config.sequence_length
@@ -926,6 +970,15 @@ class EnvManager:
             f"env/{tag}/response_length": response_length,
             f"env/{tag}/response_length_per_turn": float(turn.get("token_length", 0)),
             f"env/{tag}/response_length_player_{player_id}": response_length,
+            f"env/{tag}/attempt_return": float(turn_return),
+            f"env/{tag}/game_return_to_go": float(
+                turn_return - turn.get("auxiliary_reward", 0.0)
+            ),
+            f"env/{tag}/auxiliary_reward": float(turn.get("auxiliary_reward", 0.0)),
+            f"env/{tag}/soft_length_penalty": soft_length_penalty,
+            f"env/{tag}/validity_and_legacy_penalty": float(
+                turn.get("auxiliary_reward", 0.0) - soft_length_penalty
+            ),
         }
         for key, value in decision_info.items():
             if key.startswith("minimax_") or key == "success" or isinstance(value, str):

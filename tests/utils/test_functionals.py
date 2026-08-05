@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import torch
 
-from roll.utils.functionals import traverse_obj, divide_by_chunk_size, pad_to_length
+from roll.utils.functionals import agg_loss, divide_by_chunk_size, pad_to_length, traverse_obj
 
 
 def visitor(obj: object, path: Tuple):
@@ -53,6 +53,24 @@ def test_pad_to_length():
 
     padded_tensor = pad_to_length(tensor, length, pad_value, dim=-1)
     print(padded_tensor)
+
+
+def test_seq_mean_token_mean_gives_equal_sequence_weight_without_double_division():
+    losses = torch.tensor([[2.0, 2.0, 0.0, 0.0], [4.0, 4.0, 4.0, 4.0]])
+    mask = torch.tensor([[1, 1, 0, 0], [1, 1, 1, 1]], dtype=torch.bool)
+
+    result = agg_loss(losses, mask, "seq-mean-token-mean")
+
+    assert result.item() == pytest.approx(3.0)
+
+
+def test_seq_mean_token_sum_sums_tokens_before_averaging_sequences():
+    losses = torch.tensor([[2.0, 2.0, 0.0, 0.0], [4.0, 4.0, 4.0, 4.0]])
+    mask = torch.tensor([[1, 1, 0, 0], [1, 1, 1, 1]], dtype=torch.bool)
+
+    result = agg_loss(losses, mask, "seq-mean-token-sum")
+
+    assert result.item() == pytest.approx(10.0)
 
 
 if __name__ == "__main__":

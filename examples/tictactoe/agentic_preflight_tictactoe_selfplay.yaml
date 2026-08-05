@@ -9,7 +9,7 @@ exp_name: "tictactoe_generation_preflight"
 # trajectories per completed game.
 max_steps: 1
 rollout_batch_size: 100
-sequence_length: 8192
+sequence_length: 2048
 num_gpus_per_node: 1
 
 track_with: tensorboard
@@ -40,7 +40,7 @@ actor_infer:
     strategy_name: vllm
     strategy_config:
       gpu_memory_utilization: 0.8
-      max_model_len: 4096
+      max_model_len: 2048
       block_size: 16
       load_format: auto
   device_mapping: list(range(0,1))
@@ -64,9 +64,12 @@ custom_envs:
 
 train_env_manager:
   max_invalid_retries_per_decision: 1
-  format_penalty: -0.1
+  # Invalid output is a control failure, not canonical game utility.  A unit
+  # penalty makes it materially larger than the maximum 0.1 length cost while
+  # keeping it on the same order as the minimax game signal.
+  format_penalty: -1.0
   minimax_length_penalty_beta: 0.1
-  minimax_length_soft_budget: 200
+  minimax_length_soft_budget: 400
   minimax_length_hard_budget: 600
   enable_length_penalty: false
   max_env_num_per_worker: 50

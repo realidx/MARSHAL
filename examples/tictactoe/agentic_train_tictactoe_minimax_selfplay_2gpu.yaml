@@ -25,7 +25,8 @@ dump_debug_batches: false
 # Markovian training emits one sample per generation attempt.
 rollout_batch_size: 32
 val_batch_size: 32
-sequence_length: 8192
+# Each training sample is one Markovian attempt rather than a full episode.
+sequence_length: 2048
 max_actions_per_traj: 10
 
 actor_train:
@@ -50,9 +51,9 @@ actor_infer:
   strategy_args:
     strategy_config:
       gpu_memory_utilization: 0.8
-      # Full Tic-Tac-Toe inference histories, including occasional retries,
-      # fit within this budget; reconstructed trainer trajectories retain 8192.
-      max_model_len: 4096
+      # Markovian generation contains only the current board prompt and one
+      # response, so 2048 safely accommodates the 600-token generation cap.
+      max_model_len: 2048
       block_size: 16
       load_format: auto
   device_mapping: list(range(0,2))
