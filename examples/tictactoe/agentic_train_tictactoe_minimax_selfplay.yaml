@@ -2,21 +2,23 @@ defaults:
   - agentic_val_tictactoe_selfplay
   - _self_
 
-# Exact perfect-information shaping experiment. The inherited configuration
-# retains the existing model/distributed settings and evaluation opponents.
-exp_name: "tictactoe_minimax_shaped_selfplay"
+# Exact perfect-information counterfactual-credit experiment. Self-play chooses
+# the state distribution; precomputed Q* values evaluate each acting player's
+# decision independently of the sampled continuation and eventual winner.
+exp_name: "tictactoe_minimax_counterfactual_selfplay"
 pretrain: /home/e/e1300530/models/Qwen3-4B-Instruct-2507/
 
 
 adv_estimator: reinforce
 use_turn_scores: true
 
-# gamma remains one at token level. game_step_discount is applied only at
-# environment-transition boundaries.
+# gamma remains one at token level. game_step_discount defines the horizon
+# preference inside Q*; counterfactual decision rewards are not accumulated
+# across later self-play actions.
 gamma: 1.0
 game_step_discount: 0.9
 
-# Preserve the raw shaped reward before computing return-to-go.
+# Preserve the raw, unstandardized counterfactual decision credit.
 reward_normalization:
   grouping: tags
   method: identity
@@ -29,12 +31,11 @@ advantage_norm: ~
 # independent of response length.
 loss_agg_mode: seq-mean-token-mean
 
-# The original 1e-6 update produced rapidly rising KL and persistent gradient
-# clipping before invalid-response penalties appeared.  Use a smaller update
-# while keeping the reward scale and objective unchanged.
+# Keep the original MARSHAL actor learning rate. The lower-rate diagnostic
+# delayed but did not remove the role-specific reward collapse.
 actor_train:
   training_args:
-    learning_rate: 5.0e-7
+    learning_rate: 1.0e-6
 
 # Concise non-thinking reason/answer protocol; capped responses are never force-completed.
 actor_infer:
@@ -49,7 +50,7 @@ markovian_turn_context: true
 enable_think: false
 use_reason_answer_format: true
 
-# Keep KL as a separate loss rather than mixing it into the shaped reward.
+# Keep KL as a separate loss rather than mixing it into the game reward.
 add_token_level_kl: false
 use_kl_loss: true
 
@@ -62,7 +63,7 @@ custom_envs:
       built_in_opponent: none
       render_mode: text
       response_token_limit: 600
-      reward_mode: minimax_shaped
+      reward_mode: minimax_counterfactual
       minimax_discount: ${game_step_discount}
       precompute_minimax: true
 

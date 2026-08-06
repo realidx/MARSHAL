@@ -35,12 +35,20 @@ class TicTacToe(BaseDiscreteActionEnv):
         self.opponent_player = config.opponent_player
         self.include_opponent_turn = config.include_opponent_turn
         self.reward_mode = config.reward_mode
-        if self.reward_mode not in ("environment", "minimax_shaped"):
+        if self.reward_mode not in (
+            "environment",
+            "minimax_shaped",
+            "minimax_counterfactual",
+        ):
             raise ValueError(
                 f"Unsupported Tic-Tac-Toe reward_mode {self.reward_mode!r}; "
-                "expected 'environment' or 'minimax_shaped'"
+                "expected 'environment', 'minimax_shaped', or "
+                "'minimax_counterfactual'"
             )
-        self.use_minimax = self.reward_mode == "minimax_shaped" or config.minimax_diagnostics
+        self.use_minimax = self.reward_mode in (
+            "minimax_shaped",
+            "minimax_counterfactual",
+        ) or config.minimax_diagnostics
         self.minimax_evaluator = None
         if self.use_minimax:
             self.minimax_evaluator = (
@@ -179,14 +187,28 @@ class TicTacToe(BaseDiscreteActionEnv):
             for player in (0, 1)
         ]
 
+        # Decision-local counterfactual credit.  Compare the chosen action with
+        # the uniform mean of every legal alternative from the acting player's
+        # fixed perspective.  The baseline is state-dependent but independent
+        # of the chosen action, so it preserves the Q* action ordering.  Only
+        # the acting player receives this transition's decision credit.
+        counterfactual_baseline = sum(acting_action_values.values()) / len(
+            acting_action_values
+        )
+        chosen_q = acting_action_values[action]
+        counterfactual_advantage = chosen_q - counterfactual_baseline
+        counterfactual_rewards = [0.0, 0.0]
+        counterfactual_rewards[acting_player] = counterfactual_advantage
+
         if self.reward_mode == "minimax_shaped":
             rewards = shaped_rewards
+        elif self.reward_mode == "minimax_counterfactual":
+            rewards = counterfactual_rewards
         else:
             rewards = list(self.state.rewards())
             if info:
                 rewards = [0.1 if reward == 0 else reward for reward in rewards]
 
-        chosen_q = acting_action_values[action]
         action_values = tuple(acting_action_values.values())
         decision_spread = max(action_values) - min(action_values)
         regret = (
@@ -201,6 +223,11 @@ class TicTacToe(BaseDiscreteActionEnv):
                 "canonical_reward_player_1": canonical_rewards[1],
                 "shaped_reward_player_0": shaped_rewards[0],
                 "shaped_reward_player_1": shaped_rewards[1],
+                "counterfactual_reward_player_0": counterfactual_rewards[0],
+                "counterfactual_reward_player_1": counterfactual_rewards[1],
+                "minimax_counterfactual_baseline": counterfactual_baseline,
+                "minimax_counterfactual_advantage": counterfactual_advantage,
+                "minimax_value_loss": before_values[acting_player] - chosen_q,
                 "minimax_value_player_0": before_values[0],
                 "minimax_value_player_1": before_values[1],
                 "minimax_chosen_q": chosen_q,

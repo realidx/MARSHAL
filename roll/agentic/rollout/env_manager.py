@@ -343,9 +343,9 @@ class EnvManager:
         self.env_entry["status"] = EnvStatus()
         env_reward_mode = getattr(self.env_entry["env"], "reward_mode", None)
         env_discount = getattr(getattr(self.env_entry["env"], "config", None), "minimax_discount", None)
-        if env_reward_mode == "minimax_shaped":
+        if env_reward_mode in ("minimax_shaped", "minimax_counterfactual"):
             if self.pipeline_config.game_step_discount is None:
-                raise ValueError("minimax_shaped rewards require game_step_discount")
+                raise ValueError(f"{env_reward_mode} rewards require game_step_discount")
             if abs(self.pipeline_config.game_step_discount - env_discount) > 1e-12:
                 raise ValueError(
                     "game_step_discount must match the Tic-Tac-Toe minimax_discount "
@@ -895,6 +895,16 @@ class EnvManager:
 
     def _compute_player_turn_returns(self, player_history: List[Dict]) -> List[float]:
         """Combine game return-to-go with auxiliary reward from the same attempt."""
+        env = self.env_entry.get("env") if hasattr(self, "env_entry") else None
+        if getattr(env, "reward_mode", None) == "minimax_counterfactual":
+            # Q* already contains the terminal consequence under optimal
+            # continuation.  Keep its counterfactual credit local to the action
+            # that produced it; later self-play outcomes must not alter it.
+            return [
+                sum(turn.get("transition_rewards", [turn["reward"]]))
+                + float(turn.get("auxiliary_reward", 0.0))
+                for turn in player_history
+            ]
         if self.pipeline_config.game_step_discount is None:
             return [float(turn["reward"]) for turn in player_history]
 
@@ -1115,6 +1125,13 @@ class EnvManager:
                     "spread": float(info["minimax_decision_spread"]),
                     "regret": float(info["minimax_normalized_regret"]),
                     "optimal": float(info["minimax_optimal_action"]),
+                    "counterfactual_baseline": float(
+                        info.get("minimax_counterfactual_baseline", 0.0)
+                    ),
+                    "counterfactual_advantage": float(
+                        info.get("minimax_counterfactual_advantage", 0.0)
+                    ),
+                    "value_loss": float(info.get("minimax_value_loss", 0.0)),
                 }
             )
         return record
@@ -1363,6 +1380,15 @@ class EnvManager:
                         "spread": float(decision_info["minimax_decision_spread"]),
                         "regret": float(decision_info["minimax_normalized_regret"]),
                         "optimal": float(decision_info["minimax_optimal_action"]),
+                        "counterfactual_baseline": float(
+                            decision_info.get("minimax_counterfactual_baseline", 0.0)
+                        ),
+                        "counterfactual_advantage": float(
+                            decision_info.get("minimax_counterfactual_advantage", 0.0)
+                        ),
+                        "value_loss": float(
+                            decision_info.get("minimax_value_loss", 0.0)
+                        ),
                     }
                 )
             minimax_decision_records.append(record)

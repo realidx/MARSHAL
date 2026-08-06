@@ -41,6 +41,43 @@ def test_environment_shaped_rewards_telescope():
         )
 
 
+def test_counterfactual_reward_is_local_role_relative_and_action_centered():
+    env = TicTacToe(
+        TicTacToeConfig(
+            built_in_opponent="none",
+            reward_mode="minimax_counterfactual",
+            minimax_discount=0.9,
+            precompute_minimax=True,
+        )
+    )
+    env.reset(seed=0)
+    env.step(4)  # X takes center; O acts from a role-asymmetric state.
+
+    board = env._render_text()
+    board_tuple = tuple(
+        0 if cell == "_" else 1 if cell == "X" else -1
+        for cell in board.replace("\n", "")
+    )
+    action_values = env.minimax_evaluator.action_values(board_tuple, perspective=1)
+    action = 0
+    expected_baseline = sum(action_values.values()) / len(action_values)
+    expected_advantage = action_values[action] - expected_baseline
+
+    result = env.step(action)[0]
+
+    assert result["rewards"][0] == 0.0
+    assert result["rewards"][1] == pytest.approx(expected_advantage)
+    assert result["info"]["minimax_counterfactual_baseline"] == pytest.approx(
+        expected_baseline
+    )
+    assert result["info"]["minimax_counterfactual_advantage"] == pytest.approx(
+        expected_advantage
+    )
+    assert sum(
+        action_values[candidate] - expected_baseline for candidate in action_values
+    ) == pytest.approx(0.0)
+
+
 def test_invalid_response_is_not_canonical_game_utility():
     env = TicTacToe(
         TicTacToeConfig(

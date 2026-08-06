@@ -480,6 +480,30 @@ def test_future_auxiliary_penalty_does_not_change_earlier_game_return():
     assert manager._compute_player_turn_returns(history) == pytest.approx([0.5, -0.1])
 
 
+def test_counterfactual_credit_does_not_accumulate_future_decisions():
+    manager = EnvManager.__new__(EnvManager)
+    manager.env_entry = {
+        "env": SimpleNamespace(reward_mode="minimax_counterfactual")
+    }
+    manager.pipeline_config = SimpleNamespace(game_step_discount=0.9)
+    history = [
+        {
+            "reward": 0.25,
+            "transition_rewards": [0.25, 0.0],
+            "auxiliary_reward": 0.0,
+        },
+        {
+            "reward": -0.5,
+            "transition_rewards": [-0.5],
+            "auxiliary_reward": -0.1,
+        },
+    ]
+
+    assert manager._compute_player_turn_returns(history) == pytest.approx(
+        [0.25, -0.6]
+    )
+
+
 def test_markovian_training_emits_failed_attempt_and_retry_as_separate_samples():
     manager = EnvManager.__new__(EnvManager)
     manager.mode = "train"
