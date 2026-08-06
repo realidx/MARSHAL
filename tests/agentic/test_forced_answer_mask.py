@@ -334,6 +334,26 @@ def test_soft_length_penalty_is_placed_only_after_budget_and_preserves_sum():
     assert result.sum().item() == pytest.approx(0.9)
 
 
+def test_soft_length_penalty_maps_generation_budget_to_retokenized_suffix():
+    # Inference produced 600 tokens, but decoding and retokenizing retained only
+    # 300 policy tokens.  The final third corresponds to the 200/600 over-budget
+    # fraction and must carry the complete scalar penalty.
+    scores = torch.zeros((1, 300))
+    response_mask = torch.ones_like(scores, dtype=torch.bool)
+
+    result = distribute_token_local_length_penalty(
+        score_tensor=scores,
+        response_mask=response_mask,
+        soft_budget=400,
+        sequence_penalties=[-0.1],
+        generated_token_lengths=[600],
+    )
+
+    assert result[0, :200].count_nonzero().item() == 0
+    assert result[0, 200:].tolist() == pytest.approx([-0.001] * 100)
+    assert result.sum().item() == pytest.approx(-0.1)
+
+
 
 def test_retry_logging_is_zero_step_and_does_not_update_opponent_history():
     manager = EnvManager.__new__(EnvManager)

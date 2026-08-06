@@ -237,18 +237,53 @@ def distribute_token_local_length_penalty(
     response_mask: torch.Tensor,
     soft_budget: int,
     sequence_penalties: List[float],
+    generated_token_lengths: Optional[List[int]] = None,
 ) -> torch.Tensor:
-    """Place a sequence length penalty on generated tokens beyond a soft budget."""
+    """Place a sequence length penalty on the policy-token suffix beyond a soft budget.
+
+    ``generated_token_lengths`` refers to the original inference tokenization.  It
+    can differ from the policy mask length when a legacy sample was decoded and
+    retokenized.  In that case, map the same over-budget fraction onto the tail of
+    the policy tokens while preserving the scalar sequence penalty exactly.
+    """
+    if generated_token_lengths is not None and len(generated_token_lengths) != len(
+        sequence_penalties
+    ):
+        raise ValueError("generated_token_lengths and sequence_penalties must have the same length")
     result = score_tensor.clone()
     token_ordinals = torch.cumsum(response_mask.long(), dim=-1)
-    eligible = response_mask.bool() & (token_ordinals > soft_budget)
     for row, penalty in enumerate(sequence_penalties):
         if penalty == 0:
             continue
-        positions = eligible[row]
+        row_mask = response_mask[row].bool()
+        policy_token_count = int(row_mask.sum().item())
+        if policy_token_count == 0:
+            raise ValueError("non-zero length penalty has no trainable response tokens")
+
+        if generated_token_lengths is None:
+            positions = row_mask & (token_ordinals[row] > soft_budget)
+        else:
+            generated_length = max(int(generated_token_lengths[row]), 1)
+            generated_excess = max(generated_length - soft_budget, 0)
+            # A non-zero penalty should imply generated_excess > 0.  Retain a
+            # safe one-token fallback so malformed legacy metadata cannot abort
+            # a long training run.
+            tail_count = max(
+                1,
+                (policy_token_count * generated_excess + generated_length - 1)
+                // generated_length,
+            )
+            tail_count = min(tail_count, policy_token_count)
+            policy_positions = row_mask.nonzero(as_tuple=True)[0]
+            positions = torch.zeros_like(row_mask)
+            positions[policy_positions[-tail_count:]] = True
+
         count = int(positions.sum().item())
         if count == 0:
-            raise ValueError("non-zero length penalty has no response tokens beyond the soft budget")
+            # This remains useful for callers without generation-token metadata.
+            positions = torch.zeros_like(row_mask)
+            positions[row_mask.nonzero(as_tuple=True)[0][-1]] = True
+            count = 1
         result[row, positions] += float(penalty) / count
     return result
 
@@ -702,11 +737,36 @@ class EnvManager:
 
     def get_env_input(self, lm_output: DataProto, current_sequence_length: int) -> Dict:
         if lm_output.batch is not None and "responses" in lm_output.batch.keys():
-            responses = self.tokenizer.batch_decode(lm_output.batch["responses"], skip_special_tokens=True)
-            token_lengths = list(map(len, lm_output.batch["responses"]))
+            generated_response_token_ids = []
+            generated_prompt_token_ids = []
+            if all(
+                key in lm_output.batch.keys()
+                for key in ("input_ids", "attention_mask", "response_mask")
+            ):
+                for input_row, attention_row, response_row in zip(
+                    lm_output.batch["input_ids"],
+                    lm_output.batch["attention_mask"],
+                    lm_output.batch["response_mask"],
+                ):
+                    attended = attention_row.bool()
+                    response_tokens = attended & response_row.bool()
+                    prompt_tokens = attended & ~response_row.bool()
+                    generated_response_token_ids.append(input_row[response_tokens].tolist())
+                    generated_prompt_token_ids.append(input_row[prompt_tokens].tolist())
+            else:
+                generated_response_token_ids = [
+                    row.tolist() for row in lm_output.batch["responses"]
+                ]
+                generated_prompt_token_ids = [None] * len(generated_response_token_ids)
+            responses = self.tokenizer.batch_decode(
+                generated_response_token_ids, skip_special_tokens=True
+            )
+            token_lengths = list(map(len, generated_response_token_ids))
         else:  # dataproto has textual responses
             responses = lm_output.non_tensor_batch["response_texts"]
             token_lengths = list(map(lambda x: len(self.tokenizer.encode(x)) + 1, responses))  # + 1 for eos token
+            generated_response_token_ids = [None] * len(responses)
+            generated_prompt_token_ids = [None] * len(responses)
 
         if not self.pipeline_config.use_reason_answer_format:
             responses = [
@@ -732,6 +792,10 @@ class EnvManager:
             # Markovian training rollout is built from this snapshot instead
             # of reconstructing a different, full-episode conversation.
             "generation_messages": generation_messages,
+            # Preserve the inference tokenization for exact on-policy Markovian
+            # samples.  Decoding and retokenizing is not guaranteed to round-trip.
+            "generated_prompt_token_ids": generated_prompt_token_ids[0],
+            "generated_response_token_ids": generated_response_token_ids[0],
             # (tzy) use the token length information to compute length penalty reward.
             "current_sequence_length": current_sequence_length,
             "token_length": token_length,
@@ -875,10 +939,22 @@ class EnvManager:
     ) -> DataProto:
         """Create one on-policy training sample for one generation attempt."""
         llm_input_texts, messages_list = self._format_markovian_attempt(turn)
-        inputs = self.tokenizer(
-            llm_input_texts, return_tensors="pt", padding=True, padding_side="left", truncation=False
-        )
-        input_ids, attention_mask = inputs.input_ids, inputs.attention_mask
+        prompt_token_ids = turn.get("generated_prompt_token_ids")
+        response_token_ids = turn.get("generated_response_token_ids")
+        if prompt_token_ids is not None and response_token_ids is not None:
+            input_ids = torch.tensor(
+                [list(prompt_token_ids) + list(response_token_ids)], dtype=torch.long
+            )
+            attention_mask = torch.ones_like(input_ids)
+        else:
+            inputs = self.tokenizer(
+                llm_input_texts,
+                return_tensors="pt",
+                padding=True,
+                padding_side="left",
+                truncation=False,
+            )
+            input_ids, attention_mask = inputs.input_ids, inputs.attention_mask
         position_ids = attention_mask.cumsum(dim=-1)
 
         soft_length_penalty = float(turn.get("soft_length_penalty", 0.0))
@@ -896,6 +972,7 @@ class EnvManager:
             response_mask=response_mask,
             soft_budget=int(self.worker_config.minimax_length_soft_budget),
             sequence_penalties=[soft_length_penalty],
+            generated_token_lengths=[int(turn.get("token_length", response_mask.sum().item()))],
         )
         response_length = response_mask.sum(dim=-1).float().mean().item()
 
@@ -971,13 +1048,34 @@ class EnvManager:
             f"env/{tag}/response_length_per_turn": float(turn.get("token_length", 0)),
             f"env/{tag}/response_length_player_{player_id}": response_length,
             f"env/{tag}/attempt_return": float(turn_return),
+            f"env/{tag}/attempt_return_player_{player_id}": float(turn_return),
             f"env/{tag}/game_return_to_go": float(
                 turn_return - turn.get("auxiliary_reward", 0.0)
             ),
+            f"env/{tag}/game_return_to_go_player_{player_id}": float(
+                turn_return - turn.get("auxiliary_reward", 0.0)
+            ),
             f"env/{tag}/auxiliary_reward": float(turn.get("auxiliary_reward", 0.0)),
+            f"env/{tag}/auxiliary_reward_player_{player_id}": float(
+                turn.get("auxiliary_reward", 0.0)
+            ),
             f"env/{tag}/soft_length_penalty": soft_length_penalty,
+            f"env/{tag}/soft_length_penalty_player_{player_id}": soft_length_penalty,
             f"env/{tag}/validity_and_legacy_penalty": float(
                 turn.get("auxiliary_reward", 0.0) - soft_length_penalty
+            ),
+            f"env/{tag}/validity_and_legacy_penalty_player_{player_id}": float(
+                turn.get("auxiliary_reward", 0.0) - soft_length_penalty
+            ),
+            f"env/{tag}/valid_action_player_{player_id}": float(
+                bool(turn.get("valid_action", False))
+            ),
+            f"env/{tag}/response_truncated_player_{player_id}": float(
+                bool(turn.get("overlong_response", False))
+                or bool(turn.get("overlong_sequence", False))
+            ),
+            f"env/{tag}/generation_policy_token_gap_player_{player_id}": float(
+                turn.get("token_length", 0) - response_length
             ),
         }
         for key, value in decision_info.items():
@@ -1498,6 +1596,8 @@ class EnvManager:
                 num_actions_info.update({
                     "llm_response": env_input["llm_response"],
                     "llm_raw_response": env_input["llm_raw_response"],
+                    "generated_prompt_token_ids": env_input.get("generated_prompt_token_ids"),
+                    "generated_response_token_ids": env_input.get("generated_response_token_ids"),
                     "current_sequence_length": env_input["current_sequence_length"],
                     "token_length": env_input["token_length"],
                     "token_left": env_input["token_left"],
