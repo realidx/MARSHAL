@@ -1,0 +1,55 @@
+defaults:
+  - agentic_train_geography_counterfactual_selfplay_2gpu
+  - _self_
+
+exp_name: "geography_generation_preflight"
+
+# AgenticRolloutPipeline performs generation only; it does not construct an
+# optimizer or update model weights.
+max_steps: 1
+rollout_batch_size: 64
+sequence_length: 4096
+num_gpus_per_node: 1
+
+actor_train:
+  device_mapping: list(range(0,1))
+
+reference:
+  device_mapping: list(range(0,1))
+
+actor_infer:
+  generating_args:
+    max_new_tokens: 256
+    top_p: 0.8
+    top_k: 20
+    num_beams: 1
+    temperature: 0.7
+    num_return_sequences: 1
+  strategy_args:
+    strategy_config:
+      max_model_len: 4096
+  device_mapping: list(range(0,1))
+
+enable_think: false
+
+train_env_manager:
+  max_invalid_retries_per_decision: 1
+  format_penalty: -1.0
+  minimax_length_penalty_beta: 0.1
+  minimax_length_soft_budget: 128
+  minimax_length_hard_budget: 256
+  enable_length_penalty: false
+  max_env_num_per_worker: 32
+  env_groups: 32
+  group_size: 1
+  tags:
+    - Geography-IID
+    - Geography-Depth-OOD
+    - Geography-Size-OOD
+    - Geography-Transposition-OOD
+    - Geography-Relabel-A
+    - Geography-Relabel-B
+    - Geography-Root-P0
+    - Geography-Root-P1
+  n_groups: [4, 4, 4, 4, 4, 4, 4, 4]
+

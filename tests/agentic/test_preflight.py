@@ -1,4 +1,8 @@
-from roll.agentic.preflight import summarize_tictactoe_preflight
+from roll.agentic.preflight import (
+    summarize_agentic_preflight,
+    summarize_tictactoe_preflight,
+)
+from math import comb
 
 
 def test_preflight_deduplicates_player_rollouts_into_games():
@@ -124,3 +128,79 @@ def test_preflight_reports_retry_recovery_and_token_overhead():
     assert summary["additional_retry_tokens"] == 30
     assert summary["by_player"]["0"]["retry_attempt_count"] == 1
     assert summary["final_episode_truncation_rate"] == 0.0
+
+
+def test_generic_preflight_stratifies_informative_decisions_by_depth():
+    records = [[
+        {
+            "turn_index": 0,
+            "player_id": 0,
+            "token_length": 20,
+            "valid_action": True,
+            "has_closing_answer_tag": True,
+            "hit_token_limit": False,
+            "parsed_action": "N4",
+            "counterfactual_optimal_action": True,
+            "counterfactual_decision_spread": 2.0,
+            "counterfactual_regret": 0.0,
+            "remaining_optimal_distance": 4,
+        },
+        {
+            "turn_index": 1,
+            "player_id": 0,
+            "token_length": 20,
+            "valid_action": True,
+            "has_closing_answer_tag": True,
+            "hit_token_limit": False,
+            "parsed_action": "N7",
+            "counterfactual_optimal_action": False,
+            "counterfactual_decision_spread": 2.0,
+            "counterfactual_regret": 1.0,
+            "remaining_optimal_distance": 4,
+        },
+    ]]
+    summary, _ = summarize_agentic_preflight(
+        records, ["geography_p0"], [{"success": True}]
+    )
+    bucket = summary["informative_decisions_by_remaining_optimal_distance"]["4"]
+    assert bucket["decision_count"] == 2
+    assert bucket["optimal_action_rate"] == 0.5
+    assert bucket["normalized_regret_mean"] == 0.5
+
+
+def test_preflight_reports_root_move_pass_at_k_by_graph_group():
+    records = []
+    trajectory_ids = []
+    terminal_infos = []
+    tags = []
+    for sample_index in range(32):
+        records.append([{
+            "turn_index": 0,
+            "decision_index": 0,
+            "retry_attempt_index": 0,
+            "player_id": 0,
+            "token_length": 50,
+            "valid_action": True,
+            "has_closing_answer_tag": True,
+            "hit_token_limit": False,
+            "counterfactual_optimal_action": sample_index < 4,
+            "graph_id": "held-out-easy-0",
+        }])
+        trajectory_ids.append(f"sample-{sample_index}_p0")
+        terminal_infos.append({"success": True})
+        tags.append("Geography-Rollout-Easy")
+
+    summary, flat_records = summarize_agentic_preflight(
+        records, trajectory_ids, terminal_infos, tags=tags
+    )
+    group = summary["root_move_pass_at_k"]["Geography-Rollout-Easy"]
+
+    assert group["graph_count"] == 1
+    assert group["sample_count"] == 32
+    assert group["pass@1"] == 4 / 32
+    assert group["pass@8"] == 1 - comb(28, 8) / comb(32, 8)
+    assert group["pass@32"] == 1.0
+    assert group["graphs_with_pass@32"] == 1
+    assert {record["tag"] for record in flat_records} == {
+        "Geography-Rollout-Easy"
+    }

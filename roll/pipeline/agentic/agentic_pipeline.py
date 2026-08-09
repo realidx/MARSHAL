@@ -7,7 +7,10 @@ import torch
 from codetiming import Timer
 from ray.util.timer import _Timer
 
-from roll.agentic.metrics import aggregate_minimax_decision_metrics
+from roll.agentic.metrics import (
+    aggregate_counterfactual_decision_metrics,
+    aggregate_minimax_decision_metrics,
+)
 from roll.agentic.rollout.rollout_scheduler import RolloutScheduler
 from roll.distributed.executor.cluster import Cluster
 from roll.distributed.scheduler.protocol import DataProto
@@ -29,6 +32,26 @@ from roll.utils.kl_controller import get_kl_controller
 from roll.utils.logging import get_logger
 
 logger = get_logger()
+
+
+def _aggregate_decision_metrics(batch: DataProto) -> Dict[str, float]:
+    generic_records = batch.non_tensor_batch.get(
+        "counterfactual_decision_records",
+        batch.non_tensor_batch["minimax_decision_records"],
+    )
+    metrics = aggregate_counterfactual_decision_metrics(
+        generic_records,
+        batch.non_tensor_batch["tags"],
+    )
+    # Preserve the historical namespace until dashboards and stored-run tools
+    # have migrated to the generic counterfactual namespace.
+    metrics.update(
+        aggregate_minimax_decision_metrics(
+            batch.non_tensor_batch["minimax_decision_records"],
+            batch.non_tensor_batch["tags"],
+        )
+    )
+    return metrics
 
 
 def maybe_dump_debug_batch(batch: Any, output_dir: str, global_step: int, enabled: bool) -> bool:
@@ -134,12 +157,7 @@ class AgenticPipeline(BasePipeline):
         eval_metrics["score/mean"] = torch.mean(eval_score).detach().item()
         eval_metrics["score/max"] = torch.max(eval_score).detach().item()
         eval_metrics["score/min"] = torch.min(eval_score).detach().item()
-        eval_metrics.update(
-            aggregate_minimax_decision_metrics(
-                eval_batch.non_tensor_batch["minimax_decision_records"],
-                eval_batch.non_tensor_batch["tags"],
-            )
-        )
+        eval_metrics.update(_aggregate_decision_metrics(eval_batch))
 
         prompt_mask = eval_batch.batch["prompt_mask"]
         non_prompt_mask = eval_batch.batch["non_prompt_mask"]
@@ -240,12 +258,7 @@ class AgenticPipeline(BasePipeline):
                     eval_metrics["score/mean"] = torch.mean(eval_score).detach().item()
                     eval_metrics["score/max"] = torch.max(eval_score).detach().item()
                     eval_metrics["score/min"] = torch.min(eval_score).detach().item()
-                    eval_metrics.update(
-                        aggregate_minimax_decision_metrics(
-                            eval_batch.non_tensor_batch["minimax_decision_records"],
-                            eval_batch.non_tensor_batch["tags"],
-                        )
-                    )
+                    eval_metrics.update(_aggregate_decision_metrics(eval_batch))
                     metrics.update({f"val/{k}": v for k, v in eval_metrics.items()})
 
                     # dump eval_batch
@@ -322,12 +335,7 @@ class AgenticPipeline(BasePipeline):
                     batch.non_tensor_batch.pop("frames")
                 metrics["time/rollout"] = rollout_timer.last
                 metrics.update(reduce_metrics(batch.meta_info.pop("metrics", {})))
-                metrics.update(
-                    aggregate_minimax_decision_metrics(
-                        batch.non_tensor_batch["minimax_decision_records"],
-                        batch.non_tensor_batch["tags"],
-                    )
-                )
+                metrics.update(_aggregate_decision_metrics(batch))
                 batch.meta_info["global_step"] = global_step
 
                 with Timer(name="cal_ref_log_probs", logger=None) as cal_timer:

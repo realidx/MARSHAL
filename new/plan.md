@@ -1,236 +1,177 @@
-# Value-Oriented Credit Assignment For Interactive Reasoning
+# Procedural DAG Vertex Geography Experiment
 
-## Thesis
+## Research objective
 
-Do not frame this as "training an LLM to play games." Frame it as:
+Use procedurally generated, exactly solvable games to test whether game post-training learns a reusable lookahead procedure rather than a fixed state-to-action policy. A fresh labelled DAG is generated for each episode, and evaluation separates IID performance from relabelling, depth, size, and topology generalization.
 
-> Games are controlled interactive environments for studying long-horizon credit assignment. Each game targets a specific reasoning primitive, and value-based feedback converts delayed outcomes into local decision and, later, reasoning-span credit.
+This first implementation establishes the environment, exact counterfactual signal, diagnostics, and preflight suites. It does **not** establish reasoning transfer; that claim requires later mechanism and non-game transfer experiments.
 
-MARSHAL is the closest baseline:
+## Frozen v1 game specification
 
-```text
-MARSHAL: delayed outcome -> turn-level reward
-Ours: game/information-state value -> decision-level credit -> optional span-level process credit
-```
+- Deterministic, two-player, zero-sum, perfect information.
+- The game graph is a finite directed acyclic graph and every node is reachable from the root.
+- The complete labelled adjacency list is visible to both players.
+- A token starts at the root. Players alternately move it along one outgoing edge.
+- A player whose turn begins at a node with no outgoing edge loses.
+- Node labels and adjacency order are randomized independently of graph structure.
+- The game-step discount is \(\delta=1\).
 
-The key claim must stay conditional: games do not automatically improve general reasoning. Transfer must be tested on tasks that require the same primitive.
+For a node/state \(s\),
 
-## Ability-Driven Curriculum
+\[
+V(s)=
+\begin{cases}
+-1,&\mathcal A(s)=\varnothing,\\
+\max_{a\in\mathcal A(s)}Q(s,a),&\text{otherwise},
+\end{cases}
+\]
 
-Organize by ability, not by game.
+and
 
-| Game | Target Ability | Credit Signal | Transfer Tests |
-|---|---|---|---|
-| TicTacToe | deterministic planning, lookahead, threat/block detection | exact minimax, depth-sensitive value, regret | multi-step math, code planning, deterministic tool planning |
-| Connect Four | deeper lookahead, traps, delayed tactics | approximate minimax/MCTS value | longer planning and search tasks |
-| Kuhn Poker | imperfect information, belief reasoning, mixed strategy, opponent modeling | information-state CFR value, policy advantage, exploitability | theory-of-mind, hidden-state inference, adversarial dialogue |
-| Leduc Poker | multi-round belief update, public/private evidence | CFR or approximate information-state value | multi-turn belief revision |
-| Mini Hanabi | cooperation, communication, partner modeling, information value | rollout/belief value, counterfactual team score | multi-agent collaboration, tool delegation |
-| Matrix/social games | payoff reasoning, preference modeling, deception/identity inference | payoff or role-inference value | negotiation, social reasoning |
+\[
+Q(s,a)=-V(T(s,a)).
+\]
 
-Core interpretation:
+The decision-local game reward for a valid action is
 
-- TicTacToe asks: "What happens several steps after this action?"
-- Kuhn asks: "How should I act under hidden information and stochastic/mixed strategies?"
-- Mini Hanabi asks: "What does my partner know, and should I act or communicate?"
+\[
+r_t^{\mathrm{game}}
+=Q(s_t,a_t)-\frac{1}{|\mathcal A(s_t)|}
+\sum_{a\in\mathcal A(s_t)}Q(s_t,a).
+\]
 
-## MARSHAL Hook Points
+Auxiliary interface controls remain separate:
 
-The existing repo already supports per-turn reward injection.
+\[
+r_t^{\mathrm{train}}
+=r_t^{\mathrm{game}}+r_t^{\mathrm{format}}+r_t^{\mathrm{length}}.
+\]
 
-- `roll/agentic/rollout/env_manager.py`
-  - `_log_env_state(...)` records one scalar `reward` for the current player's action.
-  - `_formulate_single_rollout(...)` collects rewards as turn `scores`.
-  - `get_masks_and_scores(...)` places turn scores at `<|im_end|>` when `use_turn_scores: True`.
-- `roll/utils/functionals.py`
-  - `reward_postprocess_agentic(...)` normalizes/clips rewards.
-  - `compute_advantage(...)` computes REINFORCE/GAE over the response mask.
+The environment's `rewards` field contains only the selected game-training signal (centered \(Q\) credit or the terminal-outcome control). Canonical terminal utility is recorded separately, and the rollout manager adds format and length controls outside both signals. Artificial truncation or invalid output is not a legal game transition and has zero game reward and zero canonical utility.
 
-So the first prototype should change reward generation, not the trainer.
+With \(\delta=1\), values distinguish outcome-preserving decisions only. They do not prefer faster wins or slower losses. For diagnostics, `optimal_distance` uses a deterministic convention: terminal distance is zero, and a nonterminal node uses one plus the minimum distance among value-optimal children.
 
-## Reward Models
+## Generator controls and strata
 
-Use a shared abstraction:
-
-```text
-state or information state -> legal action values -> local credit
-```
-
-Preferred reward modes:
+The generator exposes:
 
 ```text
-potential_delta = V(after) - V(before)
-centered_q = Q(chosen) - mean_a Q(a)
-regret = Q(chosen) - max_a Q(a)
+num_nodes
+min_depth
+max_depth
+min_branching
+max_branching
+transposition_rate
+target_root_value
+target_root_informative
+target_informative_fraction
 ```
 
-Use regret carefully: it is non-positive and can be wrong for mixed-strategy games.
+An informative node has
 
-Game-specific choices:
+\[
+D(s)=\max_a Q(s,a)-\min_a Q(s,a)>0.
+\]
 
-1. **TicTacToe**
-   - Use exact minimax, not `data/tictactoe_value_table.json` because that table is MCTS/terminal-return based.
-   - Include depth-sensitive values so progress toward faster wins and delayed losses is visible.
-   - This is a sanity check, not evidence of general reasoning.
+Candidates are scored against requested properties rather than accepted by a single narrow rejection rule. Each graph records its achieved root value, informative fraction, longest depth, branching statistics, and transposition rate so later sampling can explicitly balance:
 
-2. **Kuhn Poker**
-   - Use information-state value: private card + public betting history.
-   - Use CFR/Nash policy value or CFR-policy advantage.
-   - Do not use hidden full-state value that leaks the opponent's private card.
-   - Avoid pure max-regret as the only reward because equilibrium can require mixed strategies.
+| Dimension | Strata |
+|---|---|
+| Root value | winning / losing |
+| Decision type | all actions equal / mixed values |
+| Depth | shallow / medium / deep |
+| Topology | tree-like / high transposition |
+| Branching | low / high |
 
-3. **Mini Hanabi**
-   - Use approximate rollout or belief-state value over expected team score.
-   - Reward the counterfactual value of acting, discarding, or communicating.
-   - Avoid heavily hand-coded heuristics except as explicit ablations.
-   - Do not call it an exact oracle unless an exact solver/table is actually built.
+## Implementation phases
 
-For general-sum/cooperative games, always specify the solution concept: team score, welfare, partner-model value, exploitability, or counterfactual improvement.
+| Phase | Deliverable | Gate/status |
+|---|---|---|
+| 1 | Frozen specification in this file | complete |
+| 2 | Immutable graph/state and exact reverse-topological solver | implemented; core checks pass |
+| 3 | Seeded stratified DAG generator and relabelling | implemented; 100-seed/property sweeps pass |
+| 4 | MARSHAL `GeographyEnv`, parser, opponents, registry | implemented; full dependency integration pending |
+| 5 | Generic `counterfactual_*` diagnostics with temporary `minimax_*` compatibility aliases | implemented; legacy metric tests pass |
+| 6 | Solver/environment correctness tests | implemented; dependency-light execution passes |
+| 7 | Three-group root-decision rollout pilot | implemented; model run not started |
+| 8 | Training configuration derived from Tic-Tac-Toe | smoke/control configs staged; blocked on model preflight |
+| 9 | Smoke test, reward comparison, OOD evaluation, full run | future experiment |
 
-## Prompt Robustness
+## Correctness gate
 
-Prompt randomization is useful but not proven to solve overfitting. Treat it as an ablation.
+No model training may begin until tests verify:
 
-Randomize:
+1. Generated graphs are acyclic and root-reachable.
+2. Generation is deterministic for a fixed seed.
+3. Every transition follows a declared edge.
+4. The player to act at a terminal node loses.
+5. Solver values satisfy the Bellman equations and \(Q(s,a)=-V(s')\).
+6. Optimal actions have zero regret.
+7. Uniform-baseline counterfactual rewards sum to zero over legal actions.
+8. Relabelling preserves values and optimal actions up to the label permutation.
+9. Invalid output leaves graph state and canonical values unchanged.
+10. Random play terminates within the longest root-to-terminal depth.
+11. Optimal-versus-optimal play agrees exactly with the solved root value.
+12. Graph suite seeds/splits are reproducible and disjoint.
 
-- rule prompt templates, with held-out templates for eval
-- auxiliary rule hints
-- board/state renderings
-- action surface forms mapped to canonical action ids
-- symbol names and player roles
-- opponent/partner wording
+## Rollout-first pilot
 
-Measure:
+Before any RL, run one deliberately small edge-of-competence experiment. It
+contains three held-out graph groups rather than a large factorial pool:
 
-```text
-generalization_gap = seen_prompt_score - held_out_prompt_score
-```
+| Group | Nodes | Depth range | Branching | Target transposition |
+|---|---:|---:|---:|---:|
+| Easy | 8 | 2--4 | 1--2 | 0.05 |
+| Medium | 16 | 4--7 | 1--3 | 0.25 |
+| Hard | 24 | 7--10 | 2--4 | 0.50 |
 
-If randomization only improves seen-prompt performance, it is not evidence against overfitting.
+Sample 10 graph seeds in each group and generate 32 independent stochastic
+responses for each identical graph prompt: 30 graphs and 960 responses total.
+The 30 group seeds are the fixed sequence 700000--700029; distinct environment
+seed namespaces keep the three groups disjoint from one another and from the
+default training namespace.
+The model sees the complete graph, current node, legal moves, rules, and output
+schema. It is asked to analyze future moves and opponent responses, but the
+`<reason>` field is free-form: the prompt does not request a brief or concise
+answer. Generation stops at `</answer>` or at the 600-token hard ceiling.
 
-## Span / Prefix Probing
+Each rollout evaluates only the root decision. The graph remains solved by
+backward induction, so the selected move has an exact optimality label and
+exact continuation outcome, but neither the root value nor any solver result is
+shown to the model. Pilot generation targets an informative root with at least
+one optimal and one suboptimal legal action, so pass@k cannot be made trivial by
+an all-actions-equal root. No retry, format reward, length reward, optimizer, or model
+update is used in this pilot.
 
-Span probing should be a second-layer diagnostic before it becomes a training reward.
+Report final-root-move pass@1, pass@8, and pass@32 separately for each group,
+averaged across graphs using the standard repeated-sampling estimator. Also
+report validity and token-cap rates. Preserve raw responses for later manual
+inspection. Root-state-value and process-certificate scoring are deferred; a
+free-form explanation has no trustworthy automatic process label yet.
 
-For a reasoning prefix `z_{\le t}`:
+The executable configuration is
+`examples/geography/agentic_rollout_geography_root_pilot.yaml`. Its results
+determine whether a useful edge-of-competence region exists before the training
+distribution and reward comparison are frozen.
 
-```text
-U_t = sum_a pi(a | s, z_{\le t}) Q(s,a)
-delta_t = U_t - U_{t-1}
-```
+## Training comparison (after gates pass)
 
-Immediate `delta_t` rewards spans that directly shift action probability toward better actions. It can miss setup reasoning such as:
+Hold the model, optimizer, rollout budget, prompt, and graph distribution fixed:
 
-```text
-I should consider what the opponent will do.
-```
+| Training signal | Claim tested |
+|---|---|
+| No training | Base-model reference |
+| Terminal result only | Whether ordinary game training is sufficient |
+| Exact centered \(Q\) reward | Whether local alternative comparison improves learning |
 
-Use delayed span credit:
+Initial training keeps Qwen3-4B-Instruct-2507, REINFORCE, full-weight updates, `seq-mean-token-mean`, Markovian turn context, one retry, and existing auxiliary format/length controls. The first full run is allowed only after a 20-step smoke test preserves validity, diagnostic records, and reward separation.
 
-```text
-credit_i = sum_{t >= i} lambda^(t-i) delta_t
-```
+## Claim-to-evidence boundary
 
-For analysis, use counterfactual ablation:
-
-```text
-credit(span_i) = U(full_reasoning) - U(reasoning_without_span_i)
-```
-
-Cost:
-
-```text
-num_spans * num_legal_actions * action_string_length
-```
-
-This is feasible for TicTacToe and Kuhn. Rollout-based probing is much more expensive and should not be first.
-
-Training rule, only after offline validation:
-
-```text
-total_reward = action_value_credit + alpha * normalized_span_credit
-```
-
-Keep `alpha` small so noisy process rewards do not dominate action correctness.
-
-Baselines:
-
-1. outcome-only MARSHAL
-2. turn-end oracle reward
-3. immediate prefix-delta reward
-4. lambda-return span reward
-5. counterfactual span ablation as analysis
-
-Prior-work lessons:
-
-- PRMs/PRM800K: direct process labels are expensive.
-- Math-Shepherd-style methods: continuation sampling gives automatic step quality but is costly.
-- MCTS/value methods: useful but introduce approximation.
-- Free/process-from-outcome approaches: possible, but must be checked against final correctness.
-
-## Experiments
-
-Minimum experiment ladder:
-
-1. **Sanity check**
-   - TicTacToe exact minimax reward.
-   - Verify action optimality, regret, and prompt robustness.
-
-2. **Ability reward models**
-   - TicTacToe: planning value.
-   - Kuhn: information-state CFR value.
-   - Mini Hanabi: rollout/belief team value.
-
-3. **Prompt robustness**
-   - fixed prompt vs randomized prompt vs randomized state/action forms.
-   - evaluate seen and held-out templates.
-
-4. **Span probing**
-   - first offline `U_t` curves.
-   - then lambda-return span reward if curves are meaningful.
-
-5. **Transfer**
-   - planning games -> math/code/tool planning
-   - belief games -> hidden-state/theory-of-mind/adversarial dialogue
-   - cooperative games -> multi-agent collaboration/tool delegation
-
-Critical ablations:
-
-```text
-same games + same rollout budget + different credit assignment
-same reward + same games + fixed prompts vs randomized prompts
-ability-targeted training vs unrelated transfer tasks
-```
-
-## Claims
-
-Defensible now:
-
-- MARSHAL leaves intra-turn reasoning credit unresolved.
-- Small games can provide cleaner local decision credit than terminal-only rewards.
-- Different games stress different interactive reasoning primitives.
-- Span probing is plausible but should be validated before training.
-
-Needs evidence:
-
-- non-game transfer
-- span credit improves over turn-end decision credit
-- approximate values are reliable enough for Kuhn/Hanabi-style training
-- ability-targeted game training transfers more to matched tasks than unmatched tasks
-
-Do not claim yet:
-
-- "games improve general reasoning"
-- "span probing solves token-level credit assignment"
-- "all games have exact optimal values"
-- "prompt randomization prevents overfitting"
-
-## Immediate Next Steps
-
-1. Implement exact TicTacToe minimax as a sanity check.
-2. Add a generic `InteractionCreditOracle` interface.
-3. Add prompt/state/action randomization with held-out template evaluation.
-4. Build Kuhn information-state CFR value.
-5. Prototype Mini Hanabi rollout/belief value.
-6. Run offline span-probing diagnostics before adding span reward to training.
-7. Choose ability-matched transfer benchmarks before any large run.
+| Claim | Required evidence | Current status |
+|---|---|---|
+| The environment implements exact DAG Geography | correctness tests | focused suite passes; full runtime preflight pending |
+| Counterfactual credit improves game learning | compute-matched terminal-reward control | future experiment |
+| The model learns planning rather than labels | relabelling and procedural held-out graphs | future experiment |
+| The model learns depth-generalizing lookahead | depth-conditioned OOD curve | future experiment |
+| Game learning transfers outside games | mechanism-matched non-game evaluation | out of scope for v1 implementation |

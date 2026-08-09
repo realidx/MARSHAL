@@ -342,7 +342,12 @@ class EnvManager:
         self.env_entry["env"] = REGISTERED_ENVS[self.env_entry["env_class"]](self.env_entry["config"])
         self.env_entry["status"] = EnvStatus()
         env_reward_mode = getattr(self.env_entry["env"], "reward_mode", None)
-        env_discount = getattr(getattr(self.env_entry["env"], "config", None), "minimax_discount", None)
+        env_config_object = getattr(self.env_entry["env"], "config", None)
+        env_discount = getattr(
+            env_config_object,
+            "game_step_discount",
+            getattr(env_config_object, "minimax_discount", None),
+        )
         if env_reward_mode in ("minimax_shaped", "minimax_counterfactual"):
             if self.pipeline_config.game_step_discount is None:
                 raise ValueError(f"{env_reward_mode} rewards require game_step_discount")
@@ -405,8 +410,12 @@ class EnvManager:
         with self.thread_lock:
             initial_observation, execute_results = entry["env"].reset(seed=seed)
 
+        if is_self_play:
+            current_player = entry["env"].current_player
+            self.rollout_cache["current_player"] = current_player
+
         initial_state_entry = {
-            "player": 0,
+            "player": current_player,
             "state": initial_observation['observation'],
             "legal_actions": initial_observation['legal_actions'],
         }
@@ -418,10 +427,10 @@ class EnvManager:
             next_state_entry=initial_state_entry,
         )
         
-        # For self-play, also initialize player 0 history
-        # Note: player 1 history is not initialized here, because the starting state is only for player 0
-        self.rollout_cache["player_0_history"] = self._update_cache_history(
-            self.rollout_cache["player_0_history"],
+        # For self-play, initialize the configured starting player's history.
+        starting_history_key = f"player_{current_player}_history"
+        self.rollout_cache[starting_history_key] = self._update_cache_history(
+            self.rollout_cache[starting_history_key],
             num_actions_info=None,
             next_state_entry=initial_state_entry,
         )
@@ -896,7 +905,9 @@ class EnvManager:
     def _compute_player_turn_returns(self, player_history: List[Dict]) -> List[float]:
         """Combine game return-to-go with auxiliary reward from the same attempt."""
         env = self.env_entry.get("env") if hasattr(self, "env_entry") else None
-        if getattr(env, "reward_mode", None) == "minimax_counterfactual":
+        if getattr(env, "decision_local_reward", False) or getattr(
+            env, "reward_mode", None
+        ) == "minimax_counterfactual":
             # Q* already contains the terminal consequence under optimal
             # continuation.  Keep its counterfactual credit local to the action
             # that produced it; later self-play outcomes must not alter it.
@@ -1022,7 +1033,7 @@ class EnvManager:
         group_id = self.rollout_cache["group_id"]
         sample_suffix = f"_p{player_id}_a{turn_index}"
         decision_info = turn.get("decision_info", turn.get("info", {}))
-        decision_record = self._make_minimax_decision_record(turn, player_id, turn_index)
+        decision_record = self._make_counterfactual_decision_record(turn, player_id, turn_index)
         preflight_record = self._make_preflight_turn_record(turn, player_id, turn_index)
 
         llm_inputs.non_tensor_batch.update(
@@ -1039,6 +1050,9 @@ class EnvManager:
                 ),
                 "auxiliary_rewards": self._object_row([turn.get("auxiliary_reward", 0.0)]),
                 "minimax_decision_records": self._object_row(
+                    [decision_record] if decision_record else []
+                ),
+                "counterfactual_decision_records": self._object_row(
                     [decision_record] if decision_record else []
                 ),
                 "preflight_turn_records": self._object_row([preflight_record]),
@@ -1102,17 +1116,22 @@ class EnvManager:
         return result
 
     @staticmethod
-    def _make_minimax_decision_record(
+    def _make_counterfactual_decision_record(
         turn: Dict, player_id: int, turn_index: int
     ) -> Optional[Dict]:
         info = turn.get("decision_info", turn.get("info", {}))
-        if "minimax_valid_action" not in info:
+        valid_key = (
+            "counterfactual_valid_action"
+            if "counterfactual_valid_action" in info
+            else "minimax_valid_action"
+        )
+        if valid_key not in info:
             return None
         record = {
             "turn_index": turn_index,
             "player_id": player_id,
             "action": turn.get("actions", ""),
-            "valid": float(info["minimax_valid_action"]),
+            "valid": float(info[valid_key]),
             "format_valid": float(info.get("format_valid", 1.0)),
             "semantic_action_valid": float(info.get("semantic_action_valid", 1.0)),
             "action_recovered": float(info.get("action_recovered", 0.0)),
@@ -1120,21 +1139,49 @@ class EnvManager:
             "response_truncated": float(info.get("response_truncated", 0.0)),
         }
         if record["valid"]:
+            spread = info[
+                "counterfactual_decision_spread"
+                if "counterfactual_decision_spread" in info
+                else "minimax_decision_spread"
+            ]
+            regret = info[
+                "counterfactual_regret"
+                if "counterfactual_regret" in info
+                else "minimax_normalized_regret"
+            ]
+            optimal = info[
+                "counterfactual_optimal_action"
+                if "counterfactual_optimal_action" in info
+                else "minimax_optimal_action"
+            ]
             record.update(
                 {
-                    "spread": float(info["minimax_decision_spread"]),
-                    "regret": float(info["minimax_normalized_regret"]),
-                    "optimal": float(info["minimax_optimal_action"]),
+                    "spread": float(spread),
+                    "regret": float(regret),
+                    "optimal": float(optimal),
                     "counterfactual_baseline": float(
-                        info.get("minimax_counterfactual_baseline", 0.0)
+                        info.get(
+                            "counterfactual_baseline",
+                            info.get("minimax_counterfactual_baseline", 0.0),
+                        )
                     ),
                     "counterfactual_advantage": float(
-                        info.get("minimax_counterfactual_advantage", 0.0)
+                        info.get(
+                            "counterfactual_advantage",
+                            info.get("minimax_counterfactual_advantage", 0.0),
+                        )
                     ),
-                    "value_loss": float(info.get("minimax_value_loss", 0.0)),
+                    "value_loss": float(
+                        info.get(
+                            "counterfactual_value_loss",
+                            info.get("minimax_value_loss", 0.0),
+                        )
+                    ),
                 }
             )
         return record
+
+    _make_minimax_decision_record = _make_counterfactual_decision_record
 
     @staticmethod
     def _make_preflight_turn_record(turn: Dict, player_id: int, turn_index: int) -> Dict:
@@ -1159,6 +1206,43 @@ class EnvManager:
             and not bool(turn.get("has_closing_answer_tag", False)),
             "minimax_valid_action": bool(info.get("minimax_valid_action", False)),
             "minimax_optimal_action": bool(info.get("minimax_optimal_action", False)),
+            "counterfactual_valid_action": bool(
+                info.get(
+                    "counterfactual_valid_action",
+                    info.get("minimax_valid_action", False),
+                )
+            ),
+            "counterfactual_optimal_action": bool(
+                info.get(
+                    "counterfactual_optimal_action",
+                    info.get("minimax_optimal_action", False),
+                )
+            ),
+            "counterfactual_regret": float(
+                info.get(
+                    "counterfactual_regret",
+                    info.get("minimax_normalized_regret", 0.0),
+                )
+            ),
+            "counterfactual_decision_spread": float(
+                info.get(
+                    "counterfactual_decision_spread",
+                    info.get("minimax_decision_spread", 0.0),
+                )
+            ),
+            "graph_id": str(info.get("graph_id", "")),
+            "graph_seed": int(info.get("graph_seed", 0)),
+            "graph_node_count": int(info.get("graph_node_count", 0)),
+            "graph_edge_count": int(info.get("graph_edge_count", 0)),
+            "graph_depth": int(info.get("graph_depth", 0)),
+            "graph_transposition_rate": float(
+                info.get("graph_transposition_rate", 0.0)
+            ),
+            "graph_mean_branching": float(info.get("graph_mean_branching", 0.0)),
+            "remaining_optimal_distance": int(
+                info.get("remaining_optimal_distance", 0)
+            ),
+            "current_out_degree": int(info.get("current_out_degree", 0)),
             "retry_attempt_index": int(turn.get("retry_attempt_index", 0)),
             "decision_index": int(turn.get("decision_index", 0)),
             "retry_scheduled": bool(turn.get("retry_scheduled", False)),
@@ -1361,40 +1445,16 @@ class EnvManager:
         minimax_decision_records = []
         for turn_index, turn in enumerate(self.rollout_cache[history_key]):
             decision_info = turn.get("decision_info", turn.get("info", {}))
-            if "minimax_valid_action" not in decision_info:
+            decision_record = self._make_counterfactual_decision_record(
+                turn, player_id, turn_index
+            )
+            if decision_record is None:
                 continue
-            record = {
-                "turn_index": turn_index,
-                "player_id": player_id,
-                "action": turn.get("actions", ""),
-                "valid": float(decision_info["minimax_valid_action"]),
-                "format_valid": float(decision_info.get("format_valid", 1.0)),
-                "semantic_action_valid": float(decision_info.get("semantic_action_valid", 1.0)),
-                "action_recovered": float(decision_info.get("action_recovered", 0.0)),
-                "near_generation_limit": float(decision_info.get("near_generation_limit", 0.0)),
-                "response_truncated": float(decision_info.get("response_truncated", 0.0)),
-            }
-            if record["valid"]:
-                record.update(
-                    {
-                        "spread": float(decision_info["minimax_decision_spread"]),
-                        "regret": float(decision_info["minimax_normalized_regret"]),
-                        "optimal": float(decision_info["minimax_optimal_action"]),
-                        "counterfactual_baseline": float(
-                            decision_info.get("minimax_counterfactual_baseline", 0.0)
-                        ),
-                        "counterfactual_advantage": float(
-                            decision_info.get("minimax_counterfactual_advantage", 0.0)
-                        ),
-                        "value_loss": float(
-                            decision_info.get("minimax_value_loss", 0.0)
-                        ),
-                    }
-                )
-            minimax_decision_records.append(record)
+            minimax_decision_records.append(decision_record)
         decision_records_array = np.empty(1, dtype=object)
         decision_records_array[0] = minimax_decision_records
         llm_inputs.non_tensor_batch["minimax_decision_records"] = decision_records_array
+        llm_inputs.non_tensor_batch["counterfactual_decision_records"] = decision_records_array.copy()
 
         if turn_returns is not None:
             llm_inputs.non_tensor_batch["game_step_returns"] = np.array(turn_returns, dtype=object)
@@ -1434,6 +1494,35 @@ class EnvManager:
                     "capped_without_answer": bool(turn.get("hit_token_limit", False)) and not bool(turn.get("has_closing_answer_tag", False)),
                     "minimax_valid_action": bool(decision_info.get("minimax_valid_action", False)),
                     "minimax_optimal_action": bool(decision_info.get("minimax_optimal_action", False)),
+                    "counterfactual_valid_action": bool(
+                        decision_info.get(
+                            "counterfactual_valid_action",
+                            decision_info.get("minimax_valid_action", False),
+                        )
+                    ),
+                    "counterfactual_optimal_action": bool(
+                        decision_info.get(
+                            "counterfactual_optimal_action",
+                            decision_info.get("minimax_optimal_action", False),
+                        )
+                    ),
+                    "counterfactual_regret": float(
+                        decision_info.get(
+                            "counterfactual_regret",
+                            decision_info.get("minimax_normalized_regret", 0.0),
+                        )
+                    ),
+                    "counterfactual_decision_spread": float(
+                        decision_info.get(
+                            "counterfactual_decision_spread",
+                            decision_info.get("minimax_decision_spread", 0.0),
+                        )
+                    ),
+                    "graph_id": str(decision_info.get("graph_id", "")),
+                    "graph_seed": str(decision_info.get("graph_seed", "")),
+                    "graph_node_count": int(decision_info.get("graph_node_count", 0)),
+                    "graph_depth": int(decision_info.get("graph_depth", 0)),
+                    "graph_transposition_rate": float(decision_info.get("graph_transposition_rate", 0.0)),
                     "retry_attempt_index": int(turn.get("retry_attempt_index", 0)),
                     "decision_index": int(turn.get("decision_index", 0)),
                     "retry_scheduled": bool(turn.get("retry_scheduled", False)),

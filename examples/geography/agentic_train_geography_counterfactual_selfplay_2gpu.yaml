@@ -1,0 +1,137 @@
+defaults:
+  - /tictactoe/agentic_train_tictactoe_minimax_selfplay_2gpu
+  - _self_
+
+hydra:
+  searchpath:
+    - file://${oc.env:PWD}/examples
+
+exp_name: "geography_counterfactual_selfplay_2gpu"
+game_step_discount: 1.0
+max_actions_per_traj: 12
+
+actor_infer:
+  generating_args:
+    max_new_tokens: 256
+
+custom_envs:
+  Geography:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      reward_mode: counterfactual
+      game_step_discount: ${game_step_discount}
+      response_token_limit: 256
+      num_nodes: 16
+      min_depth: 4
+      max_depth: 8
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.25
+      target_root_value: null
+      target_informative_fraction: 0.5
+      generator_candidates: 32
+
+  Geography-IID:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      seed_namespace: 1
+
+  Geography-Depth-OOD:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      seed_namespace: 2
+      num_nodes: 24
+      min_depth: 8
+      max_depth: 12
+
+  Geography-Size-OOD:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      seed_namespace: 3
+      num_nodes: 30
+      min_depth: 5
+      max_depth: 10
+
+  Geography-Transposition-OOD:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      seed_namespace: 4
+      transposition_rate: 0.6
+
+  Geography-Relabel-A:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      fixed_graph_seed: 5000101
+      relabel_seed_offset: 1
+
+  Geography-Relabel-B:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      fixed_graph_seed: 5000101
+      relabel_seed_offset: 2
+
+  Geography-Root-P0:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      fixed_graph_seed: 6000101
+      relabel_seed_offset: 1
+      starting_player: 0
+
+  Geography-Root-P1:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      fixed_graph_seed: 6000101
+      relabel_seed_offset: 1
+      starting_player: 1
+
+train_env_manager:
+  tags: [Geography]
+  n_groups: [16]
+
+val_env_manager:
+  tags:
+    - Geography-IID
+    - Geography-Depth-OOD
+    - Geography-Size-OOD
+    - Geography-Transposition-OOD
+    - Geography-Relabel-A
+    - Geography-Relabel-B
+    - Geography-Root-P0
+    - Geography-Root-P1
+  n_groups: [4, 4, 4, 4, 4, 4, 4, 4]

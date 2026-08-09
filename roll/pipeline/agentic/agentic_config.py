@@ -39,6 +39,12 @@ class EnvManagerConfig(WorkerConfig):
             "help": "If not set, all env names divide nums equally. Under the same group, the env config and env seed (prompt) are equal in each generation"
         },
     )
+    group_seed_base: Optional[int] = field(
+        default=None,
+        metadata={
+            "help": "If set, group g uses the reproducible seed group_seed_base + g."
+        },
+    )
     max_traj_per_env: int = field(
         default=-1, metadata={"help": "The maximum number of trajectories that each environment can rollout."}
     )
@@ -330,7 +336,11 @@ class AgenticConfig(BaseConfig):
                     env_config = REGISTERED_ENV_CONFIGS[env_class](**cfg_template.env_config)
                 group_id = env_id // env_manager_config.group_size
                 if group_id not in group_seeds:
-                    group_seeds[group_id] = random.randint(0, 1000000)
+                    group_seeds[group_id] = (
+                        int(env_manager_config.group_seed_base) + group_id
+                        if env_manager_config.group_seed_base is not None
+                        else random.randint(0, 1000000)
+                    )
                 entry = {
                     "tag": tag,
                     "group_id": env_id // env_manager_config.group_size,

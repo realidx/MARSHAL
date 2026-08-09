@@ -235,6 +235,15 @@ class TicTacToe(BaseDiscreteActionEnv):
                 "minimax_normalized_regret": regret,
                 "minimax_optimal_action": float(abs(chosen_q - before_values[acting_player]) < 1e-9),
                 "minimax_valid_action": 1.0,
+                "counterfactual_valid_action": 1.0,
+                "counterfactual_state_value": before_values[acting_player],
+                "counterfactual_chosen_q": chosen_q,
+                "counterfactual_baseline": counterfactual_baseline,
+                "counterfactual_advantage": counterfactual_advantage,
+                "counterfactual_value_loss": before_values[acting_player] - chosen_q,
+                "counterfactual_decision_spread": decision_spread,
+                "counterfactual_regret": regret,
+                "counterfactual_optimal_action": float(abs(chosen_q - before_values[acting_player]) < 1e-9),
             }
         )
         return observation, rewards, done, info
@@ -354,6 +363,7 @@ class TicTacToe(BaseDiscreteActionEnv):
             "retry_attempt": 1.0,
             "generation_limit_retry": float(hit_token_limit),
             "minimax_valid_action": 0.0,
+            "counterfactual_valid_action": 0.0,
             "canonical_reward_player_0": 0.0,
             "canonical_reward_player_1": 0.0,
             "shaped_reward_player_0": 0.0,
@@ -428,6 +438,7 @@ class TicTacToe(BaseDiscreteActionEnv):
             }
         )
         info.setdefault("minimax_valid_action", 0.0)
+        info.setdefault("counterfactual_valid_action", 0.0)
         info.setdefault("canonical_reward_player_0", 0.0)
         info.setdefault("canonical_reward_player_1", 0.0)
 

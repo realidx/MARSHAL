@@ -6,7 +6,7 @@ import ray
 import torch
 from codetiming import Timer
 
-from roll.agentic.preflight import write_tictactoe_preflight_report
+from roll.agentic.preflight import write_agentic_preflight_report
 from roll.agentic.rollout.rollout_scheduler import RolloutScheduler
 from roll.distributed.executor.cluster import Cluster
 from roll.distributed.scheduler.protocol import DataProto
@@ -85,12 +85,13 @@ class AgenticRolloutPipeline(BasePipeline):
             metrics["system/samples"] = (global_step + 1) * batch.batch.shape[0]
             if "preflight_turn_records" in batch.non_tensor_batch:
                 preflight_dir = os.path.join(os.environ["ROLL_OUTPUT_DIR"], "preflight")
-                preflight_summary = write_tictactoe_preflight_report(
+                preflight_summary = write_agentic_preflight_report(
                     output_dir=preflight_dir,
                     records_by_rollout=batch.non_tensor_batch["preflight_turn_records"].tolist(),
                     trajectory_ids=batch.non_tensor_batch["traj_group_id"].tolist(),
                     terminal_infos=batch.non_tensor_batch["terminal_info"].tolist(),
                     random_seed=self.pipeline_config.seed,
+                    tags=batch.non_tensor_batch["tags"].tolist(),
                 )
                 logger.info("Preflight summary: %s", json.dumps(preflight_summary, ensure_ascii=False))
 

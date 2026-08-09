@@ -4,11 +4,12 @@ from collections import defaultdict
 from typing import Dict, Iterable, Mapping, Optional, Sequence
 
 
-def aggregate_minimax_decision_metrics(
+def aggregate_counterfactual_decision_metrics(
     records_by_rollout: Sequence[Iterable[Mapping]],
     tags: Optional[Sequence[str]] = None,
+    namespace: str = "counterfactual",
 ) -> Dict[str, float]:
-    """Aggregate exact minimax diagnostics with decision-level denominators.
+    """Aggregate exact counterfactual diagnostics with decision denominators.
 
     Individual records remain in ``minimax_decision_records`` on the rollout
     batch for arbitrary spread-conditioned analysis. This function only emits
@@ -25,7 +26,7 @@ def aggregate_minimax_decision_metrics(
 
     metrics = {}
     for tag, records in grouped.items():
-        prefix = f"env/{tag}/minimax"
+        prefix = f"env/{tag}/{namespace}"
         decision_count = len(records)
         valid_records = [record for record in records if float(record.get("valid", 0.0)) > 0]
         valid_count = len(valid_records)
@@ -59,3 +60,15 @@ def aggregate_minimax_decision_metrics(
         metrics[f"{prefix}/decision_spread_mean"] = spread_sum / valid_count if valid_count else 0.0
 
     return metrics
+
+
+def aggregate_minimax_decision_metrics(
+    records_by_rollout: Sequence[Iterable[Mapping]],
+    tags: Optional[Sequence[str]] = None,
+) -> Dict[str, float]:
+    """Compatibility wrapper for existing dashboards and saved runs."""
+    return aggregate_counterfactual_decision_metrics(
+        records_by_rollout,
+        tags=tags,
+        namespace="minimax",
+    )

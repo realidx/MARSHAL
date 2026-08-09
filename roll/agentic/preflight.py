@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from math import comb
 import random
 import re
 from pathlib import Path
@@ -25,17 +26,108 @@ def _percentile(values: Sequence[int], quantile: float) -> float:
     return ordered[lower] * (1 - fraction) + ordered[upper] * fraction
 
 
-def summarize_tictactoe_preflight(
+def _pass_at_k(sample_count: int, success_count: int, k: int) -> float | None:
+    """Unbiased pass@k estimate from repeated samples of one graph."""
+    if sample_count < k:
+        return None
+    if sample_count - success_count < k:
+        return 1.0
+    return 1.0 - comb(sample_count - success_count, k) / comb(sample_count, k)
+
+
+def _summarize_root_move_pass_at_k(
+    records: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    root_attempts = [
+        record
+        for record in records
+        if int(record.get("decision_index", record.get("turn_index", 0))) == 0
+        and int(record.get("retry_attempt_index", 0)) == 0
+    ]
+    graphs: dict[tuple[str, str], list[Mapping[str, Any]]] = {}
+    for record in root_attempts:
+        graph_id = str(record.get("graph_id", ""))
+        graph_key = (
+            f"{record.get('graph_seed', '')}:{graph_id}"
+            if graph_id
+            else str(record["game_id"])
+        )
+        graphs.setdefault((str(record.get("tag", "all")), graph_key), []).append(record)
+
+    def summarize(graph_samples: Sequence[list[Mapping[str, Any]]]) -> dict[str, Any]:
+        result: dict[str, Any] = {
+            "graph_count": len(graph_samples),
+            "sample_count": sum(len(samples) for samples in graph_samples),
+        }
+        result["valid_action_rate"] = (
+            sum(
+                bool(record.get("valid_action", False))
+                for samples in graph_samples
+                for record in samples
+            )
+            / result["sample_count"]
+            if result["sample_count"]
+            else 0.0
+        )
+        result["token_limit_hit_rate"] = (
+            sum(
+                bool(record.get("hit_token_limit", False))
+                for samples in graph_samples
+                for record in samples
+            )
+            / result["sample_count"]
+            if result["sample_count"]
+            else 0.0
+        )
+        for k in (1, 8, 32):
+            estimates = []
+            for samples in graph_samples:
+                successes = sum(
+                    bool(record.get("valid_action", False))
+                    and bool(
+                        record.get(
+                            "counterfactual_optimal_action",
+                            record.get("minimax_optimal_action", False),
+                        )
+                    )
+                    for record in samples
+                )
+                estimate = _pass_at_k(len(samples), successes, k)
+                if estimate is not None:
+                    estimates.append(estimate)
+            result[f"graphs_with_pass@{k}"] = len(estimates)
+            result[f"pass@{k}"] = (
+                sum(estimates) / len(estimates) if estimates else None
+            )
+        return result
+
+    by_group = {}
+    for tag in sorted({tag for tag, _ in graphs}):
+        by_group[tag] = summarize(
+            [samples for (sample_tag, _), samples in graphs.items() if sample_tag == tag]
+        )
+    by_group["overall"] = summarize(list(graphs.values()))
+    return by_group
+
+
+def summarize_agentic_preflight(
     records_by_rollout: Sequence[Iterable[Mapping[str, Any]]],
     trajectory_ids: Sequence[str],
     terminal_infos: Sequence[Mapping[str, Any]],
+    tags: Sequence[str] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     if not (len(records_by_rollout) == len(trajectory_ids) == len(terminal_infos)):
         raise ValueError("preflight inputs must have the same length")
+    if tags is None:
+        tags = ["all"] * len(records_by_rollout)
+    if len(tags) != len(records_by_rollout):
+        raise ValueError("preflight tags must match the number of rollouts")
 
     games: dict[str, dict[str, Any]] = {}
     flat_records: list[dict[str, Any]] = []
-    for rollout_records, trajectory_id, terminal_info in zip(records_by_rollout, trajectory_ids, terminal_infos):
+    for rollout_records, trajectory_id, terminal_info, tag in zip(
+        records_by_rollout, trajectory_ids, terminal_infos, tags
+    ):
         rollout_records = list(rollout_records)
         game_id = _game_id(trajectory_id)
         game = games.setdefault(
@@ -49,6 +141,7 @@ def summarize_tictactoe_preflight(
             item = dict(record)
             item["game_id"] = game_id
             item["trajectory_id"] = str(trajectory_id)
+            item["tag"] = str(tag)
             game["records"].append(item)
             flat_records.append(item)
 
@@ -112,7 +205,15 @@ def summarize_tictactoe_preflight(
         player_closing = sum(bool(record["has_closing_answer_tag"]) for record in player_records)
         player_limited = sum(bool(record["hit_token_limit"]) for record in player_records)
         player_missing = len(player_records) - player_closing
-        player_optimal = sum(bool(record.get("minimax_optimal_action", False)) for record in player_records)
+        player_optimal = sum(
+            bool(
+                record.get(
+                    "counterfactual_optimal_action",
+                    record.get("minimax_optimal_action", False),
+                )
+            )
+            for record in player_records
+        )
         player_first_attempts = [
             record for record in player_records
             if int(record.get("retry_attempt_index", 0)) == 0
@@ -159,8 +260,14 @@ def summarize_tictactoe_preflight(
         by_player["0"]["valid_action_rate"] - by_player["1"]["valid_action_rate"]
     )
 
-    minimax_optimal_count = sum(
-        bool(record.get("minimax_optimal_action", False)) for record in flat_records
+    counterfactual_optimal_count = sum(
+        bool(
+            record.get(
+                "counterfactual_optimal_action",
+                record.get("minimax_optimal_action", False),
+            )
+        )
+        for record in flat_records
     )
     role_minimax_optimality_gap = abs(
         by_player["0"]["minimax_optimality_rate"]
@@ -212,8 +319,14 @@ def summarize_tictactoe_preflight(
         "capped_without_answer_count": len(capped_without_answer),
         "capped_without_answer_rate": len(capped_without_answer) / turn_count if turn_count else 0.0,
         "role_validity_asymmetry": role_validity_asymmetry,
-        "minimax_optimal_action_count": minimax_optimal_count,
-        "minimax_optimality_rate": minimax_optimal_count / turn_count if turn_count else 0.0,
+        "counterfactual_optimal_action_count": counterfactual_optimal_count,
+        "counterfactual_optimality_rate": (
+            counterfactual_optimal_count / turn_count if turn_count else 0.0
+        ),
+        "minimax_optimal_action_count": counterfactual_optimal_count,
+        "minimax_optimality_rate": (
+            counterfactual_optimal_count / turn_count if turn_count else 0.0
+        ),
         "role_minimax_optimality_gap": role_minimax_optimality_gap,
         "action_diversity": {
             "unique_action_count": len(action_counts),
@@ -239,19 +352,64 @@ def summarize_tictactoe_preflight(
         "dominant_action_rate_at_most_0_80": dominant_action_rate <= 0.80,
     }
     summary["passed"] = all(summary["gate"].values())
+    informative_valid = [
+        record
+        for record in flat_records
+        if record.get("valid_action")
+        and float(record.get("counterfactual_decision_spread", 0.0)) > 0.0
+    ]
+    by_distance = {}
+    for distance in sorted(
+        {int(record.get("remaining_optimal_distance", 0)) for record in informative_valid}
+    ):
+        bucket = [
+            record
+            for record in informative_valid
+            if int(record.get("remaining_optimal_distance", 0)) == distance
+        ]
+        optimal = sum(
+            bool(record.get("counterfactual_optimal_action", False))
+            for record in bucket
+        )
+        by_distance[str(distance)] = {
+            "decision_count": len(bucket),
+            "optimal_action_rate": optimal / len(bucket) if bucket else 0.0,
+            "normalized_regret_mean": (
+                sum(float(record.get("counterfactual_regret", 0.0)) for record in bucket)
+                / len(bucket)
+                if bucket
+                else 0.0
+            ),
+        }
+    summary["informative_decisions_by_remaining_optimal_distance"] = by_distance
+    summary["root_move_pass_at_k"] = _summarize_root_move_pass_at_k(flat_records)
     return summary, flat_records
 
 
-def write_tictactoe_preflight_report(
+def summarize_tictactoe_preflight(
+    records_by_rollout: Sequence[Iterable[Mapping[str, Any]]],
+    trajectory_ids: Sequence[str],
+    terminal_infos: Sequence[Mapping[str, Any]],
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Compatibility wrapper retained for existing callers and reports."""
+    return summarize_agentic_preflight(
+        records_by_rollout, trajectory_ids, terminal_infos
+    )
+
+
+def write_agentic_preflight_report(
     output_dir: str | Path,
     records_by_rollout: Sequence[Iterable[Mapping[str, Any]]],
     trajectory_ids: Sequence[str],
     terminal_infos: Sequence[Mapping[str, Any]],
     random_seed: int = 42,
+    tags: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
-    summary, records = summarize_tictactoe_preflight(records_by_rollout, trajectory_ids, terminal_infos)
+    summary, records = summarize_agentic_preflight(
+        records_by_rollout, trajectory_ids, terminal_infos, tags=tags
+    )
 
     (output_path / "summary.json").write_text(
         json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
@@ -272,3 +430,20 @@ def write_tictactoe_preflight_report(
         json.dumps(inspection, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     return summary
+
+
+def write_tictactoe_preflight_report(
+    output_dir: str | Path,
+    records_by_rollout: Sequence[Iterable[Mapping[str, Any]]],
+    trajectory_ids: Sequence[str],
+    terminal_infos: Sequence[Mapping[str, Any]],
+    random_seed: int = 42,
+) -> dict[str, Any]:
+    """Compatibility wrapper retained for existing preflight commands."""
+    return write_agentic_preflight_report(
+        output_dir,
+        records_by_rollout,
+        trajectory_ids,
+        terminal_infos,
+        random_seed=random_seed,
+    )

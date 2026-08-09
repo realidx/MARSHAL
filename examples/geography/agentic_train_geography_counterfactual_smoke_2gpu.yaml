@@ -1,0 +1,25 @@
+defaults:
+  - agentic_train_geography_counterfactual_selfplay_2gpu
+  - _self_
+
+exp_name: "geography_counterfactual_smoke_2gpu"
+max_steps: 20
+eval_steps: 5
+save_steps: 1000000
+rollout_batch_size: 8
+val_batch_size: 16
+
+actor_train:
+  training_args:
+    warmup_steps: 0
+
+train_env_manager:
+  max_env_num_per_worker: 4
+  env_groups: 4
+  n_groups: [4]
+
+val_env_manager:
+  max_env_num_per_worker: 16
+  env_groups: 16
+  n_groups: [2, 2, 2, 2, 2, 2, 2, 2]
+

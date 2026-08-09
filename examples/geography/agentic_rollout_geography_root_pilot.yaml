@@ -1,0 +1,113 @@
+defaults:
+  - agentic_train_geography_counterfactual_selfplay_2gpu
+  - _self_
+
+exp_name: "geography_root_rollout_pilot"
+
+# Generation-only edge-of-competence pilot: 30 held-out graphs, with 32
+# independent stochastic responses to the identical prompt for each graph.
+max_steps: 1
+rollout_batch_size: 960
+sequence_length: 4096
+max_actions_per_traj: 1
+num_gpus_per_node: 2
+
+actor_infer:
+  generating_args:
+    max_new_tokens: 600
+    top_p: 0.8
+    top_k: 20
+    num_beams: 1
+    temperature: 0.7
+    num_return_sequences: 1
+    stop: ["</answer>"]
+    include_stop_str_in_output: true
+  strategy_args:
+    strategy_config:
+      tensor_model_parallel_size: 2
+      max_model_len: 4096
+      gpu_memory_utilization: 0.8
+  device_mapping: list(range(0,2))
+
+enable_think: false
+markovian_turn_context: true
+use_reason_answer_format: true
+
+custom_envs:
+  Geography-Rollout-Easy:
+    env_type: geography
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      root_decision_only: true
+      response_token_limit: 600
+      seed_namespace: 101
+      num_nodes: 8
+      min_depth: 2
+      max_depth: 4
+      min_branching: 1
+      max_branching: 2
+      transposition_rate: 0.05
+      target_root_informative: true
+      target_informative_fraction: 0.5
+      generator_candidates: 32
+
+  Geography-Rollout-Medium:
+    env_type: geography
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      root_decision_only: true
+      response_token_limit: 600
+      seed_namespace: 102
+      num_nodes: 16
+      min_depth: 4
+      max_depth: 7
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.25
+      target_root_informative: true
+      target_informative_fraction: 0.5
+      generator_candidates: 32
+
+  Geography-Rollout-Hard:
+    env_type: geography
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      root_decision_only: true
+      response_token_limit: 600
+      seed_namespace: 103
+      num_nodes: 24
+      min_depth: 7
+      max_depth: 10
+      min_branching: 2
+      max_branching: 4
+      transposition_rate: 0.5
+      target_root_informative: true
+      target_informative_fraction: 0.5
+      generator_candidates: 32
+
+train_env_manager:
+  # No retry or auxiliary reward is used in this measurement-only run.
+  max_invalid_retries_per_decision: 0
+  format_penalty: 0.0
+  minimax_length_penalty_beta: 0.0
+  minimax_length_soft_budget: 400
+  minimax_length_hard_budget: 600
+  enable_length_penalty: false
+  max_env_num_per_worker: 64
+  env_groups: 30
+  group_size: 32
+  group_seed_base: 700000
+  tags:
+    - Geography-Rollout-Easy
+    - Geography-Rollout-Medium
+    - Geography-Rollout-Hard
+  n_groups: [10, 10, 10]
