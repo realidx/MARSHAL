@@ -1,0 +1,790 @@
+bash: /home/e/e1300530/miniconda3/envs/marshal/lib/libtinfo.so.6: no version information available (required by bash)
+2026-08-10 12:05:28,653	INFO scripts.py:1392 -- Did not find any active Ray processes.
+/home/e/e1300530/MARSHAL/examples/start_agentic_rollout_pipeline.py:19: UserWarning: 
+The version_base parameter is not specified.
+Please specify a compatability version level, or None.
+Will assume defaults for version 1.1
+  initialize(config_path=args.config_path, job_name="app")
+add logger: log_rank_DRIVER_0_1
+Created or verified log directory: ./runs/geography_root_pilot/20260810-120528/logs
+Added logging to file: /home/e/e1300530/MARSHAL/runs/geography_root_pilot/20260810-120528/logs/log_rank_DRIVER_0_1.log
+custom_env:
+  SimpleSokoban:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      dim_x: 6
+      dim_y: 6
+      num_boxes: 1
+      max_steps: 100
+  LargerSokoban:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      dim_x: 8
+      dim_y: 8
+      num_boxes: 2
+      max_steps: 100
+      search_depth: 10
+  SokobanDifferentGridVocab:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      search_depth: 30
+      dim_x: 6
+      dim_y: 6
+      num_boxes: 1
+      max_steps: 100
+      grid_lookup:
+        0: W
+        1: .
+        2: G
+        3: C
+        4: B
+        5: A
+        6: '@'
+      grid_vocab:
+        W: wall
+        .: empty
+        G: target
+        C: box on target
+        B: box
+        A: player
+        '@': player on target
+  VisualSimpleSokoban:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      dim_x: 6
+      dim_y: 6
+      num_boxes: 1
+      max_steps: 100
+      render_mode: rgb_array
+  Countdown:
+    env_type: countdown
+    max_actions_per_traj: 1
+    env_instruction: 'You are solving the Countdown puzzle. You should use the num
+      list to create an equation that equals the target. Example answer format: <think>
+      To find an equation using [3, 5, 2] to get 4. Let''s check 2 + 5 = 7, 7 - 3
+      = 4. So the answer is 2 + 5 - 3 = 4. </think><answer>2 + 5 - 3</answer>'
+    max_tokens: 100
+    env_config: null
+  Bandit:
+    env_type: bandit
+    max_actions_per_traj: 1
+    env_instruction: ''
+    max_tokens: 100
+    env_config:
+      lo_arm_name: Phoenix
+      hi_arm_name: Dragon
+  BanditTest:
+    env_type: bandit
+    max_actions_per_traj: 1
+    env_instruction: ''
+    max_tokens: 100
+    env_config:
+      lo_arm_name: Trader
+      hi_arm_name: Librarian
+  FrozenLake:
+    env_type: frozen_lake
+    max_actions_per_traj: 10
+    env_instruction: You are solving the FrozenLake puzzle. Forbid the whole and go
+      to the target. You may move to the unintended direction due to the slippery
+      ice. The answer must be a sequence of actions, like <answer>Right || Right ||
+      Up</answer>
+    max_tokens: 100
+    env_config: null
+  MetamathQA:
+    env_type: metamathqa
+    max_actions_per_traj: 1
+    env_instruction: 'You are solving Math problems. '
+    max_tokens: 100
+    env_config: null
+  WebShop:
+    env_type: webshop
+    max_actions_per_traj: 30
+    env_instruction: 'You are browsing an online shop. Based on the instruction, find
+      the product that matches the production description. You need to iteratively
+      take action, read the website and decide what action to take next until finding
+      the product. Available actions depends on the page: in the search page you can
+      search keywords, in the search result page you can click an item url or click[next
+      >] to navigate to next page, in the product page you can click[description]
+      or click[features] to see the details, click[blue] or click[x-large] to choose
+      size and colors, click[buy now] when you decided to buy the product, click[back
+      to search] to return to search page. Example process: I need a gingko light
+      and 20x20 pillow cover that is hand painted. First search[gingko light 20x20
+      pillow cover hand painted], answer format: <answer>search[blanket with fleece
+      throw]</answer>. Valid answer is search[<keywords>] or click[<clickable>].'
+    max_tokens: 100
+    env_config: null
+deepspeed_zero:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 0
+  checkpoint:
+    tag_validation: IGNORE
+deepspeed_zero2:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 2
+    allgather_partitions: true
+    allgather_bucket_size: 1000000000.0
+    overlap_comm: true
+    reduce_scatter: true
+    reduce_bucket_size: 500000000.0
+    contiguous_gradients: true
+deepspeed_zero3:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 3
+    overlap_comm: true
+    contiguous_gradients: true
+    sub_group_size: 1000000000.0
+    reduce_bucket_size: auto
+    stage3_prefetch_bucket_size: auto
+    stage3_param_persistence_threshold: auto
+    stage3_max_live_parameters: 1000000000.0
+    stage3_max_reuse_distance: 1000000000.0
+    stage3_gather_16bit_weights_on_model_save: true
+deepspeed_zero3_cpuoffload:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 3
+    offload_optimizer:
+      device: cpu
+      pin_memory: true
+    overlap_comm: true
+    contiguous_gradients: true
+    sub_group_size: 1000000000.0
+    reduce_bucket_size: auto
+    stage3_prefetch_bucket_size: auto
+    stage3_param_persistence_threshold: auto
+    stage3_max_live_parameters: 1000000000.0
+    stage3_max_reuse_distance: 1000000000.0
+    stage3_gather_16bit_weights_on_model_save: true
+exp_name: geography_root_rollout_pilot
+seed: 42
+logging_dir: ./runs/geography_root_pilot/20260810-120528/logs
+output_dir: ./runs/geography_root_pilot/20260810-120528
+system_envs:
+  USE_MODELSCOPE: '1'
+track_with: tensorboard
+tracker_kwargs:
+  log_dir: ./runs/geography_root_pilot/20260810-120528/tensorboard
+num_gpus_per_node: 1
+max_steps: 1
+save_steps: 1000000
+logging_steps: 1
+eval_steps: 10
+resume_from_checkpoint: false
+rollout_batch_size: 960
+val_batch_size: 32
+sequence_length: 4096
+dual_clip_loss: true
+ppo_epochs: 1
+adv_estimator: reinforce
+init_kl_coef: 0.0
+use_kl_loss: true
+kl_loss_coef: 0.2
+whiten_advantages: false
+entropy_loss_coef: 0
+pretrain: /home/e/e1300530/models/Qwen3-4B-Instruct-2507/
+actor_train:
+  model_args:
+    flash_attn: fa2
+    disable_gradient_checkpointing: false
+    dtype: bf16
+    model_type: null
+  training_args:
+    lr_scheduler_type: cosine_with_min_lr
+    learning_rate: 1.0e-06
+    weight_decay: 0.05
+    adam_beta1: 0.9
+    adam_beta2: 0.95
+    per_device_train_batch_size: 1
+    gradient_accumulation_steps: 4
+    warmup_steps: 10
+  data_args:
+    template: qwen3
+  strategy_args:
+    strategy_name: megatron_train
+    strategy_config:
+      sequence_parallel: true
+      tensor_model_parallel_size: 2
+      pipeline_model_parallel_size: 1
+      expert_model_parallel_size: 1
+      use_distributed_optimizer: true
+      recompute_granularity: full
+      accumulate_allreduce_grads_in_fp32: true
+      check_for_nan_in_loss_and_grad: false
+  device_mapping: list(range(0,1))
+  infer_batch_size: 1
+actor_infer:
+  model_args:
+    flash_attn: fa2
+    disable_gradient_checkpointing: true
+    dtype: bf16
+  generating_args:
+    max_new_tokens: 1200
+    top_p: 0.8
+    top_k: 20
+    num_beams: 1
+    temperature: 0.7
+    num_return_sequences: 1
+    stop:
+    - </answer>
+    include_stop_str_in_output: true
+  data_args:
+    template: qwen3
+  strategy_args:
+    strategy_name: vllm
+    strategy_config:
+      gpu_memory_utilization: 0.8
+      block_size: 16
+      load_format: auto
+      max_model_len: 4096
+      tensor_parallel_size: 1
+  device_mapping: list(range(0,1))
+reference:
+  model_args:
+    flash_attn: fa2
+    disable_gradient_checkpointing: true
+    dtype: bf16
+    model_type: null
+  data_args:
+    template: qwen3
+  strategy_args:
+    strategy_name: hf_infer
+    strategy_config: null
+  device_mapping: list(range(0,1))
+  infer_batch_size: 1
+enable_response_mask: true
+action_sep: '||'
+use_turn_scores: true
+enable_think: false
+max_actions_per_traj: 1
+reward_normalization:
+  grouping: tags
+  method: identity
+  separate_norm_for_selfplay: false
+whiten_rewards: false
+advantage_norm: null
+pg_clip_high: 0.2
+custom_envs:
+  TicTacToe:
+    env_type: tictactoe
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      response_token_limit: 600
+      reward_mode: minimax_counterfactual
+      minimax_discount: 1.0
+      precompute_minimax: true
+  TicTacToe-first-100:
+    env_type: tictactoe
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 1.0
+      precompute_minimax: true
+  TicTacToe-second-100:
+    env_type: tictactoe
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 1.0
+      precompute_minimax: true
+  TicTacToe-first-1000:
+    env_type: tictactoe
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      max_simulations: 1000
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 1.0
+      precompute_minimax: true
+  TicTacToe-second-1000:
+    env_type: tictactoe
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      max_simulations: 1000
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 1.0
+      precompute_minimax: true
+  Connect4-first-100:
+    env_type: connect_four
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      render_mode: text
+  Connect4-second-100:
+    env_type: connect_four
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      render_mode: text
+  Connect4-first-1000:
+    env_type: connect_four
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      max_simulations: 1000
+      render_mode: text
+  Connect4-second-1000:
+    env_type: connect_four
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      max_simulations: 1000
+      render_mode: text
+  KuhnPoker-first:
+    env_type: kuhn_poker
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: cfr
+      render_mode: text
+  KuhnPoker-second:
+    env_type: kuhn_poker
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: cfr
+      opponent_player: 0
+      render_mode: text
+  LeducPoker-first:
+    env_type: leduc_poker
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: ne
+      render_mode: text
+  LeducPoker-second:
+    env_type: leduc_poker
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: ne
+      opponent_player: 0
+      render_mode: text
+  MiniHanabi:
+    env_type: hanabi
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      render_mode: text
+  SimpleHanabi:
+    env_type: hanabi
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      render_mode: text
+      colors: 3
+      ranks: 2
+      hand_size: 5
+      max_information_tokens: 8
+      max_life_tokens: 3
+  FullHanabi:
+    env_type: hanabi
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      render_mode: text
+      colors: 3
+      ranks: 3
+      hand_size: 5
+      max_information_tokens: 8
+      max_life_tokens: 3
+  Geography-Rollout-Distance-1:
+    env_type: geography
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      root_decision_only: true
+      response_token_limit: 1200
+      seed_namespace: 101
+      num_nodes: 12
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.15
+      target_root_informative: true
+      target_root_optimal_distance: 1
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 8192
+  Geography-Rollout-Distance-3:
+    env_type: geography
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      root_decision_only: true
+      response_token_limit: 1200
+      seed_namespace: 102
+      num_nodes: 12
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.15
+      target_root_informative: true
+      target_root_optimal_distance: 3
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 8192
+  Geography-Rollout-Distance-5:
+    env_type: geography
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      root_decision_only: true
+      response_token_limit: 1200
+      seed_namespace: 103
+      num_nodes: 12
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.15
+      target_root_informative: true
+      target_root_optimal_distance: 5
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 8192
+train_env_manager:
+  format_penalty: 0.0
+  max_env_num_per_worker: 160
+  env_groups: 30
+  group_size: 32
+  tags:
+  - Geography-Rollout-Distance-1
+  - Geography-Rollout-Distance-3
+  - Geography-Rollout-Distance-5
+  n_groups:
+  - 10
+  - 10
+  - 10
+  minimax_length_penalty_beta: 0.0
+  minimax_length_soft_budget: 1000
+  minimax_length_hard_budget: 1200
+  max_invalid_retries_per_decision: 0
+  enable_length_penalty: false
+  group_seed_base: 700000
+val_env_manager:
+  max_env_num_per_worker: 32
+  env_groups: 32
+  group_size: 1
+  tags:
+  - TicTacToe-first-100
+  - TicTacToe-second-100
+  - TicTacToe-first-1000
+  - TicTacToe-second-1000
+  n_groups:
+  - 8
+  - 8
+  - 8
+  - 8
+  format_penalty: 0.0
+  enable_length_penalty: false
+gamma: 1.0
+game_step_discount: 1.0
+loss_agg_mode: seq-mean-token-mean
+markovian_turn_context: true
+use_reason_answer_format: true
+add_token_level_kl: false
+eval_at_end: true
+dump_debug_batches: false
+
+[2026-08-10 12:05:31] [agentic_config.py (88)] [INFO] [DRIVER 0 / 1][PID 1153490] max_env_num_per_worker: 160
+[2026-08-10 12:05:31] [agentic_config.py (88)] [INFO] [DRIVER 0 / 1][PID 1153490] max_env_num_per_worker: 32
+[2026-08-10 12:05:31] [worker_config.py (103)] [INFO] [DRIVER 0 / 1][PID 1153490] set vllm num_gpus_per_worker to 1, tensor_parallel_size: 1, pipeline_parallel_size: 1
+[2026-08-10 12:05:31] [base_config.py (166)] [INFO] [DRIVER 0 / 1][PID 1153490] add exp_name to logging_dir ./runs/geography_root_pilot/20260810-120528/logs
+[2026-08-10 12:05:31] [base_config.py (171)] [INFO] [DRIVER 0 / 1][PID 1153490] add timestamp to tensorboard log_dir ./runs/geography_root_pilot/20260810-120528/tensorboard
+[2026-08-10 12:05:31] [agentic_config.py (291)] [INFO] [DRIVER 0 / 1][PID 1153490] add timestamp to render_save_dir  None
+EnvManagerConfig(name='train_env', worker_cls='roll.pipeline.agentic.environment_worker.EnvironmentWorker', model_args=ModelArguments(model_name_or_path='/home/e/e1300530/models/Qwen3-4B-Instruct-2507/', attn_implementation=None, moe_aux_loss_coef=None, disable_gradient_checkpointing=False, device_map='balanced', dtype='bf16', model_type=None, num_labels=1, model_config_kwargs={}, freeze_module_prefix=None), training_args=TrainingArguments(output_dir='', max_steps=-1, num_train_epochs=1.0, learning_rate=5e-05, lr_scheduler_type='linear', weight_decay=0.0, adam_beta1=0.9, adam_beta2=0.999, per_device_train_batch_size=8, gradient_accumulation_steps=1, seed=42, data_seed=None, dataloader_num_workers=0, fp16=False, bf16=False, tf32=None, warmup_ratio=0.03, warmup_steps=0), data_args=None, generating_args=GeneratingArguments(do_sample=True, temperature=0.7, top_p=0.8, top_k=20, num_beams=1, max_length=512, max_new_tokens=1200, repetition_penalty=1.0, length_penalty=1.0, num_return_sequences=1, stop=['</answer>'], include_stop_str_in_output=True), strategy_args=None, world_size=6, device_mapping=None, num_gpus_per_worker=1, model_update_frequency=1, infer_batch_size=16, backend_timeout=30, system_envs={}, env_groups=30, group_size=32, tags=['Geography-Rollout-Distance-1', 'Geography-Rollout-Distance-3', 'Geography-Rollout-Distance-5'], n_groups=[10, 10, 10], group_seed_base=700000, max_traj_per_env=-1, format_penalty=0.0, minimax_length_penalty_beta=0.0, minimax_length_soft_budget=1000, minimax_length_hard_budget=1200, max_invalid_retries_per_decision=0, enable_length_penalty=False, max_env_num_per_worker=160)
+EnvManagerConfig(name='val_env', worker_cls='roll.pipeline.agentic.environment_worker.EnvironmentWorker', model_args=ModelArguments(model_name_or_path='/home/e/e1300530/models/Qwen3-4B-Instruct-2507/', attn_implementation=None, moe_aux_loss_coef=None, disable_gradient_checkpointing=False, device_map='balanced', dtype='bf16', model_type=None, num_labels=1, model_config_kwargs={}, freeze_module_prefix=None), training_args=TrainingArguments(output_dir='', max_steps=-1, num_train_epochs=1.0, learning_rate=5e-05, lr_scheduler_type='linear', weight_decay=0.0, adam_beta1=0.9, adam_beta2=0.999, per_device_train_batch_size=8, gradient_accumulation_steps=1, seed=42, data_seed=None, dataloader_num_workers=0, fp16=False, bf16=False, tf32=None, warmup_ratio=0.03, warmup_steps=0), data_args=None, generating_args=GeneratingArguments(do_sample=True, temperature=0.7, top_p=0.8, top_k=20, num_beams=1, max_length=512, max_new_tokens=1200, repetition_penalty=1.0, length_penalty=1.0, num_return_sequences=1, stop=['</answer>'], include_stop_str_in_output=True), strategy_args=None, world_size=1, device_mapping=None, num_gpus_per_worker=1, model_update_frequency=1, infer_batch_size=16, backend_timeout=30, system_envs={}, env_groups=32, group_size=1, tags=['TicTacToe-first-100', 'TicTacToe-second-100', 'TicTacToe-first-1000', 'TicTacToe-second-1000'], n_groups=[8, 8, 8, 8], group_seed_base=None, max_traj_per_env=-1, format_penalty=0.0, minimax_length_penalty_beta=0.0, minimax_length_soft_budget=200, minimax_length_hard_budget=600, max_invalid_retries_per_decision=0, enable_length_penalty=False, max_env_num_per_worker=32)
+[2026-08-10 12:05:31] [agentic_config.py (309)] [INFO] [DRIVER 0 / 1][PID 1153490] train_env_manager.max_traj_per_env: 1
+[2026-08-10 12:05:31] [agentic_config.py (316)] [INFO] [DRIVER 0 / 1][PID 1153490] val_env_manager.max_traj_per_env: 1
+[2026-08-10 12:05:32] [initialize.py (59)] [INFO] [DRIVER 0 / 1][PID 1153490] Starting ray cluster: ray start --head --port=6379 --node-name=127.0.0.1:0 --num-gpus=1
+2026-08-10 12:05:36,510	INFO worker.py:1694 -- Connecting to existing Ray cluster at address: 192.168.51.175:6379...
+2026-08-10 12:05:36,553	INFO worker.py:1888 -- Connected to Ray cluster.
+[2026-08-10 12:05:40] [initialize.py (88)] [INFO] [DRIVER 0 / 1][PID 1153490] Ray cluster initialized
+2026-08-10 12:05:40,778	INFO log_monitor.py:157 -- Starting log monitor with [max open files=200], [is_autoscaler_v2=False]
+[2026-08-10 12:05:40] [initialize.py (95)] [INFO] [DRIVER 0 / 1][PID 1153490] Current ray cluster resources: {'node:192.168.51.175': 1.0, 'GPU': 1.0, 'CPU': 128.0, 'memory': 869262868480.0, 'node:__internal_head__': 1.0, 'object_store_memory': 200000000000.0, 'accelerator_type:H100': 1.0}
+[33m(raylet, ip=192.168.51.175)[0m bash: /home/e/e1300530/miniconda3/envs/marshal/lib/libtinfo.so.6: no version information available (required by bash)
+[2026-08-10 12:05:45,461] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+/home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/megatron/core/transformer/multi_token_prediction.py:60: UserWarning: Apex is not installed. Falling back to Torch Norm
+  warnings.warn('Apex is not installed. Falling back to Torch Norm')
+/home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/megatron/core/models/gpt/gpt_layer_specs.py:65: UserWarning: Apex is not installed. Falling back to Torch Norm
+  warnings.warn('Apex is not installed. Falling back to Torch Norm')
+[33m(raylet, ip=192.168.51.175)[0m bash: /home/e/e1300530/miniconda3/envs/marshal/lib/libtinfo.so.6: no version information available (required by bash)
+[33m(raylet, ip=192.168.51.175)[0m bash: /home/e/e1300530/miniconda3/envs/marshal/lib/libtinfo.so.6: no version information available (required by bash)
+Warning: The cache directory for DeepSpeed Triton autotune, /home/e/e1300530/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+gpu ranks: [['0']]
+node2pg: {0: <ray.util.placement_group.PlacementGroup object at 0x7b632c116950>}
+[2026-08-10 12:05:55] [checkpoint_manager.py (55)] [INFO] [DRIVER 0 / 1][PID 1153490] checkpoint_config: {}
+[2026-08-10 12:05:55] [tracking.py (132)] [INFO] [DRIVER 0 / 1][PID 1153490] create tracker tensorboard, kwargs: {'log_dir': './runs/geography_root_pilot/20260810-120528/tensorboard'}
+[2026-08-10 12:05:55] [agentic_config.py (380)] [INFO] [DRIVER 0 / 1][PID 1153490] pipeline max_steps: 1 to 1
+[2026-08-10 12:05:55] [agentic_config.py (381)] [INFO] [DRIVER 0 / 1][PID 1153490] actor train max_steps without dp_size: 240
+[2026-08-10 12:05:55] [agentic_config.py (382)] [INFO] [DRIVER 0 / 1][PID 1153490] critic train max_steps without dp_size: 120
+[2026-08-10 12:05:56] [cluster.py (43)] [INFO] [DRIVER 0 / 1][PID 1153490] wrap ActorWorker to ray.remote()
+[36m(pid=1165010, ip=192.168.51.175)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/megatron/core/transformer/multi_token_prediction.py:60: UserWarning: Apex is not installed. Falling back to Torch Norm
+[36m(pid=1165010, ip=192.168.51.175)[0m   warnings.warn('Apex is not installed. Falling back to Torch Norm')
+[33m(raylet, ip=192.168.51.175)[0m bash: /home/e/e1300530/miniconda3/envs/marshal/lib/libtinfo.so.6: no version information available (required by bash)
+[36m(pid=1165010, ip=192.168.51.175)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/megatron/core/models/gpt/gpt_layer_specs.py:65: UserWarning: Apex is not installed. Falling back to Torch Norm
+[36m(pid=1165010, ip=192.168.51.175)[0m   warnings.warn('Apex is not installed. Falling back to Torch Norm')
+[33m(raylet, ip=192.168.51.175)[0m bash: /home/e/e1300530/miniconda3/envs/marshal/lib/libtinfo.so.6: no version information available (required by bash)
+[36m(pid=1165010, ip=192.168.51.175)[0m add logger: log_rank_actor_infer-0_0_1
+[36m(pid=1165010, ip=192.168.51.175)[0m Created or verified log directory: ./runs/geography_root_pilot/20260810-120528/logs
+[36m(pid=1165010, ip=192.168.51.175)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/geography_root_pilot/20260810-120528/logs/log_rank_actor_infer-0_0_1.log
+[36m(pid=1165010, ip=192.168.51.175)[0m [2026-08-10 12:06:00,667] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[36m(pid=1165010, ip=192.168.51.175)[0m Warning: The cache directory for DeepSpeed Triton autotune, /home/e/e1300530/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+[2026-08-10 12:06:09] [cluster.py (43)] [INFO] [DRIVER 0 / 1][PID 1153490] wrap EnvironmentWorker to ray.remote()
+[36m(SharedStorage pid=1165116, ip=192.168.51.175)[0m MASTER_ADDR_PORT:192.168.51.175:57607 is not found in storage
+[36m(pid=1165274, ip=192.168.51.175)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/megatron/core/models/gpt/gpt_layer_specs.py:65: UserWarning: Apex is not installed. Falling back to Torch Norm[32m [repeated 2x across cluster] (Ray deduplicates logs by default. Set RAY_DEDUP_LOGS=0 to disable log deduplication, or see https://docs.ray.io/en/master/ray-observability/user-guides/configure-logging.html#log-deduplication for more options.)[0m
+[36m(pid=1165274, ip=192.168.51.175)[0m   warnings.warn('Apex is not installed. Falling back to Torch Norm')[32m [repeated 2x across cluster][0m
+[33m(raylet, ip=192.168.51.175)[0m bash: /home/e/e1300530/miniconda3/envs/marshal/lib/libtinfo.so.6: no version information available (required by bash)[32m [repeated 4x across cluster][0m
+[36m(SharedStorage pid=1165116, ip=192.168.51.175)[0m MASTER_ADDR_PORT:192.168.51.175:51131 is not found in storage
+[36m(pid=1165684, ip=192.168.51.175)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/megatron/core/models/gpt/gpt_layer_specs.py:65: UserWarning: Apex is not installed. Falling back to Torch Norm[32m [repeated 4x across cluster][0m
+[36m(pid=1165684, ip=192.168.51.175)[0m   warnings.warn('Apex is not installed. Falling back to Torch Norm')[32m [repeated 4x across cluster][0m
+[33m(raylet, ip=192.168.51.175)[0m bash: /home/e/e1300530/miniconda3/envs/marshal/lib/libtinfo.so.6: no version information available (required by bash)[32m [repeated 5x across cluster][0m
+[36m(pid=1165681, ip=192.168.51.175)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/megatron/core/models/gpt/gpt_layer_specs.py:65: UserWarning: Apex is not installed. Falling back to Torch Norm[32m [repeated 8x across cluster][0m
+[36m(pid=1165681, ip=192.168.51.175)[0m   warnings.warn('Apex is not installed. Falling back to Torch Norm')[32m [repeated 8x across cluster][0m
+[33m(raylet, ip=192.168.51.175)[0m bash: /home/e/e1300530/miniconda3/envs/marshal/lib/libtinfo.so.6: no version information available (required by bash)
+log redirect to filename: ./runs/geography_root_pilot/20260810-120528/logs/SharedStorage.log
+[36m(pid=1165239, ip=192.168.51.175)[0m add logger: log_rank_DRIVER_0_1
+[36m(pid=1165239, ip=192.168.51.175)[0m Created or verified log directory: ./runs/geography_root_pilot/20260810-120528/logs
+[36m(pid=1165239, ip=192.168.51.175)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/geography_root_pilot/20260810-120528/logs/log_rank_DRIVER_0_1.log
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m [2026-08-10 12:06:14,580] [WARNING] [real_accelerator.py:181:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m [2026-08-10 12:06:14,581] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cpu (auto detect)
+log redirect to filename: ./runs/geography_root_pilot/20260810-120528/logs/RequestScheduler.log
+[36m(pid=1165274, ip=192.168.51.175)[0m add logger: log_rank_train_env-0_0_6
+[36m(pid=1165274, ip=192.168.51.175)[0m Created or verified log directory: ./runs/geography_root_pilot/20260810-120528/logs
+[36m(pid=1165274, ip=192.168.51.175)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/geography_root_pilot/20260810-120528/logs/log_rank_train_env-0_0_6.log
+[36m(pid=1165274, ip=192.168.51.175)[0m [2026-08-10 12:06:15,325] [WARNING] [real_accelerator.py:181:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.
+[36m(pid=1165274, ip=192.168.51.175)[0m [2026-08-10 12:06:15,327] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cpu (auto detect)
+[36m(pid=1165682, ip=192.168.51.175)[0m add logger: log_rank_train_env-3_3_6
+[36m(pid=1165682, ip=192.168.51.175)[0m Created or verified log directory: ./runs/geography_root_pilot/20260810-120528/logs
+[36m(pid=1165682, ip=192.168.51.175)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/geography_root_pilot/20260810-120528/logs/log_rank_train_env-3_3_6.log
+[36m(pid=1165681, ip=192.168.51.175)[0m add logger: log_rank_train_env-2_2_6
+[36m(pid=1165681, ip=192.168.51.175)[0m Created or verified log directory: ./runs/geography_root_pilot/20260810-120528/logs
+[36m(pid=1165681, ip=192.168.51.175)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/geography_root_pilot/20260810-120528/logs/log_rank_train_env-2_2_6.log
+[36m(pid=1165682, ip=192.168.51.175)[0m [2026-08-10 12:06:27,553] [WARNING] [real_accelerator.py:181:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.
+[36m(pid=1165682, ip=192.168.51.175)[0m [2026-08-10 12:06:27,555] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cpu (auto detect)
+[36m(pid=1165680, ip=192.168.51.175)[0m add logger: log_rank_train_env-1_1_6[32m [repeated 3x across cluster][0m
+[36m(pid=1165680, ip=192.168.51.175)[0m Created or verified log directory: ./runs/geography_root_pilot/20260810-120528/logs[32m [repeated 3x across cluster][0m
+[36m(pid=1165680, ip=192.168.51.175)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/geography_root_pilot/20260810-120528/logs/log_rank_train_env-1_1_6.log[32m [repeated 3x across cluster][0m
+[36m(EnvironmentWorker(train_env-1) pid=1165680, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}
+[36m(pid=1165680, ip=192.168.51.175)[0m [2026-08-10 12:06:32,573] [WARNING] [real_accelerator.py:181:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.[32m [repeated 4x across cluster][0m
+[36m(pid=1165680, ip=192.168.51.175)[0m [2026-08-10 12:06:32,574] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cpu (auto detect)[32m [repeated 4x across cluster][0m
+log redirect to filename: ./runs/geography_root_pilot/20260810-120528/logs/EnvironmentWorker(train_env-1).log
+log redirect to filename: ./runs/geography_root_pilot/20260810-120528/logs/EnvironmentWorker(train_env-2).log
+log redirect to filename: ./runs/geography_root_pilot/20260810-120528/logs/EnvironmentWorker(train_env-0).log
+log redirect to filename: ./runs/geography_root_pilot/20260810-120528/logs/EnvironmentWorker(train_env-3).log
+log redirect to filename: ./runs/geography_root_pilot/20260810-120528/logs/EnvironmentWorker(train_env-5).log
+log redirect to filename: ./runs/geography_root_pilot/20260810-120528/logs/EnvironmentWorker(train_env-4).log
+[36m(EnvironmentWorker(train_env-0) pid=1165274, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 36x across cluster][0m
+[36m(EnvironmentWorker(train_env-2) pid=1165681, ip=192.168.51.175)[0m 
+[36m(EnvironmentWorker(train_env-3) pid=1165682, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 33x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=1165274, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 36x across cluster][0m
+[36m(EnvironmentWorker(train_env-1) pid=1165680, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 31x across cluster][0m
+[36m(EnvironmentWorker(train_env-3) pid=1165682, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 30x across cluster][0m
+[36m(EnvironmentWorker(train_env-5) pid=1165684, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 33x across cluster][0m
+[36m(EnvironmentWorker(train_env-5) pid=1165684, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 31x across cluster][0m
+[36m(EnvironmentWorker(train_env-5) pid=1165684, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 32x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=1165274, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 31x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=1165274, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 31x across cluster][0m
+[36m(EnvironmentWorker(train_env-2) pid=1165681, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 31x across cluster][0m
+[36m(EnvironmentWorker(train_env-2) pid=1165681, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 31x across cluster][0m
+[36m(EnvironmentWorker(train_env-2) pid=1165681, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 31x across cluster][0m
+[36m(EnvironmentWorker(train_env-4) pid=1165683, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 30x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=1165274, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 27x across cluster][0m
+[36m(EnvironmentWorker(train_env-2) pid=1165681, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 31x across cluster][0m
+[36m(EnvironmentWorker(train_env-2) pid=1165681, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 31x across cluster][0m
+[36m(EnvironmentWorker(train_env-2) pid=1165681, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 31x across cluster][0m
+[36m(EnvironmentWorker(train_env-4) pid=1165683, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 30x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=1165274, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 29x across cluster][0m
+[36m(EnvironmentWorker(train_env-4) pid=1165683, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 27x across cluster][0m
+[36m(EnvironmentWorker(train_env-2) pid=1165681, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 31x across cluster][0m
+[36m(EnvironmentWorker(train_env-3) pid=1165682, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 29x across cluster][0m
+[36m(EnvironmentWorker(train_env-2) pid=1165681, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 27x across cluster][0m
+[36m(EnvironmentWorker(train_env-1) pid=1165680, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 27x across cluster][0m
+[36m(EnvironmentWorker(train_env-4) pid=1165683, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 28x across cluster][0m
+[36m(EnvironmentWorker(train_env-3) pid=1165682, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 28x across cluster][0m
+[36m(EnvironmentWorker(train_env-4) pid=1165683, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 21x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=1165274, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 23x across cluster][0m
+[36m(EnvironmentWorker(train_env-4) pid=1165683, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 22x across cluster][0m
+[36m(EnvironmentWorker(train_env-1) pid=1165680, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 22x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=1165274, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 21x across cluster][0m
+[36m(EnvironmentWorker(train_env-5) pid=1165684, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 23x across cluster][0m
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:09:35 [__init__.py:239] Automatically detected platform cuda.
+log redirect to filename: ./runs/geography_root_pilot/20260810-120528/logs/ActorWorker(actor_infer-0).log
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m [2026-08-10 12:09:38] [vllm_strategy.py (76)] [INFO] [actor_infer-0 0 / 1][PID 1165010] vllm_config: {'gpu_memory_utilization': 0.8, 'block_size': 16, 'load_format': 'auto', 'max_model_len': 4096, 'tensor_parallel_size': 1, 'model': '/home/e/e1300530/models/Qwen3-4B-Instruct-2507/', 'dtype': 'bfloat16', 'enforce_eager': True, 'trust_remote_code': True, 'seed': 42, 'disable_custom_all_reduce': True, 'enable_prefix_caching': False}
+[36m(EnvironmentWorker(train_env-0) pid=1165274, ip=192.168.51.175)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 4x across cluster][0m
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:09:46 [config.py:689] This model supports multiple tasks: {'generate', 'reward', 'score', 'embed', 'classify'}. Defaulting to 'generate'.
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:09:46 [config.py:1901] Chunked prefill is enabled with max_num_batched_tokens=16384.
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m WARNING 08-10 12:09:46 [cuda.py:96] To see benefits of async output processing, enable CUDA graph. Since, enforce-eager is enabled, async output processor cannot be used
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m [2026-08-10 12:09:47] [llm_engine.py (179)] [INFO] [actor_infer-0 0 / 1][PID 1165010] Using executor_class: <class 'vllm.v1.executor.abstract.UniProcExecutor'>
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m [2026-08-10 12:09:47] [llm_engine.py (180)] [INFO] [actor_infer-0 0 / 1][PID 1165010] Using worker cls: roll.third_party.vllm.vllm_0_8_4.v1.worker.Worker084
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:09:52 [__init__.py:239] Automatically detected platform cuda.
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:09:54 [core.py:61] Initializing a V1 LLM engine (v0.8.4) with config: model='/home/e/e1300530/models/Qwen3-4B-Instruct-2507/', speculative_config=None, tokenizer='/home/e/e1300530/models/Qwen3-4B-Instruct-2507/', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, override_neuron_config=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=4096, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, disable_custom_all_reduce=True, quantization=None, enforce_eager=True, kv_cache_dtype=auto,  device_config=cuda, decoding_config=DecodingConfig(guided_decoding_backend='auto', reasoning_backend=None), observability_config=ObservabilityConfig(show_hidden_metrics=False, otlp_traces_endpoint=None, collect_model_forward_time=False, collect_model_execute_time=False), seed=42, served_model_name=/home/e/e1300530/models/Qwen3-4B-Instruct-2507/, num_scheduler_steps=1, multi_step_stream_outputs=True, enable_prefix_caching=False, chunked_prefill_enabled=True, use_async_output_proc=False, disable_mm_preprocessor_cache=False, mm_processor_kwargs=None, pooler_config=None, compilation_config={"splitting_ops":[],"compile_sizes":[],"cudagraph_capture_sizes":[],"max_capture_size":0}
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m add logger: log_rank_actor_infer-0_0_1
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m Created or verified log directory: ./runs/geography_root_pilot/20260810-120528/logs
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/geography_root_pilot/20260810-120528/logs/log_rank_actor_infer-0_0_1.log
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m WARNING 08-10 12:09:55 [utils.py:2444] Methods determine_num_available_blocks,device_config,get_cache_block_size_bytes,initialize_cache not implemented in <roll.third_party.vllm.vllm_0_8_4.v1.worker.Worker084 object at 0x770e7c2d70d0>
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:09:56 [parallel_state.py:959] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, TP rank 0
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:09:56 [cuda.py:221] Using Flash Attention backend on V1 engine.
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:09:56 [gpu_model_runner.py:1276] Starting to load model /home/e/e1300530/models/Qwen3-4B-Instruct-2507/...
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m Loading safetensors checkpoint shards:   0% Completed | 0/3 [00:00<?, ?it/s]
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m Loading safetensors checkpoint shards:  33% Completed | 1/3 [00:00<00:00,  2.77it/s]
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m Loading safetensors checkpoint shards:  67% Completed | 2/3 [00:00<00:00,  2.35it/s]
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m Loading safetensors checkpoint shards: 100% Completed | 3/3 [00:00<00:00,  3.55it/s]
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m Loading safetensors checkpoint shards: 100% Completed | 3/3 [00:00<00:00,  3.18it/s]
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m 
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m WARNING 08-10 12:09:56 [topk_topp_sampler.py:69] FlashInfer is not available. Falling back to the PyTorch-native implementation of top-p & top-k sampling. For the best performance, please install FlashInfer.
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:09:57 [loader.py:458] Loading weights took 0.95 seconds
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:09:57 [gpu_model_runner.py:1291] Model loading took 7.6064 GiB and 1.062067 seconds
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:09:58 [kv_cache_utils.py:634] GPU KV cache size: 440,768 tokens
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:09:58 [kv_cache_utils.py:637] Maximum concurrency for 4,096 tokens per request: 107.61x
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:09:58 [core.py:163] init engine (profile, create kv cache, warmup model) took 0.82 seconds
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:09:58 [core_client.py:435] Core engine process 0 ready.
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m [2026-08-10 12:09:58] [vllm_strategy.py (94)] [INFO] [actor_infer-0 0 / 1][PID 1165010] add [AddedToken("<|endoftext|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True)] to additional_special_tokens: ['<|im_start|>', '<|im_end|>', '<|object_ref_start|>', '<|object_ref_end|>', '<|box_start|>', '<|box_end|>', '<|quad_start|>', '<|quad_end|>', '<|vision_start|>', '<|vision_end|>', '<|vision_pad|>', '<|image_pad|>', '<|video_pad|>', '<|endoftext|>']
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m [2026-08-10 12:09:58] [base_worker.py (73)] [INFO] [actor_infer-0 0 / 1][PID 1165010] actor_infer-0 initialized
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:09:58 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:10:04 [gpu_worker.py:81] Sleep mode freed 73.79 GiB memory, 0.80 GiB memory is still in use.
+[2026-08-10 12:10:04] [agentic_rollout_pipeline.py (60)] [INFO] [DRIVER 0 / 1][PID 1153490] pipeline rollout global step 0 start...
+preflight rollout progress(trajectory):   0%|          | 0/960 [00:00<?, ?it/s][36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/torch/cuda/memory.py:391: FutureWarning: torch.cuda.reset_max_memory_allocated now calls torch.cuda.reset_peak_memory_stats, which resets /all/ peak memory stats.
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m   warnings.warn(
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/torch/cuda/memory.py:417: FutureWarning: torch.cuda.reset_max_memory_cached now calls torch.cuda.reset_peak_memory_stats, which resets /all/ peak memory stats.
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m   warnings.warn(
+preflight rollout progress(trajectory):  13%|█▎        | 128/960 [01:41<11:01,  1.26it/s]preflight rollout progress(trajectory):  73%|███████▎  | 704/960 [02:00<03:23,  1.26it/s][36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m [2026-08-10 12:10:04] [base_worker.py (191)] [INFO] [actor_infer-0 0 / 1][PID 1165010] actor_infer-0 generate server global step 0
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m [2026-08-10 12:10:04] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 1165010] actor_infer/generate_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 1.0216941833496094
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m [2026-08-10 12:10:05] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 1165010] actor_infer/generate_start_onload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 1.0216941833496094
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m Elapsed time: 0.4081 seconds
+[36m(_QueueActor pid=1165240, ip=192.168.51.175)[0m add logger: log_rank_DRIVER_0_1
+[36m(_QueueActor pid=1165240, ip=192.168.51.175)[0m Created or verified log directory: ./runs/geography_root_pilot/20260810-120528/logs
+[36m(_QueueActor pid=1165240, ip=192.168.51.175)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/geography_root_pilot/20260810-120528/logs/log_rank_DRIVER_0_1.log
+log redirect to filename: ./runs/geography_root_pilot/20260810-120528/logs/_QueueActor.log
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m Elapsed time: 136.5288 seconds
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m [2026-08-10 12:12:21] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 1165010] actor_infer/generate_end_onload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.001953125, rss (GB): 1.70806884765625
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:12:21 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m INFO 08-10 12:12:22 [gpu_worker.py:81] Sleep mode freed 75.92 GiB memory, 1.62 GiB memory is still in use.
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m [2026-08-10 12:12:22] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 1165010] actor_infer/generate_end_offload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.001953125, rss (GB): 1.7028160095214844
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m Elapsed time: 0.9027 seconds
+[36m(ActorWorker(actor_infer-0) pid=1165010, ip=192.168.51.175)[0m Elapsed time: 137.8398 seconds
+[2026-08-10 12:12:23] [agentic_rollout_pipeline.py (96)] [INFO] [DRIVER 0 / 1][PID 1153490] Preflight summary: {"game_count": 0, "observed_game_count": 30, "partial_game_count": 30, "turn_count": 960, "decision_count": 960, "first_attempt_valid_count": 545, "first_attempt_validity_rate": 0.5677083333333334, "eventual_valid_count": 545, "eventual_validity_rate": 0.5677083333333334, "retry_attempt_count": 0, "retry_success_count": 0, "retry_success_rate": 0.0, "additional_retry_tokens": 0, "final_episode_truncation_count": 26, "final_episode_truncation_rate": 0.8666666666666667, "role_first_attempt_validity_gap": 0.5677083333333334, "role_eventual_validity_gap": 0.5677083333333334, "completed_legal_game_count": 0, "completed_legal_game_rate": 0.0, "valid_action_count": 545, "valid_action_rate": 0.5677083333333334, "closing_answer_tag_count": 579, "closing_answer_tag_rate": 0.603125, "token_limit_hit_count": 381, "token_limit_hit_rate": 0.396875, "missing_answer_count": 381, "missing_answer_rate": 0.396875, "capped_without_answer_count": 381, "capped_without_answer_rate": 0.396875, "role_validity_asymmetry": 0.5677083333333334, "counterfactual_optimal_action_count": 370, "counterfactual_optimality_rate": 0.3854166666666667, "minimax_optimal_action_count": 370, "minimax_optimality_rate": 0.3854166666666667, "role_minimax_optimality_gap": 0.3854166666666667, "action_diversity": {"unique_action_count": 12, "action_counts": {"N0": 61, "N1": 83, "N10": 10, "N11": 70, "N2": 46, "N3": 4, "N4": 49, "N5": 36, "N6": 32, "N7": 72, "N8": 16, "N9": 66}, "dominant_action_rate": 0.15229357798165138}, "response_length": {"median": 801.5, "p90": 1200.0, "p95": 1200.0, "p99": 1200.0, "max": 1200}, "by_player": {"0": {"turn_count": 960, "valid_action_rate": 0.5677083333333334, "closing_answer_tag_rate": 0.603125, "token_limit_hit_rate": 0.396875, "missing_answer_rate": 0.396875, "minimax_optimal_action_count": 370, "minimax_optimality_rate": 0.3854166666666667, "first_attempt_count": 960, "first_attempt_validity_rate": 0.5677083333333334, "retry_attempt_count": 0, "retry_success_rate": 0.0, "eventual_validity_rate": 0.5677083333333334, "additional_retry_tokens": 0}, "1": {"turn_count": 0, "valid_action_rate": 0.0, "closing_answer_tag_rate": 0.0, "token_limit_hit_rate": 0.0, "missing_answer_rate": 0.0, "minimax_optimal_action_count": 0, "minimax_optimality_rate": 0.0, "first_attempt_count": 0, "first_attempt_validity_rate": 0.0, "retry_attempt_count": 0, "retry_success_rate": 0.0, "eventual_validity_rate": 0.0, "additional_retry_tokens": 0}}, "gate": {"valid_action_rate_at_least_0_95": false, "eventual_validity_rate_at_least_0_95": false, "closing_answer_tag_rate_at_least_0_95": false, "token_limit_hit_rate_at_most_0_02": false, "role_validity_asymmetry_at_most_0_05": false, "at_least_3_unique_actions": true, "dominant_action_rate_at_most_0_80": true}, "passed": false, "informative_decisions_by_remaining_optimal_distance": {"1": {"decision_count": 299, "optimal_action_rate": 0.9765886287625418, "normalized_regret_mean": 0.023411371237458192}, "3": {"decision_count": 110, "optimal_action_rate": 0.41818181818181815, "normalized_regret_mean": 0.5818181818181818}, "5": {"decision_count": 136, "optimal_action_rate": 0.23529411764705882, "normalized_regret_mean": 0.7647058823529411}}, "root_move_pass_at_k": {"Geography-Rollout-Distance-1": {"graph_count": 10, "sample_count": 320, "valid_action_rate": 0.934375, "token_limit_hit_rate": 0.05625, "graphs_with_pass@1": 10, "pass@1": 0.9125, "graphs_with_pass@8": 10, "pass@8": 0.9999995721742106, "graphs_with_pass@32": 10, "pass@32": 1.0}, "Geography-Rollout-Distance-3": {"graph_count": 10, "sample_count": 320, "valid_action_rate": 0.34375, "token_limit_hit_rate": 0.6, "graphs_with_pass@1": 10, "pass@1": 0.14375, "graphs_with_pass@8": 10, "pass@8": 0.6558249336870027, "graphs_with_pass@32": 10, "pass@32": 0.9}, "Geography-Rollout-Distance-5": {"graph_count": 10, "sample_count": 320, "valid_action_rate": 0.425, "token_limit_hit_rate": 0.534375, "graphs_with_pass@1": 10, "pass@1": 0.1, "graphs_with_pass@8": 10, "pass@8": 0.5090211916374319, "graphs_with_pass@32": 10, "pass@32": 0.9}, "overall": {"graph_count": 30, "sample_count": 960, "valid_action_rate": 0.5677083333333334, "token_limit_hit_rate": 0.396875, "graphs_with_pass@1": 30, "pass@1": 0.3854166666666667, "graphs_with_pass@8": 30, "pass@8": 0.7216152324995484, "graphs_with_pass@32": 30, "pass@32": 0.9333333333333333}}}
+[2026-08-10 12:12:24] [agentic_rollout_pipeline.py (134)] [INFO] [DRIVER 0 / 1][PID 1153490] [{"prompt": "system\nYou are playing Directed Acyclic Graph Vertex Geography.user\nThe players alternate moving a token along one directed edge. A player with no legal move loses. Choose one legal destination that maximizes your final game outcome.\n\nAnalyze the graph carefully. Consider future moves and the opponent's possible responses before choosing.\n\nOutput exactly:\n<reason>your analysis</reason>\n<answer>NODE</answer>\n\nDo not output anything else.\n\nYou are Player 1.\n\nCurrent node: N7\n\nDirected graph:\nN0 -> terminal\nN2 -> terminal\nN9 -> terminal\nN4 -> N3, N11, N8\nN8 -> terminal\nN7 -> N1, N5\nN3 -> terminal\nN1 -> terminal\nN11 -> N6, N0, N9\nN10 -> N3\nN5 -> N2, N1, N4\nN6 -> N10\n\nLegal moves: N1, N5assistant\n", "response": "<reason>Starting at N7, Player 1 can move to either N1 or N5.  \n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.  \n- Moving to N5: From N5, the next moves are to N2, N1, or N4.  \n  - N2 and N1 are terminal nodes, so if Player 2 moves to either, they lose immediately.  \n  - N4 leads to N3, N11, or N8 — all of which eventually lead to terminal nodes.  \n  - However, if Player 1 moves to N5, Player 2 can choose N2 or N1 and win immediately. So N5 is a losing move for Player 1.  \n\nTherefore, the best move is to N1, which ends the game immediately and causes Player 2 to lose. This is a winning move with no risk and optimal outcome.</reason>\n<answer>N1</answer>", "episode_score": 1.0, "llm_raw_text": "<|im_start|>assistant\n<reason>Starting at N7, Player 1 can move to either N1 or N5.  \n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.  \n- Moving to N5: From N5, the next moves are to N2, N1, or N4.  \n  - N2 and N1 are terminal nodes, so if Player 2 moves to either, they lose immediately.  \n  - N4 leads to N3, N11, or N8 — all of which eventually lead to terminal nodes.  \n  - However, if Player 1 moves to N5, Player 2 can choose N2 or N1 and win immediately. So N5 is a losing move for Player 1.  \n\nTherefore, the best move is to N1, which ends the game immediately and causes Player 2 to lose. This is a winning move with no risk and optimal outcome.</reason>\n<answer>N1</answer><|im_end|>"}, {"prompt": "system\nYou are playing Directed Acyclic Graph Vertex Geography.user\nThe players alternate moving a token along one directed edge. A player with no legal move loses. Choose one legal destination that maximizes your final game outcome.\n\nAnalyze the graph carefully. Consider future moves and the opponent's possible responses before choosing.\n\nOutput exactly:\n<reason>your analysis</reason>\n<answer>NODE</answer>\n\nDo not output anything else.\n\nYou are Player 1.\n\nCurrent node: N7\n\nDirected graph:\nN0 -> terminal\nN2 -> terminal\nN9 -> terminal\nN4 -> N3, N11, N8\nN8 -> terminal\nN7 -> N1, N5\nN3 -> terminal\nN1 -> terminal\nN11 -> N6, N0, N9\nN10 -> N3\nN5 -> N2, N1, N4\nN6 -> N10\n\nLegal moves: N1, N5assistant\n", "response": "<reason>Starting at N7, Player 1 can move to either N1 or N5.  \n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.  \n- Moving to N5: From N5, the possible moves are N2, N1, N4.  \n  - N2 and N1 are terminal nodes.  \n  - N4 leads to N3, N11, N8 — all of which eventually lead to terminal nodes.  \n  - Thus, from N5, the game continues, and Player 2 will eventually be forced into a terminal node.  \n  However, if Player 1 moves to N1 directly, the game ends immediately and Player 2 loses. This is a winning move with no risk.  \nTherefore, the optimal choice is to move to N1, which ends the game immediately and guarantees a win.</reason>\n<answer>N1</answer>", "episode_score": 1.0, "llm_raw_text": "<|im_start|>assistant\n<reason>Starting at N7, Player 1 can move to either N1 or N5.  \n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.  \n- Moving to N5: From N5, the possible moves are N2, N1, N4.  \n  - N2 and N1 are terminal nodes.  \n  - N4 leads to N3, N11, N8 — all of which eventually lead to terminal nodes.  \n  - Thus, from N5, the game continues, and Player 2 will eventually be forced into a terminal node.  \n  However, if Player 1 moves to N1 directly, the game ends immediately and Player 2 loses. This is a winning move with no risk.  \nTherefore, the optimal choice is to move to N1, which ends the game immediately and guarantees a win.</reason>\n<answer>N1</answer><|im_end|>"}, {"prompt": "system\nYou are playing Directed Acyclic Graph Vertex Geography.user\nThe players alternate moving a token along one directed edge. A player with no legal move loses. Choose one legal destination that maximizes your final game outcome.\n\nAnalyze the graph carefully. Consider future moves and the opponent's possible responses before choosing.\n\nOutput exactly:\n<reason>your analysis</reason>\n<answer>NODE</answer>\n\nDo not output anything else.\n\nYou are Player 1.\n\nCurrent node: N7\n\nDirected graph:\nN0 -> terminal\nN2 -> terminal\nN9 -> terminal\nN4 -> N3, N11, N8\nN8 -> terminal\nN7 -> N1, N5\nN3 -> terminal\nN1 -> terminal\nN11 -> N6, N0, N9\nN10 -> N3\nN5 -> N2, N1, N4\nN6 -> N10\n\nLegal moves: N1, N5assistant\n", "response": "<reason>Starting at N7, Player 1 can move to either N1 or N5. \n\n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.\n- Moving to N5: From N5, the next moves are to N2, N1, or N4. \n  - N2 and N1 are terminal, so if Player 2 moves to either, they lose immediately.\n  - N4 leads to N3, N11, or N8 — all of which eventually lead to terminal nodes. \n  - However, if Player 1 moves to N5, Player 2 can choose N2 or N1 (both terminal), and thus Player 2 wins immediately. So this is a losing move for Player 1.\n\nTherefore, the optimal move is to go directly to N1, which ends the game immediately and causes Player 2 to lose. This move maximizes Player 1's outcome.</reason>\n<answer>N1</answer>", "episode_score": 1.0, "llm_raw_text": "<|im_start|>assistant\n<reason>Starting at N7, Player 1 can move to either N1 or N5. \n\n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.\n- Moving to N5: From N5, the next moves are to N2, N1, or N4. \n  - N2 and N1 are terminal, so if Player 2 moves to either, they lose immediately.\n  - N4 leads to N3, N11, or N8 — all of which eventually lead to terminal nodes. \n  - However, if Player 1 moves to N5, Player 2 can choose N2 or N1 (both terminal), and thus Player 2 wins immediately. So this is a losing move for Player 1.\n\nTherefore, the optimal move is to go directly to N1, which ends the game immediately and causes Player 2 to lose. This move maximizes Player 1's outcome.</reason>\n<answer>N1</answer><|im_end|>"}, {"prompt": "system\nYou are playing Directed Acyclic Graph Vertex Geography.user\nThe players alternate moving a token along one directed edge. A player with no legal move loses. Choose one legal destination that maximizes your final game outcome.\n\nAnalyze the graph carefully. Consider future moves and the opponent's possible responses before choosing.\n\nOutput exactly:\n<reason>your analysis</reason>\n<answer>NODE</answer>\n\nDo not output anything else.\n\nYou are Player 1.\n\nCurrent node: N7\n\nDirected graph:\nN0 -> terminal\nN2 -> terminal\nN9 -> terminal\nN4 -> N3, N11, N8\nN8 -> terminal\nN7 -> N1, N5\nN3 -> terminal\nN1 -> terminal\nN11 -> N6, N0, N9\nN10 -> N3\nN5 -> N2, N1, N4\nN6 -> N10\n\nLegal moves: N1, N5assistant\n", "response": "<reason>Starting at N7, Player 1 can move to either N1 or N5. \n\n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.\n- Moving to N5: From N5, the token goes to N2 or N1 or N4. \n  - N2 and N1 are terminal, so if Player 2 moves to either, they lose immediately. \n  - If Player 2 moves to N4, then from N4, Player 1 can go to N3, N11, or N8 — all of which are terminal or lead to terminal nodes. So Player 1 would win regardless. \n  - Thus, from N5, Player 2 is forced into a position where they either lose immediately or face a winning response from Player 1.\n\nHowever, the best immediate outcome is to move directly to N1, which is terminal. Player 2 has no legal move and immediately loses. This is a guaranteed win with no risk.\n\nTherefore, the optimal move is to N1.</reason>\n<answer>N1</answer>", "episode_score": 1.0, "llm_raw_text": "<|im_start|>assistant\n<reason>Starting at N7, Player 1 can move to either N1 or N5. \n\n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.\n- Moving to N5: From N5, the token goes to N2 or N1 or N4. \n  - N2 and N1 are terminal, so if Player 2 moves to either, they lose immediately. \n  - If Player 2 moves to N4, then from N4, Player 1 can go to N3, N11, or N8 — all of which are terminal or lead to terminal nodes. So Player 1 would win regardless. \n  - Thus, from N5, Player 2 is forced into a position where they either lose immediately or face a winning response from Player 1.\n\nHowever, the best immediate outcome is to move directly to N1, which is terminal. Player 2 has no legal move and immediately loses. This is a guaranteed win with no risk.\n\nTherefore, the optimal move is to N1.</reason>\n<answer>N1</answer><|im_end|>"}, {"prompt": "system\nYou are playing Directed Acyclic Graph Vertex Geography.user\nThe players alternate moving a token along one directed edge. A player with no legal move loses. Choose one legal destination that maximizes your final game outcome.\n\nAnalyze the graph carefully. Consider future moves and the opponent's possible responses before choosing.\n\nOutput exactly:\n<reason>your analysis</reason>\n<answer>NODE</answer>\n\nDo not output anything else.\n\nYou are Player 1.\n\nCurrent node: N7\n\nDirected graph:\nN0 -> terminal\nN2 -> terminal\nN9 -> terminal\nN4 -> N3, N11, N8\nN8 -> terminal\nN7 -> N1, N5\nN3 -> terminal\nN1 -> terminal\nN11 -> N6, N0, N9\nN10 -> N3\nN5 -> N2, N1, N4\nN6 -> N10\n\nLegal moves: N1, N5assistant\n", "response": "<reason>Starting at N7, Player 1 can move to either N1 or N5. \n\n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.\n- Moving to N5: From N5, the possible moves are to N2, N1, or N4. \n  - N2 and N1 are terminal, so moving to either ends the game immediately for the opponent.\n  - Moving to N4 leads to N3, N11, or N8 — all of which eventually lead to terminal nodes. \n    - N3 → terminal\n    - N8 → terminal\n    - N11 → N6 → N10 → N3 → terminal\n    So, any path from N4 leads to terminal nodes eventually.\n\nThus, moving to N1 immediately ends the game and wins the game. Since Player 1 moves first, choosing N1 results in an immediate win with no further moves for Player 2.\n\nTherefore, the optimal choice is to move to N1, which guarantees a win.</reason>\n<answer>N1</answer>", "episode_score": 1.0, "llm_raw_text": "<|im_start|>assistant\n<reason>Starting at N7, Player 1 can move to either N1 or N5. \n\n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.\n- Moving to N5: From N5, the possible moves are to N2, N1, or N4. \n  - N2 and N1 are terminal, so moving to either ends the game immediately for the opponent.\n  - Moving to N4 leads to N3, N11, or N8 — all of which eventually lead to terminal nodes. \n    - N3 → terminal\n    - N8 → terminal\n    - N11 → N6 → N10 → N3 → terminal\n    So, any path from N4 leads to terminal nodes eventually.\n\nThus, moving to N1 immediately ends the game and wins the game. Since Player 1 moves first, choosing N1 results in an immediate win with no further moves for Player 2.\n\nTherefore, the optimal choice is to move to N1, which guarantees a win.</reason>\n<answer>N1</answer><|im_end|>"}, {"prompt": "system\nYou are playing Directed Acyclic Graph Vertex Geography.user\nThe players alternate moving a token along one directed edge. A player with no legal move loses. Choose one legal destination that maximizes your final game outcome.\n\nAnalyze the graph carefully. Consider future moves and the opponent's possible responses before choosing.\n\nOutput exactly:\n<reason>your analysis</reason>\n<answer>NODE</answer>\n\nDo not output anything else.\n\nYou are Player 1.\n\nCurrent node: N7\n\nDirected graph:\nN0 -> terminal\nN2 -> terminal\nN9 -> terminal\nN4 -> N3, N11, N8\nN8 -> terminal\nN7 -> N1, N5\nN3 -> terminal\nN1 -> terminal\nN11 -> N6, N0, N9\nN10 -> N3\nN5 -> N2, N1, N4\nN6 -> N10\n\nLegal moves: N1, N5assistant\n", "response": "<reason>Starting at N7, Player 1 has two legal moves: to N1 or to N5.  \n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.  \n- Moving to N5: From N5, the next moves are to N2, N1, or N4.  \n  - N2 and N1 are terminal, so if Player 2 moves to either, they lose immediately.  \n  - But if Player 2 moves to N4, then from N4, Player 1 can go to N3 (terminal), N11, or N8 (all terminal). So Player 1 would win in that case too.  \n  However, regardless of the path from N5, eventually the game ends in a terminal node, and the player who cannot move loses.  \n\nBut the key is: if Player 1 moves to N1, the game ends immediately and Player 2 loses. That is a guaranteed win.  \nMoving to N5 gives Player 2 opportunities to respond and potentially avoid immediate loss, but all paths from N5 eventually lead to terminal nodes.  \n\nThus, the optimal move is to N1, which ends the game immediately and wins the game. This is the best outcome.</reason>\n<answer>N1</answer>", "episode_score": 1.0, "llm_raw_text": "<|im_start|>assistant\n<reason>Starting at N7, Player 1 has two legal moves: to N1 or to N5.  \n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.  \n- Moving to N5: From N5, the next moves are to N2, N1, or N4.  \n  - N2 and N1 are terminal, so if Player 2 moves to either, they lose immediately.  \n  - But if Player 2 moves to N4, then from N4, Player 1 can go to N3 (terminal), N11, or N8 (all terminal). So Player 1 would win in that case too.  \n  However, regardless of the path from N5, eventually the game ends in a terminal node, and the player who cannot move loses.  \n\nBut the key is: if Player 1 moves to N1, the game ends immediately and Player 2 loses. That is a guaranteed win.  \nMoving to N5 gives Player 2 opportunities to respond and potentially avoid immediate loss, but all paths from N5 eventually lead to terminal nodes.  \n\nThus, the optimal move is to N1, which ends the game immediately and wins the game. This is the best outcome.</reason>\n<answer>N1</answer><|im_end|>"}, {"prompt": "system\nYou are playing Directed Acyclic Graph Vertex Geography.user\nThe players alternate moving a token along one directed edge. A player with no legal move loses. Choose one legal destination that maximizes your final game outcome.\n\nAnalyze the graph carefully. Consider future moves and the opponent's possible responses before choosing.\n\nOutput exactly:\n<reason>your analysis</reason>\n<answer>NODE</answer>\n\nDo not output anything else.\n\nYou are Player 1.\n\nCurrent node: N7\n\nDirected graph:\nN0 -> terminal\nN2 -> terminal\nN9 -> terminal\nN4 -> N3, N11, N8\nN8 -> terminal\nN7 -> N1, N5\nN3 -> terminal\nN1 -> terminal\nN11 -> N6, N0, N9\nN10 -> N3\nN5 -> N2, N1, N4\nN6 -> N10\n\nLegal moves: N1, N5assistant\n", "response": "<reason>Starting at N7, Player 1 can move to either N1 or N5.  \n- Moving to N1: N1 is a terminal node, so Player 1 wins immediately (opponent has no move). This is a winning move.  \n- Moving to N5: From N5, the next moves are to N2, N1, or N4.  \n  - N2 and N1 are terminal, so if Player 1 moves to N5 and then to N2 or N1, Player 2 would have no move and lose.  \n  - But if Player 1 goes to N5 and then to N4, the game continues. From N4, Player 2 can go to N3, N11, or N8 — all of which eventually lead to terminal nodes. So the game would end in a few steps, but Player 1 would have already made a move. However, since Player 1 moves first, and N1 is a terminal node, moving directly to N1 ends the game immediately and wins the game.  \n\nTherefore, the optimal move is to go directly to N1, which ends the game immediately and results in a win. This move maximizes the final game outcome.</reason>\n<answer>N1</answer>", "episode_score": 1.0, "llm_raw_text": "<|im_start|>assistant\n<reason>Starting at N7, Player 1 can move to either N1 or N5.  \n- Moving to N1: N1 is a terminal node, so Player 1 wins immediately (opponent has no move). This is a winning move.  \n- Moving to N5: From N5, the next moves are to N2, N1, or N4.  \n  - N2 and N1 are terminal, so if Player 1 moves to N5 and then to N2 or N1, Player 2 would have no move and lose.  \n  - But if Player 1 goes to N5 and then to N4, the game continues. From N4, Player 2 can go to N3, N11, or N8 — all of which eventually lead to terminal nodes. So the game would end in a few steps, but Player 1 would have already made a move. However, since Player 1 moves first, and N1 is a terminal node, moving directly to N1 ends the game immediately and wins the game.  \n\nTherefore, the optimal move is to go directly to N1, which ends the game immediately and results in a win. This move maximizes the final game outcome.</reason>\n<answer>N1</answer><|im_end|>"}, {"prompt": "system\nYou are playing Directed Acyclic Graph Vertex Geography.user\nThe players alternate moving a token along one directed edge. A player with no legal move loses. Choose one legal destination that maximizes your final game outcome.\n\nAnalyze the graph carefully. Consider future moves and the opponent's possible responses before choosing.\n\nOutput exactly:\n<reason>your analysis</reason>\n<answer>NODE</answer>\n\nDo not output anything else.\n\nYou are Player 1.\n\nCurrent node: N7\n\nDirected graph:\nN0 -> terminal\nN2 -> terminal\nN9 -> terminal\nN4 -> N3, N11, N8\nN8 -> terminal\nN7 -> N1, N5\nN3 -> terminal\nN1 -> terminal\nN11 -> N6, N0, N9\nN10 -> N3\nN5 -> N2, N1, N4\nN6 -> N10\n\nLegal moves: N1, N5assistant\n", "response": "<reason>Starting at N7, Player 1 can move to either N1 or N5. \n\n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.\n- Moving to N5: From N5, the possible moves are to N2, N1, or N4. \n  - N2 and N1 are terminal nodes, so moving to either ends the game immediately with Player 2 losing.\n  - Moving to N4 leads to N3, N11, or N8 — all of which eventually lead to terminal nodes. \n    - N3 → terminal\n    - N8 → terminal\n    - N11 → N6 → N10 → N3 → terminal\n    So any path from N4 leads to a terminal node eventually.\n\nThus, regardless of whether Player 1 moves to N1 or N5, the game ends on the next move (either immediately or after one more step), and Player 2 has no legal move. However, moving directly to N1 (a terminal node) ends the game immediately, and Player 2 loses without any chance to respond.\n\nTherefore, the optimal move is to go directly to N1, which guarantees an immediate win.</reason>\n<answer>N1</answer>", "episode_score": 1.0, "llm_raw_text": "<|im_start|>assistant\n<reason>Starting at N7, Player 1 can move to either N1 or N5. \n\n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.\n- Moving to N5: From N5, the possible moves are to N2, N1, or N4. \n  - N2 and N1 are terminal nodes, so moving to either ends the game immediately with Player 2 losing.\n  - Moving to N4 leads to N3, N11, or N8 — all of which eventually lead to terminal nodes. \n    - N3 → terminal\n    - N8 → terminal\n    - N11 → N6 → N10 → N3 → terminal\n    So any path from N4 leads to a terminal node eventually.\n\nThus, regardless of whether Player 1 moves to N1 or N5, the game ends on the next move (either immediately or after one more step), and Player 2 has no legal move. However, moving directly to N1 (a terminal node) ends the game immediately, and Player 2 loses without any chance to respond.\n\nTherefore, the optimal move is to go directly to N1, which guarantees an immediate win.</reason>\n<answer>N1</answer><|im_end|>"}, {"prompt": "system\nYou are playing Directed Acyclic Graph Vertex Geography.user\nThe players alternate moving a token along one directed edge. A player with no legal move loses. Choose one legal destination that maximizes your final game outcome.\n\nAnalyze the graph carefully. Consider future moves and the opponent's possible responses before choosing.\n\nOutput exactly:\n<reason>your analysis</reason>\n<answer>NODE</answer>\n\nDo not output anything else.\n\nYou are Player 1.\n\nCurrent node: N7\n\nDirected graph:\nN0 -> terminal\nN2 -> terminal\nN9 -> terminal\nN4 -> N3, N11, N8\nN8 -> terminal\nN7 -> N1, N5\nN3 -> terminal\nN1 -> terminal\nN11 -> N6, N0, N9\nN10 -> N3\nN5 -> N2, N1, N4\nN6 -> N10\n\nLegal moves: N1, N5assistant\n", "response": "<reason>Starting at N7, Player 1 can move to either N1 or N5. \n\n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.\n- Moving to N5: From N5, the next moves are to N2, N1, or N4. \n  - N2 and N1 are terminal nodes — if Player 2 moves to either, they lose immediately.\n  - N4 leads to N3, N11, or N8 — all of which eventually lead to terminal nodes. \n  - However, if Player 1 moves to N5, Player 2 can choose N2 or N1 and win immediately (since those are terminal and Player 1 would have no move). But if Player 2 chooses N4, then Player 1 can continue.\n\nBut note: if Player 1 moves to N1, the game ends immediately — Player 2 has no move and loses. That is a winning move.\n\nThus, moving to N1 is a winning move and ends the game immediately. It is the best possible choice because it forces an immediate loss for the opponent without any risk or need for further planning.\n\nTherefore, the optimal move is to N1.</reason>\n<answer>N1</answer>", "episode_score": 1.0, "llm_raw_text": "<|im_start|>assistant\n<reason>Starting at N7, Player 1 can move to either N1 or N5. \n\n- Moving to N1: N1 is a terminal node. Player 2 has no legal moves and loses. This is an immediate win.\n- Moving to N5: From N5, the next moves are to N2, N1, or N4. \n  - N2 and N1 are terminal nodes — if Player 2 moves to either, they lose immediately.\n  - N4 leads to N3, N11, or N8 — all of which eventually lead to terminal nodes. \n  - However, if Player 1 moves to N5, Player 2 can choose N2 or N1 and win immediately (since those are terminal and Player 1 would have no move). But if Player 2 chooses N4, then Player 1 can continue.\n\nBut note: if Player 1 moves to N1, the game ends immediately — Player 2 has no move and loses. That is a winning move.\n\nThus, moving to N1 is a winning move and ends the game immediately. It is the best possible choice because it forces an immediate loss for the opponent without any risk or need for further planning.\n\nTherefore, the optimal move is to N1.</reason>\n<answer>N1</answer><|im_end|>"}, {"prompt": "system\nYou are playing Directed Acyclic Graph Vertex Geography.user\nThe players alternate moving a token along one directed edge. A player with no legal move loses. Choose one legal destination that maximizes your final game outcome.\n\nAnalyze the graph carefully. Consider future moves and the opponent's possible responses before choosing.\n\nOutput exactly:\n<reason>your analysis</reason>\n<answer>NODE</answer>\n\nDo not output anything else.\n\nYou are Player 1.\n\nCurrent node: N7\n\nDirected graph:\nN0 -> terminal\nN2 -> terminal\nN9 -> terminal\nN4 -> N3, N11, N8\nN8 -> terminal\nN7 -> N1, N5\nN3 -> terminal\nN1 -> terminal\nN11 -> N6, N0, N9\nN10 -> N3\nN5 -> N2, N1, N4\nN6 -> N10\n\nLegal moves: N1, N5assistant\n", "response": "<reason>Starting at N7, Player 1 has two legal moves: to N1 or to N5.  \n\n- Moving to N1: N1 is a terminal node. The game ends immediately, and Player 1 has made the last move. Player 2 has no move and loses. This is a winning move.  \n- Moving to N5: From N5, the possible moves are to N2, N1, or N4.  \n  - N2 and N1 are terminal, so if Player 2 moves to either, the game ends immediately with Player 2 winning.  \n  - If Player 2 moves to N4, then from N4, the player can go to N3, N11, or N8 — all of which are terminal or lead to terminal nodes. So any move from N4 leads to a terminal state.  \n  - Thus, from N5, Player 2 can choose a terminal move (N2 or N1) and win immediately.  \n  - Therefore, moving to N5 gives Player 2 a winning response.  \n\nThus, the only move that guarantees a win for Player 1 is to move to N1, which ends the game immediately and causes Player 2 to lose. This is the optimal choice.</reason>\n<answer>N1</answer>", "episode_score": 1.0, "llm_raw_text": "<|im_start|>assistant\n<reason>Starting at N7, Player 1 has two legal moves: to N1 or to N5.  \n\n- Moving to N1: N1 is a terminal node. The game ends immediately, and Player 1 has made the last move. Player 2 has no move and loses. This is a winning move.  \n- Moving to N5: From N5, the possible moves are to N2, N1, or N4.  \n  - N2 and N1 are terminal, so if Player 2 moves to either, the game ends immediately with Player 2 winning.  \n  - If Player 2 moves to N4, then from N4, the player can go to N3, N11, or N8 — all of which are terminal or lead to terminal nodes. So any move from N4 leads to a terminal state.  \n  - Thus, from N5, Player 2 can choose a terminal move (N2 or N1) and win immediately.  \n  - Therefore, moving to N5 gives Player 2 a winning response.  \n\nThus, the only move that guarantees a win for Player 1 is to move to N1, which ends the game immediately and causes Player 2 to lose. This is the optimal choice.</reason>\n<answer>N1</answer><|im_end|>"}]
+[2026-08-10 12:12:24] [agentic_rollout_pipeline.py (135)] [INFO] [DRIVER 0 / 1][PID 1153490] {"time/rollout": 138.39847895875573, "env/Geography-Rollout-Distance-1/success": 0.934375, "env/Geography-Rollout-Distance-1/num_actions": 0.934375, "env/Geography-Rollout-Distance-1/generation_attempts": 1.0, "env/Geography-Rollout-Distance-1/retry_attempts": 0.0, "env/Geography-Rollout-Distance-1/game_transition": 0.934375, "env/Geography-Rollout-Distance-1/canonical_reward_player_0": 0.890625, "env/Geography-Rollout-Distance-1/canonical_reward_player_1": -0.890625, "env/Geography-Rollout-Distance-1/counterfactual_reward_player_0": 0.890625, "env/Geography-Rollout-Distance-1/counterfactual_reward_player_1": 0.0, "env/Geography-Rollout-Distance-1/counterfactual_valid_action": 0.934375, "env/Geography-Rollout-Distance-1/counterfactual_state_value": 1.0, "env/Geography-Rollout-Distance-1/counterfactual_chosen_q": 0.9531772575250836, "env/Geography-Rollout-Distance-1/counterfactual_baseline": 0.0, "env/Geography-Rollout-Distance-1/counterfactual_advantage": 0.9531772575250836, "env/Geography-Rollout-Distance-1/counterfactual_decision_spread": 2.0, "env/Geography-Rollout-Distance-1/counterfactual_regret": 0.023411371237458192, "env/Geography-Rollout-Distance-1/counterfactual_value_loss": 0.046822742474916385, "env/Geography-Rollout-Distance-1/counterfactual_optimal_action": 0.9765886287625418, "env/Geography-Rollout-Distance-1/graph_node_count": 12.0, "env/Geography-Rollout-Distance-1/graph_edge_count": 13.0, "env/Geography-Rollout-Distance-1/graph_depth": 5.488294314381271, "env/Geography-Rollout-Distance-1/graph_transposition_rate": 0.18181818181818185, "env/Geography-Rollout-Distance-1/graph_mean_branching": 2.1666666666666665, "env/Geography-Rollout-Distance-1/graph_informative_fraction": 0.5, "env/Geography-Rollout-Distance-1/remaining_optimal_distance": 1.0, "env/Geography-Rollout-Distance-1/current_out_degree": 2.0, "env/Geography-Rollout-Distance-1/root_decision_only": 1.0, "env/Geography-Rollout-Distance-1/player_0_return": 0.890625, "env/Geography-Rollout-Distance-1/player_1_return": -0.890625, "env/Geography-Rollout-Distance-1/winner": -0.04375, "env/Geography-Rollout-Distance-1/player_0_success": 0.9125, "env/Geography-Rollout-Distance-1/player_1_success": 0.021875, "env/Geography-Rollout-Distance-1/draw": 0.0, "env/Geography-Rollout-Distance-1/player_0_lose_for_wrong_format": 0.065625, "env/Geography-Rollout-Distance-1/player_1_lose_for_wrong_format": 0.0, "env/Geography-Rollout-Distance-1/player_0_lose_for_overlong_response": 0.05625, "env/Geography-Rollout-Distance-1/player_1_lose_for_overlong_response": 0.0, "env/Geography-Rollout-Distance-1/player_0_lose_for_overlong_sequence": 0.0, "env/Geography-Rollout-Distance-1/player_1_lose_for_overlong_sequence": 0.0, "env/Geography-Rollout-Distance-1/format_valid": 0.934375, "env/Geography-Rollout-Distance-1/semantic_action_valid": 0.94375, "env/Geography-Rollout-Distance-1/action_recovered": 0.0, "env/Geography-Rollout-Distance-1/near_generation_limit": 0.05625, "env/Geography-Rollout-Distance-1/response_truncated": 0.05625, "env/Geography-Rollout-Distance-1/response_length": 470.303125, "env/Geography-Rollout-Distance-1/response_length_per_turn": 469.303125, "env/Geography-Rollout-Distance-1/response_length_turn_0": 469.303125, "env/Geography-Rollout-Distance-1/response_length_player_0": 470.303125, "env/Geography-Rollout-Distance-1/response_length_per_turn_player_0": 469.303125, "env/Geography-Rollout-Distance-1/response_length_player_0_turn_0": 469.303125, "env/Geography-Rollout-Distance-5/success": 0.425, "env/Geography-Rollout-Distance-5/num_actions": 0.425, "env/Geography-Rollout-Distance-5/generation_attempts": 1.0, "env/Geography-Rollout-Distance-5/retry_attempts": 0.0, "env/Geography-Rollout-Distance-5/game_transition": 0.425, "env/Geography-Rollout-Distance-5/canonical_reward_player_0": -0.225, "env/Geography-Rollout-Distance-5/canonical_reward_player_1": 0.225, "env/Geography-Rollout-Distance-5/counterfactual_reward_player_0": -0.225, "env/Geography-Rollout-Distance-5/counterfactual_reward_player_1": 0.0, "env/Geography-Rollout-Distance-5/counterfactual_valid_action": 0.425, "env/Geography-Rollout-Distance-5/counterfactual_state_value": 1.0, "env/Geography-Rollout-Distance-5/counterfactual_chosen_q": -0.5294117647058824, "env/Geography-Rollout-Distance-5/counterfactual_baseline": 0.0, "env/Geography-Rollout-Distance-5/counterfactual_advantage": -0.5294117647058824, "env/Geography-Rollout-Distance-5/counterfactual_decision_spread": 2.0, "env/Geography-Rollout-Distance-5/counterfactual_regret": 0.7647058823529411, "env/Geography-Rollout-Distance-5/counterfactual_value_loss": 1.5294117647058822, "env/Geography-Rollout-Distance-5/counterfactual_optimal_action": 0.23529411764705882, "env/Geography-Rollout-Distance-5/graph_node_count": 12.0, "env/Geography-Rollout-Distance-5/graph_edge_count": 13.0, "env/Geography-Rollout-Distance-5/graph_depth": 6.0, "env/Geography-Rollout-Distance-5/graph_transposition_rate": 0.18181818181818188, "env/Geography-Rollout-Distance-5/graph_mean_branching": 1.643776260504202, "env/Geography-Rollout-Distance-5/graph_informative_fraction": 0.49422268907563033, "env/Geography-Rollout-Distance-5/remaining_optimal_distance": 5.0, "env/Geography-Rollout-Distance-5/current_out_degree": 2.0, "env/Geography-Rollout-Distance-5/root_decision_only": 1.0, "env/Geography-Rollout-Distance-5/solved_continuation": 1.0, "env/Geography-Rollout-Distance-5/player_0_return": -0.225, "env/Geography-Rollout-Distance-5/player_1_return": 0.225, "env/Geography-Rollout-Distance-5/winner": -0.25, "env/Geography-Rollout-Distance-5/player_0_success": 0.1, "env/Geography-Rollout-Distance-5/player_1_success": 0.325, "env/Geography-Rollout-Distance-5/draw": 0.0, "env/Geography-Rollout-Distance-5/player_0_lose_for_wrong_format": 0.575, "env/Geography-Rollout-Distance-5/player_1_lose_for_wrong_format": 0.0, "env/Geography-Rollout-Distance-5/player_0_lose_for_overlong_response": 0.534375, "env/Geography-Rollout-Distance-5/player_1_lose_for_overlong_response": 0.0, "env/Geography-Rollout-Distance-5/player_0_lose_for_overlong_sequence": 0.0, "env/Geography-Rollout-Distance-5/player_1_lose_for_overlong_sequence": 0.0, "env/Geography-Rollout-Distance-5/format_valid": 0.425, "env/Geography-Rollout-Distance-5/semantic_action_valid": 0.465625, "env/Geography-Rollout-Distance-5/action_recovered": 0.0, "env/Geography-Rollout-Distance-5/near_generation_limit": 0.534375, "env/Geography-Rollout-Distance-5/response_truncated": 0.534375, "env/Geography-Rollout-Distance-5/response_length": 937.340625, "env/Geography-Rollout-Distance-5/response_length_per_turn": 936.340625, "env/Geography-Rollout-Distance-5/response_length_turn_0": 936.340625, "env/Geography-Rollout-Distance-5/response_length_player_0": 937.340625, "env/Geography-Rollout-Distance-5/response_length_per_turn_player_0": 936.340625, "env/Geography-Rollout-Distance-5/response_length_player_0_turn_0": 936.340625, "env/Geography-Rollout-Distance-5/retry_attempt": 0.0, "env/Geography-Rollout-Distance-5/artificial_truncation": 1.0, "env/Geography-Rollout-Distance-3/success": 0.34375, "env/Geography-Rollout-Distance-3/num_actions": 0.34375, "env/Geography-Rollout-Distance-3/generation_attempts": 1.0, "env/Geography-Rollout-Distance-3/retry_attempts": 0.0, "env/Geography-Rollout-Distance-3/game_transition": 0.34375, "env/Geography-Rollout-Distance-3/canonical_reward_player_0": -0.05625, "env/Geography-Rollout-Distance-3/canonical_reward_player_1": 0.05625, "env/Geography-Rollout-Distance-3/counterfactual_reward_player_0": -0.05625, "env/Geography-Rollout-Distance-3/counterfactual_reward_player_1": 0.0, "env/Geography-Rollout-Distance-3/counterfactual_valid_action": 0.34375, "env/Geography-Rollout-Distance-3/counterfactual_state_value": 1.0, "env/Geography-Rollout-Distance-3/counterfactual_chosen_q": -0.16363636363636364, "env/Geography-Rollout-Distance-3/counterfactual_baseline": 0.0, "env/Geography-Rollout-Distance-3/counterfactual_advantage": -0.16363636363636364, "env/Geography-Rollout-Distance-3/counterfactual_decision_spread": 2.0, "env/Geography-Rollout-Distance-3/counterfactual_regret": 0.5818181818181818, "env/Geography-Rollout-Distance-3/counterfactual_value_loss": 1.1636363636363636, "env/Geography-Rollout-Distance-3/counterfactual_optimal_action": 0.41818181818181815, "env/Geography-Rollout-Distance-3/graph_node_count": 12.0, "env/Geography-Rollout-Distance-3/graph_edge_count": 13.0, "env/Geography-Rollout-Distance-3/graph_depth": 5.5636363636363635, "env/Geography-Rollout-Distance-3/graph_transposition_rate": 0.1818181818181819, "env/Geography-Rollout-Distance-3/graph_mean_branching": 2.014015151515151, "env/Geography-Rollout-Distance-3/graph_informative_fraction": 0.5, "env/Geography-Rollout-Distance-3/remaining_optimal_distance": 3.0, "env/Geography-Rollout-Distance-3/current_out_degree": 2.0, "env/Geography-Rollout-Distance-3/root_decision_only": 1.0, "env/Geography-Rollout-Distance-3/solved_continuation": 1.0, "env/Geography-Rollout-Distance-3/player_0_return": -0.05625, "env/Geography-Rollout-Distance-3/player_1_return": 0.05625, "env/Geography-Rollout-Distance-3/winner": -0.45625, "env/Geography-Rollout-Distance-3/player_0_success": 0.14375, "env/Geography-Rollout-Distance-3/player_1_success": 0.2, "env/Geography-Rollout-Distance-3/draw": 0.0, "env/Geography-Rollout-Distance-3/player_0_lose_for_wrong_format": 0.65625, "env/Geography-Rollout-Distance-3/player_1_lose_for_wrong_format": 0.0, "env/Geography-Rollout-Distance-3/player_0_lose_for_overlong_response": 0.6, "env/Geography-Rollout-Distance-3/player_1_lose_for_overlong_response": 0.0, "env/Geography-Rollout-Distance-3/player_0_lose_for_overlong_sequence": 0.0, "env/Geography-Rollout-Distance-3/player_1_lose_for_overlong_sequence": 0.0, "env/Geography-Rollout-Distance-3/format_valid": 0.34375, "env/Geography-Rollout-Distance-3/semantic_action_valid": 0.396875, "env/Geography-Rollout-Distance-3/action_recovered": 0.0, "env/Geography-Rollout-Distance-3/near_generation_limit": 0.6, "env/Geography-Rollout-Distance-3/response_truncated": 0.6, "env/Geography-Rollout-Distance-3/response_length": 1010.7, "env/Geography-Rollout-Distance-3/response_length_per_turn": 1009.7, "env/Geography-Rollout-Distance-3/response_length_turn_0": 1009.7, "env/Geography-Rollout-Distance-3/response_length_player_0": 1010.7, "env/Geography-Rollout-Distance-3/response_length_per_turn_player_0": 1009.7, "env/Geography-Rollout-Distance-3/response_length_player_0_turn_0": 1009.7, "env/Geography-Rollout-Distance-3/retry_attempt": 0.0, "env/Geography-Rollout-Distance-3/artificial_truncation": 1.0, "env/Geography-Rollout-Distance-1/solved_continuation": 1.0, "env/Geography-Rollout-Distance-1/retry_attempt": 0.0, "env/Geography-Rollout-Distance-1/artificial_truncation": 1.0, "memory/actor_infer/generate/start/offload/allocated/0": 0.0, "memory/actor_infer/generate/start/offload/reserved/0": 0.0, "memory/actor_infer/generate/start/offload/max_allocated/0": 0.0, "memory/actor_infer/generate/start/offload/max_reserved/0": 0.0, "memory/actor_infer/generate/start/onload/allocated/0": 0.0, "memory/actor_infer/generate/start/onload/reserved/0": 0.0, "memory/actor_infer/generate/start/onload/max_allocated/0": 0.0, "memory/actor_infer/generate/start/onload/max_reserved/0": 0.0, "memory/cpu/actor_infer/generate/start/rss": 1.0216941833496094, "memory/cpu/actor_infer/generate/start/vms": 211.4129867553711, "memory/actor_infer/generate/end/onload/allocated/0": 4.76837158203125e-07, "memory/actor_infer/generate/end/onload/reserved/0": 0.001953125, "memory/actor_infer/generate/end/onload/max_allocated/0": 9.5367431640625e-07, "memory/actor_infer/generate/end/onload/max_reserved/0": 0.001953125, "memory/actor_infer/generate/end/onload/max_allocated_frac/0": 1.0245155926355525e-08, "memory/actor_infer/generate/end/onload/max_reserved_frac/0": 2.0982079337176114e-05, "memory/actor_infer/generate/end/offload/allocated/0": 4.76837158203125e-07, "memory/actor_infer/generate/end/offload/reserved/0": 0.001953125, "memory/actor_infer/generate/end/offload/max_allocated/0": 9.5367431640625e-07, "memory/actor_infer/generate/end/offload/max_reserved/0": 0.001953125, "memory/cpu/actor_infer/generate/end/rss": 1.7028160095214844, "memory/cpu/actor_infer/generate/end/vms": 213.44063568115234, "time/actor_infer/generate/total": 137.83981663361192, "time/actor_infer/generate/execute": 136.5288118608296, "time/actor_infer/generate/onload": 0.4081418290734291, "time/actor_infer/generate/offload": 0.9027310870587826, "rollout/score/mean": 0.203125, "rollout/score/max": 1.0, "rollout/score/min": -1.0, "system/samples": 960}
+[2026-08-10 12:12:24] [agentic_rollout_pipeline.py (137)] [INFO] [DRIVER 0 / 1][PID 1153490] pipeline step 0 finished
+[2026-08-10 12:12:24] [agentic_rollout_pipeline.py (139)] [INFO] [DRIVER 0 / 1][PID 1153490] epoch 1 finished
+[2026-08-10 12:12:24] [agentic_rollout_pipeline.py (140)] [INFO] [DRIVER 0 / 1][PID 1153490] pipeline complete!
+preflight rollout progress(trajectory): 100%|██████████| 960/960 [02:19<00:00,  6.88it/s]
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m Fatal Python error: PyGILState_Release: auto-releasing thread-state, but no thread-state for this thread
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m Python runtime state: initialized
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m 
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m Thread 0x00007d4f2dbcb6c0 (most recent call first):
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m   <no Python frame>
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m 
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m Thread 0x00007d4f2e3cc6c0 (most recent call first):
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m   <no Python frame>
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m 
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m Thread 0x00007d633bea76c0 (most recent call first):
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m   File "/home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/torch/_inductor/compile_worker/subproc_pool.py", line 53 in _recv_msg
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m   File "/home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/torch/_inductor/compile_worker/subproc_pool.py", line 161 in _read_thread
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m   File "/home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/threading.py", line 953 in run
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m   File "/home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/threading.py", line 1016 in _bootstrap_inner
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m   File "/home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/threading.py", line 973 in _bootstrap
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m 
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m Thread 0x00007d939641a740 (most recent call first):
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m   File "/home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/ray/_private/worker.py", line 946 in main_loop
+[36m(RequestScheduler pid=1165239, ip=192.168.51.175)[0m   File "/home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/ray/_private/workers/default_worker.py", line 330 in <module>
+[2026-08-10 12:12:31] [log_monitor.py (225)] [INFO] [DRIVER 0 / 1][PID 1153490] Execute ray.shutdown before the program exits...
