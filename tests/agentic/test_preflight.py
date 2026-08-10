@@ -174,19 +174,21 @@ def test_preflight_reports_root_move_pass_at_k_by_graph_group():
     terminal_infos = []
     tags = []
     for sample_index in range(32):
+        valid = sample_index < 31
         records.append([{
             "turn_index": 0,
             "decision_index": 0,
             "retry_attempt_index": 0,
             "player_id": 0,
             "token_length": 50,
-            "valid_action": True,
-            "has_closing_answer_tag": True,
-            "hit_token_limit": False,
+            "valid_action": valid,
+            "has_closing_answer_tag": valid,
+            "hit_token_limit": not valid,
             "counterfactual_optimal_action": sample_index < 4,
-            "graph_id": "held-out-easy-0",
+            # Invalid attempts have no transition and therefore no graph_id.
+            "graph_id": "held-out-easy-0" if valid else "",
         }])
-        trajectory_ids.append(f"sample-{sample_index}_p0")
+        trajectory_ids.append("7_0_700000_p0_a0")
         terminal_infos.append({"success": True})
         tags.append("Geography-Rollout-Easy")
 
@@ -197,10 +199,14 @@ def test_preflight_reports_root_move_pass_at_k_by_graph_group():
 
     assert group["graph_count"] == 1
     assert group["sample_count"] == 32
+    assert group["valid_action_rate"] == 31 / 32
+    assert group["token_limit_hit_rate"] == 1 / 32
     assert group["pass@1"] == 4 / 32
     assert group["pass@8"] == 1 - comb(28, 8) / comb(32, 8)
     assert group["pass@32"] == 1.0
     assert group["graphs_with_pass@32"] == 1
+    assert summary["decision_count"] == 32
+    assert summary["eventual_validity_rate"] == 31 / 32
     assert {record["tag"] for record in flat_records} == {
         "Geography-Rollout-Easy"
     }

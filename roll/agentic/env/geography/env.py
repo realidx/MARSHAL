@@ -67,6 +67,8 @@ class GeographyEnv(BaseDiscreteActionEnv):
             transposition_rate=self.config.transposition_rate,
             target_root_value=self.config.target_root_value,
             target_root_informative=self.config.target_root_informative,
+            target_root_optimal_distance=self.config.target_root_optimal_distance,
+            target_root_branching=self.config.target_root_branching,
             target_informative_fraction=self.config.target_informative_fraction,
             candidate_count=self.config.generator_candidates,
         )

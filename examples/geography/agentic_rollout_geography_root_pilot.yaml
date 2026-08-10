@@ -8,8 +8,8 @@ hydra:
 
 exp_name: "geography_root_rollout_pilot"
 
-# Generation-only edge-of-competence pilot: 30 held-out graphs, with 32
-# independent stochastic responses to the identical prompt for each graph.
+# Generation-only depth pilot: 30 held-out graphs, with 32 independent
+# stochastic responses to the identical prompt for each graph.
 max_steps: 1
 game_step_discount: 1.0
 rollout_batch_size: 960
@@ -25,7 +25,7 @@ reference:
 
 actor_infer:
   generating_args:
-    max_new_tokens: 600
+    max_new_tokens: 1200
     top_p: 0.8
     top_k: 20
     num_beams: 1
@@ -45,7 +45,7 @@ markovian_turn_context: true
 use_reason_answer_format: true
 
 custom_envs:
-  Geography-Rollout-Easy:
+  Geography-Rollout-Distance-1:
     env_type: geography
     max_actions_per_traj: 1
     grid_vocab: false
@@ -53,39 +53,21 @@ custom_envs:
       built_in_opponent: none
       reward_mode: environment
       root_decision_only: true
-      response_token_limit: 600
+      response_token_limit: 1200
       seed_namespace: 101
-      num_nodes: 8
-      min_depth: 2
-      max_depth: 4
-      min_branching: 1
-      max_branching: 2
-      transposition_rate: 0.05
-      target_root_informative: true
-      target_informative_fraction: 0.5
-      generator_candidates: 32
-
-  Geography-Rollout-Medium:
-    env_type: geography
-    max_actions_per_traj: 1
-    grid_vocab: false
-    env_config:
-      built_in_opponent: none
-      reward_mode: environment
-      root_decision_only: true
-      response_token_limit: 600
-      seed_namespace: 102
-      num_nodes: 16
+      num_nodes: 12
       min_depth: 4
-      max_depth: 7
+      max_depth: 6
       min_branching: 1
       max_branching: 3
-      transposition_rate: 0.25
+      transposition_rate: 0.15
       target_root_informative: true
+      target_root_optimal_distance: 1
+      target_root_branching: 2
       target_informative_fraction: 0.5
-      generator_candidates: 32
+      generator_candidates: 8192
 
-  Geography-Rollout-Hard:
+  Geography-Rollout-Distance-3:
     env_type: geography
     max_actions_per_traj: 1
     grid_vocab: false
@@ -93,25 +75,49 @@ custom_envs:
       built_in_opponent: none
       reward_mode: environment
       root_decision_only: true
-      response_token_limit: 600
-      seed_namespace: 103
-      num_nodes: 24
-      min_depth: 7
-      max_depth: 10
-      min_branching: 2
-      max_branching: 4
-      transposition_rate: 0.5
+      response_token_limit: 1200
+      seed_namespace: 102
+      num_nodes: 12
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.15
       target_root_informative: true
+      target_root_optimal_distance: 3
+      target_root_branching: 2
       target_informative_fraction: 0.5
-      generator_candidates: 32
+      generator_candidates: 8192
+
+  Geography-Rollout-Distance-5:
+    env_type: geography
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      root_decision_only: true
+      response_token_limit: 1200
+      seed_namespace: 103
+      num_nodes: 12
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.15
+      target_root_informative: true
+      target_root_optimal_distance: 5
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 8192
 
 train_env_manager:
   # No retry or auxiliary reward is used in this measurement-only run.
   max_invalid_retries_per_decision: 0
   format_penalty: 0.0
   minimax_length_penalty_beta: 0.0
-  minimax_length_soft_budget: 400
-  minimax_length_hard_budget: 600
+  minimax_length_soft_budget: 1000
+  minimax_length_hard_budget: 1200
   enable_length_penalty: false
   # Pack five 32-sample graph groups into each process. This preserves the
   # identical-prompt sampling design while avoiding 15 duplicated Ray runtimes.
@@ -120,7 +126,7 @@ train_env_manager:
   group_size: 32
   group_seed_base: 700000
   tags:
-    - Geography-Rollout-Easy
-    - Geography-Rollout-Medium
-    - Geography-Rollout-Hard
+    - Geography-Rollout-Distance-1
+    - Geography-Rollout-Distance-3
+    - Geography-Rollout-Distance-5
   n_groups: [10, 10, 10]

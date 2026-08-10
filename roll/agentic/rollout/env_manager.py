@@ -1521,8 +1521,21 @@ class EnvManager:
                     "graph_id": str(decision_info.get("graph_id", "")),
                     "graph_seed": str(decision_info.get("graph_seed", "")),
                     "graph_node_count": int(decision_info.get("graph_node_count", 0)),
+                    "graph_edge_count": int(decision_info.get("graph_edge_count", 0)),
                     "graph_depth": int(decision_info.get("graph_depth", 0)),
                     "graph_transposition_rate": float(decision_info.get("graph_transposition_rate", 0.0)),
+                    "graph_mean_branching": float(
+                        decision_info.get("graph_mean_branching", 0.0)
+                    ),
+                    "graph_informative_fraction": float(
+                        decision_info.get("graph_informative_fraction", 0.0)
+                    ),
+                    "remaining_optimal_distance": int(
+                        decision_info.get("remaining_optimal_distance", 0)
+                    ),
+                    "current_out_degree": int(
+                        decision_info.get("current_out_degree", 0)
+                    ),
                     "retry_attempt_index": int(turn.get("retry_attempt_index", 0)),
                     "decision_index": int(turn.get("decision_index", 0)),
                     "retry_scheduled": bool(turn.get("retry_scheduled", False)),

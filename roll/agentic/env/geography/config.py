@@ -25,6 +25,8 @@ class GeographyConfig:
     transposition_rate: float = 0.25
     target_root_value: Optional[int] = None
     target_root_informative: Optional[bool] = None
+    target_root_optimal_distance: Optional[int] = None
+    target_root_branching: Optional[int] = None
     target_informative_fraction: Optional[float] = 0.5
     generator_candidates: int = 32
 

@@ -64,6 +64,8 @@ max_branching
 transposition_rate
 target_root_value
 target_root_informative
+target_root_optimal_distance
+target_root_branching
 target_informative_fraction
 ```
 
@@ -119,21 +121,28 @@ No model training may begin until tests verify:
 Before any RL, run one deliberately small edge-of-competence experiment. It
 contains three held-out graph groups rather than a large factorial pool:
 
-| Group | Nodes | Depth range | Branching | Target transposition |
+| Group | Nodes | Root branching | Root optimal distance | Target transposition |
 |---|---:|---:|---:|---:|
-| Easy | 8 | 2--4 | 1--2 | 0.05 |
-| Medium | 16 | 4--7 | 1--3 | 0.25 |
-| Hard | 24 | 7--10 | 2--4 | 0.50 |
+| Distance-1 | 12 | 2 | 1 | 0.15 |
+| Distance-3 | 12 | 2 | 3 | 0.15 |
+| Distance-5 | 12 | 2 | 5 | 0.15 |
 
 Sample 10 graph seeds in each group and generate 32 independent stochastic
 responses for each identical graph prompt: 30 graphs and 960 responses total.
-The 30 group seeds are the fixed sequence 700000--700029; distinct environment
-seed namespaces keep the three groups disjoint from one another and from the
-default training namespace.
+With the default pipeline seed of 42, the 30 effective group seeds are the
+fixed sequence 700042--700071; distinct environment seed namespaces keep the
+three groups disjoint from one another and from the default training namespace.
 The model sees the complete graph, current node, legal moves, rules, and output
 schema. It is asked to analyze future moves and opponent responses, but the
 `<reason>` field is free-form: the prompt does not request a brief or concise
-answer. Generation stops at `</answer>` or at the 600-token hard ceiling.
+answer. Generation stops at `</answer>` or at the 1,200-token hard ceiling.
+
+The three groups use the same node count, root branching, generator depth
+bounds, and target transposition rate. They differ in the exact shortest
+optimal-continuation distance from the root. This isolates that solver-defined
+depth proxy from the graph-size and root-branching effects observed in the first
+pilot; it does not by itself prove how much lookahead a model actually used. No
+budget-aware wording or two-stage answer extraction is used.
 
 Each rollout evaluates only the root decision. The graph remains solved by
 backward induction, so the selected move has an exact optimality label and

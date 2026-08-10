@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from functools import lru_cache
 import hashlib
 import json
 import random
@@ -158,6 +159,7 @@ def graph_properties(graph: GeographyGraph, solution: GeographySolution) -> Grap
     )
 
 
+@lru_cache(maxsize=4096)
 def generate_geography_graph(
     *,
     seed: int,
@@ -169,6 +171,8 @@ def generate_geography_graph(
     transposition_rate: float,
     target_root_value: Optional[int] = None,
     target_root_informative: Optional[bool] = None,
+    target_root_optimal_distance: Optional[int] = None,
+    target_root_branching: Optional[int] = None,
     target_informative_fraction: Optional[float] = None,
     candidate_count: int = 32,
 ) -> Tuple[GeographyGraph, GeographySolution, GraphProperties]:
@@ -181,6 +185,8 @@ def generate_geography_graph(
         transposition_rate,
         target_root_value,
         target_root_informative,
+        target_root_optimal_distance,
+        target_root_branching,
         target_informative_fraction,
         candidate_count,
     )
@@ -204,10 +210,48 @@ def generate_geography_graph(
         if target_root_informative is not None:
             root_is_informative = solution.decision_spreads[graph.start_node] > 0
             score += 2.0 * float(root_is_informative != target_root_informative)
+        if target_root_optimal_distance is not None:
+            score += abs(
+                solution.optimal_distances[graph.start_node]
+                - target_root_optimal_distance
+            )
+        if target_root_branching is not None:
+            score += abs(len(graph.adjacency[graph.start_node]) - target_root_branching)
         if target_informative_fraction is not None:
             score += abs(properties.informative_fraction - target_informative_fraction)
         candidates.append((score, candidate_index, graph, solution, properties))
-    _, _, graph, solution, properties = min(candidates, key=lambda item: (item[0], item[1]))
+
+    # Exact distance is an experimental stratum, not a soft preference. When
+    # requested, also enforce the paired root branching/informativeness controls
+    # so graph size or an all-actions-equal root cannot redefine the stratum.
+    if target_root_optimal_distance is not None:
+        exact_candidates = [
+            item
+            for item in candidates
+            if item[3].optimal_distances[item[2].start_node]
+            == target_root_optimal_distance
+            and (
+                target_root_branching is None
+                or len(item[2].adjacency[item[2].start_node])
+                == target_root_branching
+            )
+            and (
+                target_root_informative is None
+                or (item[3].decision_spreads[item[2].start_node] > 0)
+                == target_root_informative
+            )
+        ]
+        if not exact_candidates:
+            raise ValueError(
+                "No graph matched target_root_optimal_distance="
+                f"{target_root_optimal_distance} and target_root_branching="
+                f"{target_root_branching} among {candidate_count} candidates"
+            )
+        candidates = exact_candidates
+
+    _, _, graph, solution, properties = min(
+        candidates, key=lambda item: (item[0], item[1])
+    )
     graph = replace(graph, episode_seed=seed)
     return graph, solution, properties
 
@@ -333,6 +377,8 @@ def _validate_generator_args(
     transposition_rate: float,
     target_root_value: Optional[int],
     target_root_informative: Optional[bool],
+    target_root_optimal_distance: Optional[int],
+    target_root_branching: Optional[int],
     target_informative_fraction: Optional[float],
     candidate_count: int,
 ) -> None:
@@ -352,6 +398,18 @@ def _validate_generator_args(
         raise ValueError("target_root_value must be None, -1, or 1")
     if target_root_informative not in (None, False, True):
         raise ValueError("target_root_informative must be None or a boolean")
+    if target_root_optimal_distance is not None and not (
+        1 <= target_root_optimal_distance <= max_depth
+    ):
+        raise ValueError(
+            "target_root_optimal_distance must lie between 1 and max_depth"
+        )
+    if target_root_branching is not None and not (
+        min_branching <= target_root_branching <= max_branching
+    ):
+        raise ValueError(
+            "target_root_branching must lie within the branching bounds"
+        )
     if target_informative_fraction is not None and not 0.0 <= target_informative_fraction <= 1.0:
         raise ValueError("target_informative_fraction must lie in [0, 1]")
     if candidate_count < 1:

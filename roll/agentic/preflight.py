@@ -12,7 +12,10 @@ from typing import Any, Iterable, Mapping, Sequence
 
 
 def _game_id(trajectory_id: str) -> str:
-    return re.sub(r"_p[01]$", "", str(trajectory_id))
+    # Markovian rollouts append `_p{player}_a{turn}`. All samples in an
+    # environment group still belong to the same graph and must therefore
+    # share one pass@k bucket, including attempts with no valid transition.
+    return re.sub(r"_p[01](?:_a\d+)?$", "", str(trajectory_id))
 
 
 def _percentile(values: Sequence[int], quantile: float) -> float:
@@ -46,12 +49,10 @@ def _summarize_root_move_pass_at_k(
     ]
     graphs: dict[tuple[str, str], list[Mapping[str, Any]]] = {}
     for record in root_attempts:
-        graph_id = str(record.get("graph_id", ""))
-        graph_key = (
-            f"{record.get('graph_seed', '')}:{graph_id}"
-            if graph_id
-            else str(record["game_id"])
-        )
+        # game_id is present before an action is parsed, whereas graph_id is
+        # transition metadata and is consequently absent on invalid/capped
+        # responses. Using game_id keeps all 32 attempts in the same bucket.
+        graph_key = str(record["game_id"])
         graphs.setdefault((str(record.get("tag", "all")), graph_key), []).append(record)
 
     def summarize(graph_samples: Sequence[list[Mapping[str, Any]]]) -> dict[str, Any]:
@@ -125,9 +126,12 @@ def summarize_agentic_preflight(
 
     games: dict[str, dict[str, Any]] = {}
     flat_records: list[dict[str, Any]] = []
-    for rollout_records, trajectory_id, terminal_info, tag in zip(
-        records_by_rollout, trajectory_ids, terminal_infos, tags
-    ):
+    for rollout_index, (
+        rollout_records,
+        trajectory_id,
+        terminal_info,
+        tag,
+    ) in enumerate(zip(records_by_rollout, trajectory_ids, terminal_infos, tags)):
         rollout_records = list(rollout_records)
         game_id = _game_id(trajectory_id)
         game = games.setdefault(
@@ -141,6 +145,7 @@ def summarize_agentic_preflight(
             item = dict(record)
             item["game_id"] = game_id
             item["trajectory_id"] = str(trajectory_id)
+            item["rollout_index"] = rollout_index
             item["tag"] = str(tag)
             game["records"].append(item)
             flat_records.append(item)
@@ -167,7 +172,7 @@ def summarize_agentic_preflight(
     decisions = {}
     for record in flat_records:
         decision_key = (
-            record["game_id"],
+            int(record["rollout_index"]),
             int(record["player_id"]),
             int(record.get("decision_index", record["turn_index"])),
         )

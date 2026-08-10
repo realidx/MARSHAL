@@ -91,6 +91,28 @@ def test_generator_can_target_an_informative_root(seed):
     assert solution.decision_spreads[graph.start_node] > 0
 
 
+@pytest.mark.parametrize("target_distance", [1, 3, 5])
+def test_generator_can_exactly_target_root_optimal_distance(target_distance):
+    graph, solution, _ = generate_geography_graph(
+        seed=9000 + target_distance,
+        num_nodes=12,
+        min_depth=4,
+        max_depth=6,
+        min_branching=1,
+        max_branching=3,
+        transposition_rate=0.15,
+        target_root_informative=True,
+        target_root_optimal_distance=target_distance,
+        target_root_branching=2,
+        target_informative_fraction=0.5,
+        candidate_count=8192,
+    )
+    root = graph.start_node
+    assert solution.optimal_distances[root] == target_distance
+    assert solution.decision_spreads[root] > 0
+    assert len(graph.adjacency[root]) == 2
+
+
 def test_seed_namespaces_make_splits_reproducible_and_disjoint():
     first = GeographyEnv(
         GeographyConfig(built_in_opponent="none", seed_namespace=1)
