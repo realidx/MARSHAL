@@ -1137,6 +1137,17 @@ class EnvManager:
             "action_recovered": float(info.get("action_recovered", 0.0)),
             "near_generation_limit": float(info.get("near_generation_limit", 0.0)),
             "response_truncated": float(info.get("response_truncated", 0.0)),
+            "graph_id": str(info.get("graph_id", "")),
+            "graph_seed": str(info.get("graph_seed", "")),
+            "graph_current_node": str(info.get("graph_current_node", "")),
+            "graph_node_count": int(info.get("graph_node_count", 0)),
+            "graph_transposition_rate": float(
+                info.get("graph_transposition_rate", 0.0)
+            ),
+            "remaining_optimal_distance": int(
+                info.get("remaining_optimal_distance", -1)
+            ),
+            "current_out_degree": int(info.get("current_out_degree", 0)),
         }
         if record["valid"]:
             spread = info[

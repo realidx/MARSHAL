@@ -1,0 +1,295 @@
+defaults:
+  - agentic_train_geography_counterfactual_selfplay_2gpu
+  - _self_
+
+exp_name: "geography_counterfactual_distance3_2gpu"
+
+# First causal training experiment: exact local counterfactual credit on
+# procedurally fresh Distance-3 roots, with full-game self-play thereafter.
+max_steps: 100
+eval_steps: 20
+eval_at_end: true
+rollout_batch_size: 32
+val_batch_size: 48
+sequence_length: 4096
+max_actions_per_traj: 6
+
+actor_infer:
+  generating_args:
+    max_new_tokens: 1200
+    stop: ["</answer>"]
+    include_stop_str_in_output: true
+  strategy_args:
+    strategy_config:
+      max_model_len: 4096
+
+custom_envs:
+  Geography-Train-D3-N10-LowShare:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      reward_mode: counterfactual
+      game_step_discount: ${game_step_discount}
+      root_decision_only: false
+      response_token_limit: 1200
+      seed_namespace: 201
+      num_nodes: 10
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.05
+      target_root_informative: true
+      target_root_optimal_distance: 3
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 1024
+
+  Geography-Train-D3-N10-HighShare:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      reward_mode: counterfactual
+      game_step_discount: ${game_step_discount}
+      root_decision_only: false
+      response_token_limit: 1200
+      seed_namespace: 202
+      num_nodes: 10
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.35
+      target_root_informative: true
+      target_root_optimal_distance: 3
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 1024
+
+  Geography-Train-D3-N14-LowShare:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      reward_mode: counterfactual
+      game_step_discount: ${game_step_discount}
+      root_decision_only: false
+      response_token_limit: 1200
+      seed_namespace: 203
+      num_nodes: 14
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.05
+      target_root_informative: true
+      target_root_optimal_distance: 3
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 1024
+
+  Geography-Train-D3-N14-HighShare:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      reward_mode: counterfactual
+      game_step_discount: ${game_step_discount}
+      root_decision_only: false
+      response_token_limit: 1200
+      seed_namespace: 204
+      num_nodes: 14
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.35
+      target_root_informative: true
+      target_root_optimal_distance: 3
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 1024
+
+  Geography-Val-D1-Sanity:
+    env_type: geography
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      root_decision_only: true
+      response_token_limit: 1200
+      seed_namespace: 301
+      num_nodes: 12
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.15
+      target_root_informative: true
+      target_root_optimal_distance: 1
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 1024
+
+  Geography-Val-D3-IID:
+    env_type: geography
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      root_decision_only: true
+      response_token_limit: 1200
+      seed_namespace: 302
+      num_nodes: 12
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.15
+      target_root_informative: true
+      target_root_optimal_distance: 3
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 1024
+
+  Geography-Val-D3-Relabel:
+    env_type: geography
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      root_decision_only: true
+      response_token_limit: 1200
+      # These groups follow the eight D3-IID groups. Subtracting eight pairs
+      # each graph seed with its IID counterpart; only the labels differ.
+      seed_namespace: 302
+      seed_offset: -8
+      relabel_seed_offset: 1000003
+      num_nodes: 12
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.15
+      target_root_informative: true
+      target_root_optimal_distance: 3
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 1024
+
+  Geography-Val-D3-Topology-OOD:
+    env_type: geography
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      root_decision_only: true
+      response_token_limit: 1200
+      seed_namespace: 304
+      num_nodes: 16
+      min_depth: 5
+      max_depth: 8
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.5
+      target_root_informative: true
+      target_root_optimal_distance: 3
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 2048
+
+  Geography-Val-D5-ZeroShot:
+    env_type: geography
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      root_decision_only: true
+      response_token_limit: 1200
+      seed_namespace: 305
+      num_nodes: 12
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.15
+      target_root_informative: true
+      target_root_optimal_distance: 5
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 8192
+
+  Geography-Val-D3-FullGame:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      root_decision_only: false
+      response_token_limit: 1200
+      seed_namespace: 306
+      num_nodes: 12
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.15
+      target_root_informative: true
+      target_root_optimal_distance: 3
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 1024
+
+train_env_manager:
+  max_invalid_retries_per_decision: 0
+  format_penalty: -1.5
+  minimax_length_penalty_beta: 0.0
+  minimax_length_soft_budget: 1000
+  minimax_length_hard_budget: 1200
+  enable_length_penalty: false
+  max_env_num_per_worker: 8
+  env_groups: 32
+  group_size: 1
+  group_seed_base: 100000
+  tags:
+    - Geography-Train-D3-N10-LowShare
+    - Geography-Train-D3-N10-HighShare
+    - Geography-Train-D3-N14-LowShare
+    - Geography-Train-D3-N14-HighShare
+  n_groups: [8, 8, 8, 8]
+
+val_env_manager:
+  max_invalid_retries_per_decision: 0
+  format_penalty: 0.0
+  minimax_length_penalty_beta: 0.0
+  minimax_length_soft_budget: 1000
+  minimax_length_hard_budget: 1200
+  enable_length_penalty: false
+  max_env_num_per_worker: 8
+  env_groups: 48
+  group_size: 1
+  group_seed_base: 800000
+  tags:
+    - Geography-Val-D1-Sanity
+    - Geography-Val-D3-IID
+    - Geography-Val-D3-Relabel
+    - Geography-Val-D3-Topology-OOD
+    - Geography-Val-D5-ZeroShot
+    - Geography-Val-D3-FullGame
+  n_groups: [8, 8, 8, 8, 8, 8]

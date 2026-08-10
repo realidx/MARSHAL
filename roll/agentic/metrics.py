@@ -59,6 +59,52 @@ def aggregate_counterfactual_decision_metrics(
         metrics[f"{prefix}/decision_spread_sum"] = spread_sum
         metrics[f"{prefix}/decision_spread_mean"] = spread_sum / valid_count if valid_count else 0.0
 
+        graph_seeds = {
+            str(record.get("graph_seed", ""))
+            for record in records
+            if str(record.get("graph_seed", ""))
+        }
+        metrics[f"{prefix}/unique_graph_count"] = float(len(graph_seeds))
+
+        observed_distances = sorted(
+            {
+                int(record["remaining_optimal_distance"])
+                for record in records
+                if int(record.get("remaining_optimal_distance", -1)) >= 0
+            }
+        )
+        for distance in observed_distances:
+            distance_records = [
+                record
+                for record in records
+                if int(record.get("remaining_optimal_distance", -1)) == distance
+            ]
+            distance_valid = [
+                record
+                for record in distance_records
+                if float(record.get("valid", 0.0)) > 0
+            ]
+            distance_optimal = sum(
+                float(record.get("optimal", 0.0)) for record in distance_valid
+            )
+            distance_prefix = f"{prefix}/distance_{distance}"
+            metrics[f"{distance_prefix}/decision_count"] = float(
+                len(distance_records)
+            )
+            metrics[f"{distance_prefix}/valid_action_rate"] = (
+                len(distance_valid) / len(distance_records)
+                if distance_records
+                else 0.0
+            )
+            metrics[f"{distance_prefix}/optimal_action_rate"] = (
+                distance_optimal / len(distance_valid) if distance_valid else 0.0
+            )
+            metrics[f"{distance_prefix}/end_to_end_optimal_rate"] = (
+                distance_optimal / len(distance_records)
+                if distance_records
+                else 0.0
+            )
+
     return metrics
 
 

@@ -243,6 +243,13 @@ def test_invalid_output_does_not_change_state_or_canonical_values():
     assert result["info"]["canonical_reward_player_0"] == 0.0
     assert result["info"]["canonical_reward_player_1"] == 0.0
     assert result["info"]["game_transition"] == 0.0
+    assert result["info"]["graph_seed"] == str(env.state.graph.episode_seed)
+    assert result["info"]["graph_current_node"] == env.state.graph.labels[
+        env.state.current_node
+    ]
+    assert result["info"]["remaining_optimal_distance"] == (
+        env.solution.optimal_distances[env.state.current_node]
+    )
 
 
 def test_random_self_play_terminates_within_longest_depth():

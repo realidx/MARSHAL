@@ -180,6 +180,7 @@ class GeographyEnv(BaseDiscreteActionEnv):
             "graph_informative_fraction": float(self.properties.informative_fraction),
             "remaining_optimal_distance": float(self.solution.optimal_distances[before_node]),
             "current_out_degree": float(len(action_values)),
+            "graph_current_node": self.state.graph.labels[before_node],
             "root_decision_only": float(self.config.root_decision_only),
         }
         # Compatibility aliases let the existing rollout aggregation continue
@@ -352,8 +353,8 @@ class GeographyEnv(BaseDiscreteActionEnv):
             }
         ]
 
-    def _zero_nontransition_info(self, retry: bool) -> Dict[str, float]:
-        return {
+    def _zero_nontransition_info(self, retry: bool) -> Dict[str, Any]:
+        info: Dict[str, Any] = {
             "retry_attempt": float(retry),
             "game_transition": 0.0,
             "canonical_reward_player_0": 0.0,
@@ -363,6 +364,39 @@ class GeographyEnv(BaseDiscreteActionEnv):
             "counterfactual_valid_action": 0.0,
             "minimax_valid_action": 0.0,
         }
+        # Invalid and truncated responses still occurred at a real decision
+        # state. Preserve its graph/depth metadata so coverage diagnostics do
+        # not silently exclude the hardest failed decisions.
+        if self.state is not None and self.solution is not None and self.properties is not None:
+            node = self.state.current_node
+            info.update(
+                {
+                    "counterfactual_state_value": float(self.solution.value(node)),
+                    "counterfactual_decision_spread": float(
+                        self.solution.decision_spreads[node]
+                    ),
+                    "graph_id": self.state.graph.graph_id,
+                    "graph_seed": str(self.state.graph.episode_seed),
+                    "graph_node_count": float(self.state.graph.num_nodes),
+                    "graph_edge_count": float(self.state.graph.num_edges),
+                    "graph_depth": float(self.properties.longest_depth),
+                    "graph_transposition_rate": float(
+                        self.properties.transposition_rate
+                    ),
+                    "graph_mean_branching": float(self.properties.mean_branching),
+                    "graph_informative_fraction": float(
+                        self.properties.informative_fraction
+                    ),
+                    "remaining_optimal_distance": float(
+                        self.solution.optimal_distances[node]
+                    ),
+                    "current_out_degree": float(
+                        len(self.solution.action_values(node))
+                    ),
+                    "graph_current_node": self.state.graph.labels[node],
+                }
+            )
+        return info
 
     def _terminal_info(self) -> Dict[str, Any]:
         assert self.state is not None and self.state.is_terminal()

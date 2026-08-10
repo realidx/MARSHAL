@@ -58,3 +58,45 @@ def test_generic_counterfactual_metrics_use_generic_namespace():
     metrics = aggregate_counterfactual_decision_metrics(records, tags=["Geography"])
     assert metrics["env/Geography/counterfactual/decision_count"] == 1.0
     assert metrics["env/Geography/counterfactual/optimal_action_rate"] == 1.0
+
+
+def test_counterfactual_metrics_report_graph_coverage_and_distance_buckets():
+    records = [
+        [
+            {
+                "valid": 1.0,
+                "optimal": 1.0,
+                "regret": 0.0,
+                "spread": 2.0,
+                "graph_seed": "101",
+                "remaining_optimal_distance": 3,
+            },
+            {
+                "valid": 0.0,
+                "graph_seed": "101",
+                "remaining_optimal_distance": 1,
+            },
+        ],
+        [
+            {
+                "valid": 1.0,
+                "optimal": 0.0,
+                "regret": 1.0,
+                "spread": 2.0,
+                "graph_seed": "102",
+                "remaining_optimal_distance": 3,
+            }
+        ],
+    ]
+    metrics = aggregate_counterfactual_decision_metrics(
+        records, tags=["Geography", "Geography"]
+    )
+    prefix = "env/Geography/counterfactual"
+
+    assert metrics[f"{prefix}/unique_graph_count"] == 2.0
+    assert metrics[f"{prefix}/distance_1/decision_count"] == 1.0
+    assert metrics[f"{prefix}/distance_1/valid_action_rate"] == 0.0
+    assert metrics[f"{prefix}/distance_3/decision_count"] == 2.0
+    assert metrics[f"{prefix}/distance_3/valid_action_rate"] == 1.0
+    assert metrics[f"{prefix}/distance_3/optimal_action_rate"] == 0.5
+    assert metrics[f"{prefix}/distance_3/end_to_end_optimal_rate"] == 0.5

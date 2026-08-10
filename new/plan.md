@@ -173,7 +173,46 @@ Hold the model, optimizer, rollout budget, prompt, and graph distribution fixed:
 | Terminal result only | Whether ordinary game training is sufficient |
 | Exact centered \(Q\) reward | Whether local alternative comparison improves learning |
 
-Initial training keeps Qwen3-4B-Instruct-2507, REINFORCE, full-weight updates, `seq-mean-token-mean`, Markovian turn context, one retry, and existing auxiliary format/length controls. The first full run is allowed only after a 20-step smoke test preserves validity, diagnostic records, and reward separation.
+Initial training keeps Qwen3-4B-Instruct-2507, REINFORCE, full-weight updates, `seq-mean-token-mean`, and Markovian turn context. The frozen first run below disables retries and length penalties so its counterfactual game reward remains easy to interpret. The first full run is allowed only after a 20-step smoke test preserves validity, diagnostic records, and reward separation.
+
+## Frozen first training run: Distance-3 counterfactual
+
+The first optimization run isolates exact local counterfactual credit. It does
+not include the MARSHAL episode return or a process reward. Those remain later,
+matched experimental arms.
+
+Training uses full-game self-play from an informative Distance-3 root. Four
+equally sampled procedural strata cross node count (10 or 14) with target
+transposition (0.05 or 0.35). Every stratum fixes root branching at two and
+requires exact root optimal distance three. Labels, row order, successor order,
+and episode graphs remain procedural. Group size is one, so training does not
+generate repeated samples of the same prompt as the preflight did.
+
+The initial schedule is:
+
+| Stage | Updates | Rollout decisions/update | Purpose |
+|---|---:|---:|---|
+| Smoke | 20 | 8 | runtime, reward separation, and logging correctness |
+| First learning run | 100 | 32 | determine whether held-out Distance-3 improves |
+| Conditional extension | 300 total | 32 | only if the held-out learning curve is still improving |
+
+Responses retain the free-form reason/answer protocol and a 1,200-token hard
+ceiling. There is no length reward and no retry. Invalid or truncated output has
+zero game reward and a separate format penalty of -1.5. Full games are capped at
+six legal moves, matching the generator depth bound.
+
+Validation has disjoint fixed namespaces and no auxiliary penalties. It covers
+Distance-1 sanity, Distance-3 IID, paired relabelled copies of Distance-3 IID, topology/size-OOD
+Distance-3, zero-shot Distance-5, and a small full-game Distance-3 suite. Online
+diagnostics report unique graph seeds and, for every observed optimal distance,
+decision count, validity, conditional optimality, and end-to-end optimality.
+
+The executable configurations are:
+
+```text
+examples/geography/agentic_train_geography_counterfactual_distance3_smoke_2gpu.yaml
+examples/geography/agentic_train_geography_counterfactual_distance3_2gpu.yaml
+```
 
 ## Claim-to-evidence boundary
 
