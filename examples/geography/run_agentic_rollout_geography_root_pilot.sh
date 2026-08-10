@@ -1,11 +1,12 @@
 #!/bin/bash
+set -euo pipefail
 set +x
-ray stop
+ray stop --force || true
 
 CONFIG_PATH=$(basename $(dirname "$0"))
 
 ROLL_PATH=${PWD}
-export PYTHONPATH="$ROLL_PATH:$PYTHONPATH"
+export PYTHONPATH="$ROLL_PATH:${PYTHONPATH:-}"
 
 ROLL_OUTPUT_DIR="./runs/geography_root_pilot/$(date +%Y%m%d-%H%M%S)"
 ROLL_LOG_DIR="$ROLL_OUTPUT_DIR/logs"

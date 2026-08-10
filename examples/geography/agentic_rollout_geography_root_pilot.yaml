@@ -1,16 +1,27 @@
 defaults:
-  - agentic_train_geography_counterfactual_selfplay_2gpu
+  - /tictactoe/agentic_train_tictactoe_minimax_selfplay_2gpu@_global_
   - _self_
+
+hydra:
+  searchpath:
+    - file://${oc.env:PWD}/examples
 
 exp_name: "geography_root_rollout_pilot"
 
 # Generation-only edge-of-competence pilot: 30 held-out graphs, with 32
 # independent stochastic responses to the identical prompt for each graph.
 max_steps: 1
+game_step_discount: 1.0
 rollout_batch_size: 960
 sequence_length: 4096
 max_actions_per_traj: 1
-num_gpus_per_node: 2
+num_gpus_per_node: 1
+
+actor_train:
+  device_mapping: list(range(0,1))
+
+reference:
+  device_mapping: list(range(0,1))
 
 actor_infer:
   generating_args:
@@ -24,10 +35,10 @@ actor_infer:
     include_stop_str_in_output: true
   strategy_args:
     strategy_config:
-      tensor_model_parallel_size: 2
+      tensor_parallel_size: 1
       max_model_len: 4096
       gpu_memory_utilization: 0.8
-  device_mapping: list(range(0,2))
+  device_mapping: list(range(0,1))
 
 enable_think: false
 markovian_turn_context: true
@@ -102,7 +113,9 @@ train_env_manager:
   minimax_length_soft_budget: 400
   minimax_length_hard_budget: 600
   enable_length_penalty: false
-  max_env_num_per_worker: 64
+  # Pack five 32-sample graph groups into each process. This preserves the
+  # identical-prompt sampling design while avoiding 15 duplicated Ray runtimes.
+  max_env_num_per_worker: 160
   env_groups: 30
   group_size: 32
   group_seed_base: 700000
