@@ -3,7 +3,7 @@ set -euo pipefail
 set +x
 ray stop --force || true
 
-CONFIG_PATH=$(basename $(dirname "$0"))
+CONFIG_PATH=.
 CONFIG_NAME=${CONFIG_NAME:-agentic_train_geography_counterfactual_distance3_smoke_2gpu}
 
 ROLL_PATH=${PWD}
@@ -19,5 +19,5 @@ mkdir -p "$ROLL_LOG_DIR"
 
 python examples/start_agentic_pipeline.py \
   --config_path "$CONFIG_PATH" \
-  --config_name "$CONFIG_NAME" \
+  --config_name "geography/$CONFIG_NAME" \
   | tee "$ROLL_LOG_DIR/custom_logs.log"

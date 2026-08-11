@@ -1,3 +1,5 @@
+# @package _global_
+
 defaults:
   - agentic_train_geography_counterfactual_distance3_2gpu
   - _self_
@@ -11,6 +13,12 @@ val_batch_size: 12
 actor_train:
   training_args:
     warmup_steps: 0
+
+custom_envs:
+  Geography-Val-D3-Relabel:
+    env_config:
+      # Smoke has two IID groups immediately before its two relabel groups.
+      seed_offset: -2
 
 train_env_manager:
   max_env_num_per_worker: 8
