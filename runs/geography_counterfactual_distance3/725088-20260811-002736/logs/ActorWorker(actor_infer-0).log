@@ -1,0 +1,135 @@
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:02 [__init__.py:239] Automatically detected platform cuda.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:34:10] [vllm_strategy.py (76)] [INFO] [actor_infer-0 0 / 1][PID 338663] vllm_config: {'gpu_memory_utilization': 0.8, 'block_size': 16, 'load_format': 'auto', 'max_model_len': 4096, 'model': '/home/e/e1300530/models/Qwen3-4B-Instruct-2507/', 'dtype': 'bfloat16', 'enforce_eager': True, 'trust_remote_code': True, 'seed': 42, 'disable_custom_all_reduce': True, 'enable_prefix_caching': False}
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:27 [config.py:689] This model supports multiple tasks: {'embed', 'score', 'generate', 'classify', 'reward'}. Defaulting to 'generate'.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:27 [config.py:1901] Chunked prefill is enabled with max_num_batched_tokens=8192.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m WARNING 08-11 00:34:27 [cuda.py:96] To see benefits of async output processing, enable CUDA graph. Since, enforce-eager is enabled, async output processor cannot be used
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:34:27] [llm_engine.py (179)] [INFO] [actor_infer-0 0 / 1][PID 338663] Using executor_class: <class 'vllm.v1.executor.abstract.UniProcExecutor'>
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:34:27] [llm_engine.py (180)] [INFO] [actor_infer-0 0 / 1][PID 338663] Using worker cls: roll.third_party.vllm.vllm_0_8_4.v1.worker.Worker084
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:38 [__init__.py:239] Automatically detected platform cuda.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:42 [core.py:61] Initializing a V1 LLM engine (v0.8.4) with config: model='/home/e/e1300530/models/Qwen3-4B-Instruct-2507/', speculative_config=None, tokenizer='/home/e/e1300530/models/Qwen3-4B-Instruct-2507/', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, override_neuron_config=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=4096, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, disable_custom_all_reduce=True, quantization=None, enforce_eager=True, kv_cache_dtype=auto,  device_config=cuda, decoding_config=DecodingConfig(guided_decoding_backend='auto', reasoning_backend=None), observability_config=ObservabilityConfig(show_hidden_metrics=False, otlp_traces_endpoint=None, collect_model_forward_time=False, collect_model_execute_time=False), seed=42, served_model_name=/home/e/e1300530/models/Qwen3-4B-Instruct-2507/, num_scheduler_steps=1, multi_step_stream_outputs=True, enable_prefix_caching=False, chunked_prefill_enabled=True, use_async_output_proc=False, disable_mm_preprocessor_cache=False, mm_processor_kwargs=None, pooler_config=None, compilation_config={"splitting_ops":[],"compile_sizes":[],"cudagraph_capture_sizes":[],"max_capture_size":0}
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m add logger: log_rank_actor_infer-0_0_1
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Created or verified log directory: ./runs/geography_counterfactual_distance3/725088-20260811-002736/logs
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/geography_counterfactual_distance3/725088-20260811-002736/logs/log_rank_actor_infer-0_0_1.log
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m WARNING 08-11 00:34:45 [utils.py:2444] Methods determine_num_available_blocks,device_config,get_cache_block_size_bytes,initialize_cache not implemented in <roll.third_party.vllm.vllm_0_8_4.v1.worker.Worker084 object at 0x746ee96bef50>
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:46 [parallel_state.py:959] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, TP rank 0
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:46 [cuda.py:221] Using Flash Attention backend on V1 engine.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:46 [gpu_model_runner.py:1276] Starting to load model /home/e/e1300530/models/Qwen3-4B-Instruct-2507/...
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m WARNING 08-11 00:34:46 [topk_topp_sampler.py:69] FlashInfer is not available. Falling back to the PyTorch-native implementation of top-p & top-k sampling. For the best performance, please install FlashInfer.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Loading safetensors checkpoint shards:   0% Completed | 0/3 [00:00<?, ?it/s]
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Loading safetensors checkpoint shards:  33% Completed | 1/3 [00:01<00:02,  1.03s/it]
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Loading safetensors checkpoint shards:  67% Completed | 2/3 [00:02<00:01,  1.05s/it]
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:48 [loader.py:458] Loading weights took 2.25 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Loading safetensors checkpoint shards: 100% Completed | 3/3 [00:02<00:00,  1.56it/s]
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Loading safetensors checkpoint shards: 100% Completed | 3/3 [00:02<00:00,  1.33it/s]
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m 
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:48 [gpu_model_runner.py:1291] Model loading took 7.6064 GiB and 2.460204 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:50 [kv_cache_utils.py:634] GPU KV cache size: 386,992 tokens
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:50 [kv_cache_utils.py:637] Maximum concurrency for 4,096 tokens per request: 94.48x
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:50 [core.py:163] init engine (profile, create kv cache, warmup model) took 1.33 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:50 [core_client.py:435] Core engine process 0 ready.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:34:50] [vllm_strategy.py (94)] [INFO] [actor_infer-0 0 / 1][PID 338663] add [AddedToken("<|endoftext|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True)] to additional_special_tokens: ['<|im_start|>', '<|im_end|>', '<|object_ref_start|>', '<|object_ref_end|>', '<|box_start|>', '<|box_end|>', '<|quad_start|>', '<|quad_end|>', '<|vision_start|>', '<|vision_end|>', '<|vision_pad|>', '<|image_pad|>', '<|video_pad|>', '<|endoftext|>']
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:34:50] [base_worker.py (73)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer-0 initialized
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:50 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:34:55 [gpu_worker.py:81] Sleep mode freed 62.18 GiB memory, 1.25 GiB memory is still in use.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:35:05] [worker_helper.py (56)] [INFO] [actor_infer-0 0 / 1][PID 344010] no comm_plan found for rank 0/0
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:53:25] [base_worker.py (191)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer-0 generate server global step 0
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:53:25] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.25, memory max reserved (GB): 0.25, rss (GB): 1.3407478332519531
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/torch/cuda/memory.py:391: FutureWarning: torch.cuda.reset_max_memory_allocated now calls torch.cuda.reset_peak_memory_stats, which resets /all/ peak memory stats.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m   warnings.warn(
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/torch/cuda/memory.py:417: FutureWarning: torch.cuda.reset_max_memory_cached now calls torch.cuda.reset_peak_memory_stats, which resets /all/ peak memory stats.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m   warnings.warn(
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:53:26] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_start_onload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.25, rss (GB): 1.3407554626464844
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 0.4255 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 43.3914 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:54:09] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_end_onload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.25, rss (GB): 1.5620384216308594
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:54:09] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_end_offload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.25, rss (GB): 1.5620384216308594
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 0.0060 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 43.8232 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:54:10] [base_worker.py (191)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer-0 generate server global step 0
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:54:10] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_start_offload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.001953125, rss (GB): 1.5620498657226562
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:54:10] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_start_onload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.001953125, rss (GB): 1.5620498657226562
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 0.2213 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 40.1891 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:54:50] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_end_onload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.001953125, rss (GB): 1.5621986389160156
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:54:50 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 00:54:51 [gpu_worker.py:81] Sleep mode freed 62.12 GiB memory, 2.56 GiB memory is still in use.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 00:54:51] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_end_offload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.001953125, rss (GB): 1.5621986389160156
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 1.2698 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 41.6803 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 01:15:08] [base_worker.py (191)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer-0 generate server global step 1
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 01:15:08] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_start_offload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.251953125, memory max reserved (GB): 0.251953125, rss (GB): 1.56585693359375
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 01:15:09] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_start_onload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.251953125, rss (GB): 1.56585693359375
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 0.6052 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 31.0325 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 01:15:40] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_end_onload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.251953125, rss (GB): 1.5659713745117188
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 01:15:40 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 01:15:40 [gpu_worker.py:81] Sleep mode freed 62.12 GiB memory, 2.80 GiB memory is still in use.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 01:15:41] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_end_offload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.251953125, rss (GB): 1.5659713745117188
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 1.2613 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 32.8992 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 01:34:35] [base_worker.py (191)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer-0 generate server global step 2
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 01:34:35] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_start_offload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.251953125, memory max reserved (GB): 0.251953125, rss (GB): 1.5813179016113281
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 01:34:35] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_start_onload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.251953125, rss (GB): 1.5813179016113281
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 0.3633 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 29.5794 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 01:35:05] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_end_onload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.251953125, rss (GB): 1.5814056396484375
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 01:35:05 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 01:35:05 [gpu_worker.py:81] Sleep mode freed 62.12 GiB memory, 2.80 GiB memory is still in use.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 01:35:06] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_end_offload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.251953125, rss (GB): 1.5814056396484375
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 1.2574 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 31.2002 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 01:54:03] [base_worker.py (191)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer-0 generate server global step 3
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 01:54:03] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_start_offload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.251953125, memory max reserved (GB): 0.251953125, rss (GB): 1.5834503173828125
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 01:54:03] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_start_onload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.251953125, rss (GB): 1.5834503173828125
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 0.3212 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 29.1947 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 01:54:32] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_end_onload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.251953125, rss (GB): 1.58258056640625
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 01:54:32 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 01:54:33 [gpu_worker.py:81] Sleep mode freed 62.12 GiB memory, 2.80 GiB memory is still in use.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 01:54:34] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_end_offload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.251953125, rss (GB): 1.58258056640625
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 1.1750 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 30.6912 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 02:13:36] [base_worker.py (191)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer-0 generate server global step 4
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 02:13:36] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer/generate_start_offload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.251953125, memory max reserved (GB): 0.251953125, rss (GB): 1.5836181640625
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 0.3877 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 44.2351 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 02:14:21 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 02:14:21 [gpu_worker.py:81] Sleep mode freed 62.12 GiB memory, 2.80 GiB memory is still in use.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 1.1331 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 45.7560 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 02:33:15] [base_worker.py (191)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer-0 generate server global step 5
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 0.4743 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 30.5824 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 0.0045 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 31.0616 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 02:33:46] [base_worker.py (191)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer-0 generate server global step 5
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 0.2352 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 52.2919 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 02:34:39 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 02:34:39 [gpu_worker.py:81] Sleep mode freed 62.12 GiB memory, 2.80 GiB memory is still in use.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 1.1205 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 53.6477 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 02:53:39] [base_worker.py (191)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer-0 generate server global step 6
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 0.3952 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 31.0716 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 02:54:10 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 02:54:11 [gpu_worker.py:81] Sleep mode freed 62.12 GiB memory, 2.80 GiB memory is still in use.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 1.1278 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 32.5948 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m [2026-08-11 03:13:00] [base_worker.py (191)] [INFO] [actor_infer-0 0 / 1][PID 338663] actor_infer-0 generate server global step 7
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 0.3796 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 29.1875 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 03:13:29 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 0it [00:00, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m INFO 08-11 03:13:30 [gpu_worker.py:81] Sleep mode freed 62.12 GiB memory, 2.80 GiB memory is still in use.
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 1.0960 seconds
+[36m(ActorWorker(actor_infer-0) pid=338663, ip=192.168.51.118)[0m Elapsed time: 30.6633 seconds

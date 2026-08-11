@@ -1,0 +1,490 @@
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:15] [checkpoint_manager.py (55)] [INFO] [actor_train-0 0 / 1][PID 338467] checkpoint_config: {}
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:15] [megatron_strategy.py (61)] [INFO] [actor_train-0 0 / 1][PID 338467] training_args: {'output_dir': './runs/geography_counterfactual_distance3/725088-20260811-002736', 'max_steps': 40, 'num_train_epochs': 1.0, 'learning_rate': 1e-06, 'lr_scheduler_type': 'cosine_with_min_lr', 'weight_decay': 0.05, 'adam_beta1': 0.9, 'adam_beta2': 0.95, 'per_device_train_batch_size': 1, 'gradient_accumulation_steps': 4, 'seed': 42, 'data_seed': None, 'dataloader_num_workers': 0, 'fp16': False, 'bf16': True, 'tf32': None, 'warmup_ratio': 0.03, 'warmup_steps': 0, 'sequence_parallel': False, 'tensor_model_parallel_size': 1, 'pipeline_model_parallel_size': 1, 'expert_model_parallel_size': 1, 'use_distributed_optimizer': True, 'recompute_granularity': 'full', 'accumulate_allreduce_grads_in_fp32': True, 'check_for_nan_in_loss_and_grad': False, 'max_grad_norm': 1.0}
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:15,521] [INFO] [mcore_adapter.initialize]: Initializing mpu on device cuda:0
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:15,531] [INFO] [mcore_adapter.initialize]: initialized tensor model parallel with size 1
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:15,531] [INFO] [mcore_adapter.initialize]: initialized pipeline model parallel with size 1
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:16,563] [INFO] [mcore_adapter.models.auto.modeling_auto]: Did not find /home/e/e1300530/models/Qwen3-4B-Instruct-2507/mca_config.json, loading HuggingFace config from /home/e/e1300530/models/Qwen3-4B-Instruct-2507/
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:16,565] [INFO] [mcore_adapter.models.model_config]: Did not find /home/e/e1300530/models/Qwen3-4B-Instruct-2507/mca_config.json, loading HuggingFace config from /home/e/e1300530/models/Qwen3-4B-Instruct-2507/
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:16,574] [WARNING] [mcore_adapter.models.model_config]: Non-interleaved pipeline parallelism does not support overlapping p2p communication!
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:17,139] [INFO] [mcore_adapter.models.model_factory]: number of parameters on (tensor, pipeline, expert) model parallel rank (0, 0, 0): 4022468096
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:17,139] [INFO] [mcore_adapter.models.converter.model_converter]: Begin converting mca state dict from hf ckpt...
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:34,891] [INFO] [mcore_adapter.models.converter.model_converter]: End converting, cost: 17.751s
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:45,139] [INFO] [mcore_adapter.models.model_factory]: End loading, cost: 28.574s
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [rank0]:[W811 00:33:46.788224069 ProcessGroupNCCL.cpp:4561] [PG ID 0 PG GUID 0 Rank 0]  using GPU 0 to perform barrier as devices used by this process are currently unknown. This can potentially cause a hang if this rank to GPU mapping is incorrect. Specify device_ids in barrier() to force use of a particular device, or call init_process_group() with a device_id.
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:46] [megatron_strategy.py (306)] [INFO] [actor_train-0 0 / 1][PID 338467] megatron optimizer: <megatron.core.optimizer.distrib_optimizer.DistributedOptimizer object at 0x72f75075bf10>
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:46] [megatron_strategy.py (319)] [INFO] [actor_train-0 0 / 1][PID 338467] max steps pipeline 40
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:46] [megatron_strategy.py (324)] [INFO] [actor_train-0 0 / 1][PID 338467] max steps worker train 40
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:46] [megatron_strategy.py (351)] [INFO] [actor_train-0 0 / 1][PID 338467] [DistributedDataParallel(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m   (module): McaGPTModel(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m     (embedding): LanguageModelEmbedding(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m       (word_embeddings): VocabParallelEmbedding()
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m       (embedding_dropout): Dropout(p=0.0, inplace=False)
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m     )
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m     (rotary_pos_emb): RotaryEmbedding()
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m     (decoder): TransformerBlock(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m       (layers): ModuleList(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m         (0-35): 36 x TransformerLayer(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m           (input_layernorm): IdentityOp()
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m           (self_attention): SelfAttention(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m             (core_attention): TEDotProductAttention(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m               (flash_attention): FlashAttention()
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m               (fused_attention): FusedAttention()
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m               (unfused_attention): UnfusedDotProductAttention(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m                 (scale_mask_softmax): FusedScaleMaskSoftmax()
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m                 (attention_dropout): Dropout(p=0.0, inplace=False)
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m               )
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m             )
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m             (linear_proj): TERowParallelLinear(in_features=4096, out_features=2560, bias=False, TP=1)
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m             (linear_qkv): TELayerNormColumnParallelLinear(in_features=2560, out_features=6144, bias=False, TP=1)
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m             (q_layernorm): RMSNorm()
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m             (k_layernorm): RMSNorm()
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m           )
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m           (pre_cross_attn_layernorm): IdentityOp()
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m           (cross_attention): IdentityOp()
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m           (cross_attn_bda): IdentityFuncOp()
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m           (pre_mlp_layernorm): IdentityOp()
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m           (mlp): MLP(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m             (linear_fc1): TELayerNormColumnParallelLinear(in_features=2560, out_features=19456, bias=False, TP=1)
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m             (linear_fc2): TERowParallelLinear(in_features=9728, out_features=2560, bias=False, TP=1)
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m           )
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m         )
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m       )
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m       (final_layernorm): RMSNorm()
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m     )
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m     (output_layer): ColumnParallelLinear(in_features=2560, out_features=151936, bias=False, TP=1)
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m   )
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m )]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:33:46] [base_worker.py (73)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train-0 initialized
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:35:05] [strategy.py (171)] [INFO] [actor_train-0 0 / 1][PID 338467] warmup setup_collective_group: model_update_actor_train_0_to_actor_infer_ rank: 0 world_size: 1
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/torch/cuda/memory.py:391: FutureWarning: torch.cuda.reset_max_memory_allocated now calls torch.cuda.reset_peak_memory_stats, which resets /all/ peak memory stats.
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m   warnings.warn(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/torch/cuda/memory.py:417: FutureWarning: torch.cuda.reset_max_memory_cached now calls torch.cuda.reset_peak_memory_stats, which resets /all/ peak memory stats.
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m   warnings.warn(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:35:05] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/model_update_start_offload, memory allocated (GB): 1.9073486328125e-06, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.001953125, rss (GB): 25.387496948242188
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:35:06] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/model_update_start_onload, memory allocated (GB): 7.492432594299316, memory reserved (GB): 7.501953125, memory max reserved (GB): 7.501953125, rss (GB): 25.38751220703125
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.6087 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 39.0862 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.3433 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.6983 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.5410 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 34.5842 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.7408 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.5506 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.9553 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.8188 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.9089 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.2927 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.6646 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.0718 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.7313 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.4922 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.1356 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.3157 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.0938 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.2536 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.0286 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.4666 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.8672 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.6187 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.3520 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.8983 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.6748 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.4637 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.9102 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.6525 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.6232 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1096.0288 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1096.0289 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:53:22] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/model_update_end_onload, memory allocated (GB): 7.742432594299316, memory reserved (GB): 8.478515625, memory max reserved (GB): 8.478515625, rss (GB): 25.638870239257812
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:53:25] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/model_update_end_offload, memory allocated (GB): 1.9073486328125e-06, memory reserved (GB): 0.001953125, memory max reserved (GB): 8.478515625, rss (GB): 25.638870239257812
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 3.2011 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1099.8388 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:55:03] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/compute_log_probs_start_offload, memory allocated (GB): 1.9073486328125e-06, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.001953125, rss (GB): 25.642887115478516
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:55:03] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/compute_log_probs_start_onload, memory allocated (GB): 7.492432594299316, memory reserved (GB): 7.501953125, memory max reserved (GB): 7.501953125, rss (GB): 25.642887115478516
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.6955 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 8.2100 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:55:12] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/compute_log_probs_end_onload, memory allocated (GB): 7.506410121917725, memory reserved (GB): 11.04296875, memory max reserved (GB): 11.04296875, rss (GB): 26.141429901123047
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:55:12] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/compute_log_probs_end_offload, memory allocated (GB): 7.506410121917725, memory reserved (GB): 11.04296875, memory max reserved (GB): 11.04296875, rss (GB): 26.141433715820312
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0030 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 8.9087 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/torch/cuda/memory.py:391: FutureWarning: torch.cuda.reset_max_memory_allocated now calls torch.cuda.reset_peak_memory_stats, which resets /all/ peak memory stats.
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m   warnings.warn(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/torch/cuda/memory.py:417: FutureWarning: torch.cuda.reset_max_memory_cached now calls torch.cuda.reset_peak_memory_stats, which resets /all/ peak memory stats.
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m   warnings.warn(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:55:12] [base_worker.py (91)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train-0 generate global step 0
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:55:12] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/train_step_start_offload, memory allocated (GB): 7.498292446136475, memory reserved (GB): 7.54296875, memory max reserved (GB): 7.54296875, rss (GB): 26.146625518798828
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 0:   0%|          | 0/2 [00:00<?, ?it/s]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:55:13] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/train_step_start_onload, memory allocated (GB): 37.46606206893921, memory reserved (GB): 37.50390625, memory max reserved (GB): 37.5234375, rss (GB): 26.14922332763672
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.1026 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 0:  50%|█████     | 1/2 [00:23<00:23, 23.86s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 0: 100%|██████████| 2/2 [00:31<00:00, 14.36s/it]actor_train-0 train global step 0: 100%|██████████| 2/2 [00:31<00:00, 15.78s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 31.5775 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:55:45] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/train_step_end_onload, memory allocated (GB): 37.48452615737915, memory reserved (GB): 37.525390625, memory max reserved (GB): 67.51171875, rss (GB): 58.36167526245117
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:55:45] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/train_step_end_offload, memory allocated (GB): 37.48452615737915, memory reserved (GB): 37.525390625, memory max reserved (GB): 67.51171875, rss (GB): 58.36167526245117
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0022 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 32.6824 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/torch/cuda/memory.py:391: FutureWarning: torch.cuda.reset_max_memory_allocated now calls torch.cuda.reset_peak_memory_stats, which resets /all/ peak memory stats.
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m   warnings.warn(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/torch/cuda/memory.py:417: FutureWarning: torch.cuda.reset_max_memory_cached now calls torch.cuda.reset_peak_memory_stats, which resets /all/ peak memory stats.
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m   warnings.warn(
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:55:51] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/model_update_start_offload, memory allocated (GB): 0.003908634185791016, memory reserved (GB): 0.0234375, memory max reserved (GB): 0.0234375, rss (GB): 58.36170196533203
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 00:55:53] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/model_update_start_onload, memory allocated (GB): 7.496339321136475, memory reserved (GB): 7.5234375, memory max reserved (GB): 7.5234375, rss (GB): 58.36170196533203
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.3941 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 38.5189 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 39.5480 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 39.1718 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 38.0779 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 40.3359 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 39.1636 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 39.4783 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 39.7733 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 39.3983 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 40.0061 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.9325 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 38.8417 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 38.6025 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 38.3280 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.9780 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 38.3122 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 38.1080 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 39.2362 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 39.0920 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 39.1731 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 39.4774 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.8528 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.1663 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.7325 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.8074 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.7763 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.9128 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.1240 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.8261 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.7947 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1151.7909 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1151.7914 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 01:15:04] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/model_update_end_onload, memory allocated (GB): 7.746339321136475, memory reserved (GB): 8.5, memory max reserved (GB): 8.5, rss (GB): 58.36392593383789
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 01:15:08] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/model_update_end_offload, memory allocated (GB): 0.003908634185791016, memory reserved (GB): 0.0234375, memory max reserved (GB): 8.5, rss (GB): 58.36392593383789
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 3.5041 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1156.6899 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 01:15:50] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/compute_log_probs_start_offload, memory allocated (GB): 0.003908634185791016, memory reserved (GB): 0.0234375, memory max reserved (GB): 0.0234375, rss (GB): 58.36394119262695
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 01:15:51] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/compute_log_probs_start_onload, memory allocated (GB): 7.496339321136475, memory reserved (GB): 7.5234375, memory max reserved (GB): 7.5234375, rss (GB): 58.36394119262695
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.7110 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.9514 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 01:15:53] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/compute_log_probs_end_onload, memory allocated (GB): 7.506410121917725, memory reserved (GB): 11.04296875, memory max reserved (GB): 11.04296875, rss (GB): 58.36394500732422
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 01:15:53] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/compute_log_probs_end_offload, memory allocated (GB): 7.506410121917725, memory reserved (GB): 11.04296875, memory max reserved (GB): 11.04296875, rss (GB): 58.36394500732422
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0029 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 2.6669 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 01:15:53] [base_worker.py (91)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train-0 generate global step 1
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 01:15:53] [context_managers.py (37)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train/train_step_start_offload, memory allocated (GB): 7.498292446136475, memory reserved (GB): 7.54296875, memory max reserved (GB): 7.54296875, rss (GB): 58.366539001464844
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 1:   0%|          | 0/2 [00:00<?, ?it/s]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.0637 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 1:  50%|█████     | 1/2 [00:07<00:07,  7.37s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 1: 100%|██████████| 2/2 [00:15<00:00,  7.53s/it]actor_train-0 train global step 1: 100%|██████████| 2/2 [00:15<00:00,  7.50s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 15.0153 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0011 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 16.0802 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.3934 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.4733 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.2238 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.9328 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.2489 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.1106 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.1606 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.5081 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.0608 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.9495 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.8805 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.9412 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.6707 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.9862 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.5555 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.7029 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.4552 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.0908 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.6346 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.3804 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.4567 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.8344 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.1883 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m 
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.9164 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.7376 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.8367 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.5055 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.0960 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.8521 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.4105 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.8703 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1095.9725 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1095.9727 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 3.2989 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1100.6651 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.7241 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.9463 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0018 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 2.6724 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 01:35:20] [base_worker.py (91)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train-0 generate global step 2
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 2:   0%|          | 0/2 [00:00<?, ?it/s]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.1080 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 2:  50%|█████     | 1/2 [00:07<00:07,  7.31s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 2: 100%|██████████| 2/2 [00:14<00:00,  7.48s/it]actor_train-0 train global step 2: 100%|██████████| 2/2 [00:14<00:00,  7.45s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 14.9153 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0011 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 16.0245 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.3734 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.5452 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 38.4914 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.2139 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.3726 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.3290 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.3735 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.3317 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.7477 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.4854 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 38.0813 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.8160 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.2617 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.0840 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.3843 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.8773 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.1610 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.2088 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.0797 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.5000 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.9406 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.9929 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.6830 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.4375 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.5345 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.2607 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 34.9426 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.7744 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.6125 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.3586 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.4731 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1096.6450 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1096.6456 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 3.5263 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1101.5456 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.7222 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.9496 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0020 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 2.6741 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 01:54:48] [base_worker.py (91)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train-0 generate global step 3
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 3:   0%|          | 0/2 [00:00<?, ?it/s]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.0931 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 3:  50%|█████     | 1/2 [00:07<00:07,  7.32s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 3: 100%|██████████| 2/2 [00:14<00:00,  7.48s/it]actor_train-0 train global step 3: 100%|██████████| 2/2 [00:14<00:00,  7.46s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 14.9303 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0011 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 16.0247 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.3046 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.1484 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.9068 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.1195 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 38.1437 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.5742 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.0045 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.5370 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.6219 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.4704 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.3041 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.1147 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.5589 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.6173 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.6699 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.1627 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.6554 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.7570 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.4507 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.0086 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.7029 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.7406 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.0872 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.8076 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.0560 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.2398 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.4296 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.7175 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.4155 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.7736 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.9509 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1102.0613 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1102.0615 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 3.2330 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1106.5993 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.7146 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.9539 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0027 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 2.6714 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 02:14:36] [base_worker.py (91)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train-0 generate global step 4
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 4:   0%|          | 0/2 [00:00<?, ?it/s]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.1106 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 4:  50%|█████     | 1/2 [00:07<00:07,  7.34s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 4: 100%|██████████| 2/2 [00:14<00:00,  7.51s/it]actor_train-0 train global step 4: 100%|██████████| 2/2 [00:14<00:00,  7.48s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 14.9729 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0011 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 16.0847 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.3716 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.7246 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.2543 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.4721 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.9134 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.2892 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.4959 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.5789 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.6898 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.9542 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.2481 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.5719 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.1303 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.6419 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.6410 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.6485 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.7053 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.7563 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.5640 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.7148 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.5496 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.9491 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 34.9045 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.6368 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.6471 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.6846 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.0694 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.6582 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.1689 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.9123 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.6869 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1093.0982 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1093.0984 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 3.2237 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1097.6938 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.7288 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.9647 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0018 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 2.6956 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 02:34:54] [base_worker.py (91)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train-0 generate global step 5
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 5:   0%|          | 0/2 [00:00<?, ?it/s]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.0608 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 5:  50%|█████     | 1/2 [00:07<00:07,  7.37s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 5: 100%|██████████| 2/2 [00:15<00:00,  7.54s/it]actor_train-0 train global step 5: 100%|██████████| 2/2 [00:15<00:00,  7.51s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 15.0330 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0011 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 16.0950 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.3893 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 38.0312 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.8757 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.1245 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.4279 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.0578 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.2743 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.5444 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.3355 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.1045 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.7021 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.7863 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.4485 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.4349 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.1994 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.5174 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.1138 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.2509 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.1490 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.5955 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.2825 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.9991 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.0952 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.8269 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.7374 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.5465 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.2436 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.5106 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.8807 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.1472 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.2413 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1098.7056 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1098.7058 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 3.1621 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1103.2573 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.7008 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.9555 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0018 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 2.6583 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 02:54:25] [base_worker.py (91)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train-0 generate global step 6
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 6:   0%|          | 0/2 [00:00<?, ?it/s]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.1121 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 6:  50%|█████     | 1/2 [00:07<00:07,  7.34s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 6: 100%|██████████| 2/2 [00:14<00:00,  7.51s/it]actor_train-0 train global step 6: 100%|██████████| 2/2 [00:14<00:00,  7.48s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 14.9784 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0011 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 16.0918 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.3877 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.5560 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 34.9550 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.7199 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 34.9843 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.6558 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.9307 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.3993 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 34.9843 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.1466 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.3181 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.5701 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.2510 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.9988 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.3196 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.0634 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.6776 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.0053 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.0744 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.6353 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.8311 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.7702 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.1167 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.6125 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.0849 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.1721 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.6599 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.8137 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.4914 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.7764 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.6340 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1088.4823 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1088.4824 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 3.2056 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1093.0759 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.7013 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.9528 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0013 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 2.6562 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m [2026-08-11 03:13:44] [base_worker.py (91)] [INFO] [actor_train-0 0 / 1][PID 338467] actor_train-0 generate global step 7
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 7:   0%|          | 0/2 [00:00<?, ?it/s]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.0915 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 7:  50%|█████     | 1/2 [00:07<00:07,  7.35s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m actor_train-0 train global step 7: 100%|██████████| 2/2 [00:14<00:00,  7.51s/it]actor_train-0 train global step 7: 100%|██████████| 2/2 [00:14<00:00,  7.49s/it]
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 14.9866 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 0.0011 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 16.0793 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 1.3726 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.7082 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.4046 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.7575 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.2762 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 34.6591 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.1739 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 34.4492 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.9359 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.9480 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.8793 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.2142 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.8407 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.3331 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.2797 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 37.2706 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.5548 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.2850 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.3324 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 33.9055 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 35.2793 seconds
+[36m(ActorWorker(actor_train-0) pid=338467, ip=192.168.51.118)[0m Elapsed time: 36.8838 seconds
