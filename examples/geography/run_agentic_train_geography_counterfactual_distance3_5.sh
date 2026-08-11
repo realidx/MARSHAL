@@ -4,12 +4,12 @@ set +x
 ray stop --force || true
 
 CONFIG_PATH=.
-CONFIG_NAME=${CONFIG_NAME:-agentic_train_geography_counterfactual_distance3_2gpu}
+CONFIG_NAME=${CONFIG_NAME:-agentic_train_geography_counterfactual_distance3_5_2gpu}
 
 ROLL_PATH=${PWD}
 export PYTHONPATH="$ROLL_PATH:${PYTHONPATH:-}"
 
-ROLL_OUTPUT_DIR="./runs/geography_counterfactual_distance3/$(date +%Y%m%d-%H%M%S)"
+ROLL_OUTPUT_DIR="./runs/geography_counterfactual_distance3_5/$(date +%Y%m%d-%H%M%S)"
 ROLL_LOG_DIR="$ROLL_OUTPUT_DIR/logs"
 ROLL_RENDER_DIR="$ROLL_OUTPUT_DIR/render"
 export ROLL_OUTPUT_DIR

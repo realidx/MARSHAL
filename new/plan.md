@@ -177,46 +177,56 @@ Hold the model, optimizer, rollout budget, prompt, and graph distribution fixed:
 | Exact centered \(Q\) reward | Whether local alternative comparison improves learning |
 
 Initial training keeps Qwen3-4B-Instruct-2507, REINFORCE, full-weight updates,
-`seq-mean-token-mean`, and Markovian turn context. The original smoke run
+`seq-mean-token-mean`, and Markovian turn context. Because the game is impartial,
+the current-state prompt omits arbitrary Player 1/Player 2 role labels; both
+self-play roles still generate training decisions for the shared policy. The original smoke run
 disabled retries and length shaping; it produced frequent 1,200-token
 truncations. The next controlled arm retains the same game reward and adds only
 MARSHAL-style format and conciseness controls. A full run is allowed only after
 a 20-step smoke test preserves validity, strategic accuracy, diagnostic
 records, and reward separation.
 
-## Distance-3 counterfactual and MARSHAL stabilization arm
+## Distance-3/5 counterfactual and MARSHAL stabilization arm
 
 The game signal remains exact local counterfactual credit. It does not include
 the MARSHAL episode return or a process reward. Those remain later, matched
 experimental arms. After the original smoke run's length collapse, the current
 stabilization arm adds MARSHAL-style auxiliary format and conciseness controls.
 
-Training uses full-game self-play from an informative Distance-3 root. Four
-equally sampled procedural strata cross node count (10 or 14) with target
-transposition (0.05 or 0.35). Every stratum fixes root branching at two and
-requires exact root optimal distance three. Labels, row order, successor order,
-and episode graphs remain procedural. Group size is one, so training does not
-generate repeated samples of the same prompt as the preflight did.
+Training uses full-game self-play from informative Distance-3 and Distance-5
+roots in equal proportion. At Distance-3, four procedural strata cross node
+count (10 or 14) with low or high decision branching; Distance-5 similarly
+crosses node count (14 or 18) with low or high branching. Low-branching roots
+have two actions with graph branching capped at two, while high-branching roots
+have three actions with graph branching capped at four. The transposition target
+is held at 0.2 so planning distance, node count, and branching remain
+interpretable. Each of the eight strata receives four of the 32 rollout groups.
+Labels, row order, successor order, and episode graphs remain procedural. Group
+size is one, so training does not generate repeated samples of the same prompt
+as the preflight did.
 
 The initial schedule is:
 
 | Stage | Updates | Rollout decisions/update | Purpose |
 |---|---:|---:|---|
 | Smoke | 20 | 8 | runtime, reward separation, and logging correctness |
-| First learning run | 100 | 32 | determine whether held-out Distance-3 improves |
-| Conditional extension | 300 total | 32 | only if the held-out learning curve is still improving |
+| Full learning run, checkpoint 1 | 100 | 32 | test sustained held-out Distance-3/5 learning |
+| Full learning run, checkpoint 2 | 200 total | 32 | test stability and later transfer |
 
-Responses retain the free-form reason/answer protocol and a 1,200-token hard
+Responses retain the free-form reason/answer protocol and a 1,024-token hard
 ceiling. There is no retry. Invalid or truncated output has zero game reward and
 a separate format penalty of -1.5. A completed legal response receives a +0.05
 format reward and a MARSHAL-style conciseness reward that decreases linearly
 from +0.5 at 11 tokens to zero at 600 tokens; invalid, illegal, and truncated
-responses cannot earn either positive reward. Full games are capped at six
-legal moves, matching the generator depth bound.
+responses cannot earn either positive reward. Full games are capped at eight
+legal moves, covering the Distance-5 generators' maximum depth of seven.
 
 Validation has disjoint fixed namespaces and no auxiliary penalties. It covers
-Distance-1 sanity, Distance-3 IID, paired relabelled copies of Distance-3 IID, topology/size-OOD
-Distance-3, zero-shot Distance-5, and a small full-game Distance-3 suite. Online
+Distance-1 sanity, Distance-3 IID, identical Distance-3 roots under the other
+internal player identity, paired relabelled copies of Distance-3 IID,
+topology/size-OOD Distance-3, and held-out Distance-5. Full-game evaluation is
+deferred to a separate exact-solver evaluation so variable-length player
+rollouts cannot crowd controlled root suites out of the validation batch. Online
 diagnostics report unique graph seeds and, for every observed optimal distance,
 decision count, validity, conditional optimality, and end-to-end optimality.
 
@@ -225,6 +235,7 @@ The executable configurations are:
 ```text
 examples/geography/agentic_train_geography_counterfactual_distance3_smoke_2gpu.yaml
 examples/geography/agentic_train_geography_counterfactual_distance3_2gpu.yaml
+examples/geography/agentic_train_geography_counterfactual_distance3_5_2gpu.yaml
 ```
 
 ## Claim-to-evidence boundary

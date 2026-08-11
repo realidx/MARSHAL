@@ -361,7 +361,8 @@ def test_normal_mode_does_not_stop_after_a_nonterminal_root_move():
 
 
 def test_prompt_invites_free_form_analysis_with_marshal_concision_instruction():
-    prompt = GeographyEnv().get_prompt()["user"].lower()
+    env = GeographyEnv()
+    prompt = env.get_prompt()["user"].lower()
     assert "<reason>your analysis</reason>" in prompt
     assert "consider future moves" not in prompt
     assert "opponent's possible responses" not in prompt
@@ -371,3 +372,36 @@ def test_prompt_invites_free_form_analysis_with_marshal_concision_instruction():
     assert "does not follow this format results in immediate loss" in prompt
     assert "token budget" not in prompt
     assert "1200" not in prompt
+
+
+def test_turn_prompt_is_role_neutral():
+    env = GeographyEnv()
+    state, _ = env.reset(seed=41)
+    prompt_player_0 = env.format_turn_prompt(
+        state["observation"], state["legal_actions"], player_id=0
+    )
+    prompt_player_1 = env.format_turn_prompt(
+        state["observation"], state["legal_actions"], player_id=1
+    )
+
+    assert prompt_player_0 == prompt_player_1
+    assert "you are player" not in prompt_player_0.lower()
+
+
+def test_paired_starting_roles_have_identical_graph_and_prompt():
+    player_0 = GeographyEnv(
+        GeographyConfig(seed_namespace=302, starting_player=0)
+    )
+    player_1 = GeographyEnv(
+        GeographyConfig(seed_namespace=302, seed_offset=-8, starting_player=1)
+    )
+    state_0, _ = player_0.reset(seed=800008)
+    state_1, _ = player_1.reset(seed=800016)
+
+    assert player_0.state.graph == player_1.state.graph
+    assert player_0.solution == player_1.solution
+    assert player_0.format_turn_prompt(
+        state_0["observation"], state_0["legal_actions"], player_id=0
+    ) == player_1.format_turn_prompt(
+        state_1["observation"], state_1["legal_actions"], player_id=1
+    )

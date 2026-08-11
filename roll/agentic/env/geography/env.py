@@ -276,9 +276,9 @@ class GeographyEnv(BaseDiscreteActionEnv):
         }
 
     def format_turn_prompt(self, state, legal_actions, player_id=0):
+        del player_id
         return (
-            f"\n\nYou are Player {player_id + 1}.\n\n"
-            f"{state}\n\n"
+            f"\n\n{state}\n\n"
             f"Legal moves: {', '.join((legal_actions or {}).values())}"
         )
 

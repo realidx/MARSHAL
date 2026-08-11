@@ -8,7 +8,8 @@ exp_name: "geography_counterfactual_distance3_2gpu"
 
 # First causal training experiment: exact local counterfactual credit on
 # procedurally fresh Distance-3 roots, with full-game self-play thereafter.
-max_steps: 100
+max_steps: 200
+save_steps: 100
 eval_steps: 20
 eval_at_end: true
 rollout_batch_size: 32
@@ -18,7 +19,7 @@ max_actions_per_traj: 6
 
 actor_infer:
   generating_args:
-    max_new_tokens: 1200
+    max_new_tokens: 1024
     stop: ["</answer>"]
     include_stop_str_in_output: true
   strategy_args:
@@ -36,7 +37,7 @@ custom_envs:
       reward_mode: counterfactual
       game_step_discount: ${game_step_discount}
       root_decision_only: false
-      response_token_limit: 1200
+      response_token_limit: 1024
       seed_namespace: 201
       num_nodes: 10
       min_depth: 4
@@ -60,7 +61,7 @@ custom_envs:
       reward_mode: counterfactual
       game_step_discount: ${game_step_discount}
       root_decision_only: false
-      response_token_limit: 1200
+      response_token_limit: 1024
       seed_namespace: 202
       num_nodes: 10
       min_depth: 4
@@ -84,7 +85,7 @@ custom_envs:
       reward_mode: counterfactual
       game_step_discount: ${game_step_discount}
       root_decision_only: false
-      response_token_limit: 1200
+      response_token_limit: 1024
       seed_namespace: 203
       num_nodes: 14
       min_depth: 4
@@ -108,7 +109,7 @@ custom_envs:
       reward_mode: counterfactual
       game_step_discount: ${game_step_discount}
       root_decision_only: false
-      response_token_limit: 1200
+      response_token_limit: 1024
       seed_namespace: 204
       num_nodes: 14
       min_depth: 4
@@ -130,7 +131,7 @@ custom_envs:
       built_in_opponent: none
       reward_mode: environment
       root_decision_only: true
-      response_token_limit: 1200
+      response_token_limit: 1024
       seed_namespace: 301
       num_nodes: 12
       min_depth: 4
@@ -152,8 +153,35 @@ custom_envs:
       built_in_opponent: none
       reward_mode: environment
       root_decision_only: true
-      response_token_limit: 1200
+      response_token_limit: 1024
       seed_namespace: 302
+      num_nodes: 12
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.15
+      target_root_informative: true
+      target_root_optimal_distance: 3
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 1024
+
+  # Role-invariance pair: this uses the same graph seeds and rendered labels as
+  # Geography-Val-D3-IID, but starts with the other internal player identity.
+  # The model prompt is deliberately identical for both environments.
+  Geography-Val-D3-IID-P1:
+    env_type: geography
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      root_decision_only: true
+      response_token_limit: 1024
+      seed_namespace: 302
+      seed_offset: -8
+      starting_player: 1
       num_nodes: 12
       min_depth: 4
       max_depth: 6
@@ -174,11 +202,12 @@ custom_envs:
       built_in_opponent: none
       reward_mode: environment
       root_decision_only: true
-      response_token_limit: 1200
-      # These groups follow the eight D3-IID groups. Subtracting eight pairs
-      # each graph seed with its IID counterpart; only the labels differ.
+      response_token_limit: 1024
+      # These groups follow D3-IID and its eight role-invariance copies.
+      # Subtracting sixteen pairs each graph seed with its IID counterpart;
+      # only the node labels and display ordering differ.
       seed_namespace: 302
-      seed_offset: -8
+      seed_offset: -16
       relabel_seed_offset: 1000003
       num_nodes: 12
       min_depth: 4
@@ -200,7 +229,7 @@ custom_envs:
       built_in_opponent: none
       reward_mode: environment
       root_decision_only: true
-      response_token_limit: 1200
+      response_token_limit: 1024
       seed_namespace: 304
       num_nodes: 16
       min_depth: 5
@@ -222,7 +251,7 @@ custom_envs:
       built_in_opponent: none
       reward_mode: environment
       root_decision_only: true
-      response_token_limit: 1200
+      response_token_limit: 1024
       seed_namespace: 305
       num_nodes: 12
       min_depth: 4
@@ -244,7 +273,7 @@ custom_envs:
       built_in_opponent: none
       reward_mode: environment
       root_decision_only: false
-      response_token_limit: 1200
+      response_token_limit: 1024
       seed_namespace: 306
       num_nodes: 12
       min_depth: 4
@@ -263,7 +292,8 @@ train_env_manager:
   format_penalty: -1.5
   # MARSHAL-style auxiliary controls. A completed legal response receives a
   # small format reward and a positive conciseness reward that decreases from
-  # 0.5 at 11 tokens to zero halfway through the 1200-token generation budget.
+  # 0.5 at 11 tokens to zero at 600 tokens. The hard generation limit is 1024;
+  # keeping the tested 11--600 curve isolates the hard-limit change.
   # Invalid, illegal, and truncated responses receive neither positive reward.
   valid_format_reward: 0.05
   marshal_length_reward_alpha: 0.5
@@ -271,7 +301,7 @@ train_env_manager:
   marshal_length_reward_max_tokens: 600
   minimax_length_penalty_beta: 0.0
   minimax_length_soft_budget: 1000
-  minimax_length_hard_budget: 1200
+  minimax_length_hard_budget: 1024
   enable_length_penalty: false
   max_env_num_per_worker: 8
   env_groups: 32
@@ -289,7 +319,7 @@ val_env_manager:
   format_penalty: 0.0
   minimax_length_penalty_beta: 0.0
   minimax_length_soft_budget: 1000
-  minimax_length_hard_budget: 1200
+  minimax_length_hard_budget: 1024
   enable_length_penalty: false
   max_env_num_per_worker: 8
   env_groups: 48
@@ -298,8 +328,8 @@ val_env_manager:
   tags:
     - Geography-Val-D1-Sanity
     - Geography-Val-D3-IID
+    - Geography-Val-D3-IID-P1
     - Geography-Val-D3-Relabel
     - Geography-Val-D3-Topology-OOD
     - Geography-Val-D5-ZeroShot
-    - Geography-Val-D3-FullGame
   n_groups: [8, 8, 8, 8, 8, 8]

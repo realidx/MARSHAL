@@ -1,0 +1,248 @@
+# @package _global_
+
+defaults:
+  - agentic_train_geography_counterfactual_distance3_2gpu
+  - _self_
+
+exp_name: "geography_counterfactual_distance3_5_2gpu"
+
+# Balanced planning-depth treatment. Within each distance, independently vary
+# graph size and branching while holding the transposition target fixed.
+max_actions_per_traj: 8
+
+custom_envs:
+  Geography-Train-D3-N10-LowBranch:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      reward_mode: counterfactual
+      game_step_discount: ${game_step_discount}
+      root_decision_only: false
+      response_token_limit: 1024
+      seed_namespace: 211
+      num_nodes: 10
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 2
+      transposition_rate: 0.2
+      target_root_informative: true
+      target_root_optimal_distance: 3
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 1024
+
+  Geography-Train-D3-N10-HighBranch:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      reward_mode: counterfactual
+      game_step_discount: ${game_step_discount}
+      root_decision_only: false
+      response_token_limit: 1024
+      seed_namespace: 212
+      num_nodes: 10
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 4
+      transposition_rate: 0.2
+      target_root_informative: true
+      target_root_optimal_distance: 3
+      target_root_branching: 3
+      target_informative_fraction: 0.5
+      generator_candidates: 2048
+
+  Geography-Train-D3-N14-LowBranch:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      reward_mode: counterfactual
+      game_step_discount: ${game_step_discount}
+      root_decision_only: false
+      response_token_limit: 1024
+      seed_namespace: 213
+      num_nodes: 14
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 2
+      transposition_rate: 0.2
+      target_root_informative: true
+      target_root_optimal_distance: 3
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 1024
+
+  Geography-Train-D3-N14-HighBranch:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      reward_mode: counterfactual
+      game_step_discount: ${game_step_discount}
+      root_decision_only: false
+      response_token_limit: 1024
+      seed_namespace: 214
+      num_nodes: 14
+      min_depth: 4
+      max_depth: 6
+      min_branching: 1
+      max_branching: 4
+      transposition_rate: 0.2
+      target_root_informative: true
+      target_root_optimal_distance: 3
+      target_root_branching: 3
+      target_informative_fraction: 0.5
+      generator_candidates: 2048
+
+  Geography-Train-D5-N14-LowBranch:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      reward_mode: counterfactual
+      game_step_discount: ${game_step_discount}
+      root_decision_only: false
+      response_token_limit: 1024
+      seed_namespace: 215
+      num_nodes: 14
+      min_depth: 5
+      max_depth: 7
+      min_branching: 1
+      max_branching: 2
+      transposition_rate: 0.2
+      target_root_informative: true
+      target_root_optimal_distance: 5
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 4096
+
+  Geography-Train-D5-N14-HighBranch:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      reward_mode: counterfactual
+      game_step_discount: ${game_step_discount}
+      root_decision_only: false
+      response_token_limit: 1024
+      seed_namespace: 216
+      num_nodes: 14
+      min_depth: 5
+      max_depth: 7
+      min_branching: 1
+      max_branching: 4
+      transposition_rate: 0.2
+      target_root_informative: true
+      target_root_optimal_distance: 5
+      target_root_branching: 3
+      target_informative_fraction: 0.5
+      generator_candidates: 4096
+
+  Geography-Train-D5-N18-LowBranch:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      reward_mode: counterfactual
+      game_step_discount: ${game_step_discount}
+      root_decision_only: false
+      response_token_limit: 1024
+      seed_namespace: 217
+      num_nodes: 18
+      min_depth: 5
+      max_depth: 7
+      min_branching: 1
+      max_branching: 2
+      transposition_rate: 0.2
+      target_root_informative: true
+      target_root_optimal_distance: 5
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 4096
+
+  Geography-Train-D5-N18-HighBranch:
+    env_type: geography
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      reward_mode: counterfactual
+      game_step_discount: ${game_step_discount}
+      root_decision_only: false
+      response_token_limit: 1024
+      seed_namespace: 218
+      num_nodes: 18
+      min_depth: 5
+      max_depth: 7
+      min_branching: 1
+      max_branching: 4
+      transposition_rate: 0.2
+      target_root_informative: true
+      target_root_optimal_distance: 5
+      target_root_branching: 3
+      target_informative_fraction: 0.5
+      generator_candidates: 4096
+
+  Geography-Val-D5-HeldOut:
+    env_type: geography
+    max_actions_per_traj: 1
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      reward_mode: environment
+      root_decision_only: true
+      response_token_limit: 1024
+      seed_namespace: 305
+      num_nodes: 16
+      min_depth: 5
+      max_depth: 7
+      min_branching: 1
+      max_branching: 3
+      transposition_rate: 0.2
+      target_root_informative: true
+      target_root_optimal_distance: 5
+      target_root_branching: 2
+      target_informative_fraction: 0.5
+      generator_candidates: 4096
+
+train_env_manager:
+  tags:
+    - Geography-Train-D3-N10-LowBranch
+    - Geography-Train-D3-N10-HighBranch
+    - Geography-Train-D3-N14-LowBranch
+    - Geography-Train-D3-N14-HighBranch
+    - Geography-Train-D5-N14-LowBranch
+    - Geography-Train-D5-N14-HighBranch
+    - Geography-Train-D5-N18-LowBranch
+    - Geography-Train-D5-N18-HighBranch
+  n_groups: [4, 4, 4, 4, 4, 4, 4, 4]
+
+val_env_manager:
+  tags:
+    - Geography-Val-D1-Sanity
+    - Geography-Val-D3-IID
+    - Geography-Val-D3-IID-P1
+    - Geography-Val-D3-Relabel
+    - Geography-Val-D3-Topology-OOD
+    - Geography-Val-D5-HeldOut
+  n_groups: [8, 8, 8, 8, 8, 8]

@@ -15,10 +15,14 @@ actor_train:
     warmup_steps: 0
 
 custom_envs:
+  Geography-Val-D3-IID-P1:
+    env_config:
+      # Smoke has two IID groups immediately before its two role copies.
+      seed_offset: -2
   Geography-Val-D3-Relabel:
     env_config:
-      # Smoke has two IID groups immediately before its two relabel groups.
-      seed_offset: -2
+      # Relabel follows two IID groups and two role-invariance copies.
+      seed_offset: -4
 
 train_env_manager:
   max_env_num_per_worker: 8
@@ -29,4 +33,3 @@ val_env_manager:
   max_env_num_per_worker: 6
   env_groups: 12
   n_groups: [2, 2, 2, 2, 2, 2]
-
