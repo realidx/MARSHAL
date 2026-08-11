@@ -133,9 +133,12 @@ With the default pipeline seed of 42, the 30 effective group seeds are the
 fixed sequence 700042--700071; distinct environment seed namespaces keep the
 three groups disjoint from one another and from the default training namespace.
 The model sees the complete graph, current node, legal moves, rules, and output
-schema. It is asked to analyze future moves and opponent responses, but the
-`<reason>` field is free-form: the prompt does not request a brief or concise
-answer. Generation stops at `</answer>` or at the 1,200-token hard ceiling.
+schema. The `<reason>` field remains free-form and has no numerical budget or
+reasoning schema. The prompt does not prescribe lookahead, backward induction,
+or exhaustive analysis, because doing so would leak the hypothesized strategy
+and can encourage semantic reasoning loops. It adopts only MARSHAL's instruction
+to keep the thinking process concise. Generation stops at `</answer>` or at the
+1,200-token hard ceiling.
 
 The three groups use the same node count, root branching, generator depth
 bounds, and target transposition rate. They differ in the exact shortest
@@ -173,13 +176,20 @@ Hold the model, optimizer, rollout budget, prompt, and graph distribution fixed:
 | Terminal result only | Whether ordinary game training is sufficient |
 | Exact centered \(Q\) reward | Whether local alternative comparison improves learning |
 
-Initial training keeps Qwen3-4B-Instruct-2507, REINFORCE, full-weight updates, `seq-mean-token-mean`, and Markovian turn context. The frozen first run below disables retries and length penalties so its counterfactual game reward remains easy to interpret. The first full run is allowed only after a 20-step smoke test preserves validity, diagnostic records, and reward separation.
+Initial training keeps Qwen3-4B-Instruct-2507, REINFORCE, full-weight updates,
+`seq-mean-token-mean`, and Markovian turn context. The original smoke run
+disabled retries and length shaping; it produced frequent 1,200-token
+truncations. The next controlled arm retains the same game reward and adds only
+MARSHAL-style format and conciseness controls. A full run is allowed only after
+a 20-step smoke test preserves validity, strategic accuracy, diagnostic
+records, and reward separation.
 
-## Frozen first training run: Distance-3 counterfactual
+## Distance-3 counterfactual and MARSHAL stabilization arm
 
-The first optimization run isolates exact local counterfactual credit. It does
-not include the MARSHAL episode return or a process reward. Those remain later,
-matched experimental arms.
+The game signal remains exact local counterfactual credit. It does not include
+the MARSHAL episode return or a process reward. Those remain later, matched
+experimental arms. After the original smoke run's length collapse, the current
+stabilization arm adds MARSHAL-style auxiliary format and conciseness controls.
 
 Training uses full-game self-play from an informative Distance-3 root. Four
 equally sampled procedural strata cross node count (10 or 14) with target
@@ -197,9 +207,12 @@ The initial schedule is:
 | Conditional extension | 300 total | 32 | only if the held-out learning curve is still improving |
 
 Responses retain the free-form reason/answer protocol and a 1,200-token hard
-ceiling. There is no length reward and no retry. Invalid or truncated output has
-zero game reward and a separate format penalty of -1.5. Full games are capped at
-six legal moves, matching the generator depth bound.
+ceiling. There is no retry. Invalid or truncated output has zero game reward and
+a separate format penalty of -1.5. A completed legal response receives a +0.05
+format reward and a MARSHAL-style conciseness reward that decreases linearly
+from +0.5 at 11 tokens to zero at 600 tokens; invalid, illegal, and truncated
+responses cannot earn either positive reward. Full games are capped at six
+legal moves, matching the generator depth bound.
 
 Validation has disjoint fixed namespaces and no auxiliary penalties. It covers
 Distance-1 sanity, Distance-3 IID, paired relabelled copies of Distance-3 IID, topology/size-OOD

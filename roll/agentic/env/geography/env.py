@@ -265,13 +265,13 @@ class GeographyEnv(BaseDiscreteActionEnv):
             "user": (
                 "The players alternate moving a token along one directed edge. "
                 "A player with no legal move loses. Choose one legal destination "
-                "that maximizes your final game outcome.\n\n"
-                "Analyze the graph carefully. Consider future moves and the "
-                "opponent's possible responses before choosing.\n\n"
+                "that maximizes your final game outcome. Keep your thinking "
+                "process concise.\n\n"
                 "Output exactly:\n"
                 "<reason>your analysis</reason>\n"
                 "<answer>NODE</answer>\n\n"
-                "Do not output anything else."
+                "Do not output anything else. A response that does not follow "
+                "this format results in immediate loss."
             ),
         }
 

@@ -478,6 +478,28 @@ class EnvManager:
         excess_fraction = (float(token_length) - soft_budget) / (hard_budget - soft_budget)
         return -beta * min(1.0, max(0.0, excess_fraction))
 
+    def compute_marshal_length_reward(self, token_length: int, valid_action: bool) -> float:
+        """Return MARSHAL's linearly decreasing reward for a valid response.
+
+        Invalid, illegal, and truncated responses cannot earn a conciseness
+        reward. This prevents a short malformed response from being preferred
+        to a longer response that actually completes a game decision.
+        """
+        alpha = float(getattr(self.worker_config, "marshal_length_reward_alpha", 0.0))
+        if alpha <= 0.0 or not valid_action:
+            return 0.0
+        min_tokens = int(getattr(self.worker_config, "marshal_length_reward_min_tokens", 11))
+        max_tokens = int(getattr(self.worker_config, "marshal_length_reward_max_tokens", 2048))
+        if max_tokens <= min_tokens:
+            raise ValueError(
+                "marshal_length_reward_max_tokens must exceed "
+                "marshal_length_reward_min_tokens"
+            )
+        remaining_fraction = 1.0 - (
+            (float(token_length) - min_tokens) / (max_tokens - min_tokens)
+        )
+        return alpha * min(1.0, max(0.0, remaining_fraction))
+
 
     def step(self, llm_output: DataProto, current_sequence_length: int):
         env_input, overlong_response, overlong_sequence = self.get_env_input(llm_output, current_sequence_length)
@@ -539,6 +561,7 @@ class EnvManager:
             min(self.worker_config.format_penalty, 0.0)
             if invalid_response
             else max(self.worker_config.format_penalty, 0.0)
+            + float(getattr(self.worker_config, "valid_format_reward", 0.0))
         )
         execute_results[0]["info"].update(
             {
@@ -979,6 +1002,8 @@ class EnvManager:
         position_ids = attention_mask.cumsum(dim=-1)
 
         soft_length_penalty = float(turn.get("soft_length_penalty", 0.0))
+        marshal_length_reward = float(turn.get("marshal_length_reward", 0.0))
+        format_reward = float(turn.get("format_reward", 0.0))
         base_turn_return = turn_return - soft_length_penalty
         non_prompt_mask, score_tensor, response_mask, turn_end_positions, _ = get_masks_and_scores(
             input_ids,
@@ -1085,11 +1110,19 @@ class EnvManager:
             ),
             f"env/{tag}/soft_length_penalty": soft_length_penalty,
             f"env/{tag}/soft_length_penalty_player_{player_id}": soft_length_penalty,
+            f"env/{tag}/marshal_length_reward": marshal_length_reward,
+            f"env/{tag}/marshal_length_reward_player_{player_id}": marshal_length_reward,
+            f"env/{tag}/format_reward": format_reward,
+            f"env/{tag}/format_reward_player_{player_id}": format_reward,
             f"env/{tag}/validity_and_legacy_penalty": float(
-                turn.get("auxiliary_reward", 0.0) - soft_length_penalty
+                turn.get("auxiliary_reward", 0.0)
+                - soft_length_penalty
+                - marshal_length_reward
             ),
             f"env/{tag}/validity_and_legacy_penalty_player_{player_id}": float(
-                turn.get("auxiliary_reward", 0.0) - soft_length_penalty
+                turn.get("auxiliary_reward", 0.0)
+                - soft_length_penalty
+                - marshal_length_reward
             ),
             f"env/{tag}/valid_action_player_{player_id}": float(
                 bool(turn.get("valid_action", False))
@@ -1258,7 +1291,9 @@ class EnvManager:
             "decision_index": int(turn.get("decision_index", 0)),
             "retry_scheduled": bool(turn.get("retry_scheduled", False)),
             "auxiliary_reward": float(turn.get("auxiliary_reward", 0.0)),
+            "format_reward": float(turn.get("format_reward", 0.0)),
             "soft_length_penalty": float(turn.get("soft_length_penalty", 0.0)),
+            "marshal_length_reward": float(turn.get("marshal_length_reward", 0.0)),
             "return_boundary": bool(turn.get("return_boundary", False)),
         }
 
@@ -1551,7 +1586,9 @@ class EnvManager:
                     "decision_index": int(turn.get("decision_index", 0)),
                     "retry_scheduled": bool(turn.get("retry_scheduled", False)),
                     "auxiliary_reward": float(turn.get("auxiliary_reward", 0.0)),
+                    "format_reward": float(turn.get("format_reward", 0.0)),
                     "soft_length_penalty": float(turn.get("soft_length_penalty", 0.0)),
+                    "marshal_length_reward": float(turn.get("marshal_length_reward", 0.0)),
                     "return_boundary": bool(turn.get("return_boundary", False)),
                 }
             )
@@ -1727,11 +1764,21 @@ class EnvManager:
                 soft_length_penalty = self.compute_minimax_length_penalty(
                     env_input["token_length"], turn["info"], env_input["valid_action"]
                 )
-                auxiliary_reward = format_reward + legacy_length_penalty + soft_length_penalty
+                marshal_length_reward = self.compute_marshal_length_reward(
+                    env_input["token_length"], env_input["valid_action"]
+                )
+                auxiliary_reward = (
+                    format_reward
+                    + legacy_length_penalty
+                    + soft_length_penalty
+                    + marshal_length_reward
+                )
                 num_actions_info["reward"] += auxiliary_reward
                 num_actions_info["auxiliary_reward"] += auxiliary_reward
                 num_actions_info["return_boundary"] = not env_input["valid_action"]
+                num_actions_info["format_reward"] = format_reward
                 num_actions_info["soft_length_penalty"] = soft_length_penalty
+                num_actions_info["marshal_length_reward"] = marshal_length_reward
                 num_actions_info.update({
                     "llm_response": env_input["llm_response"],
                     "llm_raw_response": env_input["llm_raw_response"],

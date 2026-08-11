@@ -261,6 +261,14 @@ custom_envs:
 train_env_manager:
   max_invalid_retries_per_decision: 0
   format_penalty: -1.5
+  # MARSHAL-style auxiliary controls. A completed legal response receives a
+  # small format reward and a positive conciseness reward that decreases from
+  # 0.5 at 11 tokens to zero halfway through the 1200-token generation budget.
+  # Invalid, illegal, and truncated responses receive neither positive reward.
+  valid_format_reward: 0.05
+  marshal_length_reward_alpha: 0.5
+  marshal_length_reward_min_tokens: 11
+  marshal_length_reward_max_tokens: 600
   minimax_length_penalty_beta: 0.0
   minimax_length_soft_budget: 1000
   minimax_length_hard_budget: 1200

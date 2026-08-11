@@ -360,10 +360,14 @@ def test_normal_mode_does_not_stop_after_a_nonterminal_root_move():
     assert result["done"] is False
 
 
-def test_prompt_invites_free_form_analysis_without_requesting_brevity():
+def test_prompt_invites_free_form_analysis_with_marshal_concision_instruction():
     prompt = GeographyEnv().get_prompt()["user"].lower()
-    assert "consider future moves" in prompt
-    assert "opponent's possible responses" in prompt
     assert "<reason>your analysis</reason>" in prompt
+    assert "consider future moves" not in prompt
+    assert "opponent's possible responses" not in prompt
+    assert "analyze the graph carefully" not in prompt
     assert "brief" not in prompt
-    assert "concise" not in prompt
+    assert "keep your thinking process concise" in prompt
+    assert "does not follow this format results in immediate loss" in prompt
+    assert "token budget" not in prompt
+    assert "1200" not in prompt

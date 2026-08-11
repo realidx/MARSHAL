@@ -49,6 +49,22 @@ class EnvManagerConfig(WorkerConfig):
         default=-1, metadata={"help": "The maximum number of trajectories that each environment can rollout."}
     )
     format_penalty: float = field(default=0, metadata={"help": "Format penalty value."})
+    valid_format_reward: float = field(
+        default=0.0,
+        metadata={"help": "Additional reward for a completed, valid, legal response."},
+    )
+    marshal_length_reward_alpha: float = field(
+        default=0.0,
+        metadata={"help": "Maximum MARSHAL-style reward for a short valid response."},
+    )
+    marshal_length_reward_min_tokens: int = field(
+        default=11,
+        metadata={"help": "Token length receiving the maximum MARSHAL-style reward."},
+    )
+    marshal_length_reward_max_tokens: int = field(
+        default=2048,
+        metadata={"help": "Token length at which the MARSHAL-style reward reaches zero."},
+    )
     minimax_length_penalty_beta: float = field(
         default=0.0,
         metadata={"help": "Maximum soft length penalty for valid minimax decisions."},
