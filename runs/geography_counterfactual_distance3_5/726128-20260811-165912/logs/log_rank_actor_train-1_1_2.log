@@ -1,0 +1,274 @@
+[2026-08-11 17:02:50] [checkpoint_manager.py (55)] [INFO] [actor_train-1 1 / 2][PID 1380150] checkpoint_config: {}
+[2026-08-11 17:02:50] [megatron_strategy.py (61)] [INFO] [actor_train-1 1 / 2][PID 1380150] training_args: {'output_dir': './runs/geography_counterfactual_distance3_5/726128-20260811-165912', 'max_steps': 1600, 'num_train_epochs': 1.0, 'learning_rate': 1e-06, 'lr_scheduler_type': 'cosine_with_min_lr', 'weight_decay': 0.05, 'adam_beta1': 0.9, 'adam_beta2': 0.95, 'per_device_train_batch_size': 1, 'gradient_accumulation_steps': 4, 'seed': 42, 'data_seed': None, 'dataloader_num_workers': 0, 'fp16': False, 'bf16': True, 'tf32': None, 'warmup_ratio': 0.03, 'warmup_steps': 10, 'sequence_parallel': True, 'tensor_model_parallel_size': 2, 'pipeline_model_parallel_size': 1, 'expert_model_parallel_size': 1, 'use_distributed_optimizer': True, 'recompute_granularity': 'full', 'accumulate_allreduce_grads_in_fp32': True, 'check_for_nan_in_loss_and_grad': False, 'max_grad_norm': 1.0}
+[2026-08-11 17:02:52] [megatron_strategy.py (306)] [INFO] [actor_train-1 1 / 2][PID 1380150] megatron optimizer: <megatron.core.optimizer.distrib_optimizer.DistributedOptimizer object at 0x7858bc6e0220>
+[2026-08-11 17:02:52] [megatron_strategy.py (319)] [INFO] [actor_train-1 1 / 2][PID 1380150] max steps pipeline 1600
+[2026-08-11 17:02:52] [megatron_strategy.py (324)] [INFO] [actor_train-1 1 / 2][PID 1380150] max steps worker train 1600
+[2026-08-11 17:02:52] [megatron_strategy.py (351)] [INFO] [actor_train-1 1 / 2][PID 1380150] [DistributedDataParallel(
+  (module): McaGPTModel(
+    (embedding): LanguageModelEmbedding(
+      (word_embeddings): VocabParallelEmbedding()
+      (embedding_dropout): Dropout(p=0.0, inplace=False)
+    )
+    (rotary_pos_emb): RotaryEmbedding()
+    (decoder): TransformerBlock(
+      (layers): ModuleList(
+        (0-35): 36 x TransformerLayer(
+          (input_layernorm): IdentityOp()
+          (self_attention): SelfAttention(
+            (core_attention): TEDotProductAttention(
+              (flash_attention): FlashAttention()
+              (fused_attention): FusedAttention()
+              (unfused_attention): UnfusedDotProductAttention(
+                (scale_mask_softmax): FusedScaleMaskSoftmax()
+                (attention_dropout): Dropout(p=0.0, inplace=False)
+              )
+            )
+            (linear_proj): TERowParallelLinear(in_features=2048, out_features=2560, bias=False, TP=2)
+            (linear_qkv): TELayerNormColumnParallelLinear(in_features=2560, out_features=3072, bias=False, TP=2)
+            (q_layernorm): RMSNorm()
+            (k_layernorm): RMSNorm()
+          )
+          (pre_cross_attn_layernorm): IdentityOp()
+          (cross_attention): IdentityOp()
+          (cross_attn_bda): IdentityFuncOp()
+          (pre_mlp_layernorm): IdentityOp()
+          (mlp): MLP(
+            (linear_fc1): TELayerNormColumnParallelLinear(in_features=2560, out_features=9728, bias=False, TP=2)
+            (linear_fc2): TERowParallelLinear(in_features=4864, out_features=2560, bias=False, TP=2)
+          )
+        )
+      )
+      (final_layernorm): RMSNorm()
+    )
+    (output_layer): ColumnParallelLinear(in_features=2560, out_features=151936, bias=False, TP=2)
+  )
+)]
+[2026-08-11 17:02:53] [base_worker.py (73)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 initialized
+[2026-08-11 17:03:22] [strategy.py (171)] [INFO] [actor_train-1 1 / 2][PID 1380150] warmup setup_collective_group: model_update_actor_train_1_to_actor_infer_(0,0) rank: 0 world_size: 2
+[2026-08-11 17:03:23] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/model_update_start_offload, memory allocated (GB): 1.9073486328125e-06, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.001953125, rss (GB): 13.515396118164062
+[2026-08-11 17:03:23] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/model_update_start_onload, memory allocated (GB): 3.7463998794555664, memory reserved (GB): 3.751953125, memory max reserved (GB): 3.751953125, rss (GB): 13.51540756225586
+[2026-08-11 17:03:24] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/model_update_end_onload, memory allocated (GB): 3.7463998794555664, memory reserved (GB): 6.173828125, memory max reserved (GB): 6.173828125, rss (GB): 13.591312408447266
+[2026-08-11 17:03:25] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/model_update_end_offload, memory allocated (GB): 1.9073486328125e-06, memory reserved (GB): 0.001953125, memory max reserved (GB): 6.173828125, rss (GB): 13.591312408447266
+[2026-08-11 17:04:02] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/compute_log_probs_start_offload, memory allocated (GB): 1.9073486328125e-06, memory reserved (GB): 0.021484375, memory max reserved (GB): 0.021484375, rss (GB): 13.691486358642578
+[2026-08-11 17:04:03] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/compute_log_probs_start_onload, memory allocated (GB): 3.7463998794555664, memory reserved (GB): 3.751953125, memory max reserved (GB): 3.751953125, rss (GB): 13.691490173339844
+[2026-08-11 17:04:13] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/compute_log_probs_end_onload, memory allocated (GB): 3.818788528442383, memory reserved (GB): 5.625, memory max reserved (GB): 5.625, rss (GB): 14.126953125
+[2026-08-11 17:04:13] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/compute_log_probs_end_offload, memory allocated (GB): 3.818788528442383, memory reserved (GB): 5.625, memory max reserved (GB): 5.625, rss (GB): 14.126953125
+[2026-08-11 17:04:14] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 0
+[2026-08-11 17:04:14] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/train_step_start_offload, memory allocated (GB): 3.7796034812927246, memory reserved (GB): 3.83984375, memory max reserved (GB): 3.83984375, rss (GB): 14.126983642578125
+[2026-08-11 17:04:14] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/train_step_start_onload, memory allocated (GB): 18.76324224472046, memory reserved (GB): 18.79296875, memory max reserved (GB): 18.8203125, rss (GB): 14.128337860107422
+[2026-08-11 17:04:38] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/train_step_end_onload, memory allocated (GB): 18.855650424957275, memory reserved (GB): 18.9609375, memory max reserved (GB): 35.72265625, rss (GB): 30.348102569580078
+[2026-08-11 17:04:38] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/train_step_end_offload, memory allocated (GB): 18.855650424957275, memory reserved (GB): 18.9609375, memory max reserved (GB): 35.72265625, rss (GB): 30.348102569580078
+[2026-08-11 17:04:41] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/model_update_start_offload, memory allocated (GB): 0.050783634185791016, memory reserved (GB): 0.1015625, memory max reserved (GB): 0.1015625, rss (GB): 30.348129272460938
+[2026-08-11 17:04:42] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/model_update_start_onload, memory allocated (GB): 3.7971816062927246, memory reserved (GB): 3.8515625, memory max reserved (GB): 3.8515625, rss (GB): 30.34814453125
+[2026-08-11 17:04:43] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/model_update_end_onload, memory allocated (GB): 3.7971816062927246, memory reserved (GB): 6.29296875, memory max reserved (GB): 6.29296875, rss (GB): 30.34817123413086
+[2026-08-11 17:04:44] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/model_update_end_offload, memory allocated (GB): 0.050783634185791016, memory reserved (GB): 0.1015625, memory max reserved (GB): 6.29296875, rss (GB): 30.34817123413086
+[2026-08-11 17:05:02] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/compute_log_probs_start_offload, memory allocated (GB): 0.050783634185791016, memory reserved (GB): 0.1015625, memory max reserved (GB): 0.1015625, rss (GB): 30.376205444335938
+[2026-08-11 17:05:02] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/compute_log_probs_start_onload, memory allocated (GB): 3.7971816062927246, memory reserved (GB): 3.8515625, memory max reserved (GB): 3.8515625, rss (GB): 30.376205444335938
+[2026-08-11 17:05:05] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/compute_log_probs_end_onload, memory allocated (GB): 3.838319778442383, memory reserved (GB): 5.6640625, memory max reserved (GB): 5.6640625, rss (GB): 30.376205444335938
+[2026-08-11 17:05:05] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/compute_log_probs_end_offload, memory allocated (GB): 3.838319778442383, memory reserved (GB): 5.6640625, memory max reserved (GB): 5.6640625, rss (GB): 30.376209259033203
+[2026-08-11 17:05:06] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 1
+[2026-08-11 17:05:06] [context_managers.py (37)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train/train_step_start_offload, memory allocated (GB): 3.7991347312927246, memory reserved (GB): 3.857421875, memory max reserved (GB): 3.857421875, rss (GB): 30.376220703125
+[2026-08-11 17:05:54] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 2
+[2026-08-11 17:06:42] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 3
+[2026-08-11 17:07:29] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 4
+[2026-08-11 17:08:16] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 5
+[2026-08-11 17:09:03] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 6
+[2026-08-11 17:09:52] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 7
+[2026-08-11 17:10:39] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 8
+[2026-08-11 17:11:28] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 9
+[2026-08-11 17:12:17] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 10
+[2026-08-11 17:13:02] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 11
+[2026-08-11 17:13:51] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 12
+[2026-08-11 17:14:39] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 13
+[2026-08-11 17:15:29] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 14
+[2026-08-11 17:16:17] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 15
+[2026-08-11 17:17:07] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 16
+[2026-08-11 17:17:58] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 17
+[2026-08-11 17:18:45] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 18
+[2026-08-11 17:19:35] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 19
+[2026-08-11 17:20:38] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 20
+[2026-08-11 17:21:28] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 21
+[2026-08-11 17:22:18] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 22
+[2026-08-11 17:23:08] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 23
+[2026-08-11 17:23:57] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 24
+[2026-08-11 17:24:47] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 25
+[2026-08-11 17:25:38] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 26
+[2026-08-11 17:26:27] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 27
+[2026-08-11 17:27:16] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 28
+[2026-08-11 17:28:03] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 29
+[2026-08-11 17:28:49] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 30
+[2026-08-11 17:29:37] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 31
+[2026-08-11 17:30:23] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 32
+[2026-08-11 17:31:07] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 33
+[2026-08-11 17:31:52] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 34
+[2026-08-11 17:32:37] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 35
+[2026-08-11 17:33:24] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 36
+[2026-08-11 17:34:09] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 37
+[2026-08-11 17:34:54] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 38
+[2026-08-11 17:35:42] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 39
+[2026-08-11 17:36:41] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 40
+[2026-08-11 17:37:27] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 41
+[2026-08-11 17:38:14] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 42
+[2026-08-11 17:39:00] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 43
+[2026-08-11 17:39:48] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 44
+[2026-08-11 17:40:36] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 45
+[2026-08-11 17:41:30] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 46
+[2026-08-11 17:42:17] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 47
+[2026-08-11 17:43:04] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 48
+[2026-08-11 17:43:53] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 49
+[2026-08-11 17:44:39] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 50
+[2026-08-11 17:45:30] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 51
+[2026-08-11 17:46:22] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 52
+[2026-08-11 17:47:13] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 53
+[2026-08-11 17:48:06] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 54
+[2026-08-11 17:48:59] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 55
+[2026-08-11 17:49:57] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 56
+[2026-08-11 17:50:48] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 57
+[2026-08-11 17:51:36] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 58
+[2026-08-11 17:52:25] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 59
+[2026-08-11 17:53:30] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 60
+[2026-08-11 17:54:22] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 61
+[2026-08-11 17:55:11] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 62
+[2026-08-11 17:56:00] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 63
+[2026-08-11 17:56:47] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 64
+[2026-08-11 17:57:35] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 65
+[2026-08-11 17:58:21] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 66
+[2026-08-11 17:59:10] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 67
+[2026-08-11 17:59:58] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 68
+[2026-08-11 18:00:48] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 69
+[2026-08-11 18:01:40] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 70
+[2026-08-11 18:02:29] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 71
+[2026-08-11 18:03:15] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 72
+[2026-08-11 18:04:00] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 73
+[2026-08-11 18:04:45] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 74
+[2026-08-11 18:05:33] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 75
+[2026-08-11 18:06:19] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 76
+[2026-08-11 18:07:06] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 77
+[2026-08-11 18:07:56] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 78
+[2026-08-11 18:08:49] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 79
+[2026-08-11 18:09:49] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 80
+[2026-08-11 18:10:36] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 81
+[2026-08-11 18:11:26] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 82
+[2026-08-11 18:12:16] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 83
+[2026-08-11 18:13:04] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 84
+[2026-08-11 18:13:56] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 85
+[2026-08-11 18:14:46] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 86
+[2026-08-11 18:15:37] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 87
+[2026-08-11 18:16:28] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 88
+[2026-08-11 18:17:20] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 89
+[2026-08-11 18:18:13] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 90
+[2026-08-11 18:19:08] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 91
+[2026-08-11 18:20:00] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 92
+[2026-08-11 18:20:51] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 93
+[2026-08-11 18:21:45] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 94
+[2026-08-11 18:22:39] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 95
+[2026-08-11 18:23:32] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 96
+[2026-08-11 18:24:26] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 97
+[2026-08-11 18:25:20] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 98
+[2026-08-11 18:26:13] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 99
+[2026-08-11 18:26:33] [base_worker.py (349)] [INFO] [actor_train-1 1 / 2][PID 1380150] save checkpoint-99 to ./runs/geography_counterfactual_distance3_5/726128-20260811-165912/actor_train-1/checkpoint-99
+[2026-08-11 18:26:33] [megatron_strategy.py (478)] [INFO] [actor_train-1 1 / 2][PID 1380150] save_dir: ./runs/geography_counterfactual_distance3_5/726128-20260811-165912/actor_train-1/checkpoint-99
+[2026-08-11 18:27:40] [checkpoint_manager.py (67)] [WARNING] [actor_train-1 1 / 2][PID 1380150] uploader is None, skip upload...
+[2026-08-11 18:28:29] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 100
+[2026-08-11 18:29:25] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 101
+[2026-08-11 18:30:19] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 102
+[2026-08-11 18:31:13] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 103
+[2026-08-11 18:32:07] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 104
+[2026-08-11 18:33:01] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 105
+[2026-08-11 18:33:57] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 106
+[2026-08-11 18:34:52] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 107
+[2026-08-11 18:35:46] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 108
+[2026-08-11 18:36:42] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 109
+[2026-08-11 18:37:37] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 110
+[2026-08-11 18:38:31] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 111
+[2026-08-11 18:39:25] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 112
+[2026-08-11 18:40:20] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 113
+[2026-08-11 18:41:14] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 114
+[2026-08-11 18:42:09] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 115
+[2026-08-11 18:43:04] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 116
+[2026-08-11 18:43:59] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 117
+[2026-08-11 18:44:55] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 118
+[2026-08-11 18:45:49] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 119
+[2026-08-11 18:47:01] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 120
+[2026-08-11 18:47:57] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 121
+[2026-08-11 18:48:53] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 122
+[2026-08-11 18:49:48] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 123
+[2026-08-11 18:50:44] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 124
+[2026-08-11 18:51:40] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 125
+[2026-08-11 18:52:35] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 126
+[2026-08-11 18:53:30] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 127
+[2026-08-11 18:54:25] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 128
+[2026-08-11 18:55:20] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 129
+[2026-08-11 18:56:15] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 130
+[2026-08-11 18:57:11] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 131
+[2026-08-11 18:58:06] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 132
+[2026-08-11 18:59:01] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 133
+[2026-08-11 18:59:56] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 134
+[2026-08-11 19:00:50] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 135
+[2026-08-11 19:01:44] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 136
+[2026-08-11 19:02:39] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 137
+[2026-08-11 19:03:32] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 138
+[2026-08-11 19:04:25] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 139
+[2026-08-11 19:05:35] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 140
+[2026-08-11 19:06:30] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 141
+[2026-08-11 19:07:24] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 142
+[2026-08-11 19:08:18] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 143
+[2026-08-11 19:09:13] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 144
+[2026-08-11 19:10:07] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 145
+[2026-08-11 19:11:01] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 146
+[2026-08-11 19:11:55] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 147
+[2026-08-11 19:12:49] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 148
+[2026-08-11 19:13:42] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 149
+[2026-08-11 19:14:36] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 150
+[2026-08-11 19:15:30] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 151
+[2026-08-11 19:16:24] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 152
+[2026-08-11 19:17:18] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 153
+[2026-08-11 19:18:13] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 154
+[2026-08-11 19:19:08] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 155
+[2026-08-11 19:20:03] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 156
+[2026-08-11 19:20:57] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 157
+[2026-08-11 19:21:52] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 158
+[2026-08-11 19:22:46] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 159
+[2026-08-11 19:23:56] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 160
+[2026-08-11 19:24:53] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 161
+[2026-08-11 19:25:48] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 162
+[2026-08-11 19:26:41] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 163
+[2026-08-11 19:27:36] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 164
+[2026-08-11 19:28:29] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 165
+[2026-08-11 19:29:24] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 166
+[2026-08-11 19:30:17] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 167
+[2026-08-11 19:31:11] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 168
+[2026-08-11 19:32:05] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 169
+[2026-08-11 19:33:00] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 170
+[2026-08-11 19:33:53] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 171
+[2026-08-11 19:34:48] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 172
+[2026-08-11 19:35:42] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 173
+[2026-08-11 19:36:36] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 174
+[2026-08-11 19:37:30] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 175
+[2026-08-11 19:38:24] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 176
+[2026-08-11 19:39:20] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 177
+[2026-08-11 19:40:14] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 178
+[2026-08-11 19:41:09] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 179
+[2026-08-11 19:42:21] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 180
+[2026-08-11 19:43:16] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 181
+[2026-08-11 19:44:10] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 182
+[2026-08-11 19:45:05] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 183
+[2026-08-11 19:45:59] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 184
+[2026-08-11 19:46:54] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 185
+[2026-08-11 19:47:48] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 186
+[2026-08-11 19:48:44] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 187
+[2026-08-11 19:49:38] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 188
+[2026-08-11 19:50:34] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 189
+[2026-08-11 19:51:28] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 190
+[2026-08-11 19:52:24] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 191
+[2026-08-11 19:53:19] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 192
+[2026-08-11 19:54:13] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 193
+[2026-08-11 19:55:08] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 194
+[2026-08-11 19:56:02] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 195
+[2026-08-11 19:56:57] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 196
+[2026-08-11 19:57:51] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 197
+[2026-08-11 19:58:45] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 198
+[2026-08-11 19:59:40] [base_worker.py (91)] [INFO] [actor_train-1 1 / 2][PID 1380150] actor_train-1 generate global step 199
+[2026-08-11 20:00:00] [base_worker.py (349)] [INFO] [actor_train-1 1 / 2][PID 1380150] save checkpoint-199 to ./runs/geography_counterfactual_distance3_5/726128-20260811-165912/actor_train-1/checkpoint-199
+[2026-08-11 20:00:00] [megatron_strategy.py (478)] [INFO] [actor_train-1 1 / 2][PID 1380150] save_dir: ./runs/geography_counterfactual_distance3_5/726128-20260811-165912/actor_train-1/checkpoint-199
+[2026-08-11 20:01:02] [checkpoint_manager.py (67)] [WARNING] [actor_train-1 1 / 2][PID 1380150] uploader is None, skip upload...
