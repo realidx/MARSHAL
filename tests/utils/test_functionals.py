@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import torch
 
-from roll.utils.functionals import agg_loss, divide_by_chunk_size, pad_to_length, traverse_obj
+from roll.utils.functionals import agg_loss, divide_by_chunk_size, masked_whiten, pad_to_length, traverse_obj
 
 
 def visitor(obj: object, path: Tuple):
@@ -71,6 +71,17 @@ def test_seq_mean_token_sum_sums_tokens_before_averaging_sequences():
     result = agg_loss(losses, mask, "seq-mean-token-sum")
 
     assert result.item() == pytest.approx(10.0)
+
+
+def test_masked_whiten_constant_negative_advantages_returns_zero_without_nan():
+    """An all-invalid rollout batch must not produce a policy-gradient update."""
+    mask = torch.arange(8).unsqueeze(0) < torch.arange(1, 33).remainder(8).add(1).unsqueeze(1)
+    advantages = torch.where(mask, -1.5, 0.0)
+
+    whitened = masked_whiten(advantages, mask)
+
+    assert torch.isfinite(whitened).all()
+    assert torch.count_nonzero(whitened * mask) == 0
 
 
 if __name__ == "__main__":

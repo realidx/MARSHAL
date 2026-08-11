@@ -6,6 +6,13 @@ defaults:
 
 exp_name: "geography_counterfactual_distance3_5_2gpu"
 
+# Center decision advantages before the policy update and whiten the centered
+# values.  In particular, an all-invalid rollout batch has constant negative
+# returns, so whitening maps every active-token advantage to zero instead of
+# applying a uniform-negative REINFORCE update.
+advantage_norm: mean
+whiten_advantages: true
+
 # Balanced planning-depth treatment. Within each distance, independently vary
 # graph size and branching while holding the transposition target fixed.
 max_actions_per_traj: 8
