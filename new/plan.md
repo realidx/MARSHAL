@@ -221,6 +221,23 @@ from +0.5 at 11 tokens to zero at 600 tokens; invalid, illegal, and truncated
 responses cannot earn either positive reward. Full games are capped at eight
 legal moves, covering the Distance-5 generators' maximum depth of seven.
 
+Policy credit preserves the valid decision's exact counterfactual game
+advantage without global normalization. Only the auxiliary response-control
+total is mean-centered across the 32 rollout samples:
+
+\[
+A_i = \mathbf 1[v_i]r_i^{\mathrm{game}}
+    + \left(r_i^{\mathrm{aux}}-
+      \frac{1}{B}\sum_{j=1}^{B}r_j^{\mathrm{aux}}\right).
+\]
+
+This makes the invalid penalty adaptive without changing strategic credit. If
+the batch contains no valid action, both components are set to zero and that
+optimizer step is driven only by the separate KL loss. Reward whitening,
+advantage whitening, and global advantage normalization are disabled. The
+200-step horizon is explicit so the learning-rate schedule remains active at
+the step-100 checkpoint.
+
 Validation has disjoint fixed namespaces and no auxiliary penalties. It covers
 Distance-1 sanity, Distance-3 IID, identical Distance-3 roots under the other
 internal player identity, paired relabelled copies of Distance-3 IID,

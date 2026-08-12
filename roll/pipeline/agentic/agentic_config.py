@@ -148,6 +148,16 @@ class AgenticConfig(BaseConfig):
         default=False,
         metadata={"help": "Generate each action from only the current environment state, without prior turns."},
     )
+    preserve_counterfactual_game_advantage: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Keep decision-local counterfactual game advantages raw while "
+                "mean-centering auxiliary response controls. An all-invalid "
+                "batch receives zero policy-gradient advantage."
+            )
+        },
+    )
     reward_normalization: RewardNormalizationConfig = field(
         default_factory=RewardNormalizationConfig, metadata={"help": "Reward normalization configuration."}
     )
@@ -268,6 +278,42 @@ class AgenticConfig(BaseConfig):
                 raise ValueError("game_step_discount requires use_turn_scores=True")
             if self.adv_estimator == "gae":
                 raise ValueError("game_step_discount currently supports only reinforce/grpo, not GAE")
+
+        if self.preserve_counterfactual_game_advantage:
+            if not self.markovian_turn_context:
+                raise ValueError(
+                    "preserve_counterfactual_game_advantage requires markovian_turn_context=True"
+                )
+            if not self.use_turn_scores or self.adv_estimator != "reinforce":
+                raise ValueError(
+                    "preserve_counterfactual_game_advantage requires use_turn_scores=True "
+                    "and adv_estimator='reinforce'"
+                )
+            if self.gamma != 1.0:
+                raise ValueError("preserve_counterfactual_game_advantage requires gamma=1.0")
+            if self.reward_normalization.method != "identity":
+                raise ValueError(
+                    "preserve_counterfactual_game_advantage requires identity reward normalization"
+                )
+            if self.whiten_rewards or self.whiten_advantages or self.advantage_norm is not None:
+                raise ValueError(
+                    "preserve_counterfactual_game_advantage performs its own auxiliary centering; "
+                    "disable reward/advantage whitening and advantage_norm"
+                )
+            if self.add_token_level_kl:
+                raise ValueError(
+                    "preserve_counterfactual_game_advantage requires KL to remain a separate loss"
+                )
+            if self.reward_clip is not None:
+                raise ValueError(
+                    "preserve_counterfactual_game_advantage requires reward_clip=None so the "
+                    "exact game component is not altered"
+                )
+            if self.advantage_clip is not None:
+                raise ValueError(
+                    "preserve_counterfactual_game_advantage requires advantage_clip=None so the "
+                    "exact game component is not altered"
+                )
 
         if (
             self.actor_train.model_args.model_name_or_path is None

@@ -1020,6 +1020,28 @@ class EnvManager:
             sequence_penalties=[soft_length_penalty],
             generated_token_lengths=[int(turn.get("token_length", response_mask.sum().item()))],
         )
+        auxiliary_reward = float(turn.get("auxiliary_reward", 0.0))
+        _, auxiliary_score_tensor, _, _, _ = get_masks_and_scores(
+            input_ids,
+            self.tokenizer,
+            [[auxiliary_reward - soft_length_penalty]],
+            use_turn_scores=True,
+        )
+        auxiliary_score_tensor = distribute_token_local_length_penalty(
+            score_tensor=auxiliary_score_tensor,
+            response_mask=response_mask,
+            soft_budget=int(self.worker_config.minimax_length_soft_budget),
+            sequence_penalties=[soft_length_penalty],
+            generated_token_lengths=[int(turn.get("token_length", response_mask.sum().item()))],
+        )
+        # Split the already constructed total score rather than recomputing the
+        # game component. This preserves exact equality even when a soft length
+        # penalty is distributed over multiple response tokens.
+        game_score_tensor = score_tensor - auxiliary_score_tensor
+        if not torch.allclose(
+            game_score_tensor + auxiliary_score_tensor, score_tensor, atol=1e-7, rtol=0
+        ):
+            raise RuntimeError("Game and auxiliary score components do not reconstruct total score")
         response_length = response_mask.sum(dim=-1).float().mean().item()
 
         sequence_length = self.pipeline_config.sequence_length
@@ -1029,6 +1051,10 @@ class EnvManager:
         response_mask = pad_to_length(response_mask, length=sequence_length, pad_value=0)
         non_prompt_mask = pad_to_length(non_prompt_mask, length=sequence_length, pad_value=0)
         score_tensor = pad_to_length(score_tensor, length=sequence_length, pad_value=0)
+        game_score_tensor = pad_to_length(game_score_tensor, length=sequence_length, pad_value=0)
+        auxiliary_score_tensor = pad_to_length(
+            auxiliary_score_tensor, length=sequence_length, pad_value=0
+        )
         turn_end_positions = pad_to_length(turn_end_positions, length=sequence_length, pad_value=0)
 
         prompt_start = non_prompt_mask.int().argmax(dim=1)
@@ -1049,6 +1075,11 @@ class EnvManager:
                 "response_mask": response_mask if self.pipeline_config.enable_response_mask else non_prompt_mask,
                 "prompt_mask": prompt_mask,
                 "scores": score_tensor,
+                "game_scores": game_score_tensor,
+                "auxiliary_scores": auxiliary_score_tensor,
+                "valid_actions": torch.tensor(
+                    [bool(turn.get("valid_action", False))], dtype=torch.bool
+                ),
                 "turn_end_positions": turn_end_positions,
             },
             batch_size=input_ids.shape[0],

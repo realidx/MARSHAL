@@ -4,14 +4,24 @@ defaults:
   - agentic_train_geography_counterfactual_distance3_2gpu
   - _self_
 
-exp_name: "geography_counterfactual_distance3_5_2gpu"
+exp_name: "geography_counterfactual_distance3_5_preserve_game_2gpu"
 
-# Center decision advantages before the policy update and whiten the centered
-# values.  In particular, an all-invalid rollout batch has constant negative
-# returns, so whitening maps every active-token advantage to zero instead of
-# applying a uniform-negative REINFORCE update.
-advantage_norm: mean
-whiten_advantages: true
+# Preserve the exact decision-local counterfactual game advantage. Center only
+# auxiliary response controls; if a batch has no valid action, its policy
+# gradient is zero and the separate KL loss provides recovery pressure.
+preserve_counterfactual_game_advantage: true
+reward_normalization:
+  grouping: tags
+  method: identity
+  separate_norm_for_selfplay: false
+whiten_rewards: false
+advantage_norm: ~
+whiten_advantages: false
+
+# Make the intended full-run horizon explicit so the cosine schedule does not
+# decay to zero at step 100.
+max_steps: 200
+save_steps: 100
 
 # Balanced planning-depth treatment. Within each distance, independently vary
 # graph size and branching while holding the transposition target fixed.

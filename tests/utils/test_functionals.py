@@ -4,7 +4,14 @@ import numpy as np
 import pytest
 import torch
 
-from roll.utils.functionals import agg_loss, divide_by_chunk_size, masked_whiten, pad_to_length, traverse_obj
+from roll.utils.functionals import (
+    agg_loss,
+    combine_counterfactual_game_and_auxiliary_advantages,
+    divide_by_chunk_size,
+    masked_whiten,
+    pad_to_length,
+    traverse_obj,
+)
 
 
 def visitor(obj: object, path: Tuple):
@@ -82,6 +89,49 @@ def test_masked_whiten_constant_negative_advantages_returns_zero_without_nan():
 
     assert torch.isfinite(whitened).all()
     assert torch.count_nonzero(whitened * mask) == 0
+
+
+def test_counterfactual_game_credit_is_preserved_while_auxiliary_controls_are_centered():
+    response_mask = torch.tensor(
+        [[1, 1, 0, 0], [1, 1, 1, 1], [1, 1, 1, 0]], dtype=torch.bool
+    )
+    game_advantages = torch.tensor(
+        [[-1.0, -1.0, 0.0, 0.0], [-0.5, -0.5, -0.5, -0.5], [1.0, 1.0, 1.0, 0.0]]
+    )
+    auxiliary_rewards = torch.tensor(
+        [[0.0, -1.5, 0.0, 0.0], [0.0, 0.0, 0.0, -1.5], [0.0, 0.0, 0.5, 0.0]]
+    )
+    valid_actions = torch.tensor([False, False, True])
+
+    combined, game, auxiliary, skipped = combine_counterfactual_game_and_auxiliary_advantages(
+        game_advantages, auxiliary_rewards, valid_actions, response_mask
+    )
+
+    assert not skipped
+    assert torch.count_nonzero(game[:2]) == 0
+    assert torch.equal(game[2], game_advantages[2])
+    assert auxiliary[0, 0].item() == pytest.approx(-2.0 / 3.0)
+    assert auxiliary[1, 0].item() == pytest.approx(-2.0 / 3.0)
+    assert auxiliary[2, 0].item() == pytest.approx(4.0 / 3.0)
+    assert torch.equal(combined, (game + auxiliary) * response_mask)
+
+
+def test_zero_valid_batch_has_zero_policy_gradient_even_if_auxiliary_values_differ():
+    response_mask = torch.tensor([[1, 1, 0], [1, 1, 1]], dtype=torch.bool)
+    game_advantages = torch.full((2, 3), -1.0)
+    auxiliary_rewards = torch.tensor([[0.0, -1.5, 0.0], [0.0, 0.0, -1.0]])
+
+    combined, game, auxiliary, skipped = combine_counterfactual_game_and_auxiliary_advantages(
+        game_advantages,
+        auxiliary_rewards,
+        torch.tensor([False, False]),
+        response_mask,
+    )
+
+    assert skipped
+    assert torch.count_nonzero(combined) == 0
+    assert torch.count_nonzero(game) == 0
+    assert torch.count_nonzero(auxiliary) == 0
 
 
 if __name__ == "__main__":

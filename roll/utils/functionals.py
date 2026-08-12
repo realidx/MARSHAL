@@ -875,6 +875,28 @@ def reward_postprocess_agentic(data: "DataProto", pipeline_config: AgenticConfig
 
     metrics = {"critic/reward_clip_frac": 0.0}
 
+    if pipeline_config.preserve_counterfactual_game_advantage:
+        required_keys = {"game_scores", "auxiliary_scores", "valid_actions"}
+        missing_keys = required_keys.difference(data.batch.keys())
+        if missing_keys:
+            raise ValueError(
+                "Counterfactual-preserving reward processing requires split rollout fields: "
+                f"{sorted(missing_keys)}"
+            )
+        game_rewards = data.batch["game_scores"][:, 1:].float()
+        auxiliary_rewards = data.batch["auxiliary_scores"][:, 1:].float()
+        data.batch["token_level_game_rewards"] = game_rewards
+        data.batch["token_level_auxiliary_rewards"] = auxiliary_rewards
+        data.batch["token_level_rewards"] = game_rewards + auxiliary_rewards
+        metrics.update(
+            {
+                "critic/game_reward/mean": game_rewards.sum(dim=-1).mean().item(),
+                "critic/auxiliary_reward/mean": auxiliary_rewards.sum(dim=-1).mean().item(),
+                "critic/valid_fraction": data.batch["valid_actions"].float().mean().item(),
+            }
+        )
+        return data, metrics
+
     # 1. normalize (identity/mean/mean_std/asym_clip/running)
     # Check if we should normalize players separately in self-play mode
     if pipeline_config.reward_normalization.separate_norm_for_selfplay:
@@ -976,6 +998,40 @@ def apply_kl_penalty(data: "DataProto", kl_ctrl: AdaptiveKLController, kl_penalt
     return data, metrics
 
 
+def combine_counterfactual_game_and_auxiliary_advantages(
+    game_advantages: torch.Tensor,
+    auxiliary_rewards: torch.Tensor,
+    valid_actions: torch.Tensor,
+    response_mask: torch.Tensor,
+):
+    """Preserve game credit while centering sequence-level response controls.
+
+    Returns the combined, game, and auxiliary advantages plus a scalar boolean
+    indicating that the whole policy-gradient update must be skipped.
+    """
+    valid_actions = valid_actions.bool().reshape(-1)
+    if valid_actions.shape[0] != response_mask.shape[0]:
+        raise ValueError("valid_actions must contain one value per rollout sample")
+
+    game_advantages = game_advantages * valid_actions.unsqueeze(-1) * response_mask
+    auxiliary_totals = (auxiliary_rewards * response_mask).sum(dim=-1)
+    centered_auxiliary = auxiliary_totals - auxiliary_totals.mean()
+    auxiliary_advantages = centered_auxiliary.unsqueeze(-1) * response_mask
+
+    policy_update_skipped = valid_actions.sum() == 0
+    if policy_update_skipped:
+        game_advantages = torch.zeros_like(game_advantages)
+        auxiliary_advantages = torch.zeros_like(auxiliary_advantages)
+
+    combined_advantages = (game_advantages + auxiliary_advantages) * response_mask
+    return (
+        combined_advantages,
+        game_advantages,
+        auxiliary_advantages,
+        policy_update_skipped,
+    )
+
+
 @torch.no_grad()
 def compute_advantage(
     data: "DataProto",
@@ -987,6 +1043,7 @@ def compute_advantage(
     whiten_rewards=False,
     advantage_norm=None,
     response_mask=None,
+    preserve_counterfactual_game_advantage=False,
 ):
     if response_mask is None:
         response_mask = data.batch["response_mask"][:, 1:]
@@ -1005,6 +1062,71 @@ def compute_advantage(
                 "Shifted continuation_discounts must match token_level_rewards, "
                 f"got {continuation_discounts.shape} and {token_level_rewards.shape}"
             )
+    if preserve_counterfactual_game_advantage:
+        required_keys = {
+            "token_level_game_rewards",
+            "token_level_auxiliary_rewards",
+            "valid_actions",
+        }
+        missing_keys = required_keys.difference(data.batch.keys())
+        if missing_keys:
+            raise ValueError(
+                "Counterfactual-preserving advantages require split rollout fields: "
+                f"{sorted(missing_keys)}"
+            )
+        if adv_estimator != "reinforce" or gamma != 1.0:
+            raise ValueError(
+                "Counterfactual-preserving advantages require REINFORCE with gamma=1"
+            )
+        if whiten_rewards or whiten_advantages or advantage_norm:
+            raise ValueError(
+                "Counterfactual-preserving advantages cannot be combined with global normalization"
+            )
+
+        game_rewards = data.batch["token_level_game_rewards"].float() * response_mask
+        auxiliary_rewards = data.batch["token_level_auxiliary_rewards"].float() * response_mask
+        game_advantages, _ = compute_reinforce_return(
+            token_level_rewards=game_rewards,
+            gamma=gamma,
+            lambd=lambd,
+            continuation_discounts=continuation_discounts,
+        )
+        raw_advantages, returns = compute_reinforce_return(
+            token_level_rewards=game_rewards + auxiliary_rewards,
+            gamma=gamma,
+            lambd=lambd,
+            continuation_discounts=continuation_discounts,
+        )
+
+        # Auxiliary controls are sequence-level protocol signals. Center them
+        # over rollout samples, not response tokens, so response length cannot
+        # change the baseline. This yields an adaptive validity penalty: when
+        # validity is rare, valid samples get a strong positive contrast while
+        # each invalid sample gets only a small negative contrast.
+        (
+            advantages,
+            game_advantages,
+            auxiliary_advantages,
+            policy_update_skipped,
+        ) = combine_counterfactual_game_and_auxiliary_advantages(
+            game_advantages=game_advantages,
+            auxiliary_rewards=auxiliary_rewards,
+            valid_actions=data.batch["valid_actions"],
+            response_mask=response_mask,
+        )
+        data.batch["raw_advantages"] = raw_advantages
+        data.batch["game_advantages"] = game_advantages
+        data.batch["auxiliary_advantages"] = auxiliary_advantages
+        data.batch["policy_update_skipped"] = torch.full(
+            (response_mask.shape[0],),
+            bool(policy_update_skipped),
+            dtype=torch.bool,
+            device=response_mask.device,
+        )
+        data.batch["advantages"] = advantages
+        data.batch["returns"] = returns
+        return data
+
     if adv_estimator == "gae":
         if continuation_discounts is not None and not torch.all(continuation_discounts == gamma):
             raise ValueError("Environment-step continuation discounts are not implemented for GAE")

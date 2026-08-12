@@ -292,6 +292,9 @@ class AgenticVLMPipeline(BasePipeline):
                         advantage_clip=self.pipeline_config.advantage_clip,
                         whiten_advantages=self.pipeline_config.whiten_advantages,
                         whiten_rewards=self.pipeline_config.whiten_rewards,
+                        preserve_counterfactual_game_advantage=(
+                            self.pipeline_config.preserve_counterfactual_game_advantage
+                        ),
                     )
 
                 metrics.update(kl_metrics)

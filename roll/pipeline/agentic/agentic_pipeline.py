@@ -432,6 +432,9 @@ class AgenticPipeline(BasePipeline):
                             whiten_advantages=self.pipeline_config.whiten_advantages,
                             whiten_rewards=self.pipeline_config.whiten_rewards,
                             advantage_norm=self.pipeline_config.advantage_norm,
+                            preserve_counterfactual_game_advantage=(
+                                self.pipeline_config.preserve_counterfactual_game_advantage
+                            ),
                         )
                     metrics["time/compute_adv"] = compute_adv_timer.last
 
@@ -566,6 +569,30 @@ def compute_data_metrics(batch):
         "tokens/non_prompt_length/max": torch.max(non_prompt_mask).detach().item(),
         "tokens/non_prompt_length/min": torch.min(non_prompt_mask).detach().item(),
     }
+    if "game_advantages" in batch.batch.keys():
+        game_advantages = batch.batch["game_advantages"]
+        auxiliary_advantages = batch.batch["auxiliary_advantages"]
+        metrics.update(
+            {
+                "critic/game_advantages/mean": masked_mean(
+                    game_advantages, response_mask
+                ).detach().item(),
+                "critic/auxiliary_advantages/mean": masked_mean(
+                    auxiliary_advantages, response_mask, dim=-1
+                )
+                .mean()
+                .detach()
+                .item(),
+                "critic/policy_update_skipped": batch.batch[
+                    "policy_update_skipped"
+                ].float().mean().detach().item(),
+                "critic/valid_fraction": batch.batch["valid_actions"]
+                .float()
+                .mean()
+                .detach()
+                .item(),
+            }
+        )
     if "values" in batch.batch.keys():
         values = batch.batch["values"]
         # values
