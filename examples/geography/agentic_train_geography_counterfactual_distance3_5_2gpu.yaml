@@ -4,19 +4,34 @@ defaults:
   - agentic_train_geography_counterfactual_distance3_2gpu
   - _self_
 
-exp_name: "geography_counterfactual_distance3_5_preserve_game_2gpu"
+exp_name: "geography_counterfactual_distance3_5_marshal_stable_2gpu"
 
-# Preserve the exact decision-local counterfactual game advantage. Center only
-# auxiliary response controls; if a batch has no valid action, its policy
-# gradient is zero and the separate KL loss provides recovery pressure.
-preserve_counterfactual_game_advantage: true
+# MARSHAL-style stabilization arm. The exact counterfactual value remains the
+# game component, but normalization is applied after game, format, and length
+# components have been combined. One normalization batch contains 128 fresh
+# on-policy decisions; this is not gradient accumulation over four batches.
+rollout_batch_size: 128
+preserve_counterfactual_game_advantage: false
+skip_policy_update_if_no_valid_actions: true
 reward_normalization:
-  grouping: tags
-  method: identity
+  grouping: batch
+  method: mean_std
   separate_norm_for_selfplay: false
 whiten_rewards: false
 advantage_norm: ~
 whiten_advantages: false
+
+# Keep KL as a separate differentiable loss. It remains active when the
+# zero-valid guard suppresses the reward-driven policy gradient.
+add_token_level_kl: false
+use_kl_loss: true
+kl_loss_coef: 0.20
+
+# Preserve the previous number of optimizer updates per pipeline step while
+# increasing the rollout/normalization batch from 32 to 128.
+actor_train:
+  training_args:
+    gradient_accumulation_steps: 16
 
 # Make the intended full-run horizon explicit so the cosine schedule does not
 # decay to zero at step 100.
@@ -243,6 +258,22 @@ custom_envs:
       generator_candidates: 4096
 
 train_env_manager:
+  max_invalid_retries_per_decision: 0
+  format_penalty: -1.5
+  valid_format_reward: 0.05
+  # Penalty-only response shaping: no reward below 600 tokens, then a linear
+  # penalty to -0.5 at the 1024-token generation cap. This scalar is combined
+  # with game and format reward before full-batch normalization.
+  marshal_length_reward_alpha: 0.5
+  marshal_length_reward_penalty_only: true
+  marshal_length_reward_min_tokens: 600
+  marshal_length_reward_max_tokens: 1024
+  minimax_length_penalty_beta: 0.0
+  enable_length_penalty: false
+  max_env_num_per_worker: 16
+  env_groups: 128
+  group_size: 1
+  group_seed_base: 100000
   tags:
     - Geography-Train-D3-N10-LowBranch
     - Geography-Train-D3-N10-HighBranch
@@ -252,7 +283,7 @@ train_env_manager:
     - Geography-Train-D5-N14-HighBranch
     - Geography-Train-D5-N18-LowBranch
     - Geography-Train-D5-N18-HighBranch
-  n_groups: [4, 4, 4, 4, 4, 4, 4, 4]
+  n_groups: [16, 16, 16, 16, 16, 16, 16, 16]
 
 val_env_manager:
   tags:

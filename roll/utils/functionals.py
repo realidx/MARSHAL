@@ -1032,6 +1032,25 @@ def combine_counterfactual_game_and_auxiliary_advantages(
     )
 
 
+def zero_advantages_if_no_valid_actions(
+    advantages: torch.Tensor,
+    valid_actions: torch.Tensor,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Suppress a policy-gradient update from an entirely invalid batch.
+
+    The returned flag is a scalar tensor so callers can record it directly in
+    the rollout batch. This guard intentionally leaves the separate KL loss
+    active: only the reward-driven policy gradient is suppressed.
+    """
+    valid_actions = valid_actions.bool().reshape(-1)
+    if valid_actions.shape[0] != advantages.shape[0]:
+        raise ValueError("valid_actions must contain one value per rollout sample")
+    policy_update_skipped = valid_actions.sum() == 0
+    if policy_update_skipped:
+        advantages = torch.zeros_like(advantages)
+    return advantages, policy_update_skipped
+
+
 @torch.no_grad()
 def compute_advantage(
     data: "DataProto",
@@ -1044,6 +1063,7 @@ def compute_advantage(
     advantage_norm=None,
     response_mask=None,
     preserve_counterfactual_game_advantage=False,
+    skip_policy_update_if_no_valid_actions=False,
 ):
     if response_mask is None:
         response_mask = data.batch["response_mask"][:, 1:]
@@ -1166,6 +1186,22 @@ def compute_advantage(
         adv_clip_frac = compute_clip_fraction(values=advantages, clip_min=-advantage_clip, clip_max=advantage_clip)
         data.meta_info["metrics"] = {"critic/advantage_clip_frac": adv_clip_frac}
         advantages = torch.clamp(advantages, min=-advantage_clip, max=advantage_clip)
+
+    if skip_policy_update_if_no_valid_actions:
+        if "valid_actions" not in data.batch.keys():
+            raise ValueError(
+                "skip_policy_update_if_no_valid_actions requires valid_actions in the rollout batch"
+            )
+        advantages, policy_update_skipped = zero_advantages_if_no_valid_actions(
+            advantages=advantages,
+            valid_actions=data.batch["valid_actions"],
+        )
+        data.batch["policy_update_skipped"] = torch.full(
+            (response_mask.shape[0],),
+            bool(policy_update_skipped),
+            dtype=torch.bool,
+            device=response_mask.device,
+        )
 
     data.batch["advantages"] = advantages
     data.batch["returns"] = returns

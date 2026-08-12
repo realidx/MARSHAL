@@ -348,6 +348,22 @@ def test_marshal_length_reward_decreases_to_zero_for_valid_responses():
     assert manager.compute_marshal_length_reward(11, False) == 0.0
 
 
+def test_marshal_penalty_only_length_shaping_is_zero_then_negative():
+    manager = EnvManager.__new__(EnvManager)
+    manager.worker_config = SimpleNamespace(
+        marshal_length_reward_alpha=0.5,
+        marshal_length_reward_penalty_only=True,
+        marshal_length_reward_min_tokens=600,
+        marshal_length_reward_max_tokens=1024,
+    )
+
+    assert manager.compute_marshal_length_reward(100, True) == 0.0
+    assert manager.compute_marshal_length_reward(600, True) == 0.0
+    assert manager.compute_marshal_length_reward(812, True) == pytest.approx(-0.25)
+    assert manager.compute_marshal_length_reward(1024, True) == pytest.approx(-0.5)
+    assert manager.compute_marshal_length_reward(1200, False) == pytest.approx(-0.5)
+
+
 def test_soft_length_penalty_is_placed_only_after_budget_and_preserves_sum():
     scores = torch.tensor([[0.0, 0.0, 0.0, 0.0, 0.0, 1.0]])
     response_mask = torch.ones_like(scores, dtype=torch.bool)

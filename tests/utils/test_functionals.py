@@ -11,6 +11,7 @@ from roll.utils.functionals import (
     masked_whiten,
     pad_to_length,
     traverse_obj,
+    zero_advantages_if_no_valid_actions,
 )
 
 
@@ -132,6 +133,24 @@ def test_zero_valid_batch_has_zero_policy_gradient_even_if_auxiliary_values_diff
     assert torch.count_nonzero(combined) == 0
     assert torch.count_nonzero(game) == 0
     assert torch.count_nonzero(auxiliary) == 0
+
+
+def test_generic_zero_valid_guard_preserves_mixed_batch_and_suppresses_all_invalid_batch():
+    advantages = torch.tensor([[1.0, 1.0], [-0.5, -0.5]])
+
+    mixed, mixed_skipped = zero_advantages_if_no_valid_actions(
+        advantages,
+        torch.tensor([True, False]),
+    )
+    suppressed, invalid_skipped = zero_advantages_if_no_valid_actions(
+        advantages,
+        torch.tensor([False, False]),
+    )
+
+    assert not mixed_skipped
+    assert torch.equal(mixed, advantages)
+    assert invalid_skipped
+    assert torch.count_nonzero(suppressed) == 0
 
 
 if __name__ == "__main__":

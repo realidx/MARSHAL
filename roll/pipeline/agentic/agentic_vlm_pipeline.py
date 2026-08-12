@@ -295,6 +295,9 @@ class AgenticVLMPipeline(BasePipeline):
                         preserve_counterfactual_game_advantage=(
                             self.pipeline_config.preserve_counterfactual_game_advantage
                         ),
+                        skip_policy_update_if_no_valid_actions=(
+                            self.pipeline_config.skip_policy_update_if_no_valid_actions
+                        ),
                     )
 
                 metrics.update(kl_metrics)

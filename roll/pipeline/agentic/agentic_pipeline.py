@@ -435,6 +435,9 @@ class AgenticPipeline(BasePipeline):
                             preserve_counterfactual_game_advantage=(
                                 self.pipeline_config.preserve_counterfactual_game_advantage
                             ),
+                            skip_policy_update_if_no_valid_actions=(
+                                self.pipeline_config.skip_policy_update_if_no_valid_actions
+                            ),
                         )
                     metrics["time/compute_adv"] = compute_adv_timer.last
 
@@ -583,15 +586,15 @@ def compute_data_metrics(batch):
                 .mean()
                 .detach()
                 .item(),
-                "critic/policy_update_skipped": batch.batch[
-                    "policy_update_skipped"
-                ].float().mean().detach().item(),
-                "critic/valid_fraction": batch.batch["valid_actions"]
-                .float()
-                .mean()
-                .detach()
-                .item(),
             }
+        )
+    if "policy_update_skipped" in batch.batch.keys():
+        metrics["critic/policy_update_skipped"] = batch.batch[
+            "policy_update_skipped"
+        ].float().mean().detach().item()
+    if "valid_actions" in batch.batch.keys():
+        metrics["critic/valid_fraction"] = (
+            batch.batch["valid_actions"].float().mean().detach().item()
         )
     if "values" in batch.batch.keys():
         values = batch.batch["values"]

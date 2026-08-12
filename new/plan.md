@@ -200,43 +200,50 @@ crosses node count (14 or 18) with low or high branching. Low-branching roots
 have two actions with graph branching capped at two, while high-branching roots
 have three actions with graph branching capped at four. The transposition target
 is held at 0.2 so planning distance, node count, and branching remain
-interpretable. Each of the eight strata receives four of the 32 rollout groups.
+interpretable. The current stabilization run assigns 16 of the 128 rollout
+groups to each stratum.
 Labels, row order, successor order, and episode graphs remain procedural. Group
 size is one, so training does not generate repeated samples of the same prompt
 as the preflight did.
 
-The initial schedule is:
+The initial schedule was:
 
 | Stage | Updates | Rollout decisions/update | Purpose |
 |---|---:|---:|---|
 | Smoke | 20 | 8 | runtime, reward separation, and logging correctness |
-| Full learning run, checkpoint 1 | 100 | 32 | test sustained held-out Distance-3/5 learning |
-| Full learning run, checkpoint 2 | 200 total | 32 | test stability and later transfer |
+| Earlier full run, checkpoint 1 | 100 | 32 | test sustained held-out Distance-3/5 learning |
+| Earlier full run, checkpoint 2 | 200 total | 32 | exposed the post-step-100 validity collapse |
+| MARSHAL stabilization, checkpoints 1/2 | 100/200 | 128 | test joint validity and strategy stability |
 
 Responses retain the free-form reason/answer protocol and a 1,024-token hard
 ceiling. There is no retry. Invalid or truncated output has zero game reward and
 a separate format penalty of -1.5. A completed legal response receives a +0.05
-format reward and a MARSHAL-style conciseness reward that decreases linearly
-from +0.5 at 11 tokens to zero at 600 tokens; invalid, illegal, and truncated
-responses cannot earn either positive reward. Full games are capped at eight
+format reward. Response-length shaping is penalty-only: it is zero through 600
+tokens and decreases linearly to -0.5 at the 1,024-token hard cap. Thus short
+responses receive no positive brevity bonus. Full games are capped at eight
 legal moves, covering the Distance-5 generators' maximum depth of seven.
 
-Policy credit preserves the valid decision's exact counterfactual game
-advantage without global normalization. Only the auxiliary response-control
-total is mean-centered across the 32 rollout samples:
+After the raw-game/centered-auxiliary arm still lost validity after step 100,
+the next full run uses 128 fresh on-policy decisions per normalization batch,
+balanced as 16 decisions from each Distance/node-count/branching stratum. Game,
+format, and length components are first combined and then mean/std normalized
+over the complete batch:
 
 \[
-A_i = \mathbf 1[v_i]r_i^{\mathrm{game}}
-    + \left(r_i^{\mathrm{aux}}-
-      \frac{1}{B}\sum_{j=1}^{B}r_j^{\mathrm{aux}}\right).
+z_i = \frac{
+  r_i^{\mathrm{game}}+r_i^{\mathrm{format}}+r_i^{\mathrm{length}}-\mu_B
+}{\sigma_B+10^{-6}}, \qquad B=128.
 \]
 
-This makes the invalid penalty adaptive without changing strategic credit. If
-the batch contains no valid action, both components are set to zero and that
-optimizer step is driven only by the separate KL loss. Reward whitening,
-advantage whitening, and global advantage normalization are disabled. The
-200-step horizon is explicit so the learning-rate schedule remains active at
-the step-100 checkpoint.
+Because Markovian training emits one decision per sample, this normalizes the
+combined scalar decision return rather than sparse token positions. Additional
+token-level reward or advantage whitening is disabled to avoid a
+response-length-dependent baseline. If the batch contains no valid action, the
+policy-gradient advantages are set to zero and only the separate KL loss
+(coefficient 0.20) remains active. Gradient accumulation is increased from 4
+to 16 so enlarging the rollout batch does not also quadruple the number of
+optimizer updates per pipeline step. The 200-step horizon remains explicit so
+the learning-rate schedule is active at the step-100 checkpoint.
 
 Validation has disjoint fixed namespaces and no auxiliary penalties. It covers
 Distance-1 sanity, Distance-3 IID, identical Distance-3 roots under the other

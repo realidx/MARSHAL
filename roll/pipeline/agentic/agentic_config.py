@@ -55,7 +55,16 @@ class EnvManagerConfig(WorkerConfig):
     )
     marshal_length_reward_alpha: float = field(
         default=0.0,
-        metadata={"help": "Maximum MARSHAL-style reward for a short valid response."},
+        metadata={"help": "Maximum magnitude of MARSHAL-style response-length shaping."},
+    )
+    marshal_length_reward_penalty_only: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Use zero reward through min_tokens and a linear negative "
+                "penalty reaching -alpha at max_tokens."
+            )
+        },
     )
     marshal_length_reward_min_tokens: int = field(
         default=11,
@@ -155,6 +164,16 @@ class AgenticConfig(BaseConfig):
                 "Keep decision-local counterfactual game advantages raw while "
                 "mean-centering auxiliary response controls. An all-invalid "
                 "batch receives zero policy-gradient advantage."
+            )
+        },
+    )
+    skip_policy_update_if_no_valid_actions: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Set the policy-gradient advantage to zero when an entire "
+                "rollout batch contains no executable action. A separate KL "
+                "loss may still update the policy."
             )
         },
     )

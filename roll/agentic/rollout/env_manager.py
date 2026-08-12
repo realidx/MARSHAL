@@ -491,14 +491,15 @@ class EnvManager:
         return -beta * min(1.0, max(0.0, excess_fraction))
 
     def compute_marshal_length_reward(self, token_length: int, valid_action: bool) -> float:
-        """Return MARSHAL's linearly decreasing reward for a valid response.
+        """Return configured MARSHAL-style response-length shaping.
 
-        Invalid, illegal, and truncated responses cannot earn a conciseness
-        reward. This prevents a short malformed response from being preferred
-        to a longer response that actually completes a game decision.
+        The legacy mode gives valid responses a positive conciseness reward.
+        Penalty-only mode gives every response zero through ``min_tokens`` and
+        then a linear negative penalty, capped at ``-alpha``. Keeping this
+        sequence-level avoids making normalization depend on response length.
         """
         alpha = float(getattr(self.worker_config, "marshal_length_reward_alpha", 0.0))
-        if alpha <= 0.0 or not valid_action:
+        if alpha <= 0.0:
             return 0.0
         min_tokens = int(getattr(self.worker_config, "marshal_length_reward_min_tokens", 11))
         max_tokens = int(getattr(self.worker_config, "marshal_length_reward_max_tokens", 2048))
@@ -507,6 +508,11 @@ class EnvManager:
                 "marshal_length_reward_max_tokens must exceed "
                 "marshal_length_reward_min_tokens"
             )
+        if bool(getattr(self.worker_config, "marshal_length_reward_penalty_only", False)):
+            excess_fraction = (float(token_length) - min_tokens) / (max_tokens - min_tokens)
+            return -alpha * min(1.0, max(0.0, excess_fraction))
+        if not valid_action:
+            return 0.0
         remaining_fraction = 1.0 - (
             (float(token_length) - min_tokens) / (max_tokens - min_tokens)
         )
