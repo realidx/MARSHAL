@@ -10,6 +10,7 @@ from roll.agentic.rollout.env_manager import (
     mask_untrainable_response_turns,
     compute_game_step_turn_returns,
     distribute_token_local_length_penalty,
+    score_components_reconstruct,
 )
 
 
@@ -20,6 +21,19 @@ class _Tokenizer:
         if text == "<|im_end|>":
             return [100]
         raise AssertionError(text)
+
+
+def test_score_component_reconstruction_allows_float32_roundoff_but_not_real_error():
+    total = torch.tensor([1.6897850036621094], dtype=torch.float32)
+    auxiliary = torch.tensor([-1.9989999532699585], dtype=torch.float32)
+    game = total - auxiliary
+
+    # One float32 ULP is larger than the former fixed 1e-7 threshold.
+    assert ((game + auxiliary) - total).abs().item() > 1e-7
+    assert score_components_reconstruct(total, game, auxiliary)
+    assert not score_components_reconstruct(
+        total, game + torch.tensor([1e-4], dtype=torch.float32), auxiliary
+    )
 
 
 

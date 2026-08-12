@@ -288,6 +288,18 @@ def distribute_token_local_length_penalty(
     return result
 
 
+def score_components_reconstruct(
+    total: torch.Tensor, game: torch.Tensor, auxiliary: torch.Tensor
+) -> bool:
+    """Check an algebraic score split within ordinary dtype roundoff."""
+    if not total.is_floating_point():
+        return torch.equal(game + auxiliary, total)
+    tolerance = 4 * torch.finfo(total.dtype).eps
+    return torch.allclose(
+        game + auxiliary, total, atol=tolerance, rtol=tolerance
+    )
+
+
 class EnvManager:
     def __init__(
         self,
@@ -1038,9 +1050,7 @@ class EnvManager:
         # game component. This preserves exact equality even when a soft length
         # penalty is distributed over multiple response tokens.
         game_score_tensor = score_tensor - auxiliary_score_tensor
-        if not torch.allclose(
-            game_score_tensor + auxiliary_score_tensor, score_tensor, atol=1e-7, rtol=0
-        ):
+        if not score_components_reconstruct(score_tensor, game_score_tensor, auxiliary_score_tensor):
             raise RuntimeError("Game and auxiliary score components do not reconstruct total score")
         response_length = response_mask.sum(dim=-1).float().mean().item()
 

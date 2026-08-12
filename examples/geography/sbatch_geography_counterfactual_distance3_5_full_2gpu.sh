@@ -51,6 +51,31 @@ echo "cuda_home=${CUDA_HOME}"
 echo "nvcc=$(command -v nvcc)"
 python -c 'import ctypes, torch, deepspeed; from torch.utils.cpp_extension import CUDA_HOME; ctypes.CDLL("libcudart.so"); print(f"torch={torch.__version__} torch_cuda={torch.version.cuda} cuda_home={CUDA_HOME} deepspeed={deepspeed.__version__} libcudart=ok")'
 
+if [[ -n "${WARMSTART_MCA_DIR:-}" ]]; then
+  : "${WARMSTART_HF_DIR:?WARMSTART_HF_DIR is required with WARMSTART_MCA_DIR}"
+  if [[ ! -f "${WARMSTART_HF_DIR}/config.json" ]]; then
+    TASK_WARMSTART_PARENT="$(dirname "${WARMSTART_HF_DIR}")"
+    mkdir -p "${TASK_WARMSTART_PARENT}"
+    TASK_WARMSTART_TMP="$(mktemp -d "${TASK_WARMSTART_PARENT}/.warmstart-hf-${SLURM_JOB_ID}.XXXXXX")"
+    echo "exporting weights-only warm start from ${WARMSTART_MCA_DIR}"
+    python - "${WARMSTART_MCA_DIR}" "${TASK_WARMSTART_TMP}/export" <<'PY'
+import sys
+from mcore_adapter.models.converter.post_converter import convert_checkpoint_to_hf
+
+convert_checkpoint_to_hf(sys.argv[1], sys.argv[2], verbose=False)
+PY
+    if [[ -e "${WARMSTART_HF_DIR}" ]]; then
+      echo "refusing to replace incomplete warm-start path: ${WARMSTART_HF_DIR}" >&2
+      exit 43
+    fi
+    mv "${TASK_WARMSTART_TMP}/export" "${WARMSTART_HF_DIR}"
+    rmdir "${TASK_WARMSTART_TMP}"
+  fi
+  test -f "${WARMSTART_HF_DIR}/config.json"
+  ls "${WARMSTART_HF_DIR}"/model*.safetensors >/dev/null
+  echo "weights_only_warmstart=${WARMSTART_HF_DIR}"
+fi
+
 srun --cpu-bind=none --mem=0 --ntasks=1 ray stop --force || true
 
 ROLL_OUTPUT_DIR="./runs/geography_counterfactual_distance3_5/${SLURM_JOB_ID:-manual}-$(date +%Y%m%d-%H%M%S)"

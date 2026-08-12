@@ -1,0 +1,13 @@
+# @package _global_
+
+defaults:
+  - agentic_train_geography_counterfactual_distance3_5_2gpu
+  - _self_
+
+exp_name: "geography_counterfactual_distance3_5_preserve_game_warmstart_2gpu"
+
+# Initialize every policy role from the exported step-100 actor weights while
+# deliberately creating fresh optimizer, scheduler, RNG, and pipeline state.
+pretrain: ${oc.env:WARMSTART_HF_DIR}
+resume_from_checkpoint: false
+
