@@ -26,7 +26,17 @@ TASK_CUDA_LIB="${CONDA_PREFIX}/lib"
 TASK_CUDA_TARGET_LIB="${CONDA_PREFIX}/targets/x86_64-linux/lib"
 TASK_PYPI_CUDA_RUNTIME_LIB="${CONDA_PREFIX}/lib/python3.10/site-packages/nvidia/cuda_runtime/lib"
 export LD_LIBRARY_PATH="${TASK_CUDA_LIB}:${TASK_CUDA_TARGET_LIB}:${TASK_PYPI_CUDA_RUNTIME_LIB}:${TASK_CUDNN_LIB}:${LD_LIBRARY_PATH:-}"
+if [[ -n "${SLURM_JOB_ID:-}" && -z "${CUDA_VISIBLE_DEVICES:-}" ]]; then
+  echo "Slurm did not expose CUDA_VISIBLE_DEVICES for a two-GPU job" >&2
+  exit 44
+fi
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0,1}"
+export ROLL_ASSIGNED_CUDA_DEVICES="${CUDA_VISIBLE_DEVICES}"
+IFS="," read -r -a TASK_ASSIGNED_GPU_LIST <<< "${ROLL_ASSIGNED_CUDA_DEVICES}"
+if (( ${#TASK_ASSIGNED_GPU_LIST[@]} != 2 )); then
+  echo "expected exactly two scheduler-assigned GPUs, got ${ROLL_ASSIGNED_CUDA_DEVICES}" >&2
+  exit 45
+fi
 export RAY_NUM_GPUS_PER_NODE="${RAY_NUM_GPUS_PER_NODE:-2}"
 export TOKENIZERS_PARALLELISM=false
 
@@ -34,6 +44,7 @@ echo "host=$(hostname)"
 echo "commit=$(git rev-parse HEAD)"
 echo "conda_prefix=${CONDA_PREFIX}"
 echo "python=$(command -v python)"
+echo "scheduler_cuda_devices=${ROLL_ASSIGNED_CUDA_DEVICES}"
 git status --short
 
 if command -v nvcc >/dev/null 2>&1; then

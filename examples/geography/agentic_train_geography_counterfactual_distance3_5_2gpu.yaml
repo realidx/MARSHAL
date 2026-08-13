@@ -33,9 +33,9 @@ actor_train:
   training_args:
     gradient_accumulation_steps: 16
 
-# Make the intended full-run horizon explicit so the cosine schedule does not
-# decay to zero at step 100.
-max_steps: 200
+# Run one fresh 100-step treatment from the base model. With the pipeline's
+# zero-based checkpoint naming, save_steps=100 writes the final checkpoint-99.
+max_steps: 100
 save_steps: 100
 
 # Balanced planning-depth treatment. Within each distance, independently vary

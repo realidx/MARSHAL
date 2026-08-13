@@ -25,6 +25,26 @@ from roll.utils.logging import get_logger
 logger = get_logger()
 
 
+def resolve_cuda_visible_devices(logical_gpu_ranks, assigned_devices=None):
+    """Translate logical MARSHAL GPU ranks to scheduler-assigned device tokens."""
+    if assigned_devices is None:
+        assigned_devices = os.environ.get("ROLL_ASSIGNED_CUDA_DEVICES") or os.environ.get(
+            "CUDA_VISIBLE_DEVICES"
+        )
+    if not assigned_devices:
+        return ",".join(map(str, logical_gpu_ranks))
+
+    device_tokens = [token.strip() for token in assigned_devices.split(",") if token.strip()]
+    if not device_tokens:
+        raise ValueError("The scheduler-assigned CUDA device list is empty")
+    if any(rank < 0 or rank >= len(device_tokens) for rank in logical_gpu_ranks):
+        raise ValueError(
+            f"Logical GPU ranks {logical_gpu_ranks} cannot be mapped through "
+            f"scheduler devices {device_tokens}"
+        )
+    return ",".join(device_tokens[rank] for rank in logical_gpu_ranks)
+
+
 class Cluster:
 
     def __init__(
@@ -114,7 +134,7 @@ class Cluster:
             if deploy_pg["gpu_rank"] is not None:
                 env_vars.update(
                     {
-                        "CUDA_VISIBLE_DEVICES": ",".join(map(str, pg_zero_gpu_ranks)),
+                        "CUDA_VISIBLE_DEVICES": resolve_cuda_visible_devices(pg_zero_gpu_ranks),
                         "RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES": "1",
                     }
                 )

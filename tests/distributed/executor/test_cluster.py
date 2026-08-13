@@ -5,7 +5,7 @@ import pytest
 import ray
 
 from roll.configs.worker_config import WorkerConfig
-from roll.distributed.executor.cluster import Cluster
+from roll.distributed.executor.cluster import Cluster, resolve_cuda_visible_devices
 from roll.distributed.executor.worker import Worker, RankInfo
 from roll.distributed.scheduler.decorator import register, Dispatch
 from roll.distributed.scheduler.resource_manager import ResourceManager
@@ -58,6 +58,17 @@ class TestDPWorker(Worker):
             v.append(val)
             res.append(v)
         return res
+
+
+def test_resolve_cuda_visible_devices_uses_scheduler_assignment():
+    assert resolve_cuda_visible_devices([0], "0,3") == "0"
+    assert resolve_cuda_visible_devices([1], "0,3") == "3"
+    assert resolve_cuda_visible_devices([0, 1], "GPU-a,GPU-b") == "GPU-a,GPU-b"
+
+
+def test_resolve_cuda_visible_devices_rejects_unassigned_logical_rank():
+    with pytest.raises(ValueError, match="cannot be mapped"):
+        resolve_cuda_visible_devices([1], "GPU-a")
 
 
 def test_cluster_run():
