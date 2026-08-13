@@ -110,6 +110,7 @@ class ActorWorker(Worker):
                 dataloader_kwargs={"shuffle": True},
             )
 
+            optimizer_steps = 0
             for batch_idx, data in tqdm(
                 enumerate(dataloader),
                 desc=f"{self.worker_name} train global step {global_step}",
@@ -117,8 +118,27 @@ class ActorWorker(Worker):
             ):
                 pg_metrics = self.strategy.train_step(batch=data, loss_func=self.loss_func)
                 append_to_dict(metrics, pg_metrics)
+                optimizer_steps += 1
+
+            expected_optimizer_steps = getattr(
+                self.pipeline_config,
+                "expected_actor_optimizer_steps_per_rollout",
+                None,
+            )
+            if (
+                expected_optimizer_steps is not None
+                and optimizer_steps != expected_optimizer_steps
+            ):
+                raise RuntimeError(
+                    "Actor optimizer-step correctness gate failed: "
+                    f"expected {expected_optimizer_steps} optimizer step(s) per "
+                    f"rollout batch, observed {optimizer_steps}; "
+                    f"backward_batch_size={backward_batch_size}, "
+                    f"ppo_epochs={self.pipeline_config.ppo_epochs}"
+                )
 
             metrics["actor/lr"] = self.strategy.scheduler.get_last_lr()[0]
+            metrics["actor/optimizer_steps_per_rollout"] = float(optimizer_steps)
             data.to("cpu")
 
         output = DataProto(meta_info={"metrics": metrics})

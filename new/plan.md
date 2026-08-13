@@ -240,10 +240,12 @@ combined scalar decision return rather than sparse token positions. Additional
 token-level reward or advantage whitening is disabled to avoid a
 response-length-dependent baseline. If the batch contains no valid action, the
 policy-gradient advantages are set to zero and only the separate KL loss
-(coefficient 0.20) remains active. Gradient accumulation is increased from 4
-to 16 so enlarging the rollout batch does not also quadruple the number of
-optimizer updates per pipeline step. The 200-step horizon remains explicit so
-the learning-rate schedule is active at the step-100 checkpoint.
+(coefficient 0.20) remains active. After the 128-sample normalization run still
+showed rising entropy and falling validity, gradient accumulation is increased
+from 16 to 128. All 128 rollout decisions now contribute to one gradient before
+one optimizer/scheduler step. A runtime correctness gate requires and logs
+exactly one optimizer step per rollout step. Reward definitions, learning rate,
+KL coefficient, prompts, and graph mixture remain fixed for this isolation.
 
 Validation has disjoint fixed namespaces and no auxiliary penalties. It covers
 Distance-1 sanity, Distance-3 IID, identical Distance-3 roots under the other

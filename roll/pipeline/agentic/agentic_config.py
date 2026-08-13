@@ -177,6 +177,15 @@ class AgenticConfig(BaseConfig):
             )
         },
     )
+    expected_actor_optimizer_steps_per_rollout: Optional[int] = field(
+        default=None,
+        metadata={
+            "help": (
+                "Optional runtime correctness gate for the number of actor "
+                "optimizer steps performed for each rollout batch."
+            )
+        },
+    )
     reward_normalization: RewardNormalizationConfig = field(
         default_factory=RewardNormalizationConfig, metadata={"help": "Reward normalization configuration."}
     )
@@ -289,6 +298,12 @@ class AgenticConfig(BaseConfig):
 
     def __post_init__(self):
         BaseConfig.__post_init__(self)
+
+        if (
+            self.expected_actor_optimizer_steps_per_rollout is not None
+            and self.expected_actor_optimizer_steps_per_rollout <= 0
+        ):
+            raise ValueError("expected_actor_optimizer_steps_per_rollout must be positive")
 
         if self.game_step_discount is not None:
             if not 0 < self.game_step_discount <= 1:

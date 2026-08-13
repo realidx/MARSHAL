@@ -27,11 +27,13 @@ add_token_level_kl: false
 use_kl_loss: true
 kl_loss_coef: 0.20
 
-# Preserve the previous number of optimizer updates per pipeline step while
-# increasing the rollout/normalization batch from 32 to 128.
+# Accumulate all 128 normalized rollout samples before updating the policy.
+# This produces exactly one optimizer/scheduler step per rollout step instead
+# of eight sequential updates over minibatches of 16.
 actor_train:
   training_args:
-    gradient_accumulation_steps: 16
+    gradient_accumulation_steps: 128
+expected_actor_optimizer_steps_per_rollout: 1
 
 # Run one fresh 100-step treatment from the base model. With the pipeline's
 # zero-based checkpoint naming, save_steps=100 writes the final checkpoint-99.
