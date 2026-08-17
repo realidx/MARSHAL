@@ -374,6 +374,32 @@ def test_prompt_invites_free_form_analysis_with_marshal_concision_instruction():
     assert "1200" not in prompt
 
 
+def test_prompt_explicitly_assigns_the_next_turn_to_the_opponent():
+    prompt = GeographyEnv().get_prompt()["user"].lower()
+
+    assert "after you move to a destination" in prompt
+    assert "the opponent acts from that destination" in prompt
+    assert (
+        "if that destination has no outgoing edges, the opponent loses" in prompt
+    )
+
+
+def test_render_describes_terminal_nodes_as_having_no_outgoing_edges():
+    env = GeographyEnv()
+    state, _ = env.reset(seed=43)
+    rendered = state["observation"]
+    terminal_labels = [
+        env.state.graph.labels[node]
+        for node, successors in enumerate(env.state.graph.adjacency)
+        if not successors
+    ]
+
+    assert terminal_labels
+    assert "-> terminal" not in rendered
+    for label in terminal_labels:
+        assert f"{label}: no outgoing edges" in rendered
+
+
 def test_turn_prompt_is_role_neutral():
     env = GeographyEnv()
     state, _ = env.reset(seed=41)

@@ -13,8 +13,8 @@ class GeographyConfig:
     reward_mode: str = "counterfactual"
     game_step_discount: float = 1.0
     response_token_limit: int = 256
-    # Evaluation-only mode: score the root move with its exact solved Q value
-    # and end the episode without generating the optimal continuation.
+    # Root-decision mode: score the root move with its exact solved Q value and
+    # end the episode without generating the optimal continuation.
     root_decision_only: bool = False
 
     num_nodes: int = 16

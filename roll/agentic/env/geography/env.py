@@ -264,6 +264,9 @@ class GeographyEnv(BaseDiscreteActionEnv):
             "system": "You are playing Directed Acyclic Graph Vertex Geography.",
             "user": (
                 "The players alternate moving a token along one directed edge. "
+                "After you move to a destination, the opponent acts from that "
+                "destination. If that destination has no outgoing edges, the "
+                "opponent loses. "
                 "A player with no legal move loses. Choose one legal destination "
                 "that maximizes your final game outcome. Keep your thinking "
                 "process concise.\n\n"

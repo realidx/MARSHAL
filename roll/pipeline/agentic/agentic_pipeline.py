@@ -10,6 +10,7 @@ from ray.util.timer import _Timer
 from roll.agentic.metrics import (
     aggregate_counterfactual_decision_metrics,
     aggregate_minimax_decision_metrics,
+    aggregate_prompt_group_metrics,
 )
 from roll.agentic.rollout.rollout_scheduler import RolloutScheduler
 from roll.distributed.executor.cluster import Cluster
@@ -52,6 +53,47 @@ def _aggregate_decision_metrics(batch: DataProto) -> Dict[str, float]:
         )
     )
     return metrics
+
+
+def _aggregate_training_group_metrics(batch: DataProto, grouping: str) -> Dict[str, float]:
+    """Report prompt-group diversity before reward normalization."""
+    if grouping == "batch":
+        group_ids = ["batch"] * len(batch)
+    elif grouping in batch.non_tensor_batch:
+        group_ids = batch.non_tensor_batch[grouping].tolist()
+    elif grouping in batch.batch.keys():
+        group_ids = batch.batch[grouping].detach().cpu().tolist()
+    else:
+        raise KeyError(f"Grouping key {grouping!r} not found in rollout batch")
+
+    combined_rewards = (
+        batch.batch["scores"].sum(dim=-1) + batch.batch["penalty"]
+    ).detach().cpu().tolist()
+    game_score_key = "game_scores" if "game_scores" in batch.batch.keys() else "scores"
+    game_rewards = (
+        batch.batch[game_score_key].sum(dim=-1).detach().cpu().tolist()
+    )
+    if "counterfactual_decision_records" in batch.non_tensor_batch:
+        records = batch.non_tensor_batch["counterfactual_decision_records"].tolist()
+    else:
+        records = batch.non_tensor_batch["minimax_decision_records"].tolist()
+    if "valid_actions" in batch.batch.keys():
+        valid_actions = batch.batch["valid_actions"].detach().cpu().tolist()
+    else:
+        # Full-trajectory rollouts predate the per-attempt tensor field. Derive
+        # the same signal from their stored decision records so the diagnostic
+        # remains backward-compatible with non-Markovian experiments.
+        valid_actions = [
+            any(float(record.get("valid", 0.0)) > 0 for record in rollout_records)
+            for rollout_records in records
+        ]
+    return aggregate_prompt_group_metrics(
+        group_ids=group_ids,
+        combined_rewards=combined_rewards,
+        game_rewards=game_rewards,
+        valid_actions=valid_actions,
+        records_by_rollout=records,
+    )
 
 
 def maybe_dump_debug_batch(batch: Any, output_dir: str, global_step: int, enabled: bool) -> bool:
@@ -336,6 +378,9 @@ class AgenticPipeline(BasePipeline):
                 metrics["time/rollout"] = rollout_timer.last
                 metrics.update(reduce_metrics(batch.meta_info.pop("metrics", {})))
                 metrics.update(_aggregate_decision_metrics(batch))
+                metrics.update(
+                    _aggregate_training_group_metrics(batch, "traj_group_id")
+                )
                 batch.meta_info["global_step"] = global_step
 
                 with Timer(name="cal_ref_log_probs", logger=None) as cal_timer:

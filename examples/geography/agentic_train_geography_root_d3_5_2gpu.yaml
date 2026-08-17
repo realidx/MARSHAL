@@ -1,0 +1,89 @@
+# @package _global_
+
+defaults:
+  - agentic_train_geography_counterfactual_distance3_5_2gpu
+  - _self_
+
+# Shared causal-control setup for the root-only REINFORCE and GRPO arms.
+# Both arms use the same hard states, exact solved Q(s,a), combined auxiliary
+# rewards, optimizer schedule, and evaluation suites. They differ only in the
+# advantage estimator label and reward-normalization group.
+rollout_batch_size: 128
+val_batch_size: 384
+max_actions_per_traj: 1
+eval_steps: 20
+eval_at_end: true
+
+# Preserve the eight optimizer steps per rollout used by run 729401. This
+# deliberately does not carry forward the later one-update stabilization arm.
+actor_train:
+  training_args:
+    gradient_accumulation_steps: 16
+expected_actor_optimizer_steps_per_rollout: 8
+
+custom_envs:
+  Geography-Train-D3-N10-LowBranch:
+    max_actions_per_traj: 1
+    env_config:
+      reward_mode: environment
+      root_decision_only: true
+  Geography-Train-D3-N10-HighBranch:
+    max_actions_per_traj: 1
+    env_config:
+      reward_mode: environment
+      root_decision_only: true
+  Geography-Train-D3-N14-LowBranch:
+    max_actions_per_traj: 1
+    env_config:
+      reward_mode: environment
+      root_decision_only: true
+  Geography-Train-D3-N14-HighBranch:
+    max_actions_per_traj: 1
+    env_config:
+      reward_mode: environment
+      root_decision_only: true
+  Geography-Train-D5-N14-LowBranch:
+    max_actions_per_traj: 1
+    env_config:
+      reward_mode: environment
+      root_decision_only: true
+  Geography-Train-D5-N14-HighBranch:
+    max_actions_per_traj: 1
+    env_config:
+      reward_mode: environment
+      root_decision_only: true
+  Geography-Train-D5-N18-LowBranch:
+    max_actions_per_traj: 1
+    env_config:
+      reward_mode: environment
+      root_decision_only: true
+  Geography-Train-D5-N18-HighBranch:
+    max_actions_per_traj: 1
+    env_config:
+      reward_mode: environment
+      root_decision_only: true
+
+  # With 16 graph groups per suite, these offsets preserve the exact graph
+  # pairing for role invariance and relabeling checks.
+  Geography-Val-D3-IID-P1:
+    env_config:
+      seed_offset: -16
+  Geography-Val-D3-Relabel:
+    env_config:
+      seed_offset: -32
+
+train_env_manager:
+  # Sixteen prompt groups x eight stochastic responses = 128 samples. Each
+  # stratum contributes two independently generated hard graphs per update.
+  max_env_num_per_worker: 16
+  env_groups: 16
+  group_size: 8
+  n_groups: [2, 2, 2, 2, 2, 2, 2, 2]
+
+val_env_manager:
+  # Per suite: 16 fixed graphs x four responses = 64 observations. The model
+  # and graph RNG seeds are reset identically at every checkpoint.
+  max_env_num_per_worker: 64
+  env_groups: 96
+  group_size: 4
+  n_groups: [16, 16, 16, 16, 16, 16]

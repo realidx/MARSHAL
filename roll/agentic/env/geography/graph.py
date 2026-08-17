@@ -64,7 +64,10 @@ class GeographyGraph:
         for node in self.display_order:
             successors = self.adjacency[node]
             rendered = ", ".join(self.labels[child] for child in successors)
-            lines.append(f"{self.labels[node]} -> {rendered if rendered else 'terminal'}")
+            if rendered:
+                lines.append(f"{self.labels[node]} -> {rendered}")
+            else:
+                lines.append(f"{self.labels[node]}: no outgoing edges")
         return "\n".join(lines)
 
     def relabel(self, seed: int) -> "GeographyGraph":

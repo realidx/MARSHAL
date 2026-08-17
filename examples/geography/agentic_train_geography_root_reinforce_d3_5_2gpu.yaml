@@ -1,0 +1,15 @@
+# @package _global_
+
+defaults:
+  - agentic_train_geography_root_d3_5_2gpu
+  - _self_
+
+exp_name: "geography_root_reinforce_d3_5_2gpu"
+
+# Matched control: the only substantive difference from the GRPO arm is that
+# the combined rewards are standardized over the complete 128-sample batch.
+adv_estimator: reinforce
+reward_normalization:
+  grouping: batch
+  method: mean_std
+  separate_norm_for_selfplay: false
