@@ -136,9 +136,15 @@ def summarize_agentic_preflight(
         game_id = _game_id(trajectory_id)
         game = games.setdefault(
             game_id,
-            {"records": [], "terminal_info": dict(terminal_info), "players": set()},
+            {
+                "records": [],
+                "terminal_info": dict(terminal_info),
+                "players": set(),
+                "tags": set(),
+            },
         )
         game["players"].update(int(record["player_id"]) for record in rollout_records)
+        game["tags"].add(str(tag))
         if terminal_info:
             game["terminal_info"] = dict(terminal_info)
         for record in rollout_records:
@@ -242,6 +248,9 @@ def summarize_agentic_preflight(
             "missing_answer_rate": player_missing / len(player_records) if player_records else 0.0,
             "minimax_optimal_action_count": player_optimal,
             "minimax_optimality_rate": player_optimal / len(player_records) if player_records else 0.0,
+            "minimax_optimality_when_valid_rate": (
+                player_optimal / player_valid if player_valid else 0.0
+            ),
             "first_attempt_count": len(player_first_attempts),
             "first_attempt_validity_rate": (
                 sum(bool(record["valid_action"]) for record in player_first_attempts)
@@ -288,6 +297,50 @@ def summarize_agentic_preflight(
         - by_player["1"]["eventual_validity_rate"]
     )
 
+    single_model_outcomes_by_tag = {}
+    for game in games.values():
+        if len(game["players"]) != 1 or len(game["tags"]) != 1:
+            continue
+        tag = next(iter(game["tags"]))
+        player_id = next(iter(game["players"]))
+        terminal_info = game["terminal_info"]
+        outcome = single_model_outcomes_by_tag.setdefault(
+            tag,
+            {
+                "game_count": 0,
+                "completed_count": 0,
+                "invalid_or_truncated_count": 0,
+                "win_count": 0,
+                "draw_count": 0,
+                "loss_count": 0,
+            },
+        )
+        outcome["game_count"] += 1
+        if not terminal_info.get("success", False):
+            outcome["invalid_or_truncated_count"] += 1
+            continue
+        outcome["completed_count"] += 1
+        model_return = float(terminal_info.get(f"player_{player_id}_return", 0.0))
+        if model_return > 0:
+            outcome["win_count"] += 1
+        elif model_return < 0:
+            outcome["loss_count"] += 1
+        else:
+            outcome["draw_count"] += 1
+
+    for outcome in single_model_outcomes_by_tag.values():
+        games_for_tag = outcome["game_count"]
+        completed_for_tag = outcome["completed_count"]
+        outcome["completion_rate"] = (
+            completed_for_tag / games_for_tag if games_for_tag else 0.0
+        )
+        for name in ("win", "draw", "loss"):
+            outcome[f"{name}_rate_when_completed"] = (
+                outcome[f"{name}_count"] / completed_for_tag
+                if completed_for_tag
+                else 0.0
+            )
+
     summary = {
         "game_count": game_count,
         "observed_game_count": observed_game_count,
@@ -311,6 +364,7 @@ def summarize_agentic_preflight(
         ),
         "role_first_attempt_validity_gap": role_first_attempt_validity_gap,
         "role_eventual_validity_gap": role_eventual_validity_gap,
+        "single_model_outcomes_by_tag": single_model_outcomes_by_tag,
         "completed_legal_game_count": completed_legal_games,
         "completed_legal_game_rate": completed_legal_games / game_count if game_count else 0.0,
         "valid_action_count": len(valid),
@@ -328,9 +382,15 @@ def summarize_agentic_preflight(
         "counterfactual_optimality_rate": (
             counterfactual_optimal_count / turn_count if turn_count else 0.0
         ),
+        "counterfactual_optimality_when_valid_rate": (
+            counterfactual_optimal_count / len(valid) if valid else 0.0
+        ),
         "minimax_optimal_action_count": counterfactual_optimal_count,
         "minimax_optimality_rate": (
             counterfactual_optimal_count / turn_count if turn_count else 0.0
+        ),
+        "minimax_optimality_when_valid_rate": (
+            counterfactual_optimal_count / len(valid) if valid else 0.0
         ),
         "role_minimax_optimality_gap": role_minimax_optimality_gap,
         "action_diversity": {

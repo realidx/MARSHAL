@@ -1,0 +1,105 @@
+# @package _global_
+
+defaults:
+  - agentic_preflight_tictactoe_selfplay
+  - _self_
+
+# Generation-only cross-domain evaluation. EVAL_MODEL_DIR should point to an
+# exported Hugging Face checkpoint. No optimizer or weight update is created.
+exp_name: "geography_transfer_tictactoe_${oc.env:EVAL_LABEL,model}"
+pretrain: ${oc.env:EVAL_MODEL_DIR}
+resume_from_checkpoint: false
+max_steps: 1
+rollout_batch_size: 128
+sequence_length: 4096
+max_actions_per_traj: 10
+num_gpus_per_node: 1
+
+track_with: tensorboard
+tracker_kwargs:
+  log_dir: ${oc.env:ROLL_OUTPUT_DIR}/tensorboard
+
+# Keep the native Tic-Tac-Toe reason/answer interface while matching the
+# Geography checkpoint's sampling policy. This tests strategic transfer rather
+# than zero-shot compliance with an unrelated output protocol.
+enable_think: false
+use_reason_answer_format: true
+markovian_turn_context: true
+
+actor_train:
+  device_mapping: list(range(0,1))
+
+reference:
+  device_mapping: list(range(0,1))
+
+actor_infer:
+  model_args:
+    flash_attn: fa2
+    disable_gradient_checkpointing: true
+    dtype: bf16
+  generating_args:
+    max_new_tokens: 600
+    top_p: 0.8
+    top_k: 20
+    num_beams: 1
+    temperature: 0.7
+    num_return_sequences: 1
+    stop: ["</answer>"]
+    include_stop_str_in_output: true
+  strategy_args:
+    strategy_name: vllm
+    strategy_config:
+      gpu_memory_utilization: 0.8
+      max_model_len: 4096
+      block_size: 16
+      load_format: auto
+  device_mapping: list(range(0,1))
+
+custom_envs:
+  TicTacToe-Transfer-First:
+    env_type: tictactoe
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 1
+      max_simulations: 1000
+      render_mode: text
+      response_token_limit: 600
+      reward_mode: environment
+      minimax_diagnostics: true
+      minimax_discount: ${game_step_discount}
+      precompute_minimax: true
+
+  TicTacToe-Transfer-Second:
+    env_type: tictactoe
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      max_simulations: 1000
+      render_mode: text
+      response_token_limit: 600
+      reward_mode: environment
+      minimax_diagnostics: true
+      minimax_discount: ${game_step_discount}
+      precompute_minimax: true
+
+train_env_manager:
+  # No retry: validity is measured rather than repaired. Both model roles use
+  # 64 reproducible games, sufficient for a first transfer comparison.
+  max_invalid_retries_per_decision: 0
+  format_penalty: -1.0
+  valid_format_reward: 0.0
+  marshal_length_reward_alpha: 0.0
+  minimax_length_penalty_beta: 0.0
+  enable_length_penalty: false
+  max_env_num_per_worker: 32
+  env_groups: 128
+  group_size: 1
+  group_seed_base: 910000
+  tags:
+    - TicTacToe-Transfer-First
+    - TicTacToe-Transfer-Second
+  n_groups: [64, 64]

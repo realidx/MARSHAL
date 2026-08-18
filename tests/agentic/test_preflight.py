@@ -95,6 +95,85 @@ def test_preflight_passes_balanced_diverse_outputs():
     assert summary["role_minimax_optimality_gap"] == 0.0
 
 
+def test_preflight_separates_overall_and_valid_conditional_optimality():
+    records = [[
+        {
+            "turn_index": 0,
+            "player_id": 0,
+            "token_length": 20,
+            "valid_action": True,
+            "has_closing_answer_tag": True,
+            "hit_token_limit": False,
+            "parsed_action": "X(0,0)",
+            "minimax_optimal_action": True,
+        },
+        {
+            "turn_index": 1,
+            "player_id": 0,
+            "token_length": 20,
+            "valid_action": True,
+            "has_closing_answer_tag": True,
+            "hit_token_limit": False,
+            "parsed_action": "X(0,1)",
+            "minimax_optimal_action": False,
+        },
+        {
+            "turn_index": 2,
+            "player_id": 0,
+            "token_length": 600,
+            "valid_action": False,
+            "has_closing_answer_tag": False,
+            "hit_token_limit": True,
+            "parsed_action": "",
+            "minimax_optimal_action": False,
+        },
+    ]]
+
+    summary, _ = summarize_tictactoe_preflight(
+        records, ["conditional_p0"], [{"success": False}]
+    )
+
+    assert summary["minimax_optimality_rate"] == 1 / 3
+    assert summary["minimax_optimality_when_valid_rate"] == 1 / 2
+    assert summary["by_player"]["0"]["minimax_optimality_rate"] == 1 / 3
+    assert (
+        summary["by_player"]["0"]["minimax_optimality_when_valid_rate"]
+        == 1 / 2
+    )
+
+
+def test_preflight_reports_single_model_outcomes_against_built_in_opponent():
+    base_record = {
+        "turn_index": 0,
+        "player_id": 0,
+        "token_length": 20,
+        "valid_action": True,
+        "has_closing_answer_tag": True,
+        "hit_token_limit": False,
+        "parsed_action": "X(0,0)",
+        "minimax_optimal_action": True,
+    }
+    summary, _ = summarize_agentic_preflight(
+        records_by_rollout=[[base_record], [base_record], [base_record]],
+        trajectory_ids=["win_p0", "draw_p0", "invalid_p0"],
+        terminal_infos=[
+            {"success": True, "player_0_return": 1.0},
+            {"success": True, "player_0_return": 0.0},
+            {"success": False, "player_0_return": 0.0},
+        ],
+        tags=["TicTacToe-First"] * 3,
+    )
+
+    outcome = summary["single_model_outcomes_by_tag"]["TicTacToe-First"]
+    assert outcome["game_count"] == 3
+    assert outcome["completed_count"] == 2
+    assert outcome["invalid_or_truncated_count"] == 1
+    assert outcome["completion_rate"] == 2 / 3
+    assert outcome["win_rate_when_completed"] == 1 / 2
+    assert outcome["draw_rate_when_completed"] == 1 / 2
+    assert outcome["loss_rate_when_completed"] == 0.0
+
+
 def test_preflight_reports_retry_recovery_and_token_overhead():
     records = [
         [
