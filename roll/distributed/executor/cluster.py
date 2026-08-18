@@ -118,12 +118,16 @@ class Cluster:
 
         for rank, pgs in enumerate(placement_groups):
             deploy_pg = pgs[0]
-            pg_zero_gpu_ranks = sorted([pg["gpu_rank"] for pg in pgs if pg["node_rank"] == deploy_pg["node_rank"]])
+            worker_gpu_ranks = sorted(
+                pg["gpu_rank"]
+                for pg in pgs
+                if pg["node_rank"] == deploy_pg["node_rank"]
+            )
             worker_name = f"{self.cluster_name}-{rank}"
             env_vars = {
                 "WORLD_SIZE": str(self.world_size),
                 "RANK": str(rank),
-                "LOCAL_RANK": str(0),
+                "LOCAL_RANK": "0",
                 "CLUSTER_NAME": self.cluster_name,
                 "WORKER_NAME": worker_name,
             }
@@ -134,10 +138,12 @@ class Cluster:
             if deploy_pg["gpu_rank"] is not None:
                 env_vars.update(
                     {
-                        "CUDA_VISIBLE_DEVICES": resolve_cuda_visible_devices(pg_zero_gpu_ranks),
+                        "CUDA_VISIBLE_DEVICES": resolve_cuda_visible_devices(worker_gpu_ranks),
                         "RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES": "1",
                     }
                 )
+            else:
+                env_vars["CUDA_VISIBLE_DEVICES"] = ""
             if "ROLL_LOG_DIR" in os.environ:
                 env_vars["ROLL_LOG_DIR"] = os.environ["ROLL_LOG_DIR"]
             env_vars.update(self.worker_config.system_envs)

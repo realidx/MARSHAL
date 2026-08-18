@@ -14,8 +14,6 @@ from roll.distributed.scheduler.decorator import register, Dispatch
 from roll.distributed.scheduler.protocol import DataProto
 from roll.distributed.strategy.factory import create_strategy
 from roll.distributed.strategy.strategy import InferenceStrategy, TrainStrategy
-from roll.models.model_providers import default_actor_model_provider, default_value_model_provider, \
-    default_reward_model_provider
 from roll.utils.context_managers import state_offload_manger
 from roll.utils.functionals import (
     append_to_dict,
@@ -62,6 +60,20 @@ class ActorWorker(Worker):
     @register(dispatch_mode=Dispatch.ONE_TO_ALL)
     def initialize(self, pipeline_config):
         super().initialize(pipeline_config)
+
+        if self.worker_config.device_mapping:
+            device_count = torch.cuda.device_count()
+            self.logger.info(
+                f"CUDA worker mapping: visible={os.environ.get('CUDA_VISIBLE_DEVICES')}, "
+                f"device_count={device_count}, local_rank={self.local_rank}"
+            )
+            if self.local_rank < 0 or self.local_rank >= device_count:
+                raise RuntimeError(
+                    f"LOCAL_RANK {self.local_rank} is invalid for {device_count} visible CUDA devices"
+                )
+            torch.cuda.set_device(self.local_rank)
+
+        from roll.models.model_providers import default_actor_model_provider
 
         self.strategy = create_strategy(worker=self)
 
@@ -430,6 +442,8 @@ class CriticWorker(Worker):
     def initialize(self, pipeline_config):
         super().initialize(pipeline_config)
 
+        from roll.models.model_providers import default_value_model_provider
+
         self.strategy = create_strategy(worker=self)
 
         self.strategy.initialize(model_provider=default_value_model_provider)
@@ -585,6 +599,8 @@ class RewardWorker(Worker):
     @register(dispatch_mode=Dispatch.ONE_TO_ALL)
     def initialize(self, pipeline_config):
         super().initialize(pipeline_config)
+
+        from roll.models.model_providers import default_reward_model_provider
 
         self.strategy = create_strategy(worker=self)
 

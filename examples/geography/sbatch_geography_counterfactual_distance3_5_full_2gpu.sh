@@ -37,6 +37,12 @@ if (( ${#TASK_ASSIGNED_GPU_LIST[@]} != 2 )); then
   echo "expected exactly two scheduler-assigned GPUs, got ${ROLL_ASSIGNED_CUDA_DEVICES}" >&2
   exit 45
 fi
+mapfile -t TASK_ASSIGNED_MIG_UUIDS < <(nvidia-smi -L | sed -n 's/.*(UUID: \(MIG-[^)]*\)).*/\1/p')
+if (( ${#TASK_ASSIGNED_MIG_UUIDS[@]} == ${#TASK_ASSIGNED_GPU_LIST[@]} )); then
+  ROLL_ASSIGNED_CUDA_DEVICES="$(IFS=,; echo "${TASK_ASSIGNED_MIG_UUIDS[*]}")"
+  export ROLL_ASSIGNED_CUDA_DEVICES
+  echo "resolved_mig_devices=${ROLL_ASSIGNED_CUDA_DEVICES}"
+fi
 export RAY_NUM_GPUS_PER_NODE="${RAY_NUM_GPUS_PER_NODE:-2}"
 export TOKENIZERS_PARALLELISM=false
 

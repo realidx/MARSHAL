@@ -22,6 +22,7 @@ from roll.utils.logging import get_logger
 logger = get_logger()
 
 default_envs = {
+    "RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES": "1",
     # "RAY_DEBUG": "legacy"
     "TORCHINDUCTOR_COMPILE_THREADS": "2",
     "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
@@ -32,6 +33,9 @@ default_envs = {
 
 
 def start_ray_cluster():
+    # Ray must see this before worker processes start; actor runtime envs are
+    # applied too late for libraries that query CUDA while importing.
+    os.environ.setdefault("RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES", "1")
     rank = get_driver_rank()
     world_size = get_driver_world_size()
     master_addr = get_driver_master_addr()
