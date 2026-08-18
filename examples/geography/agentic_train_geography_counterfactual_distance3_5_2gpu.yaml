@@ -4,18 +4,27 @@ defaults:
   - agentic_train_geography_counterfactual_distance3_2gpu
   - _self_
 
-exp_name: "geography_counterfactual_distance3_5_marshal_stable_2gpu"
+exp_name: "geography_counterfactual_distance3_5_reinforce_stable_2gpu"
 
-# MARSHAL-style stabilization arm. The exact counterfactual value remains the
-# game component, but normalization is applied after game, format, and length
-# components have been combined. One normalization batch contains 128 fresh
-# on-policy decisions; this is not gradient accumulation over four batches.
+# Literature-aligned stabilization treatment: retain complete multi-turn
+# self-play trajectories and one PPO epoch, while increasing each on-policy
+# rollout from 32 to 128 independently generated trajectories. The inherited
+# pretrain path is the clean Qwen3-4B-Instruct base model; this configuration
+# deliberately does not inherit the 727065/727616 warm-start weights.
 rollout_batch_size: 128
-preserve_counterfactual_game_advantage: false
+val_batch_size: 384
+resume_from_checkpoint: false
+ppo_epochs: 1
+adv_estimator: reinforce
+
+# Preserve exact solved Q(s,a) as the unstandardized game advantage. Format
+# and length controls are centered separately across rollout samples so they
+# cannot rescale or reverse the strategic signal.
+preserve_counterfactual_game_advantage: true
 skip_policy_update_if_no_valid_actions: true
 reward_normalization:
-  grouping: batch
-  method: mean_std
+  grouping: tags
+  method: identity
   separate_norm_for_selfplay: false
 whiten_rewards: false
 advantage_norm: ~
@@ -27,13 +36,13 @@ add_token_level_kl: false
 use_kl_loss: true
 kl_loss_coef: 0.20
 
-# Accumulate all 128 normalized rollout samples before updating the policy.
-# This produces exactly one optimizer/scheduler step per rollout step instead
-# of eight sequential updates over minibatches of 16.
+# Make one pass over each rollout in eight effective minibatches of 16. This
+# keeps the update count used by 727616 while each update now averages four
+# times as many fresh trajectories (16 rather than 4).
 actor_train:
   training_args:
-    gradient_accumulation_steps: 128
-expected_actor_optimizer_steps_per_rollout: 1
+    gradient_accumulation_steps: 16
+expected_actor_optimizer_steps_per_rollout: 8
 
 # Run one fresh 100-step treatment from the base model. With the pipeline's
 # zero-based checkpoint naming, save_steps=100 writes the final checkpoint-99.
@@ -237,6 +246,23 @@ custom_envs:
       target_informative_fraction: 0.5
       generator_candidates: 4096
 
+  # Sixteen graph groups per suite require larger offsets than the inherited
+  # eight-graph validation setup to preserve exact role and relabel pairing.
+  Geography-Val-D3-IID-P1:
+    env_config:
+      seed_offset: -16
+
+  Geography-Val-D3-Relabel:
+    env_config:
+      seed_offset: -32
+
+  # Fixed seeds 800117 and 800118 only satisfy the requested topology after
+  # 2,048 candidates. Keep the hard OOD target and enlarge the deterministic
+  # search budget instead of silently substituting easier validation graphs.
+  Geography-Val-D3-Topology-OOD:
+    env_config:
+      generator_candidates: 4096
+
   Geography-Val-D5-HeldOut:
     env_type: geography
     max_actions_per_traj: 1
@@ -264,8 +290,8 @@ train_env_manager:
   format_penalty: -1.5
   valid_format_reward: 0.05
   # Penalty-only response shaping: no reward below 600 tokens, then a linear
-  # penalty to -0.5 at the 1024-token generation cap. This scalar is combined
-  # with game and format reward before full-batch normalization.
+  # penalty to -0.5 at the 1024-token generation cap. This auxiliary signal is
+  # centered across rollout samples without changing the exact game advantage.
   marshal_length_reward_alpha: 0.5
   marshal_length_reward_penalty_only: true
   marshal_length_reward_min_tokens: 600
@@ -288,6 +314,11 @@ train_env_manager:
   n_groups: [16, 16, 16, 16, 16, 16, 16, 16]
 
 val_env_manager:
+  # Per suite: 16 fixed graphs x four stochastic responses = 64 observations.
+  # Graph and generation seeds are reset identically at every checkpoint.
+  max_env_num_per_worker: 64
+  env_groups: 96
+  group_size: 4
   tags:
     - Geography-Val-D1-Sanity
     - Geography-Val-D3-IID
@@ -295,4 +326,4 @@ val_env_manager:
     - Geography-Val-D3-Relabel
     - Geography-Val-D3-Topology-OOD
     - Geography-Val-D5-HeldOut
-  n_groups: [8, 8, 8, 8, 8, 8]
+  n_groups: [16, 16, 16, 16, 16, 16]

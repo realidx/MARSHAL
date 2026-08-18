@@ -216,8 +216,9 @@ The initial schedule was:
 | Smoke | 20 | 8 | runtime, reward separation, and logging correctness |
 | Earlier full run, checkpoint 1 | 100 | 32 | test sustained held-out Distance-3/5 learning |
 | Earlier full run, checkpoint 2 | 200 total | 32 | exposed the post-step-100 validity collapse |
-| MARSHAL stabilization, checkpoints 1/2 | 100/200 | 128 | test joint validity and strategy stability |
-| Root GRPO treatment | 100 | 16 prompts x 8 responses | compare actions within the same exact-Q root state |
+| 727616 warm-start treatment | 100/200 | 32 | exposed transfer failure and late response looping |
+| Root GRPO treatment | 100 | 16 prompts x 8 responses | exposed within-prompt strategy learning but severe validity regression |
+| Revised multi-turn treatment | 100 | 128 independent trajectories | test lower-variance REINFORCE without removing sequential play |
 
 Responses retain the free-form reason/answer protocol and a 1,024-token hard
 ceiling. There is no retry. Invalid or truncated output has zero game reward and
@@ -227,29 +228,21 @@ tokens and decreases linearly to -0.5 at the 1,024-token hard cap. Thus short
 responses receive no positive brevity bonus. Full games are capped at eight
 legal moves, covering the Distance-5 generators' maximum depth of seven.
 
-After the raw-game/centered-auxiliary arm still lost validity after step 100,
-the next full run uses 128 fresh on-policy decisions per normalization batch,
-balanced as 16 decisions from each Distance/node-count/branching stratum. Game,
-format, and length components are first combined and then mean/std normalized
-over the complete batch:
+The revised treatment keeps the parts of 727616 that produced useful strategic
+learning: multi-turn self-play, exact counterfactual Q(s,a), REINFORCE, one PPO
+epoch, and eight optimizer updates per rollout. It changes the rollout from 32
+to 128 independently generated trajectories, balanced as 16 trajectories from
+each Distance/node-count/branching stratum. With gradient accumulation 16,
+each of the eight optimizer updates therefore averages four times as many fresh
+samples as 727616 (16 rather than 4).
 
-\[
-z_i = \frac{
-  r_i^{\mathrm{game}}+r_i^{\mathrm{format}}+r_i^{\mathrm{length}}-\mu_B
-}{\sigma_B+10^{-6}}, \qquad B=128.
-\]
-
-Because Markovian training emits one decision per sample, this normalizes the
-combined scalar decision return rather than sparse token positions. Additional
-token-level reward or advantage whitening is disabled to avoid a
-response-length-dependent baseline. If the batch contains no valid action, the
-policy-gradient advantages are set to zero and only the separate KL loss
-(coefficient 0.20) remains active. After the 128-sample normalization run still
-showed rising entropy and falling validity, gradient accumulation is increased
-from 16 to 128. All 128 rollout decisions now contribute to one gradient before
-one optimizer/scheduler step. A runtime correctness gate requires and logs
-exactly one optimizer step per rollout step. Reward definitions, learning rate,
-KL coefficient, prompts, and graph mixture remain fixed for this isolation.
+The treatment starts from the clean Qwen3-4B-Instruct base model rather than
+the 727065 step-100 warm start used by 727616. Exact game advantages remain raw
+and unstandardized. Format and length controls are centered separately across
+rollout samples, so they cannot rescale or reverse the solved strategic signal.
+If a batch contains no valid action, reward-driven policy-gradient advantages
+are set to zero and only the separate KL loss (coefficient 0.20) remains active.
+Token-level reward and advantage whitening remain disabled.
 
 Validation has disjoint fixed namespaces and no auxiliary penalties. It covers
 Distance-1 sanity, Distance-3 IID, identical Distance-3 roots under the other
@@ -260,14 +253,13 @@ rollouts cannot crowd controlled root suites out of the validation batch. Online
 diagnostics report unique graph seeds and, for every observed optimal distance,
 decision count, validity, conditional optimality, and end-to-end optimality.
 
-The next treatment is root-only GRPO rather than full-game self-play. Each legal
-root move receives its exact solved continuation value Q(s,a), while format and
-penalty-only length rewards are combined before normalization. Sixteen prompt
-groups with eight stochastic responses each produce the 128-sample rollout.
-Validation runs every ten updates, but the model is saved only once after the
-final update. Because checkpoint indices are zero-based, this sole saved model
-is checkpoint-99. The matched REINFORCE control changes only the normalization
-group from the eight same-prompt responses to the full batch.
+The next treatment is the revised multi-turn REINFORCE configuration. Full
+self-play continues until a terminal node, with eight actions as a safety cap.
+Validation runs every ten updates over 16 fixed graphs and four stochastic
+responses per suite. The model is saved only once after the final update;
+because checkpoint indices are zero-based, the sole saved model is
+checkpoint-99. Root-only GRPO and REINFORCE configurations remain available as
+diagnostic ablations but are not the next launch target.
 
 The 16-graph topology-OOD validation suite uses a 4,096-candidate deterministic
 generation budget. Its fixed seeds 800117 and 800118 have no exact requested
@@ -288,7 +280,7 @@ examples/geography/agentic_train_geography_root_reinforce_d3_5_2gpu.yaml
 Launch the treatment from the repository root with:
 
 ```bash
-sbatch --export=ALL,CONFIG_NAME=agentic_train_geography_root_grpo_d3_5_2gpu \
+sbatch --export=ALL,CONFIG_NAME=agentic_train_geography_counterfactual_distance3_5_2gpu \
   examples/geography/sbatch_geography_counterfactual_distance3_5_full_2gpu.sh
 ```
 
