@@ -1,0 +1,52 @@
+[2026-08-18 11:37:06] [base_worker.py (66)] [INFO] [reference-1 1 / 2][PID 1874352] CUDA worker mapping: visible=1, device_count=1, local_rank=0
+[2026-08-18 11:37:18] [model_providers.py (362)] [INFO] [reference-1 1 / 2][PID 1874352] init_kwargs: {'torch_dtype': torch.bfloat16, 'trust_remote_code': True, 'low_cpu_mem_usage': True, 'device_map': 'balanced'}
+[2026-08-18 11:37:19] [hf_strategy.py (47)] [INFO] [reference-1 1 / 2][PID 1874352] Qwen3ForCausalLM(
+  (model): Qwen3Model(
+    (embed_tokens): Embedding(151936, 2560)
+    (layers): ModuleList(
+      (0-35): 36 x Qwen3DecoderLayer(
+        (self_attn): Qwen3Attention(
+          (q_proj): Linear(in_features=2560, out_features=4096, bias=False)
+          (k_proj): Linear(in_features=2560, out_features=1024, bias=False)
+          (v_proj): Linear(in_features=2560, out_features=1024, bias=False)
+          (o_proj): Linear(in_features=4096, out_features=2560, bias=False)
+          (q_norm): Qwen3RMSNorm((128,), eps=1e-06)
+          (k_norm): Qwen3RMSNorm((128,), eps=1e-06)
+        )
+        (mlp): Qwen3MLP(
+          (gate_proj): Linear(in_features=2560, out_features=9728, bias=False)
+          (up_proj): Linear(in_features=2560, out_features=9728, bias=False)
+          (down_proj): Linear(in_features=9728, out_features=2560, bias=False)
+          (act_fn): SiLU()
+        )
+        (input_layernorm): Qwen3RMSNorm((2560,), eps=1e-06)
+        (post_attention_layernorm): Qwen3RMSNorm((2560,), eps=1e-06)
+      )
+    )
+    (norm): Qwen3RMSNorm((2560,), eps=1e-06)
+    (rotary_emb): Qwen3RotaryEmbedding()
+  )
+  (lm_head): Linear(in_features=2560, out_features=151936, bias=False)
+)
+[2026-08-18 11:37:19] [base_worker.py (85)] [INFO] [reference-1 1 / 2][PID 1874352] reference-1 initialized
+[2026-08-18 11:38:18] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 8.872283935546875
+[2026-08-18 11:38:18] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_start_onload, memory allocated (GB): 7.492448329925537, memory reserved (GB): 7.501953125, memory max reserved (GB): 7.501953125, rss (GB): 3.137645721435547
+[2026-08-18 11:38:31] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_end_onload, memory allocated (GB): 7.524674892425537, memory reserved (GB): 11.138671875, memory max reserved (GB): 11.138671875, rss (GB): 3.2783126831054688
+[2026-08-18 11:38:32] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_end_offload, memory allocated (GB): 0.0009765625, memory reserved (GB): 0.00390625, memory max reserved (GB): 11.138671875, rss (GB): 10.394824981689453
+[2026-08-18 11:40:16] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 10.41314697265625
+[2026-08-18 11:40:16] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_start_onload, memory allocated (GB): 7.492448329925537, memory reserved (GB): 7.501953125, memory max reserved (GB): 7.501953125, rss (GB): 3.760631561279297
+[2026-08-18 11:40:28] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_end_onload, memory allocated (GB): 7.524674892425537, memory reserved (GB): 11.138671875, memory max reserved (GB): 11.138671875, rss (GB): 3.7216262817382812
+[2026-08-18 11:40:30] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_end_offload, memory allocated (GB): 0.0009765625, memory reserved (GB): 0.00390625, memory max reserved (GB): 11.138671875, rss (GB): 10.691520690917969
+[2026-08-18 11:42:10] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 10.692550659179688
+[2026-08-18 11:42:10] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_start_onload, memory allocated (GB): 7.492448329925537, memory reserved (GB): 7.501953125, memory max reserved (GB): 7.501953125, rss (GB): 3.29296875
+[2026-08-18 11:42:22] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_end_onload, memory allocated (GB): 7.524674892425537, memory reserved (GB): 11.138671875, memory max reserved (GB): 11.138671875, rss (GB): 3.2929763793945312
+[2026-08-18 11:42:24] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_end_offload, memory allocated (GB): 0.0009765625, memory reserved (GB): 0.00390625, memory max reserved (GB): 11.138671875, rss (GB): 10.414260864257812
+[2026-08-18 11:44:01] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 10.414302825927734
+[2026-08-18 11:44:01] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_start_onload, memory allocated (GB): 7.492448329925537, memory reserved (GB): 7.501953125, memory max reserved (GB): 7.501953125, rss (GB): 3.2930335998535156
+[2026-08-18 11:44:14] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_end_onload, memory allocated (GB): 7.524674892425537, memory reserved (GB): 11.138671875, memory max reserved (GB): 11.138671875, rss (GB): 3.2930374145507812
+[2026-08-18 11:44:15] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_end_offload, memory allocated (GB): 0.0009765625, memory reserved (GB): 0.00390625, memory max reserved (GB): 11.138671875, rss (GB): 10.414306640625
+[2026-08-18 11:45:52] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 10.41433334350586
+[2026-08-18 11:45:52] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_start_onload, memory allocated (GB): 7.492448329925537, memory reserved (GB): 7.501953125, memory max reserved (GB): 7.501953125, rss (GB): 3.2930641174316406
+[2026-08-18 11:46:04] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_end_onload, memory allocated (GB): 7.524674892425537, memory reserved (GB): 11.138671875, memory max reserved (GB): 11.138671875, rss (GB): 3.2930641174316406
+[2026-08-18 11:46:06] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_end_offload, memory allocated (GB): 0.0009765625, memory reserved (GB): 0.00390625, memory max reserved (GB): 11.138671875, rss (GB): 10.41433334350586
+[2026-08-18 11:47:41] [context_managers.py (37)] [INFO] [reference-1 1 / 2][PID 1874352] reference/compute_log_probs_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 10.41537857055664

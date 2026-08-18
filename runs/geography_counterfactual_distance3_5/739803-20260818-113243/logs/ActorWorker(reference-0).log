@@ -1,0 +1,464 @@
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:37:06] [base_worker.py (66)] [INFO] [reference-0 0 / 2][PID 1874234] CUDA worker mapping: visible=0, device_count=1, local_rank=0
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/megatron/core/transformer/multi_token_prediction.py:60: UserWarning: Apex is not installed. Falling back to Torch Norm
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m   warnings.warn('Apex is not installed. Falling back to Torch Norm')
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/megatron/core/models/gpt/gpt_layer_specs.py:65: UserWarning: Apex is not installed. Falling back to Torch Norm
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m   warnings.warn('Apex is not installed. Falling back to Torch Norm')
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:37:18] [model_providers.py (362)] [INFO] [reference-0 0 / 2][PID 1874234] init_kwargs: {'torch_dtype': torch.bfloat16, 'trust_remote_code': True, 'low_cpu_mem_usage': True, 'device_map': 'balanced'}
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Loading checkpoint shards:  33%|███▎      | 1/3 [00:00<00:00,  2.71it/s]
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Loading checkpoint shards:  67%|██████▋   | 2/3 [00:00<00:00,  2.69it/s]
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00,  3.97it/s]
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:37:19] [hf_strategy.py (47)] [INFO] [reference-0 0 / 2][PID 1874234] Qwen3ForCausalLM(
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m   (model): Qwen3Model(
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m     (embed_tokens): Embedding(151936, 2560)
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m     (layers): ModuleList(
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m       (0-35): 36 x Qwen3DecoderLayer(
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m         (self_attn): Qwen3Attention(
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m           (q_proj): Linear(in_features=2560, out_features=4096, bias=False)
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m           (k_proj): Linear(in_features=2560, out_features=1024, bias=False)
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m           (v_proj): Linear(in_features=2560, out_features=1024, bias=False)
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m           (o_proj): Linear(in_features=4096, out_features=2560, bias=False)
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m           (q_norm): Qwen3RMSNorm((128,), eps=1e-06)
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m           (k_norm): Qwen3RMSNorm((128,), eps=1e-06)
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m         )
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m         (mlp): Qwen3MLP(
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m           (gate_proj): Linear(in_features=2560, out_features=9728, bias=False)
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m           (up_proj): Linear(in_features=2560, out_features=9728, bias=False)
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m           (down_proj): Linear(in_features=9728, out_features=2560, bias=False)
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m           (act_fn): SiLU()
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m         )
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m         (input_layernorm): Qwen3RMSNorm((2560,), eps=1e-06)
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m         (post_attention_layernorm): Qwen3RMSNorm((2560,), eps=1e-06)
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m       )
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m     )
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m     (norm): Qwen3RMSNorm((2560,), eps=1e-06)
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m     (rotary_emb): Qwen3RotaryEmbedding()
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m   )
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m   (lm_head): Linear(in_features=2560, out_features=151936, bias=False)
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m )
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:37:19] [base_worker.py (85)] [INFO] [reference-0 0 / 2][PID 1874234] reference-0 initialized
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/torch/cuda/memory.py:391: FutureWarning: torch.cuda.reset_max_memory_allocated now calls torch.cuda.reset_peak_memory_stats, which resets /all/ peak memory stats.
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m   warnings.warn(
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m /home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/torch/cuda/memory.py:417: FutureWarning: torch.cuda.reset_max_memory_cached now calls torch.cuda.reset_peak_memory_stats, which resets /all/ peak memory stats.
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m   warnings.warn(
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:38:18] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 8.872093200683594
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:38:18] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_start_onload, memory allocated (GB): 7.492448329925537, memory reserved (GB): 7.501953125, memory max reserved (GB): 7.501953125, rss (GB): 3.1374549865722656
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.3592 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.2613 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:38:30] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_end_onload, memory allocated (GB): 7.524674892425537, memory reserved (GB): 11.138671875, memory max reserved (GB): 11.138671875, rss (GB): 3.278125762939453
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:38:32] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_end_offload, memory allocated (GB): 0.0009765625, memory reserved (GB): 0.00390625, memory max reserved (GB): 11.138671875, rss (GB): 10.416126251220703
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7577 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.3783 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:40:16] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 10.420089721679688
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:40:16] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_start_onload, memory allocated (GB): 7.492448329925537, memory reserved (GB): 7.501953125, memory max reserved (GB): 7.501953125, rss (GB): 3.9238204956054688
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.3964 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1763 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:40:28] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_end_onload, memory allocated (GB): 7.524674892425537, memory reserved (GB): 11.138671875, memory max reserved (GB): 11.138671875, rss (GB): 3.6504173278808594
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:40:30] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_end_offload, memory allocated (GB): 0.0009765625, memory reserved (GB): 0.00390625, memory max reserved (GB): 11.138671875, rss (GB): 10.705764770507812
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7203 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.2931 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:42:10] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 10.70681381225586
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:42:10] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_start_onload, memory allocated (GB): 7.492448329925537, memory reserved (GB): 7.501953125, memory max reserved (GB): 7.501953125, rss (GB): 3.3780288696289062
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4887 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1349 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:42:22] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_end_onload, memory allocated (GB): 7.524674892425537, memory reserved (GB): 11.138671875, memory max reserved (GB): 11.138671875, rss (GB): 3.3780555725097656
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:42:24] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_end_offload, memory allocated (GB): 0.0009765625, memory reserved (GB): 0.00390625, memory max reserved (GB): 11.138671875, rss (GB): 10.43341064453125
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7859 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4096 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:44:01] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 10.434364318847656
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:44:01] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_start_onload, memory allocated (GB): 7.492448329925537, memory reserved (GB): 7.501953125, memory max reserved (GB): 7.501953125, rss (GB): 3.379016876220703
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4436 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1790 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:44:14] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_end_onload, memory allocated (GB): 7.524674892425537, memory reserved (GB): 11.138671875, memory max reserved (GB): 11.138671875, rss (GB): 3.3790206909179688
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:44:15] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_end_offload, memory allocated (GB): 0.0009765625, memory reserved (GB): 0.00390625, memory max reserved (GB): 11.138671875, rss (GB): 10.434368133544922
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7085 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.3313 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:45:52] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 10.447765350341797
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:45:52] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_start_onload, memory allocated (GB): 7.492448329925537, memory reserved (GB): 7.501953125, memory max reserved (GB): 7.501953125, rss (GB): 3.3924179077148438
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4125 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1853 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:46:04] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_end_onload, memory allocated (GB): 7.524674892425537, memory reserved (GB): 11.138671875, memory max reserved (GB): 11.138671875, rss (GB): 3.3924179077148438
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:46:06] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_end_offload, memory allocated (GB): 0.0009765625, memory reserved (GB): 0.00390625, memory max reserved (GB): 11.138671875, rss (GB): 10.447765350341797
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7470 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.3449 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m [2026-08-18 11:47:41] [context_managers.py (37)] [INFO] [reference-0 0 / 2][PID 1874234] reference/compute_log_probs_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 10.44778060913086
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.3781 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1807 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7858 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.3448 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4093 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1772 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7252 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.3118 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.3786 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1661 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7305 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.2755 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.3763 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1408 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7250 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.2423 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4047 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1641 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7271 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.2961 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4149 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1640 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7551 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.3341 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4265 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1783 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7983 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4032 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4332 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1756 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7689 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.3779 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4277 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1698 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8113 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4090 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4351 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1773 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8019 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4145 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5191 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1702 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7616 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4511 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4539 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1443 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7711 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.3695 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4866 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1680 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7612 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4160 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4660 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1425 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7835 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.3922 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4488 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1381 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7737 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.3608 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4520 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1657 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7911 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4091 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.6826 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1748 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7627 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.6203 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4949 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1848 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7759 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4558 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.6992 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1704 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7671 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.6370 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4366 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1374 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8101 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.3843 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4501 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1712 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7929 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4144 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4614 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1692 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8050 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4358 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4353 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1699 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7921 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.3974 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4416 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1781 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7894 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4093 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.7295 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1358 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8154 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.6809 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4686 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1802 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8045 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4536 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4469 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1692 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8008 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4171 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4709 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1841 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7924 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4475 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5111 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1667 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7922 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4702 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4660 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1756 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8246 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4663 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4709 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1741 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7886 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4338 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4663 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1743 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7831 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4239 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4705 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1798 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7820 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4324 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4613 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1437 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7742 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.3793 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4553 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1419 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7843 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.3817 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4599 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1826 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8244 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4670 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5022 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1417 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8038 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4478 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4902 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1864 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8207 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4975 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4764 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1787 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8154 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4706 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5551 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1703 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7909 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5165 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5032 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1866 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7982 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4882 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4804 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1716 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8082 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4604 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5053 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1680 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8089 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4823 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4939 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1759 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8540 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5240 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.7242 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1824 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8040 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.7107 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5638 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1386 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8099 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5125 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5748 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1422 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8519 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5691 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5238 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1746 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7992 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4977 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5515 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1336 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8031 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4884 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.7761 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1812 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7865 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.7440 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4986 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1815 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8190 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4993 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.7335 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1760 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8200 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.7296 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5033 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1371 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8457 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4863 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.6657 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1365 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8011 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.6034 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5616 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1734 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8615 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5966 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.7977 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1751 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8435 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.8165 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5553 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1819 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8390 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5764 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5178 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1342 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8007 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4529 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5418 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1786 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8027 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5233 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5411 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1398 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8137 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4948 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5054 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1857 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8363 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5275 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5025 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1337 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8129 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4492 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5630 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1622 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7898 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5152 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5405 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1813 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8253 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5473 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5395 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1334 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8124 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4855 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.8263 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1797 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8264 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.8326 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5074 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1790 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8183 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5049 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.6005 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1658 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8055 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5720 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.7057 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1681 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8426 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.7166 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.6942 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1705 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8426 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.7075 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.4935 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1377 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8620 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4934 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.6761 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1719 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8034 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.6516 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5490 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1845 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8424 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5761 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5194 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1798 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8523 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5516 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5076 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1720 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8239 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5036 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.7305 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1839 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8548 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.7694 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.7601 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1776 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8508 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.7887 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5187 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1763 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8392 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5343 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5604 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1765 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8068 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5438 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5094 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1329 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8167 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4591 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5127 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1770 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8224 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5123 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5167 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1750 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8424 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5343 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5509 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1778 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8489 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5778 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5189 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1747 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8366 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5304 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.6955 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1465 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8694 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.7114 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5206 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1565 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8765 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5538 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5643 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1749 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8285 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5679 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5096 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1684 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.7964 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.4746 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5336 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1784 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8596 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5718 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.7326 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1764 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8372 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.7464 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5202 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1374 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8477 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5055 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5255 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1717 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8428 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5403 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5240 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1736 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8279 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5257 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5299 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1751 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8224 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.5276 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 0.5887 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 12.1710 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 1.8839 seconds
+[36m(ActorWorker(reference-0) pid=1874234, ip=192.168.48.46)[0m Elapsed time: 14.6438 seconds
