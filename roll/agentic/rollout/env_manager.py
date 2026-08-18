@@ -426,8 +426,17 @@ class EnvManager:
             current_player = entry["env"].current_player
             self.rollout_cache["current_player"] = current_player
 
+        # ``initial_observation`` is the state before any transitions returned by
+        # reset.  When a built-in opponent starts, that state therefore belongs
+        # to the opponent, not to the policy player that will act after reset.
+        # Seed the first transition's actor history so _log_env_state can attach
+        # the reset-time action to its preceding state.
+        initial_player = (
+            execute_results[0]["current_player"] if execute_results else current_player
+        )
+
         initial_state_entry = {
-            "player": current_player,
+            "player": initial_player,
             "state": initial_observation['observation'],
             "legal_actions": initial_observation['legal_actions'],
         }
@@ -438,9 +447,9 @@ class EnvManager:
             num_actions_info=None,
             next_state_entry=initial_state_entry,
         )
-        
-        # For self-play, initialize the configured starting player's history.
-        starting_history_key = f"player_{current_player}_history"
+
+        # Initialize the history of the player acting in the initial state.
+        starting_history_key = f"player_{initial_player}_history"
         self.rollout_cache[starting_history_key] = self._update_cache_history(
             self.rollout_cache[starting_history_key],
             num_actions_info=None,
@@ -449,7 +458,10 @@ class EnvManager:
 
         # log first turn by the built-in opponent (if opponent goes first)
         if execute_results:
-            self._log_env_state(execute_results=execute_results, current_player=0)
+            self._log_env_state(
+                execute_results=execute_results,
+                current_player=initial_player,
+            )
 
         self.episode_id += 1
         return self.rollout_cache
