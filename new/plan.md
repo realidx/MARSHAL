@@ -269,6 +269,12 @@ final update. Because checkpoint indices are zero-based, this sole saved model
 is checkpoint-99. The matched REINFORCE control changes only the normalization
 group from the eight same-prompt responses to the full batch.
 
+The 16-graph topology-OOD validation suite uses a 4,096-candidate deterministic
+generation budget. Its fixed seeds 800117 and 800118 have no exact requested
+Distance-3, root-branching-2 graph among their first 2,048 candidates, but both
+match by 3,072 candidates. The larger budget preserves the suite constraints
+and seed schedule rather than substituting easier fixtures.
+
 The executable configurations are:
 
 ```text

@@ -76,6 +76,13 @@ custom_envs:
   Geography-Val-D3-Relabel:
     env_config:
       seed_offset: -32
+  # The expanded 16-graph suite includes fixed seeds 800117 and 800118.
+  # Neither has an exact Distance-3, branching-2 match in its first 2048
+  # candidates; both do within 3072. Use the next standard power-of-two budget
+  # without relaxing or replacing the intended OOD fixtures.
+  Geography-Val-D3-Topology-OOD:
+    env_config:
+      generator_candidates: 4096
 
 train_env_manager:
   # Sixteen prompt groups x eight stochastic responses = 128 samples. Each
