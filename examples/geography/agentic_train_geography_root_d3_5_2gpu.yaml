@@ -11,8 +11,13 @@ defaults:
 rollout_batch_size: 128
 val_batch_size: 384
 max_actions_per_traj: 1
+max_steps: 100
 eval_steps: 10
 eval_at_end: true
+
+# Checkpoints are named by the zero-based pipeline step. With 100 updates,
+# save_steps=100 writes exactly one checkpoint: the final checkpoint-99.
+save_steps: 100
 
 # Preserve the eight optimizer steps per rollout used by run 729401. This
 # deliberately does not carry forward the later one-update stabilization arm.

@@ -204,7 +204,10 @@ interpretable. The current stabilization run assigns 16 of the 128 rollout
 groups to each stratum.
 Labels, row order, successor order, and episode graphs remain procedural. Group
 size is one, so training does not generate repeated samples of the same prompt
-as the preflight did.
+as the preflight did. The subsequent root-GRPO treatment changes this sampling
+unit explicitly: each of 16 fresh hard root prompts is sampled eight times, so
+the group-relative baseline is computed only among responses to the same
+state.
 
 The initial schedule was:
 
@@ -214,6 +217,7 @@ The initial schedule was:
 | Earlier full run, checkpoint 1 | 100 | 32 | test sustained held-out Distance-3/5 learning |
 | Earlier full run, checkpoint 2 | 200 total | 32 | exposed the post-step-100 validity collapse |
 | MARSHAL stabilization, checkpoints 1/2 | 100/200 | 128 | test joint validity and strategy stability |
+| Root GRPO treatment | 100 | 16 prompts x 8 responses | compare actions within the same exact-Q root state |
 
 Responses retain the free-form reason/answer protocol and a 1,024-token hard
 ceiling. There is no retry. Invalid or truncated output has zero game reward and
@@ -256,12 +260,30 @@ rollouts cannot crowd controlled root suites out of the validation batch. Online
 diagnostics report unique graph seeds and, for every observed optimal distance,
 decision count, validity, conditional optimality, and end-to-end optimality.
 
+The next treatment is root-only GRPO rather than full-game self-play. Each legal
+root move receives its exact solved continuation value Q(s,a), while format and
+penalty-only length rewards are combined before normalization. Sixteen prompt
+groups with eight stochastic responses each produce the 128-sample rollout.
+Validation runs every ten updates, but the model is saved only once after the
+final update. Because checkpoint indices are zero-based, this sole saved model
+is checkpoint-99. The matched REINFORCE control changes only the normalization
+group from the eight same-prompt responses to the full batch.
+
 The executable configurations are:
 
 ```text
 examples/geography/agentic_train_geography_counterfactual_distance3_smoke_2gpu.yaml
 examples/geography/agentic_train_geography_counterfactual_distance3_2gpu.yaml
 examples/geography/agentic_train_geography_counterfactual_distance3_5_2gpu.yaml
+examples/geography/agentic_train_geography_root_grpo_d3_5_2gpu.yaml
+examples/geography/agentic_train_geography_root_reinforce_d3_5_2gpu.yaml
+```
+
+Launch the treatment from the repository root with:
+
+```bash
+sbatch --export=ALL,CONFIG_NAME=agentic_train_geography_root_grpo_d3_5_2gpu \
+  examples/geography/sbatch_geography_counterfactual_distance3_5_full_2gpu.sh
 ```
 
 ## Claim-to-evidence boundary
