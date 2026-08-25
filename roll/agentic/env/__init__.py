@@ -14,6 +14,8 @@ from .leduc_poker.config import LeducPokerConfig
 from .leduc_poker.env import LeducPoker
 from .geography.config import GeographyConfig
 from .geography.env import GeographyEnv
+from .pivotal_query.config import PivotalQueryConfig
+from .pivotal_query.env import PivotalQueryEnv
 
 REGISTERED_ENVS = {
     "tictactoe": TicTacToe,
@@ -22,6 +24,7 @@ REGISTERED_ENVS = {
     "kuhn_poker": KuhnPoker,
     "leduc_poker": LeducPoker,
     "geography": GeographyEnv,
+    "pivotal_query": PivotalQueryEnv,
 }
 
 REGISTERED_ENV_CONFIGS = {
@@ -31,4 +34,5 @@ REGISTERED_ENV_CONFIGS = {
     "kuhn_poker": KuhnPokerConfig,
     "leduc_poker": LeducPokerConfig,
     "geography": GeographyConfig,
+    "pivotal_query": PivotalQueryConfig,
 }
