@@ -54,6 +54,11 @@ index_table = {
 }
 
 
+def _is_numeric_metric_value(value) -> bool:
+    """Return whether an environment diagnostic can be aggregated numerically."""
+    return value is not None and not isinstance(value, str)
+
+
 @dataclass
 class EnvStatus:
     """Status of an environment"""
@@ -1195,7 +1200,11 @@ class EnvManager:
             ),
         }
         for key, value in decision_info.items():
-            if key.startswith("minimax_") or key == "success" or isinstance(value, str):
+            if (
+                key.startswith("minimax_")
+                or key == "success"
+                or not _is_numeric_metric_value(value)
+            ):
                 continue
             metrics[f"env/{tag}/{key}"] = float(value)
         llm_inputs.meta_info = {"metrics": metrics}
@@ -1672,7 +1681,7 @@ class EnvManager:
                     continue
                 if k.startswith("minimax_"):
                     continue
-                if isinstance(v, str):
+                if not _is_numeric_metric_value(v):
                     continue
                 if k not in custom_metric:
                     custom_metric[k] = []
@@ -1686,7 +1695,7 @@ class EnvManager:
         # player happened to generate the final action. Attach it once to both
         # fixed-player rollouts without overwriting their decision diagnostics.
         for k, v in self.rollout_cache.get("terminal_info", {}).items():
-            if k.startswith("minimax_") or isinstance(v, str):
+            if k.startswith("minimax_") or not _is_numeric_metric_value(v):
                 continue
             env_metric[k] = float(v)
 

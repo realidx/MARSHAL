@@ -1,6 +1,6 @@
 from threading import Lock
 
-from roll.agentic.rollout.env_manager import EnvManager
+from roll.agentic.rollout.env_manager import EnvManager, _is_numeric_metric_value
 
 
 class _SecondRoleEnv:
@@ -51,3 +51,10 @@ def test_reset_seeds_history_for_built_in_opponent_that_moves_first():
     assert cache["player_0_history"][0]["actions"] == "X(0,0)"
     assert len(cache["player_1_history"]) == 1
     assert cache["player_1_history"][0]["state"] == "board after MCTS move"
+
+
+def test_optional_environment_diagnostics_are_not_numeric_metrics():
+    assert _is_numeric_metric_value(None) is False
+    assert _is_numeric_metric_value("metadata") is False
+    assert _is_numeric_metric_value(0.0) is True
+    assert _is_numeric_metric_value(False) is True

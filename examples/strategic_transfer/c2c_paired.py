@@ -25,6 +25,9 @@ C2C_COMMIT = "2f7eb4a163d21e139a3ea8b9f7d625b470594f00"
 COMMANDERS = ("Commander Red", "Commander Blue", "Commander Green", "Commander Yellow")
 OBJECTIVES = ("northwest_southeast", "southwest_northeast")
 FOCAL_SLOT = "__FOCAL__"
+PROMISING_PAIRED_DIFFERENCE = 0.06
+PROMISING_NET_PAIRED_WINS = 3
+OPERATIONAL_RATE_BALANCE_TOLERANCE = 0.05
 
 
 @dataclass(frozen=True)
@@ -203,14 +206,17 @@ def summarize_condition(condition_dir: Path) -> dict[str, Any]:
         )
     completed = [row for row in rows if row["evaluated"]]
     wins = sum(row["focal_win"] for row in completed)
+    errors = sum(row["error"] is not None for row in rows)
     return {
         "condition": manifest["condition"],
         "focal_model": focal_model,
         "games_planned": len(rows),
         "games_completed": len(completed),
-        "errors": sum(row["error"] is not None for row in rows),
-        "focal_wins": wins,
-        "focal_win_rate": wins / len(completed) if completed else None,
+        "completion_rate": len(completed) / len(rows) if rows else None,
+        "errors": errors,
+        "error_rate": errors / len(rows) if rows else None,
+        "focal_objective_completions": wins,
+        "focal_objective_completion_rate": wins / len(completed) if completed else None,
         "rows": rows,
     }
 
@@ -224,23 +230,52 @@ def compare_conditions(base_dir: Path, treatment_dir: Path) -> dict[str, Any]:
     paired = [
         {
             "pair_id": pair_id,
-            "base_win": base_rows[pair_id]["focal_win"],
-            "treatment_win": treatment_rows[pair_id]["focal_win"],
+            "base_completion": base_rows[pair_id]["focal_win"],
+            "treatment_completion": treatment_rows[pair_id]["focal_win"],
         }
         for pair_id in shared
         if base_rows[pair_id]["evaluated"] and treatment_rows[pair_id]["evaluated"]
     ]
-    gains = sum(row["treatment_win"] and not row["base_win"] for row in paired)
-    losses = sum(row["base_win"] and not row["treatment_win"] for row in paired)
+    gains = sum(row["treatment_completion"] and not row["base_completion"] for row in paired)
+    losses = sum(row["base_completion"] and not row["treatment_completion"] for row in paired)
+    paired_difference = (
+        sum(row["treatment_completion"] - row["base_completion"] for row in paired) / len(paired)
+        if paired
+        else None
+    )
+    net_paired_wins = gains - losses
+    completion_rate_difference = treatment["completion_rate"] - base["completion_rate"]
+    error_rate_difference = treatment["error_rate"] - base["error_rate"]
+    operational_rates_balanced = (
+        abs(completion_rate_difference) <= OPERATIONAL_RATE_BALANCE_TOLERANCE
+        and abs(error_rate_difference) <= OPERATIONAL_RATE_BALANCE_TOLERANCE
+    )
+    effect_promising = bool(
+        paired_difference is not None
+        and (
+            paired_difference >= PROMISING_PAIRED_DIFFERENCE
+            or net_paired_wins >= PROMISING_NET_PAIRED_WINS
+        )
+    )
     return {
+        "primary_outcome": "focal_secret_objective_completion_by_50_round_horizon",
         "base": base,
         "treatment": treatment,
         "completed_pairs": len(paired),
-        "discordant_treatment_wins": gains,
-        "discordant_base_wins": losses,
-        "paired_win_rate_difference": (
-            sum(row["treatment_win"] - row["base_win"] for row in paired) / len(paired) if paired else None
-        ),
+        "discordant_treatment_completions": gains,
+        "discordant_base_completions": losses,
+        "net_paired_wins": net_paired_wins,
+        "paired_completion_rate_difference": paired_difference,
+        "completion_rate_difference": completion_rate_difference,
+        "error_rate_difference": error_rate_difference,
+        "operational_rates_balanced": operational_rates_balanced,
+        "screening_rule": {
+            "paired_difference_threshold": PROMISING_PAIRED_DIFFERENCE,
+            "net_paired_wins_threshold": PROMISING_NET_PAIRED_WINS,
+            "operational_rate_balance_tolerance": OPERATIONAL_RATE_BALANCE_TOLERANCE,
+            "effect_promising": effect_promising,
+            "promising_for_expansion": effect_promising and operational_rates_balanced,
+        },
         "paired_rows": paired,
     }
 

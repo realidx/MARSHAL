@@ -13,6 +13,7 @@ from examples.strategic_transfer.c2c_paired import (
 )
 from examples.strategic_transfer.trust_calibration import (
     ScriptedPolicy,
+    compare_trust_rows,
     generate_episode,
     load_suite,
     run_episode,
@@ -82,3 +83,28 @@ def test_oracle_policy_has_zero_decision_regret():
     assert score["decision_regret"] == 0.0
     assert score["fraction_oracle_gap_recovered"] == 1.0
     assert score["decisions"] == 12
+
+
+def test_corrected_trust_metrics_and_paired_trajectories():
+    rows = run_episode(generate_episode(seed=9, episode_id=1, num_rounds=4), ScriptedPolicy("oracle"))
+    reliabilities = (
+        {"Atlas": 0.9, "Beacon": 0.6, "Cipher": 0.1, "Delta": 0.8},
+        {"Atlas": 0.9, "Beacon": 0.6, "Cipher": 0.1, "Delta": 0.6},
+        {"Atlas": 0.9, "Beacon": 0.6, "Cipher": 0.1, "Delta": 0.4},
+        {"Atlas": 0.9, "Beacon": 0.6, "Cipher": 0.1, "Delta": 0.55},
+    )
+    for row, reliability in zip(rows, reliabilities):
+        row["reliability"] = reliability
+
+    score = score_rows(rows, delta_drop_margin=0.2)
+    assert score["stable_adversary_identification_rate"] == 1.0
+    assert score["delta_switch_recognition"]["rate"] == 0.5
+    assert score["post_switch_adversary_recall"] == 1.0
+    assert "unreliable_source_identification_accuracy" in score["defective_metrics"]
+
+    treatment = json.loads(json.dumps(rows))
+    for row in treatment[2:]:
+        row["reliability"]["Delta"] -= 0.1
+    comparison = compare_trust_rows(rows, treatment, delta_drop_margin=0.2)
+    trajectory = comparison["paired_delta_reliability_trajectory"]
+    assert [item["paired_treatment_minus_base"] for item in trajectory] == pytest.approx([-0.1, -0.1])

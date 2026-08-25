@@ -41,10 +41,23 @@ python -m examples.strategic_transfer.trust_calibration run \
 ```
 
 Restart the server with the MARSHAL checkpoint and write `treatment.jsonl`.
-The summary reports decision regret, normalized oracle-gap recovery, source
-identification, reliability Brier score, switch-detection delay, post-switch
-recovery, and change in reliance on the switching partner. Raw prompts,
-responses, reports, and feedback are retained in each JSONL row.
+Rescore and compare the raw files without rerunning inference:
+
+```bash
+python -m examples.strategic_transfer.trust_calibration compare \
+  --base-input runs/trust_calibration/base.jsonl \
+  --treatment-input runs/trust_calibration/treatment.jsonl \
+  --delta-drop-margin 0.20 \
+  --output runs/trust_calibration/paired-trust-comparison-v2.json
+```
+
+Version 2 reports stable-adversary identification, Delta switch recognition,
+post-switch recall of both adversaries, paired Delta-reliability trajectories,
+and behavioral reliance on Delta. The 0.20 drop margin is fixed prospectively
+for future runs; for run 744718 it is explicitly post-hoc. The old
+`unreliable_source_identification_accuracy` remains under `defective_metrics`
+for provenance only and must not support conclusions. Raw prompts, responses,
+reports, and feedback are retained in each JSONL row.
 
 ## 2. Matched C2C evaluation
 
@@ -75,7 +88,8 @@ server must expose a working chat template:
 ```bash
 vllm serve Qwen/Qwen3-4B \
   --served-model-name qwen3-4b-focal \
-  --port 8000 --max-model-len 32768 --reasoning-parser qwen3
+  --port 8000 --max-model-len 32768 \
+  --generation-config vllm --seed 26042026
 ```
 
 With provider keys set for the three counterparties, run the base condition:
@@ -89,8 +103,11 @@ python -m examples.strategic_transfer.c2c_paired run-condition \
 
 Restart vLLM with `nics-efc/MARSHAL-Generalist-Qwen3-4B`, preserving the served
 name, generation settings, and all other arguments; then run with
-`--condition treatment`. Start with one worker for a two-pair smoke run before increasing
-parallelism. `DEBUG_LLM_CALLS=true` preserves every C2C prompt and response.
+`--condition treatment`. Before the screen, run the two-pair infrastructure
+preflight with one worker and the frozen smoke plan. Inspect the first
+`error.json`, vLLM log, and Slurm output after any failure; an operational
+failure is not a scientific null. `DEBUG_LLM_CALLS=true` preserves every C2C
+prompt and response.
 
 Summarize the primary outcome:
 
@@ -101,22 +118,24 @@ python -m examples.strategic_transfer.c2c_paired summarize \
   --output runs/c2c_marshal_poc/paired_summary.json
 ```
 
-The preregistered primary metric is focal objective completion by the 50-round
-horizon. The summary includes the paired win-rate difference and discordant-pair
-counts. Run C2C's released analysis pipeline separately for negotiation
-follow-through, support exchange, partner diversity, negotiation–attack
-separation, deception, and offer/counteroffer mechanisms. Those metrics explain
-the primary outcome; they do not redefine success.
+The preregistered primary metric is focal secret-objective completion by the
+50-round horizon. The summary includes the paired completion-rate difference,
+discordant-pair counts, net paired wins, and completion/error-rate balance.
+Treat about +6 percentage points or at least three net paired wins as promising
+for expansion, provided completion and error rates differ by no more than five
+percentage points between conditions. Run C2C's released analysis pipeline
+separately for negotiation follow-through, support exchange, partner diversity,
+negotiation–attack separation, deception, and offer/counteroffer mechanisms.
+Those metrics explain the primary outcome; they do not redefine success.
 
 ## Interpretation
 
-| Trust diagnostic | C2C | Interpretation |
-|---|---|---|
-| positive | positive | evidence for transferable strategic interaction |
-| positive | null | trust transfers but is insufficient for complex negotiation |
-| null | positive | gains may reflect planning or game tactics rather than trust calibration |
-| null | null | the released training distribution likely lacks the required interaction structure |
+| C2C result | Interpretation given the trust diagnostic |
+|---|---|
+| MARSHAL positive | Transfer exists, but likely through planning, tactics, negotiation conventions, or stable-partner discrimination—not adaptive trust calibration. |
+| null | Null/null outcome: no evidence that the released checkpoint transfers to persistent mixed-motive interaction. |
+| MARSHAL negative | The post-training may be mismatched to this richer interaction setting; inspect validity and behavioral mechanisms before concluding harm. |
 
-A null result does not test a tailored social-game curriculum. Training on
-additional social games is a second-stage experiment only after this checkpoint
-screen.
+Do not train a new model yet. A null result does not test a tailored social-game
+curriculum; additional social-game training is a later-stage experiment only
+after this checkpoint screen.

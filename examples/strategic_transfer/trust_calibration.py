@@ -24,6 +24,7 @@ from typing import Any, Iterable, Protocol, Sequence
 SOURCE_NAMES = ("Atlas", "Beacon", "Cipher", "Delta")
 OPTION_IDS = ("A", "B", "C", "D")
 DOMAINS = ("routing", "procurement", "software_allocation")
+DELTA_DROP_MARGIN = 0.20
 
 
 @dataclass(frozen=True)
@@ -322,18 +323,29 @@ def run_episode(episode: Episode, policy: Policy) -> list[dict[str, Any]]:
     return history
 
 
-def score_rows(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
+def _delta_report_agreement(row: dict[str, Any]) -> float:
+    delta_option = next(report["option"] for report in row["reports"] if report["source"] == "Delta")
+    return float(row["choice"] == delta_option)
+
+
+def score_rows(
+    rows: Sequence[dict[str, Any]], delta_drop_margin: float = DELTA_DROP_MARGIN
+) -> dict[str, Any]:
     if not rows:
         raise ValueError("cannot score an empty run")
+    if not 0 <= delta_drop_margin <= 1:
+        raise ValueError("delta_drop_margin must lie in [0, 1]")
     accuracy = sum(row["choice"] == row["correct_option"] for row in rows) / len(rows)
     brier_terms = []
     source_agreement: dict[str, list[float]] = {source: [] for source in SOURCE_NAMES}
-    adversary_hits = 0
+    defective_adversary_hits = 0
+    stable_adversary_hits = 0
     episode_last: dict[int, dict[str, Any]] = {}
     for row in rows:
         reports = {report["source"]: report for report in row["reports"]}
+        reliability = {source: float(row["reliability"][source]) for source in SOURCE_NAMES}
         for source in SOURCE_NAMES:
-            probability = float(row["reliability"][source])
+            probability = reliability[source]
             outcome = float(reports[source]["correct"])
             brier_terms.append((probability - outcome) ** 2)
             source_agreement[source].append(float(row["choice"] == reports[source]["option"]))
@@ -342,19 +354,42 @@ def score_rows(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
         }
         if row["round"] < row["switch_round"]:
             true_accuracy["Delta"] = 0.85
-        predicted_worst = min(SOURCE_NAMES, key=lambda source: row["reliability"][source])
+        predicted_worst = min(SOURCE_NAMES, key=reliability.get)
         true_worst = min(SOURCE_NAMES, key=true_accuracy.get)
-        adversary_hits += predicted_worst == true_worst
+        defective_adversary_hits += predicted_worst == true_worst
+        stable_adversary_hits += reliability["Cipher"] < reliability["Atlas"] and reliability["Cipher"] < reliability["Beacon"]
         episode_last[row["episode_id"]] = row
 
     adaptation_delays = []
     recovery_values = []
     delta_reliance_changes = []
+    delta_recognition = []
+    post_switch_adversary_recall = []
+    delta_reliability_by_round: dict[int, list[float]] = {}
+    delta_recognition_by_round: dict[int, list[float]] = {}
+    delta_agreement_by_round: dict[int, list[float]] = {}
+    pre_delta_agreement = []
+    post_delta_agreement = []
     for episode_id in sorted(episode_last):
-        episode_rows = [row for row in rows if row["episode_id"] == episode_id]
+        episode_rows = sorted(
+            (row for row in rows if row["episode_id"] == episode_id), key=lambda row: row["round"]
+        )
         switch_round = episode_rows[0]["switch_round"]
         pre = [row for row in episode_rows if row["round"] < switch_round]
         post = [row for row in episode_rows if row["round"] >= switch_round]
+        pre_delta_estimate = sum(float(row["reliability"]["Delta"]) for row in pre) / len(pre)
+        for row in post:
+            round_index = int(row["round"])
+            reliability = {source: float(row["reliability"][source]) for source in SOURCE_NAMES}
+            recognized = float(reliability["Delta"] <= pre_delta_estimate - delta_drop_margin)
+            delta_recognition.append(recognized)
+            delta_reliability_by_round.setdefault(round_index, []).append(reliability["Delta"])
+            delta_recognition_by_round.setdefault(round_index, []).append(recognized)
+            post_switch_adversary_recall.append(
+                float(max(reliability["Cipher"], reliability["Delta"]) < min(reliability["Atlas"], reliability["Beacon"]))
+            )
+        for row in episode_rows:
+            delta_agreement_by_round.setdefault(int(row["round"]), []).append(_delta_report_agreement(row))
         detected = next((row["round"] for row in post if row["reliability"]["Delta"] < 0.5), None)
         adaptation_delays.append((detected - switch_round) if detected is not None else None)
         early = post[:2]
@@ -363,22 +398,55 @@ def score_rows(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
             sum(row["choice"] == row["correct_option"] for row in late) / len(late)
             - sum(row["choice"] == row["correct_option"] for row in early) / len(early)
         )
-        pre_agreement = sum(
-            row["choice"] == next(r["option"] for r in row["reports"] if r["source"] == "Delta") for row in pre
-        ) / len(pre)
-        post_agreement = sum(
-            row["choice"] == next(r["option"] for r in row["reports"] if r["source"] == "Delta") for row in post
-        ) / len(post)
+        pre_agreement = sum(_delta_report_agreement(row) for row in pre) / len(pre)
+        post_agreement = sum(_delta_report_agreement(row) for row in post) / len(post)
+        pre_delta_agreement.extend(_delta_report_agreement(row) for row in pre)
+        post_delta_agreement.extend(_delta_report_agreement(row) for row in post)
         delta_reliance_changes.append(post_agreement - pre_agreement)
 
     finite_delays = [delay for delay in adaptation_delays if delay is not None]
     return {
+        "scoring_specification": {
+            "version": 2,
+            "delta_drop_margin_status": "post_hoc_for_existing_run; fixed prospectively for future runs",
+        },
         "decisions": len(rows),
         "episodes": len(episode_last),
         "accuracy": accuracy,
         "decision_regret": 1.0 - accuracy,
         "fraction_oracle_gap_recovered": (accuracy - 0.25) / 0.75,
-        "unreliable_source_identification_accuracy": adversary_hits / len(rows),
+        "stable_adversary_identification_rate": stable_adversary_hits / len(rows),
+        "delta_switch_recognition": {
+            "drop_margin": delta_drop_margin,
+            "reference": "episode_mean_pre_switch_delta_reliability",
+            "rate": sum(delta_recognition) / len(delta_recognition),
+            "by_round": {
+                str(round_index): sum(values) / len(values)
+                for round_index, values in sorted(delta_recognition_by_round.items())
+            },
+        },
+        "post_switch_adversary_recall": sum(post_switch_adversary_recall) / len(post_switch_adversary_recall),
+        "delta_reliability_trajectory": {
+            str(round_index): sum(values) / len(values)
+            for round_index, values in sorted(delta_reliability_by_round.items())
+        },
+        "behavioral_delta_reliance": {
+            "pre_switch": sum(pre_delta_agreement) / len(pre_delta_agreement),
+            "post_switch": sum(post_delta_agreement) / len(post_delta_agreement),
+            "change": sum(delta_reliance_changes) / len(delta_reliance_changes),
+            "by_round": {
+                str(round_index): sum(values) / len(values)
+                for round_index, values in sorted(delta_agreement_by_round.items())
+            },
+        },
+        "defective_metrics": {
+            "unreliable_source_identification_accuracy": defective_adversary_hits / len(rows),
+            "warning": (
+                "Defective tie-breaking metric retained for provenance only. After Delta switches, Cipher and "
+                "Delta share the lowest true reliability, but tuple order always selects Cipher as true_worst. "
+                "Do not use this metric to support conclusions."
+            ),
+        },
         "reliability_brier_score": sum(brier_terms) / len(brier_terms),
         "mean_rounds_to_detect_delta_switch": sum(finite_delays) / len(finite_delays) if finite_delays else None,
         "delta_switch_detection_rate": len(finite_delays) / len(adaptation_delays),
@@ -387,6 +455,74 @@ def score_rows(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
         "source_choice_agreement": {source: sum(values) / len(values) for source, values in source_agreement.items()},
     }
 
+
+def compare_trust_rows(
+    base_rows: Sequence[dict[str, Any]],
+    treatment_rows: Sequence[dict[str, Any]],
+    delta_drop_margin: float = DELTA_DROP_MARGIN,
+) -> dict[str, Any]:
+    def row_key(row: dict[str, Any]) -> tuple[int, int]:
+        return int(row["episode_id"]), int(row["round"])
+
+    base_by_key = {row_key(row): row for row in base_rows}
+    treatment_by_key = {row_key(row): row for row in treatment_rows}
+    if set(base_by_key) != set(treatment_by_key):
+        raise ValueError("base and treatment rows must contain identical episode-round keys")
+    for key in base_by_key:
+        base = base_by_key[key]
+        treatment = treatment_by_key[key]
+        for fixed_field in ("seed", "switch_round", "correct_option", "reports"):
+            if base[fixed_field] != treatment[fixed_field]:
+                raise ValueError(f"paired rows differ on {fixed_field} at episode-round {key}")
+
+    delta_trajectory = []
+    behavioral_trajectory = []
+    rounds = sorted({key[1] for key in base_by_key})
+    for round_index in rounds:
+        paired = [
+            (base_by_key[key], treatment_by_key[key])
+            for key in sorted(base_by_key)
+            if key[1] == round_index
+        ]
+        switch_round = int(paired[0][0]["switch_round"])
+        if round_index >= switch_round:
+            base_values = [float(base["reliability"]["Delta"]) for base, _ in paired]
+            treatment_values = [float(treatment["reliability"]["Delta"]) for _, treatment in paired]
+            delta_trajectory.append(
+                {
+                    "round": round_index,
+                    "post_switch_offset": round_index - switch_round,
+                    "pairs": len(paired),
+                    "base_mean": sum(base_values) / len(base_values),
+                    "treatment_mean": sum(treatment_values) / len(treatment_values),
+                    "paired_treatment_minus_base": sum(
+                        treatment - base for base, treatment in zip(base_values, treatment_values)
+                    ) / len(paired),
+                }
+            )
+        base_agreement = [_delta_report_agreement(base) for base, _ in paired]
+        treatment_agreement = [_delta_report_agreement(treatment) for _, treatment in paired]
+        behavioral_trajectory.append(
+            {
+                "round": round_index,
+                "phase": "pre_switch" if round_index < switch_round else "post_switch",
+                "pairs": len(paired),
+                "base_agreement": sum(base_agreement) / len(base_agreement),
+                "treatment_agreement": sum(treatment_agreement) / len(treatment_agreement),
+                "paired_treatment_minus_base": sum(
+                    treatment - base for base, treatment in zip(base_agreement, treatment_agreement)
+                ) / len(paired),
+            }
+        )
+    return {
+        "schema_version": 2,
+        "delta_drop_margin": delta_drop_margin,
+        "margin_status": "post_hoc_for_existing_run; fixed prospectively for future runs",
+        "base": score_rows(base_rows, delta_drop_margin),
+        "treatment": score_rows(treatment_rows, delta_drop_margin),
+        "paired_delta_reliability_trajectory": delta_trajectory,
+        "paired_behavioral_delta_reliance_trajectory": behavioral_trajectory,
+    }
 
 def save_rows(path: Path, rows: Sequence[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -422,6 +558,13 @@ def build_parser() -> argparse.ArgumentParser:
     score = sub.add_parser("score")
     score.add_argument("--input", required=True)
     score.add_argument("--output")
+    score.add_argument("--delta-drop-margin", type=float, default=DELTA_DROP_MARGIN)
+
+    compare = sub.add_parser("compare")
+    compare.add_argument("--base-input", required=True)
+    compare.add_argument("--treatment-input", required=True)
+    compare.add_argument("--output")
+    compare.add_argument("--delta-drop-margin", type=float, default=DELTA_DROP_MARGIN)
     return parser
 
 
@@ -443,7 +586,12 @@ def main(argv: Iterable[str] | None = None) -> None:
         save_rows(Path(args.output), rows)
         print(json.dumps(score_rows(rows), indent=2))
         return
-    result = score_rows(load_rows(Path(args.input)))
+    if args.command == "compare":
+        result = compare_trust_rows(
+            load_rows(Path(args.base_input)), load_rows(Path(args.treatment_input)), args.delta_drop_margin
+        )
+    else:
+        result = score_rows(load_rows(Path(args.input)), args.delta_drop_margin)
     rendered = json.dumps(result, indent=2) + "\n"
     if args.output:
         Path(args.output).write_text(rendered, encoding="utf-8")
