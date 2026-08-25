@@ -583,9 +583,27 @@ class EnvManager:
                 entry["status"].retry_attempts += 1
                 env_input["retry_scheduled"] = True
             else:
-                execute_results = entry["env"].get_losing_state(
-                    current_player, overlong_response, overlong_sequence
-                )
+                # Some evaluation environments need to distinguish a
+                # well-formed but illegal policy decision from an
+                # infrastructure truncation.  Give them one chance to turn
+                # that response into an explicit, scored terminal outcome.
+                invalid_handler = getattr(entry["env"], "handle_invalid_response", None)
+                with self.thread_lock:
+                    execute_results = (
+                        invalid_handler(
+                            player_id=current_player,
+                            actions=env_input["actions"],
+                            raw_response=env_input["llm_raw_response"],
+                            overlong_response=overlong_response,
+                            overlong_sequence=overlong_sequence,
+                        )
+                        if callable(invalid_handler)
+                        else None
+                    )
+                    if execute_results is None:
+                        execute_results = entry["env"].get_losing_state(
+                            current_player, overlong_response, overlong_sequence
+                        )
                 env_input["retry_scheduled"] = False
         else:
             with self.thread_lock:

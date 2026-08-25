@@ -33,5 +33,9 @@ def aggregate_pivotal_query_metrics(
         "first_decision_optimal_rate": _mean(info["first_decision_optimal"] for info in infos),
         "mean_num_asks": _mean(info["num_asks"] for info in infos),
         "mean_unproductive_queries": _mean(info["unproductive_queries"] for info in infos),
+        "illegal_ask_after_budget_rate": _mean(
+            info.get("illegal_ask_after_budget", 0.0) for info in infos
+        ),
+        "policy_failure_rate": _mean(info.get("policy_failure", 0.0) for info in infos),
         "episodes": float(len(infos)),
     }

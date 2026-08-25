@@ -188,6 +188,82 @@ class PivotalQueryEnv(BaseDiscreteActionEnv):
             }
         ]
 
+    def handle_invalid_response(
+        self,
+        player_id: int = 0,
+        actions=None,
+        raw_response: str = "",
+        overlong_response: bool = False,
+        overlong_sequence: bool = False,
+    ):
+        """Score ASK-after-budget as a policy failure, not a runner failure.
+
+        The legal-action mask intentionally contains only ACT actions once the
+        query budget is exhausted.  A structurally valid ASK at that point is
+        therefore evidence about the policy's stopping behavior.  Returning a
+        successful *administrative* terminal state keeps that evidence in the
+        completed-condition denominator while preserving semantic validity=0.
+        Other invalid outputs retain the runner's ordinary losing-state path.
+        """
+        del raw_response
+        if (
+            self.game is None
+            or self.game.done
+            or overlong_response
+            or overlong_sequence
+            or len(self.game.attempted_queries) < self.game.max_queries
+        ):
+            return None
+        parsed_actions = list(actions or ())
+        if len(parsed_actions) != 1:
+            return None
+        attempted_action = " ".join(str(parsed_actions[0]).split())
+        if re.fullmatch(
+            r"ASK\s+[A-Za-z][A-Za-z0-9_-]*\s+[A-Za-z][A-Za-z0-9_-]*",
+            attempted_action,
+            re.IGNORECASE,
+        ) is None:
+            return None
+        if any(action.startswith("ASK ") for action in self.game.legal_actions()):
+            return None
+
+        info = self.game.terminal_metrics()
+        info.update(
+            {
+                "success": True,
+                "administrative_terminal": 1.0,
+                "policy_failure": 1.0,
+                "illegal_ask_after_budget": 1.0,
+                "query_budget_exhausted": 1.0,
+                "game_transition": 1.0,
+                "player_0_return": self.game.total_reward,
+                "player_1_return": 0.0,
+                "winner": -1,
+                "player_0_success": False,
+                "player_1_success": False,
+                "draw": False,
+                "player_0_lose_for_wrong_format": 0,
+                "player_1_lose_for_wrong_format": 0,
+                "player_0_lose_for_overlong_response": 0,
+                "player_1_lose_for_overlong_response": 0,
+                "player_0_lose_for_overlong_sequence": 0,
+                "player_1_lose_for_overlong_sequence": 0,
+            }
+        )
+        self.game.done = True
+        return [
+            {
+                "current_player": player_id,
+                "action": attempted_action,
+                "rewards": [0.0, 0.0],
+                "done": True,
+                "info": info,
+                "next_player": None,
+                "observation": None,
+                "legal_actions": None,
+            }
+        ]
+
     def get_losing_state(
         self,
         player_id: int = 0,

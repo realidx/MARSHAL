@@ -233,6 +233,31 @@ def test_roll_adapter_parser_requires_one_legal_structured_action():
     assert env.recover_action(f"<reason>x</reason><answer>{action} extra</answer>", initial["legal_actions"]) is None
 
 
+def test_ask_after_budget_is_scored_as_terminal_policy_failure():
+    env = PivotalQueryEnv(PivotalQueryConfig(condition="known_pivotal", max_queries=3))
+    env.reset(seed=17)
+    assert env.game is not None
+    for _ in range(3):
+        ask = next(action for action in env.game.legal_actions() if action.startswith("ASK "))
+        result = env.step(ask)[0]
+        assert result["done"] is False
+
+    assert all(action.startswith("ACT ") for action in env.game.legal_actions())
+    terminal = env.handle_invalid_response(
+        player_id=0,
+        actions=["ASK Alice F1"],
+        raw_response="<answer>ASK Alice F1</answer>",
+    )[0]
+    assert terminal["done"] is True
+    assert terminal["action"] == "ASK Alice F1"
+    assert terminal["info"]["success"] is True
+    assert terminal["info"]["administrative_terminal"] == 1.0
+    assert terminal["info"]["policy_failure"] == 1.0
+    assert terminal["info"]["illegal_ask_after_budget"] == 1.0
+    assert terminal["info"]["player_0_success"] is False
+    assert "artificial_truncation" not in terminal["info"]
+
+
 def test_decision_rule_hint_is_an_explicit_prompt_intervention():
     neutral = PivotalQueryEnv(PivotalQueryConfig()).get_prompt()["user"]
     hinted = PivotalQueryEnv(PivotalQueryConfig(decision_rule_hint=True)).get_prompt()["user"]
