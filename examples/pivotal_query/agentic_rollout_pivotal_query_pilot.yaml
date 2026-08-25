@@ -25,7 +25,9 @@ reference:
 
 actor_infer:
   generating_args:
-    max_new_tokens: 256
+    # The runtime injects the opening <answer> tag. The model only emits one
+    # symbolic action plus </answer>; 128 tokens is a generous protocol budget.
+    max_new_tokens: 128
     top_p: 0.8
     top_k: 20
     num_beams: 1
@@ -42,7 +44,7 @@ actor_infer:
 
 enable_think: false
 markovian_turn_context: true
-use_reason_answer_format: true
+use_reason_answer_format: false
 
 custom_envs:
   PivotalQuery-Known:
@@ -51,7 +53,7 @@ custom_envs:
     grid_vocab: false
     env_config:
       condition: known_pivotal
-      response_token_limit: 256
+      response_token_limit: 128
 
   PivotalQuery-Necessary:
     env_type: pivotal_query
@@ -60,7 +62,7 @@ custom_envs:
     env_config:
       condition: ask_necessary
       seed_offset: -10
-      response_token_limit: 256
+      response_token_limit: 128
 
   PivotalQuery-Costly:
     env_type: pivotal_query
@@ -69,7 +71,7 @@ custom_envs:
     env_config:
       condition: costly_query
       seed_offset: -20
-      response_token_limit: 256
+      response_token_limit: 128
 
   PivotalQuery-Irrelevant:
     env_type: pivotal_query
@@ -78,7 +80,7 @@ custom_envs:
     env_config:
       condition: irrelevant_uncertainty
       seed_offset: -30
-      response_token_limit: 256
+      response_token_limit: 128
 
 train_env_manager:
   max_invalid_retries_per_decision: 0

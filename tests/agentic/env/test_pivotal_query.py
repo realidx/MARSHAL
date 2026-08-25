@@ -221,9 +221,15 @@ def test_roll_adapter_parser_requires_one_legal_structured_action():
     env = PivotalQueryEnv(PivotalQueryConfig(condition="ask_necessary"))
     initial, _ = env.reset(seed=5)
     action = next(iter(initial["legal_actions"].values()))
-    response = f"<reason>decision value exceeds cost</reason><answer>{action}</answer>"
+    response = f"<answer>{action}</answer>"
     assert env.recover_action(response, initial["legal_actions"]) == action
-    assert env.recover_action(f"<answer>{action}</answer>", initial["legal_actions"]) is None
+    assert (
+        env.recover_action(
+            f"<reason>brief</reason><answer>{action}</answer>",
+            initial["legal_actions"],
+        )
+        == action
+    )
     assert env.recover_action(f"<reason>x</reason><answer>{action} extra</answer>", initial["legal_actions"]) is None
 
 

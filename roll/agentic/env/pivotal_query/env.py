@@ -90,7 +90,7 @@ class PivotalQueryEnv(BaseDiscreteActionEnv):
 
     def recover_action(self, response: str, legal_actions: Dict[int, str]) -> Optional[str]:
         match = re.fullmatch(
-            r"\s*<reason>.*?</reason>\s*<answer>\s*((?:ASK\s+[A-Za-z][A-Za-z0-9_-]*\s+[A-Za-z][A-Za-z0-9_-]*|ACT\s+[A-Za-z][A-Za-z0-9_-]*))\s*</answer>\s*",
+            r"\s*(?:<reason>.*?</reason>\s*)?<answer>\s*((?:ASK\s+[A-Za-z][A-Za-z0-9_-]*\s+[A-Za-z][A-Za-z0-9_-]*|ACT\s+[A-Za-z][A-Za-z0-9_-]*))\s*</answer>\s*",
             response,
             re.DOTALL | re.IGNORECASE,
         )
@@ -121,8 +121,9 @@ class PivotalQueryEnv(BaseDiscreteActionEnv):
                 "The listed communication cost is deducted immediately, and you may then "
                 f"decide again.{decision_hint}\n\n"
                 "Output exactly:\n"
-                "<reason>your analysis</reason>\n"
-                "<answer>ASK PARTNER FACT or ACT OPTION</answer>\n\n"
+                "<answer>ASK PARTNER FACT</answer>\n"
+                "or\n"
+                "<answer>ACT OPTION</answer>\n\n"
                 "Do not output anything else. A malformed or illegal response ends the episode."
             ),
         }
