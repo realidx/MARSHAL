@@ -14,7 +14,7 @@ class HiddenChoiceConfig:
     include_opponent_turn: str = "full"
     response_token_limit: int = 128
 
-    # One of: cycle, no_query, necessary_query,
+    # One of: cycle, no_query, cost_suppressed, necessary_query,
     # irrelevant_uncertainty, selective_query.
     condition: str = "cycle"
     communication_cost: float = 0.25
@@ -27,3 +27,6 @@ class HiddenChoiceConfig:
     shuffle_action_order: bool = True
     decision_rule_hint: bool = False
     full_information: bool = False
+    # Optional matched control: reveal exactly one fact before the first
+    # decision, without allowing the model to choose a query.
+    forced_information_fact: str | None = None

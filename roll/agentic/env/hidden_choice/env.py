@@ -34,7 +34,11 @@ class HiddenChoiceEnv(BaseDiscreteActionEnv):
     def reset(self, seed: Optional[int] = 0):
         self.episode_seed = int(0 if seed is None else seed) + int(self.config.seed_offset)
         instance = generate_instance(self.episode_seed, self.config.condition, self.config)
-        self.game = HiddenChoiceGame(instance, full_information=self.config.full_information)
+        self.game = HiddenChoiceGame(
+            instance,
+            full_information=self.config.full_information,
+            forced_information_fact=self.config.forced_information_fact,
+        )
         return {"observation": self.render(), "legal_actions": self.get_all_actions()}, []
 
     def step(self, action):
@@ -98,7 +102,7 @@ class HiddenChoiceEnv(BaseDiscreteActionEnv):
     def validate_response(self, response: str, legal_actions: Dict[int, str]) -> bool:
         """Validate the current protocol without requiring `</answer>`."""
         match = re.search(
-            r"<answer>\s*((?:ASK|ACT)\s+[A-Za-z][A-Za-z0-9_-]*)"
+            r"(?:<reason>.*?</reason>\s*)?<answer>\s*((?:ASK|ACT)\s+[A-Za-z][A-Za-z0-9_-]*)"
             r"(?:</answer>)?\s*$",
             response,
             re.DOTALL | re.IGNORECASE,
@@ -121,8 +125,9 @@ class HiddenChoiceEnv(BaseDiscreteActionEnv):
                 "listed communication cost. After receiving the answer, you will make one "
                 "final ACT decision.\n\n"
                 "Your objective is to maximize expected total utility, including communication cost.\n\n"
-                "Reason carefully, then finish with exactly one listed legal action "
-                "inside <answer> and </answer>, such as <answer>ACT X</answer>. "
+                "Reason carefully inside a <reason>...</reason> block, then finish "
+                "with exactly one listed legal action inside <answer> and </answer>, "
+                "such as <reason>brief reasoning</reason><answer>ACT X</answer>. "
                 "Do not output anything else."
             ),
         }

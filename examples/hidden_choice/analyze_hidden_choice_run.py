@@ -8,6 +8,7 @@ from collections import defaultdict
 import json
 from pathlib import Path
 import re
+from math import sqrt
 
 TIERS = {"Near": 0.05, "Medium": 0.25, "Far": 1.0}
 CONDITIONS = {
@@ -15,25 +16,37 @@ CONDITIONS = {
     "Necessary": "necessary_query",
     "Irrelevant": "irrelevant_uncertainty",
     "Selective": "selective_query",
+    # Appended to preserve seed offsets for legacy NoQuery/Necessary/
+    # Irrelevant/Selective runs.
+    "CostSuppressed": "cost_suppressed",
 }
 TIER_ORDER = tuple(TIERS)
 CONDITION_ORDER = tuple(CONDITIONS)
-MODE_ORDER = ("Hidden", "Full")
+MODE_ORDER = ("Hidden", "Full", "Forced")
 
 
 def parse_tag(tag: str):
     match = re.fullmatch(
-        r"HC-(Near|Medium|Far)-(NoQuery|Necessary|Irrelevant|Selective)-(Hidden|Full)",
+        r"HC-(Near|Medium|Far)-(NoQuery|CostSuppressed|Necessary|Irrelevant|Selective)-(Hidden|Full|Forced)",
         tag,
     )
     if match is None:
         raise ValueError(f"unexpected Hidden Choice tag {tag!r}")
     tier, condition_label, mode = match.groups()
-    tag_index = (
-        TIER_ORDER.index(tier) * len(CONDITION_ORDER) * len(MODE_ORDER)
-        + CONDITION_ORDER.index(condition_label) * len(MODE_ORDER)
-        + MODE_ORDER.index(mode)
-    )
+    legacy_conditions = ("NoQuery", "Necessary", "Irrelevant", "Selective")
+    if condition_label in legacy_conditions and mode in ("Hidden", "Full"):
+        # Preserve the seed mapping used by all existing runs.
+        tag_index = (
+            TIER_ORDER.index(tier) * len(legacy_conditions) * 2
+            + legacy_conditions.index(condition_label) * 2
+            + (0 if mode == "Hidden" else 1)
+        )
+    else:
+        tag_index = (
+            TIER_ORDER.index(tier) * len(CONDITION_ORDER) * len(MODE_ORDER)
+            + CONDITION_ORDER.index(condition_label) * len(MODE_ORDER)
+            + MODE_ORDER.index(mode)
+        )
     return {
         "tier": tier,
         "magnitude": TIERS[tier],
@@ -50,6 +63,17 @@ def _mean(values):
 
 def _rate(numerator, denominator):
     return float(numerator) / denominator if denominator else None
+
+
+def _wilson(successes, trials, z=1.96):
+    """Approximate 95% binomial interval for reproducible small-N reports."""
+    if not trials:
+        return None
+    p = successes / trials
+    denominator = 1.0 + z * z / trials
+    center = (p + z * z / (2.0 * trials)) / denominator
+    half = z * sqrt(p * (1.0 - p) / trials + z * z / (4.0 * trials * trials)) / denominator
+    return (max(0.0, center - half), min(1.0, center + half))
 
 
 def recover_semantic_action(turn, legal_actions):
@@ -73,7 +97,7 @@ def strict_answer_protocol_valid(turn, legal_actions):
     """Validate the V3 protocol: `<answer>` + one action, no close required."""
     raw = str(turn.get("raw_response", ""))
     match = re.search(
-        r"<answer>\s*((?:ASK|ACT)\s+[A-Za-z][A-Za-z0-9_-]*)"
+        r"(?:<reason>.*?</reason>\s*)?<answer>\s*((?:ASK|ACT)\s+[A-Za-z][A-Za-z0-9_-]*)"
         r"(?:</answer>)?\s*$",
         raw,
         re.DOTALL | re.IGNORECASE,
@@ -98,7 +122,12 @@ def reconstruct_trajectory(turns):
     config = HiddenChoiceConfig(margin_magnitude=spec["magnitude"])
     instance = generate_instance(seed, spec["condition"], config)
     full_information = spec["mode"] == "full"
-    game = HiddenChoiceGame(instance, full_information=full_information)
+    forced_information = spec["mode"] == "forced"
+    game = HiddenChoiceGame(
+        instance,
+        full_information=full_information,
+        forced_information_fact=instance.pivotal_fact if forced_information else None,
+    )
     protocol_failure = False
     stopping_failure = False
     strict_protocol_valid = True
@@ -158,6 +187,7 @@ def reconstruct_trajectory(turns):
         **spec,
         "tag": turns[0]["tag"],
         "trajectory_id": turns[0]["trajectory_id"],
+        "family_id": instance.family_id,
         "rollout_index": turns[0]["rollout_index"],
         "oracle_margin": max_voi - instance.communication_cost,
         "strict_protocol_valid": float(strict_protocol_valid),
@@ -173,6 +203,9 @@ def reconstruct_trajectory(turns):
         "post_query_eligible": float(post_query_eligible),
         "final_action_optimal": float(info.get("final_action_optimal", 0.0)) if first_semantic_valid else None,
         "full_info_action_correct": float(info.get("full_info_action_correct", 0.0)),
+        "forced_info_action_correct": float(
+            info.get("final_action_optimal", 0.0) if forced_information else 0.0
+        ),
         "benchmark_success": float(info.get("benchmark_success", 0.0)),
         "total_utility": game.total_reward,
         "path_regret": path_regret,
@@ -183,6 +216,28 @@ def reconstruct_trajectory(turns):
 
 
 def aggregate(records):
+    # A matched pair is only formed when hidden/full runs reconstruct the same
+    # exact family_id. This prevents silently treating different states as
+    # controls when an old run used different seed offsets.
+    full_by_family = {
+        record["family_id"]: record
+        for record in records
+        if record["mode"] == "full"
+    }
+    for record in records:
+        if record["mode"] == "hidden":
+            matched = full_by_family.get(record["family_id"])
+            record["matched_full_info_correct"] = (
+                matched["full_info_action_correct"] if matched is not None else None
+            )
+            record["under_query_given_full_correct"] = (
+                record["under_querying"]
+                if matched is not None and matched["full_info_action_correct"] == 1.0
+                else None
+            )
+        else:
+            record["matched_full_info_correct"] = None
+            record["under_query_given_full_correct"] = None
     grouped = defaultdict(list)
     for record in records:
         grouped[(record["tier"], record["condition"], record["mode"])].append(record)
@@ -208,9 +263,17 @@ def aggregate(records):
                 "semantic_action_validity": _mean(record["semantic_action_valid"] for record in group),
                 "voi_policy_coverage": _mean(record["voi_policy_eligible"] for record in group),
                 "ask_rate": _mean(record["first_ask"] if record["voi_policy_eligible"] else None for record in group),
+                "ask_rate_ci": _wilson(
+                    sum(record["first_ask"] for record in group if record["voi_policy_eligible"]),
+                    sum(1 for record in group if record["voi_policy_eligible"]),
+                ),
                 "ask_act_accuracy": _mean(record["ask_act_correct"] if record["voi_policy_eligible"] else None for record in group),
                 "over_query_rate": _mean(record["over_querying"] for record in group),
                 "under_query_rate": _mean(record["under_querying"] for record in group),
+                "under_query_rate_ci": _wilson(
+                    sum(record["under_querying"] for record in group if record["voi_policy_eligible"]),
+                    sum(1 for record in group if record["voi_policy_eligible"]),
+                ),
                 "query_selection_accuracy": _rate(
                     sum(
                         record["query_selection_correct"]
@@ -231,6 +294,9 @@ def aggregate(records):
                 "full_info_action_accuracy": _mean(
                     record["full_info_action_correct"] for record in group
                 ) if mode == "full" else None,
+                "under_query_given_full_correct": _mean(
+                    record["under_query_given_full_correct"] for record in group
+                ) if mode == "hidden" else None,
                 "benchmark_success_rate": _mean(record["benchmark_success"] for record in group),
                 "voi_policy_success_rate": _mean(
                     record["benchmark_success"] if record["voi_policy_eligible"] else None
@@ -254,7 +320,18 @@ def aggregate(records):
         {"oracle_margin": margin, "ask_rate": _mean(values), "trajectories": len(values)}
         for margin, values in sorted(by_margin.items())
     ]
-    return {"rows": rows, "ask_curve": ask_curve, "trajectories": len(records)}
+    matched_hidden = [
+        record for record in hidden if record.get("under_query_given_full_correct") is not None
+    ]
+    return {
+        "rows": rows,
+        "ask_curve": ask_curve,
+        "trajectories": len(records),
+        "matched_pair_count": len(matched_hidden),
+        "matched_under_query_given_full_correct": _mean(
+            record["under_query_given_full_correct"] for record in matched_hidden
+        ),
+    }
 
 
 def _percent(value):
@@ -265,14 +342,14 @@ def render_markdown(summary):
     lines = [
         "# Hidden Choice diagnostic",
         "",
-        "The report separates strict envelope compliance, recoverable semantic actions, and VOI policy metrics. VOI metrics are computed only for trajectories whose first action is semantically recoverable.",
+        "The report separates strict envelope compliance, recoverable semantic actions, and VOI policy metrics. VOI metrics are computed only for trajectories whose first action is semantically recoverable. Matched hidden/full metrics are reported only when family_id agrees exactly.",
         "",
-        "| Margin | Condition | Mode | N | Strict | Semantic | VOI cov. | ASK | Over-query | Under-query | Query selection | Post-query act | VOI success | Full-info act | Protocol fail |",
+        "| Margin | Condition | Mode | N | Strict | Semantic | VOI cov. | ASK | Over-query | Under-query | Under-query\n(full-info correct) | Query selection | Post-query act | VOI success | Full-info act | Protocol fail |",
         "|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in summary["rows"]:
         lines.append(
-            "| {oracle_margin:+.2f} | {condition} | {mode} | {trajectories} | {strict} | {semantic} | {coverage} | {ask} | {over} | {under} | {selection} | {post} | {voisuccess} | {full} | {protocol} |".format(
+            "| {oracle_margin:+.2f} | {condition} | {mode} | {trajectories} | {strict} | {semantic} | {coverage} | {ask} | {over} | {under} | {under_matched} | {selection} | {post} | {voisuccess} | {full} | {protocol} |".format(
                 **row,
                 strict=_percent(row["strict_protocol_validity"]),
                 semantic=_percent(row["semantic_action_validity"]),
@@ -280,6 +357,7 @@ def render_markdown(summary):
                 ask=_percent(row["ask_rate"]),
                 over=_percent(row["over_query_rate"]),
                 under=_percent(row["under_query_rate"]),
+                under_matched=_percent(row["under_query_given_full_correct"]),
                 selection=_percent(row["query_selection_accuracy"]),
                 post=_percent(row["post_query_action_accuracy"]),
                 voisuccess=_percent(row["voi_policy_success_rate"]),
@@ -294,6 +372,15 @@ def render_markdown(summary):
         lines.append(
             f"| {point['oracle_margin']:+.2f} | {point['trajectories']} | {_percent(point['ask_rate'])} |"
         )
+    lines.extend(
+        [
+            "",
+            "## Matched hidden/full control",
+            "",
+            f"Exact family matches: {summary.get('matched_pair_count', 0)}",
+            f"Under-query rate conditioned on matched full-info correctness: {_percent(summary.get('matched_under_query_given_full_correct'))}",
+        ]
+    )
     return "\n".join(lines) + "\n"
 
 

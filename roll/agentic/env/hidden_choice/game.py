@@ -9,23 +9,37 @@ from .types import HiddenChoiceInstance
 
 
 class HiddenChoiceGame:
-    def __init__(self, instance: HiddenChoiceInstance, full_information: bool = False):
+    def __init__(
+        self,
+        instance: HiddenChoiceInstance,
+        full_information: bool = False,
+        forced_information_fact: Optional[str] = None,
+    ):
         self.instance = instance
         self.oracle = OneShotVOIOracle(instance)
         self.full_information = bool(full_information)
+        if forced_information_fact == "pivotal":
+            forced_information_fact = instance.pivotal_fact
+        self.forced_information_fact = forced_information_fact
+        if forced_information_fact is not None:
+            if forced_information_fact not in instance.fact_names:
+                raise ValueError(f"unknown forced information fact {forced_information_fact!r}")
+            if self.full_information:
+                raise ValueError("forced information and full information are mutually exclusive")
         self.known: Dict[str, str] = (
             dict(zip(instance.fact_names, instance.actual_values))
             if self.full_information
-            else {}
+            else ({forced_information_fact: instance.actual_value(forced_information_fact)}
+                  if forced_information_fact is not None else {})
         )
-        self.query_used = False
+        self.query_used = forced_information_fact is not None
         self.records: List[Dict[str, Any]] = []
         self.done = False
         self.total_reward = 0.0
         self.final_option: Optional[str] = None
         self.communication_decision = self.oracle.solve()
         self.initial_decision = self.oracle.solve(
-            self.known, allow_questions=not self.full_information
+            self.known, allow_questions=not self.full_information and not self.query_used
         )
 
     def legal_actions(self):
@@ -95,6 +109,7 @@ class HiddenChoiceGame:
                 "condition": self.instance.condition,
                 "family_id": self.instance.family_id,
                 "full_information": float(self.full_information),
+                "forced_information": float(self.forced_information_fact is not None),
                 "step_reward": reward,
                 "num_asks": float(self.query_used),
                 "game_transition": 1.0,
@@ -117,7 +132,7 @@ class HiddenChoiceGame:
         )
         final_correct = bool(final_record and final_record["optimal_action"])
         correct_query = bool(first_ask and first["query_correct"])
-        if self.full_information:
+        if self.full_information or self.forced_information_fact is not None:
             benchmark_success = bool(not first_ask and first_optimal)
         else:
             benchmark_success = (
@@ -134,6 +149,7 @@ class HiddenChoiceGame:
             "total_return": self.total_reward,
             "initial_should_ask": float(should_ask),
             "full_information": float(self.full_information),
+            "forced_information": float(self.forced_information_fact is not None),
             "max_gross_voi": max_voi,
             "communication_cost": self.instance.communication_cost,
             "oracle_margin": max_voi - self.instance.communication_cost,

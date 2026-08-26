@@ -31,6 +31,9 @@ def check_instance(instance: HiddenChoiceInstance, tolerance: float = 1e-9) -> S
     if instance.condition == "no_query":
         passed = max_voi <= instance.communication_cost + tolerance
         passed = passed and len({world.utilities for world in instance.worlds}) == 1
+    elif instance.condition == "cost_suppressed":
+        passed = 0.0 < max_voi < instance.communication_cost - tolerance
+        passed = passed and len(valuable) == 0
     elif instance.condition == "necessary_query":
         passed = len(valuable) == 1
     elif instance.condition == "irrelevant_uncertainty":

@@ -45,6 +45,7 @@ HiddenChoiceGame = GAME.HiddenChoiceGame
 OneShotVOIOracle = ORACLE.OneShotVOIOracle
 generate_instance = GENERATOR.generate_instance
 generate_matched_quartet = GENERATOR.generate_matched_quartet
+generate_threshold_pair = GENERATOR.generate_threshold_pair
 aggregate_metrics = METRICS.aggregate_hidden_choice_metrics
 generate_observation = OBSERVATION.generate_observation
 check_instance = SANITY.check_instance
@@ -113,6 +114,37 @@ def test_gross_voi_is_separate_from_communication_cost():
     assert next(iter(dict(cheap.gross_voi).values())) == pytest.approx(0.5)
     assert cheap.should_ask is True
     assert expensive.should_ask is False
+
+
+def test_cost_suppressed_has_positive_gross_but_negative_net_voi():
+    instance = generate_instance(19, "cost_suppressed", HiddenChoiceConfig(margin_magnitude=0.25))
+    decision = OneShotVOIOracle(instance).solve()
+    report = check_instance(instance)
+    assert 0.0 < report.max_gross_voi < instance.communication_cost
+    assert decision.should_ask is False
+    assert report.oracle_margin == pytest.approx(-0.125)
+
+
+def test_forced_relevant_information_reveals_only_pivotal_fact():
+    env = HiddenChoiceEnv(
+        HiddenChoiceConfig(condition="selective_query", forced_information_fact="pivotal")
+    )
+    initial, _ = env.reset(seed=52)
+    assert all(action.startswith("ACT ") for action in initial["legal_actions"].values())
+    assert "Known hidden facts:" in initial["observation"]
+    action = next(action for action in env.game.initial_decision.optimal_actions if action.startswith("ACT "))
+    terminal = env.step(action)[0]
+    assert terminal["info"]["forced_information"] == 1.0
+
+
+def test_threshold_pair_changes_only_cost_and_crosses_oracle_boundary():
+    cheap, expensive = generate_threshold_pair(17, gross_value=0.8)
+    assert cheap.worlds == expensive.worlds
+    assert cheap.actual_values == expensive.actual_values
+    assert cheap.communication_cost == pytest.approx(0.3)
+    assert expensive.communication_cost == pytest.approx(0.9)
+    assert OneShotVOIOracle(cheap).solve().should_ask is True
+    assert OneShotVOIOracle(expensive).solve().should_ask is False
 
 
 @pytest.mark.parametrize("magnitude", [0.05, 0.25, 1.0])
@@ -236,8 +268,18 @@ def test_adapter_parser_recovers_one_listed_action_without_closing_tag():
     assert env.recover_action(f"<answer>{action}</answer>", initial["legal_actions"]) == action
     assert env.recover_action(f"<answer>{action}", initial["legal_actions"]) == action
     assert env.recover_action(f"<reason>reason</reason><answer>{action}", initial["legal_actions"]) == action
+    assert env.validate_response(
+        f"<reason>reason</reason><answer>{action}</answer>", initial["legal_actions"]
+    )
     assert env.validate_response(f"<answer>{action}", initial["legal_actions"])
     assert not env.validate_response(f"<answer>{action}</answer></", initial["legal_actions"])
+
+
+def test_prompt_explicitly_uses_reason_then_answer_protocol():
+    env = HiddenChoiceEnv(HiddenChoiceConfig(condition="selective_query"))
+    prompt = env.get_prompt()["user"]
+    assert "<reason>...</reason>" in prompt
+    assert "<answer>ACT X</answer>" in prompt
 
 
 def test_aggregate_metrics_keeps_failure_modes_separate():

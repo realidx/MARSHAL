@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import itertools
 import random
+from dataclasses import replace
 from typing import Dict, Optional
 
 from .config import HiddenChoiceConfig
@@ -18,6 +19,7 @@ CONDITIONS = (
     "irrelevant_uncertainty",
     "selective_query",
 )
+SUPPORTED_CONDITIONS = (*CONDITIONS, "cost_suppressed")
 
 
 def _family_id(seed: int) -> str:
@@ -32,7 +34,7 @@ def generate_instance(
     config = config or HiddenChoiceConfig()
     if condition == "cycle":
         condition = CONDITIONS[seed % len(CONDITIONS)]
-    if condition not in CONDITIONS:
+    if condition not in SUPPORTED_CONDITIONS:
         raise ValueError(f"unknown Hidden Choice condition {condition!r}")
     margin_magnitude = config.margin_magnitude
     if margin_magnitude is not None and margin_magnitude <= 0:
@@ -48,7 +50,12 @@ def generate_instance(
     # With risky utilities safe_value +/- signal_gap, one binary answer has
     # gross VOI signal_gap/2. This makes Delta exactly positive_margin.
     safe_value = 5.0
-    signal_gap = 2.0 * (communication_cost + positive_margin)
+    if condition == "cost_suppressed":
+        # The pivotal fact changes the decision, but its gross value is only
+        # half the communication cost: 0 < G(q*) < c.
+        signal_gap = communication_cost
+    else:
+        signal_gap = 2.0 * (communication_cost + positive_margin)
 
     rng = random.Random(seed)
     fact_names = ["F1", "F2", "F3"]
@@ -90,7 +97,7 @@ def generate_instance(
     for values in assignments:
         pivotal_value = values[fact_names.index(pivotal_fact)]
         nuisance_value = values[fact_names.index(nuisance_fact)]
-        if condition in ("necessary_query", "selective_query"):
+        if condition in ("necessary_query", "selective_query", "cost_suppressed"):
             role_utilities = {
                 "risky": safe_value + signal_gap if pivotal_value == "1" else safe_value - signal_gap,
                 "safe": safe_value,
@@ -143,11 +150,14 @@ def generate_instance(
         pivotal_fact=pivotal_fact,
     )
     report = check_instance(instance)
-    expected_margin = (
-        positive_margin
-        if condition in ("necessary_query", "selective_query")
-        else -communication_cost
-    )
+    if condition == "cost_suppressed":
+        expected_margin = -communication_cost / 2.0
+    else:
+        expected_margin = (
+            positive_margin
+            if condition in ("necessary_query", "selective_query")
+            else -communication_cost
+        )
     if abs(report.oracle_margin - expected_margin) > 1e-9:
         raise ValueError(
             f"generator missed requested oracle margin: {report.oracle_margin} != {expected_margin}"
@@ -163,3 +173,31 @@ def generate_matched_quartet(
         condition: generate_instance(seed, condition, config)
         for condition in CONDITIONS
     }
+
+
+def generate_threshold_pair(
+    seed: int,
+    condition: str = "selective_query",
+    gross_value: float = 0.8,
+    costs: tuple[float, float] = (0.3, 0.9),
+    config: Optional[HiddenChoiceConfig] = None,
+) -> tuple[HiddenChoiceInstance, HiddenChoiceInstance]:
+    """Create a counterfactual pair with identical worlds and different costs.
+
+    The base instance is constructed so its pivotal query has the requested
+    gross value, then only ``communication_cost`` is intervened on. The pair
+    therefore crosses the oracle threshold without changing the task state.
+    """
+    if condition not in ("necessary_query", "selective_query"):
+        raise ValueError("threshold pairs require necessary_query or selective_query")
+    if gross_value <= 0 or not (costs[0] < gross_value < costs[1]):
+        raise ValueError("costs must straddle a positive gross_value")
+    base_config = config or HiddenChoiceConfig()
+    base_config = replace(
+        base_config,
+        communication_cost=gross_value / 2.0,
+        margin_magnitude=gross_value / 2.0,
+    )
+    base = generate_instance(seed, condition, base_config)
+    pair = tuple(replace(base, communication_cost=float(cost)) for cost in costs)
+    return pair  # type: ignore[return-value]
