@@ -117,7 +117,9 @@ def reconstruct_trajectory(turns):
             continue
         protocol_failure = True
         stopping_failure = bool(
-            action.startswith("ASK ") and not full_information and game.query_used
+            (action or "").startswith("ASK ")
+            and not full_information
+            and game.query_used
         )
         break
 
