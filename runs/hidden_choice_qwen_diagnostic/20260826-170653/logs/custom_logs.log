@@ -1,0 +1,914 @@
+add logger: log_rank_DRIVER_0_1
+Created or verified log directory: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs
+Added logging to file: /home/e/e1300530/MARSHAL/runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/log_rank_DRIVER_0_1.log
+custom_env:
+  SimpleSokoban:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      dim_x: 6
+      dim_y: 6
+      num_boxes: 1
+      max_steps: 100
+  LargerSokoban:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      dim_x: 8
+      dim_y: 8
+      num_boxes: 2
+      max_steps: 100
+      search_depth: 10
+  SokobanDifferentGridVocab:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      search_depth: 30
+      dim_x: 6
+      dim_y: 6
+      num_boxes: 1
+      max_steps: 100
+      grid_lookup:
+        0: W
+        1: .
+        2: G
+        3: C
+        4: B
+        5: A
+        6: '@'
+      grid_vocab:
+        W: wall
+        .: empty
+        G: target
+        C: box on target
+        B: box
+        A: player
+        '@': player on target
+  VisualSimpleSokoban:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      dim_x: 6
+      dim_y: 6
+      num_boxes: 1
+      max_steps: 100
+      render_mode: rgb_array
+  Countdown:
+    env_type: countdown
+    max_actions_per_traj: 1
+    env_instruction: 'You are solving the Countdown puzzle. You should use the num
+      list to create an equation that equals the target. Example answer format: <think>
+      To find an equation using [3, 5, 2] to get 4. Let''s check 2 + 5 = 7, 7 - 3
+      = 4. So the answer is 2 + 5 - 3 = 4. </think><answer>2 + 5 - 3</answer>'
+    max_tokens: 100
+    env_config: null
+  Bandit:
+    env_type: bandit
+    max_actions_per_traj: 1
+    env_instruction: ''
+    max_tokens: 100
+    env_config:
+      lo_arm_name: Phoenix
+      hi_arm_name: Dragon
+  BanditTest:
+    env_type: bandit
+    max_actions_per_traj: 1
+    env_instruction: ''
+    max_tokens: 100
+    env_config:
+      lo_arm_name: Trader
+      hi_arm_name: Librarian
+  FrozenLake:
+    env_type: frozen_lake
+    max_actions_per_traj: 10
+    env_instruction: You are solving the FrozenLake puzzle. Forbid the whole and go
+      to the target. You may move to the unintended direction due to the slippery
+      ice. The answer must be a sequence of actions, like <answer>Right || Right ||
+      Up</answer>
+    max_tokens: 100
+    env_config: null
+  MetamathQA:
+    env_type: metamathqa
+    max_actions_per_traj: 1
+    env_instruction: 'You are solving Math problems. '
+    max_tokens: 100
+    env_config: null
+  WebShop:
+    env_type: webshop
+    max_actions_per_traj: 30
+    env_instruction: 'You are browsing an online shop. Based on the instruction, find
+      the product that matches the production description. You need to iteratively
+      take action, read the website and decide what action to take next until finding
+      the product. Available actions depends on the page: in the search page you can
+      search keywords, in the search result page you can click an item url or click[next
+      >] to navigate to next page, in the product page you can click[description]
+      or click[features] to see the details, click[blue] or click[x-large] to choose
+      size and colors, click[buy now] when you decided to buy the product, click[back
+      to search] to return to search page. Example process: I need a gingko light
+      and 20x20 pillow cover that is hand painted. First search[gingko light 20x20
+      pillow cover hand painted], answer format: <answer>search[blanket with fleece
+      throw]</answer>. Valid answer is search[<keywords>] or click[<clickable>].'
+    max_tokens: 100
+    env_config: null
+deepspeed_zero:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 0
+  checkpoint:
+    tag_validation: IGNORE
+deepspeed_zero2:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 2
+    allgather_partitions: true
+    allgather_bucket_size: 1000000000.0
+    overlap_comm: true
+    reduce_scatter: true
+    reduce_bucket_size: 500000000.0
+    contiguous_gradients: true
+deepspeed_zero3:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 3
+    overlap_comm: true
+    contiguous_gradients: true
+    sub_group_size: 1000000000.0
+    reduce_bucket_size: auto
+    stage3_prefetch_bucket_size: auto
+    stage3_param_persistence_threshold: auto
+    stage3_max_live_parameters: 1000000000.0
+    stage3_max_reuse_distance: 1000000000.0
+    stage3_gather_16bit_weights_on_model_save: true
+deepspeed_zero3_cpuoffload:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 3
+    offload_optimizer:
+      device: cpu
+      pin_memory: true
+    overlap_comm: true
+    contiguous_gradients: true
+    sub_group_size: 1000000000.0
+    reduce_bucket_size: auto
+    stage3_prefetch_bucket_size: auto
+    stage3_param_persistence_threshold: auto
+    stage3_max_live_parameters: 1000000000.0
+    stage3_max_reuse_distance: 1000000000.0
+    stage3_gather_16bit_weights_on_model_save: true
+exp_name: hidden_choice_qwen_zero_shot_diagnostic
+seed: 42
+logging_dir: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs
+output_dir: ./runs/hidden_choice_qwen_diagnostic/20260826-170653
+system_envs:
+  USE_MODELSCOPE: '1'
+track_with: tensorboard
+tracker_kwargs:
+  log_dir: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/tensorboard
+num_gpus_per_node: 1
+max_steps: 1
+save_steps: 1000000
+logging_steps: 1
+eval_steps: 10
+resume_from_checkpoint: false
+rollout_batch_size: 480
+val_batch_size: 32
+sequence_length: 4096
+dual_clip_loss: true
+ppo_epochs: 1
+adv_estimator: reinforce
+init_kl_coef: 0.0
+use_kl_loss: true
+kl_loss_coef: 0.2
+whiten_advantages: false
+entropy_loss_coef: 0
+pretrain: /home/e/e1300530/models/Qwen3-4B-Instruct-2507
+actor_train:
+  model_args:
+    flash_attn: fa2
+    disable_gradient_checkpointing: false
+    dtype: bf16
+    model_type: null
+  training_args:
+    lr_scheduler_type: cosine_with_min_lr
+    learning_rate: 1.0e-06
+    weight_decay: 0.05
+    adam_beta1: 0.9
+    adam_beta2: 0.95
+    per_device_train_batch_size: 1
+    gradient_accumulation_steps: 4
+    warmup_steps: 10
+  data_args:
+    template: qwen3
+  strategy_args:
+    strategy_name: megatron_train
+    strategy_config:
+      sequence_parallel: true
+      tensor_model_parallel_size: 2
+      pipeline_model_parallel_size: 1
+      expert_model_parallel_size: 1
+      use_distributed_optimizer: true
+      recompute_granularity: full
+      accumulate_allreduce_grads_in_fp32: true
+      check_for_nan_in_loss_and_grad: false
+  device_mapping: list(range(0,1))
+  infer_batch_size: 1
+actor_infer:
+  model_args:
+    flash_attn: fa2
+    disable_gradient_checkpointing: true
+    dtype: bf16
+  generating_args:
+    max_new_tokens: 1024
+    top_p: 0.8
+    top_k: 20
+    num_beams: 1
+    temperature: 0.7
+    num_return_sequences: 1
+    stop: []
+    include_stop_str_in_output: false
+  data_args:
+    template: qwen3
+  strategy_args:
+    strategy_name: vllm
+    strategy_config:
+      gpu_memory_utilization: 0.8
+      block_size: 16
+      load_format: auto
+      max_model_len: 4096
+      tensor_parallel_size: 1
+  device_mapping: list(range(0,1))
+reference:
+  model_args:
+    flash_attn: fa2
+    disable_gradient_checkpointing: true
+    dtype: bf16
+    model_type: null
+  data_args:
+    template: qwen3
+  strategy_args:
+    strategy_name: hf_infer
+    strategy_config: null
+  device_mapping: list(range(0,1))
+  infer_batch_size: 1
+enable_response_mask: true
+action_sep: '||'
+use_turn_scores: true
+enable_think: true
+max_actions_per_traj: 2
+reward_normalization:
+  grouping: tags
+  method: identity
+  separate_norm_for_selfplay: false
+whiten_rewards: false
+advantage_norm: null
+pg_clip_high: 0.2
+custom_envs:
+  TicTacToe:
+    env_type: tictactoe
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      response_token_limit: 600
+      reward_mode: minimax_counterfactual
+      minimax_discount: 0.9
+      precompute_minimax: true
+  TicTacToe-first-100:
+    env_type: tictactoe
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 0.9
+      precompute_minimax: true
+  TicTacToe-second-100:
+    env_type: tictactoe
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 0.9
+      precompute_minimax: true
+  TicTacToe-first-1000:
+    env_type: tictactoe
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      max_simulations: 1000
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 0.9
+      precompute_minimax: true
+  TicTacToe-second-1000:
+    env_type: tictactoe
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      max_simulations: 1000
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 0.9
+      precompute_minimax: true
+  Connect4-first-100:
+    env_type: connect_four
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      render_mode: text
+  Connect4-second-100:
+    env_type: connect_four
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      render_mode: text
+  Connect4-first-1000:
+    env_type: connect_four
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      max_simulations: 1000
+      render_mode: text
+  Connect4-second-1000:
+    env_type: connect_four
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      max_simulations: 1000
+      render_mode: text
+  KuhnPoker-first:
+    env_type: kuhn_poker
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      built_in_opponent: cfr
+      render_mode: text
+  KuhnPoker-second:
+    env_type: kuhn_poker
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      built_in_opponent: cfr
+      opponent_player: 0
+      render_mode: text
+  LeducPoker-first:
+    env_type: leduc_poker
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      built_in_opponent: ne
+      render_mode: text
+  LeducPoker-second:
+    env_type: leduc_poker
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      built_in_opponent: ne
+      opponent_player: 0
+      render_mode: text
+  MiniHanabi:
+    env_type: hanabi
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      render_mode: text
+  SimpleHanabi:
+    env_type: hanabi
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      render_mode: text
+      colors: 3
+      ranks: 2
+      hand_size: 5
+      max_information_tokens: 8
+      max_life_tokens: 3
+  FullHanabi:
+    env_type: hanabi
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      render_mode: text
+      colors: 3
+      ranks: 3
+      hand_size: 5
+      max_information_tokens: 8
+      max_life_tokens: 3
+  HC-Near-NoQuery-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: no_query
+      margin_magnitude: 0.05
+      response_token_limit: 128
+  HC-Near-NoQuery-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: no_query
+      margin_magnitude: 0.05
+      full_information: true
+      seed_offset: -5
+      response_token_limit: 128
+  HC-Near-Necessary-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: necessary_query
+      margin_magnitude: 0.05
+      seed_offset: -10
+      response_token_limit: 128
+  HC-Near-Necessary-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: necessary_query
+      margin_magnitude: 0.05
+      full_information: true
+      seed_offset: -15
+      response_token_limit: 128
+  HC-Near-Irrelevant-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: irrelevant_uncertainty
+      margin_magnitude: 0.05
+      seed_offset: -20
+      response_token_limit: 128
+  HC-Near-Irrelevant-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: irrelevant_uncertainty
+      margin_magnitude: 0.05
+      full_information: true
+      seed_offset: -25
+      response_token_limit: 128
+  HC-Near-Selective-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: selective_query
+      margin_magnitude: 0.05
+      seed_offset: -30
+      response_token_limit: 128
+  HC-Near-Selective-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: selective_query
+      margin_magnitude: 0.05
+      full_information: true
+      seed_offset: -35
+      response_token_limit: 128
+  HC-Medium-NoQuery-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: no_query
+      margin_magnitude: 0.25
+      seed_offset: -40
+      response_token_limit: 128
+  HC-Medium-NoQuery-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: no_query
+      margin_magnitude: 0.25
+      full_information: true
+      seed_offset: -45
+      response_token_limit: 128
+  HC-Medium-Necessary-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: necessary_query
+      margin_magnitude: 0.25
+      seed_offset: -50
+      response_token_limit: 128
+  HC-Medium-Necessary-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: necessary_query
+      margin_magnitude: 0.25
+      full_information: true
+      seed_offset: -55
+      response_token_limit: 128
+  HC-Medium-Irrelevant-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: irrelevant_uncertainty
+      margin_magnitude: 0.25
+      seed_offset: -60
+      response_token_limit: 128
+  HC-Medium-Irrelevant-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: irrelevant_uncertainty
+      margin_magnitude: 0.25
+      full_information: true
+      seed_offset: -65
+      response_token_limit: 128
+  HC-Medium-Selective-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: selective_query
+      margin_magnitude: 0.25
+      seed_offset: -70
+      response_token_limit: 128
+  HC-Medium-Selective-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: selective_query
+      margin_magnitude: 0.25
+      full_information: true
+      seed_offset: -75
+      response_token_limit: 128
+  HC-Far-NoQuery-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: no_query
+      margin_magnitude: 1.0
+      seed_offset: -80
+      response_token_limit: 128
+  HC-Far-NoQuery-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: no_query
+      margin_magnitude: 1.0
+      full_information: true
+      seed_offset: -85
+      response_token_limit: 128
+  HC-Far-Necessary-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: necessary_query
+      margin_magnitude: 1.0
+      seed_offset: -90
+      response_token_limit: 128
+  HC-Far-Necessary-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: necessary_query
+      margin_magnitude: 1.0
+      full_information: true
+      seed_offset: -95
+      response_token_limit: 128
+  HC-Far-Irrelevant-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: irrelevant_uncertainty
+      margin_magnitude: 1.0
+      seed_offset: -100
+      response_token_limit: 128
+  HC-Far-Irrelevant-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: irrelevant_uncertainty
+      margin_magnitude: 1.0
+      full_information: true
+      seed_offset: -105
+      response_token_limit: 128
+  HC-Far-Selective-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: selective_query
+      margin_magnitude: 1.0
+      seed_offset: -110
+      response_token_limit: 128
+  HC-Far-Selective-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config:
+      condition: selective_query
+      margin_magnitude: 1.0
+      full_information: true
+      seed_offset: -115
+      response_token_limit: 128
+train_env_manager:
+  format_penalty: 0.0
+  max_env_num_per_worker: 30
+  env_groups: 120
+  group_size: 4
+  tags:
+  - HC-Near-NoQuery-Hidden
+  - HC-Near-NoQuery-Full
+  - HC-Near-Necessary-Hidden
+  - HC-Near-Necessary-Full
+  - HC-Near-Irrelevant-Hidden
+  - HC-Near-Irrelevant-Full
+  - HC-Near-Selective-Hidden
+  - HC-Near-Selective-Full
+  - HC-Medium-NoQuery-Hidden
+  - HC-Medium-NoQuery-Full
+  - HC-Medium-Necessary-Hidden
+  - HC-Medium-Necessary-Full
+  - HC-Medium-Irrelevant-Hidden
+  - HC-Medium-Irrelevant-Full
+  - HC-Medium-Selective-Hidden
+  - HC-Medium-Selective-Full
+  - HC-Far-NoQuery-Hidden
+  - HC-Far-NoQuery-Full
+  - HC-Far-Necessary-Hidden
+  - HC-Far-Necessary-Full
+  - HC-Far-Irrelevant-Hidden
+  - HC-Far-Irrelevant-Full
+  - HC-Far-Selective-Hidden
+  - HC-Far-Selective-Full
+  n_groups:
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  minimax_length_penalty_beta: 0.0
+  minimax_length_soft_budget: 400
+  minimax_length_hard_budget: 600
+  max_invalid_retries_per_decision: 0
+  enable_length_penalty: false
+  group_seed_base: 820000
+val_env_manager:
+  max_env_num_per_worker: 32
+  env_groups: 32
+  group_size: 1
+  tags:
+  - TicTacToe-first-100
+  - TicTacToe-second-100
+  - TicTacToe-first-1000
+  - TicTacToe-second-1000
+  n_groups:
+  - 8
+  - 8
+  - 8
+  - 8
+  format_penalty: 0.0
+  enable_length_penalty: false
+gamma: 1.0
+game_step_discount: 0.9
+loss_agg_mode: seq-mean-token-mean
+markovian_turn_context: true
+use_reason_answer_format: true
+add_token_level_kl: false
+eval_at_end: true
+dump_debug_batches: false
+
+[2026-08-26 17:06:58] [agentic_config.py (113)] [INFO] [DRIVER 0 / 1][PID 189956] max_env_num_per_worker: 30
+[2026-08-26 17:06:58] [agentic_config.py (113)] [INFO] [DRIVER 0 / 1][PID 189956] max_env_num_per_worker: 32
+[2026-08-26 17:06:58] [worker_config.py (103)] [INFO] [DRIVER 0 / 1][PID 189956] set vllm num_gpus_per_worker to 1, tensor_parallel_size: 1, pipeline_parallel_size: 1
+[2026-08-26 17:06:58] [base_config.py (166)] [INFO] [DRIVER 0 / 1][PID 189956] add exp_name to logging_dir ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs
+[2026-08-26 17:06:58] [base_config.py (171)] [INFO] [DRIVER 0 / 1][PID 189956] add timestamp to tensorboard log_dir ./runs/hidden_choice_qwen_diagnostic/20260826-170653/tensorboard
+[2026-08-26 17:06:58] [agentic_config.py (387)] [INFO] [DRIVER 0 / 1][PID 189956] add timestamp to render_save_dir  None
+EnvManagerConfig(name='train_env', worker_cls='roll.pipeline.agentic.environment_worker.EnvironmentWorker', model_args=ModelArguments(model_name_or_path='/home/e/e1300530/models/Qwen3-4B-Instruct-2507', attn_implementation=None, moe_aux_loss_coef=None, disable_gradient_checkpointing=False, device_map='balanced', dtype='bf16', model_type=None, num_labels=1, model_config_kwargs={}, freeze_module_prefix=None), training_args=TrainingArguments(output_dir='', max_steps=-1, num_train_epochs=1.0, learning_rate=5e-05, lr_scheduler_type='linear', weight_decay=0.0, adam_beta1=0.9, adam_beta2=0.999, per_device_train_batch_size=8, gradient_accumulation_steps=1, seed=42, data_seed=None, dataloader_num_workers=0, fp16=False, bf16=False, tf32=None, warmup_ratio=0.03, warmup_steps=0), data_args=None, generating_args=GeneratingArguments(do_sample=True, temperature=0.7, top_p=0.8, top_k=20, num_beams=1, max_length=512, max_new_tokens=1024, repetition_penalty=1.0, length_penalty=1.0, num_return_sequences=1, stop=[], include_stop_str_in_output=False), strategy_args=None, world_size=16, device_mapping=None, num_gpus_per_worker=1, model_update_frequency=1, infer_batch_size=16, backend_timeout=30, system_envs={}, env_groups=120, group_size=4, tags=['HC-Near-NoQuery-Hidden', 'HC-Near-NoQuery-Full', 'HC-Near-Necessary-Hidden', 'HC-Near-Necessary-Full', 'HC-Near-Irrelevant-Hidden', 'HC-Near-Irrelevant-Full', 'HC-Near-Selective-Hidden', 'HC-Near-Selective-Full', 'HC-Medium-NoQuery-Hidden', 'HC-Medium-NoQuery-Full', 'HC-Medium-Necessary-Hidden', 'HC-Medium-Necessary-Full', 'HC-Medium-Irrelevant-Hidden', 'HC-Medium-Irrelevant-Full', 'HC-Medium-Selective-Hidden', 'HC-Medium-Selective-Full', 'HC-Far-NoQuery-Hidden', 'HC-Far-NoQuery-Full', 'HC-Far-Necessary-Hidden', 'HC-Far-Necessary-Full', 'HC-Far-Irrelevant-Hidden', 'HC-Far-Irrelevant-Full', 'HC-Far-Selective-Hidden', 'HC-Far-Selective-Full'], n_groups=[5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5], group_seed_base=820000, max_traj_per_env=-1, format_penalty=0.0, valid_format_reward=0.0, marshal_length_reward_alpha=0.0, marshal_length_reward_penalty_only=False, marshal_length_reward_min_tokens=11, marshal_length_reward_max_tokens=2048, minimax_length_penalty_beta=0.0, minimax_length_soft_budget=400, minimax_length_hard_budget=600, max_invalid_retries_per_decision=0, enable_length_penalty=False, max_env_num_per_worker=30)
+EnvManagerConfig(name='val_env', worker_cls='roll.pipeline.agentic.environment_worker.EnvironmentWorker', model_args=ModelArguments(model_name_or_path='/home/e/e1300530/models/Qwen3-4B-Instruct-2507', attn_implementation=None, moe_aux_loss_coef=None, disable_gradient_checkpointing=False, device_map='balanced', dtype='bf16', model_type=None, num_labels=1, model_config_kwargs={}, freeze_module_prefix=None), training_args=TrainingArguments(output_dir='', max_steps=-1, num_train_epochs=1.0, learning_rate=5e-05, lr_scheduler_type='linear', weight_decay=0.0, adam_beta1=0.9, adam_beta2=0.999, per_device_train_batch_size=8, gradient_accumulation_steps=1, seed=42, data_seed=None, dataloader_num_workers=0, fp16=False, bf16=False, tf32=None, warmup_ratio=0.03, warmup_steps=0), data_args=None, generating_args=GeneratingArguments(do_sample=True, temperature=0.7, top_p=0.8, top_k=20, num_beams=1, max_length=512, max_new_tokens=1024, repetition_penalty=1.0, length_penalty=1.0, num_return_sequences=1, stop=[], include_stop_str_in_output=False), strategy_args=None, world_size=1, device_mapping=None, num_gpus_per_worker=1, model_update_frequency=1, infer_batch_size=16, backend_timeout=30, system_envs={}, env_groups=32, group_size=1, tags=['TicTacToe-first-100', 'TicTacToe-second-100', 'TicTacToe-first-1000', 'TicTacToe-second-1000'], n_groups=[8, 8, 8, 8], group_seed_base=None, max_traj_per_env=-1, format_penalty=0.0, valid_format_reward=0.0, marshal_length_reward_alpha=0.0, marshal_length_reward_penalty_only=False, marshal_length_reward_min_tokens=11, marshal_length_reward_max_tokens=2048, minimax_length_penalty_beta=0.0, minimax_length_soft_budget=200, minimax_length_hard_budget=600, max_invalid_retries_per_decision=0, enable_length_penalty=False, max_env_num_per_worker=32)
+[2026-08-26 17:06:58] [agentic_config.py (405)] [INFO] [DRIVER 0 / 1][PID 189956] train_env_manager.max_traj_per_env: 1
+[2026-08-26 17:06:58] [agentic_config.py (412)] [INFO] [DRIVER 0 / 1][PID 189956] val_env_manager.max_traj_per_env: 1
+[2026-08-26 17:07:03] [initialize.py (63)] [INFO] [DRIVER 0 / 1][PID 189956] Starting ray cluster: ray start --head --port=6379 --node-name=127.0.0.1:0 --num-gpus=1
+[2026-08-26 17:07:12] [initialize.py (92)] [INFO] [DRIVER 0 / 1][PID 189956] Ray cluster initialized
+[2026-08-26 17:07:13] [initialize.py (99)] [INFO] [DRIVER 0 / 1][PID 189956] Current ray cluster resources: {'memory': 186520013210.0, 'accelerator_type:A100': 1.0, 'node:__internal_head__': 1.0, 'GPU': 1.0, 'object_store_memory': 79937148518.0, 'node:192.168.51.119': 1.0, 'CPU': 64.0}
+[2026-08-26 17:07:22,131] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+Warning: The cache directory for DeepSpeed Triton autotune, /home/e/e1300530/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+gpu ranks: [['0']]
+node2pg: {0: <ray.util.placement_group.PlacementGroup object at 0x7ddb563bf010>}
+[2026-08-26 17:07:44] [checkpoint_manager.py (55)] [INFO] [DRIVER 0 / 1][PID 189956] checkpoint_config: {}
+[2026-08-26 17:07:45] [tracking.py (132)] [INFO] [DRIVER 0 / 1][PID 189956] create tracker tensorboard, kwargs: {'log_dir': './runs/hidden_choice_qwen_diagnostic/20260826-170653/tensorboard'}
+[2026-08-26 17:07:45] [agentic_config.py (476)] [INFO] [DRIVER 0 / 1][PID 189956] pipeline max_steps: 1 to 1
+[2026-08-26 17:07:45] [agentic_config.py (477)] [INFO] [DRIVER 0 / 1][PID 189956] actor train max_steps without dp_size: 120
+[2026-08-26 17:07:45] [agentic_config.py (478)] [INFO] [DRIVER 0 / 1][PID 189956] critic train max_steps without dp_size: 60
+[2026-08-26 17:07:45] [cluster.py (63)] [INFO] [DRIVER 0 / 1][PID 189956] wrap ActorWorker to ray.remote()
+[36m(pid=195018, ip=192.168.51.119)[0m add logger: log_rank_actor_infer-0_0_1
+[36m(pid=195018, ip=192.168.51.119)[0m Created or verified log directory: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs
+[36m(pid=195018, ip=192.168.51.119)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/log_rank_actor_infer-0_0_1.log
+[36m(pid=195018, ip=192.168.51.119)[0m [2026-08-26 17:08:02,660] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[36m(pid=195018, ip=192.168.51.119)[0m Warning: The cache directory for DeepSpeed Triton autotune, /home/e/e1300530/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/SharedStorage.log
+[2026-08-26 17:08:07] [cluster.py (63)] [INFO] [DRIVER 0 / 1][PID 189956] wrap EnvironmentWorker to ray.remote()
+[36m(pid=195217, ip=192.168.51.119)[0m add logger: log_rank_DRIVER_0_1
+[36m(pid=195217, ip=192.168.51.119)[0m Created or verified log directory: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs
+[36m(pid=195217, ip=192.168.51.119)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/log_rank_DRIVER_0_1.log
+[36m(RequestScheduler pid=195217, ip=192.168.51.119)[0m [2026-08-26 17:08:16,179] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/RequestScheduler.log
+[36m(RequestScheduler pid=195217, ip=192.168.51.119)[0m Warning: The cache directory for DeepSpeed Triton autotune, /home/e/e1300530/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+[36m(pid=195218, ip=192.168.51.119)[0m [2026-08-26 17:08:17,196] [WARNING] [real_accelerator.py:181:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.
+[36m(pid=195218, ip=192.168.51.119)[0m [2026-08-26 17:08:17,199] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cpu (auto detect)
+[36m(pid=197631, ip=192.168.51.119)[0m add logger: log_rank_train_env-1_1_16[32m [repeated 2x across cluster] (Ray deduplicates logs by default. Set RAY_DEDUP_LOGS=0 to disable log deduplication, or see https://docs.ray.io/en/master/ray-observability/user-guides/configure-logging.html#log-deduplication for more options.)[0m
+[36m(pid=197631, ip=192.168.51.119)[0m Created or verified log directory: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs[32m [repeated 2x across cluster][0m
+[36m(pid=197631, ip=192.168.51.119)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/log_rank_train_env-1_1_16.log[32m [repeated 2x across cluster][0m
+[36m(pid=197631, ip=192.168.51.119)[0m [2026-08-26 17:08:46,240] [WARNING] [real_accelerator.py:181:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.
+[36m(pid=197631, ip=192.168.51.119)[0m [2026-08-26 17:08:46,242] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cpu (auto detect)
+[36m(pid=197636, ip=192.168.51.119)[0m add logger: log_rank_train_env-6_6_16[32m [repeated 13x across cluster][0m
+[36m(pid=197636, ip=192.168.51.119)[0m Created or verified log directory: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs[32m [repeated 13x across cluster][0m
+[36m(pid=197636, ip=192.168.51.119)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/log_rank_train_env-6_6_16.log[32m [repeated 13x across cluster][0m
+[36m(pid=197636, ip=192.168.51.119)[0m [2026-08-26 17:08:51,481] [WARNING] [real_accelerator.py:181:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.[32m [repeated 13x across cluster][0m
+[36m(pid=197636, ip=192.168.51.119)[0m [2026-08-26 17:08:51,487] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cpu (auto detect)[32m [repeated 13x across cluster][0m
+[36m(EnvironmentWorker(train_env-12) pid=197642, ip=192.168.51.119)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}
+[36m(pid=197644, ip=192.168.51.119)[0m add logger: log_rank_train_env-14_14_16
+[36m(pid=197644, ip=192.168.51.119)[0m Created or verified log directory: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs
+[36m(pid=197644, ip=192.168.51.119)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/log_rank_train_env-14_14_16.log
+[36m(pid=197644, ip=192.168.51.119)[0m [2026-08-26 17:08:52,367] [WARNING] [real_accelerator.py:181:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.
+[36m(pid=197644, ip=192.168.51.119)[0m [2026-08-26 17:08:52,368] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cpu (auto detect)
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-12).log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-11).log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-4).log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-3).log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-6).log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-14).log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-9).log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-5).log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-0).log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-8).log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-2).log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-7).log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-15).log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-10).log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-1).log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/EnvironmentWorker(train_env-13).log
+[36m(EnvironmentWorker(train_env-12) pid=197642, ip=192.168.51.119)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 59x across cluster][0m
+[36m(EnvironmentWorker(train_env-6) pid=197636, ip=192.168.51.119)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 60x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=195218, ip=192.168.51.119)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 59x across cluster][0m
+[36m(EnvironmentWorker(train_env-5) pid=197635, ip=192.168.51.119)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 62x across cluster][0m
+[36m(EnvironmentWorker(train_env-11) pid=197641, ip=192.168.51.119)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 58x across cluster][0m
+[36m(EnvironmentWorker(train_env-8) pid=197638, ip=192.168.51.119)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 58x across cluster][0m
+[36m(EnvironmentWorker(train_env-14) pid=197644, ip=192.168.51.119)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 59x across cluster][0m
+[36m(EnvironmentWorker(train_env-2) pid=197632, ip=192.168.51.119)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 41x across cluster][0m
+[36m(EnvironmentWorker(train_env-1) pid=197631, ip=192.168.51.119)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 23x across cluster][0m
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m [2026-08-26 17:09:52] [base_worker.py (66)] [INFO] [actor_infer-0 0 / 1][PID 195018] CUDA worker mapping: visible=0, device_count=1, local_rank=0
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/ActorWorker(actor_infer-0).log
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:10:08 [__init__.py:239] Automatically detected platform cuda.
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m [2026-08-26 17:10:13] [vllm_strategy.py (76)] [INFO] [actor_infer-0 0 / 1][PID 195018] vllm_config: {'gpu_memory_utilization': 0.8, 'block_size': 16, 'load_format': 'auto', 'max_model_len': 4096, 'tensor_parallel_size': 1, 'model': '/home/e/e1300530/models/Qwen3-4B-Instruct-2507', 'dtype': 'bfloat16', 'enforce_eager': True, 'trust_remote_code': True, 'seed': 42, 'disable_custom_all_reduce': True, 'enable_prefix_caching': False}
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:10:33 [config.py:689] This model supports multiple tasks: {'generate', 'reward', 'score', 'embed', 'classify'}. Defaulting to 'generate'.
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:10:33 [config.py:1901] Chunked prefill is enabled with max_num_batched_tokens=8192.
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m WARNING 08-26 17:10:33 [cuda.py:96] To see benefits of async output processing, enable CUDA graph. Since, enforce-eager is enabled, async output processor cannot be used
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m [2026-08-26 17:10:33] [llm_engine.py (179)] [INFO] [actor_infer-0 0 / 1][PID 195018] Using executor_class: <class 'vllm.v1.executor.abstract.UniProcExecutor'>
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m [2026-08-26 17:10:33] [llm_engine.py (180)] [INFO] [actor_infer-0 0 / 1][PID 195018] Using worker cls: roll.third_party.vllm.vllm_0_8_4.v1.worker.Worker084
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:10:45 [__init__.py:239] Automatically detected platform cuda.
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:10:52 [core.py:61] Initializing a V1 LLM engine (v0.8.4) with config: model='/home/e/e1300530/models/Qwen3-4B-Instruct-2507', speculative_config=None, tokenizer='/home/e/e1300530/models/Qwen3-4B-Instruct-2507', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, override_neuron_config=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=4096, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, disable_custom_all_reduce=True, quantization=None, enforce_eager=True, kv_cache_dtype=auto,  device_config=cuda, decoding_config=DecodingConfig(guided_decoding_backend='auto', reasoning_backend=None), observability_config=ObservabilityConfig(show_hidden_metrics=False, otlp_traces_endpoint=None, collect_model_forward_time=False, collect_model_execute_time=False), seed=42, served_model_name=/home/e/e1300530/models/Qwen3-4B-Instruct-2507, num_scheduler_steps=1, multi_step_stream_outputs=True, enable_prefix_caching=False, chunked_prefill_enabled=True, use_async_output_proc=False, disable_mm_preprocessor_cache=False, mm_processor_kwargs=None, pooler_config=None, compilation_config={"splitting_ops":[],"compile_sizes":[],"cudagraph_capture_sizes":[],"max_capture_size":0}
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m add logger: log_rank_actor_infer-0_0_1
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m Created or verified log directory: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/log_rank_actor_infer-0_0_1.log
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m WARNING 08-26 17:10:54 [utils.py:2444] Methods determine_num_available_blocks,device_config,get_cache_block_size_bytes,initialize_cache not implemented in <roll.third_party.vllm.vllm_0_8_4.v1.worker.Worker084 object at 0x724783b93a60>
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:10:55 [parallel_state.py:959] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, TP rank 0
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:10:55 [cuda.py:221] Using Flash Attention backend on V1 engine.
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:10:55 [gpu_model_runner.py:1276] Starting to load model /home/e/e1300530/models/Qwen3-4B-Instruct-2507...
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m WARNING 08-26 17:10:55 [topk_topp_sampler.py:69] FlashInfer is not available. Falling back to the PyTorch-native implementation of top-p & top-k sampling. For the best performance, please install FlashInfer.
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:10:57 [loader.py:458] Loading weights took 1.50 seconds
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:10:57 [gpu_model_runner.py:1291] Model loading took 7.6064 GiB and 1.691148 seconds
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:10:58 [kv_cache_utils.py:634] GPU KV cache size: 391,856 tokens
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:10:58 [kv_cache_utils.py:637] Maximum concurrency for 4,096 tokens per request: 95.67x
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:10:58 [core.py:163] init engine (profile, create kv cache, warmup model) took 0.98 seconds
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:10:58 [core_client.py:435] Core engine process 0 ready.
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m [2026-08-26 17:10:58] [vllm_strategy.py (94)] [INFO] [actor_infer-0 0 / 1][PID 195018] add [AddedToken("<|endoftext|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True)] to additional_special_tokens: ['<|im_start|>', '<|im_end|>', '<|object_ref_start|>', '<|object_ref_end|>', '<|box_start|>', '<|box_end|>', '<|quad_start|>', '<|quad_end|>', '<|vision_start|>', '<|vision_end|>', '<|vision_pad|>', '<|image_pad|>', '<|video_pad|>', '<|endoftext|>']
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m [2026-08-26 17:10:58] [base_worker.py (85)] [INFO] [actor_infer-0 0 / 1][PID 195018] actor_infer-0 initialized
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:10:58 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:11:03 [gpu_worker.py:81] Sleep mode freed 62.89 GiB memory, 0.59 GiB memory is still in use.
+[2026-08-26 17:11:03] [agentic_rollout_pipeline.py (60)] [INFO] [DRIVER 0 / 1][PID 189956] pipeline rollout global step 0 start...
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m [2026-08-26 17:11:03] [base_worker.py (223)] [INFO] [actor_infer-0 0 / 1][PID 195018] actor_infer-0 generate server global step 0
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m [2026-08-26 17:11:03] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 195018] actor_infer/generate_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 1.108245849609375
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m [2026-08-26 17:11:04] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 195018] actor_infer/generate_start_onload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 1.1082572937011719
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m Elapsed time: 1.1054 seconds
+[36m(_QueueActor pid=195199, ip=192.168.51.119)[0m add logger: log_rank_DRIVER_0_1
+[36m(_QueueActor pid=195199, ip=192.168.51.119)[0m Created or verified log directory: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs
+[36m(_QueueActor pid=195199, ip=192.168.51.119)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/log_rank_DRIVER_0_1.log
+log redirect to filename: ./runs/hidden_choice_qwen_diagnostic/20260826-170653/logs/_QueueActor.log
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m Elapsed time: 137.8685 seconds
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m [2026-08-26 17:13:22] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 195018] actor_infer/generate_end_onload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.001953125, rss (GB): 1.5297889709472656
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:13:22 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m INFO 08-26 17:13:23 [gpu_worker.py:81] Sleep mode freed 64.84 GiB memory, 1.21 GiB memory is still in use.
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m [2026-08-26 17:13:23] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 195018] actor_infer/generate_end_offload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.001953125, rss (GB): 1.5297927856445312
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m Elapsed time: 1.2332 seconds
+[36m(ActorWorker(actor_infer-0) pid=195018, ip=192.168.51.119)[0m Elapsed time: 140.2073 seconds
+[2026-08-26 17:13:24] [agentic_rollout_pipeline.py (96)] [INFO] [DRIVER 0 / 1][PID 189956] Preflight summary: {"game_count": 71, "observed_game_count": 120, "partial_game_count": 49, "turn_count": 496, "decision_count": 496, "first_attempt_valid_count": 321, "first_attempt_validity_rate": 0.6471774193548387, "eventual_valid_count": 321, "eventual_validity_rate": 0.6471774193548387, "retry_attempt_count": 0, "retry_success_count": 0, "retry_success_rate": 0.0, "additional_retry_tokens": 0, "final_episode_truncation_count": 49, "final_episode_truncation_rate": 0.4083333333333333, "role_first_attempt_validity_gap": 0.6471774193548387, "role_eventual_validity_gap": 0.6471774193548387, "single_model_outcomes_by_tag": {"HC-Near-NoQuery-Full": {"game_count": 5, "completed_count": 5, "invalid_or_truncated_count": 0, "win_count": 5, "draw_count": 0, "loss_count": 0, "completion_rate": 1.0, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Medium-NoQuery-Hidden": {"game_count": 5, "completed_count": 5, "invalid_or_truncated_count": 0, "win_count": 5, "draw_count": 0, "loss_count": 0, "completion_rate": 1.0, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Medium-NoQuery-Full": {"game_count": 5, "completed_count": 5, "invalid_or_truncated_count": 0, "win_count": 5, "draw_count": 0, "loss_count": 0, "completion_rate": 1.0, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Medium-Selective-Full": {"game_count": 5, "completed_count": 4, "invalid_or_truncated_count": 1, "win_count": 4, "draw_count": 0, "loss_count": 0, "completion_rate": 0.8, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Near-NoQuery-Hidden": {"game_count": 5, "completed_count": 5, "invalid_or_truncated_count": 0, "win_count": 5, "draw_count": 0, "loss_count": 0, "completion_rate": 1.0, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Far-NoQuery-Hidden": {"game_count": 5, "completed_count": 5, "invalid_or_truncated_count": 0, "win_count": 5, "draw_count": 0, "loss_count": 0, "completion_rate": 1.0, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Far-NoQuery-Full": {"game_count": 5, "completed_count": 5, "invalid_or_truncated_count": 0, "win_count": 5, "draw_count": 0, "loss_count": 0, "completion_rate": 1.0, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Near-Irrelevant-Full": {"game_count": 5, "completed_count": 3, "invalid_or_truncated_count": 2, "win_count": 3, "draw_count": 0, "loss_count": 0, "completion_rate": 0.6, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Far-Irrelevant-Full": {"game_count": 5, "completed_count": 2, "invalid_or_truncated_count": 3, "win_count": 2, "draw_count": 0, "loss_count": 0, "completion_rate": 0.4, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Far-Selective-Full": {"game_count": 5, "completed_count": 5, "invalid_or_truncated_count": 0, "win_count": 5, "draw_count": 0, "loss_count": 0, "completion_rate": 1.0, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Far-Necessary-Full": {"game_count": 5, "completed_count": 4, "invalid_or_truncated_count": 1, "win_count": 4, "draw_count": 0, "loss_count": 0, "completion_rate": 0.8, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Medium-Necessary-Full": {"game_count": 5, "completed_count": 4, "invalid_or_truncated_count": 1, "win_count": 4, "draw_count": 0, "loss_count": 0, "completion_rate": 0.8, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Near-Selective-Full": {"game_count": 5, "completed_count": 4, "invalid_or_truncated_count": 1, "win_count": 4, "draw_count": 0, "loss_count": 0, "completion_rate": 0.8, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Near-Necessary-Full": {"game_count": 5, "completed_count": 2, "invalid_or_truncated_count": 3, "win_count": 2, "draw_count": 0, "loss_count": 0, "completion_rate": 0.4, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Medium-Irrelevant-Full": {"game_count": 5, "completed_count": 3, "invalid_or_truncated_count": 2, "win_count": 3, "draw_count": 0, "loss_count": 0, "completion_rate": 0.6, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Medium-Irrelevant-Hidden": {"game_count": 5, "completed_count": 0, "invalid_or_truncated_count": 5, "win_count": 0, "draw_count": 0, "loss_count": 0, "completion_rate": 0.0, "win_rate_when_completed": 0.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Far-Necessary-Hidden": {"game_count": 5, "completed_count": 3, "invalid_or_truncated_count": 2, "win_count": 3, "draw_count": 0, "loss_count": 0, "completion_rate": 0.6, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Far-Selective-Hidden": {"game_count": 5, "completed_count": 0, "invalid_or_truncated_count": 5, "win_count": 0, "draw_count": 0, "loss_count": 0, "completion_rate": 0.0, "win_rate_when_completed": 0.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Near-Irrelevant-Hidden": {"game_count": 5, "completed_count": 0, "invalid_or_truncated_count": 5, "win_count": 0, "draw_count": 0, "loss_count": 0, "completion_rate": 0.0, "win_rate_when_completed": 0.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Near-Selective-Hidden": {"game_count": 5, "completed_count": 0, "invalid_or_truncated_count": 5, "win_count": 0, "draw_count": 0, "loss_count": 0, "completion_rate": 0.0, "win_rate_when_completed": 0.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Far-Irrelevant-Hidden": {"game_count": 5, "completed_count": 0, "invalid_or_truncated_count": 5, "win_count": 0, "draw_count": 0, "loss_count": 0, "completion_rate": 0.0, "win_rate_when_completed": 0.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Medium-Selective-Hidden": {"game_count": 5, "completed_count": 0, "invalid_or_truncated_count": 5, "win_count": 0, "draw_count": 0, "loss_count": 0, "completion_rate": 0.0, "win_rate_when_completed": 0.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Medium-Necessary-Hidden": {"game_count": 5, "completed_count": 3, "invalid_or_truncated_count": 2, "win_count": 3, "draw_count": 0, "loss_count": 0, "completion_rate": 0.6, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "HC-Near-Necessary-Hidden": {"game_count": 5, "completed_count": 4, "invalid_or_truncated_count": 1, "win_count": 4, "draw_count": 0, "loss_count": 0, "completion_rate": 0.8, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}}, "completed_legal_game_count": 59, "completed_legal_game_rate": 0.8309859154929577, "valid_action_count": 321, "valid_action_rate": 0.6471774193548387, "closing_answer_tag_count": 0, "closing_answer_tag_rate": 0.0, "token_limit_hit_count": 175, "token_limit_hit_rate": 0.3528225806451613, "missing_answer_count": 496, "missing_answer_rate": 1.0, "capped_without_answer_count": 175, "capped_without_answer_rate": 0.3528225806451613, "role_validity_asymmetry": 0.0, "counterfactual_optimal_action_count": 0, "counterfactual_optimality_rate": 0.0, "counterfactual_optimality_when_valid_rate": 0.0, "minimax_optimal_action_count": 0, "minimax_optimality_rate": 0.0, "minimax_optimality_when_valid_rate": 0.0, "role_minimax_optimality_gap": 0.0, "action_diversity": {"unique_action_count": 5, "action_counts": {"ACT X": 6, "ACT Y": 118, "ACT Z": 182, "ASK F1": 9, "ASK F3": 6}, "dominant_action_rate": 0.5669781931464174}, "response_length": {"median": 759.5, "p90": 1024.0, "p95": 1024.0, "p99": 1024.0, "max": 1024}, "by_player": {"0": {"turn_count": 496, "valid_action_rate": 0.6471774193548387, "closing_answer_tag_rate": 0.0, "token_limit_hit_rate": 0.3528225806451613, "missing_answer_rate": 1.0, "minimax_optimal_action_count": 0, "minimax_optimality_rate": 0.0, "minimax_optimality_when_valid_rate": 0.0, "first_attempt_count": 496, "first_attempt_validity_rate": 0.6471774193548387, "retry_attempt_count": 0, "retry_success_rate": 0.0, "eventual_validity_rate": 0.6471774193548387, "additional_retry_tokens": 0}, "1": {"turn_count": 0, "valid_action_rate": 0.0, "closing_answer_tag_rate": 0.0, "token_limit_hit_rate": 0.0, "missing_answer_rate": 0.0, "minimax_optimal_action_count": 0, "minimax_optimality_rate": 0.0, "minimax_optimality_when_valid_rate": 0.0, "first_attempt_count": 0, "first_attempt_validity_rate": 0.0, "retry_attempt_count": 0, "retry_success_rate": 0.0, "eventual_validity_rate": 0.0, "additional_retry_tokens": 0}}, "gate": {"valid_action_rate_at_least_0_95": false, "eventual_validity_rate_at_least_0_95": false, "closing_answer_tag_rate_at_least_0_95": false, "token_limit_hit_rate_at_most_0_02": false, "role_validity_asymmetry_at_most_0_05": true, "at_least_3_unique_actions": true, "dominant_action_rate_at_most_0_80": true}, "passed": false, "informative_decisions_by_remaining_optimal_distance": {}, "root_move_pass_at_k": {"HC-Far-Irrelevant-Full": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.75, "token_limit_hit_rate": 0.25, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Far-Irrelevant-Hidden": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.0, "token_limit_hit_rate": 1.0, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Far-Necessary-Full": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.95, "token_limit_hit_rate": 0.05, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Far-Necessary-Hidden": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.35, "token_limit_hit_rate": 0.65, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Far-NoQuery-Full": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 1.0, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Far-NoQuery-Hidden": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.9, "token_limit_hit_rate": 0.1, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Far-Selective-Full": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 1.0, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Far-Selective-Hidden": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.05, "token_limit_hit_rate": 0.95, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Medium-Irrelevant-Full": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.85, "token_limit_hit_rate": 0.15, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Medium-Irrelevant-Hidden": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.1, "token_limit_hit_rate": 0.9, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Medium-Necessary-Full": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.95, "token_limit_hit_rate": 0.05, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Medium-Necessary-Hidden": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.35, "token_limit_hit_rate": 0.65, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Medium-NoQuery-Full": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 1.0, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Medium-NoQuery-Hidden": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 1.0, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Medium-Selective-Full": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.95, "token_limit_hit_rate": 0.05, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Medium-Selective-Hidden": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.05, "token_limit_hit_rate": 0.95, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Near-Irrelevant-Full": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.9, "token_limit_hit_rate": 0.1, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Near-Irrelevant-Hidden": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.05, "token_limit_hit_rate": 0.95, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Near-Necessary-Full": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.85, "token_limit_hit_rate": 0.15, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Near-Necessary-Hidden": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.25, "token_limit_hit_rate": 0.75, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Near-NoQuery-Full": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 1.0, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Near-NoQuery-Hidden": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 1.0, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Near-Selective-Full": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.95, "token_limit_hit_rate": 0.05, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "HC-Near-Selective-Hidden": {"graph_count": 5, "sample_count": 20, "valid_action_rate": 0.0, "token_limit_hit_rate": 1.0, "graphs_with_pass@1": 5, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "overall": {"graph_count": 120, "sample_count": 480, "valid_action_rate": 0.6354166666666666, "token_limit_hit_rate": 0.3645833333333333, "graphs_with_pass@1": 120, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}}}
+[2026-08-26 17:13:28] [agentic_rollout_pipeline.py (134)] [INFO] [DRIVER 0 / 1][PID 189956] [{"prompt": "system\nYou are playing a decision-making game with another agent.user\nAt each decision point, choose exactly one listed legal action.\n\nACT <option> chooses that option as the final action and ends the episode.\nASK <fact> asks the truthful partner to reveal that fact. ASK incurs the listed communication cost. After receiving the answer, you will make one final ACT decision.\n\nYour objective is to maximize expected total utility, including communication cost.\n\nReason carefully, then finish with <answer> followed immediately by exactly one listed legal action, such as <answer>ACT X.\n\nObserved context: market=busy, utility_shift=+0\nKnown hidden facts: F1=1, F2=1, F3=1\nAskable facts: none\nInformation mode: full\nCommunication cost: 0.05\n\nPossible-world utility table:\nF1 | F2 | F3 | probability | Y | Z | X\n0 | 0 | 0 | 0.125 | 8 | 6 | 4\n0 | 0 | 1 | 0.125 | 8 | 6 | 4\n0 | 1 | 0 | 0.125 | 8 | 6 | 4\n0 | 1 | 1 | 0.125 | 8 | 6 | 4\n1 | 0 | 0 | 0.125 | 8 | 6 | 4\n1 | 0 | 1 | 0.125 | 8 | 6 | 4\n1 | 1 | 0 | 0.125 | 8 | 6 | 4\n1 | 1 | 1 | 0.125 | 8 | 6 | 4\n\nLegal actions: ACT X, ACT Y, ACT Zassistant\n", "response": "We are given a scenario with hidden facts F1, F2, F3, each equal to 1 with certainty in the known hidden facts. That is:\n\n- F1 = 1  \n- F2 = 1  \n- F3 = 1  \n\nThe possible-world utility table shows that for **all combinations** of F1, F2, F3, the utility values for X, Y, Z are:\n\n- X = 4  \n- Y = 6  \n- Z = 8  \n\nAnd each combination has equal probability: 0.125. Since all combinations yield the same utility values, the expected utility for each action is simply the value of that action.\n\nSo:\n\n- Expected utility of ACT X = 4  \n- Expected utility of ACT Y = 6  \n- Expected utility of ACT Z = 8  \n\nNo askable facts are available (ASK is not an option), and communication cost is 0.05, but since we cannot ask any facts, we do not incur any cost.\n\nTherefore, to maximize expected total utility, we should choose the action with the highest expected utility.\n\nThat is: **ACT Z**\n\n<answer>ACT Z", "episode_score": 6.0, "llm_raw_text": "<|im_start|>assistant\nWe are given a scenario with hidden facts F1, F2, F3, each equal to 1 with certainty in the known hidden facts. That is:\n\n- F1 = 1  \n- F2 = 1  \n- F3 = 1  \n\nThe possible-world utility table shows that for **all combinations** of F1, F2, F3, the utility values for X, Y, Z are:\n\n- X = 4  \n- Y = 6  \n- Z = 8  \n\nAnd each combination has equal probability: 0.125. Since all combinations yield the same utility values, the expected utility for each action is simply the value of that action.\n\nSo:\n\n- Expected utility of ACT X = 4  \n- Expected utility of ACT Y = 6  \n- Expected utility of ACT Z = 8  \n\nNo askable facts are available (ASK is not an option), and communication cost is 0.05, but since we cannot ask any facts, we do not incur any cost.\n\nTherefore, to maximize expected total utility, we should choose the action with the highest expected utility.\n\nThat is: **ACT Z**\n\n<answer>ACT Z<|im_end|>"}, {"prompt": "system\nYou are playing a decision-making game with another agent.user\nAt each decision point, choose exactly one listed legal action.\n\nACT <option> chooses that option as the final action and ends the episode.\nASK <fact> asks the truthful partner to reveal that fact. ASK incurs the listed communication cost. After receiving the answer, you will make one final ACT decision.\n\nYour objective is to maximize expected total utility, including communication cost.\n\nReason carefully, then finish with <answer> followed immediately by exactly one listed legal action, such as <answer>ACT X.\n\nObserved context: market=busy, utility_shift=+0\nKnown hidden facts: F1=1, F2=1, F3=1\nAskable facts: none\nInformation mode: full\nCommunication cost: 0.05\n\nPossible-world utility table:\nF1 | F2 | F3 | probability | Y | Z | X\n0 | 0 | 0 | 0.125 | 8 | 6 | 4\n0 | 0 | 1 | 0.125 | 8 | 6 | 4\n0 | 1 | 0 | 0.125 | 8 | 6 | 4\n0 | 1 | 1 | 0.125 | 8 | 6 | 4\n1 | 0 | 0 | 0.125 | 8 | 6 | 4\n1 | 0 | 1 | 0.125 | 8 | 6 | 4\n1 | 1 | 0 | 0.125 | 8 | 6 | 4\n1 | 1 | 1 | 0.125 | 8 | 6 | 4\n\nLegal actions: ACT X, ACT Y, ACT Zassistant\n", "response": "We are given a scenario with hidden facts F1, F2, F3, each of which is known to be 1 (from \"Known hidden facts: F1=1, F2=1, F3=1\"). The possible-world utility table shows that regardless of the combination of F1, F2, F3, the utilities for X, Y, Z are always:\n\n- X = 4  \n- Y = 6  \n- Z = 8  \n\nAnd each combination has equal probability (0.125), so the distribution is uniform.\n\nSince we know the hidden facts (F1=F2=F3=1), we can directly compute the utility of each action without uncertainty.\n\nWe are to choose one of:\n\n- ACT X → utility = 4  \n- ACT Y → utility = 6  \n- ACT Z → utility = 8  \n\nAll actions have fixed utilities in this world, and no askable facts exist (so no communication cost is incurred).\n\nTherefore, to maximize expected total utility, we should pick the action with the highest utility.\n\nThe highest utility is Z = 8.\n\nNo communication is needed because the hidden facts are already known.\n\n<answer>ACT Z", "episode_score": 6.0, "llm_raw_text": "<|im_start|>assistant\nWe are given a scenario with hidden facts F1, F2, F3, each of which is known to be 1 (from \"Known hidden facts: F1=1, F2=1, F3=1\"). The possible-world utility table shows that regardless of the combination of F1, F2, F3, the utilities for X, Y, Z are always:\n\n- X = 4  \n- Y = 6  \n- Z = 8  \n\nAnd each combination has equal probability (0.125), so the distribution is uniform.\n\nSince we know the hidden facts (F1=F2=F3=1), we can directly compute the utility of each action without uncertainty.\n\nWe are to choose one of:\n\n- ACT X → utility = 4  \n- ACT Y → utility = 6  \n- ACT Z → utility = 8  \n\nAll actions have fixed utilities in this world, and no askable facts exist (so no communication cost is incurred).\n\nTherefore, to maximize expected total utility, we should pick the action with the highest utility.\n\nThe highest utility is Z = 8.\n\nNo communication is needed because the hidden facts are already known.\n\n<answer>ACT Z<|im_end|>"}, {"prompt": "system\nYou are playing a decision-making game with another agent.user\nAt each decision point, choose exactly one listed legal action.\n\nACT <option> chooses that option as the final action and ends the episode.\nASK <fact> asks the truthful partner to reveal that fact. ASK incurs the listed communication cost. After receiving the answer, you will make one final ACT decision.\n\nYour objective is to maximize expected total utility, including communication cost.\n\nReason carefully, then finish with <answer> followed immediately by exactly one listed legal action, such as <answer>ACT X.\n\nObserved context: market=busy, utility_shift=+0\nKnown hidden facts: F1=1, F2=1, F3=1\nAskable facts: none\nInformation mode: full\nCommunication cost: 0.05\n\nPossible-world utility table:\nF1 | F2 | F3 | probability | Y | Z | X\n0 | 0 | 0 | 0.125 | 8 | 6 | 4\n0 | 0 | 1 | 0.125 | 8 | 6 | 4\n0 | 1 | 0 | 0.125 | 8 | 6 | 4\n0 | 1 | 1 | 0.125 | 8 | 6 | 4\n1 | 0 | 0 | 0.125 | 8 | 6 | 4\n1 | 0 | 1 | 0.125 | 8 | 6 | 4\n1 | 1 | 0 | 0.125 | 8 | 6 | 4\n1 | 1 | 1 | 0.125 | 8 | 6 | 4\n\nLegal actions: ACT X, ACT Y, ACT Zassistant\n", "response": "We are given a scenario with hidden facts F1, F2, F3, each of which is known to be 1 (from \"Known hidden facts: F1=1, F2=1, F3=1\"). The possible-world utility table shows that regardless of the values of F1, F2, F3, the utility values for X, Y, Z are always:\n\n- X = 4  \n- Y = 6  \n- Z = 8  \n\nAnd each combination of F1, F2, F3 occurs with equal probability (0.125), so the distribution is uniform across 8 rows.\n\nHowever, the key point is: **we already know the hidden facts** — F1 = 1, F2 = 1, F3 = 1. Therefore, we do not need to ask for any fact. The utility values are fixed in this world.\n\nOur objective is to **maximize expected total utility**, including communication cost.\n\nSince we know the true state (F1=F2=F3=1), we can directly compute the utility of each action:\n\n- ACT X → utility = 4  \n- ACT Y → utility = 6  \n- ACT Z → utility = 8  \n\nNo communication cost is incurred because no facts are askable (as per \"Askable facts: none\").\n\nTherefore, the best action is **ACT Z**, which yields the highest utility (8).\n\n<answer>ACT Z", "episode_score": 6.0, "llm_raw_text": "<|im_start|>assistant\nWe are given a scenario with hidden facts F1, F2, F3, each of which is known to be 1 (from \"Known hidden facts: F1=1, F2=1, F3=1\"). The possible-world utility table shows that regardless of the values of F1, F2, F3, the utility values for X, Y, Z are always:\n\n- X = 4  \n- Y = 6  \n- Z = 8  \n\nAnd each combination of F1, F2, F3 occurs with equal probability (0.125), so the distribution is uniform across 8 rows.\n\nHowever, the key point is: **we already know the hidden facts** — F1 = 1, F2 = 1, F3 = 1. Therefore, we do not need to ask for any fact. The utility values are fixed in this world.\n\nOur objective is to **maximize expected total utility**, including communication cost.\n\nSince we know the true state (F1=F2=F3=1), we can directly compute the utility of each action:\n\n- ACT X → utility = 4  \n- ACT Y → utility = 6  \n- ACT Z → utility = 8  \n\nNo communication cost is incurred because no facts are askable (as per \"Askable facts: none\").\n\nTherefore, the best action is **ACT Z**, which yields the highest utility (8).\n\n<answer>ACT Z<|im_end|>"}, {"prompt": "system\nYou are playing a decision-making game with another agent.user\nAt each decision point, choose exactly one listed legal action.\n\nACT <option> chooses that option as the final action and ends the episode.\nASK <fact> asks the truthful partner to reveal that fact. ASK incurs the listed communication cost. After receiving the answer, you will make one final ACT decision.\n\nYour objective is to maximize expected total utility, including communication cost.\n\nReason carefully, then finish with <answer> followed immediately by exactly one listed legal action, such as <answer>ACT X.\n\nObserved context: market=busy, utility_shift=+0\nKnown hidden facts: F1=1, F2=1, F3=1\nAskable facts: none\nInformation mode: full\nCommunication cost: 0.05\n\nPossible-world utility table:\nF1 | F2 | F3 | probability | Y | Z | X\n0 | 0 | 0 | 0.125 | 8 | 6 | 4\n0 | 0 | 1 | 0.125 | 8 | 6 | 4\n0 | 1 | 0 | 0.125 | 8 | 6 | 4\n0 | 1 | 1 | 0.125 | 8 | 6 | 4\n1 | 0 | 0 | 0.125 | 8 | 6 | 4\n1 | 0 | 1 | 0.125 | 8 | 6 | 4\n1 | 1 | 0 | 0.125 | 8 | 6 | 4\n1 | 1 | 1 | 0.125 | 8 | 6 | 4\n\nLegal actions: ACT X, ACT Y, ACT Zassistant\n", "response": "We are given a scenario with hidden facts F1, F2, F3, each equal to 1 with certainty in the known hidden facts. That is:\n\n- F1 = 1  \n- F2 = 1  \n- F3 = 1  \n\nThe possible-world utility table shows that **for every combination of F1, F2, F3**, the utility values for X, Y, Z are all equal:\n\n- Y = 8  \n- Z = 6  \n- X = 4  \n\nAnd each combination has probability 0.125, so the total probability is 1 (8 combinations × 0.125 = 1).\n\nImportantly, **the utility values do not depend on the actual values of F1, F2, F3** — they are constant across all combinations. That means, regardless of which combination of F1, F2, F3 occurs, the utilities for X, Y, Z are always:\n\n- X = 4  \n- Y = 8  \n- Z = 6  \n\nSince we already know the hidden facts (F1=F2=F3=1), and the utility values are fixed across all possible worlds, we do **not** need to ask any fact — the utility of each action is known.\n\nWe are to **maximize expected total utility**, including communication cost.\n\nSince no facts are askable (ASK is not an option), and we know the full utility values, we can directly compute the expected utility of each action.\n\n- Expected utility of ACT X = 4  \n- Expected utility of ACT Y = 8  \n- Expected utility of ACT Z = 6  \n\nThus, the best action is **ACT Y**, with utility 8.\n\nNo communication cost is incurred because we are not asking anything.\n\n<answer>ACT Y", "episode_score": 8.0, "llm_raw_text": "<|im_start|>assistant\nWe are given a scenario with hidden facts F1, F2, F3, each equal to 1 with certainty in the known hidden facts. That is:\n\n- F1 = 1  \n- F2 = 1  \n- F3 = 1  \n\nThe possible-world utility table shows that **for every combination of F1, F2, F3**, the utility values for X, Y, Z are all equal:\n\n- Y = 8  \n- Z = 6  \n- X = 4  \n\nAnd each combination has probability 0.125, so the total probability is 1 (8 combinations × 0.125 = 1).\n\nImportantly, **the utility values do not depend on the actual values of F1, F2, F3** — they are constant across all combinations. That means, regardless of which combination of F1, F2, F3 occurs, the utilities for X, Y, Z are always:\n\n- X = 4  \n- Y = 8  \n- Z = 6  \n\nSince we already know the hidden facts (F1=F2=F3=1), and the utility values are fixed across all possible worlds, we do **not** need to ask any fact — the utility of each action is known.\n\nWe are to **maximize expected total utility**, including communication cost.\n\nSince no facts are askable (ASK is not an option), and we know the full utility values, we can directly compute the expected utility of each action.\n\n- Expected utility of ACT X = 4  \n- Expected utility of ACT Y = 8  \n- Expected utility of ACT Z = 6  \n\nThus, the best action is **ACT Y**, with utility 8.\n\nNo communication cost is incurred because we are not asking anything.\n\n<answer>ACT Y<|im_end|>"}, {"prompt": "system\nYou are playing a decision-making game with another agent.user\nAt each decision point, choose exactly one listed legal action.\n\nACT <option> chooses that option as the final action and ends the episode.\nASK <fact> asks the truthful partner to reveal that fact. ASK incurs the listed communication cost. After receiving the answer, you will make one final ACT decision.\n\nYour objective is to maximize expected total utility, including communication cost.\n\nReason carefully, then finish with <answer> followed immediately by exactly one listed legal action, such as <answer>ACT X.\n\nObserved context: market=calm, utility_shift=+0\nKnown hidden facts: none\nAskable facts: F1, F3, F2\nInformation mode: hidden\nCommunication cost: 0.25\n\nPossible-world utility table:\nF1 | F3 | F2 | probability | Z | X | Y\n0 | 0 | 0 | 0.125 | 8 | 6 | 4\n0 | 0 | 1 | 0.125 | 8 | 6 | 4\n0 | 1 | 0 | 0.125 | 8 | 6 | 4\n0 | 1 | 1 | 0.125 | 8 | 6 | 4\n1 | 0 | 0 | 0.125 | 8 | 6 | 4\n1 | 0 | 1 | 0.125 | 8 | 6 | 4\n1 | 1 | 0 | 0.125 | 8 | 6 | 4\n1 | 1 | 1 | 0.125 | 8 | 6 | 4\n\nLegal actions: ASK F2, ASK F1, ASK F3, ACT X, ACT Y, ACT Zassistant\n", "response": "We are given a situation with hidden facts F1, F2, F3, each with equal probability (0.125) across all 8 combinations. The utility values for each combination are:\n\n- For all combinations (regardless of F1, F2, F3), the utility values are:\n  - Z: 8\n  - X: 6\n  - Y: 4\n\nThis means that **Z gives the highest utility (8)**, then X (6), then Y (4), and **all combinations yield the same utilities** — there is no variation in utility based on the hidden facts.\n\nTherefore, **the expected utility of any action is the same regardless of the hidden facts**.\n\n- Expected utility of ACT Z = 8\n- Expected utility of ACT X = 6\n- Expected utility of ACT Y = 4\n\nSo, **ACT Z** is clearly the best action in terms of expected utility.\n\nNow, consider whether asking any fact (F1, F2, F3) would improve utility. But since **all combinations yield the same utility values**, no information from F1, F2, or F3 changes the expected utility of any action. Thus, asking any fact would incur a communication cost of 0.25, but **would not improve the expected utility**.\n\nTherefore, **asking any fact is not beneficial** — it only adds cost without benefit.\n\n### Conclusion:\nWe should choose the action with the highest expected utility: **ACT Z**.\n\n<answer>ACT Z", "episode_score": 8.0, "llm_raw_text": "<|im_start|>assistant\nWe are given a situation with hidden facts F1, F2, F3, each with equal probability (0.125) across all 8 combinations. The utility values for each combination are:\n\n- For all combinations (regardless of F1, F2, F3), the utility values are:\n  - Z: 8\n  - X: 6\n  - Y: 4\n\nThis means that **Z gives the highest utility (8)**, then X (6), then Y (4), and **all combinations yield the same utilities** — there is no variation in utility based on the hidden facts.\n\nTherefore, **the expected utility of any action is the same regardless of the hidden facts**.\n\n- Expected utility of ACT Z = 8\n- Expected utility of ACT X = 6\n- Expected utility of ACT Y = 4\n\nSo, **ACT Z** is clearly the best action in terms of expected utility.\n\nNow, consider whether asking any fact (F1, F2, F3) would improve utility. But since **all combinations yield the same utility values**, no information from F1, F2, or F3 changes the expected utility of any action. Thus, asking any fact would incur a communication cost of 0.25, but **would not improve the expected utility**.\n\nTherefore, **asking any fact is not beneficial** — it only adds cost without benefit.\n\n### Conclusion:\nWe should choose the action with the highest expected utility: **ACT Z**.\n\n<answer>ACT Z<|im_end|>"}, {"prompt": "system\nYou are playing a decision-making game with another agent.user\nAt each decision point, choose exactly one listed legal action.\n\nACT <option> chooses that option as the final action and ends the episode.\nASK <fact> asks the truthful partner to reveal that fact. ASK incurs the listed communication cost. After receiving the answer, you will make one final ACT decision.\n\nYour objective is to maximize expected total utility, including communication cost.\n\nReason carefully, then finish with <answer> followed immediately by exactly one listed legal action, such as <answer>ACT X.\n\nObserved context: market=calm, utility_shift=+0\nKnown hidden facts: none\nAskable facts: F1, F3, F2\nInformation mode: hidden\nCommunication cost: 0.25\n\nPossible-world utility table:\nF1 | F3 | F2 | probability | Z | X | Y\n0 | 0 | 0 | 0.125 | 8 | 6 | 4\n0 | 0 | 1 | 0.125 | 8 | 6 | 4\n0 | 1 | 0 | 0.125 | 8 | 6 | 4\n0 | 1 | 1 | 0.125 | 8 | 6 | 4\n1 | 0 | 0 | 0.125 | 8 | 6 | 4\n1 | 0 | 1 | 0.125 | 8 | 6 | 4\n1 | 1 | 0 | 0.125 | 8 | 6 | 4\n1 | 1 | 1 | 0.125 | 8 | 6 | 4\n\nLegal actions: ASK F2, ASK F1, ASK F3, ACT X, ACT Y, ACT Zassistant\n", "response": "We are given a scenario with hidden facts F1, F2, F3, each with equal probability (0.125) across all combinations. The utility values for each combination of facts are:\n\n- For all combinations (all 8 rows), Z = 8, X = 6, Y = 4.\n\nThis means that **regardless of the actual values of F1, F2, F3**, the utilities for actions X, Y, Z are fixed:\n- ACT X → utility = 6\n- ACT Y → utility = 4\n- ACT Z → utility = 8\n\nTherefore, **no matter what the hidden facts are**, the utility of each action is constant across all possible worlds.\n\nSo:\n- ACT Z gives 8 utility\n- ACT X gives 6 utility\n- ACT Y gives 4 utility\n\nSince all possible worlds are equally likely (each with probability 0.125), and the utilities are independent of the facts, asking any fact (F1, F2, F3) will not change the expected utility of any action — because the utilities are already known to be constant.\n\nHowever, we must consider the **communication cost** of asking: each ASK incurs a cost of 0.25.\n\nSo, if we ask a fact, we pay 0.25, but we gain **no additional utility** — because the utility of each action is already fixed regardless of the facts.\n\nTherefore, **asking any fact reduces expected utility** by 0.25, since we get no benefit from the information.\n\nThus, the optimal action is to **not ask**, and instead **choose the action with the highest utility**.\n\nBest utility: ACT Z → 8\n\n<answer>ACT Z", "episode_score": 8.0, "llm_raw_text": "<|im_start|>assistant\nWe are given a scenario with hidden facts F1, F2, F3, each with equal probability (0.125) across all combinations. The utility values for each combination of facts are:\n\n- For all combinations (all 8 rows), Z = 8, X = 6, Y = 4.\n\nThis means that **regardless of the actual values of F1, F2, F3**, the utilities for actions X, Y, Z are fixed:\n- ACT X → utility = 6\n- ACT Y → utility = 4\n- ACT Z → utility = 8\n\nTherefore, **no matter what the hidden facts are**, the utility of each action is constant across all possible worlds.\n\nSo:\n- ACT Z gives 8 utility\n- ACT X gives 6 utility\n- ACT Y gives 4 utility\n\nSince all possible worlds are equally likely (each with probability 0.125), and the utilities are independent of the facts, asking any fact (F1, F2, F3) will not change the expected utility of any action — because the utilities are already known to be constant.\n\nHowever, we must consider the **communication cost** of asking: each ASK incurs a cost of 0.25.\n\nSo, if we ask a fact, we pay 0.25, but we gain **no additional utility** — because the utility of each action is already fixed regardless of the facts.\n\nTherefore, **asking any fact reduces expected utility** by 0.25, since we get no benefit from the information.\n\nThus, the optimal action is to **not ask**, and instead **choose the action with the highest utility**.\n\nBest utility: ACT Z → 8\n\n<answer>ACT Z<|im_end|>"}, {"prompt": "system\nYou are playing a decision-making game with another agent.user\nAt each decision point, choose exactly one listed legal action.\n\nACT <option> chooses that option as the final action and ends the episode.\nASK <fact> asks the truthful partner to reveal that fact. ASK incurs the listed communication cost. After receiving the answer, you will make one final ACT decision.\n\nYour objective is to maximize expected total utility, including communication cost.\n\nReason carefully, then finish with <answer> followed immediately by exactly one listed legal action, such as <answer>ACT X.\n\nObserved context: market=calm, utility_shift=+0\nKnown hidden facts: none\nAskable facts: F1, F3, F2\nInformation mode: hidden\nCommunication cost: 0.25\n\nPossible-world utility table:\nF1 | F3 | F2 | probability | Z | X | Y\n0 | 0 | 0 | 0.125 | 8 | 6 | 4\n0 | 0 | 1 | 0.125 | 8 | 6 | 4\n0 | 1 | 0 | 0.125 | 8 | 6 | 4\n0 | 1 | 1 | 0.125 | 8 | 6 | 4\n1 | 0 | 0 | 0.125 | 8 | 6 | 4\n1 | 0 | 1 | 0.125 | 8 | 6 | 4\n1 | 1 | 0 | 0.125 | 8 | 6 | 4\n1 | 1 | 1 | 0.125 | 8 | 6 | 4\n\nLegal actions: ASK F2, ASK F1, ASK F3, ACT X, ACT Y, ACT Zassistant\n", "response": "We are given a situation where we must choose an action to maximize expected total utility, including communication cost.\n\n---\n\n### Step 1: Understand the setup\n\n- **Hidden facts**: None are known initially.\n- **Askable facts**: F1, F2, F3.\n- **Communication cost**: 0.25 per ASK.\n- **Possible-world utility table**:\n  - All combinations of F1, F3, F2 have equal probability: 0.125 each.\n  - There are 8 rows (2^3), each with probability 0.125.\n  - In **all** cases, the utility values are:\n    - Z: 8\n    - X: 6\n    - Y: 4\n\nSo regardless of the values of F1, F2, F3, the utilities for actions X, Y, Z are constant:\n- ACT Z → utility = 8\n- ACT X → utility = 6\n- ACT Y → utility = 4\n\nThis means that **no matter what the hidden facts are**, the utility of each action is fixed.\n\n---\n\n### Step 2: Evaluate expected utility of each action\n\nSince all outcomes have equal probability (0.125), and utility is constant across all combinations:\n\n- **ACT Z**: utility = 8\n- **ACT X**: utility = 6\n- **ACT Y**: utility = 4\n\nNo information from asking facts changes the utility — because the utility values are the same in every possible world.\n\nTherefore, asking any fact (F1, F2, or F3) will not improve the expected utility, because:\n- The utility of each action is independent of the hidden facts.\n- The cost of asking (0.25) will reduce expected utility.\n\n---\n\n### Step 3: Decision\n\nEven though we can ask facts, doing so incurs a cost of 0.25 with no benefit in utility.\n\nSo, the best action is to **choose the action with the highest utility without any cost**.\n\nThat is: **ACT Z**, which gives utility 8.\n\n---\n\n<answer>ACT Z", "episode_score": 8.0, "llm_raw_text": "<|im_start|>assistant\nWe are given a situation where we must choose an action to maximize expected total utility, including communication cost.\n\n---\n\n### Step 1: Understand the setup\n\n- **Hidden facts**: None are known initially.\n- **Askable facts**: F1, F2, F3.\n- **Communication cost**: 0.25 per ASK.\n- **Possible-world utility table**:\n  - All combinations of F1, F3, F2 have equal probability: 0.125 each.\n  - There are 8 rows (2^3), each with probability 0.125.\n  - In **all** cases, the utility values are:\n    - Z: 8\n    - X: 6\n    - Y: 4\n\nSo regardless of the values of F1, F2, F3, the utilities for actions X, Y, Z are constant:\n- ACT Z → utility = 8\n- ACT X → utility = 6\n- ACT Y → utility = 4\n\nThis means that **no matter what the hidden facts are**, the utility of each action is fixed.\n\n---\n\n### Step 2: Evaluate expected utility of each action\n\nSince all outcomes have equal probability (0.125), and utility is constant across all combinations:\n\n- **ACT Z**: utility = 8\n- **ACT X**: utility = 6\n- **ACT Y**: utility = 4\n\nNo information from asking facts changes the utility — because the utility values are the same in every possible world.\n\nTherefore, asking any fact (F1, F2, or F3) will not improve the expected utility, because:\n- The utility of each action is independent of the hidden facts.\n- The cost of asking (0.25) will reduce expected utility.\n\n---\n\n### Step 3: Decision\n\nEven though we can ask facts, doing so incurs a cost of 0.25 with no benefit in utility.\n\nSo, the best action is to **choose the action with the highest utility without any cost**.\n\nThat is: **ACT Z**, which gives utility 8.\n\n---\n\n<answer>ACT Z<|im_end|>"}, {"prompt": "system\nYou are playing a decision-making game with another agent.user\nAt each decision point, choose exactly one listed legal action.\n\nACT <option> chooses that option as the final action and ends the episode.\nASK <fact> asks the truthful partner to reveal that fact. ASK incurs the listed communication cost. After receiving the answer, you will make one final ACT decision.\n\nYour objective is to maximize expected total utility, including communication cost.\n\nReason carefully, then finish with <answer> followed immediately by exactly one listed legal action, such as <answer>ACT X.\n\nObserved context: market=calm, utility_shift=+0\nKnown hidden facts: none\nAskable facts: F1, F3, F2\nInformation mode: hidden\nCommunication cost: 0.25\n\nPossible-world utility table:\nF1 | F3 | F2 | probability | Z | X | Y\n0 | 0 | 0 | 0.125 | 8 | 6 | 4\n0 | 0 | 1 | 0.125 | 8 | 6 | 4\n0 | 1 | 0 | 0.125 | 8 | 6 | 4\n0 | 1 | 1 | 0.125 | 8 | 6 | 4\n1 | 0 | 0 | 0.125 | 8 | 6 | 4\n1 | 0 | 1 | 0.125 | 8 | 6 | 4\n1 | 1 | 0 | 0.125 | 8 | 6 | 4\n1 | 1 | 1 | 0.125 | 8 | 6 | 4\n\nLegal actions: ASK F2, ASK F1, ASK F3, ACT X, ACT Y, ACT Zassistant\n", "response": "We are given a scenario where we must choose between:\n\n- Asking for one of the hidden facts: F1, F2, or F3 (each costing 0.25 utility)\n- Or acting directly: ACT X, ACT Y, or ACT Z\n\nOur objective is to **maximize expected total utility**, which includes communication cost.\n\n---\n\n### Step 1: Understand the Utility Structure\n\nThe possible-world utility table shows:\n\n- All combinations of F1, F2, F3 are equally likely: each with probability 0.125\n- Regardless of the values of F1, F2, F3, the utilities are:\n  - Z = 8\n  - X = 6\n  - Y = 4\n\nSo, **in every possible world**, the utilities of X, Y, Z are fixed.\n\nThis means:\n- ACT Z gives 8 utility\n- ACT X gives 6 utility\n- ACT Y gives 4 utility\n\nThus, **no matter what the hidden facts are**, the utility of each action is constant across all possible worlds.\n\nTherefore, the **expected utility** of each action is just the utility itself, since all outcomes are equally likely and the utilities do not depend on the facts.\n\n---\n\n### Step 2: Evaluate the Value of Asking\n\nWe can ask for F1, F2, or F3. Each costs 0.25 utility.\n\nBut **asking does not change the utility outcomes** — because regardless of the truth of F1, F2, or F3, the resulting utility from ACT X, Y, or Z is always the same.\n\nTherefore:\n- Asking any fact provides **no information** that changes the expected utility of the actions.\n- Since the utilities are constant across all worlds, we cannot improve our decision by asking.\n\nThus, **asking any fact is not beneficial** — it only incurs a cost of 0.25 with no gain in expected utility.\n\n---\n\n### Step 3: Choose the Best Action\n\nSince:\n- ACT Z gives 8 utility\n- ACT X gives 6 utility\n- ACT Y gives 4 utility\n\nThe best action is **ACT Z**, with the highest utility.\n\n---\n\n### Final Decision\n\nWe do not need to ask any fact — no information is useful, and all outcomes have identical utility values.\n\n<answer>ACT Z", "episode_score": 8.0, "llm_raw_text": "<|im_start|>assistant\nWe are given a scenario where we must choose between:\n\n- Asking for one of the hidden facts: F1, F2, or F3 (each costing 0.25 utility)\n- Or acting directly: ACT X, ACT Y, or ACT Z\n\nOur objective is to **maximize expected total utility**, which includes communication cost.\n\n---\n\n### Step 1: Understand the Utility Structure\n\nThe possible-world utility table shows:\n\n- All combinations of F1, F2, F3 are equally likely: each with probability 0.125\n- Regardless of the values of F1, F2, F3, the utilities are:\n  - Z = 8\n  - X = 6\n  - Y = 4\n\nSo, **in every possible world**, the utilities of X, Y, Z are fixed.\n\nThis means:\n- ACT Z gives 8 utility\n- ACT X gives 6 utility\n- ACT Y gives 4 utility\n\nThus, **no matter what the hidden facts are**, the utility of each action is constant across all possible worlds.\n\nTherefore, the **expected utility** of each action is just the utility itself, since all outcomes are equally likely and the utilities do not depend on the facts.\n\n---\n\n### Step 2: Evaluate the Value of Asking\n\nWe can ask for F1, F2, or F3. Each costs 0.25 utility.\n\nBut **asking does not change the utility outcomes** — because regardless of the truth of F1, F2, or F3, the resulting utility from ACT X, Y, or Z is always the same.\n\nTherefore:\n- Asking any fact provides **no information** that changes the expected utility of the actions.\n- Since the utilities are constant across all worlds, we cannot improve our decision by asking.\n\nThus, **asking any fact is not beneficial** — it only incurs a cost of 0.25 with no gain in expected utility.\n\n---\n\n### Step 3: Choose the Best Action\n\nSince:\n- ACT Z gives 8 utility\n- ACT X gives 6 utility\n- ACT Y gives 4 utility\n\nThe best action is **ACT Z**, with the highest utility.\n\n---\n\n### Final Decision\n\nWe do not need to ask any fact — no information is useful, and all outcomes have identical utility values.\n\n<answer>ACT Z<|im_end|>"}, {"prompt": "system\nYou are playing a decision-making game with another agent.user\nAt each decision point, choose exactly one listed legal action.\n\nACT <option> chooses that option as the final action and ends the episode.\nASK <fact> asks the truthful partner to reveal that fact. ASK incurs the listed communication cost. After receiving the answer, you will make one final ACT decision.\n\nYour objective is to maximize expected total utility, including communication cost.\n\nReason carefully, then finish with <answer> followed immediately by exactly one listed legal action, such as <answer>ACT X.\n\nObserved context: market=calm, utility_shift=+0\nKnown hidden facts: F1=1, F3=1, F2=0\nAskable facts: none\nInformation mode: full\nCommunication cost: 0.25\n\nPossible-world utility table:\nF1 | F3 | F2 | probability | Z | X | Y\n0 | 0 | 0 | 0.125 | 8 | 6 | 4\n0 | 0 | 1 | 0.125 | 8 | 6 | 4\n0 | 1 | 0 | 0.125 | 8 | 6 | 4\n0 | 1 | 1 | 0.125 | 8 | 6 | 4\n1 | 0 | 0 | 0.125 | 8 | 6 | 4\n1 | 0 | 1 | 0.125 | 8 | 6 | 4\n1 | 1 | 0 | 0.125 | 8 | 6 | 4\n1 | 1 | 1 | 0.125 | 8 | 6 | 4\n\nLegal actions: ACT X, ACT Y, ACT Zassistant\n", "response": "We are given:\n\n- Hidden facts: F1 = 1, F3 = 1, F2 = 0  \n- Information mode: full → we know all hidden facts  \n- Utility table shows that for all combinations of F1, F2, F3, the utility values are:\n  - Z = 8\n  - X = 6\n  - Y = 4\n- All probability entries are 0.125 (8 equally likely combinations, each with equal probability)\n\nSince we **know** the hidden facts (F1=1, F3=1, F2=0), we can directly compute the utility of each action.\n\nWe are to **maximize expected total utility**, including communication cost. But communication cost only applies if we **ask** a fact — and **no facts are askable**.\n\nTherefore, we **do not incur any communication cost**.\n\nNow, compute expected utility for each action:\n\n- ACT X: utility = 6 (regardless of the state, since all rows have X=6)\n- ACT Y: utility = 4\n- ACT Z: utility = 8\n\nSince all states are equally likely and the utilities are constant across states, the expected utility is just the value of the action.\n\nThus:\n- ACT X: 6\n- ACT Y: 4\n- ACT Z: 8\n\nMaximum expected utility is 8 → from ACT Z.\n\nNo communication is needed, since we already know all facts.\n\n<answer>ACT Z", "episode_score": 8.0, "llm_raw_text": "<|im_start|>assistant\nWe are given:\n\n- Hidden facts: F1 = 1, F3 = 1, F2 = 0  \n- Information mode: full → we know all hidden facts  \n- Utility table shows that for all combinations of F1, F2, F3, the utility values are:\n  - Z = 8\n  - X = 6\n  - Y = 4\n- All probability entries are 0.125 (8 equally likely combinations, each with equal probability)\n\nSince we **know** the hidden facts (F1=1, F3=1, F2=0), we can directly compute the utility of each action.\n\nWe are to **maximize expected total utility**, including communication cost. But communication cost only applies if we **ask** a fact — and **no facts are askable**.\n\nTherefore, we **do not incur any communication cost**.\n\nNow, compute expected utility for each action:\n\n- ACT X: utility = 6 (regardless of the state, since all rows have X=6)\n- ACT Y: utility = 4\n- ACT Z: utility = 8\n\nSince all states are equally likely and the utilities are constant across states, the expected utility is just the value of the action.\n\nThus:\n- ACT X: 6\n- ACT Y: 4\n- ACT Z: 8\n\nMaximum expected utility is 8 → from ACT Z.\n\nNo communication is needed, since we already know all facts.\n\n<answer>ACT Z<|im_end|>"}, {"prompt": "system\nYou are playing a decision-making game with another agent.user\nAt each decision point, choose exactly one listed legal action.\n\nACT <option> chooses that option as the final action and ends the episode.\nASK <fact> asks the truthful partner to reveal that fact. ASK incurs the listed communication cost. After receiving the answer, you will make one final ACT decision.\n\nYour objective is to maximize expected total utility, including communication cost.\n\nReason carefully, then finish with <answer> followed immediately by exactly one listed legal action, such as <answer>ACT X.\n\nObserved context: market=calm, utility_shift=+0\nKnown hidden facts: F1=1, F3=1, F2=0\nAskable facts: none\nInformation mode: full\nCommunication cost: 0.25\n\nPossible-world utility table:\nF1 | F3 | F2 | probability | Z | X | Y\n0 | 0 | 0 | 0.125 | 8 | 6 | 4\n0 | 0 | 1 | 0.125 | 8 | 6 | 4\n0 | 1 | 0 | 0.125 | 8 | 6 | 4\n0 | 1 | 1 | 0.125 | 8 | 6 | 4\n1 | 0 | 0 | 0.125 | 8 | 6 | 4\n1 | 0 | 1 | 0.125 | 8 | 6 | 4\n1 | 1 | 0 | 0.125 | 8 | 6 | 4\n1 | 1 | 1 | 0.125 | 8 | 6 | 4\n\nLegal actions: ACT X, ACT Y, ACT Zassistant\n", "response": "We are given:\n\n- Hidden facts: F1 = 1, F3 = 1, F2 = 0  \n- Information mode: full → we know all hidden facts  \n- Market is calm, utility shift is +0 → no additional dynamic effects  \n- Possible-world utility table shows that **for all combinations of F1, F2, F3**, the utility values (Z, X, Y) are constant:  \n  - Z = 8  \n  - X = 6  \n  - Y = 4  \n- All probability entries are 0.125 (8 equally likely combinations)  \n- Communication cost for ASK is 0.25, but **no facts are askable**  \n- Legal actions: ACT X, ACT Y, ACT Z  \n\nSince we **know the hidden facts** (F1=1, F3=1, F2=0), and the utility table shows that **X, Y, Z are constant across all possible worlds**, we can compute the expected utility of each action directly.\n\n### Step 1: Compute expected utility of each action\n\n- **ACT X**: utility = 6 (in all cases) → expected utility = 6  \n- **ACT Y**: utility = 4 (in all cases) → expected utility = 4  \n- **ACT Z**: utility = 8 (in all cases) → expected utility = 8  \n\nNo communication is needed, since all facts are known.\n\n### Step 2: Choose action with highest expected utility\n\nMaximize expected utility → choose **ACT Z** (utility = 8)\n\n<answer>ACT Z", "episode_score": 8.0, "llm_raw_text": "<|im_start|>assistant\nWe are given:\n\n- Hidden facts: F1 = 1, F3 = 1, F2 = 0  \n- Information mode: full → we know all hidden facts  \n- Market is calm, utility shift is +0 → no additional dynamic effects  \n- Possible-world utility table shows that **for all combinations of F1, F2, F3**, the utility values (Z, X, Y) are constant:  \n  - Z = 8  \n  - X = 6  \n  - Y = 4  \n- All probability entries are 0.125 (8 equally likely combinations)  \n- Communication cost for ASK is 0.25, but **no facts are askable**  \n- Legal actions: ACT X, ACT Y, ACT Z  \n\nSince we **know the hidden facts** (F1=1, F3=1, F2=0), and the utility table shows that **X, Y, Z are constant across all possible worlds**, we can compute the expected utility of each action directly.\n\n### Step 1: Compute expected utility of each action\n\n- **ACT X**: utility = 6 (in all cases) → expected utility = 6  \n- **ACT Y**: utility = 4 (in all cases) → expected utility = 4  \n- **ACT Z**: utility = 8 (in all cases) → expected utility = 8  \n\nNo communication is needed, since all facts are known.\n\n### Step 2: Choose action with highest expected utility\n\nMaximize expected utility → choose **ACT Z** (utility = 8)\n\n<answer>ACT Z<|im_end|>"}]
+[2026-08-26 17:13:28] [agentic_rollout_pipeline.py (135)] [INFO] [DRIVER 0 / 1][PID 189956] {"time/rollout": 140.6582893889863, "env/HC-Near-NoQuery-Full/success": 1.0, "env/HC-Near-NoQuery-Full/num_actions": 1.0, "env/HC-Near-NoQuery-Full/generation_attempts": 1.0, "env/HC-Near-NoQuery-Full/retry_attempts": 0.0, "env/HC-Near-NoQuery-Full/action_is_ask": 0.0, "env/HC-Near-NoQuery-Full/oracle_should_ask": 0.0, "env/HC-Near-NoQuery-Full/oracle_value_act": 9.2, "env/HC-Near-NoQuery-Full/oracle_value": 9.2, "env/HC-Near-NoQuery-Full/chosen_action_value": 8.9, "env/HC-Near-NoQuery-Full/decision_regret": 0.3, "env/HC-Near-NoQuery-Full/optimal_action": 0.85, "env/HC-Near-NoQuery-Full/query_correct": 0.0, "env/HC-Near-NoQuery-Full/full_information": 1.0, "env/HC-Near-NoQuery-Full/step_reward": 8.9, "env/HC-Near-NoQuery-Full/num_asks": 0.0, "env/HC-Near-NoQuery-Full/game_transition": 1.0, "env/HC-Near-NoQuery-Full/benchmark_success": 0.85, "env/HC-Near-NoQuery-Full/total_return": 8.9, "env/HC-Near-NoQuery-Full/initial_should_ask": 0.0, "env/HC-Near-NoQuery-Full/max_gross_voi": 0.0, "env/HC-Near-NoQuery-Full/communication_cost": 0.05000000000000001, "env/HC-Near-NoQuery-Full/oracle_margin": -0.05000000000000001, "env/HC-Near-NoQuery-Full/first_action_ask": 0.0, "env/HC-Near-NoQuery-Full/first_decision_optimal": 0.85, "env/HC-Near-NoQuery-Full/ask_act_correct": 0.85, "env/HC-Near-NoQuery-Full/correct_abstention": 0.0, "env/HC-Near-NoQuery-Full/over_querying": 0.0, "env/HC-Near-NoQuery-Full/decision_error": 0.0, "env/HC-Near-NoQuery-Full/under_querying": 0.0, "env/HC-Near-NoQuery-Full/query_selection_failure": 0.0, "env/HC-Near-NoQuery-Full/query_selection_correct": 0.0, "env/HC-Near-NoQuery-Full/information_use_failure": 0.0, "env/HC-Near-NoQuery-Full/communication_success": 0.0, "env/HC-Near-NoQuery-Full/post_query_action_correct": 0.0, "env/HC-Near-NoQuery-Full/stopping_failure": 0.0, "env/HC-Near-NoQuery-Full/full_info_action_correct": 0.85, "env/HC-Near-NoQuery-Full/final_action_optimal": 0.85, "env/HC-Near-NoQuery-Full/total_decision_regret": 0.3, "env/HC-Near-NoQuery-Full/player_0_return": 8.9, "env/HC-Near-NoQuery-Full/player_1_return": 0.0, "env/HC-Near-NoQuery-Full/winner": -0.15, "env/HC-Near-NoQuery-Full/player_0_success": 0.85, "env/HC-Near-NoQuery-Full/player_1_success": 0.0, "env/HC-Near-NoQuery-Full/draw": 0.0, "env/HC-Near-NoQuery-Full/player_0_lose_for_wrong_format": 0.0, "env/HC-Near-NoQuery-Full/player_1_lose_for_wrong_format": 0.0, "env/HC-Near-NoQuery-Full/player_0_lose_for_overlong_response": 0.0, "env/HC-Near-NoQuery-Full/player_1_lose_for_overlong_response": 0.0, "env/HC-Near-NoQuery-Full/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Near-NoQuery-Full/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Near-NoQuery-Full/format_valid": 1.0, "env/HC-Near-NoQuery-Full/semantic_action_valid": 1.0, "env/HC-Near-NoQuery-Full/action_recovered": 1.0, "env/HC-Near-NoQuery-Full/near_generation_limit": 0.0, "env/HC-Near-NoQuery-Full/response_truncated": 0.0, "env/HC-Near-NoQuery-Full/response_length": 413.35, "env/HC-Near-NoQuery-Full/response_length_per_turn": 413.35, "env/HC-Near-NoQuery-Full/response_length_turn_0": 413.35, "env/HC-Medium-NoQuery-Hidden/success": 1.0, "env/HC-Medium-NoQuery-Hidden/num_actions": 1.0, "env/HC-Medium-NoQuery-Hidden/generation_attempts": 1.0, "env/HC-Medium-NoQuery-Hidden/retry_attempts": 0.0, "env/HC-Medium-NoQuery-Hidden/action_is_ask": 0.0, "env/HC-Medium-NoQuery-Hidden/oracle_should_ask": 0.0, "env/HC-Medium-NoQuery-Hidden/oracle_value_act": 9.2, "env/HC-Medium-NoQuery-Hidden/oracle_value": 9.2, "env/HC-Medium-NoQuery-Hidden/chosen_action_value": 8.8, "env/HC-Medium-NoQuery-Hidden/decision_regret": 0.4, "env/HC-Medium-NoQuery-Hidden/optimal_action": 0.8, "env/HC-Medium-NoQuery-Hidden/query_correct": 0.0, "env/HC-Medium-NoQuery-Hidden/full_information": 0.0, "env/HC-Medium-NoQuery-Hidden/step_reward": 8.8, "env/HC-Medium-NoQuery-Hidden/num_asks": 0.0, "env/HC-Medium-NoQuery-Hidden/game_transition": 1.0, "env/HC-Medium-NoQuery-Hidden/benchmark_success": 0.8, "env/HC-Medium-NoQuery-Hidden/total_return": 8.8, "env/HC-Medium-NoQuery-Hidden/initial_should_ask": 0.0, "env/HC-Medium-NoQuery-Hidden/max_gross_voi": 0.0, "env/HC-Medium-NoQuery-Hidden/communication_cost": 0.25, "env/HC-Medium-NoQuery-Hidden/oracle_margin": -0.25, "env/HC-Medium-NoQuery-Hidden/first_action_ask": 0.0, "env/HC-Medium-NoQuery-Hidden/first_decision_optimal": 0.8, "env/HC-Medium-NoQuery-Hidden/ask_act_correct": 0.8, "env/HC-Medium-NoQuery-Hidden/correct_abstention": 0.8, "env/HC-Medium-NoQuery-Hidden/over_querying": 0.0, "env/HC-Medium-NoQuery-Hidden/decision_error": 0.2, "env/HC-Medium-NoQuery-Hidden/under_querying": 0.0, "env/HC-Medium-NoQuery-Hidden/query_selection_failure": 0.0, "env/HC-Medium-NoQuery-Hidden/query_selection_correct": 0.0, "env/HC-Medium-NoQuery-Hidden/information_use_failure": 0.0, "env/HC-Medium-NoQuery-Hidden/communication_success": 0.0, "env/HC-Medium-NoQuery-Hidden/post_query_action_correct": 0.0, "env/HC-Medium-NoQuery-Hidden/stopping_failure": 0.0, "env/HC-Medium-NoQuery-Hidden/full_info_action_correct": 0.0, "env/HC-Medium-NoQuery-Hidden/final_action_optimal": 0.8, "env/HC-Medium-NoQuery-Hidden/total_decision_regret": 0.4, "env/HC-Medium-NoQuery-Hidden/player_0_return": 8.8, "env/HC-Medium-NoQuery-Hidden/player_1_return": 0.0, "env/HC-Medium-NoQuery-Hidden/winner": -0.2, "env/HC-Medium-NoQuery-Hidden/player_0_success": 0.8, "env/HC-Medium-NoQuery-Hidden/player_1_success": 0.0, "env/HC-Medium-NoQuery-Hidden/draw": 0.0, "env/HC-Medium-NoQuery-Hidden/player_0_lose_for_wrong_format": 0.0, "env/HC-Medium-NoQuery-Hidden/player_1_lose_for_wrong_format": 0.0, "env/HC-Medium-NoQuery-Hidden/player_0_lose_for_overlong_response": 0.0, "env/HC-Medium-NoQuery-Hidden/player_1_lose_for_overlong_response": 0.0, "env/HC-Medium-NoQuery-Hidden/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Medium-NoQuery-Hidden/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Medium-NoQuery-Hidden/format_valid": 1.0, "env/HC-Medium-NoQuery-Hidden/semantic_action_valid": 1.0, "env/HC-Medium-NoQuery-Hidden/action_recovered": 1.0, "env/HC-Medium-NoQuery-Hidden/near_generation_limit": 0.0, "env/HC-Medium-NoQuery-Hidden/response_truncated": 0.0, "env/HC-Medium-NoQuery-Hidden/response_length": 520.3, "env/HC-Medium-NoQuery-Hidden/response_length_per_turn": 520.3, "env/HC-Medium-NoQuery-Hidden/response_length_turn_0": 520.3, "env/HC-Medium-NoQuery-Full/success": 1.0, "env/HC-Medium-NoQuery-Full/num_actions": 1.0, "env/HC-Medium-NoQuery-Full/generation_attempts": 1.0, "env/HC-Medium-NoQuery-Full/retry_attempts": 0.0, "env/HC-Medium-NoQuery-Full/action_is_ask": 0.0, "env/HC-Medium-NoQuery-Full/oracle_should_ask": 0.0, "env/HC-Medium-NoQuery-Full/oracle_value_act": 9.2, "env/HC-Medium-NoQuery-Full/oracle_value": 9.2, "env/HC-Medium-NoQuery-Full/chosen_action_value": 8.8, "env/HC-Medium-NoQuery-Full/decision_regret": 0.4, "env/HC-Medium-NoQuery-Full/optimal_action": 0.8, "env/HC-Medium-NoQuery-Full/query_correct": 0.0, "env/HC-Medium-NoQuery-Full/full_information": 1.0, "env/HC-Medium-NoQuery-Full/step_reward": 8.8, "env/HC-Medium-NoQuery-Full/num_asks": 0.0, "env/HC-Medium-NoQuery-Full/game_transition": 1.0, "env/HC-Medium-NoQuery-Full/benchmark_success": 0.8, "env/HC-Medium-NoQuery-Full/total_return": 8.8, "env/HC-Medium-NoQuery-Full/initial_should_ask": 0.0, "env/HC-Medium-NoQuery-Full/max_gross_voi": 0.0, "env/HC-Medium-NoQuery-Full/communication_cost": 0.25, "env/HC-Medium-NoQuery-Full/oracle_margin": -0.25, "env/HC-Medium-NoQuery-Full/first_action_ask": 0.0, "env/HC-Medium-NoQuery-Full/first_decision_optimal": 0.8, "env/HC-Medium-NoQuery-Full/ask_act_correct": 0.8, "env/HC-Medium-NoQuery-Full/correct_abstention": 0.0, "env/HC-Medium-NoQuery-Full/over_querying": 0.0, "env/HC-Medium-NoQuery-Full/decision_error": 0.0, "env/HC-Medium-NoQuery-Full/under_querying": 0.0, "env/HC-Medium-NoQuery-Full/query_selection_failure": 0.0, "env/HC-Medium-NoQuery-Full/query_selection_correct": 0.0, "env/HC-Medium-NoQuery-Full/information_use_failure": 0.0, "env/HC-Medium-NoQuery-Full/communication_success": 0.0, "env/HC-Medium-NoQuery-Full/post_query_action_correct": 0.0, "env/HC-Medium-NoQuery-Full/stopping_failure": 0.0, "env/HC-Medium-NoQuery-Full/full_info_action_correct": 0.8, "env/HC-Medium-NoQuery-Full/final_action_optimal": 0.8, "env/HC-Medium-NoQuery-Full/total_decision_regret": 0.4, "env/HC-Medium-NoQuery-Full/player_0_return": 8.8, "env/HC-Medium-NoQuery-Full/player_1_return": 0.0, "env/HC-Medium-NoQuery-Full/winner": -0.2, "env/HC-Medium-NoQuery-Full/player_0_success": 0.8, "env/HC-Medium-NoQuery-Full/player_1_success": 0.0, "env/HC-Medium-NoQuery-Full/draw": 0.0, "env/HC-Medium-NoQuery-Full/player_0_lose_for_wrong_format": 0.0, "env/HC-Medium-NoQuery-Full/player_1_lose_for_wrong_format": 0.0, "env/HC-Medium-NoQuery-Full/player_0_lose_for_overlong_response": 0.0, "env/HC-Medium-NoQuery-Full/player_1_lose_for_overlong_response": 0.0, "env/HC-Medium-NoQuery-Full/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Medium-NoQuery-Full/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Medium-NoQuery-Full/format_valid": 1.0, "env/HC-Medium-NoQuery-Full/semantic_action_valid": 1.0, "env/HC-Medium-NoQuery-Full/action_recovered": 1.0, "env/HC-Medium-NoQuery-Full/near_generation_limit": 0.0, "env/HC-Medium-NoQuery-Full/response_truncated": 0.0, "env/HC-Medium-NoQuery-Full/response_length": 444.05, "env/HC-Medium-NoQuery-Full/response_length_per_turn": 444.05, "env/HC-Medium-NoQuery-Full/response_length_turn_0": 444.05, "env/HC-Medium-Selective-Full/success": 0.95, "env/HC-Medium-Selective-Full/num_actions": 0.95, "env/HC-Medium-Selective-Full/generation_attempts": 1.0, "env/HC-Medium-Selective-Full/retry_attempts": 0.0, "env/HC-Medium-Selective-Full/action_is_ask": 0.0, "env/HC-Medium-Selective-Full/oracle_should_ask": 0.0, "env/HC-Medium-Selective-Full/oracle_value_act": 7.0, "env/HC-Medium-Selective-Full/oracle_value": 7.0, "env/HC-Medium-Selective-Full/chosen_action_value": 6.947368421052632, "env/HC-Medium-Selective-Full/decision_regret": 0.05263157894736842, "env/HC-Medium-Selective-Full/optimal_action": 0.9473684210526315, "env/HC-Medium-Selective-Full/query_correct": 0.0, "env/HC-Medium-Selective-Full/full_information": 1.0, "env/HC-Medium-Selective-Full/step_reward": 6.947368421052632, "env/HC-Medium-Selective-Full/num_asks": 0.0, "env/HC-Medium-Selective-Full/game_transition": 0.95, "env/HC-Medium-Selective-Full/benchmark_success": 0.9473684210526315, "env/HC-Medium-Selective-Full/total_return": 6.947368421052632, "env/HC-Medium-Selective-Full/initial_should_ask": 1.0, "env/HC-Medium-Selective-Full/max_gross_voi": 0.5, "env/HC-Medium-Selective-Full/communication_cost": 0.25, "env/HC-Medium-Selective-Full/oracle_margin": 0.25, "env/HC-Medium-Selective-Full/first_action_ask": 0.0, "env/HC-Medium-Selective-Full/first_decision_optimal": 0.9473684210526315, "env/HC-Medium-Selective-Full/ask_act_correct": 0.9473684210526315, "env/HC-Medium-Selective-Full/correct_abstention": 0.0, "env/HC-Medium-Selective-Full/over_querying": 0.0, "env/HC-Medium-Selective-Full/decision_error": 0.0, "env/HC-Medium-Selective-Full/under_querying": 0.0, "env/HC-Medium-Selective-Full/query_selection_failure": 0.0, "env/HC-Medium-Selective-Full/query_selection_correct": 0.0, "env/HC-Medium-Selective-Full/information_use_failure": 0.0, "env/HC-Medium-Selective-Full/communication_success": 0.0, "env/HC-Medium-Selective-Full/post_query_action_correct": 0.0, "env/HC-Medium-Selective-Full/stopping_failure": 0.0, "env/HC-Medium-Selective-Full/full_info_action_correct": 0.9473684210526315, "env/HC-Medium-Selective-Full/final_action_optimal": 0.9473684210526315, "env/HC-Medium-Selective-Full/total_decision_regret": 0.05263157894736842, "env/HC-Medium-Selective-Full/player_0_return": 6.6, "env/HC-Medium-Selective-Full/player_1_return": 0.0, "env/HC-Medium-Selective-Full/winner": -0.1, "env/HC-Medium-Selective-Full/player_0_success": 0.9, "env/HC-Medium-Selective-Full/player_1_success": 0.0, "env/HC-Medium-Selective-Full/draw": 0.0, "env/HC-Medium-Selective-Full/player_0_lose_for_wrong_format": 0.05, "env/HC-Medium-Selective-Full/player_1_lose_for_wrong_format": 0.0, "env/HC-Medium-Selective-Full/player_0_lose_for_overlong_response": 0.05, "env/HC-Medium-Selective-Full/player_1_lose_for_overlong_response": 0.0, "env/HC-Medium-Selective-Full/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Medium-Selective-Full/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Medium-Selective-Full/format_valid": 0.95, "env/HC-Medium-Selective-Full/semantic_action_valid": 0.95, "env/HC-Medium-Selective-Full/action_recovered": 0.95, "env/HC-Medium-Selective-Full/near_generation_limit": 0.05, "env/HC-Medium-Selective-Full/response_truncated": 0.05, "env/HC-Medium-Selective-Full/response_length": 587.5, "env/HC-Medium-Selective-Full/response_length_per_turn": 587.45, "env/HC-Medium-Selective-Full/response_length_turn_0": 587.45, "env/HC-Near-NoQuery-Hidden/success": 1.0, "env/HC-Near-NoQuery-Hidden/num_actions": 1.0, "env/HC-Near-NoQuery-Hidden/generation_attempts": 1.0, "env/HC-Near-NoQuery-Hidden/retry_attempts": 0.0, "env/HC-Near-NoQuery-Hidden/action_is_ask": 0.0, "env/HC-Near-NoQuery-Hidden/oracle_should_ask": 0.0, "env/HC-Near-NoQuery-Hidden/oracle_value_act": 9.2, "env/HC-Near-NoQuery-Hidden/oracle_value": 9.2, "env/HC-Near-NoQuery-Hidden/chosen_action_value": 8.6, "env/HC-Near-NoQuery-Hidden/decision_regret": 0.6, "env/HC-Near-NoQuery-Hidden/optimal_action": 0.8, "env/HC-Near-NoQuery-Hidden/query_correct": 0.0, "env/HC-Near-NoQuery-Hidden/full_information": 0.0, "env/HC-Near-NoQuery-Hidden/step_reward": 8.6, "env/HC-Near-NoQuery-Hidden/num_asks": 0.0, "env/HC-Near-NoQuery-Hidden/game_transition": 1.0, "env/HC-Near-NoQuery-Hidden/benchmark_success": 0.8, "env/HC-Near-NoQuery-Hidden/total_return": 8.6, "env/HC-Near-NoQuery-Hidden/initial_should_ask": 0.0, "env/HC-Near-NoQuery-Hidden/max_gross_voi": 0.0, "env/HC-Near-NoQuery-Hidden/communication_cost": 0.05000000000000001, "env/HC-Near-NoQuery-Hidden/oracle_margin": -0.05000000000000001, "env/HC-Near-NoQuery-Hidden/first_action_ask": 0.0, "env/HC-Near-NoQuery-Hidden/first_decision_optimal": 0.8, "env/HC-Near-NoQuery-Hidden/ask_act_correct": 0.8, "env/HC-Near-NoQuery-Hidden/correct_abstention": 0.8, "env/HC-Near-NoQuery-Hidden/over_querying": 0.0, "env/HC-Near-NoQuery-Hidden/decision_error": 0.2, "env/HC-Near-NoQuery-Hidden/under_querying": 0.0, "env/HC-Near-NoQuery-Hidden/query_selection_failure": 0.0, "env/HC-Near-NoQuery-Hidden/query_selection_correct": 0.0, "env/HC-Near-NoQuery-Hidden/information_use_failure": 0.0, "env/HC-Near-NoQuery-Hidden/communication_success": 0.0, "env/HC-Near-NoQuery-Hidden/post_query_action_correct": 0.0, "env/HC-Near-NoQuery-Hidden/stopping_failure": 0.0, "env/HC-Near-NoQuery-Hidden/full_info_action_correct": 0.0, "env/HC-Near-NoQuery-Hidden/final_action_optimal": 0.8, "env/HC-Near-NoQuery-Hidden/total_decision_regret": 0.6, "env/HC-Near-NoQuery-Hidden/player_0_return": 8.6, "env/HC-Near-NoQuery-Hidden/player_1_return": 0.0, "env/HC-Near-NoQuery-Hidden/winner": -0.2, "env/HC-Near-NoQuery-Hidden/player_0_success": 0.8, "env/HC-Near-NoQuery-Hidden/player_1_success": 0.0, "env/HC-Near-NoQuery-Hidden/draw": 0.0, "env/HC-Near-NoQuery-Hidden/player_0_lose_for_wrong_format": 0.0, "env/HC-Near-NoQuery-Hidden/player_1_lose_for_wrong_format": 0.0, "env/HC-Near-NoQuery-Hidden/player_0_lose_for_overlong_response": 0.0, "env/HC-Near-NoQuery-Hidden/player_1_lose_for_overlong_response": 0.0, "env/HC-Near-NoQuery-Hidden/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Near-NoQuery-Hidden/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Near-NoQuery-Hidden/format_valid": 1.0, "env/HC-Near-NoQuery-Hidden/semantic_action_valid": 1.0, "env/HC-Near-NoQuery-Hidden/action_recovered": 1.0, "env/HC-Near-NoQuery-Hidden/near_generation_limit": 0.0, "env/HC-Near-NoQuery-Hidden/response_truncated": 0.0, "env/HC-Near-NoQuery-Hidden/response_length": 569.95, "env/HC-Near-NoQuery-Hidden/response_length_per_turn": 569.95, "env/HC-Near-NoQuery-Hidden/response_length_turn_0": 569.95, "env/HC-Far-NoQuery-Hidden/success": 0.95, "env/HC-Far-NoQuery-Hidden/num_actions": 0.95, "env/HC-Far-NoQuery-Hidden/generation_attempts": 1.0, "env/HC-Far-NoQuery-Hidden/retry_attempts": 0.0, "env/HC-Far-NoQuery-Hidden/action_is_ask": 0.0, "env/HC-Far-NoQuery-Hidden/oracle_should_ask": 0.0, "env/HC-Far-NoQuery-Hidden/oracle_value_act": 9.157894736842104, "env/HC-Far-NoQuery-Hidden/oracle_value": 9.157894736842104, "env/HC-Far-NoQuery-Hidden/chosen_action_value": 8.631578947368421, "env/HC-Far-NoQuery-Hidden/decision_regret": 0.5263157894736842, "env/HC-Far-NoQuery-Hidden/optimal_action": 0.7894736842105263, "env/HC-Far-NoQuery-Hidden/query_correct": 0.0, "env/HC-Far-NoQuery-Hidden/full_information": 0.0, "env/HC-Far-NoQuery-Hidden/step_reward": 8.631578947368421, "env/HC-Far-NoQuery-Hidden/num_asks": 0.0, "env/HC-Far-NoQuery-Hidden/game_transition": 0.95, "env/HC-Far-NoQuery-Hidden/benchmark_success": 0.7894736842105263, "env/HC-Far-NoQuery-Hidden/total_return": 8.631578947368421, "env/HC-Far-NoQuery-Hidden/initial_should_ask": 0.0, "env/HC-Far-NoQuery-Hidden/max_gross_voi": 0.0, "env/HC-Far-NoQuery-Hidden/communication_cost": 1.0, "env/HC-Far-NoQuery-Hidden/oracle_margin": -1.0, "env/HC-Far-NoQuery-Hidden/first_action_ask": 0.0, "env/HC-Far-NoQuery-Hidden/first_decision_optimal": 0.7894736842105263, "env/HC-Far-NoQuery-Hidden/ask_act_correct": 0.7894736842105263, "env/HC-Far-NoQuery-Hidden/correct_abstention": 0.7894736842105263, "env/HC-Far-NoQuery-Hidden/over_querying": 0.0, "env/HC-Far-NoQuery-Hidden/decision_error": 0.21052631578947367, "env/HC-Far-NoQuery-Hidden/under_querying": 0.0, "env/HC-Far-NoQuery-Hidden/query_selection_failure": 0.0, "env/HC-Far-NoQuery-Hidden/query_selection_correct": 0.0, "env/HC-Far-NoQuery-Hidden/information_use_failure": 0.0, "env/HC-Far-NoQuery-Hidden/communication_success": 0.0, "env/HC-Far-NoQuery-Hidden/post_query_action_correct": 0.0, "env/HC-Far-NoQuery-Hidden/stopping_failure": 0.0, "env/HC-Far-NoQuery-Hidden/full_info_action_correct": 0.0, "env/HC-Far-NoQuery-Hidden/final_action_optimal": 0.7894736842105263, "env/HC-Far-NoQuery-Hidden/total_decision_regret": 0.5263157894736842, "env/HC-Far-NoQuery-Hidden/player_0_return": 8.2, "env/HC-Far-NoQuery-Hidden/player_1_return": 0.0, "env/HC-Far-NoQuery-Hidden/winner": -0.25, "env/HC-Far-NoQuery-Hidden/player_0_success": 0.75, "env/HC-Far-NoQuery-Hidden/player_1_success": 0.0, "env/HC-Far-NoQuery-Hidden/draw": 0.0, "env/HC-Far-NoQuery-Hidden/player_0_lose_for_wrong_format": 0.05, "env/HC-Far-NoQuery-Hidden/player_1_lose_for_wrong_format": 0.0, "env/HC-Far-NoQuery-Hidden/player_0_lose_for_overlong_response": 0.05, "env/HC-Far-NoQuery-Hidden/player_1_lose_for_overlong_response": 0.0, "env/HC-Far-NoQuery-Hidden/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Far-NoQuery-Hidden/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Far-NoQuery-Hidden/format_valid": 0.95, "env/HC-Far-NoQuery-Hidden/semantic_action_valid": 0.95, "env/HC-Far-NoQuery-Hidden/action_recovered": 0.95, "env/HC-Far-NoQuery-Hidden/near_generation_limit": 0.1, "env/HC-Far-NoQuery-Hidden/response_truncated": 0.1, "env/HC-Far-NoQuery-Hidden/response_length": 608.25, "env/HC-Far-NoQuery-Hidden/response_length_per_turn": 608.2, "env/HC-Far-NoQuery-Hidden/response_length_turn_0": 608.2, "env/HC-Far-NoQuery-Full/success": 1.0, "env/HC-Far-NoQuery-Full/num_actions": 1.0, "env/HC-Far-NoQuery-Full/generation_attempts": 1.0, "env/HC-Far-NoQuery-Full/retry_attempts": 0.0, "env/HC-Far-NoQuery-Full/action_is_ask": 0.0, "env/HC-Far-NoQuery-Full/oracle_should_ask": 0.0, "env/HC-Far-NoQuery-Full/oracle_value_act": 9.2, "env/HC-Far-NoQuery-Full/oracle_value": 9.2, "env/HC-Far-NoQuery-Full/chosen_action_value": 9.0, "env/HC-Far-NoQuery-Full/decision_regret": 0.2, "env/HC-Far-NoQuery-Full/optimal_action": 0.9, "env/HC-Far-NoQuery-Full/query_correct": 0.0, "env/HC-Far-NoQuery-Full/full_information": 1.0, "env/HC-Far-NoQuery-Full/step_reward": 9.0, "env/HC-Far-NoQuery-Full/num_asks": 0.0, "env/HC-Far-NoQuery-Full/game_transition": 1.0, "env/HC-Far-NoQuery-Full/benchmark_success": 0.9, "env/HC-Far-NoQuery-Full/total_return": 9.0, "env/HC-Far-NoQuery-Full/initial_should_ask": 0.0, "env/HC-Far-NoQuery-Full/max_gross_voi": 0.0, "env/HC-Far-NoQuery-Full/communication_cost": 1.0, "env/HC-Far-NoQuery-Full/oracle_margin": -1.0, "env/HC-Far-NoQuery-Full/first_action_ask": 0.0, "env/HC-Far-NoQuery-Full/first_decision_optimal": 0.9, "env/HC-Far-NoQuery-Full/ask_act_correct": 0.9, "env/HC-Far-NoQuery-Full/correct_abstention": 0.0, "env/HC-Far-NoQuery-Full/over_querying": 0.0, "env/HC-Far-NoQuery-Full/decision_error": 0.0, "env/HC-Far-NoQuery-Full/under_querying": 0.0, "env/HC-Far-NoQuery-Full/query_selection_failure": 0.0, "env/HC-Far-NoQuery-Full/query_selection_correct": 0.0, "env/HC-Far-NoQuery-Full/information_use_failure": 0.0, "env/HC-Far-NoQuery-Full/communication_success": 0.0, "env/HC-Far-NoQuery-Full/post_query_action_correct": 0.0, "env/HC-Far-NoQuery-Full/stopping_failure": 0.0, "env/HC-Far-NoQuery-Full/full_info_action_correct": 0.9, "env/HC-Far-NoQuery-Full/final_action_optimal": 0.9, "env/HC-Far-NoQuery-Full/total_decision_regret": 0.2, "env/HC-Far-NoQuery-Full/player_0_return": 9.0, "env/HC-Far-NoQuery-Full/player_1_return": 0.0, "env/HC-Far-NoQuery-Full/winner": -0.1, "env/HC-Far-NoQuery-Full/player_0_success": 0.9, "env/HC-Far-NoQuery-Full/player_1_success": 0.0, "env/HC-Far-NoQuery-Full/draw": 0.0, "env/HC-Far-NoQuery-Full/player_0_lose_for_wrong_format": 0.0, "env/HC-Far-NoQuery-Full/player_1_lose_for_wrong_format": 0.0, "env/HC-Far-NoQuery-Full/player_0_lose_for_overlong_response": 0.0, "env/HC-Far-NoQuery-Full/player_1_lose_for_overlong_response": 0.0, "env/HC-Far-NoQuery-Full/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Far-NoQuery-Full/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Far-NoQuery-Full/format_valid": 1.0, "env/HC-Far-NoQuery-Full/semantic_action_valid": 1.0, "env/HC-Far-NoQuery-Full/action_recovered": 1.0, "env/HC-Far-NoQuery-Full/near_generation_limit": 0.0, "env/HC-Far-NoQuery-Full/response_truncated": 0.0, "env/HC-Far-NoQuery-Full/response_length": 462.6, "env/HC-Far-NoQuery-Full/response_length_per_turn": 462.6, "env/HC-Far-NoQuery-Full/response_length_turn_0": 462.6, "env/HC-Near-Irrelevant-Full/success": 0.9, "env/HC-Near-Irrelevant-Full/num_actions": 0.9, "env/HC-Near-Irrelevant-Full/generation_attempts": 1.0, "env/HC-Near-Irrelevant-Full/retry_attempts": 0.0, "env/HC-Near-Irrelevant-Full/action_is_ask": 0.0, "env/HC-Near-Irrelevant-Full/oracle_should_ask": 0.0, "env/HC-Near-Irrelevant-Full/oracle_value_act": 9.11111111111111, "env/HC-Near-Irrelevant-Full/oracle_value": 9.11111111111111, "env/HC-Near-Irrelevant-Full/chosen_action_value": 9.0, "env/HC-Near-Irrelevant-Full/decision_regret": 0.1111111111111111, "env/HC-Near-Irrelevant-Full/optimal_action": 0.9444444444444444, "env/HC-Near-Irrelevant-Full/query_correct": 0.0, "env/HC-Near-Irrelevant-Full/full_information": 1.0, "env/HC-Near-Irrelevant-Full/step_reward": 9.0, "env/HC-Near-Irrelevant-Full/num_asks": 0.0, "env/HC-Near-Irrelevant-Full/game_transition": 0.9, "env/HC-Near-Irrelevant-Full/benchmark_success": 0.9444444444444444, "env/HC-Near-Irrelevant-Full/total_return": 9.0, "env/HC-Near-Irrelevant-Full/initial_should_ask": 0.0, "env/HC-Near-Irrelevant-Full/max_gross_voi": 0.0, "env/HC-Near-Irrelevant-Full/communication_cost": 0.05000000000000001, "env/HC-Near-Irrelevant-Full/oracle_margin": -0.05000000000000001, "env/HC-Near-Irrelevant-Full/first_action_ask": 0.0, "env/HC-Near-Irrelevant-Full/first_decision_optimal": 0.9444444444444444, "env/HC-Near-Irrelevant-Full/ask_act_correct": 0.9444444444444444, "env/HC-Near-Irrelevant-Full/correct_abstention": 0.0, "env/HC-Near-Irrelevant-Full/over_querying": 0.0, "env/HC-Near-Irrelevant-Full/decision_error": 0.0, "env/HC-Near-Irrelevant-Full/under_querying": 0.0, "env/HC-Near-Irrelevant-Full/query_selection_failure": 0.0, "env/HC-Near-Irrelevant-Full/query_selection_correct": 0.0, "env/HC-Near-Irrelevant-Full/information_use_failure": 0.0, "env/HC-Near-Irrelevant-Full/communication_success": 0.0, "env/HC-Near-Irrelevant-Full/post_query_action_correct": 0.0, "env/HC-Near-Irrelevant-Full/stopping_failure": 0.0, "env/HC-Near-Irrelevant-Full/full_info_action_correct": 0.9444444444444444, "env/HC-Near-Irrelevant-Full/final_action_optimal": 0.9444444444444444, "env/HC-Near-Irrelevant-Full/total_decision_regret": 0.1111111111111111, "env/HC-Near-Irrelevant-Full/player_0_return": 8.1, "env/HC-Near-Irrelevant-Full/player_1_return": 0.0, "env/HC-Near-Irrelevant-Full/winner": -0.15, "env/HC-Near-Irrelevant-Full/player_0_success": 0.85, "env/HC-Near-Irrelevant-Full/player_1_success": 0.0, "env/HC-Near-Irrelevant-Full/draw": 0.0, "env/HC-Near-Irrelevant-Full/player_0_lose_for_wrong_format": 0.1, "env/HC-Near-Irrelevant-Full/player_1_lose_for_wrong_format": 0.0, "env/HC-Near-Irrelevant-Full/player_0_lose_for_overlong_response": 0.1, "env/HC-Near-Irrelevant-Full/player_1_lose_for_overlong_response": 0.0, "env/HC-Near-Irrelevant-Full/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Near-Irrelevant-Full/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Near-Irrelevant-Full/format_valid": 0.9, "env/HC-Near-Irrelevant-Full/semantic_action_valid": 0.9, "env/HC-Near-Irrelevant-Full/action_recovered": 0.9, "env/HC-Near-Irrelevant-Full/near_generation_limit": 0.1, "env/HC-Near-Irrelevant-Full/response_truncated": 0.1, "env/HC-Near-Irrelevant-Full/response_length": 687.95, "env/HC-Near-Irrelevant-Full/response_length_per_turn": 687.85, "env/HC-Near-Irrelevant-Full/response_length_turn_0": 687.85, "env/HC-Far-Irrelevant-Full/success": 0.75, "env/HC-Far-Irrelevant-Full/num_actions": 0.75, "env/HC-Far-Irrelevant-Full/generation_attempts": 1.0, "env/HC-Far-Irrelevant-Full/retry_attempts": 0.0, "env/HC-Far-Irrelevant-Full/action_is_ask": 0.0, "env/HC-Far-Irrelevant-Full/oracle_should_ask": 0.0, "env/HC-Far-Irrelevant-Full/oracle_value_act": 9.2, "env/HC-Far-Irrelevant-Full/oracle_value": 9.2, "env/HC-Far-Irrelevant-Full/chosen_action_value": 9.066666666666666, "env/HC-Far-Irrelevant-Full/decision_regret": 0.13333333333333333, "env/HC-Far-Irrelevant-Full/optimal_action": 0.9333333333333333, "env/HC-Far-Irrelevant-Full/query_correct": 0.0, "env/HC-Far-Irrelevant-Full/full_information": 1.0, "env/HC-Far-Irrelevant-Full/step_reward": 9.066666666666666, "env/HC-Far-Irrelevant-Full/num_asks": 0.0, "env/HC-Far-Irrelevant-Full/game_transition": 0.75, "env/HC-Far-Irrelevant-Full/benchmark_success": 0.9333333333333333, "env/HC-Far-Irrelevant-Full/total_return": 9.066666666666666, "env/HC-Far-Irrelevant-Full/initial_should_ask": 0.0, "env/HC-Far-Irrelevant-Full/max_gross_voi": 0.0, "env/HC-Far-Irrelevant-Full/communication_cost": 1.0, "env/HC-Far-Irrelevant-Full/oracle_margin": -1.0, "env/HC-Far-Irrelevant-Full/first_action_ask": 0.0, "env/HC-Far-Irrelevant-Full/first_decision_optimal": 0.9333333333333333, "env/HC-Far-Irrelevant-Full/ask_act_correct": 0.9333333333333333, "env/HC-Far-Irrelevant-Full/correct_abstention": 0.0, "env/HC-Far-Irrelevant-Full/over_querying": 0.0, "env/HC-Far-Irrelevant-Full/decision_error": 0.0, "env/HC-Far-Irrelevant-Full/under_querying": 0.0, "env/HC-Far-Irrelevant-Full/query_selection_failure": 0.0, "env/HC-Far-Irrelevant-Full/query_selection_correct": 0.0, "env/HC-Far-Irrelevant-Full/information_use_failure": 0.0, "env/HC-Far-Irrelevant-Full/communication_success": 0.0, "env/HC-Far-Irrelevant-Full/post_query_action_correct": 0.0, "env/HC-Far-Irrelevant-Full/stopping_failure": 0.0, "env/HC-Far-Irrelevant-Full/full_info_action_correct": 0.9333333333333333, "env/HC-Far-Irrelevant-Full/final_action_optimal": 0.9333333333333333, "env/HC-Far-Irrelevant-Full/total_decision_regret": 0.13333333333333333, "env/HC-Far-Irrelevant-Full/player_0_return": 6.8, "env/HC-Far-Irrelevant-Full/player_1_return": 0.0, "env/HC-Far-Irrelevant-Full/winner": -0.3, "env/HC-Far-Irrelevant-Full/player_0_success": 0.7, "env/HC-Far-Irrelevant-Full/player_1_success": 0.0, "env/HC-Far-Irrelevant-Full/draw": 0.0, "env/HC-Far-Irrelevant-Full/player_0_lose_for_wrong_format": 0.25, "env/HC-Far-Irrelevant-Full/player_1_lose_for_wrong_format": 0.0, "env/HC-Far-Irrelevant-Full/player_0_lose_for_overlong_response": 0.25, "env/HC-Far-Irrelevant-Full/player_1_lose_for_overlong_response": 0.0, "env/HC-Far-Irrelevant-Full/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Far-Irrelevant-Full/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Far-Irrelevant-Full/format_valid": 0.75, "env/HC-Far-Irrelevant-Full/semantic_action_valid": 0.75, "env/HC-Far-Irrelevant-Full/action_recovered": 0.75, "env/HC-Far-Irrelevant-Full/near_generation_limit": 0.25, "env/HC-Far-Irrelevant-Full/response_truncated": 0.25, "env/HC-Far-Irrelevant-Full/response_length": 791.45, "env/HC-Far-Irrelevant-Full/response_length_per_turn": 791.2, "env/HC-Far-Irrelevant-Full/response_length_turn_0": 791.2, "env/HC-Far-Selective-Full/success": 1.0, "env/HC-Far-Selective-Full/num_actions": 1.0, "env/HC-Far-Selective-Full/generation_attempts": 1.0, "env/HC-Far-Selective-Full/retry_attempts": 0.0, "env/HC-Far-Selective-Full/action_is_ask": 0.0, "env/HC-Far-Selective-Full/oracle_should_ask": 0.0, "env/HC-Far-Selective-Full/oracle_value_act": 9.4, "env/HC-Far-Selective-Full/oracle_value": 9.4, "env/HC-Far-Selective-Full/chosen_action_value": 9.0, "env/HC-Far-Selective-Full/decision_regret": 0.4, "env/HC-Far-Selective-Full/optimal_action": 0.9, "env/HC-Far-Selective-Full/query_correct": 0.0, "env/HC-Far-Selective-Full/full_information": 1.0, "env/HC-Far-Selective-Full/step_reward": 9.0, "env/HC-Far-Selective-Full/num_asks": 0.0, "env/HC-Far-Selective-Full/game_transition": 1.0, "env/HC-Far-Selective-Full/benchmark_success": 0.9, "env/HC-Far-Selective-Full/total_return": 9.0, "env/HC-Far-Selective-Full/initial_should_ask": 1.0, "env/HC-Far-Selective-Full/max_gross_voi": 2.0, "env/HC-Far-Selective-Full/communication_cost": 1.0, "env/HC-Far-Selective-Full/oracle_margin": 1.0, "env/HC-Far-Selective-Full/first_action_ask": 0.0, "env/HC-Far-Selective-Full/first_decision_optimal": 0.9, "env/HC-Far-Selective-Full/ask_act_correct": 0.9, "env/HC-Far-Selective-Full/correct_abstention": 0.0, "env/HC-Far-Selective-Full/over_querying": 0.0, "env/HC-Far-Selective-Full/decision_error": 0.0, "env/HC-Far-Selective-Full/under_querying": 0.0, "env/HC-Far-Selective-Full/query_selection_failure": 0.0, "env/HC-Far-Selective-Full/query_selection_correct": 0.0, "env/HC-Far-Selective-Full/information_use_failure": 0.0, "env/HC-Far-Selective-Full/communication_success": 0.0, "env/HC-Far-Selective-Full/post_query_action_correct": 0.0, "env/HC-Far-Selective-Full/stopping_failure": 0.0, "env/HC-Far-Selective-Full/full_info_action_correct": 0.9, "env/HC-Far-Selective-Full/final_action_optimal": 0.9, "env/HC-Far-Selective-Full/total_decision_regret": 0.4, "env/HC-Far-Selective-Full/player_0_return": 9.0, "env/HC-Far-Selective-Full/player_1_return": 0.0, "env/HC-Far-Selective-Full/winner": -0.1, "env/HC-Far-Selective-Full/player_0_success": 0.9, "env/HC-Far-Selective-Full/player_1_success": 0.0, "env/HC-Far-Selective-Full/draw": 0.0, "env/HC-Far-Selective-Full/player_0_lose_for_wrong_format": 0.0, "env/HC-Far-Selective-Full/player_1_lose_for_wrong_format": 0.0, "env/HC-Far-Selective-Full/player_0_lose_for_overlong_response": 0.0, "env/HC-Far-Selective-Full/player_1_lose_for_overlong_response": 0.0, "env/HC-Far-Selective-Full/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Far-Selective-Full/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Far-Selective-Full/format_valid": 1.0, "env/HC-Far-Selective-Full/semantic_action_valid": 1.0, "env/HC-Far-Selective-Full/action_recovered": 1.0, "env/HC-Far-Selective-Full/near_generation_limit": 0.0, "env/HC-Far-Selective-Full/response_truncated": 0.0, "env/HC-Far-Selective-Full/response_length": 686.85, "env/HC-Far-Selective-Full/response_length_per_turn": 686.85, "env/HC-Far-Selective-Full/response_length_turn_0": 686.85, "env/HC-Far-Necessary-Full/success": 0.95, "env/HC-Far-Necessary-Full/num_actions": 0.95, "env/HC-Far-Necessary-Full/generation_attempts": 1.0, "env/HC-Far-Necessary-Full/retry_attempts": 0.0, "env/HC-Far-Necessary-Full/action_is_ask": 0.0, "env/HC-Far-Necessary-Full/oracle_should_ask": 0.0, "env/HC-Far-Necessary-Full/oracle_value_act": 9.31578947368421, "env/HC-Far-Necessary-Full/oracle_value": 9.31578947368421, "env/HC-Far-Necessary-Full/chosen_action_value": 9.31578947368421, "env/HC-Far-Necessary-Full/decision_regret": 0.0, "env/HC-Far-Necessary-Full/optimal_action": 1.0, "env/HC-Far-Necessary-Full/query_correct": 0.0, "env/HC-Far-Necessary-Full/full_information": 1.0, "env/HC-Far-Necessary-Full/step_reward": 9.31578947368421, "env/HC-Far-Necessary-Full/num_asks": 0.0, "env/HC-Far-Necessary-Full/game_transition": 0.95, "env/HC-Far-Necessary-Full/benchmark_success": 1.0, "env/HC-Far-Necessary-Full/total_return": 9.31578947368421, "env/HC-Far-Necessary-Full/initial_should_ask": 1.0, "env/HC-Far-Necessary-Full/max_gross_voi": 2.0, "env/HC-Far-Necessary-Full/communication_cost": 1.0, "env/HC-Far-Necessary-Full/oracle_margin": 1.0, "env/HC-Far-Necessary-Full/first_action_ask": 0.0, "env/HC-Far-Necessary-Full/first_decision_optimal": 1.0, "env/HC-Far-Necessary-Full/ask_act_correct": 1.0, "env/HC-Far-Necessary-Full/correct_abstention": 0.0, "env/HC-Far-Necessary-Full/over_querying": 0.0, "env/HC-Far-Necessary-Full/decision_error": 0.0, "env/HC-Far-Necessary-Full/under_querying": 0.0, "env/HC-Far-Necessary-Full/query_selection_failure": 0.0, "env/HC-Far-Necessary-Full/query_selection_correct": 0.0, "env/HC-Far-Necessary-Full/information_use_failure": 0.0, "env/HC-Far-Necessary-Full/communication_success": 0.0, "env/HC-Far-Necessary-Full/post_query_action_correct": 0.0, "env/HC-Far-Necessary-Full/stopping_failure": 0.0, "env/HC-Far-Necessary-Full/full_info_action_correct": 1.0, "env/HC-Far-Necessary-Full/final_action_optimal": 1.0, "env/HC-Far-Necessary-Full/total_decision_regret": 0.0, "env/HC-Far-Necessary-Full/player_0_return": 8.85, "env/HC-Far-Necessary-Full/player_1_return": 0.0, "env/HC-Far-Necessary-Full/winner": -0.05, "env/HC-Far-Necessary-Full/player_0_success": 0.95, "env/HC-Far-Necessary-Full/player_1_success": 0.0, "env/HC-Far-Necessary-Full/draw": 0.0, "env/HC-Far-Necessary-Full/player_0_lose_for_wrong_format": 0.05, "env/HC-Far-Necessary-Full/player_1_lose_for_wrong_format": 0.0, "env/HC-Far-Necessary-Full/player_0_lose_for_overlong_response": 0.05, "env/HC-Far-Necessary-Full/player_1_lose_for_overlong_response": 0.0, "env/HC-Far-Necessary-Full/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Far-Necessary-Full/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Far-Necessary-Full/format_valid": 0.95, "env/HC-Far-Necessary-Full/semantic_action_valid": 0.95, "env/HC-Far-Necessary-Full/action_recovered": 0.95, "env/HC-Far-Necessary-Full/near_generation_limit": 0.05, "env/HC-Far-Necessary-Full/response_truncated": 0.05, "env/HC-Far-Necessary-Full/response_length": 697.55, "env/HC-Far-Necessary-Full/response_length_per_turn": 697.55, "env/HC-Far-Necessary-Full/response_length_turn_0": 697.55, "env/HC-Medium-Necessary-Full/success": 0.95, "env/HC-Medium-Necessary-Full/num_actions": 0.95, "env/HC-Medium-Necessary-Full/generation_attempts": 1.0, "env/HC-Medium-Necessary-Full/retry_attempts": 0.0, "env/HC-Medium-Necessary-Full/action_is_ask": 0.0, "env/HC-Medium-Necessary-Full/oracle_should_ask": 0.0, "env/HC-Medium-Necessary-Full/oracle_value_act": 6.947368421052632, "env/HC-Medium-Necessary-Full/oracle_value": 6.947368421052632, "env/HC-Medium-Necessary-Full/chosen_action_value": 6.947368421052632, "env/HC-Medium-Necessary-Full/decision_regret": 0.0, "env/HC-Medium-Necessary-Full/optimal_action": 1.0, "env/HC-Medium-Necessary-Full/query_correct": 0.0, "env/HC-Medium-Necessary-Full/full_information": 1.0, "env/HC-Medium-Necessary-Full/step_reward": 6.947368421052632, "env/HC-Medium-Necessary-Full/num_asks": 0.0, "env/HC-Medium-Necessary-Full/game_transition": 0.95, "env/HC-Medium-Necessary-Full/benchmark_success": 1.0, "env/HC-Medium-Necessary-Full/total_return": 6.947368421052632, "env/HC-Medium-Necessary-Full/initial_should_ask": 1.0, "env/HC-Medium-Necessary-Full/max_gross_voi": 0.5, "env/HC-Medium-Necessary-Full/communication_cost": 0.25, "env/HC-Medium-Necessary-Full/oracle_margin": 0.25, "env/HC-Medium-Necessary-Full/first_action_ask": 0.0, "env/HC-Medium-Necessary-Full/first_decision_optimal": 1.0, "env/HC-Medium-Necessary-Full/ask_act_correct": 1.0, "env/HC-Medium-Necessary-Full/correct_abstention": 0.0, "env/HC-Medium-Necessary-Full/over_querying": 0.0, "env/HC-Medium-Necessary-Full/decision_error": 0.0, "env/HC-Medium-Necessary-Full/under_querying": 0.0, "env/HC-Medium-Necessary-Full/query_selection_failure": 0.0, "env/HC-Medium-Necessary-Full/query_selection_correct": 0.0, "env/HC-Medium-Necessary-Full/information_use_failure": 0.0, "env/HC-Medium-Necessary-Full/communication_success": 0.0, "env/HC-Medium-Necessary-Full/post_query_action_correct": 0.0, "env/HC-Medium-Necessary-Full/stopping_failure": 0.0, "env/HC-Medium-Necessary-Full/full_info_action_correct": 1.0, "env/HC-Medium-Necessary-Full/final_action_optimal": 1.0, "env/HC-Medium-Necessary-Full/total_decision_regret": 0.0, "env/HC-Medium-Necessary-Full/player_0_return": 6.6, "env/HC-Medium-Necessary-Full/player_1_return": 0.0, "env/HC-Medium-Necessary-Full/winner": -0.05, "env/HC-Medium-Necessary-Full/player_0_success": 0.95, "env/HC-Medium-Necessary-Full/player_1_success": 0.0, "env/HC-Medium-Necessary-Full/draw": 0.0, "env/HC-Medium-Necessary-Full/player_0_lose_for_wrong_format": 0.05, "env/HC-Medium-Necessary-Full/player_1_lose_for_wrong_format": 0.0, "env/HC-Medium-Necessary-Full/player_0_lose_for_overlong_response": 0.05, "env/HC-Medium-Necessary-Full/player_1_lose_for_overlong_response": 0.0, "env/HC-Medium-Necessary-Full/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Medium-Necessary-Full/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Medium-Necessary-Full/format_valid": 0.95, "env/HC-Medium-Necessary-Full/semantic_action_valid": 0.95, "env/HC-Medium-Necessary-Full/action_recovered": 0.95, "env/HC-Medium-Necessary-Full/near_generation_limit": 0.05, "env/HC-Medium-Necessary-Full/response_truncated": 0.05, "env/HC-Medium-Necessary-Full/response_length": 632.1, "env/HC-Medium-Necessary-Full/response_length_per_turn": 632.05, "env/HC-Medium-Necessary-Full/response_length_turn_0": 632.05, "env/HC-Near-Selective-Full/success": 0.95, "env/HC-Near-Selective-Full/num_actions": 0.95, "env/HC-Near-Selective-Full/generation_attempts": 1.0, "env/HC-Near-Selective-Full/retry_attempts": 0.0, "env/HC-Near-Selective-Full/action_is_ask": 0.0, "env/HC-Near-Selective-Full/oracle_should_ask": 0.0, "env/HC-Near-Selective-Full/oracle_value_act": 6.421052631578948, "env/HC-Near-Selective-Full/oracle_value": 6.421052631578948, "env/HC-Near-Selective-Full/chosen_action_value": 6.4105263157894745, "env/HC-Near-Selective-Full/decision_regret": 0.010526315789473694, "env/HC-Near-Selective-Full/optimal_action": 0.9473684210526315, "env/HC-Near-Selective-Full/query_correct": 0.0, "env/HC-Near-Selective-Full/full_information": 1.0, "env/HC-Near-Selective-Full/step_reward": 6.4105263157894745, "env/HC-Near-Selective-Full/num_asks": 0.0, "env/HC-Near-Selective-Full/game_transition": 0.95, "env/HC-Near-Selective-Full/benchmark_success": 0.9473684210526315, "env/HC-Near-Selective-Full/total_return": 6.4105263157894745, "env/HC-Near-Selective-Full/initial_should_ask": 1.0, "env/HC-Near-Selective-Full/max_gross_voi": 0.09999999999999909, "env/HC-Near-Selective-Full/communication_cost": 0.05000000000000001, "env/HC-Near-Selective-Full/oracle_margin": 0.04999999999999907, "env/HC-Near-Selective-Full/first_action_ask": 0.0, "env/HC-Near-Selective-Full/first_decision_optimal": 0.9473684210526315, "env/HC-Near-Selective-Full/ask_act_correct": 0.9473684210526315, "env/HC-Near-Selective-Full/correct_abstention": 0.0, "env/HC-Near-Selective-Full/over_querying": 0.0, "env/HC-Near-Selective-Full/decision_error": 0.0, "env/HC-Near-Selective-Full/under_querying": 0.0, "env/HC-Near-Selective-Full/query_selection_failure": 0.0, "env/HC-Near-Selective-Full/query_selection_correct": 0.0, "env/HC-Near-Selective-Full/information_use_failure": 0.0, "env/HC-Near-Selective-Full/communication_success": 0.0, "env/HC-Near-Selective-Full/post_query_action_correct": 0.0, "env/HC-Near-Selective-Full/stopping_failure": 0.0, "env/HC-Near-Selective-Full/full_info_action_correct": 0.9473684210526315, "env/HC-Near-Selective-Full/final_action_optimal": 0.9473684210526315, "env/HC-Near-Selective-Full/total_decision_regret": 0.010526315789473694, "env/HC-Near-Selective-Full/player_0_return": 6.090000000000001, "env/HC-Near-Selective-Full/player_1_return": 0.0, "env/HC-Near-Selective-Full/winner": -0.1, "env/HC-Near-Selective-Full/player_0_success": 0.9, "env/HC-Near-Selective-Full/player_1_success": 0.0, "env/HC-Near-Selective-Full/draw": 0.0, "env/HC-Near-Selective-Full/player_0_lose_for_wrong_format": 0.05, "env/HC-Near-Selective-Full/player_1_lose_for_wrong_format": 0.0, "env/HC-Near-Selective-Full/player_0_lose_for_overlong_response": 0.05, "env/HC-Near-Selective-Full/player_1_lose_for_overlong_response": 0.0, "env/HC-Near-Selective-Full/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Near-Selective-Full/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Near-Selective-Full/format_valid": 0.95, "env/HC-Near-Selective-Full/semantic_action_valid": 0.95, "env/HC-Near-Selective-Full/action_recovered": 0.95, "env/HC-Near-Selective-Full/near_generation_limit": 0.05, "env/HC-Near-Selective-Full/response_truncated": 0.05, "env/HC-Near-Selective-Full/response_length": 683.15, "env/HC-Near-Selective-Full/response_length_per_turn": 683.1, "env/HC-Near-Selective-Full/response_length_turn_0": 683.1, "env/HC-Near-Necessary-Full/success": 0.85, "env/HC-Near-Necessary-Full/num_actions": 0.85, "env/HC-Near-Necessary-Full/generation_attempts": 1.0, "env/HC-Near-Necessary-Full/retry_attempts": 0.0, "env/HC-Near-Necessary-Full/action_is_ask": 0.0, "env/HC-Near-Necessary-Full/oracle_should_ask": 0.0, "env/HC-Near-Necessary-Full/oracle_value_act": 6.223529411764707, "env/HC-Near-Necessary-Full/oracle_value": 6.223529411764707, "env/HC-Near-Necessary-Full/chosen_action_value": 6.211764705882353, "env/HC-Near-Necessary-Full/decision_regret": 0.011764705882352951, "env/HC-Near-Necessary-Full/optimal_action": 0.9411764705882353, "env/HC-Near-Necessary-Full/query_correct": 0.0, "env/HC-Near-Necessary-Full/full_information": 1.0, "env/HC-Near-Necessary-Full/step_reward": 6.211764705882353, "env/HC-Near-Necessary-Full/num_asks": 0.0, "env/HC-Near-Necessary-Full/game_transition": 0.85, "env/HC-Near-Necessary-Full/benchmark_success": 0.9411764705882353, "env/HC-Near-Necessary-Full/total_return": 6.211764705882353, "env/HC-Near-Necessary-Full/initial_should_ask": 1.0, "env/HC-Near-Necessary-Full/max_gross_voi": 0.09999999999999917, "env/HC-Near-Necessary-Full/communication_cost": 0.05, "env/HC-Near-Necessary-Full/oracle_margin": 0.04999999999999917, "env/HC-Near-Necessary-Full/first_action_ask": 0.0, "env/HC-Near-Necessary-Full/first_decision_optimal": 0.9411764705882353, "env/HC-Near-Necessary-Full/ask_act_correct": 0.9411764705882353, "env/HC-Near-Necessary-Full/correct_abstention": 0.0, "env/HC-Near-Necessary-Full/over_querying": 0.0, "env/HC-Near-Necessary-Full/decision_error": 0.0, "env/HC-Near-Necessary-Full/under_querying": 0.0, "env/HC-Near-Necessary-Full/query_selection_failure": 0.0, "env/HC-Near-Necessary-Full/query_selection_correct": 0.0, "env/HC-Near-Necessary-Full/information_use_failure": 0.0, "env/HC-Near-Necessary-Full/communication_success": 0.0, "env/HC-Near-Necessary-Full/post_query_action_correct": 0.0, "env/HC-Near-Necessary-Full/stopping_failure": 0.0, "env/HC-Near-Necessary-Full/full_info_action_correct": 0.9411764705882353, "env/HC-Near-Necessary-Full/final_action_optimal": 0.9411764705882353, "env/HC-Near-Necessary-Full/total_decision_regret": 0.011764705882352951, "env/HC-Near-Necessary-Full/player_0_return": 5.28, "env/HC-Near-Necessary-Full/player_1_return": 0.0, "env/HC-Near-Necessary-Full/winner": -0.2, "env/HC-Near-Necessary-Full/player_0_success": 0.8, "env/HC-Near-Necessary-Full/player_1_success": 0.0, "env/HC-Near-Necessary-Full/draw": 0.0, "env/HC-Near-Necessary-Full/player_0_lose_for_wrong_format": 0.15, "env/HC-Near-Necessary-Full/player_1_lose_for_wrong_format": 0.0, "env/HC-Near-Necessary-Full/player_0_lose_for_overlong_response": 0.15, "env/HC-Near-Necessary-Full/player_1_lose_for_overlong_response": 0.0, "env/HC-Near-Necessary-Full/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Near-Necessary-Full/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Near-Necessary-Full/format_valid": 0.85, "env/HC-Near-Necessary-Full/semantic_action_valid": 0.85, "env/HC-Near-Necessary-Full/action_recovered": 0.85, "env/HC-Near-Necessary-Full/near_generation_limit": 0.15, "env/HC-Near-Necessary-Full/response_truncated": 0.15, "env/HC-Near-Necessary-Full/response_length": 703.75, "env/HC-Near-Necessary-Full/response_length_per_turn": 703.65, "env/HC-Near-Necessary-Full/response_length_turn_0": 703.65, "env/HC-Medium-Irrelevant-Full/success": 0.9, "env/HC-Medium-Irrelevant-Full/num_actions": 0.9, "env/HC-Medium-Irrelevant-Full/generation_attempts": 1.0, "env/HC-Medium-Irrelevant-Full/retry_attempts": 0.0, "env/HC-Medium-Irrelevant-Full/action_is_ask": 0.0, "env/HC-Medium-Irrelevant-Full/oracle_should_ask": 0.0, "env/HC-Medium-Irrelevant-Full/oracle_value_act": 9.11111111111111, "env/HC-Medium-Irrelevant-Full/oracle_value": 9.11111111111111, "env/HC-Medium-Irrelevant-Full/chosen_action_value": 9.0, "env/HC-Medium-Irrelevant-Full/decision_regret": 0.1111111111111111, "env/HC-Medium-Irrelevant-Full/optimal_action": 0.9444444444444444, "env/HC-Medium-Irrelevant-Full/query_correct": 0.0, "env/HC-Medium-Irrelevant-Full/full_information": 1.0, "env/HC-Medium-Irrelevant-Full/step_reward": 9.0, "env/HC-Medium-Irrelevant-Full/num_asks": 0.0, "env/HC-Medium-Irrelevant-Full/game_transition": 0.9, "env/HC-Medium-Irrelevant-Full/benchmark_success": 0.9444444444444444, "env/HC-Medium-Irrelevant-Full/total_return": 9.0, "env/HC-Medium-Irrelevant-Full/initial_should_ask": 0.0, "env/HC-Medium-Irrelevant-Full/max_gross_voi": 0.0, "env/HC-Medium-Irrelevant-Full/communication_cost": 0.25, "env/HC-Medium-Irrelevant-Full/oracle_margin": -0.25, "env/HC-Medium-Irrelevant-Full/first_action_ask": 0.0, "env/HC-Medium-Irrelevant-Full/first_decision_optimal": 0.9444444444444444, "env/HC-Medium-Irrelevant-Full/ask_act_correct": 0.9444444444444444, "env/HC-Medium-Irrelevant-Full/correct_abstention": 0.0, "env/HC-Medium-Irrelevant-Full/over_querying": 0.0, "env/HC-Medium-Irrelevant-Full/decision_error": 0.0, "env/HC-Medium-Irrelevant-Full/under_querying": 0.0, "env/HC-Medium-Irrelevant-Full/query_selection_failure": 0.0, "env/HC-Medium-Irrelevant-Full/query_selection_correct": 0.0, "env/HC-Medium-Irrelevant-Full/information_use_failure": 0.0, "env/HC-Medium-Irrelevant-Full/communication_success": 0.0, "env/HC-Medium-Irrelevant-Full/post_query_action_correct": 0.0, "env/HC-Medium-Irrelevant-Full/stopping_failure": 0.0, "env/HC-Medium-Irrelevant-Full/full_info_action_correct": 0.9444444444444444, "env/HC-Medium-Irrelevant-Full/final_action_optimal": 0.9444444444444444, "env/HC-Medium-Irrelevant-Full/total_decision_regret": 0.1111111111111111, "env/HC-Medium-Irrelevant-Full/player_0_return": 8.1, "env/HC-Medium-Irrelevant-Full/player_1_return": 0.0, "env/HC-Medium-Irrelevant-Full/winner": -0.15, "env/HC-Medium-Irrelevant-Full/player_0_success": 0.85, "env/HC-Medium-Irrelevant-Full/player_1_success": 0.0, "env/HC-Medium-Irrelevant-Full/draw": 0.0, "env/HC-Medium-Irrelevant-Full/player_0_lose_for_wrong_format": 0.1, "env/HC-Medium-Irrelevant-Full/player_1_lose_for_wrong_format": 0.0, "env/HC-Medium-Irrelevant-Full/player_0_lose_for_overlong_response": 0.1, "env/HC-Medium-Irrelevant-Full/player_1_lose_for_overlong_response": 0.0, "env/HC-Medium-Irrelevant-Full/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Medium-Irrelevant-Full/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Medium-Irrelevant-Full/format_valid": 0.9, "env/HC-Medium-Irrelevant-Full/semantic_action_valid": 0.9, "env/HC-Medium-Irrelevant-Full/action_recovered": 0.9, "env/HC-Medium-Irrelevant-Full/near_generation_limit": 0.15, "env/HC-Medium-Irrelevant-Full/response_truncated": 0.15, "env/HC-Medium-Irrelevant-Full/response_length": 738.05, "env/HC-Medium-Irrelevant-Full/response_length_per_turn": 737.95, "env/HC-Medium-Irrelevant-Full/response_length_turn_0": 737.95, "env/HC-Medium-Irrelevant-Full/artificial_truncation": 1.0, "env/HC-Medium-Irrelevant-Hidden/success": 0.1, "env/HC-Medium-Irrelevant-Hidden/num_actions": 0.1, "env/HC-Medium-Irrelevant-Hidden/generation_attempts": 1.0, "env/HC-Medium-Irrelevant-Hidden/retry_attempts": 0.0, "env/HC-Medium-Irrelevant-Hidden/action_is_ask": 0.0, "env/HC-Medium-Irrelevant-Hidden/oracle_should_ask": 0.0, "env/HC-Medium-Irrelevant-Hidden/oracle_value_act": 9.0, "env/HC-Medium-Irrelevant-Hidden/oracle_value": 9.0, "env/HC-Medium-Irrelevant-Hidden/chosen_action_value": 9.0, "env/HC-Medium-Irrelevant-Hidden/decision_regret": 0.0, "env/HC-Medium-Irrelevant-Hidden/optimal_action": 1.0, "env/HC-Medium-Irrelevant-Hidden/query_correct": 0.0, "env/HC-Medium-Irrelevant-Hidden/full_information": 0.0, "env/HC-Medium-Irrelevant-Hidden/step_reward": 9.0, "env/HC-Medium-Irrelevant-Hidden/num_asks": 0.0, "env/HC-Medium-Irrelevant-Hidden/game_transition": 0.1, "env/HC-Medium-Irrelevant-Hidden/benchmark_success": 1.0, "env/HC-Medium-Irrelevant-Hidden/total_return": 9.0, "env/HC-Medium-Irrelevant-Hidden/initial_should_ask": 0.0, "env/HC-Medium-Irrelevant-Hidden/max_gross_voi": 0.0, "env/HC-Medium-Irrelevant-Hidden/communication_cost": 0.25, "env/HC-Medium-Irrelevant-Hidden/oracle_margin": -0.25, "env/HC-Medium-Irrelevant-Hidden/first_action_ask": 0.0, "env/HC-Medium-Irrelevant-Hidden/first_decision_optimal": 1.0, "env/HC-Medium-Irrelevant-Hidden/ask_act_correct": 1.0, "env/HC-Medium-Irrelevant-Hidden/correct_abstention": 1.0, "env/HC-Medium-Irrelevant-Hidden/over_querying": 0.0, "env/HC-Medium-Irrelevant-Hidden/decision_error": 0.0, "env/HC-Medium-Irrelevant-Hidden/under_querying": 0.0, "env/HC-Medium-Irrelevant-Hidden/query_selection_failure": 0.0, "env/HC-Medium-Irrelevant-Hidden/query_selection_correct": 0.0, "env/HC-Medium-Irrelevant-Hidden/information_use_failure": 0.0, "env/HC-Medium-Irrelevant-Hidden/communication_success": 0.0, "env/HC-Medium-Irrelevant-Hidden/post_query_action_correct": 0.0, "env/HC-Medium-Irrelevant-Hidden/stopping_failure": 0.0, "env/HC-Medium-Irrelevant-Hidden/full_info_action_correct": 0.0, "env/HC-Medium-Irrelevant-Hidden/final_action_optimal": 1.0, "env/HC-Medium-Irrelevant-Hidden/total_decision_regret": 0.0, "env/HC-Medium-Irrelevant-Hidden/player_0_return": 0.9, "env/HC-Medium-Irrelevant-Hidden/player_1_return": 0.0, "env/HC-Medium-Irrelevant-Hidden/winner": -0.9, "env/HC-Medium-Irrelevant-Hidden/player_0_success": 0.1, "env/HC-Medium-Irrelevant-Hidden/player_1_success": 0.0, "env/HC-Medium-Irrelevant-Hidden/draw": 0.0, "env/HC-Medium-Irrelevant-Hidden/player_0_lose_for_wrong_format": 0.9, "env/HC-Medium-Irrelevant-Hidden/player_1_lose_for_wrong_format": 0.0, "env/HC-Medium-Irrelevant-Hidden/player_0_lose_for_overlong_response": 0.9, "env/HC-Medium-Irrelevant-Hidden/player_1_lose_for_overlong_response": 0.0, "env/HC-Medium-Irrelevant-Hidden/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Medium-Irrelevant-Hidden/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Medium-Irrelevant-Hidden/format_valid": 0.1, "env/HC-Medium-Irrelevant-Hidden/semantic_action_valid": 0.1, "env/HC-Medium-Irrelevant-Hidden/action_recovered": 0.1, "env/HC-Medium-Irrelevant-Hidden/near_generation_limit": 0.9, "env/HC-Medium-Irrelevant-Hidden/response_truncated": 0.9, "env/HC-Medium-Irrelevant-Hidden/response_length": 1004.3, "env/HC-Medium-Irrelevant-Hidden/response_length_per_turn": 1003.4, "env/HC-Medium-Irrelevant-Hidden/response_length_turn_0": 1003.4, "env/HC-Medium-Irrelevant-Hidden/artificial_truncation": 1.0, "env/HC-Far-Necessary-Hidden/success": 0.35, "env/HC-Far-Necessary-Hidden/num_actions": 0.55, "env/HC-Far-Necessary-Hidden/generation_attempts": 1.2, "env/HC-Far-Necessary-Hidden/retry_attempts": 0.0, "env/HC-Far-Necessary-Hidden/artificial_truncation": 1.0, "env/HC-Far-Necessary-Hidden/game_transition": 0.35, "env/HC-Far-Necessary-Hidden/player_0_return": 2.75, "env/HC-Far-Necessary-Hidden/player_1_return": 0.0, "env/HC-Far-Necessary-Hidden/winner": -0.8, "env/HC-Far-Necessary-Hidden/player_0_success": 0.2, "env/HC-Far-Necessary-Hidden/player_1_success": 0.0, "env/HC-Far-Necessary-Hidden/draw": 0.0, "env/HC-Far-Necessary-Hidden/player_0_lose_for_wrong_format": 0.65, "env/HC-Far-Necessary-Hidden/player_1_lose_for_wrong_format": 0.0, "env/HC-Far-Necessary-Hidden/player_0_lose_for_overlong_response": 0.65, "env/HC-Far-Necessary-Hidden/player_1_lose_for_overlong_response": 0.0, "env/HC-Far-Necessary-Hidden/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Far-Necessary-Hidden/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Far-Necessary-Hidden/format_valid": 0.35, "env/HC-Far-Necessary-Hidden/semantic_action_valid": 0.35, "env/HC-Far-Necessary-Hidden/action_recovered": 0.35, "env/HC-Far-Necessary-Hidden/near_generation_limit": 0.65, "env/HC-Far-Necessary-Hidden/response_truncated": 0.65, "env/HC-Far-Necessary-Hidden/response_length": 1096.55, "env/HC-Far-Necessary-Hidden/response_length_per_turn": 943.725, "env/HC-Far-Necessary-Hidden/response_length_turn_0": 967.75, "env/HC-Near-Necessary-Full/artificial_truncation": 1.0, "env/HC-Far-Selective-Hidden/success": 0.05, "env/HC-Far-Selective-Hidden/num_actions": 0.05, "env/HC-Far-Selective-Hidden/generation_attempts": 1.0, "env/HC-Far-Selective-Hidden/retry_attempts": 0.0, "env/HC-Far-Selective-Hidden/artificial_truncation": 1.0, "env/HC-Far-Selective-Hidden/game_transition": 0.05, "env/HC-Far-Selective-Hidden/player_0_return": 0.25, "env/HC-Far-Selective-Hidden/player_1_return": 0.0, "env/HC-Far-Selective-Hidden/winner": -1.0, "env/HC-Far-Selective-Hidden/player_0_success": 0.0, "env/HC-Far-Selective-Hidden/player_1_success": 0.0, "env/HC-Far-Selective-Hidden/draw": 0.0, "env/HC-Far-Selective-Hidden/player_0_lose_for_wrong_format": 0.95, "env/HC-Far-Selective-Hidden/player_1_lose_for_wrong_format": 0.0, "env/HC-Far-Selective-Hidden/player_0_lose_for_overlong_response": 0.95, "env/HC-Far-Selective-Hidden/player_1_lose_for_overlong_response": 0.0, "env/HC-Far-Selective-Hidden/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Far-Selective-Hidden/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Far-Selective-Hidden/format_valid": 0.05, "env/HC-Far-Selective-Hidden/semantic_action_valid": 0.05, "env/HC-Far-Selective-Hidden/action_recovered": 0.05, "env/HC-Far-Selective-Hidden/near_generation_limit": 0.95, "env/HC-Far-Selective-Hidden/response_truncated": 0.95, "env/HC-Far-Selective-Hidden/response_length": 1019.6, "env/HC-Far-Selective-Hidden/response_length_per_turn": 1018.65, "env/HC-Far-Selective-Hidden/response_length_turn_0": 1018.65, "env/HC-Far-Irrelevant-Full/artificial_truncation": 1.0, "env/HC-Near-Irrelevant-Hidden/success": 0.05, "env/HC-Near-Irrelevant-Hidden/num_actions": 0.05, "env/HC-Near-Irrelevant-Hidden/generation_attempts": 1.0, "env/HC-Near-Irrelevant-Hidden/retry_attempts": 0.0, "env/HC-Near-Irrelevant-Hidden/artificial_truncation": 1.0, "env/HC-Near-Irrelevant-Hidden/game_transition": 0.05, "env/HC-Near-Irrelevant-Hidden/player_0_return": 0.5, "env/HC-Near-Irrelevant-Hidden/player_1_return": 0.0, "env/HC-Near-Irrelevant-Hidden/winner": -0.95, "env/HC-Near-Irrelevant-Hidden/player_0_success": 0.05, "env/HC-Near-Irrelevant-Hidden/player_1_success": 0.0, "env/HC-Near-Irrelevant-Hidden/draw": 0.0, "env/HC-Near-Irrelevant-Hidden/player_0_lose_for_wrong_format": 0.95, "env/HC-Near-Irrelevant-Hidden/player_1_lose_for_wrong_format": 0.0, "env/HC-Near-Irrelevant-Hidden/player_0_lose_for_overlong_response": 0.95, "env/HC-Near-Irrelevant-Hidden/player_1_lose_for_overlong_response": 0.0, "env/HC-Near-Irrelevant-Hidden/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Near-Irrelevant-Hidden/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Near-Irrelevant-Hidden/format_valid": 0.05, "env/HC-Near-Irrelevant-Hidden/semantic_action_valid": 0.05, "env/HC-Near-Irrelevant-Hidden/action_recovered": 0.05, "env/HC-Near-Irrelevant-Hidden/near_generation_limit": 0.95, "env/HC-Near-Irrelevant-Hidden/response_truncated": 0.95, "env/HC-Near-Irrelevant-Hidden/response_length": 1009.2, "env/HC-Near-Irrelevant-Hidden/response_length_per_turn": 1008.25, "env/HC-Near-Irrelevant-Hidden/response_length_turn_0": 1008.25, "env/HC-Near-Selective-Hidden/success": 0.0, "env/HC-Near-Selective-Hidden/num_actions": 0.0, "env/HC-Near-Selective-Hidden/generation_attempts": 1.0, "env/HC-Near-Selective-Hidden/retry_attempts": 0.0, "env/HC-Near-Selective-Hidden/artificial_truncation": 1.0, "env/HC-Near-Selective-Hidden/game_transition": 0.0, "env/HC-Near-Selective-Hidden/player_0_return": 0.0, "env/HC-Near-Selective-Hidden/player_1_return": 0.0, "env/HC-Near-Selective-Hidden/winner": -1.0, "env/HC-Near-Selective-Hidden/player_0_success": 0.0, "env/HC-Near-Selective-Hidden/player_1_success": 0.0, "env/HC-Near-Selective-Hidden/draw": 0.0, "env/HC-Near-Selective-Hidden/player_0_lose_for_wrong_format": 1.0, "env/HC-Near-Selective-Hidden/player_1_lose_for_wrong_format": 0.0, "env/HC-Near-Selective-Hidden/player_0_lose_for_overlong_response": 1.0, "env/HC-Near-Selective-Hidden/player_1_lose_for_overlong_response": 0.0, "env/HC-Near-Selective-Hidden/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Near-Selective-Hidden/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Near-Selective-Hidden/format_valid": 0.0, "env/HC-Near-Selective-Hidden/semantic_action_valid": 0.0, "env/HC-Near-Selective-Hidden/action_recovered": 0.0, "env/HC-Near-Selective-Hidden/near_generation_limit": 1.0, "env/HC-Near-Selective-Hidden/response_truncated": 1.0, "env/HC-Near-Selective-Hidden/response_length": 1025.0, "env/HC-Near-Selective-Hidden/response_length_per_turn": 1024.0, "env/HC-Near-Selective-Hidden/response_length_turn_0": 1024.0, "env/HC-Far-Necessary-Hidden/action_is_ask": 0.0, "env/HC-Far-Necessary-Hidden/oracle_should_ask": 0.42857142857142855, "env/HC-Far-Necessary-Hidden/oracle_value_act": 7.285714285714286, "env/HC-Far-Necessary-Hidden/oracle_value": 7.714285714285714, "env/HC-Far-Necessary-Hidden/chosen_action_value": 7.285714285714286, "env/HC-Far-Necessary-Hidden/decision_regret": 0.42857142857142855, "env/HC-Far-Necessary-Hidden/optimal_action": 0.5714285714285714, "env/HC-Far-Necessary-Hidden/query_correct": 0.0, "env/HC-Far-Necessary-Hidden/full_information": 0.0, "env/HC-Far-Necessary-Hidden/step_reward": 8.428571428571429, "env/HC-Far-Necessary-Hidden/num_asks": 0.5714285714285714, "env/HC-Far-Necessary-Hidden/benchmark_success": 0.5714285714285714, "env/HC-Far-Necessary-Hidden/total_return": 7.857142857142857, "env/HC-Far-Necessary-Hidden/initial_should_ask": 1.0, "env/HC-Far-Necessary-Hidden/max_gross_voi": 2.0, "env/HC-Far-Necessary-Hidden/communication_cost": 1.0, "env/HC-Far-Necessary-Hidden/oracle_margin": 1.0, "env/HC-Far-Necessary-Hidden/first_action_ask": 0.5714285714285714, "env/HC-Far-Necessary-Hidden/first_decision_optimal": 0.5714285714285714, "env/HC-Far-Necessary-Hidden/ask_act_correct": 0.5714285714285714, "env/HC-Far-Necessary-Hidden/correct_abstention": 0.0, "env/HC-Far-Necessary-Hidden/over_querying": 0.0, "env/HC-Far-Necessary-Hidden/decision_error": 0.0, "env/HC-Far-Necessary-Hidden/under_querying": 0.42857142857142855, "env/HC-Far-Necessary-Hidden/query_selection_failure": 0.0, "env/HC-Far-Necessary-Hidden/query_selection_correct": 0.5714285714285714, "env/HC-Far-Necessary-Hidden/information_use_failure": 0.0, "env/HC-Far-Necessary-Hidden/communication_success": 0.5714285714285714, "env/HC-Far-Necessary-Hidden/post_query_action_correct": 0.5714285714285714, "env/HC-Far-Necessary-Hidden/stopping_failure": 0.0, "env/HC-Far-Necessary-Hidden/full_info_action_correct": 0.0, "env/HC-Far-Necessary-Hidden/final_action_optimal": 0.5714285714285714, "env/HC-Far-Necessary-Hidden/total_decision_regret": 0.42857142857142855, "env/HC-Far-Irrelevant-Hidden/success": 0.0, "env/HC-Far-Irrelevant-Hidden/num_actions": 0.0, "env/HC-Far-Irrelevant-Hidden/generation_attempts": 1.0, "env/HC-Far-Irrelevant-Hidden/retry_attempts": 0.0, "env/HC-Far-Irrelevant-Hidden/artificial_truncation": 1.0, "env/HC-Far-Irrelevant-Hidden/game_transition": 0.0, "env/HC-Far-Irrelevant-Hidden/player_0_return": 0.0, "env/HC-Far-Irrelevant-Hidden/player_1_return": 0.0, "env/HC-Far-Irrelevant-Hidden/winner": -1.0, "env/HC-Far-Irrelevant-Hidden/player_0_success": 0.0, "env/HC-Far-Irrelevant-Hidden/player_1_success": 0.0, "env/HC-Far-Irrelevant-Hidden/draw": 0.0, "env/HC-Far-Irrelevant-Hidden/player_0_lose_for_wrong_format": 1.0, "env/HC-Far-Irrelevant-Hidden/player_1_lose_for_wrong_format": 0.0, "env/HC-Far-Irrelevant-Hidden/player_0_lose_for_overlong_response": 1.0, "env/HC-Far-Irrelevant-Hidden/player_1_lose_for_overlong_response": 0.0, "env/HC-Far-Irrelevant-Hidden/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Far-Irrelevant-Hidden/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Far-Irrelevant-Hidden/format_valid": 0.0, "env/HC-Far-Irrelevant-Hidden/semantic_action_valid": 0.0, "env/HC-Far-Irrelevant-Hidden/action_recovered": 0.0, "env/HC-Far-Irrelevant-Hidden/near_generation_limit": 1.0, "env/HC-Far-Irrelevant-Hidden/response_truncated": 1.0, "env/HC-Far-Irrelevant-Hidden/response_length": 1025.0, "env/HC-Far-Irrelevant-Hidden/response_length_per_turn": 1024.0, "env/HC-Far-Irrelevant-Hidden/response_length_turn_0": 1024.0, "env/HC-Medium-Selective-Full/artificial_truncation": 1.0, "env/HC-Near-Selective-Full/artificial_truncation": 1.0, "env/HC-Near-Irrelevant-Full/artificial_truncation": 1.0, "env/HC-Medium-Selective-Hidden/success": 0.05, "env/HC-Medium-Selective-Hidden/num_actions": 0.05, "env/HC-Medium-Selective-Hidden/generation_attempts": 1.0, "env/HC-Medium-Selective-Hidden/retry_attempts": 0.0, "env/HC-Medium-Selective-Hidden/artificial_truncation": 1.0, "env/HC-Medium-Selective-Hidden/game_transition": 0.05, "env/HC-Medium-Selective-Hidden/player_0_return": 0.3, "env/HC-Medium-Selective-Hidden/player_1_return": 0.0, "env/HC-Medium-Selective-Hidden/winner": -1.0, "env/HC-Medium-Selective-Hidden/player_0_success": 0.0, "env/HC-Medium-Selective-Hidden/player_1_success": 0.0, "env/HC-Medium-Selective-Hidden/draw": 0.0, "env/HC-Medium-Selective-Hidden/player_0_lose_for_wrong_format": 0.95, "env/HC-Medium-Selective-Hidden/player_1_lose_for_wrong_format": 0.0, "env/HC-Medium-Selective-Hidden/player_0_lose_for_overlong_response": 0.95, "env/HC-Medium-Selective-Hidden/player_1_lose_for_overlong_response": 0.0, "env/HC-Medium-Selective-Hidden/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Medium-Selective-Hidden/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Medium-Selective-Hidden/format_valid": 0.05, "env/HC-Medium-Selective-Hidden/semantic_action_valid": 0.05, "env/HC-Medium-Selective-Hidden/action_recovered": 0.05, "env/HC-Medium-Selective-Hidden/near_generation_limit": 0.95, "env/HC-Medium-Selective-Hidden/response_truncated": 0.95, "env/HC-Medium-Selective-Hidden/response_length": 995.15, "env/HC-Medium-Selective-Hidden/response_length_per_turn": 994.25, "env/HC-Medium-Selective-Hidden/response_length_turn_0": 994.25, "env/HC-Medium-Necessary-Hidden/success": 0.35, "env/HC-Medium-Necessary-Hidden/num_actions": 0.65, "env/HC-Medium-Necessary-Hidden/generation_attempts": 1.3, "env/HC-Medium-Necessary-Hidden/retry_attempts": 0.0, "env/HC-Medium-Necessary-Hidden/artificial_truncation": 1.0, "env/HC-Medium-Necessary-Hidden/game_transition": 0.35, "env/HC-Medium-Necessary-Hidden/player_0_return": 2.025, "env/HC-Medium-Necessary-Hidden/player_1_return": 0.0, "env/HC-Medium-Necessary-Hidden/winner": -0.75, "env/HC-Medium-Necessary-Hidden/player_0_success": 0.25, "env/HC-Medium-Necessary-Hidden/player_1_success": 0.0, "env/HC-Medium-Necessary-Hidden/draw": 0.0, "env/HC-Medium-Necessary-Hidden/player_0_lose_for_wrong_format": 0.65, "env/HC-Medium-Necessary-Hidden/player_1_lose_for_wrong_format": 0.0, "env/HC-Medium-Necessary-Hidden/player_0_lose_for_overlong_response": 0.65, "env/HC-Medium-Necessary-Hidden/player_1_lose_for_overlong_response": 0.0, "env/HC-Medium-Necessary-Hidden/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Medium-Necessary-Hidden/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Medium-Necessary-Hidden/format_valid": 0.35, "env/HC-Medium-Necessary-Hidden/semantic_action_valid": 0.35, "env/HC-Medium-Necessary-Hidden/action_recovered": 0.35, "env/HC-Medium-Necessary-Hidden/near_generation_limit": 0.65, "env/HC-Medium-Necessary-Hidden/response_truncated": 0.65, "env/HC-Medium-Necessary-Hidden/response_length": 1140.4, "env/HC-Medium-Necessary-Hidden/response_length_per_turn": 924.175, "env/HC-Medium-Necessary-Hidden/response_length_turn_0": 974.65, "env/HC-Medium-Necessary-Hidden/action_is_ask": 0.0, "env/HC-Medium-Necessary-Hidden/oracle_should_ask": 0.14285714285714285, "env/HC-Medium-Necessary-Hidden/oracle_value_act": 6.142857142857143, "env/HC-Medium-Necessary-Hidden/oracle_value": 6.178571428571429, "env/HC-Medium-Necessary-Hidden/chosen_action_value": 5.857142857142857, "env/HC-Medium-Necessary-Hidden/decision_regret": 0.32142857142857145, "env/HC-Medium-Necessary-Hidden/optimal_action": 0.7142857142857143, "env/HC-Medium-Necessary-Hidden/query_correct": 0.0, "env/HC-Medium-Necessary-Hidden/full_information": 0.0, "env/HC-Medium-Necessary-Hidden/step_reward": 6.0, "env/HC-Medium-Necessary-Hidden/num_asks": 0.8571428571428571, "env/HC-Medium-Necessary-Hidden/benchmark_success": 0.7142857142857143, "env/HC-Medium-Necessary-Hidden/total_return": 5.785714285714286, "env/HC-Medium-Necessary-Hidden/initial_should_ask": 1.0, "env/HC-Medium-Necessary-Hidden/max_gross_voi": 0.5, "env/HC-Medium-Necessary-Hidden/communication_cost": 0.25, "env/HC-Medium-Necessary-Hidden/oracle_margin": 0.25, "env/HC-Medium-Necessary-Hidden/first_action_ask": 0.8571428571428571, "env/HC-Medium-Necessary-Hidden/first_decision_optimal": 0.8571428571428571, "env/HC-Medium-Necessary-Hidden/ask_act_correct": 0.8571428571428571, "env/HC-Medium-Necessary-Hidden/correct_abstention": 0.0, "env/HC-Medium-Necessary-Hidden/over_querying": 0.0, "env/HC-Medium-Necessary-Hidden/decision_error": 0.0, "env/HC-Medium-Necessary-Hidden/under_querying": 0.14285714285714285, "env/HC-Medium-Necessary-Hidden/query_selection_failure": 0.0, "env/HC-Medium-Necessary-Hidden/query_selection_correct": 0.8571428571428571, "env/HC-Medium-Necessary-Hidden/information_use_failure": 0.14285714285714285, "env/HC-Medium-Necessary-Hidden/communication_success": 0.7142857142857143, "env/HC-Medium-Necessary-Hidden/post_query_action_correct": 0.7142857142857143, "env/HC-Medium-Necessary-Hidden/stopping_failure": 0.0, "env/HC-Medium-Necessary-Hidden/full_info_action_correct": 0.0, "env/HC-Medium-Necessary-Hidden/final_action_optimal": 0.7142857142857143, "env/HC-Medium-Necessary-Hidden/total_decision_regret": 0.32142857142857145, "env/HC-Medium-Necessary-Hidden/response_length_turn_1": 550.3333333333334, "env/HC-Far-NoQuery-Hidden/artificial_truncation": 1.0, "env/HC-Near-Necessary-Hidden/success": 0.3, "env/HC-Near-Necessary-Hidden/num_actions": 0.6, "env/HC-Near-Necessary-Hidden/generation_attempts": 1.3, "env/HC-Near-Necessary-Hidden/retry_attempts": 0.0, "env/HC-Near-Necessary-Hidden/artificial_truncation": 1.0, "env/HC-Near-Necessary-Hidden/game_transition": 0.3, "env/HC-Near-Necessary-Hidden/player_0_return": 1.825, "env/HC-Near-Necessary-Hidden/player_1_return": 0.0, "env/HC-Near-Necessary-Hidden/winner": -0.7, "env/HC-Near-Necessary-Hidden/player_0_success": 0.3, "env/HC-Near-Necessary-Hidden/player_1_success": 0.0, "env/HC-Near-Necessary-Hidden/draw": 0.0, "env/HC-Near-Necessary-Hidden/player_0_lose_for_wrong_format": 0.7, "env/HC-Near-Necessary-Hidden/player_1_lose_for_wrong_format": 0.0, "env/HC-Near-Necessary-Hidden/player_0_lose_for_overlong_response": 0.7, "env/HC-Near-Necessary-Hidden/player_1_lose_for_overlong_response": 0.0, "env/HC-Near-Necessary-Hidden/player_0_lose_for_overlong_sequence": 0.0, "env/HC-Near-Necessary-Hidden/player_1_lose_for_overlong_sequence": 0.0, "env/HC-Near-Necessary-Hidden/format_valid": 0.3, "env/HC-Near-Necessary-Hidden/semantic_action_valid": 0.3, "env/HC-Near-Necessary-Hidden/action_recovered": 0.3, "env/HC-Near-Necessary-Hidden/near_generation_limit": 0.7, "env/HC-Near-Necessary-Hidden/response_truncated": 0.7, "env/HC-Near-Necessary-Hidden/response_length": 1160.1, "env/HC-Near-Necessary-Hidden/response_length_per_turn": 938.075, "env/HC-Near-Necessary-Hidden/response_length_turn_0": 998.9, "env/HC-Far-Necessary-Hidden/response_length_turn_1": 640.75, "env/HC-Far-Necessary-Full/artificial_truncation": 1.0, "env/HC-Near-Necessary-Hidden/action_is_ask": 0.0, "env/HC-Near-Necessary-Hidden/oracle_should_ask": 0.0, "env/HC-Near-Necessary-Hidden/oracle_value_act": 6.133333333333334, "env/HC-Near-Necessary-Hidden/oracle_value": 6.133333333333334, "env/HC-Near-Necessary-Hidden/chosen_action_value": 6.133333333333334, "env/HC-Near-Necessary-Hidden/decision_regret": 0.0, "env/HC-Near-Necessary-Hidden/optimal_action": 1.0, "env/HC-Near-Necessary-Hidden/query_correct": 0.0, "env/HC-Near-Necessary-Hidden/full_information": 0.0, "env/HC-Near-Necessary-Hidden/step_reward": 6.133333333333334, "env/HC-Near-Necessary-Hidden/num_asks": 1.0, "env/HC-Near-Necessary-Hidden/benchmark_success": 1.0, "env/HC-Near-Necessary-Hidden/total_return": 6.083333333333333, "env/HC-Near-Necessary-Hidden/initial_should_ask": 1.0, "env/HC-Near-Necessary-Hidden/max_gross_voi": 0.0999999999999992, "env/HC-Near-Necessary-Hidden/communication_cost": 0.049999999999999996, "env/HC-Near-Necessary-Hidden/oracle_margin": 0.049999999999999205, "env/HC-Near-Necessary-Hidden/first_action_ask": 1.0, "env/HC-Near-Necessary-Hidden/first_decision_optimal": 1.0, "env/HC-Near-Necessary-Hidden/ask_act_correct": 1.0, "env/HC-Near-Necessary-Hidden/correct_abstention": 0.0, "env/HC-Near-Necessary-Hidden/over_querying": 0.0, "env/HC-Near-Necessary-Hidden/decision_error": 0.0, "env/HC-Near-Necessary-Hidden/under_querying": 0.0, "env/HC-Near-Necessary-Hidden/query_selection_failure": 0.0, "env/HC-Near-Necessary-Hidden/query_selection_correct": 1.0, "env/HC-Near-Necessary-Hidden/information_use_failure": 0.0, "env/HC-Near-Necessary-Hidden/communication_success": 1.0, "env/HC-Near-Necessary-Hidden/post_query_action_correct": 1.0, "env/HC-Near-Necessary-Hidden/stopping_failure": 0.0, "env/HC-Near-Necessary-Hidden/full_info_action_correct": 0.0, "env/HC-Near-Necessary-Hidden/final_action_optimal": 1.0, "env/HC-Near-Necessary-Hidden/total_decision_regret": 0.0, "env/HC-Near-Necessary-Hidden/response_length_turn_1": 534.8333333333334, "env/HC-Medium-Necessary-Full/artificial_truncation": 1.0, "env/HC-Near-Irrelevant-Hidden/action_is_ask": 0.0, "env/HC-Near-Irrelevant-Hidden/oracle_should_ask": 0.0, "env/HC-Near-Irrelevant-Hidden/oracle_value_act": 10.0, "env/HC-Near-Irrelevant-Hidden/oracle_value": 10.0, "env/HC-Near-Irrelevant-Hidden/chosen_action_value": 10.0, "env/HC-Near-Irrelevant-Hidden/decision_regret": 0.0, "env/HC-Near-Irrelevant-Hidden/optimal_action": 1.0, "env/HC-Near-Irrelevant-Hidden/query_correct": 0.0, "env/HC-Near-Irrelevant-Hidden/full_information": 0.0, "env/HC-Near-Irrelevant-Hidden/step_reward": 10.0, "env/HC-Near-Irrelevant-Hidden/num_asks": 0.0, "env/HC-Near-Irrelevant-Hidden/benchmark_success": 1.0, "env/HC-Near-Irrelevant-Hidden/total_return": 10.0, "env/HC-Near-Irrelevant-Hidden/initial_should_ask": 0.0, "env/HC-Near-Irrelevant-Hidden/max_gross_voi": 0.0, "env/HC-Near-Irrelevant-Hidden/communication_cost": 0.05, "env/HC-Near-Irrelevant-Hidden/oracle_margin": -0.05, "env/HC-Near-Irrelevant-Hidden/first_action_ask": 0.0, "env/HC-Near-Irrelevant-Hidden/first_decision_optimal": 1.0, "env/HC-Near-Irrelevant-Hidden/ask_act_correct": 1.0, "env/HC-Near-Irrelevant-Hidden/correct_abstention": 1.0, "env/HC-Near-Irrelevant-Hidden/over_querying": 0.0, "env/HC-Near-Irrelevant-Hidden/decision_error": 0.0, "env/HC-Near-Irrelevant-Hidden/under_querying": 0.0, "env/HC-Near-Irrelevant-Hidden/query_selection_failure": 0.0, "env/HC-Near-Irrelevant-Hidden/query_selection_correct": 0.0, "env/HC-Near-Irrelevant-Hidden/information_use_failure": 0.0, "env/HC-Near-Irrelevant-Hidden/communication_success": 0.0, "env/HC-Near-Irrelevant-Hidden/post_query_action_correct": 0.0, "env/HC-Near-Irrelevant-Hidden/stopping_failure": 0.0, "env/HC-Near-Irrelevant-Hidden/full_info_action_correct": 0.0, "env/HC-Near-Irrelevant-Hidden/final_action_optimal": 1.0, "env/HC-Near-Irrelevant-Hidden/total_decision_regret": 0.0, "env/HC-Medium-Selective-Hidden/action_is_ask": 0.0, "env/HC-Medium-Selective-Hidden/oracle_should_ask": 1.0, "env/HC-Medium-Selective-Hidden/oracle_value_act": 5.0, "env/HC-Medium-Selective-Hidden/oracle_value": 5.25, "env/HC-Medium-Selective-Hidden/chosen_action_value": 5.0, "env/HC-Medium-Selective-Hidden/decision_regret": 0.25, "env/HC-Medium-Selective-Hidden/optimal_action": 0.0, "env/HC-Medium-Selective-Hidden/query_correct": 0.0, "env/HC-Medium-Selective-Hidden/full_information": 0.0, "env/HC-Medium-Selective-Hidden/step_reward": 6.0, "env/HC-Medium-Selective-Hidden/num_asks": 0.0, "env/HC-Medium-Selective-Hidden/benchmark_success": 0.0, "env/HC-Medium-Selective-Hidden/total_return": 6.0, "env/HC-Medium-Selective-Hidden/initial_should_ask": 1.0, "env/HC-Medium-Selective-Hidden/max_gross_voi": 0.5, "env/HC-Medium-Selective-Hidden/communication_cost": 0.25, "env/HC-Medium-Selective-Hidden/oracle_margin": 0.25, "env/HC-Medium-Selective-Hidden/first_action_ask": 0.0, "env/HC-Medium-Selective-Hidden/first_decision_optimal": 0.0, "env/HC-Medium-Selective-Hidden/ask_act_correct": 0.0, "env/HC-Medium-Selective-Hidden/correct_abstention": 0.0, "env/HC-Medium-Selective-Hidden/over_querying": 0.0, "env/HC-Medium-Selective-Hidden/decision_error": 0.0, "env/HC-Medium-Selective-Hidden/under_querying": 1.0, "env/HC-Medium-Selective-Hidden/query_selection_failure": 0.0, "env/HC-Medium-Selective-Hidden/query_selection_correct": 0.0, "env/HC-Medium-Selective-Hidden/information_use_failure": 0.0, "env/HC-Medium-Selective-Hidden/communication_success": 0.0, "env/HC-Medium-Selective-Hidden/post_query_action_correct": 0.0, "env/HC-Medium-Selective-Hidden/stopping_failure": 0.0, "env/HC-Medium-Selective-Hidden/full_info_action_correct": 0.0, "env/HC-Medium-Selective-Hidden/final_action_optimal": 0.0, "env/HC-Medium-Selective-Hidden/total_decision_regret": 0.25, "env/HC-Far-Selective-Hidden/action_is_ask": 0.0, "env/HC-Far-Selective-Hidden/oracle_should_ask": 1.0, "env/HC-Far-Selective-Hidden/oracle_value_act": 5.0, "env/HC-Far-Selective-Hidden/oracle_value": 6.0, "env/HC-Far-Selective-Hidden/chosen_action_value": 5.0, "env/HC-Far-Selective-Hidden/decision_regret": 1.0, "env/HC-Far-Selective-Hidden/optimal_action": 0.0, "env/HC-Far-Selective-Hidden/query_correct": 0.0, "env/HC-Far-Selective-Hidden/full_information": 0.0, "env/HC-Far-Selective-Hidden/step_reward": 5.0, "env/HC-Far-Selective-Hidden/num_asks": 0.0, "env/HC-Far-Selective-Hidden/benchmark_success": 0.0, "env/HC-Far-Selective-Hidden/total_return": 5.0, "env/HC-Far-Selective-Hidden/initial_should_ask": 1.0, "env/HC-Far-Selective-Hidden/max_gross_voi": 2.0, "env/HC-Far-Selective-Hidden/communication_cost": 1.0, "env/HC-Far-Selective-Hidden/oracle_margin": 1.0, "env/HC-Far-Selective-Hidden/first_action_ask": 0.0, "env/HC-Far-Selective-Hidden/first_decision_optimal": 0.0, "env/HC-Far-Selective-Hidden/ask_act_correct": 0.0, "env/HC-Far-Selective-Hidden/correct_abstention": 0.0, "env/HC-Far-Selective-Hidden/over_querying": 0.0, "env/HC-Far-Selective-Hidden/decision_error": 0.0, "env/HC-Far-Selective-Hidden/under_querying": 1.0, "env/HC-Far-Selective-Hidden/query_selection_failure": 0.0, "env/HC-Far-Selective-Hidden/query_selection_correct": 0.0, "env/HC-Far-Selective-Hidden/information_use_failure": 0.0, "env/HC-Far-Selective-Hidden/communication_success": 0.0, "env/HC-Far-Selective-Hidden/post_query_action_correct": 0.0, "env/HC-Far-Selective-Hidden/stopping_failure": 0.0, "env/HC-Far-Selective-Hidden/full_info_action_correct": 0.0, "env/HC-Far-Selective-Hidden/final_action_optimal": 0.0, "env/HC-Far-Selective-Hidden/total_decision_regret": 1.0, "memory/actor_infer/generate/start/offload/allocated/0": 0.0, "memory/actor_infer/generate/start/offload/reserved/0": 0.0, "memory/actor_infer/generate/start/offload/max_allocated/0": 0.0, "memory/actor_infer/generate/start/offload/max_reserved/0": 0.0, "memory/actor_infer/generate/start/onload/allocated/0": 0.0, "memory/actor_infer/generate/start/onload/reserved/0": 0.0, "memory/actor_infer/generate/start/onload/max_allocated/0": 0.0, "memory/actor_infer/generate/start/onload/max_reserved/0": 0.0, "memory/cpu/actor_infer/generate/start/rss": 1.1082687377929688, "memory/cpu/actor_infer/generate/start/vms": 90.67416000366211, "memory/actor_infer/generate/end/onload/allocated/0": 4.76837158203125e-07, "memory/actor_infer/generate/end/onload/reserved/0": 0.001953125, "memory/actor_infer/generate/end/onload/max_allocated/0": 9.5367431640625e-07, "memory/actor_infer/generate/end/onload/max_reserved/0": 0.001953125, "memory/actor_infer/generate/end/onload/max_allocated_frac/0": 1.2033782389165976e-08, "memory/actor_infer/generate/end/onload/max_reserved_frac/0": 2.464518633301192e-05, "memory/actor_infer/generate/end/offload/allocated/0": 4.76837158203125e-07, "memory/actor_infer/generate/end/offload/reserved/0": 0.001953125, "memory/actor_infer/generate/end/offload/max_allocated/0": 9.5367431640625e-07, "memory/actor_infer/generate/end/offload/max_reserved/0": 0.001953125, "memory/cpu/actor_infer/generate/end/rss": 1.5297927856445312, "memory/cpu/actor_infer/generate/end/vms": 92.28742599487305, "time/actor_infer/generate/total": 140.20733814605046, "time/actor_infer/generate/execute": 137.8685308219865, "time/actor_infer/generate/onload": 1.1054054280975834, "time/actor_infer/generate/offload": 1.233169323997572, "rollout/score/mean": 5.261250019073486, "rollout/score/max": 11.0, "rollout/score/min": 0.0, "system/samples": 480}
+[2026-08-26 17:13:28] [agentic_rollout_pipeline.py (137)] [INFO] [DRIVER 0 / 1][PID 189956] pipeline step 0 finished
+[2026-08-26 17:13:28] [agentic_rollout_pipeline.py (139)] [INFO] [DRIVER 0 / 1][PID 189956] epoch 1 finished
+[2026-08-26 17:13:28] [agentic_rollout_pipeline.py (140)] [INFO] [DRIVER 0 / 1][PID 189956] pipeline complete!
+[2026-08-26 17:13:36] [log_monitor.py (225)] [INFO] [DRIVER 0 / 1][PID 189956] Execute ray.shutdown before the program exits...
