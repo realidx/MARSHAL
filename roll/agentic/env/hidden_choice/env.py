@@ -122,7 +122,8 @@ class HiddenChoiceEnv(BaseDiscreteActionEnv):
                 "final ACT decision.\n\n"
                 "Your objective is to maximize expected total utility, including communication cost.\n\n"
                 "Reason carefully, then finish with exactly one listed legal action "
-                "inside <answer> and </answer>, such as <answer>ACT X</answer>."
+                "inside <answer> and </answer>, such as <answer>ACT X</answer>. "
+                "Do not output anything else."
             ),
         }
 
