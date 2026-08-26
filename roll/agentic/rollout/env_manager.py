@@ -565,6 +565,9 @@ class EnvManager:
                 action_recovered = True
 
         semantic_action_valid = len(valid_actions) == 1
+        env_input["format_valid"] = bool(format_valid)
+        env_input["semantic_action_valid"] = bool(semantic_action_valid)
+        env_input["action_recovered"] = bool(action_recovered)
         env_input["valid_action"] = (
             format_valid and semantic_action_valid and not overlong_response and not overlong_sequence
         )
@@ -1888,9 +1891,9 @@ class EnvManager:
                     "hit_token_limit": env_input["hit_token_limit"],
                     "has_closing_answer_tag": env_input["has_closing_answer_tag"],
                     "valid_action": env_input["valid_action"],
-                    "format_valid": bool(format_valid),
-                    "semantic_action_valid": bool(semantic_action_valid),
-                    "action_recovered": bool(action_recovered),
+                    "format_valid": bool(env_input.get("format_valid", False)),
+                    "semantic_action_valid": bool(env_input.get("semantic_action_valid", False)),
+                    "action_recovered": bool(env_input.get("action_recovered", False)),
                     "overlong_response": env_input["overlong_response"],
                     "overlong_sequence": env_input["overlong_sequence"],
                     "skip_policy_response": env_input.get("skip_policy_response", False),
