@@ -63,7 +63,7 @@ class HiddenChoiceInstance:
         if self.actual_values not in assignments:
             raise ValueError("actual_values must identify a possible world")
         legal_universe = {
-            *(f"ASK {question}" for question, _ in self.questions),
+            *(f"ASK {fact}" for _, fact in self.questions),
             *(f"ACT {option}" for option in self.option_names),
         }
         if set(self.action_order) != legal_universe or len(self.action_order) != len(legal_universe):
@@ -86,6 +86,12 @@ class HiddenChoiceInstance:
             return dict(self.questions)[question]
         except KeyError as exc:
             raise ValueError(f"unknown question {question!r}") from exc
+
+    def fact_question(self, fact: str) -> str:
+        for question, mapped_fact in self.questions:
+            if mapped_fact == fact:
+                return question
+        raise ValueError(f"no question reveals fact {fact!r}")
 
     def actual_value(self, fact: str) -> str:
         return self.actual_values[self.fact_index(fact)]

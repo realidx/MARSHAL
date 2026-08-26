@@ -96,29 +96,17 @@ class HiddenChoiceEnv(BaseDiscreteActionEnv):
         del think, player_id
         if mode != "prefix":
             raise ValueError(f"invalid prompt mode {mode!r}")
-        hint = (
-            " Ask only if the expected improvement in the final decision is "
-            "strictly greater than the communication cost."
-            if self.config.decision_rule_hint
-            else ""
-        )
-        instructions = (
-            "All hidden facts are provided. Choose exactly one listed ACT action "
-            "to maximize expected utility."
-            if self.config.full_information
-            else (
-                "You may choose a listed ACT action immediately, or use at most one "
-                "listed ASK action. The partner is truthful and deterministically "
-                "reveals the fact mapped to that question. ASK deducts the listed "
-                "cost; after its answer you must choose ACT."
-            )
-        )
         return {
-            "system": "You make a final choice with optional communication under uncertainty.",
+            "system": "You are playing a decision-making game with another agent.",
             "user": (
-                f"Maximize expected total utility. {instructions}{hint}\n\n"
-                "Return exactly one listed legal action inside <answer> and </answer>. "
-                "Do not output anything else."
+                "At each decision point, choose exactly one listed legal action.\n\n"
+                "ACT <option> chooses that option as the final action and ends the episode.\n"
+                "ASK <fact> asks the truthful partner to reveal that fact. ASK incurs the "
+                "listed communication cost. After receiving the answer, you will make one "
+                "final ACT decision.\n\n"
+                "Your objective is to maximize expected total utility, including communication cost.\n\n"
+                "Reason carefully, then return exactly one listed legal action inside "
+                "<reason>...</reason><answer>...</answer>. Do not output anything else."
             ),
         }
 
@@ -140,13 +128,10 @@ class HiddenChoiceEnv(BaseDiscreteActionEnv):
         )
         context = ", ".join(f"{name}={value}" for name, value in observation.context)
         known = ", ".join(f"{fact}={value}" for fact, value in observation.known_facts) or "none"
-        question_map = (
-            ", ".join(
-                f"{question} reveals {fact}"
-                for question, fact in observation.available_questions
-            )
+        available_facts = (
+            ", ".join(fact for _, fact in observation.available_questions)
             if observation.available_questions
-            else "no question remains; you must ACT"
+            else "none"
         )
         header = " | ".join([*instance.fact_names, "probability", *instance.option_names])
         rows = [
@@ -162,7 +147,7 @@ class HiddenChoiceEnv(BaseDiscreteActionEnv):
         return (
             f"Observed context: {context}\n"
             f"Known hidden facts: {known}\n"
-            f"Question map: {question_map}\n"
+            f"Askable facts: {available_facts}\n"
             f"Information mode: {'full' if observation.full_information else 'hidden'}\n"
             f"Communication cost: {instance.communication_cost:g}\n\n"
             f"Possible-world utility table:\n{header}\n" + "\n".join(rows)

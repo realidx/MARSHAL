@@ -33,12 +33,20 @@ class HiddenChoiceGame:
             return ()
         legal = {f"ACT {option}" for option in self.instance.option_names}
         if not self.full_information and not self.query_used:
-            legal.update(f"ASK {question}" for question, _ in self.instance.questions)
+            legal.update(f"ASK {fact}" for _, fact in self.instance.questions)
         return tuple(action for action in self.instance.action_order if action in legal)
 
     def step(self, action: str):
         if self.done:
             raise RuntimeError("cannot act in a finished Hidden Choice game")
+        # Keep the oracle's internal ASK Qk notation accepted for programmatic
+        # callers, while the model-facing interface uses ASK <fact>.
+        if action.startswith("ASK ") and action not in self.legal_actions():
+            token = action.removeprefix("ASK ")
+            try:
+                action = f"ASK {self.instance.question_fact(token)}"
+            except ValueError:
+                pass
         if action not in self.legal_actions():
             raise ValueError(f"illegal Hidden Choice action {action!r}")
 
@@ -47,23 +55,27 @@ class HiddenChoiceGame:
             allow_questions=not self.full_information and not self.query_used,
         )
         is_ask = action.startswith("ASK ")
-        query_correct = bool(is_ask and action in decision.best_questions)
+        internal_action = action
+        if is_ask:
+            fact = action.removeprefix("ASK ")
+            internal_action = f"ASK {self.instance.fact_question(fact)}"
+        query_correct = bool(is_ask and internal_action in decision.best_questions)
         record = {
             "action": action,
             "action_is_ask": float(is_ask),
             "oracle_should_ask": float(decision.should_ask),
             "oracle_value_act": decision.value_act,
             "oracle_value": decision.value,
-            "chosen_action_value": decision.action_value(action),
-            "decision_regret": max(0.0, decision.value - decision.action_value(action)),
-            "optimal_action": float(action in decision.optimal_actions),
+            "chosen_action_value": decision.action_value(internal_action),
+            "decision_regret": max(0.0, decision.value - decision.action_value(internal_action)),
+            "optimal_action": float(internal_action in decision.optimal_actions),
             "query_correct": float(query_correct),
         }
         self.records.append(record)
 
         if is_ask:
-            question = action.removeprefix("ASK ")
-            fact = self.instance.question_fact(question)
+            fact = action.removeprefix("ASK ")
+            question = self.instance.fact_question(fact)
             answer = self.instance.actual_value(fact)
             self.known[fact] = answer
             self.query_used = True

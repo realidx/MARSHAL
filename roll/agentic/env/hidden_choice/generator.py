@@ -116,13 +116,13 @@ def generate_instance(
 
     actual_values = rng.choice(assignments)
     full_action_order = [
-        *(f"ASK {question}" for question, _ in all_questions),
+        *(f"ASK {fact}" for _, fact in all_questions),
         *(f"ACT {option}" for option in option_names),
     ]
     if config.shuffle_action_order:
         rng.shuffle(full_action_order)
     legal_universe = {
-        *(f"ASK {question}" for question, _ in questions),
+        *(f"ASK {fact}" for _, fact in questions),
         *(f"ACT {option}" for option in option_names),
     }
     actions = [action for action in full_action_order if action in legal_universe]

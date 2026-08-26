@@ -23,7 +23,8 @@ reference:
   device_mapping: list(range(0,1))
 actor_infer:
   generating_args:
-    max_new_tokens: 128
+    # Shared budget: approximately 512 reasoning tokens plus the final envelope.
+    max_new_tokens: 640
     top_p: 0.8
     top_k: 20
     num_beams: 1
@@ -38,9 +39,9 @@ actor_infer:
       gpu_memory_utilization: 0.8
   device_mapping: list(range(0,1))
 
-enable_think: false
+enable_think: true
 markovian_turn_context: true
-use_reason_answer_format: false
+use_reason_answer_format: true
 
 custom_envs:
   HC-Near-NoQuery-Hidden:
