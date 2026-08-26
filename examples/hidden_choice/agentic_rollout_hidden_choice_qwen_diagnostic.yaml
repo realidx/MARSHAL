@@ -23,8 +23,8 @@ reference:
   device_mapping: list(range(0,1))
 actor_infer:
   generating_args:
-    # Shared budget: approximately 512 reasoning tokens plus the final envelope.
-    max_new_tokens: 640
+    # Shared reasoning + final-envelope budget.
+    max_new_tokens: 1024
     top_p: 0.8
     top_k: 20
     num_beams: 1
