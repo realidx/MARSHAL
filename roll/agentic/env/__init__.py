@@ -16,6 +16,8 @@ from .geography.config import GeographyConfig
 from .geography.env import GeographyEnv
 from .pivotal_query.config import PivotalQueryConfig
 from .pivotal_query.env import PivotalQueryEnv
+from .hidden_choice.config import HiddenChoiceConfig
+from .hidden_choice.env import HiddenChoiceEnv
 
 REGISTERED_ENVS = {
     "tictactoe": TicTacToe,
@@ -25,6 +27,7 @@ REGISTERED_ENVS = {
     "leduc_poker": LeducPoker,
     "geography": GeographyEnv,
     "pivotal_query": PivotalQueryEnv,
+    "hidden_choice": HiddenChoiceEnv,
 }
 
 REGISTERED_ENV_CONFIGS = {
@@ -35,4 +38,5 @@ REGISTERED_ENV_CONFIGS = {
     "leduc_poker": LeducPokerConfig,
     "geography": GeographyConfig,
     "pivotal_query": PivotalQueryConfig,
+    "hidden_choice": HiddenChoiceConfig,
 }

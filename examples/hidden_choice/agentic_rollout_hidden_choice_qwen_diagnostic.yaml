@@ -1,0 +1,203 @@
+defaults:
+  - /tictactoe/agentic_train_tictactoe_minimax_selfplay_2gpu@_global_
+  - _self_
+
+hydra:
+  searchpath:
+    - file://${oc.env:PWD}/examples
+
+exp_name: "hidden_choice_qwen_zero_shot_diagnostic"
+pretrain: ${oc.env:EVAL_MODEL_DIR}
+
+# 5 matched families x 4 samples x 4 conditions x 3 |Delta| levels x
+# hidden/full information = 480 zero-shot trajectories. No RL or SFT occurs.
+max_steps: 1
+rollout_batch_size: 480
+sequence_length: 4096
+max_actions_per_traj: 2
+num_gpus_per_node: 1
+
+actor_train:
+  device_mapping: list(range(0,1))
+reference:
+  device_mapping: list(range(0,1))
+actor_infer:
+  generating_args:
+    max_new_tokens: 128
+    top_p: 0.8
+    top_k: 20
+    num_beams: 1
+    temperature: 0.7
+    num_return_sequences: 1
+    stop: ["</answer>"]
+    include_stop_str_in_output: true
+  strategy_args:
+    strategy_config:
+      tensor_parallel_size: 1
+      max_model_len: 4096
+      gpu_memory_utilization: 0.8
+  device_mapping: list(range(0,1))
+
+enable_think: false
+markovian_turn_context: true
+use_reason_answer_format: false
+
+custom_envs:
+  HC-Near-NoQuery-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: no_query, margin_magnitude: 0.05, response_token_limit: 128}
+  HC-Near-NoQuery-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: no_query, margin_magnitude: 0.05, full_information: true, seed_offset: -5, response_token_limit: 128}
+  HC-Near-Necessary-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: necessary_query, margin_magnitude: 0.05, seed_offset: -10, response_token_limit: 128}
+  HC-Near-Necessary-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: necessary_query, margin_magnitude: 0.05, full_information: true, seed_offset: -15, response_token_limit: 128}
+  HC-Near-Irrelevant-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: irrelevant_uncertainty, margin_magnitude: 0.05, seed_offset: -20, response_token_limit: 128}
+  HC-Near-Irrelevant-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: irrelevant_uncertainty, margin_magnitude: 0.05, full_information: true, seed_offset: -25, response_token_limit: 128}
+  HC-Near-Selective-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: selective_query, margin_magnitude: 0.05, seed_offset: -30, response_token_limit: 128}
+  HC-Near-Selective-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: selective_query, margin_magnitude: 0.05, full_information: true, seed_offset: -35, response_token_limit: 128}
+
+  HC-Medium-NoQuery-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: no_query, margin_magnitude: 0.25, seed_offset: -40, response_token_limit: 128}
+  HC-Medium-NoQuery-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: no_query, margin_magnitude: 0.25, full_information: true, seed_offset: -45, response_token_limit: 128}
+  HC-Medium-Necessary-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: necessary_query, margin_magnitude: 0.25, seed_offset: -50, response_token_limit: 128}
+  HC-Medium-Necessary-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: necessary_query, margin_magnitude: 0.25, full_information: true, seed_offset: -55, response_token_limit: 128}
+  HC-Medium-Irrelevant-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: irrelevant_uncertainty, margin_magnitude: 0.25, seed_offset: -60, response_token_limit: 128}
+  HC-Medium-Irrelevant-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: irrelevant_uncertainty, margin_magnitude: 0.25, full_information: true, seed_offset: -65, response_token_limit: 128}
+  HC-Medium-Selective-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: selective_query, margin_magnitude: 0.25, seed_offset: -70, response_token_limit: 128}
+  HC-Medium-Selective-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: selective_query, margin_magnitude: 0.25, full_information: true, seed_offset: -75, response_token_limit: 128}
+
+  HC-Far-NoQuery-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: no_query, margin_magnitude: 1.0, seed_offset: -80, response_token_limit: 128}
+  HC-Far-NoQuery-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: no_query, margin_magnitude: 1.0, full_information: true, seed_offset: -85, response_token_limit: 128}
+  HC-Far-Necessary-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: necessary_query, margin_magnitude: 1.0, seed_offset: -90, response_token_limit: 128}
+  HC-Far-Necessary-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: necessary_query, margin_magnitude: 1.0, full_information: true, seed_offset: -95, response_token_limit: 128}
+  HC-Far-Irrelevant-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: irrelevant_uncertainty, margin_magnitude: 1.0, seed_offset: -100, response_token_limit: 128}
+  HC-Far-Irrelevant-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: irrelevant_uncertainty, margin_magnitude: 1.0, full_information: true, seed_offset: -105, response_token_limit: 128}
+  HC-Far-Selective-Hidden:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: selective_query, margin_magnitude: 1.0, seed_offset: -110, response_token_limit: 128}
+  HC-Far-Selective-Full:
+    env_type: hidden_choice
+    max_actions_per_traj: 2
+    grid_vocab: false
+    env_config: {condition: selective_query, margin_magnitude: 1.0, full_information: true, seed_offset: -115, response_token_limit: 128}
+
+train_env_manager:
+  max_invalid_retries_per_decision: 0
+  format_penalty: 0.0
+  minimax_length_penalty_beta: 0.0
+  enable_length_penalty: false
+  max_env_num_per_worker: 30
+  env_groups: 120
+  group_size: 4
+  group_seed_base: 820000
+  tags:
+    - HC-Near-NoQuery-Hidden
+    - HC-Near-NoQuery-Full
+    - HC-Near-Necessary-Hidden
+    - HC-Near-Necessary-Full
+    - HC-Near-Irrelevant-Hidden
+    - HC-Near-Irrelevant-Full
+    - HC-Near-Selective-Hidden
+    - HC-Near-Selective-Full
+    - HC-Medium-NoQuery-Hidden
+    - HC-Medium-NoQuery-Full
+    - HC-Medium-Necessary-Hidden
+    - HC-Medium-Necessary-Full
+    - HC-Medium-Irrelevant-Hidden
+    - HC-Medium-Irrelevant-Full
+    - HC-Medium-Selective-Hidden
+    - HC-Medium-Selective-Full
+    - HC-Far-NoQuery-Hidden
+    - HC-Far-NoQuery-Full
+    - HC-Far-Necessary-Hidden
+    - HC-Far-Necessary-Full
+    - HC-Far-Irrelevant-Hidden
+    - HC-Far-Irrelevant-Full
+    - HC-Far-Selective-Hidden
+    - HC-Far-Selective-Full
+  n_groups: [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
