@@ -52,7 +52,9 @@ def generate_instance(
 
     rng = random.Random(seed)
     fact_names = ["F1", "F2", "F3"]
-    option_names = ["A", "B", "C"]
+    # Use neutral labels so action names cannot be confused with board fields
+    # such as communication cost.
+    option_names = ["X", "Y", "Z"]
     question_names = ["Q1", "Q2", "Q3"]
     if config.randomize_labels:
         rng.shuffle(fact_names)
