@@ -52,6 +52,38 @@ def _rate(numerator, denominator):
     return float(numerator) / denominator if denominator else None
 
 
+def recover_semantic_action(turn, legal_actions):
+    """Recover one legal action from the relaxed `<answer> ACTION` protocol."""
+    parsed = str(turn.get("parsed_action", ""))
+    legal = {str(action).lower(): str(action) for action in legal_actions}
+    if parsed.lower() in legal:
+        return legal[parsed.lower()]
+    raw = str(turn.get("raw_response", ""))
+    match = re.search(
+        r"<answer>\s*((?:ASK|ACT)\s+[A-Za-z][A-Za-z0-9_-]*)",
+        raw,
+        re.DOTALL | re.IGNORECASE,
+    )
+    if match is None:
+        return None
+    return legal.get(" ".join(match.group(1).split()).lower())
+
+
+def strict_answer_protocol_valid(turn, legal_actions):
+    """Validate the V3 protocol: `<answer>` + one action, no close required."""
+    raw = str(turn.get("raw_response", ""))
+    match = re.search(
+        r"<answer>\s*((?:ASK|ACT)\s+[A-Za-z][A-Za-z0-9_-]*)"
+        r"(?:</answer>)?\s*$",
+        raw,
+        re.DOTALL | re.IGNORECASE,
+    )
+    if match is None:
+        return False
+    legal = {str(action).lower() for action in legal_actions}
+    return " ".join(match.group(1).split()).lower() in legal
+
+
 def reconstruct_trajectory(turns):
     from roll.agentic.env.hidden_choice.config import HiddenChoiceConfig
     from roll.agentic.env.hidden_choice.game import HiddenChoiceGame
@@ -69,11 +101,18 @@ def reconstruct_trajectory(turns):
     game = HiddenChoiceGame(instance, full_information=full_information)
     protocol_failure = False
     stopping_failure = False
-    first_action = str(turns[0].get("parsed_action", ""))
+    strict_protocol_valid = True
+    semantic_validities = []
+    first_action = ""
 
     for turn in turns:
-        action = str(turn.get("parsed_action", ""))
-        if bool(turn.get("valid_action")) and action in game.legal_actions():
+        strict_valid = strict_answer_protocol_valid(turn, game.legal_actions())
+        strict_protocol_valid = strict_protocol_valid and strict_valid
+        action = recover_semantic_action(turn, game.legal_actions())
+        semantic_validities.append(action is not None)
+        if len(semantic_validities) == 1:
+            first_action = action or ""
+        if action is not None and action in game.legal_actions():
             game.step(action)
             continue
         protocol_failure = True
@@ -98,10 +137,15 @@ def reconstruct_trajectory(turns):
         path_regret = None
     should_ask = game.communication_decision.should_ask
     first_ask = first_action.startswith("ASK ")
-    correct_query_eligible = bool(not full_information and should_ask and first_ask)
+    first_semantic_valid = bool(semantic_validities and semantic_validities[0])
+    correct_query_eligible = bool(
+        first_semantic_valid and not full_information and should_ask and first_ask
+    )
     post_query_eligible = bool(
         correct_query_eligible
         and game.records
+        and len(semantic_validities) > 1
+        and semantic_validities[1]
         and game.records[0].get("query_correct") == 1.0
     )
     max_voi = max(
@@ -114,17 +158,18 @@ def reconstruct_trajectory(turns):
         "trajectory_id": turns[0]["trajectory_id"],
         "rollout_index": turns[0]["rollout_index"],
         "oracle_margin": max_voi - instance.communication_cost,
+        "strict_protocol_valid": float(strict_protocol_valid),
+        "semantic_action_valid": float(all(semantic_validities)),
+        "voi_policy_eligible": float(first_semantic_valid),
         "first_ask": float(first_ask),
-        "ask_act_correct": float(
-            bool(game.records and game.records[0].get("optimal_action") == 1.0)
-        ),
-        "over_querying": float(info.get("over_querying", 0.0)),
-        "under_querying": float(info.get("under_querying", 0.0)),
+        "ask_act_correct": float(bool(first_semantic_valid and game.records and game.records[0].get("optimal_action") == 1.0)),
+        "over_querying": float(info.get("over_querying", 0.0)) if first_semantic_valid else None,
+        "under_querying": float(info.get("under_querying", 0.0)) if first_semantic_valid else None,
         "query_selection_correct": float(info.get("query_selection_correct", 0.0)),
         "query_selection_eligible": float(correct_query_eligible),
         "post_query_action_correct": float(info.get("post_query_action_correct", 0.0)),
         "post_query_eligible": float(post_query_eligible),
-        "final_action_optimal": float(info.get("final_action_optimal", 0.0)),
+        "final_action_optimal": float(info.get("final_action_optimal", 0.0)) if first_semantic_valid else None,
         "full_info_action_correct": float(info.get("full_info_action_correct", 0.0)),
         "benchmark_success": float(info.get("benchmark_success", 0.0)),
         "total_utility": game.total_reward,
@@ -157,16 +202,27 @@ def aggregate(records):
                 "condition": condition,
                 "mode": mode,
                 "trajectories": len(group),
-                "ask_rate": _mean(record["first_ask"] for record in group),
-                "ask_act_accuracy": _mean(record["ask_act_correct"] for record in group),
+                "strict_protocol_validity": _mean(record["strict_protocol_valid"] for record in group),
+                "semantic_action_validity": _mean(record["semantic_action_valid"] for record in group),
+                "voi_policy_coverage": _mean(record["voi_policy_eligible"] for record in group),
+                "ask_rate": _mean(record["first_ask"] if record["voi_policy_eligible"] else None for record in group),
+                "ask_act_accuracy": _mean(record["ask_act_correct"] if record["voi_policy_eligible"] else None for record in group),
                 "over_query_rate": _mean(record["over_querying"] for record in group),
                 "under_query_rate": _mean(record["under_querying"] for record in group),
                 "query_selection_accuracy": _rate(
-                    sum(record["query_selection_correct"] for record in group),
+                    sum(
+                        record["query_selection_correct"]
+                        for record in group
+                        if record["voi_policy_eligible"]
+                    ),
                     query_denominator,
                 ),
                 "post_query_action_accuracy": _rate(
-                    sum(record["post_query_action_correct"] for record in group),
+                    sum(
+                        record["post_query_action_correct"]
+                        for record in group
+                        if record["post_query_eligible"]
+                    ),
                     post_denominator,
                 ),
                 "final_action_accuracy": _mean(record["final_action_optimal"] for record in group),
@@ -174,6 +230,10 @@ def aggregate(records):
                     record["full_info_action_correct"] for record in group
                 ) if mode == "full" else None,
                 "benchmark_success_rate": _mean(record["benchmark_success"] for record in group),
+                "voi_policy_success_rate": _mean(
+                    record["benchmark_success"] if record["voi_policy_eligible"] else None
+                    for record in group
+                ),
                 "mean_total_utility": _mean(record["total_utility"] for record in group),
                 "mean_path_regret": _mean(record["path_regret"] for record in group),
                 "protocol_failure_rate": _mean(record["protocol_failure"] for record in group),
@@ -185,7 +245,9 @@ def aggregate(records):
     hidden = [record for record in records if record["mode"] == "hidden"]
     by_margin = defaultdict(list)
     for record in hidden:
-        by_margin[record["oracle_margin"]].append(record["first_ask"])
+        by_margin[round(float(record["oracle_margin"]), 2)].append(
+            record["first_ask"] if record["voi_policy_eligible"] else None
+        )
     ask_curve = [
         {"oracle_margin": margin, "ask_rate": _mean(values), "trajectories": len(values)}
         for margin, values in sorted(by_margin.items())
@@ -201,25 +263,28 @@ def render_markdown(summary):
     lines = [
         "# Hidden Choice diagnostic",
         "",
-        "| Margin | Condition | Mode | N | Ask | Ask/Act acc. | Over-query | Under-query | Query selection | Post-query act | Final act | Full-info act | Utility | Path regret | Protocol fail | Stop fail |",
-        "|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "The report separates strict envelope compliance, recoverable semantic actions, and VOI policy metrics. VOI metrics are computed only for trajectories whose first action is semantically recoverable.",
+        "",
+        "| Margin | Condition | Mode | N | Strict | Semantic | VOI cov. | ASK | Over-query | Under-query | Query selection | Post-query act | VOI success | Full-info act | Protocol fail |",
+        "|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in summary["rows"]:
         lines.append(
-            "| {oracle_margin:+.2f} | {condition} | {mode} | {trajectories} | {ask} | {askact} | {over} | {under} | {selection} | {post} | {final} | {full} | {utility:.3f} | {regret} | {protocol} | {stop} |".format(
+            "| {oracle_margin:+.2f} | {condition} | {mode} | {trajectories} | {strict} | {semantic} | {coverage} | {ask} | {over} | {under} | {selection} | {post} | {voisuccess} | {full} | {protocol} |".format(
                 **row,
+                strict=_percent(row["strict_protocol_validity"]),
+                semantic=_percent(row["semantic_action_validity"]),
+                coverage=_percent(row["voi_policy_coverage"]),
                 ask=_percent(row["ask_rate"]),
-                askact=_percent(row["ask_act_accuracy"]),
                 over=_percent(row["over_query_rate"]),
                 under=_percent(row["under_query_rate"]),
                 selection=_percent(row["query_selection_accuracy"]),
                 post=_percent(row["post_query_action_accuracy"]),
-                final=_percent(row["final_action_accuracy"]),
+                voisuccess=_percent(row["voi_policy_success_rate"]),
                 full=_percent(row["full_info_action_accuracy"]),
                 utility=row["mean_total_utility"],
                 regret=("N/A" if row["mean_path_regret"] is None else f"{row['mean_path_regret']:.3f}"),
                 protocol=_percent(row["protocol_failure_rate"]),
-                stop=_percent(row["stopping_failure_rate"]),
             )
         )
     lines.extend(["", "## P(ASK | oracle margin)", "", "| Delta | N | Ask rate |", "|---:|---:|---:|"])

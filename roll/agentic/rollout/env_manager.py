@@ -549,6 +549,9 @@ class EnvManager:
             legal_actions,
         )
         format_valid = env_input["envelope_valid"] and not lose_for_wrong_format
+        custom_validator = getattr(entry["env"], "validate_response", None)
+        if callable(custom_validator):
+            format_valid = bool(custom_validator(env_input["llm_raw_response"], legal_actions))
         action_recovered = False
         if lose_for_wrong_format:
             recover_action = getattr(entry["env"], "recover_action", None)
@@ -572,7 +575,12 @@ class EnvManager:
         env_input["decision_index"] = int(entry["status"].num_actions)
         entry["status"].generation_attempts += 1
         invalid_response = not env_input["valid_action"]
-        if invalid_response:
+        # Hidden Choice diagnostics intentionally separate strict envelope
+        # validity from semantic action validity.  A uniquely recovered action
+        # may advance the game while still being counted as a strict-format
+        # failure in the logs and preflight summary.
+        semantic_recovery = bool(action_recovered and semantic_action_valid)
+        if invalid_response and not semantic_recovery:
             max_retries = int(self.worker_config.max_invalid_retries_per_decision)
             if retry_attempt_index < max_retries:
                 execute_results = entry["env"].get_retry_state(
@@ -1620,6 +1628,9 @@ class EnvManager:
                     "hit_token_limit": bool(turn.get("hit_token_limit", False)),
                     "has_closing_answer_tag": bool(turn.get("has_closing_answer_tag", False)),
                     "valid_action": bool(turn.get("valid_action", False)),
+                    "format_valid": bool(turn.get("format_valid", False)),
+                    "semantic_action_valid": bool(turn.get("semantic_action_valid", False)),
+                    "action_recovered": bool(turn.get("action_recovered", False)),
                     "overlong_response": bool(turn.get("overlong_response", False)),
                     "overlong_sequence": bool(turn.get("overlong_sequence", False)),
                     "missing_answer": not bool(turn.get("has_closing_answer_tag", False)),
@@ -1877,6 +1888,9 @@ class EnvManager:
                     "hit_token_limit": env_input["hit_token_limit"],
                     "has_closing_answer_tag": env_input["has_closing_answer_tag"],
                     "valid_action": env_input["valid_action"],
+                    "format_valid": bool(format_valid),
+                    "semantic_action_valid": bool(semantic_action_valid),
+                    "action_recovered": bool(action_recovered),
                     "overlong_response": env_input["overlong_response"],
                     "overlong_sequence": env_input["overlong_sequence"],
                     "skip_policy_response": env_input.get("skip_policy_response", False),

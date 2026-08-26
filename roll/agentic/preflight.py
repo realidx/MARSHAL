@@ -198,7 +198,14 @@ def summarize_agentic_preflight(
     dominant_action_count = max(action_counts.values(), default=0)
     dominant_action_rate = dominant_action_count / len(valid) if valid else 0.0
 
-    complete_games = [game for game in games.values() if game["players"] == {0, 1}]
+    # Some environments (e.g. Hidden Choice with an automatic truthful
+    # partner) are single-model-player games.  A terminal player-0 trajectory
+    # is complete even though no player-1 model turn exists.
+    complete_games = [
+        game for game in games.values()
+        if game["players"] in ({0}, {0, 1})
+        and game["terminal_info"].get("success", False)
+    ]
     artificial_truncation_count = sum(
         bool(game["terminal_info"].get("artificial_truncation", False))
         for game in games.values()
@@ -270,8 +277,10 @@ def summarize_agentic_preflight(
     turn_count = len(flat_records)
     observed_game_count = len(games)
     game_count = len(complete_games)
-    role_validity_asymmetry = abs(
-        by_player["0"]["valid_action_rate"] - by_player["1"]["valid_action_rate"]
+    role_validity_asymmetry = (
+        abs(by_player["0"]["valid_action_rate"] - by_player["1"]["valid_action_rate"])
+        if any(int(record["player_id"]) == 1 for record in flat_records)
+        else 0.0
     )
 
     counterfactual_optimal_count = sum(

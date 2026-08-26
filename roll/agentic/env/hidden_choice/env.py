@@ -81,8 +81,11 @@ class HiddenChoiceEnv(BaseDiscreteActionEnv):
         raise ValueError(f"illegal Hidden Choice action {action!r}")
 
     def recover_action(self, response: str, legal_actions: Dict[int, str]) -> Optional[str]:
-        match = re.fullmatch(
-            r"\s*<answer>\s*((?:ASK|ACT)\s+[A-Za-z][A-Za-z0-9_-]*)\s*</answer>\s*",
+        # Diagnostic protocol: the model must emit `<answer>` followed by one
+        # action.  A closing `</answer>` is optional; strict envelope validity
+        # is tracked separately by the rollout/preflight layer.
+        match = re.search(
+            r"<answer>\s*((?:ASK|ACT)\s+[A-Za-z][A-Za-z0-9_-]*)",
             response,
             re.DOTALL | re.IGNORECASE,
         )
@@ -91,6 +94,19 @@ class HiddenChoiceEnv(BaseDiscreteActionEnv):
         candidate = " ".join(match.group(1).split())
         canonical = {action.lower(): action for action in legal_actions.values()}
         return canonical.get(candidate.lower())
+
+    def validate_response(self, response: str, legal_actions: Dict[int, str]) -> bool:
+        """Validate the current protocol without requiring `</answer>`."""
+        match = re.search(
+            r"<answer>\s*((?:ASK|ACT)\s+[A-Za-z][A-Za-z0-9_-]*)"
+            r"(?:</answer>)?\s*$",
+            response,
+            re.DOTALL | re.IGNORECASE,
+        )
+        if match is None:
+            return False
+        candidate = " ".join(match.group(1).split()).lower()
+        return candidate in {action.lower() for action in legal_actions.values()}
 
     def get_prompt(self, mode="prefix", think=True, player_id=0):
         del think, player_id
@@ -105,8 +121,8 @@ class HiddenChoiceEnv(BaseDiscreteActionEnv):
                 "listed communication cost. After receiving the answer, you will make one "
                 "final ACT decision.\n\n"
                 "Your objective is to maximize expected total utility, including communication cost.\n\n"
-                "Reason carefully, then return exactly one listed legal action inside "
-                "<reason>...</reason><answer>...</answer>. Do not output anything else."
+                "Reason carefully, then finish with <answer> followed immediately by "
+                "exactly one listed legal action, such as <answer>ACT X."
             ),
         }
 

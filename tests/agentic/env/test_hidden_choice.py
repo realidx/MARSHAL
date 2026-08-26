@@ -229,13 +229,15 @@ def test_full_information_control_has_only_act_and_scores_decision_computation()
     assert terminal["info"]["benchmark_success"] == 1.0
 
 
-def test_adapter_parser_accepts_exactly_one_listed_action():
+def test_adapter_parser_recovers_one_listed_action_without_closing_tag():
     env = HiddenChoiceEnv(HiddenChoiceConfig(condition="selective_query"))
     initial, _ = env.reset(seed=9)
     action = next(iter(initial["legal_actions"].values()))
     assert env.recover_action(f"<answer>{action}</answer>", initial["legal_actions"]) == action
-    assert env.recover_action(f"<answer>{action} extra</answer>", initial["legal_actions"]) is None
-    assert env.recover_action(f"reason <answer>{action}</answer>", initial["legal_actions"]) is None
+    assert env.recover_action(f"<answer>{action}", initial["legal_actions"]) == action
+    assert env.recover_action(f"<reason>reason</reason><answer>{action}", initial["legal_actions"]) == action
+    assert env.validate_response(f"<answer>{action}", initial["legal_actions"])
+    assert not env.validate_response(f"<answer>{action}</answer></", initial["legal_actions"])
 
 
 def test_aggregate_metrics_keeps_failure_modes_separate():
