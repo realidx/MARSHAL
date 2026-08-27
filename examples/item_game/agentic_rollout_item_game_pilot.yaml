@@ -24,7 +24,9 @@ reference:
 
 actor_infer:
   generating_args:
-    max_new_tokens: 128
+    # Match the reasoning-enabled diagnostic pilots.  The answer envelope
+    # still stops generation at </answer>, so this is a per-decision ceiling.
+    max_new_tokens: 1024
     top_p: 0.8
     top_k: 20
     num_beams: 1
@@ -39,11 +41,11 @@ actor_infer:
       gpu_memory_utilization: 0.8
   device_mapping: list(range(0,1))
 
-# Keep the first measurement about structured action choice, not long-form
-# reasoning or an additional answer-envelope failure mode.
-enable_think: false
+# Keep the measurement about structured action choice while allowing the
+# model a bounded reasoning scratchpad before the answer envelope.
+enable_think: true
 markovian_turn_context: true
-use_reason_answer_format: false
+use_reason_answer_format: true
 
 custom_envs:
   ItemGame-Collaboration:
@@ -129,4 +131,3 @@ train_env_manager:
     - ItemGame-CannotHelp
     - ItemGame-RefuseHarmful
   n_groups: [10, 10, 10, 10, 10, 10]
-
