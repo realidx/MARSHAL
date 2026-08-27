@@ -44,7 +44,9 @@ actor_infer:
 # Keep the measurement about structured action choice while allowing the
 # model a bounded reasoning scratchpad before the answer envelope.
 enable_think: true
-markovian_turn_context: true
+# Preserve the full interaction history so the agent can track prior asks,
+# partner replies, pending requests, and its own commitments across turns.
+markovian_turn_context: false
 use_reason_answer_format: true
 
 custom_envs:
