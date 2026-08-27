@@ -12,7 +12,7 @@ pretrain: ${oc.env:EVAL_MODEL_DIR}
 # Generation-only evaluation. No optimizer or model update is constructed.
 max_steps: 1
 rollout_batch_size: 60
-sequence_length: 4096
+sequence_length: 8192
 max_actions_per_traj: 6
 num_gpus_per_node: 1
 
@@ -37,7 +37,7 @@ actor_infer:
   strategy_args:
     strategy_config:
       tensor_parallel_size: 1
-      max_model_len: 4096
+      max_model_len: 8192
       gpu_memory_utilization: 0.8
   device_mapping: list(range(0,1))
 
