@@ -1,0 +1,132 @@
+defaults:
+  - /tictactoe/agentic_train_tictactoe_minimax_selfplay_2gpu@_global_
+  - _self_
+
+hydra:
+  searchpath:
+    - file://${oc.env:PWD}/examples
+
+exp_name: "item_game_qwen3_4b_instruct_pilot"
+pretrain: ${oc.env:EVAL_MODEL_DIR}
+
+# Generation-only evaluation. No optimizer or model update is constructed.
+max_steps: 1
+rollout_batch_size: 60
+sequence_length: 4096
+max_actions_per_traj: 6
+num_gpus_per_node: 1
+
+actor_train:
+  device_mapping: list(range(0,1))
+
+reference:
+  device_mapping: list(range(0,1))
+
+actor_infer:
+  generating_args:
+    max_new_tokens: 128
+    top_p: 0.8
+    top_k: 20
+    num_beams: 1
+    temperature: 0.7
+    num_return_sequences: 1
+    stop: ["</answer>"]
+    include_stop_str_in_output: true
+  strategy_args:
+    strategy_config:
+      tensor_parallel_size: 1
+      max_model_len: 4096
+      gpu_memory_utilization: 0.8
+  device_mapping: list(range(0,1))
+
+# Keep the first measurement about structured action choice, not long-form
+# reasoning or an additional answer-envelope failure mode.
+enable_think: false
+markovian_turn_context: true
+use_reason_answer_format: false
+
+custom_envs:
+  ItemGame-Collaboration:
+    env_type: item_game
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      generator: pure_collaboration
+      subtype: collaboration
+      max_ego_steps: 6
+      communication_budget: 4
+      response_token_limit: 128
+
+  ItemGame-Exchange:
+    env_type: item_game
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      generator: mixed_incentive
+      subtype: exchange
+      max_ego_steps: 6
+      communication_budget: 4
+      response_token_limit: 128
+
+  ItemGame-GiveFirst:
+    env_type: item_game
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      generator: mixed_incentive
+      subtype: give_first
+      max_ego_steps: 6
+      communication_budget: 4
+      response_token_limit: 128
+
+  ItemGame-RequestSurplus:
+    env_type: item_game
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      generator: mixed_incentive
+      subtype: request_surplus
+      max_ego_steps: 6
+      communication_budget: 4
+      response_token_limit: 128
+
+  ItemGame-CannotHelp:
+    env_type: item_game
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      generator: resource_conflict
+      subtype: cannot_help
+      max_ego_steps: 6
+      communication_budget: 4
+      response_token_limit: 128
+
+  ItemGame-RefuseHarmful:
+    env_type: item_game
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      generator: resource_conflict
+      subtype: refuse_harmful_request
+      max_ego_steps: 6
+      communication_budget: 4
+      response_token_limit: 128
+
+train_env_manager:
+  max_invalid_retries_per_decision: 0
+  format_penalty: 0.0
+  minimax_length_penalty_beta: 0.0
+  enable_length_penalty: false
+  max_env_num_per_worker: 60
+  env_groups: 60
+  group_size: 1
+  group_seed_base: 840000
+  tags:
+    - ItemGame-Collaboration
+    - ItemGame-Exchange
+    - ItemGame-GiveFirst
+    - ItemGame-RequestSurplus
+    - ItemGame-CannotHelp
+    - ItemGame-RefuseHarmful
+  n_groups: [10, 10, 10, 10, 10, 10]
+

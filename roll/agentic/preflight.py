@@ -329,8 +329,14 @@ def summarize_agentic_preflight(
             outcome["invalid_or_truncated_count"] += 1
             continue
         outcome["completed_count"] += 1
-        model_return = float(terminal_info.get(f"player_{player_id}_return", 0.0))
-        if model_return > 0:
+        explicit_success_key = f"player_{player_id}_success"
+        if explicit_success_key in terminal_info:
+            model_success = bool(terminal_info[explicit_success_key])
+            model_return = float(terminal_info.get(f"player_{player_id}_return", 0.0))
+        else:
+            model_return = float(terminal_info.get(f"player_{player_id}_return", 0.0))
+            model_success = model_return > 0
+        if model_success:
             outcome["win_count"] += 1
         elif model_return < 0:
             outcome["loss_count"] += 1

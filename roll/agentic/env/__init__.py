@@ -18,6 +18,8 @@ from .pivotal_query.config import PivotalQueryConfig
 from .pivotal_query.env import PivotalQueryEnv
 from .hidden_choice.config import HiddenChoiceConfig
 from .hidden_choice.env import HiddenChoiceEnv
+from .item_game.config import ItemGameConfig
+from .item_game.env import ItemGameEnv
 
 REGISTERED_ENVS = {
     "tictactoe": TicTacToe,
@@ -28,6 +30,7 @@ REGISTERED_ENVS = {
     "geography": GeographyEnv,
     "pivotal_query": PivotalQueryEnv,
     "hidden_choice": HiddenChoiceEnv,
+    "item_game": ItemGameEnv,
 }
 
 REGISTERED_ENV_CONFIGS = {
@@ -39,4 +42,5 @@ REGISTERED_ENV_CONFIGS = {
     "geography": GeographyConfig,
     "pivotal_query": PivotalQueryConfig,
     "hidden_choice": HiddenChoiceConfig,
+    "item_game": ItemGameConfig,
 }
