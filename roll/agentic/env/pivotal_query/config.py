@@ -17,7 +17,7 @@ class PivotalQueryConfig:
     response_token_limit: int = 256
 
     # One of: cycle, known_pivotal, ask_necessary, costly_query,
-    # irrelevant_uncertainty.
+    # irrelevant_uncertainty, who_query, retry_after_unknown.
     condition: str = "cycle"
     query_cost: float = 0.25
     high_query_cost: float = 1.25

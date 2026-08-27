@@ -281,6 +281,29 @@ def test_right_fact_asked_to_wrong_partner_separates_what_from_whom():
     assert info["unproductive_query"] == 1.0
 
 
+def test_who_and_retry_conditions_expose_source_failure_recovery():
+    who = generate_instance(61, "who_query")
+    owner = next(partner for partner in who.partner_names if who.partner_knows(partner, who.pivotal_fact))
+    assert owner in who.partner_names
+    retry = generate_instance(61, "retry_after_unknown")
+    unknown_owner = next(
+        partner for partner in retry.partner_names if not retry.partner_knows(partner, retry.pivotal_fact)
+    )
+    capable_owner = next(
+        partner for partner in retry.partner_names if retry.partner_knows(partner, retry.pivotal_fact)
+    )
+    game = PivotalQueryGame(retry, max_queries=3)
+    _, _, done, _ = game.step(f"ASK {unknown_owner} {retry.pivotal_fact}")
+    assert not done
+    _, _, done, terminal = game.step(f"ASK {capable_owner} {retry.pivotal_fact}")
+    assert not done
+    best_act = max(game.oracle.solve(game.known, game.available_queries(), 1).act_values, key=lambda pair: pair[1])[0]
+    _, _, done, terminal = game.step(best_act)
+    assert done
+    assert terminal["retry_rate"] == 1.0
+    assert terminal["correct_retry_source_rate"] == 1.0
+
+
 @pytest.mark.parametrize("seed", range(20))
 def test_exact_partner_aware_policy_is_optimal_across_matched_families(seed):
     for condition, instance in generate_matched_family(seed).items():

@@ -38,6 +38,7 @@ GENERATOR = _load(f"{PACKAGE}.hidden_choice.generator", ENV_DIR / "hidden_choice
 GAME = _load(f"{PACKAGE}.hidden_choice.game", ENV_DIR / "hidden_choice/game.py")
 METRICS = _load(f"{PACKAGE}.hidden_choice.metrics", ENV_DIR / "hidden_choice/metrics.py")
 ENV = _load(f"{PACKAGE}.hidden_choice.env", ENV_DIR / "hidden_choice/env.py")
+SOURCE = _load(f"{PACKAGE}.hidden_choice.source_aware", ENV_DIR / "hidden_choice/source_aware.py")
 
 HiddenChoiceConfig = CONFIG.HiddenChoiceConfig
 HiddenChoiceEnv = ENV.HiddenChoiceEnv
@@ -49,6 +50,9 @@ generate_threshold_pair = GENERATOR.generate_threshold_pair
 aggregate_metrics = METRICS.aggregate_hidden_choice_metrics
 generate_observation = OBSERVATION.generate_observation
 check_instance = SANITY.check_instance
+SourceAwareConfig = SOURCE.SourceAwareConfig
+SourceAwareGame = SOURCE.SourceAwareGame
+SourceAwareVOIOracle = SOURCE.SourceAwareVOIOracle
 
 
 def _best_act(game):
@@ -280,6 +284,36 @@ def test_prompt_explicitly_uses_reason_then_answer_protocol():
     prompt = env.get_prompt()["user"]
     assert "<reason>...</reason>" in prompt
     assert "<answer>ACT X</answer>" in prompt
+
+
+def test_source_aware_retry_after_unknown_and_final_act():
+    instance = generate_instance(7, "necessary_query")
+    config = SourceAwareConfig(
+        partners=("Alice", "Bob"),
+        knowledge={"Alice": (), "Bob": (instance.pivotal_fact,)},
+        max_queries=2,
+        query_cost=0.1,
+    )
+    game = SourceAwareGame(instance, config)
+    first = f"ASK Alice {instance.pivotal_fact}"
+    observation, reward, done, _ = game.step(first)
+    assert "UNKNOWN" in observation and reward == pytest.approx(-0.1) and not done
+    second = f"ASK Bob {instance.pivotal_fact}"
+    observation, _, done, _ = game.step(second)
+    assert f"{instance.pivotal_fact} = " in observation and not done
+    assert all(action.startswith("ACT ") for action in game.legal_actions)
+
+
+def test_source_aware_oracle_prefers_known_source_when_retry_is_valuable():
+    instance = generate_instance(7, "necessary_query")
+    config = SourceAwareConfig(
+        partners=("Alice", "Bob"),
+        knowledge={"Alice": (), "Bob": (instance.pivotal_fact,)},
+        max_queries=2,
+        query_cost=0.1,
+    )
+    oracle = SourceAwareVOIOracle(instance, config)
+    assert f"ASK Bob {instance.pivotal_fact}" in oracle.solve().optimal_actions
 
 
 def test_aggregate_metrics_keeps_failure_modes_separate():

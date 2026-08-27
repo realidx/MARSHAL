@@ -124,6 +124,22 @@ class PivotalQueryGame:
         first_ask = bool(first["action_is_ask"])
         initially_should_ask = self.initial_decision.should_ask
         first_targeted = first["action"] in self.initial_decision.optimal_actions if first_ask else False
+        unknown_indices = [
+            index for index, record in enumerate(self.records)
+            if record["action_is_ask"] and record["query_source_capable"] == 0.0
+        ]
+        retry_records = [
+            record for index, record in enumerate(self.records)
+            if record["action_is_ask"] and any(previous < index for previous in unknown_indices)
+        ]
+        correct_retries = [
+            record for record in retry_records
+            if record["query_fact_relevant"] == 1.0 and record["query_source_capable"] == 1.0
+        ]
+        repeat_failed = any(
+            any(later["action"] == self.records[index]["action"] for later in self.records[index + 1 :])
+            for index in unknown_indices
+        )
         return {
             "success": True,
             "total_return": self.total_reward,
@@ -142,4 +158,8 @@ class PivotalQueryGame:
             ),
             "unproductive_queries": sum(record["unproductive_query"] for record in self.records),
             "num_asks": float(len(self.attempted_queries)),
+            "retry_rate": float(bool(unknown_indices) and bool(retry_records)),
+            "correct_retry_source_rate": float(bool(correct_retries)) if retry_records else 0.0,
+            "premature_act_rate": float(bool(unknown_indices) and self.records[-1]["action"].startswith("ACT ")),
+            "repeat_failed_query_rate": float(repeat_failed),
         }

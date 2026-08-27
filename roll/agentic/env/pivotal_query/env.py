@@ -120,10 +120,10 @@ class PivotalQueryEnv(BaseDiscreteActionEnv):
                 "profile; a partner asked about another fact replies that they do not know. "
                 "The listed communication cost is deducted immediately, and you may then "
                 f"decide again.{decision_hint}\n\n"
-                "Output exactly:\n"
-                "<answer>ASK PARTNER FACT</answer>\n"
+                "Output exactly (include a brief reason tag first):\n"
+                "<reason>brief reasoning</reason><answer>ASK PARTNER FACT</answer>\n"
                 "or\n"
-                "<answer>ACT OPTION</answer>\n\n"
+                "<reason>brief reasoning</reason><answer>ACT OPTION</answer>\n\n"
                 "Do not output anything else. A malformed or illegal response ends the episode."
             ),
         }

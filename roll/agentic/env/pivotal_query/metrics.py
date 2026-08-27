@@ -33,6 +33,14 @@ def aggregate_pivotal_query_metrics(
         "first_decision_optimal_rate": _mean(info["first_decision_optimal"] for info in infos),
         "mean_num_asks": _mean(info["num_asks"] for info in infos),
         "mean_unproductive_queries": _mean(info["unproductive_queries"] for info in infos),
+        "retry_rate": _mean(info.get("retry_rate", 0.0) for info in infos),
+        "correct_retry_source_rate": _mean(
+            info.get("correct_retry_source_rate", 0.0) for info in infos
+        ),
+        "premature_act_rate": _mean(info.get("premature_act_rate", 0.0) for info in infos),
+        "repeat_failed_query_rate": _mean(
+            info.get("repeat_failed_query_rate", 0.0) for info in infos
+        ),
         "illegal_ask_after_budget_rate": _mean(
             info.get("illegal_ask_after_budget", 0.0) for info in infos
         ),

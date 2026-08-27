@@ -17,6 +17,7 @@ CONDITIONS = (
     "costly_query",
     "irrelevant_uncertainty",
 )
+SUPPORTED_CONDITIONS = (*CONDITIONS, "who_query", "retry_after_unknown")
 
 
 def _family_id(seed: int) -> str:
@@ -31,7 +32,7 @@ def generate_instance(
     config = config or PivotalQueryConfig()
     if condition == "cycle":
         condition = CONDITIONS[seed % len(CONDITIONS)]
-    if condition not in CONDITIONS:
+    if condition not in SUPPORTED_CONDITIONS:
         raise ValueError(f"unknown Pivotal Query condition {condition!r}")
 
     rng = random.Random(seed)
@@ -81,6 +82,12 @@ def generate_instance(
     # the focal agent, so this stage isolates query routing rather than partner
     # model inference.
     partner_knowledge = tuple((fact_names[index],) for index in range(len(partner_names)))
+    if condition == "retry_after_unknown":
+        pivotal_index = fact_names.index(pivotal_fact)
+        rows = [list(row) for row in partner_knowledge]
+        rows[pivotal_index] = []
+        rows[(pivotal_index + 1) % len(partner_names)] = [pivotal_fact]
+        partner_knowledge = tuple(tuple(row) for row in rows)
     query_costs = tuple(tuple(float(cost) for _ in fact_names) for _ in partner_names)
 
     return PivotalQueryInstance(
