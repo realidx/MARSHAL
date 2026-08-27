@@ -1,0 +1,691 @@
+add logger: log_rank_DRIVER_0_1
+Created or verified log directory: ./runs/pivotal_query_source_aware/20260827-155619/logs
+Added logging to file: /home/e/e1300530/MARSHAL/runs/pivotal_query_source_aware/20260827-155619/logs/log_rank_DRIVER_0_1.log
+custom_env:
+  SimpleSokoban:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      dim_x: 6
+      dim_y: 6
+      num_boxes: 1
+      max_steps: 100
+  LargerSokoban:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      dim_x: 8
+      dim_y: 8
+      num_boxes: 2
+      max_steps: 100
+      search_depth: 10
+  SokobanDifferentGridVocab:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      search_depth: 30
+      dim_x: 6
+      dim_y: 6
+      num_boxes: 1
+      max_steps: 100
+      grid_lookup:
+        0: W
+        1: .
+        2: G
+        3: C
+        4: B
+        5: A
+        6: '@'
+      grid_vocab:
+        W: wall
+        .: empty
+        G: target
+        C: box on target
+        B: box
+        A: player
+        '@': player on target
+  VisualSimpleSokoban:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      dim_x: 6
+      dim_y: 6
+      num_boxes: 1
+      max_steps: 100
+      render_mode: rgb_array
+  Countdown:
+    env_type: countdown
+    max_actions_per_traj: 1
+    env_instruction: 'You are solving the Countdown puzzle. You should use the num
+      list to create an equation that equals the target. Example answer format: <think>
+      To find an equation using [3, 5, 2] to get 4. Let''s check 2 + 5 = 7, 7 - 3
+      = 4. So the answer is 2 + 5 - 3 = 4. </think><answer>2 + 5 - 3</answer>'
+    max_tokens: 100
+    env_config: null
+  Bandit:
+    env_type: bandit
+    max_actions_per_traj: 1
+    env_instruction: ''
+    max_tokens: 100
+    env_config:
+      lo_arm_name: Phoenix
+      hi_arm_name: Dragon
+  BanditTest:
+    env_type: bandit
+    max_actions_per_traj: 1
+    env_instruction: ''
+    max_tokens: 100
+    env_config:
+      lo_arm_name: Trader
+      hi_arm_name: Librarian
+  FrozenLake:
+    env_type: frozen_lake
+    max_actions_per_traj: 10
+    env_instruction: You are solving the FrozenLake puzzle. Forbid the whole and go
+      to the target. You may move to the unintended direction due to the slippery
+      ice. The answer must be a sequence of actions, like <answer>Right || Right ||
+      Up</answer>
+    max_tokens: 100
+    env_config: null
+  MetamathQA:
+    env_type: metamathqa
+    max_actions_per_traj: 1
+    env_instruction: 'You are solving Math problems. '
+    max_tokens: 100
+    env_config: null
+  WebShop:
+    env_type: webshop
+    max_actions_per_traj: 30
+    env_instruction: 'You are browsing an online shop. Based on the instruction, find
+      the product that matches the production description. You need to iteratively
+      take action, read the website and decide what action to take next until finding
+      the product. Available actions depends on the page: in the search page you can
+      search keywords, in the search result page you can click an item url or click[next
+      >] to navigate to next page, in the product page you can click[description]
+      or click[features] to see the details, click[blue] or click[x-large] to choose
+      size and colors, click[buy now] when you decided to buy the product, click[back
+      to search] to return to search page. Example process: I need a gingko light
+      and 20x20 pillow cover that is hand painted. First search[gingko light 20x20
+      pillow cover hand painted], answer format: <answer>search[blanket with fleece
+      throw]</answer>. Valid answer is search[<keywords>] or click[<clickable>].'
+    max_tokens: 100
+    env_config: null
+deepspeed_zero:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 0
+  checkpoint:
+    tag_validation: IGNORE
+deepspeed_zero2:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 2
+    allgather_partitions: true
+    allgather_bucket_size: 1000000000.0
+    overlap_comm: true
+    reduce_scatter: true
+    reduce_bucket_size: 500000000.0
+    contiguous_gradients: true
+deepspeed_zero3:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 3
+    overlap_comm: true
+    contiguous_gradients: true
+    sub_group_size: 1000000000.0
+    reduce_bucket_size: auto
+    stage3_prefetch_bucket_size: auto
+    stage3_param_persistence_threshold: auto
+    stage3_max_live_parameters: 1000000000.0
+    stage3_max_reuse_distance: 1000000000.0
+    stage3_gather_16bit_weights_on_model_save: true
+deepspeed_zero3_cpuoffload:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 3
+    offload_optimizer:
+      device: cpu
+      pin_memory: true
+    overlap_comm: true
+    contiguous_gradients: true
+    sub_group_size: 1000000000.0
+    reduce_bucket_size: auto
+    stage3_prefetch_bucket_size: auto
+    stage3_param_persistence_threshold: auto
+    stage3_max_live_parameters: 1000000000.0
+    stage3_max_reuse_distance: 1000000000.0
+    stage3_gather_16bit_weights_on_model_save: true
+exp_name: pivotal_query_source_aware_zero_shot
+seed: 42
+logging_dir: ./runs/pivotal_query_source_aware/20260827-155619/logs
+output_dir: ./runs/pivotal_query_source_aware/20260827-155619
+system_envs:
+  USE_MODELSCOPE: '1'
+track_with: tensorboard
+tracker_kwargs:
+  log_dir: ./runs/pivotal_query_source_aware/20260827-155619/tensorboard
+num_gpus_per_node: 1
+max_steps: 1
+save_steps: 1000000
+logging_steps: 1
+eval_steps: 10
+resume_from_checkpoint: false
+rollout_batch_size: 240
+val_batch_size: 32
+sequence_length: 4096
+dual_clip_loss: true
+ppo_epochs: 1
+adv_estimator: reinforce
+init_kl_coef: 0.0
+use_kl_loss: true
+kl_loss_coef: 0.2
+whiten_advantages: false
+entropy_loss_coef: 0
+pretrain: /home/e/e1300530/models/Qwen3-4B-Instruct-2507
+actor_train:
+  model_args:
+    flash_attn: fa2
+    disable_gradient_checkpointing: false
+    dtype: bf16
+    model_type: null
+  training_args:
+    lr_scheduler_type: cosine_with_min_lr
+    learning_rate: 1.0e-06
+    weight_decay: 0.05
+    adam_beta1: 0.9
+    adam_beta2: 0.95
+    per_device_train_batch_size: 1
+    gradient_accumulation_steps: 4
+    warmup_steps: 10
+  data_args:
+    template: qwen3
+  strategy_args:
+    strategy_name: megatron_train
+    strategy_config:
+      sequence_parallel: true
+      tensor_model_parallel_size: 2
+      pipeline_model_parallel_size: 1
+      expert_model_parallel_size: 1
+      use_distributed_optimizer: true
+      recompute_granularity: full
+      accumulate_allreduce_grads_in_fp32: true
+      check_for_nan_in_loss_and_grad: false
+  device_mapping: list(range(0,1))
+  infer_batch_size: 1
+actor_infer:
+  model_args:
+    flash_attn: fa2
+    disable_gradient_checkpointing: true
+    dtype: bf16
+  generating_args:
+    max_new_tokens: 1024
+    top_p: 0.8
+    top_k: 20
+    num_beams: 1
+    temperature: 0.7
+    num_return_sequences: 1
+    stop:
+    - </answer>
+    include_stop_str_in_output: true
+  data_args:
+    template: qwen3
+  strategy_args:
+    strategy_name: vllm
+    strategy_config:
+      gpu_memory_utilization: 0.8
+      block_size: 16
+      load_format: auto
+      max_model_len: 4096
+      tensor_parallel_size: 1
+  device_mapping: list(range(0,1))
+reference:
+  model_args:
+    flash_attn: fa2
+    disable_gradient_checkpointing: true
+    dtype: bf16
+    model_type: null
+  data_args:
+    template: qwen3
+  strategy_args:
+    strategy_name: hf_infer
+    strategy_config: null
+  device_mapping: list(range(0,1))
+  infer_batch_size: 1
+enable_response_mask: true
+action_sep: '||'
+use_turn_scores: true
+enable_think: true
+max_actions_per_traj: 8
+reward_normalization:
+  grouping: tags
+  method: identity
+  separate_norm_for_selfplay: false
+whiten_rewards: false
+advantage_norm: null
+pg_clip_high: 0.2
+custom_envs:
+  TicTacToe:
+    env_type: tictactoe
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      response_token_limit: 600
+      reward_mode: minimax_counterfactual
+      minimax_discount: 0.9
+      precompute_minimax: true
+  TicTacToe-first-100:
+    env_type: tictactoe
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 0.9
+      precompute_minimax: true
+  TicTacToe-second-100:
+    env_type: tictactoe
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 0.9
+      precompute_minimax: true
+  TicTacToe-first-1000:
+    env_type: tictactoe
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      max_simulations: 1000
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 0.9
+      precompute_minimax: true
+  TicTacToe-second-1000:
+    env_type: tictactoe
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      max_simulations: 1000
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 0.9
+      precompute_minimax: true
+  Connect4-first-100:
+    env_type: connect_four
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      render_mode: text
+  Connect4-second-100:
+    env_type: connect_four
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      render_mode: text
+  Connect4-first-1000:
+    env_type: connect_four
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      max_simulations: 1000
+      render_mode: text
+  Connect4-second-1000:
+    env_type: connect_four
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      max_simulations: 1000
+      render_mode: text
+  KuhnPoker-first:
+    env_type: kuhn_poker
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: cfr
+      render_mode: text
+  KuhnPoker-second:
+    env_type: kuhn_poker
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: cfr
+      opponent_player: 0
+      render_mode: text
+  LeducPoker-first:
+    env_type: leduc_poker
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: ne
+      render_mode: text
+  LeducPoker-second:
+    env_type: leduc_poker
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: ne
+      opponent_player: 0
+      render_mode: text
+  MiniHanabi:
+    env_type: hanabi
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      render_mode: text
+  SimpleHanabi:
+    env_type: hanabi
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      render_mode: text
+      colors: 3
+      ranks: 2
+      hand_size: 5
+      max_information_tokens: 8
+      max_life_tokens: 3
+  FullHanabi:
+    env_type: hanabi
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      render_mode: text
+      colors: 3
+      ranks: 3
+      hand_size: 5
+      max_information_tokens: 8
+      max_life_tokens: 3
+  PivotalSource-Who:
+    env_type: pivotal_query
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      condition: who_query
+      decision_rule_hint: false
+      max_queries: 3
+      response_token_limit: 128
+  PivotalSource-Retry:
+    env_type: pivotal_query
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      condition: retry_after_unknown
+      decision_rule_hint: false
+      max_queries: 3
+      response_token_limit: 128
+  PivotalSource-Necessary:
+    env_type: pivotal_query
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      condition: ask_necessary
+      decision_rule_hint: false
+      max_queries: 3
+      response_token_limit: 128
+  PivotalSource-Irrelevant:
+    env_type: pivotal_query
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      condition: irrelevant_uncertainty
+      decision_rule_hint: false
+      max_queries: 3
+      response_token_limit: 128
+  PivotalSource-Known:
+    env_type: pivotal_query
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      condition: known_pivotal
+      decision_rule_hint: false
+      max_queries: 3
+      response_token_limit: 128
+  PivotalSource-Costly:
+    env_type: pivotal_query
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      condition: costly_query
+      decision_rule_hint: false
+      max_queries: 3
+      response_token_limit: 128
+train_env_manager:
+  format_penalty: 0.0
+  max_env_num_per_worker: 80
+  env_groups: 40
+  group_size: 4
+  tags:
+  - PivotalSource-Who
+  - PivotalSource-Retry
+  - PivotalSource-Necessary
+  - PivotalSource-Irrelevant
+  - PivotalSource-Known
+  - PivotalSource-Costly
+  n_groups:
+  - 8
+  - 8
+  - 8
+  - 8
+  - 4
+  - 4
+  minimax_length_penalty_beta: 0.0
+  minimax_length_soft_budget: 400
+  minimax_length_hard_budget: 600
+  max_invalid_retries_per_decision: 0
+  enable_length_penalty: false
+  group_seed_base: 830000
+val_env_manager:
+  max_env_num_per_worker: 32
+  env_groups: 32
+  group_size: 1
+  tags:
+  - TicTacToe-first-100
+  - TicTacToe-second-100
+  - TicTacToe-first-1000
+  - TicTacToe-second-1000
+  n_groups:
+  - 8
+  - 8
+  - 8
+  - 8
+  format_penalty: 0.0
+  enable_length_penalty: false
+gamma: 1.0
+game_step_discount: 0.9
+loss_agg_mode: seq-mean-token-mean
+markovian_turn_context: true
+use_reason_answer_format: true
+add_token_level_kl: false
+eval_at_end: true
+dump_debug_batches: false
+
+[2026-08-27 15:56:28] [agentic_config.py (113)] [INFO] [DRIVER 0 / 1][PID 244155] max_env_num_per_worker: 80
+[2026-08-27 15:56:28] [agentic_config.py (113)] [INFO] [DRIVER 0 / 1][PID 244155] max_env_num_per_worker: 32
+[2026-08-27 15:56:28] [worker_config.py (103)] [INFO] [DRIVER 0 / 1][PID 244155] set vllm num_gpus_per_worker to 1, tensor_parallel_size: 1, pipeline_parallel_size: 1
+[2026-08-27 15:56:28] [base_config.py (166)] [INFO] [DRIVER 0 / 1][PID 244155] add exp_name to logging_dir ./runs/pivotal_query_source_aware/20260827-155619/logs
+[2026-08-27 15:56:28] [base_config.py (171)] [INFO] [DRIVER 0 / 1][PID 244155] add timestamp to tensorboard log_dir ./runs/pivotal_query_source_aware/20260827-155619/tensorboard
+[2026-08-27 15:56:28] [agentic_config.py (387)] [INFO] [DRIVER 0 / 1][PID 244155] add timestamp to render_save_dir  None
+EnvManagerConfig(name='train_env', worker_cls='roll.pipeline.agentic.environment_worker.EnvironmentWorker', model_args=ModelArguments(model_name_or_path='/home/e/e1300530/models/Qwen3-4B-Instruct-2507', attn_implementation=None, moe_aux_loss_coef=None, disable_gradient_checkpointing=False, device_map='balanced', dtype='bf16', model_type=None, num_labels=1, model_config_kwargs={}, freeze_module_prefix=None), training_args=TrainingArguments(output_dir='', max_steps=-1, num_train_epochs=1.0, learning_rate=5e-05, lr_scheduler_type='linear', weight_decay=0.0, adam_beta1=0.9, adam_beta2=0.999, per_device_train_batch_size=8, gradient_accumulation_steps=1, seed=42, data_seed=None, dataloader_num_workers=0, fp16=False, bf16=False, tf32=None, warmup_ratio=0.03, warmup_steps=0), data_args=None, generating_args=GeneratingArguments(do_sample=True, temperature=0.7, top_p=0.8, top_k=20, num_beams=1, max_length=512, max_new_tokens=1024, repetition_penalty=1.0, length_penalty=1.0, num_return_sequences=1, stop=['</answer>'], include_stop_str_in_output=True), strategy_args=None, world_size=2, device_mapping=None, num_gpus_per_worker=1, model_update_frequency=1, infer_batch_size=16, backend_timeout=30, system_envs={}, env_groups=40, group_size=4, tags=['PivotalSource-Who', 'PivotalSource-Retry', 'PivotalSource-Necessary', 'PivotalSource-Irrelevant', 'PivotalSource-Known', 'PivotalSource-Costly'], n_groups=[8, 8, 8, 8, 4, 4], group_seed_base=830000, max_traj_per_env=-1, format_penalty=0.0, valid_format_reward=0.0, marshal_length_reward_alpha=0.0, marshal_length_reward_penalty_only=False, marshal_length_reward_min_tokens=11, marshal_length_reward_max_tokens=2048, minimax_length_penalty_beta=0.0, minimax_length_soft_budget=400, minimax_length_hard_budget=600, max_invalid_retries_per_decision=0, enable_length_penalty=False, max_env_num_per_worker=80)
+EnvManagerConfig(name='val_env', worker_cls='roll.pipeline.agentic.environment_worker.EnvironmentWorker', model_args=ModelArguments(model_name_or_path='/home/e/e1300530/models/Qwen3-4B-Instruct-2507', attn_implementation=None, moe_aux_loss_coef=None, disable_gradient_checkpointing=False, device_map='balanced', dtype='bf16', model_type=None, num_labels=1, model_config_kwargs={}, freeze_module_prefix=None), training_args=TrainingArguments(output_dir='', max_steps=-1, num_train_epochs=1.0, learning_rate=5e-05, lr_scheduler_type='linear', weight_decay=0.0, adam_beta1=0.9, adam_beta2=0.999, per_device_train_batch_size=8, gradient_accumulation_steps=1, seed=42, data_seed=None, dataloader_num_workers=0, fp16=False, bf16=False, tf32=None, warmup_ratio=0.03, warmup_steps=0), data_args=None, generating_args=GeneratingArguments(do_sample=True, temperature=0.7, top_p=0.8, top_k=20, num_beams=1, max_length=512, max_new_tokens=1024, repetition_penalty=1.0, length_penalty=1.0, num_return_sequences=1, stop=['</answer>'], include_stop_str_in_output=True), strategy_args=None, world_size=1, device_mapping=None, num_gpus_per_worker=1, model_update_frequency=1, infer_batch_size=16, backend_timeout=30, system_envs={}, env_groups=32, group_size=1, tags=['TicTacToe-first-100', 'TicTacToe-second-100', 'TicTacToe-first-1000', 'TicTacToe-second-1000'], n_groups=[8, 8, 8, 8], group_seed_base=None, max_traj_per_env=-1, format_penalty=0.0, valid_format_reward=0.0, marshal_length_reward_alpha=0.0, marshal_length_reward_penalty_only=False, marshal_length_reward_min_tokens=11, marshal_length_reward_max_tokens=2048, minimax_length_penalty_beta=0.0, minimax_length_soft_budget=200, minimax_length_hard_budget=600, max_invalid_retries_per_decision=0, enable_length_penalty=False, max_env_num_per_worker=32)
+[2026-08-27 15:56:28] [agentic_config.py (405)] [INFO] [DRIVER 0 / 1][PID 244155] train_env_manager.max_traj_per_env: 2
+[2026-08-27 15:56:28] [agentic_config.py (412)] [INFO] [DRIVER 0 / 1][PID 244155] val_env_manager.max_traj_per_env: 1
+[2026-08-27 15:56:30] [initialize.py (63)] [INFO] [DRIVER 0 / 1][PID 244155] Starting ray cluster: ray start --head --port=6379 --node-name=127.0.0.1:0 --num-gpus=1
+[2026-08-27 15:56:39] [initialize.py (92)] [INFO] [DRIVER 0 / 1][PID 244155] Ray cluster initialized
+[2026-08-27 15:56:39] [initialize.py (99)] [INFO] [DRIVER 0 / 1][PID 244155] Current ray cluster resources: {'CPU': 96.0, 'node:__internal_head__': 1.0, 'node:192.168.51.92': 1.0, 'object_store_memory': 78989706854.0, 'memory': 184309315994.0, 'accelerator_type:A100': 1.0, 'GPU': 1.0}
+[2026-08-27 15:56:51,243] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+Warning: The cache directory for DeepSpeed Triton autotune, /home/e/e1300530/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+gpu ranks: [['0']]
+node2pg: {0: <ray.util.placement_group.PlacementGroup object at 0x723028183340>}
+[2026-08-27 15:57:11] [checkpoint_manager.py (55)] [INFO] [DRIVER 0 / 1][PID 244155] checkpoint_config: {}
+[2026-08-27 15:57:11] [tracking.py (132)] [INFO] [DRIVER 0 / 1][PID 244155] create tracker tensorboard, kwargs: {'log_dir': './runs/pivotal_query_source_aware/20260827-155619/tensorboard'}
+[2026-08-27 15:57:11] [agentic_config.py (476)] [INFO] [DRIVER 0 / 1][PID 244155] pipeline max_steps: 1 to 1
+[2026-08-27 15:57:11] [agentic_config.py (477)] [INFO] [DRIVER 0 / 1][PID 244155] actor train max_steps without dp_size: 60
+[2026-08-27 15:57:11] [agentic_config.py (478)] [INFO] [DRIVER 0 / 1][PID 244155] critic train max_steps without dp_size: 30
+[2026-08-27 15:57:12] [cluster.py (63)] [INFO] [DRIVER 0 / 1][PID 244155] wrap ActorWorker to ray.remote()
+[36m(pid=251717, ip=192.168.51.92)[0m add logger: log_rank_actor_infer-0_0_1
+[36m(pid=251717, ip=192.168.51.92)[0m Created or verified log directory: ./runs/pivotal_query_source_aware/20260827-155619/logs
+[36m(pid=251717, ip=192.168.51.92)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/pivotal_query_source_aware/20260827-155619/logs/log_rank_actor_infer-0_0_1.log
+[36m(pid=251717, ip=192.168.51.92)[0m [2026-08-27 15:57:21,364] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[36m(pid=251717, ip=192.168.51.92)[0m Warning: The cache directory for DeepSpeed Triton autotune, /home/e/e1300530/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+log redirect to filename: ./runs/pivotal_query_source_aware/20260827-155619/logs/SharedStorage.log
+[2026-08-27 15:57:25] [cluster.py (63)] [INFO] [DRIVER 0 / 1][PID 244155] wrap EnvironmentWorker to ray.remote()
+[36m(pid=251919, ip=192.168.51.92)[0m add logger: log_rank_DRIVER_0_1
+[36m(pid=251919, ip=192.168.51.92)[0m Created or verified log directory: ./runs/pivotal_query_source_aware/20260827-155619/logs
+[36m(pid=251919, ip=192.168.51.92)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/pivotal_query_source_aware/20260827-155619/logs/log_rank_DRIVER_0_1.log
+[36m(RequestScheduler pid=251919, ip=192.168.51.92)[0m [2026-08-27 15:57:32,908] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+log redirect to filename: ./runs/pivotal_query_source_aware/20260827-155619/logs/RequestScheduler.log
+[36m(pid=251920, ip=192.168.51.92)[0m [2026-08-27 15:57:33,221] [WARNING] [real_accelerator.py:181:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.
+[36m(pid=251920, ip=192.168.51.92)[0m [2026-08-27 15:57:33,224] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cpu (auto detect)
+[36m(RequestScheduler pid=251919, ip=192.168.51.92)[0m Warning: The cache directory for DeepSpeed Triton autotune, /home/e/e1300530/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+[36m(pid=254368, ip=192.168.51.92)[0m add logger: log_rank_train_env-1_1_2[32m [repeated 2x across cluster] (Ray deduplicates logs by default. Set RAY_DEDUP_LOGS=0 to disable log deduplication, or see https://docs.ray.io/en/master/ray-observability/user-guides/configure-logging.html#log-deduplication for more options.)[0m
+[36m(pid=254368, ip=192.168.51.92)[0m Created or verified log directory: ./runs/pivotal_query_source_aware/20260827-155619/logs[32m [repeated 2x across cluster][0m
+[36m(pid=254368, ip=192.168.51.92)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/pivotal_query_source_aware/20260827-155619/logs/log_rank_train_env-1_1_2.log[32m [repeated 2x across cluster][0m
+[36m(pid=254368, ip=192.168.51.92)[0m [2026-08-27 15:57:55,690] [WARNING] [real_accelerator.py:181:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.
+[36m(pid=254368, ip=192.168.51.92)[0m [2026-08-27 15:57:55,694] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cpu (auto detect)
+[36m(EnvironmentWorker(train_env-1) pid=254368, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}
+log redirect to filename: ./runs/pivotal_query_source_aware/20260827-155619/logs/EnvironmentWorker(train_env-1).log
+log redirect to filename: ./runs/pivotal_query_source_aware/20260827-155619/logs/EnvironmentWorker(train_env-0).log
+[36m(EnvironmentWorker(train_env-0) pid=251920, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 10x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=251920, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 10x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=251920, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 10x across cluster][0m
+[36m(EnvironmentWorker(train_env-1) pid=254368, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=251920, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster][0m
+[36m(EnvironmentWorker(train_env-1) pid=254368, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=251920, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster][0m
+[36m(EnvironmentWorker(train_env-1) pid=254368, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=251920, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster][0m
+[36m(EnvironmentWorker(train_env-1) pid=254368, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=251920, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster][0m
+[36m(EnvironmentWorker(train_env-1) pid=254368, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=251920, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster][0m
+[36m(EnvironmentWorker(train_env-1) pid=254368, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=251920, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=251920, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 8x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=251920, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 8x across cluster][0m
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m [2026-08-27 15:59:45] [base_worker.py (66)] [INFO] [actor_infer-0 0 / 1][PID 251717] CUDA worker mapping: visible=0, device_count=1, local_rank=0
+log redirect to filename: ./runs/pivotal_query_source_aware/20260827-155619/logs/ActorWorker(actor_infer-0).log
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 15:59:57 [__init__.py:239] Automatically detected platform cuda.
+[36m(EnvironmentWorker(train_env-1) pid=254368, ip=192.168.51.92)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 5x across cluster][0m
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m [2026-08-27 16:00:02] [vllm_strategy.py (76)] [INFO] [actor_infer-0 0 / 1][PID 251717] vllm_config: {'gpu_memory_utilization': 0.8, 'block_size': 16, 'load_format': 'auto', 'max_model_len': 4096, 'tensor_parallel_size': 1, 'model': '/home/e/e1300530/models/Qwen3-4B-Instruct-2507', 'dtype': 'bfloat16', 'enforce_eager': True, 'trust_remote_code': True, 'seed': 42, 'disable_custom_all_reduce': True, 'enable_prefix_caching': False}
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:00:16 [config.py:689] This model supports multiple tasks: {'reward', 'embed', 'classify', 'score', 'generate'}. Defaulting to 'generate'.
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:00:16 [config.py:1901] Chunked prefill is enabled with max_num_batched_tokens=8192.
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m WARNING 08-27 16:00:16 [cuda.py:96] To see benefits of async output processing, enable CUDA graph. Since, enforce-eager is enabled, async output processor cannot be used
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m [2026-08-27 16:00:16] [llm_engine.py (179)] [INFO] [actor_infer-0 0 / 1][PID 251717] Using executor_class: <class 'vllm.v1.executor.abstract.UniProcExecutor'>
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m [2026-08-27 16:00:16] [llm_engine.py (180)] [INFO] [actor_infer-0 0 / 1][PID 251717] Using worker cls: roll.third_party.vllm.vllm_0_8_4.v1.worker.Worker084
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:00:24 [__init__.py:239] Automatically detected platform cuda.
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:00:28 [core.py:61] Initializing a V1 LLM engine (v0.8.4) with config: model='/home/e/e1300530/models/Qwen3-4B-Instruct-2507', speculative_config=None, tokenizer='/home/e/e1300530/models/Qwen3-4B-Instruct-2507', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, override_neuron_config=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=4096, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, disable_custom_all_reduce=True, quantization=None, enforce_eager=True, kv_cache_dtype=auto,  device_config=cuda, decoding_config=DecodingConfig(guided_decoding_backend='auto', reasoning_backend=None), observability_config=ObservabilityConfig(show_hidden_metrics=False, otlp_traces_endpoint=None, collect_model_forward_time=False, collect_model_execute_time=False), seed=42, served_model_name=/home/e/e1300530/models/Qwen3-4B-Instruct-2507, num_scheduler_steps=1, multi_step_stream_outputs=True, enable_prefix_caching=False, chunked_prefill_enabled=True, use_async_output_proc=False, disable_mm_preprocessor_cache=False, mm_processor_kwargs=None, pooler_config=None, compilation_config={"splitting_ops":[],"compile_sizes":[],"cudagraph_capture_sizes":[],"max_capture_size":0}
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m add logger: log_rank_actor_infer-0_0_1
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m Created or verified log directory: ./runs/pivotal_query_source_aware/20260827-155619/logs
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/pivotal_query_source_aware/20260827-155619/logs/log_rank_actor_infer-0_0_1.log
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m WARNING 08-27 16:00:31 [utils.py:2444] Methods determine_num_available_blocks,device_config,get_cache_block_size_bytes,initialize_cache not implemented in <roll.third_party.vllm.vllm_0_8_4.v1.worker.Worker084 object at 0x7458d338b580>
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:00:31 [parallel_state.py:959] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, TP rank 0
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:00:31 [cuda.py:221] Using Flash Attention backend on V1 engine.
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:00:31 [gpu_model_runner.py:1276] Starting to load model /home/e/e1300530/models/Qwen3-4B-Instruct-2507...
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m WARNING 08-27 16:00:32 [topk_topp_sampler.py:69] FlashInfer is not available. Falling back to the PyTorch-native implementation of top-p & top-k sampling. For the best performance, please install FlashInfer.
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:00:51 [loader.py:458] Loading weights took 19.57 seconds
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:00:52 [gpu_model_runner.py:1291] Model loading took 7.6064 GiB and 19.947460 seconds
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:00:53 [kv_cache_utils.py:634] GPU KV cache size: 160,240 tokens
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:00:53 [kv_cache_utils.py:637] Maximum concurrency for 4,096 tokens per request: 39.12x
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:00:53 [core.py:163] init engine (profile, create kv cache, warmup model) took 1.42 seconds
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:00:53 [core_client.py:435] Core engine process 0 ready.
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m [2026-08-27 16:00:53] [vllm_strategy.py (94)] [INFO] [actor_infer-0 0 / 1][PID 251717] add [AddedToken("<|endoftext|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True)] to additional_special_tokens: ['<|im_start|>', '<|im_end|>', '<|object_ref_start|>', '<|object_ref_end|>', '<|box_start|>', '<|box_end|>', '<|quad_start|>', '<|quad_end|>', '<|vision_start|>', '<|vision_end|>', '<|vision_pad|>', '<|image_pad|>', '<|video_pad|>', '<|endoftext|>']
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m [2026-08-27 16:00:53] [base_worker.py (85)] [INFO] [actor_infer-0 0 / 1][PID 251717] actor_infer-0 initialized
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:00:53 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:01:03 [gpu_worker.py:81] Sleep mode freed 31.04 GiB memory, 0.59 GiB memory is still in use.
+[2026-08-27 16:01:04] [agentic_rollout_pipeline.py (60)] [INFO] [DRIVER 0 / 1][PID 244155] pipeline rollout global step 0 start...
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m [2026-08-27 16:01:04] [base_worker.py (223)] [INFO] [actor_infer-0 0 / 1][PID 251717] actor_infer-0 generate server global step 0
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m [2026-08-27 16:01:04] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 251717] actor_infer/generate_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 1.0938911437988281
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m [2026-08-27 16:01:04] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 251717] actor_infer/generate_start_onload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 1.093902587890625
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m Elapsed time: 0.6662 seconds
+[36m(_QueueActor pid=251918, ip=192.168.51.92)[0m add logger: log_rank_DRIVER_0_1
+[36m(_QueueActor pid=251918, ip=192.168.51.92)[0m Created or verified log directory: ./runs/pivotal_query_source_aware/20260827-155619/logs
+[36m(_QueueActor pid=251918, ip=192.168.51.92)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/pivotal_query_source_aware/20260827-155619/logs/log_rank_DRIVER_0_1.log
+log redirect to filename: ./runs/pivotal_query_source_aware/20260827-155619/logs/_QueueActor.log
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m Elapsed time: 81.2212 seconds
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m [2026-08-27 16:02:26] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 251717] actor_infer/generate_end_onload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.001953125, rss (GB): 1.4363174438476562
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:02:26 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m INFO 08-27 16:02:26 [gpu_worker.py:81] Sleep mode freed 34.77 GiB memory, 1.21 GiB memory is still in use.
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m [2026-08-27 16:02:27] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 251717] actor_infer/generate_end_offload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.001953125, rss (GB): 1.4363174438476562
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m Elapsed time: 1.3837 seconds
+[36m(ActorWorker(actor_infer-0) pid=251717, ip=192.168.51.92)[0m Elapsed time: 83.2714 seconds
+[2026-08-27 16:02:28] [agentic_rollout_pipeline.py (96)] [INFO] [DRIVER 0 / 1][PID 244155] Preflight summary: {"game_count": 60, "observed_game_count": 60, "partial_game_count": 0, "turn_count": 602, "decision_count": 602, "first_attempt_valid_count": 547, "first_attempt_validity_rate": 0.9086378737541528, "eventual_valid_count": 547, "eventual_validity_rate": 0.9086378737541528, "retry_attempt_count": 0, "retry_success_count": 0, "retry_success_rate": 0.0, "additional_retry_tokens": 0, "final_episode_truncation_count": 0, "final_episode_truncation_rate": 0.0, "role_first_attempt_validity_gap": 0.9086378737541528, "role_eventual_validity_gap": 0.9086378737541528, "single_model_outcomes_by_tag": {"PivotalSource-Irrelevant": {"game_count": 13, "completed_count": 13, "invalid_or_truncated_count": 0, "win_count": 13, "draw_count": 0, "loss_count": 0, "completion_rate": 1.0, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "PivotalSource-Who": {"game_count": 14, "completed_count": 14, "invalid_or_truncated_count": 0, "win_count": 11, "draw_count": 0, "loss_count": 3, "completion_rate": 1.0, "win_rate_when_completed": 0.7857142857142857, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.21428571428571427}, "PivotalSource-Retry": {"game_count": 8, "completed_count": 8, "invalid_or_truncated_count": 0, "win_count": 6, "draw_count": 0, "loss_count": 2, "completion_rate": 1.0, "win_rate_when_completed": 0.75, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.25}, "PivotalSource-Known": {"game_count": 8, "completed_count": 8, "invalid_or_truncated_count": 0, "win_count": 8, "draw_count": 0, "loss_count": 0, "completion_rate": 1.0, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "PivotalSource-Necessary": {"game_count": 11, "completed_count": 11, "invalid_or_truncated_count": 0, "win_count": 10, "draw_count": 0, "loss_count": 1, "completion_rate": 1.0, "win_rate_when_completed": 0.9090909090909091, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.09090909090909091}, "PivotalSource-Costly": {"game_count": 6, "completed_count": 6, "invalid_or_truncated_count": 0, "win_count": 4, "draw_count": 0, "loss_count": 2, "completion_rate": 1.0, "win_rate_when_completed": 0.6666666666666666, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.3333333333333333}}, "completed_legal_game_count": 33, "completed_legal_game_rate": 0.55, "valid_action_count": 547, "valid_action_rate": 0.9086378737541528, "closing_answer_tag_count": 602, "closing_answer_tag_rate": 1.0, "token_limit_hit_count": 0, "token_limit_hit_rate": 0.0, "missing_answer_count": 0, "missing_answer_rate": 0.0, "capped_without_answer_count": 0, "capped_without_answer_rate": 0.0, "role_validity_asymmetry": 0.0, "counterfactual_optimal_action_count": 0, "counterfactual_optimality_rate": 0.0, "counterfactual_optimality_when_valid_rate": 0.0, "minimax_optimal_action_count": 0, "minimax_optimality_rate": 0.0, "minimax_optimality_when_valid_rate": 0.0, "role_minimax_optimality_gap": 0.0, "action_diversity": {"unique_action_count": 12, "action_counts": {"ACT A": 68, "ACT B": 64, "ACT C": 104, "ASK Alice F1": 35, "ASK Alice F2": 32, "ASK Alice F3": 52, "ASK Bob F1": 46, "ASK Bob F2": 62, "ASK Bob F3": 16, "ASK Carol F1": 29, "ASK Carol F2": 12, "ASK Carol F3": 27}, "dominant_action_rate": 0.19012797074954296}, "response_length": {"median": 133.5, "p90": 251.89999999999998, "p95": 333.6999999999996, "p99": 493.99, "max": 796}, "by_player": {"0": {"turn_count": 602, "valid_action_rate": 0.9086378737541528, "closing_answer_tag_rate": 1.0, "token_limit_hit_rate": 0.0, "missing_answer_rate": 0.0, "minimax_optimal_action_count": 0, "minimax_optimality_rate": 0.0, "minimax_optimality_when_valid_rate": 0.0, "first_attempt_count": 602, "first_attempt_validity_rate": 0.9086378737541528, "retry_attempt_count": 0, "retry_success_rate": 0.0, "eventual_validity_rate": 0.9086378737541528, "additional_retry_tokens": 0}, "1": {"turn_count": 0, "valid_action_rate": 0.0, "closing_answer_tag_rate": 0.0, "token_limit_hit_rate": 0.0, "missing_answer_rate": 0.0, "minimax_optimal_action_count": 0, "minimax_optimality_rate": 0.0, "minimax_optimality_when_valid_rate": 0.0, "first_attempt_count": 0, "first_attempt_validity_rate": 0.0, "retry_attempt_count": 0, "retry_success_rate": 0.0, "eventual_validity_rate": 0.0, "additional_retry_tokens": 0}}, "gate": {"valid_action_rate_at_least_0_95": false, "eventual_validity_rate_at_least_0_95": false, "closing_answer_tag_rate_at_least_0_95": true, "token_limit_hit_rate_at_most_0_02": true, "role_validity_asymmetry_at_most_0_05": true, "at_least_3_unique_actions": true, "dominant_action_rate_at_most_0_80": true}, "passed": false, "informative_decisions_by_remaining_optimal_distance": {}, "root_move_pass_at_k": {"PivotalSource-Costly": {"graph_count": 6, "sample_count": 24, "valid_action_rate": 1.0, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 6, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "PivotalSource-Irrelevant": {"graph_count": 13, "sample_count": 52, "valid_action_rate": 1.0, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 13, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "PivotalSource-Known": {"graph_count": 8, "sample_count": 32, "valid_action_rate": 1.0, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 8, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "PivotalSource-Necessary": {"graph_count": 11, "sample_count": 44, "valid_action_rate": 1.0, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 11, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "PivotalSource-Retry": {"graph_count": 8, "sample_count": 32, "valid_action_rate": 0.90625, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 8, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "PivotalSource-Who": {"graph_count": 14, "sample_count": 56, "valid_action_rate": 1.0, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 14, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "overall": {"graph_count": 60, "sample_count": 240, "valid_action_rate": 0.9875, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 60, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}}}
+[2026-08-27 16:02:28] [agentic_rollout_pipeline.py (134)] [INFO] [DRIVER 0 / 1][PID 244155] [{"prompt": "system\nYou make decisions under uncertainty in the Pivotal Query Game.user\nYour objective is to maximize expected total payoff. At every turn, choose exactly one legal action. ACT selects a final option and ends the episode. ASK names one partner and one fact. Every partner is cooperative and truthful, but each knows only the facts listed in their profile; a partner asked about another fact replies that they do not know. The listed communication cost is deducted immediately, and you may then decide again.\n\nOutput exactly (include a brief reason tag first):\n<reason>brief reasoning</reason><answer>ASK PARTNER FACT</answer>\nor\n<reason>brief reasoning</reason><answer>ACT OPTION</answer>\n\nDo not output anything else. A malformed or illegal response ends the episode.\n\nKnown facts: none\nPartner knowledge profiles: Bob knows F2, Carol knows F3, Alice knows F1.\nQuery costs: ASK Bob F2: 0.25, ASK Bob F3: 0.25, ASK Bob F1: 0.25, ASK Carol F2: 0.25, ASK Carol F3: 0.25, ASK Carol F1: 0.25, ASK Alice F2: 0.25, ASK Alice F3: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF2 | F3 | F1 | probability | B | A | C\nsafe | red | high | 0.125 | 5 | 6 | 4\nsafe | red | low | 0.125 | 5 | 6 | 4\nsafe | blue | high | 0.125 | 5 | 6 | 4\nsafe | blue | low | 0.125 | 5 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Bob F2, ASK Bob F3, ASK Bob F1, ASK Carol F2, ASK Carol F3, ASK Carol F1, ASK Alice F2, ASK Alice F3, ASK Alice F1, ACT B, ACT A, ACT Cassistant\n", "response": "<reason>Bob knows F2, and learning F2 allows us to determine the state (safe or unsafe) which directly affects payoff; since F2 is correlated with both safety and payoff, and Bob is the only one who knows it, querying him is optimal to maximize expected payoff.</reason><answer>ASK Bob F2</answer>user\n\n\nBob answers: F2 = safe.\n\nKnown facts: F2=safe\nPartner knowledge profiles: Bob knows F2, Carol knows F3, Alice knows F1.\nQuery costs: ASK Bob F3: 0.25, ASK Bob F1: 0.25, ASK Carol F3: 0.25, ASK Carol F1: 0.25, ASK Alice F3: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF2 | F3 | F1 | probability | B | A | C\nsafe | red | high | 0.125 | 5 | 6 | 4\nsafe | red | low | 0.125 | 5 | 6 | 4\nsafe | blue | high | 0.125 | 5 | 6 | 4\nsafe | blue | low | 0.125 | 5 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Bob F3, ASK Bob F1, ASK Carol F3, ASK Carol F1, ASK Alice F3, ASK Alice F1, ACT B, ACT A, ACT Cassistant\n<reason>Bob already knows F2 is safe, and all states have the same payoff for Alice and Carol, so gaining F3 or F1 from others does not improve expected payoff. Since F2 is already known, and the payoffs for B, A, C are identical across all states, acting immediately on B (highest payoff in all cases) is optimal.</reason><answer>ACT B</answer>", "episode_score": 4.25, "llm_raw_text": "<|im_start|>assistant\n<reason>Bob knows F2, and learning F2 allows us to determine the state (safe or unsafe) which directly affects payoff; since F2 is correlated with both safety and payoff, and Bob is the only one who knows it, querying him is optimal to maximize expected payoff.</reason><answer>ASK Bob F2</answer><|im_end|><|im_start|>user\n\n\nBob answers: F2 = safe.\n\nKnown facts: F2=safe\nPartner knowledge profiles: Bob knows F2, Carol knows F3, Alice knows F1.\nQuery costs: ASK Bob F3: 0.25, ASK Bob F1: 0.25, ASK Carol F3: 0.25, ASK Carol F1: 0.25, ASK Alice F3: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF2 | F3 | F1 | probability | B | A | C\nsafe | red | high | 0.125 | 5 | 6 | 4\nsafe | red | low | 0.125 | 5 | 6 | 4\nsafe | blue | high | 0.125 | 5 | 6 | 4\nsafe | blue | low | 0.125 | 5 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Bob F3, ASK Bob F1, ASK Carol F3, ASK Carol F1, ASK Alice F3, ASK Alice F1, ACT B, ACT A, ACT C<|im_end|><|im_start|>assistant\n<reason>Bob already knows F2 is safe, and all states have the same payoff for Alice and Carol, so gaining F3 or F1 from others does not improve expected payoff. Since F2 is already known, and the payoffs for B, A, C are identical across all states, acting immediately on B (highest payoff in all cases) is optimal.</reason><answer>ACT B</answer><|im_end|>"}, {"prompt": "system\nYou make decisions under uncertainty in the Pivotal Query Game.user\nYour objective is to maximize expected total payoff. At every turn, choose exactly one legal action. ACT selects a final option and ends the episode. ASK names one partner and one fact. Every partner is cooperative and truthful, but each knows only the facts listed in their profile; a partner asked about another fact replies that they do not know. The listed communication cost is deducted immediately, and you may then decide again.\n\nOutput exactly (include a brief reason tag first):\n<reason>brief reasoning</reason><answer>ASK PARTNER FACT</answer>\nor\n<reason>brief reasoning</reason><answer>ACT OPTION</answer>\n\nDo not output anything else. A malformed or illegal response ends the episode.\n\nKnown facts: none\nPartner knowledge profiles: Bob knows F2, Carol knows F3, Alice knows F1.\nQuery costs: ASK Bob F2: 0.25, ASK Bob F3: 0.25, ASK Bob F1: 0.25, ASK Carol F2: 0.25, ASK Carol F3: 0.25, ASK Carol F1: 0.25, ASK Alice F2: 0.25, ASK Alice F3: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF2 | F3 | F1 | probability | B | A | C\nsafe | red | high | 0.125 | 5 | 6 | 4\nsafe | red | low | 0.125 | 5 | 6 | 4\nsafe | blue | high | 0.125 | 5 | 6 | 4\nsafe | blue | low | 0.125 | 5 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Bob F2, ASK Bob F3, ASK Bob F1, ASK Carol F2, ASK Carol F3, ASK Carol F1, ASK Alice F2, ASK Alice F3, ASK Alice F1, ACT B, ACT A, ACT Cassistant\n", "response": "<reason>Bob knows F2, and knowing F2 allows us to eliminate the unsafe cases (which have negative payoff), leading to a higher expected payoff. Since F2 is directly known by Bob and the query cost is low (0.25), it is optimal to ask Bob about F2 to gain critical information.</reason><answer>ASK Bob F2</answer>user\n\n\nBob answers: F2 = safe.\n\nKnown facts: F2=safe\nPartner knowledge profiles: Bob knows F2, Carol knows F3, Alice knows F1.\nQuery costs: ASK Bob F3: 0.25, ASK Bob F1: 0.25, ASK Carol F3: 0.25, ASK Carol F1: 0.25, ASK Alice F3: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF2 | F3 | F1 | probability | B | A | C\nsafe | red | high | 0.125 | 5 | 6 | 4\nsafe | red | low | 0.125 | 5 | 6 | 4\nsafe | blue | high | 0.125 | 5 | 6 | 4\nsafe | blue | low | 0.125 | 5 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Bob F3, ASK Bob F1, ASK Carol F3, ASK Carol F1, ASK Alice F3, ASK Alice F1, ACT B, ACT A, ACT Cassistant\n<reason>Bob already knows F2 is safe, and all states have the same payoff for Alice and Carol, so gaining F1 or F3 from others doesn't change expected value. Since F1 and F3 are symmetric in payoffs and Bob only knows F2, asking him about F1 or F3 provides no new information. Thus, no ASK action improves expected payoff. Acting on Bob (B) gives the highest payoff given current knowledge.</reason><answer>ACT B</answer>", "episode_score": 4.25, "llm_raw_text": "<|im_start|>assistant\n<reason>Bob knows F2, and knowing F2 allows us to eliminate the unsafe cases (which have negative payoff), leading to a higher expected payoff. Since F2 is directly known by Bob and the query cost is low (0.25), it is optimal to ask Bob about F2 to gain critical information.</reason><answer>ASK Bob F2</answer><|im_end|><|im_start|>user\n\n\nBob answers: F2 = safe.\n\nKnown facts: F2=safe\nPartner knowledge profiles: Bob knows F2, Carol knows F3, Alice knows F1.\nQuery costs: ASK Bob F3: 0.25, ASK Bob F1: 0.25, ASK Carol F3: 0.25, ASK Carol F1: 0.25, ASK Alice F3: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF2 | F3 | F1 | probability | B | A | C\nsafe | red | high | 0.125 | 5 | 6 | 4\nsafe | red | low | 0.125 | 5 | 6 | 4\nsafe | blue | high | 0.125 | 5 | 6 | 4\nsafe | blue | low | 0.125 | 5 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Bob F3, ASK Bob F1, ASK Carol F3, ASK Carol F1, ASK Alice F3, ASK Alice F1, ACT B, ACT A, ACT C<|im_end|><|im_start|>assistant\n<reason>Bob already knows F2 is safe, and all states have the same payoff for Alice and Carol, so gaining F1 or F3 from others doesn't change expected value. Since F1 and F3 are symmetric in payoffs and Bob only knows F2, asking him about F1 or F3 provides no new information. Thus, no ASK action improves expected payoff. Acting on Bob (B) gives the highest payoff given current knowledge.</reason><answer>ACT B</answer><|im_end|>"}, {"prompt": "system\nYou make decisions under uncertainty in the Pivotal Query Game.user\nYour objective is to maximize expected total payoff. At every turn, choose exactly one legal action. ACT selects a final option and ends the episode. ASK names one partner and one fact. Every partner is cooperative and truthful, but each knows only the facts listed in their profile; a partner asked about another fact replies that they do not know. The listed communication cost is deducted immediately, and you may then decide again.\n\nOutput exactly (include a brief reason tag first):\n<reason>brief reasoning</reason><answer>ASK PARTNER FACT</answer>\nor\n<reason>brief reasoning</reason><answer>ACT OPTION</answer>\n\nDo not output anything else. A malformed or illegal response ends the episode.\n\nKnown facts: none\nPartner knowledge profiles: Bob knows F2, Carol knows F3, Alice knows F1.\nQuery costs: ASK Bob F2: 0.25, ASK Bob F3: 0.25, ASK Bob F1: 0.25, ASK Carol F2: 0.25, ASK Carol F3: 0.25, ASK Carol F1: 0.25, ASK Alice F2: 0.25, ASK Alice F3: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF2 | F3 | F1 | probability | B | A | C\nsafe | red | high | 0.125 | 5 | 6 | 4\nsafe | red | low | 0.125 | 5 | 6 | 4\nsafe | blue | high | 0.125 | 5 | 6 | 4\nsafe | blue | low | 0.125 | 5 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Bob F2, ASK Bob F3, ASK Bob F1, ASK Carol F2, ASK Carol F3, ASK Carol F1, ASK Alice F2, ASK Alice F3, ASK Alice F1, ACT B, ACT A, ACT Cassistant\n", "response": "<reason>Bob knows F2, and learning F2 allows us to eliminate the unsafe outcomes (which have negative payoff), while the safe outcomes have positive payoff. Since F2 is the only fact that distinguishes safe from unsafe, and we have equal probabilities across all states, knowing F2 gives the highest expected value improvement. The cost is 0.25, which is low, and we can then act optimally based on the knowledge.</reason><answer>ASK Bob F2</answer>user\n\n\nBob answers: F2 = safe.\n\nKnown facts: F2=safe\nPartner knowledge profiles: Bob knows F2, Carol knows F3, Alice knows F1.\nQuery costs: ASK Bob F3: 0.25, ASK Bob F1: 0.25, ASK Carol F3: 0.25, ASK Carol F1: 0.25, ASK Alice F3: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF2 | F3 | F1 | probability | B | A | C\nsafe | red | high | 0.125 | 5 | 6 | 4\nsafe | red | low | 0.125 | 5 | 6 | 4\nsafe | blue | high | 0.125 | 5 | 6 | 4\nsafe | blue | low | 0.125 | 5 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Bob F3, ASK Bob F1, ASK Carol F3, ASK Carol F1, ASK Alice F3, ASK Alice F1, ACT B, ACT A, ACT Cassistant\n<reason>Bob already knows F2 is safe, and all states have the same payoff for Alice and Carol, so gaining F1 or F3 from others doesn't change expected value. Since F1 and F3 are symmetric in payoff and Bob only knows F2, asking him about F1 or F3 incurs cost without new information. Thus, no benefit from ASK. All options have equal payoff, so ACT with highest payoff (Alice: 6) is optimal.</reason><answer>ACT A</answer>", "episode_score": 5.15, "llm_raw_text": "<|im_start|>assistant\n<reason>Bob knows F2, and learning F2 allows us to eliminate the unsafe outcomes (which have negative payoff), while the safe outcomes have positive payoff. Since F2 is the only fact that distinguishes safe from unsafe, and we have equal probabilities across all states, knowing F2 gives the highest expected value improvement. The cost is 0.25, which is low, and we can then act optimally based on the knowledge.</reason><answer>ASK Bob F2</answer><|im_end|><|im_start|>user\n\n\nBob answers: F2 = safe.\n\nKnown facts: F2=safe\nPartner knowledge profiles: Bob knows F2, Carol knows F3, Alice knows F1.\nQuery costs: ASK Bob F3: 0.25, ASK Bob F1: 0.25, ASK Carol F3: 0.25, ASK Carol F1: 0.25, ASK Alice F3: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF2 | F3 | F1 | probability | B | A | C\nsafe | red | high | 0.125 | 5 | 6 | 4\nsafe | red | low | 0.125 | 5 | 6 | 4\nsafe | blue | high | 0.125 | 5 | 6 | 4\nsafe | blue | low | 0.125 | 5 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Bob F3, ASK Bob F1, ASK Carol F3, ASK Carol F1, ASK Alice F3, ASK Alice F1, ACT B, ACT A, ACT C<|im_end|><|im_start|>assistant\n<reason>Bob already knows F2 is safe, and all states have the same payoff for Alice and Carol, so gaining F1 or F3 from others doesn't change expected value. Since F1 and F3 are symmetric in payoff and Bob only knows F2, asking him about F1 or F3 incurs cost without new information. Thus, no benefit from ASK. All options have equal payoff, so ACT with highest payoff (Alice: 6) is optimal.</reason><answer>ACT A</answer><|im_end|>"}, {"prompt": "system\nYou make decisions under uncertainty in the Pivotal Query Game.user\nYour objective is to maximize expected total payoff. At every turn, choose exactly one legal action. ACT selects a final option and ends the episode. ASK names one partner and one fact. Every partner is cooperative and truthful, but each knows only the facts listed in their profile; a partner asked about another fact replies that they do not know. The listed communication cost is deducted immediately, and you may then decide again.\n\nOutput exactly (include a brief reason tag first):\n<reason>brief reasoning</reason><answer>ASK PARTNER FACT</answer>\nor\n<reason>brief reasoning</reason><answer>ACT OPTION</answer>\n\nDo not output anything else. A malformed or illegal response ends the episode.\n\nKnown facts: none\nPartner knowledge profiles: Bob knows F2, Carol knows F3, Alice knows F1.\nQuery costs: ASK Bob F2: 0.25, ASK Bob F3: 0.25, ASK Bob F1: 0.25, ASK Carol F2: 0.25, ASK Carol F3: 0.25, ASK Carol F1: 0.25, ASK Alice F2: 0.25, ASK Alice F3: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF2 | F3 | F1 | probability | B | A | C\nsafe | red | high | 0.125 | 5 | 6 | 4\nsafe | red | low | 0.125 | 5 | 6 | 4\nsafe | blue | high | 0.125 | 5 | 6 | 4\nsafe | blue | low | 0.125 | 5 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Bob F2, ASK Bob F3, ASK Bob F1, ASK Carol F2, ASK Carol F3, ASK Carol F1, ASK Alice F2, ASK Alice F3, ASK Alice F1, ACT B, ACT A, ACT Cassistant\n", "response": "<reason>Bob knows F2, and knowing F2 allows us to determine the state (safe or unsafe) which directly affects the payoff. Since F2 is critical for distinguishing safe vs. unsafe scenarios (with payoffs of 5 vs. -8), and Bob is the only one who knows it, querying him is optimal to gain decisive information. The cost is 0.25, which is low relative to the payoff gain.</reason><answer>ASK Bob F2</answer>user\n\n\nBob answers: F2 = safe.\n\nKnown facts: F2=safe\nPartner knowledge profiles: Bob knows F2, Carol knows F3, Alice knows F1.\nQuery costs: ASK Bob F3: 0.25, ASK Bob F1: 0.25, ASK Carol F3: 0.25, ASK Carol F1: 0.25, ASK Alice F3: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF2 | F3 | F1 | probability | B | A | C\nsafe | red | high | 0.125 | 5 | 6 | 4\nsafe | red | low | 0.125 | 5 | 6 | 4\nsafe | blue | high | 0.125 | 5 | 6 | 4\nsafe | blue | low | 0.125 | 5 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Bob F3, ASK Bob F1, ASK Carol F3, ASK Carol F1, ASK Alice F3, ASK Alice F1, ACT B, ACT A, ACT Cassistant\n<reason>Bob already knows F2 is safe, and all states have the same payoff for Alice and Carol regardless of F1 or F3; since F2 is safe in all cases, we can ignore uncertainty in F1 and F3. However, to maximize expected payoff, we should check if any partner knows a fact that could reveal additional information about F1 or F3, which might help us choose the best action. Alice knows F1, Carol knows F3. Since F1 and F3 do not affect B's payoff (always 5), and A and C are always 6 and 4 respectively, the best action is ACT A (6), which is the highest payoff. No additional information changes this. Thus, no ASK is needed.</reason><answer>ACT A</answer>", "episode_score": 5.15, "llm_raw_text": "<|im_start|>assistant\n<reason>Bob knows F2, and knowing F2 allows us to determine the state (safe or unsafe) which directly affects the payoff. Since F2 is critical for distinguishing safe vs. unsafe scenarios (with payoffs of 5 vs. -8), and Bob is the only one who knows it, querying him is optimal to gain decisive information. The cost is 0.25, which is low relative to the payoff gain.</reason><answer>ASK Bob F2</answer><|im_end|><|im_start|>user\n\n\nBob answers: F2 = safe.\n\nKnown facts: F2=safe\nPartner knowledge profiles: Bob knows F2, Carol knows F3, Alice knows F1.\nQuery costs: ASK Bob F3: 0.25, ASK Bob F1: 0.25, ASK Carol F3: 0.25, ASK Carol F1: 0.25, ASK Alice F3: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF2 | F3 | F1 | probability | B | A | C\nsafe | red | high | 0.125 | 5 | 6 | 4\nsafe | red | low | 0.125 | 5 | 6 | 4\nsafe | blue | high | 0.125 | 5 | 6 | 4\nsafe | blue | low | 0.125 | 5 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Bob F3, ASK Bob F1, ASK Carol F3, ASK Carol F1, ASK Alice F3, ASK Alice F1, ACT B, ACT A, ACT C<|im_end|><|im_start|>assistant\n<reason>Bob already knows F2 is safe, and all states have the same payoff for Alice and Carol regardless of F1 or F3; since F2 is safe in all cases, we can ignore uncertainty in F1 and F3. However, to maximize expected payoff, we should check if any partner knows a fact that could reveal additional information about F1 or F3, which might help us choose the best action. Alice knows F1, Carol knows F3. Since F1 and F3 do not affect B's payoff (always 5), and A and C are always 6 and 4 respectively, the best action is ACT A (6), which is the highest payoff. No additional information changes this. Thus, no ASK is needed.</reason><answer>ACT A</answer><|im_end|>"}, {"prompt": "system\nYou make decisions under uncertainty in the Pivotal Query Game.user\nYour objective is to maximize expected total payoff. At every turn, choose exactly one legal action. ACT selects a final option and ends the episode. ASK names one partner and one fact. Every partner is cooperative and truthful, but each knows only the facts listed in their profile; a partner asked about another fact replies that they do not know. The listed communication cost is deducted immediately, and you may then decide again.\n\nOutput exactly (include a brief reason tag first):\n<reason>brief reasoning</reason><answer>ASK PARTNER FACT</answer>\nor\n<reason>brief reasoning</reason><answer>ACT OPTION</answer>\n\nDo not output anything else. A malformed or illegal response ends the episode.\n\nKnown facts: none\nPartner knowledge profiles: Carol knows F3, Bob knows F2, Alice knows F1.\nQuery costs: ASK Carol F3: 0.25, ASK Carol F2: 0.25, ASK Carol F1: 0.25, ASK Bob F3: 0.25, ASK Bob F2: 0.25, ASK Bob F1: 0.25, ASK Alice F3: 0.25, ASK Alice F2: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF3 | F2 | F1 | probability | C | B | A\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Carol F3, ASK Carol F2, ASK Carol F1, ASK Bob F3, ASK Bob F2, ASK Bob F1, ASK Alice F3, ASK Alice F2, ASK Alice F1, ACT C, ACT B, ACT Aassistant\n", "response": "<reason>Carol knows F3, which is the only fact directly linked to the highest payoff (C) and has a significant impact on the outcome; querying her about F3 reveals critical information to maximize expected payoff with minimal cost.</reason><answer>ASK Carol F3</answer>user\n\n\nCarol answers: F3 = unsafe.\n\nKnown facts: F3=unsafe\nPartner knowledge profiles: Carol knows F3, Bob knows F2, Alice knows F1.\nQuery costs: ASK Carol F2: 0.25, ASK Carol F1: 0.25, ASK Bob F2: 0.25, ASK Bob F1: 0.25, ASK Alice F2: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF3 | F2 | F1 | probability | C | B | A\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Carol F2, ASK Carol F1, ASK Bob F2, ASK Bob F1, ASK Alice F2, ASK Alice F1, ACT C, ACT B, ACT Aassistant\n<reason>Carol knows F3 and has confirmed it is unsafe, which implies the payoff is -8 for option C, regardless of F2 and F1. Since all states with F3=unsafe yield the same payoff of -8, and we cannot improve upon this with further queries (as Bob and Alice lack knowledge of F3), the optimal action is to act immediately on the worst-case option C to avoid further costs.</reason><answer>ACT C</answer>", "episode_score": -7.45, "llm_raw_text": "<|im_start|>assistant\n<reason>Carol knows F3, which is the only fact directly linked to the highest payoff (C) and has a significant impact on the outcome; querying her about F3 reveals critical information to maximize expected payoff with minimal cost.</reason><answer>ASK Carol F3</answer><|im_end|><|im_start|>user\n\n\nCarol answers: F3 = unsafe.\n\nKnown facts: F3=unsafe\nPartner knowledge profiles: Carol knows F3, Bob knows F2, Alice knows F1.\nQuery costs: ASK Carol F2: 0.25, ASK Carol F1: 0.25, ASK Bob F2: 0.25, ASK Bob F1: 0.25, ASK Alice F2: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF3 | F2 | F1 | probability | C | B | A\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Carol F2, ASK Carol F1, ASK Bob F2, ASK Bob F1, ASK Alice F2, ASK Alice F1, ACT C, ACT B, ACT A<|im_end|><|im_start|>assistant\n<reason>Carol knows F3 and has confirmed it is unsafe, which implies the payoff is -8 for option C, regardless of F2 and F1. Since all states with F3=unsafe yield the same payoff of -8, and we cannot improve upon this with further queries (as Bob and Alice lack knowledge of F3), the optimal action is to act immediately on the worst-case option C to avoid further costs.</reason><answer>ACT C</answer><|im_end|>"}, {"prompt": "system\nYou make decisions under uncertainty in the Pivotal Query Game.user\nYour objective is to maximize expected total payoff. At every turn, choose exactly one legal action. ACT selects a final option and ends the episode. ASK names one partner and one fact. Every partner is cooperative and truthful, but each knows only the facts listed in their profile; a partner asked about another fact replies that they do not know. The listed communication cost is deducted immediately, and you may then decide again.\n\nOutput exactly (include a brief reason tag first):\n<reason>brief reasoning</reason><answer>ASK PARTNER FACT</answer>\nor\n<reason>brief reasoning</reason><answer>ACT OPTION</answer>\n\nDo not output anything else. A malformed or illegal response ends the episode.\n\nKnown facts: none\nPartner knowledge profiles: Carol knows F3, Bob knows F2, Alice knows F1.\nQuery costs: ASK Carol F3: 0.25, ASK Carol F2: 0.25, ASK Carol F1: 0.25, ASK Bob F3: 0.25, ASK Bob F2: 0.25, ASK Bob F1: 0.25, ASK Alice F3: 0.25, ASK Alice F2: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF3 | F2 | F1 | probability | C | B | A\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Carol F3, ASK Carol F2, ASK Carol F1, ASK Bob F3, ASK Bob F2, ASK Bob F1, ASK Alice F3, ASK Alice F2, ASK Alice F1, ACT C, ACT B, ACT Aassistant\n", "response": "<reason>Carol knows F3, which is the only fact directly tied to the high payoff scenario (C), and since all states have the same payoff for B and A, knowing F3 allows us to distinguish safe vs. unsafe outcomes, maximizing expected payoff by avoiding the -8 loss. The cost of ASK Carol F3 is 0.25, which is low and justified by the high value of information.</reason><answer>ASK Carol F3</answer>user\n\n\nCarol answers: F3 = unsafe.\n\nKnown facts: F3=unsafe\nPartner knowledge profiles: Carol knows F3, Bob knows F2, Alice knows F1.\nQuery costs: ASK Carol F2: 0.25, ASK Carol F1: 0.25, ASK Bob F2: 0.25, ASK Bob F1: 0.25, ASK Alice F2: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF3 | F2 | F1 | probability | C | B | A\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Carol F2, ASK Carol F1, ASK Bob F2, ASK Bob F1, ASK Alice F2, ASK Alice F1, ACT C, ACT B, ACT Aassistant\n<reason>Carol knows F3 and has confirmed it is unsafe, which implies the payoff is -8 for C, regardless of F2 and F1. Since all states with F3=unsafe yield the same payoff of -8, and we already know F3, there is no benefit in asking further facts. Acting immediately on C maximizes expected payoff given the information.</reason><answer>ACT C</answer>", "episode_score": -7.45, "llm_raw_text": "<|im_start|>assistant\n<reason>Carol knows F3, which is the only fact directly tied to the high payoff scenario (C), and since all states have the same payoff for B and A, knowing F3 allows us to distinguish safe vs. unsafe outcomes, maximizing expected payoff by avoiding the -8 loss. The cost of ASK Carol F3 is 0.25, which is low and justified by the high value of information.</reason><answer>ASK Carol F3</answer><|im_end|><|im_start|>user\n\n\nCarol answers: F3 = unsafe.\n\nKnown facts: F3=unsafe\nPartner knowledge profiles: Carol knows F3, Bob knows F2, Alice knows F1.\nQuery costs: ASK Carol F2: 0.25, ASK Carol F1: 0.25, ASK Bob F2: 0.25, ASK Bob F1: 0.25, ASK Alice F2: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF3 | F2 | F1 | probability | C | B | A\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Carol F2, ASK Carol F1, ASK Bob F2, ASK Bob F1, ASK Alice F2, ASK Alice F1, ACT C, ACT B, ACT A<|im_end|><|im_start|>assistant\n<reason>Carol knows F3 and has confirmed it is unsafe, which implies the payoff is -8 for C, regardless of F2 and F1. Since all states with F3=unsafe yield the same payoff of -8, and we already know F3, there is no benefit in asking further facts. Acting immediately on C maximizes expected payoff given the information.</reason><answer>ACT C</answer><|im_end|>"}, {"prompt": "system\nYou make decisions under uncertainty in the Pivotal Query Game.user\nYour objective is to maximize expected total payoff. At every turn, choose exactly one legal action. ACT selects a final option and ends the episode. ASK names one partner and one fact. Every partner is cooperative and truthful, but each knows only the facts listed in their profile; a partner asked about another fact replies that they do not know. The listed communication cost is deducted immediately, and you may then decide again.\n\nOutput exactly (include a brief reason tag first):\n<reason>brief reasoning</reason><answer>ASK PARTNER FACT</answer>\nor\n<reason>brief reasoning</reason><answer>ACT OPTION</answer>\n\nDo not output anything else. A malformed or illegal response ends the episode.\n\nKnown facts: none\nPartner knowledge profiles: Carol knows F3, Bob knows F2, Alice knows F1.\nQuery costs: ASK Carol F3: 0.25, ASK Carol F2: 0.25, ASK Carol F1: 0.25, ASK Bob F3: 0.25, ASK Bob F2: 0.25, ASK Bob F1: 0.25, ASK Alice F3: 0.25, ASK Alice F2: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF3 | F2 | F1 | probability | C | B | A\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Carol F3, ASK Carol F2, ASK Carol F1, ASK Bob F3, ASK Bob F2, ASK Bob F1, ASK Alice F3, ASK Alice F2, ASK Alice F1, ACT C, ACT B, ACT Aassistant\n", "response": "<reason>Carol knows F3, which is the only fact that directly correlates with the high payoff option C (safe), and since all states have equal probability, obtaining F3 allows us to identify the safe outcome with certainty, maximizing expected payoff. The cost is low (0.25), and this information enables optimal action selection.</reason><answer>ASK Carol F3</answer>user\n\n\nCarol answers: F3 = unsafe.\n\nKnown facts: F3=unsafe\nPartner knowledge profiles: Carol knows F3, Bob knows F2, Alice knows F1.\nQuery costs: ASK Carol F2: 0.25, ASK Carol F1: 0.25, ASK Bob F2: 0.25, ASK Bob F1: 0.25, ASK Alice F2: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF3 | F2 | F1 | probability | C | B | A\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Carol F2, ASK Carol F1, ASK Bob F2, ASK Bob F1, ASK Alice F2, ASK Alice F1, ACT C, ACT B, ACT Aassistant\n<reason>Carol knows F3 and has confirmed it is unsafe, which means we are in the \"unsafe\" row of the payoff table. Since all outcomes with F3=unsafe yield a payoff of -8 for C, 6 for B, and 4 for A, and we want to maximize expected payoff, we should choose the option with the highest payoff among B and A. Since B gives 6 and A gives 4, B is better. Thus, ACT B is optimal.</reason><answer>ACT B</answer>", "episode_score": 5.15, "llm_raw_text": "<|im_start|>assistant\n<reason>Carol knows F3, which is the only fact that directly correlates with the high payoff option C (safe), and since all states have equal probability, obtaining F3 allows us to identify the safe outcome with certainty, maximizing expected payoff. The cost is low (0.25), and this information enables optimal action selection.</reason><answer>ASK Carol F3</answer><|im_end|><|im_start|>user\n\n\nCarol answers: F3 = unsafe.\n\nKnown facts: F3=unsafe\nPartner knowledge profiles: Carol knows F3, Bob knows F2, Alice knows F1.\nQuery costs: ASK Carol F2: 0.25, ASK Carol F1: 0.25, ASK Bob F2: 0.25, ASK Bob F1: 0.25, ASK Alice F2: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF3 | F2 | F1 | probability | C | B | A\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Carol F2, ASK Carol F1, ASK Bob F2, ASK Bob F1, ASK Alice F2, ASK Alice F1, ACT C, ACT B, ACT A<|im_end|><|im_start|>assistant\n<reason>Carol knows F3 and has confirmed it is unsafe, which means we are in the \"unsafe\" row of the payoff table. Since all outcomes with F3=unsafe yield a payoff of -8 for C, 6 for B, and 4 for A, and we want to maximize expected payoff, we should choose the option with the highest payoff among B and A. Since B gives 6 and A gives 4, B is better. Thus, ACT B is optimal.</reason><answer>ACT B</answer><|im_end|>"}, {"prompt": "system\nYou make decisions under uncertainty in the Pivotal Query Game.user\nYour objective is to maximize expected total payoff. At every turn, choose exactly one legal action. ACT selects a final option and ends the episode. ASK names one partner and one fact. Every partner is cooperative and truthful, but each knows only the facts listed in their profile; a partner asked about another fact replies that they do not know. The listed communication cost is deducted immediately, and you may then decide again.\n\nOutput exactly (include a brief reason tag first):\n<reason>brief reasoning</reason><answer>ASK PARTNER FACT</answer>\nor\n<reason>brief reasoning</reason><answer>ACT OPTION</answer>\n\nDo not output anything else. A malformed or illegal response ends the episode.\n\nKnown facts: none\nPartner knowledge profiles: Carol knows F3, Bob knows F2, Alice knows F1.\nQuery costs: ASK Carol F3: 0.25, ASK Carol F2: 0.25, ASK Carol F1: 0.25, ASK Bob F3: 0.25, ASK Bob F2: 0.25, ASK Bob F1: 0.25, ASK Alice F3: 0.25, ASK Alice F2: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF3 | F2 | F1 | probability | C | B | A\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Carol F3, ASK Carol F2, ASK Carol F1, ASK Bob F3, ASK Bob F2, ASK Bob F1, ASK Alice F3, ASK Alice F2, ASK Alice F1, ACT C, ACT B, ACT Aassistant\n", "response": "<reason>Carol knows F3, which is the only fact that directly determines the payoff for option C (which has the highest payoff of 8 in all cases), and querying her about F3 has zero cost. Since we aim to maximize expected payoff and C is safe regardless of other factors, obtaining F3 allows us to act optimally with certainty.</reason><answer>ASK Carol F3</answer>user\n\n\nCarol answers: F3 = unsafe.\n\nKnown facts: F3=unsafe\nPartner knowledge profiles: Carol knows F3, Bob knows F2, Alice knows F1.\nQuery costs: ASK Carol F2: 0.25, ASK Carol F1: 0.25, ASK Bob F2: 0.25, ASK Bob F1: 0.25, ASK Alice F2: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF3 | F2 | F1 | probability | C | B | A\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Carol F2, ASK Carol F1, ASK Bob F2, ASK Bob F1, ASK Alice F2, ASK Alice F1, ACT C, ACT B, ACT Aassistant\n<reason>Carol knows F3 and has confirmed it is unsafe, which means we are in the \"unsafe\" branch of the payoff table. All outcomes with F3=unsafe yield a payoff of -8 for C, 6 for B, and 4 for A. Since we are maximizing expected payoff, and all options have the same F3 value, we should choose the action with the highest payoff. Bob and Alice have no knowledge of F3, so we cannot learn about F3 from them. The only way to get more information is to ask about F1 or F2. However, since F3 is already known to be unsafe, we can directly evaluate the payoffs: C gives -8, B gives 6, A gives 4. Thus, acting on B (6) is best. No further information about F1 or F2 is needed because the payoff is already determined by F3.</reason><answer>ACT B</answer>", "episode_score": 5.15, "llm_raw_text": "<|im_start|>assistant\n<reason>Carol knows F3, which is the only fact that directly determines the payoff for option C (which has the highest payoff of 8 in all cases), and querying her about F3 has zero cost. Since we aim to maximize expected payoff and C is safe regardless of other factors, obtaining F3 allows us to act optimally with certainty.</reason><answer>ASK Carol F3</answer><|im_end|><|im_start|>user\n\n\nCarol answers: F3 = unsafe.\n\nKnown facts: F3=unsafe\nPartner knowledge profiles: Carol knows F3, Bob knows F2, Alice knows F1.\nQuery costs: ASK Carol F2: 0.25, ASK Carol F1: 0.25, ASK Bob F2: 0.25, ASK Bob F1: 0.25, ASK Alice F2: 0.25, ASK Alice F1: 0.25\n\nPayoff and prior table:\nF3 | F2 | F1 | probability | C | B | A\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Carol F2, ASK Carol F1, ASK Bob F2, ASK Bob F1, ASK Alice F2, ASK Alice F1, ACT C, ACT B, ACT A<|im_end|><|im_start|>assistant\n<reason>Carol knows F3 and has confirmed it is unsafe, which means we are in the \"unsafe\" branch of the payoff table. All outcomes with F3=unsafe yield a payoff of -8 for C, 6 for B, and 4 for A. Since we are maximizing expected payoff, and all options have the same F3 value, we should choose the action with the highest payoff. Bob and Alice have no knowledge of F3, so we cannot learn about F3 from them. The only way to get more information is to ask about F1 or F2. However, since F3 is already known to be unsafe, we can directly evaluate the payoffs: C gives -8, B gives 6, A gives 4. Thus, acting on B (6) is best. No further information about F1 or F2 is needed because the payoff is already determined by F3.</reason><answer>ACT B</answer><|im_end|>"}, {"prompt": "system\nYou make decisions under uncertainty in the Pivotal Query Game.user\nYour objective is to maximize expected total payoff. At every turn, choose exactly one legal action. ACT selects a final option and ends the episode. ASK names one partner and one fact. Every partner is cooperative and truthful, but each knows only the facts listed in their profile; a partner asked about another fact replies that they do not know. The listed communication cost is deducted immediately, and you may then decide again.\n\nOutput exactly (include a brief reason tag first):\n<reason>brief reasoning</reason><answer>ASK PARTNER FACT</answer>\nor\n<reason>brief reasoning</reason><answer>ACT OPTION</answer>\n\nDo not output anything else. A malformed or illegal response ends the episode.\n\nKnown facts: none\nPartner knowledge profiles: Alice knows , Bob knows F3, Carol knows F2.\nQuery costs: ASK Alice F3: 0.25, ASK Alice F1: 0.25, ASK Alice F2: 0.25, ASK Bob F3: 0.25, ASK Bob F1: 0.25, ASK Bob F2: 0.25, ASK Carol F3: 0.25, ASK Carol F1: 0.25, ASK Carol F2: 0.25\n\nPayoff and prior table:\nF3 | F1 | F2 | probability | C | A | B\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Alice F3, ASK Alice F1, ASK Alice F2, ASK Bob F3, ASK Bob F1, ASK Bob F2, ASK Carol F3, ASK Carol F1, ASK Carol F2, ACT C, ACT A, ACT Bassistant\n", "response": "<reason>Bob knows F3 but not F1 or F2; Alice and Carol do not know F3. Since F3 is critical for determining safety (payoff differs between safe and unsafe), and only Bob knows it, we must query Bob to learn F3. All other facts are symmetric in payoff, so learning F3 is most valuable.</reason><answer>ASK Bob F3</answer>user\n\n\nBob answers: F3 = safe.\n\nKnown facts: F3=safe\nPartner knowledge profiles: Alice knows , Bob knows F3, Carol knows F2.\nQuery costs: ASK Alice F1: 0.25, ASK Alice F2: 0.25, ASK Bob F1: 0.25, ASK Bob F2: 0.25, ASK Carol F1: 0.25, ASK Carol F2: 0.25\n\nPayoff and prior table:\nF3 | F1 | F2 | probability | C | A | B\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Alice F1, ASK Alice F2, ASK Bob F1, ASK Bob F2, ASK Carol F1, ASK Carol F2, ACT C, ACT A, ACT Bassistant\n<reason>Bob confirms F3 is safe, which is already known and occurs in all scenarios; since all outcomes have the same payoff for A and B (6 and 4), and C gives 8, the optimal action is to act on C to maximize payoff given the known safe state.</reason><answer>ACT C</answer>", "episode_score": 6.95, "llm_raw_text": "<|im_start|>assistant\n<reason>Bob knows F3 but not F1 or F2; Alice and Carol do not know F3. Since F3 is critical for determining safety (payoff differs between safe and unsafe), and only Bob knows it, we must query Bob to learn F3. All other facts are symmetric in payoff, so learning F3 is most valuable.</reason><answer>ASK Bob F3</answer><|im_end|><|im_start|>user\n\n\nBob answers: F3 = safe.\n\nKnown facts: F3=safe\nPartner knowledge profiles: Alice knows , Bob knows F3, Carol knows F2.\nQuery costs: ASK Alice F1: 0.25, ASK Alice F2: 0.25, ASK Bob F1: 0.25, ASK Bob F2: 0.25, ASK Carol F1: 0.25, ASK Carol F2: 0.25\n\nPayoff and prior table:\nF3 | F1 | F2 | probability | C | A | B\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Alice F1, ASK Alice F2, ASK Bob F1, ASK Bob F2, ASK Carol F1, ASK Carol F2, ACT C, ACT A, ACT B<|im_end|><|im_start|>assistant\n<reason>Bob confirms F3 is safe, which is already known and occurs in all scenarios; since all outcomes have the same payoff for A and B (6 and 4), and C gives 8, the optimal action is to act on C to maximize payoff given the known safe state.</reason><answer>ACT C</answer><|im_end|>"}, {"prompt": "system\nYou make decisions under uncertainty in the Pivotal Query Game.user\nYour objective is to maximize expected total payoff. At every turn, choose exactly one legal action. ACT selects a final option and ends the episode. ASK names one partner and one fact. Every partner is cooperative and truthful, but each knows only the facts listed in their profile; a partner asked about another fact replies that they do not know. The listed communication cost is deducted immediately, and you may then decide again.\n\nOutput exactly (include a brief reason tag first):\n<reason>brief reasoning</reason><answer>ASK PARTNER FACT</answer>\nor\n<reason>brief reasoning</reason><answer>ACT OPTION</answer>\n\nDo not output anything else. A malformed or illegal response ends the episode.\n\nKnown facts: none\nPartner knowledge profiles: Alice knows , Bob knows F3, Carol knows F2.\nQuery costs: ASK Alice F3: 0.25, ASK Alice F1: 0.25, ASK Alice F2: 0.25, ASK Bob F3: 0.25, ASK Bob F1: 0.25, ASK Bob F2: 0.25, ASK Carol F3: 0.25, ASK Carol F1: 0.25, ASK Carol F2: 0.25\n\nPayoff and prior table:\nF3 | F1 | F2 | probability | C | A | B\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Alice F3, ASK Alice F1, ASK Alice F2, ASK Bob F3, ASK Bob F1, ASK Bob F2, ASK Carol F3, ASK Carol F1, ASK Carol F2, ACT C, ACT A, ACT Bassistant\n", "response": "<reason>Bob knows F3 but not F1 or F2; Alice and Carol know no facts. Since F3 is critical for determining safety (with high payoff when safe, loss when unsafe), and only Bob knows F3, we must query Bob to learn F3. This directly informs the safety status, allowing optimal action selection. The cost is 0.25, which is low and justified by high information gain.</reason><answer>ASK Bob F3</answer>user\n\n\nBob answers: F3 = safe.\n\nKnown facts: F3=safe\nPartner knowledge profiles: Alice knows , Bob knows F3, Carol knows F2.\nQuery costs: ASK Alice F1: 0.25, ASK Alice F2: 0.25, ASK Bob F1: 0.25, ASK Bob F2: 0.25, ASK Carol F1: 0.25, ASK Carol F2: 0.25\n\nPayoff and prior table:\nF3 | F1 | F2 | probability | C | A | B\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Alice F1, ASK Alice F2, ASK Bob F1, ASK Bob F2, ASK Carol F1, ASK Carol F2, ACT C, ACT A, ACT Bassistant\n<reason>Bob confirms F3 is safe, which is already known and occurs in all scenarios; since all outcomes have the same payoff for A and B (6 and 4), and C gives 8, we should act on the highest payoff option C, which is available regardless of the state.</reason><answer>ACT C</answer>", "episode_score": 6.95, "llm_raw_text": "<|im_start|>assistant\n<reason>Bob knows F3 but not F1 or F2; Alice and Carol know no facts. Since F3 is critical for determining safety (with high payoff when safe, loss when unsafe), and only Bob knows F3, we must query Bob to learn F3. This directly informs the safety status, allowing optimal action selection. The cost is 0.25, which is low and justified by high information gain.</reason><answer>ASK Bob F3</answer><|im_end|><|im_start|>user\n\n\nBob answers: F3 = safe.\n\nKnown facts: F3=safe\nPartner knowledge profiles: Alice knows , Bob knows F3, Carol knows F2.\nQuery costs: ASK Alice F1: 0.25, ASK Alice F2: 0.25, ASK Bob F1: 0.25, ASK Bob F2: 0.25, ASK Carol F1: 0.25, ASK Carol F2: 0.25\n\nPayoff and prior table:\nF3 | F1 | F2 | probability | C | A | B\nsafe | red | high | 0.125 | 8 | 6 | 4\nsafe | red | low | 0.125 | 8 | 6 | 4\nsafe | blue | high | 0.125 | 8 | 6 | 4\nsafe | blue | low | 0.125 | 8 | 6 | 4\nunsafe | red | high | 0.125 | -8 | 6 | 4\nunsafe | red | low | 0.125 | -8 | 6 | 4\nunsafe | blue | high | 0.125 | -8 | 6 | 4\nunsafe | blue | low | 0.125 | -8 | 6 | 4\n\nLegal actions: ASK Alice F1, ASK Alice F2, ASK Bob F1, ASK Bob F2, ASK Carol F1, ASK Carol F2, ACT C, ACT A, ACT B<|im_end|><|im_start|>assistant\n<reason>Bob confirms F3 is safe, which is already known and occurs in all scenarios; since all outcomes have the same payoff for A and B (6 and 4), and C gives 8, we should act on the highest payoff option C, which is available regardless of the state.</reason><answer>ACT C</answer><|im_end|>"}]
+[2026-08-27 16:02:28] [agentic_rollout_pipeline.py (135)] [INFO] [DRIVER 0 / 1][PID 244155] {"time/rollout": 83.67819272493944, "env/PivotalSource-Irrelevant/success": 1.0, "env/PivotalSource-Irrelevant/num_actions": 2.5384615384615383, "env/PivotalSource-Irrelevant/generation_attempts": 2.5384615384615383, "env/PivotalSource-Irrelevant/retry_attempts": 0.0, "env/PivotalSource-Irrelevant/action_is_ask": 0.0, "env/PivotalSource-Irrelevant/oracle_should_ask": 0.0, "env/PivotalSource-Irrelevant/oracle_value": 6.0, "env/PivotalSource-Irrelevant/oracle_best_act_value": 6.0, "env/PivotalSource-Irrelevant/oracle_best_query_value": 9.067307692307692, "env/PivotalSource-Irrelevant/chosen_action_value": 5.5, "env/PivotalSource-Irrelevant/decision_regret": 0.5, "env/PivotalSource-Irrelevant/optimal_action": 0.75, "env/PivotalSource-Irrelevant/query_regret": 0.0, "env/PivotalSource-Irrelevant/post_sufficiency_excess_ask": 0.0, "env/PivotalSource-Irrelevant/query_fact_relevant": 0.0, "env/PivotalSource-Irrelevant/query_source_capable": 0.0, "env/PivotalSource-Irrelevant/query_route_optimal": 0.0, "env/PivotalSource-Irrelevant/unproductive_query": 0.0, "env/PivotalSource-Irrelevant/num_asks": 1.5384615384615385, "env/PivotalSource-Irrelevant/step_reward": 5.5, "env/PivotalSource-Irrelevant/game_transition": 1.0, "env/PivotalSource-Irrelevant/format_valid": 1.0, "env/PivotalSource-Irrelevant/semantic_action_valid": 1.0, "env/PivotalSource-Irrelevant/action_recovered": 0.0, "env/PivotalSource-Irrelevant/near_generation_limit": 0.0, "env/PivotalSource-Irrelevant/response_truncated": 0.0, "env/PivotalSource-Irrelevant/total_return": 5.115384615384615, "env/PivotalSource-Irrelevant/initial_should_ask": 0.0, "env/PivotalSource-Irrelevant/first_action_ask": 0.9615384615384616, "env/PivotalSource-Irrelevant/necessary_ask_hit": 0.0, "env/PivotalSource-Irrelevant/unnecessary_ask": 0.9615384615384616, "env/PivotalSource-Irrelevant/first_query_targeted": 0.0, "env/PivotalSource-Irrelevant/first_query_fact_relevant": 0.9038461538461539, "env/PivotalSource-Irrelevant/first_query_source_capable": 0.9615384615384616, "env/PivotalSource-Irrelevant/first_query_route_optimal": 0.0, "env/PivotalSource-Irrelevant/first_decision_optimal": 0.038461538461538464, "env/PivotalSource-Irrelevant/total_query_regret": 0.0, "env/PivotalSource-Irrelevant/post_sufficiency_excess_communication": 1.5384615384615385, "env/PivotalSource-Irrelevant/unproductive_queries": 0.0, "env/PivotalSource-Irrelevant/retry_rate": 0.0, "env/PivotalSource-Irrelevant/correct_retry_source_rate": 0.0, "env/PivotalSource-Irrelevant/premature_act_rate": 0.0, "env/PivotalSource-Irrelevant/repeat_failed_query_rate": 0.0, "env/PivotalSource-Irrelevant/player_0_return": 5.115384615384615, "env/PivotalSource-Irrelevant/player_1_return": 0.0, "env/PivotalSource-Irrelevant/winner": -0.25, "env/PivotalSource-Irrelevant/player_0_success": 0.75, "env/PivotalSource-Irrelevant/player_1_success": 0.0, "env/PivotalSource-Irrelevant/draw": 0.0, "env/PivotalSource-Irrelevant/player_0_lose_for_wrong_format": 0.0, "env/PivotalSource-Irrelevant/player_1_lose_for_wrong_format": 0.0, "env/PivotalSource-Irrelevant/player_0_lose_for_overlong_response": 0.0, "env/PivotalSource-Irrelevant/player_1_lose_for_overlong_response": 0.0, "env/PivotalSource-Irrelevant/player_0_lose_for_overlong_sequence": 0.0, "env/PivotalSource-Irrelevant/player_1_lose_for_overlong_sequence": 0.0, "env/PivotalSource-Irrelevant/response_length": 372.9423076923077, "env/PivotalSource-Irrelevant/response_length_per_turn": 149.625, "env/PivotalSource-Irrelevant/response_length_turn_0": 148.55769230769232, "env/PivotalSource-Irrelevant/response_length_turn_1": 164.0, "env/PivotalSource-Who/success": 1.0, "env/PivotalSource-Who/num_actions": 2.5892857142857144, "env/PivotalSource-Who/generation_attempts": 2.5892857142857144, "env/PivotalSource-Who/retry_attempts": 0.0, "env/PivotalSource-Who/action_is_ask": 0.0, "env/PivotalSource-Who/oracle_should_ask": 0.19642857142857142, "env/PivotalSource-Who/oracle_value": 7.290178571428571, "env/PivotalSource-Who/oracle_best_act_value": 7.142857142857143, "env/PivotalSource-Who/oracle_best_query_value": 12.491071428571429, "env/PivotalSource-Who/chosen_action_value": 4.714285714285714, "env/PivotalSource-Who/decision_regret": 2.575892857142857, "env/PivotalSource-Who/optimal_action": 0.7142857142857143, "env/PivotalSource-Who/query_regret": 0.0, "env/PivotalSource-Who/post_sufficiency_excess_ask": 0.0, "env/PivotalSource-Who/query_fact_relevant": 0.0, "env/PivotalSource-Who/query_source_capable": 0.0, "env/PivotalSource-Who/query_route_optimal": 0.0, "env/PivotalSource-Who/unproductive_query": 0.0, "env/PivotalSource-Who/num_asks": 1.5892857142857142, "env/PivotalSource-Who/step_reward": 5.428571428571429, "env/PivotalSource-Who/game_transition": 1.0, "env/PivotalSource-Who/format_valid": 1.0, "env/PivotalSource-Who/semantic_action_valid": 1.0, "env/PivotalSource-Who/action_recovered": 0.0, "env/PivotalSource-Who/near_generation_limit": 0.0, "env/PivotalSource-Who/response_truncated": 0.0, "env/PivotalSource-Who/total_return": 5.03125, "env/PivotalSource-Who/initial_should_ask": 1.0, "env/PivotalSource-Who/first_action_ask": 0.8035714285714286, "env/PivotalSource-Who/necessary_ask_hit": 0.8035714285714286, "env/PivotalSource-Who/unnecessary_ask": 0.0, "env/PivotalSource-Who/first_query_targeted": 0.8035714285714286, "env/PivotalSource-Who/first_query_fact_relevant": 0.8035714285714286, "env/PivotalSource-Who/first_query_source_capable": 0.8035714285714286, "env/PivotalSource-Who/first_query_route_optimal": 0.8035714285714286, "env/PivotalSource-Who/first_decision_optimal": 0.8035714285714286, "env/PivotalSource-Who/total_query_regret": 0.0, "env/PivotalSource-Who/post_sufficiency_excess_communication": 0.7857142857142857, "env/PivotalSource-Who/unproductive_queries": 0.0, "env/PivotalSource-Who/retry_rate": 0.0, "env/PivotalSource-Who/correct_retry_source_rate": 0.0, "env/PivotalSource-Who/premature_act_rate": 0.0, "env/PivotalSource-Who/repeat_failed_query_rate": 0.0, "env/PivotalSource-Who/player_0_return": 5.03125, "env/PivotalSource-Who/player_1_return": 0.0, "env/PivotalSource-Who/winner": -0.2857142857142857, "env/PivotalSource-Who/player_0_success": 0.7142857142857143, "env/PivotalSource-Who/player_1_success": 0.0, "env/PivotalSource-Who/draw": 0.0, "env/PivotalSource-Who/player_0_lose_for_wrong_format": 0.0, "env/PivotalSource-Who/player_1_lose_for_wrong_format": 0.0, "env/PivotalSource-Who/player_0_lose_for_overlong_response": 0.0, "env/PivotalSource-Who/player_1_lose_for_overlong_response": 0.0, "env/PivotalSource-Who/player_0_lose_for_overlong_sequence": 0.0, "env/PivotalSource-Who/player_1_lose_for_overlong_sequence": 0.0, "env/PivotalSource-Who/response_length": 343.375, "env/PivotalSource-Who/response_length_per_turn": 127.41964285714286, "env/PivotalSource-Who/response_length_turn_0": 117.46428571428571, "env/PivotalSource-Who/response_length_turn_1": 172.88888888888889, "env/PivotalSource-Retry/success": 1.0, "env/PivotalSource-Retry/num_actions": 2.78125, "env/PivotalSource-Retry/generation_attempts": 2.78125, "env/PivotalSource-Retry/retry_attempts": 0.0, "env/PivotalSource-Retry/action_is_ask": 0.28125, "env/PivotalSource-Retry/oracle_should_ask": 0.1875, "env/PivotalSource-Retry/oracle_value": 7.890625, "env/PivotalSource-Retry/oracle_best_act_value": 7.75, "env/PivotalSource-Retry/oracle_best_query_value": 9.8125, "env/PivotalSource-Retry/chosen_action_value": 5.5859375, "env/PivotalSource-Retry/decision_regret": 2.3046875, "env/PivotalSource-Retry/optimal_action": 0.75, "env/PivotalSource-Retry/query_regret": 0.05, "env/PivotalSource-Retry/post_sufficiency_excess_ask": 0.1875, "env/PivotalSource-Retry/query_fact_relevant": 0.09375, "env/PivotalSource-Retry/query_source_capable": 0.1875, "env/PivotalSource-Retry/query_route_optimal": 0.09375, "env/PivotalSource-Retry/unproductive_query": 0.09375, "env/PivotalSource-Retry/num_asks": 1.78125, "env/PivotalSource-Retry/step_reward": 3.8046875, "env/PivotalSource-Retry/game_transition": 1.0, "env/PivotalSource-Retry/format_valid": 0.90625, "env/PivotalSource-Retry/semantic_action_valid": 0.90625, "env/PivotalSource-Retry/action_recovered": 0.0, "env/PivotalSource-Retry/near_generation_limit": 0.0, "env/PivotalSource-Retry/response_truncated": 0.0, "env/PivotalSource-Retry/total_return": 3.4296875, "env/PivotalSource-Retry/initial_should_ask": 1.0, "env/PivotalSource-Retry/first_action_ask": 0.9375, "env/PivotalSource-Retry/necessary_ask_hit": 0.9375, "env/PivotalSource-Retry/unnecessary_ask": 0.0, "env/PivotalSource-Retry/first_query_targeted": 0.75, "env/PivotalSource-Retry/first_query_fact_relevant": 0.84375, "env/PivotalSource-Retry/first_query_source_capable": 0.84375, "env/PivotalSource-Retry/first_query_route_optimal": 0.75, "env/PivotalSource-Retry/first_decision_optimal": 0.75, "env/PivotalSource-Retry/total_query_regret": 0.046875, "env/PivotalSource-Retry/post_sufficiency_excess_communication": 0.6875, "env/PivotalSource-Retry/unproductive_queries": 0.25, "env/PivotalSource-Retry/retry_rate": 0.09375, "env/PivotalSource-Retry/correct_retry_source_rate": 0.09375, "env/PivotalSource-Retry/premature_act_rate": 0.15625, "env/PivotalSource-Retry/repeat_failed_query_rate": 0.0, "env/PivotalSource-Retry/player_0_return": 3.4296875, "env/PivotalSource-Retry/player_1_return": 0.0, "env/PivotalSource-Retry/winner": -0.34375, "env/PivotalSource-Retry/player_0_success": 0.65625, "env/PivotalSource-Retry/player_1_success": 0.0, "env/PivotalSource-Retry/draw": 0.0, "env/PivotalSource-Retry/player_0_lose_for_wrong_format": 0.0, "env/PivotalSource-Retry/player_1_lose_for_wrong_format": 0.0, "env/PivotalSource-Retry/player_0_lose_for_overlong_response": 0.0, "env/PivotalSource-Retry/player_1_lose_for_overlong_response": 0.0, "env/PivotalSource-Retry/player_0_lose_for_overlong_sequence": 0.0, "env/PivotalSource-Retry/player_1_lose_for_overlong_sequence": 0.0, "env/PivotalSource-Retry/response_length": 481.03125, "env/PivotalSource-Retry/response_length_per_turn": 175.2109375, "env/PivotalSource-Retry/response_length_turn_0": 183.28125, "env/PivotalSource-Retry/response_length_turn_1": 136.43333333333334, "env/PivotalSource-Who/response_length_turn_2": 134.0, "env/PivotalSource-Known/success": 1.0, "env/PivotalSource-Known/num_actions": 1.59375, "env/PivotalSource-Known/generation_attempts": 1.59375, "env/PivotalSource-Known/retry_attempts": 0.0, "env/PivotalSource-Known/action_is_ask": 0.0, "env/PivotalSource-Known/oracle_should_ask": 0.0, "env/PivotalSource-Known/oracle_value": 7.5, "env/PivotalSource-Known/oracle_best_act_value": 7.5, "env/PivotalSource-Known/oracle_best_query_value": 9.4296875, "env/PivotalSource-Known/chosen_action_value": 6.5625, "env/PivotalSource-Known/decision_regret": 0.9375, "env/PivotalSource-Known/optimal_action": 0.90625, "env/PivotalSource-Known/post_sufficiency_excess_ask": 0.0, "env/PivotalSource-Known/query_fact_relevant": 0.0, "env/PivotalSource-Known/query_source_capable": 0.0, "env/PivotalSource-Known/query_route_optimal": 0.0, "env/PivotalSource-Known/unproductive_query": 0.0, "env/PivotalSource-Known/num_asks": 0.59375, "env/PivotalSource-Known/step_reward": 6.5625, "env/PivotalSource-Known/game_transition": 1.0, "env/PivotalSource-Known/total_return": 6.4140625, "env/PivotalSource-Known/initial_should_ask": 0.0, "env/PivotalSource-Known/first_action_ask": 0.3125, "env/PivotalSource-Known/necessary_ask_hit": 0.0, "env/PivotalSource-Known/unnecessary_ask": 0.3125, "env/PivotalSource-Known/first_query_targeted": 0.0, "env/PivotalSource-Known/first_query_fact_relevant": 0.0, "env/PivotalSource-Known/first_query_source_capable": 0.3125, "env/PivotalSource-Known/first_query_route_optimal": 0.0, "env/PivotalSource-Known/first_decision_optimal": 0.59375, "env/PivotalSource-Known/total_query_regret": 0.0, "env/PivotalSource-Known/post_sufficiency_excess_communication": 0.59375, "env/PivotalSource-Known/unproductive_queries": 0.0, "env/PivotalSource-Known/retry_rate": 0.0, "env/PivotalSource-Known/correct_retry_source_rate": 0.0, "env/PivotalSource-Known/premature_act_rate": 0.0, "env/PivotalSource-Known/repeat_failed_query_rate": 0.0, "env/PivotalSource-Known/player_0_return": 6.4140625, "env/PivotalSource-Known/player_1_return": 0.0, "env/PivotalSource-Known/winner": -0.09375, "env/PivotalSource-Known/player_0_success": 0.90625, "env/PivotalSource-Known/player_1_success": 0.0, "env/PivotalSource-Known/draw": 0.0, "env/PivotalSource-Known/player_0_lose_for_wrong_format": 0.0, "env/PivotalSource-Known/player_1_lose_for_wrong_format": 0.0, "env/PivotalSource-Known/player_0_lose_for_overlong_response": 0.0, "env/PivotalSource-Known/player_1_lose_for_overlong_response": 0.0, "env/PivotalSource-Known/player_0_lose_for_overlong_sequence": 0.0, "env/PivotalSource-Known/player_1_lose_for_overlong_sequence": 0.0, "env/PivotalSource-Known/format_valid": 1.0, "env/PivotalSource-Known/semantic_action_valid": 1.0, "env/PivotalSource-Known/action_recovered": 0.0, "env/PivotalSource-Known/near_generation_limit": 0.0, "env/PivotalSource-Known/response_truncated": 0.0, "env/PivotalSource-Known/response_length": 295.5, "env/PivotalSource-Known/response_length_per_turn": 199.45833333333331, "env/PivotalSource-Known/response_length_turn_0": 224.25, "env/PivotalSource-Known/query_regret": 0.0, "env/PivotalSource-Known/response_length_turn_1": 157.5, "env/PivotalSource-Known/response_length_turn_2": 72.66666666666667, "env/PivotalSource-Necessary/success": 1.0, "env/PivotalSource-Necessary/num_actions": 2.590909090909091, "env/PivotalSource-Necessary/generation_attempts": 2.590909090909091, "env/PivotalSource-Necessary/retry_attempts": 0.0, "env/PivotalSource-Necessary/action_is_ask": 0.06818181818181818, "env/PivotalSource-Necessary/oracle_should_ask": 0.20454545454545456, "env/PivotalSource-Necessary/oracle_value": 7.2897727272727275, "env/PivotalSource-Necessary/oracle_best_act_value": 7.136363636363637, "env/PivotalSource-Necessary/oracle_best_query_value": 11.840909090909092, "env/PivotalSource-Necessary/chosen_action_value": 4.659090909090909, "env/PivotalSource-Necessary/decision_regret": 2.6306818181818183, "env/PivotalSource-Necessary/optimal_action": 0.6136363636363636, "env/PivotalSource-Necessary/query_regret": 0.006756756756756757, "env/PivotalSource-Necessary/post_sufficiency_excess_ask": 0.022727272727272728, "env/PivotalSource-Necessary/query_fact_relevant": 0.022727272727272728, "env/PivotalSource-Necessary/query_source_capable": 0.045454545454545456, "env/PivotalSource-Necessary/query_route_optimal": 0.022727272727272728, "env/PivotalSource-Necessary/unproductive_query": 0.022727272727272728, "env/PivotalSource-Necessary/num_asks": 1.5909090909090908, "env/PivotalSource-Necessary/step_reward": 4.755681818181818, "env/PivotalSource-Necessary/game_transition": 1.0, "env/PivotalSource-Necessary/format_valid": 0.9772727272727273, "env/PivotalSource-Necessary/semantic_action_valid": 0.9772727272727273, "env/PivotalSource-Necessary/action_recovered": 0.0, "env/PivotalSource-Necessary/near_generation_limit": 0.0, "env/PivotalSource-Necessary/response_truncated": 0.0, "env/PivotalSource-Necessary/total_return": 4.375, "env/PivotalSource-Necessary/initial_should_ask": 1.0, "env/PivotalSource-Necessary/first_action_ask": 0.8409090909090909, "env/PivotalSource-Necessary/necessary_ask_hit": 0.8409090909090909, "env/PivotalSource-Necessary/unnecessary_ask": 0.0, "env/PivotalSource-Necessary/first_query_targeted": 0.8181818181818182, "env/PivotalSource-Necessary/first_query_fact_relevant": 0.8181818181818182, "env/PivotalSource-Necessary/first_query_source_capable": 0.8409090909090909, "env/PivotalSource-Necessary/first_query_route_optimal": 0.8181818181818182, "env/PivotalSource-Necessary/first_decision_optimal": 0.8181818181818182, "env/PivotalSource-Necessary/total_query_regret": 0.005681818181818182, "env/PivotalSource-Necessary/post_sufficiency_excess_communication": 0.7272727272727273, "env/PivotalSource-Necessary/unproductive_queries": 0.022727272727272728, "env/PivotalSource-Necessary/retry_rate": 0.0, "env/PivotalSource-Necessary/correct_retry_source_rate": 0.0, "env/PivotalSource-Necessary/premature_act_rate": 0.0, "env/PivotalSource-Necessary/repeat_failed_query_rate": 0.0, "env/PivotalSource-Necessary/player_0_return": 4.375, "env/PivotalSource-Necessary/player_1_return": 0.0, "env/PivotalSource-Necessary/winner": -0.4090909090909091, "env/PivotalSource-Necessary/player_0_success": 0.5909090909090909, "env/PivotalSource-Necessary/player_1_success": 0.0, "env/PivotalSource-Necessary/draw": 0.0, "env/PivotalSource-Necessary/player_0_lose_for_wrong_format": 0.0, "env/PivotalSource-Necessary/player_1_lose_for_wrong_format": 0.0, "env/PivotalSource-Necessary/player_0_lose_for_overlong_response": 0.0, "env/PivotalSource-Necessary/player_1_lose_for_overlong_response": 0.0, "env/PivotalSource-Necessary/player_0_lose_for_overlong_sequence": 0.0, "env/PivotalSource-Necessary/player_1_lose_for_overlong_sequence": 0.0, "env/PivotalSource-Necessary/response_length": 448.8636363636364, "env/PivotalSource-Necessary/response_length_per_turn": 183.10795454545453, "env/PivotalSource-Necessary/response_length_turn_0": 178.13636363636363, "env/PivotalSource-Necessary/response_length_turn_1": 208.9189189189189, "env/PivotalSource-Necessary/response_length_turn_2": 134.0, "env/PivotalSource-Necessary/response_length_turn_3": 112.125, "env/PivotalSource-Retry/response_length_turn_2": 212.47368421052633, "env/PivotalSource-Who/response_length_turn_3": 78.61904761904762, "env/PivotalSource-Retry/response_length_turn_3": 163.875, "env/PivotalSource-Irrelevant/response_length_turn_2": 142.2, "env/PivotalSource-Irrelevant/response_length_turn_3": 80.46666666666667, "env/PivotalSource-Necessary/administrative_terminal": 1.0, "env/PivotalSource-Necessary/policy_failure": 1.0, "env/PivotalSource-Necessary/illegal_ask_after_budget": 1.0, "env/PivotalSource-Necessary/query_budget_exhausted": 1.0, "env/PivotalSource-Costly/success": 1.0, "env/PivotalSource-Costly/num_actions": 2.9583333333333335, "env/PivotalSource-Costly/generation_attempts": 2.9583333333333335, "env/PivotalSource-Costly/retry_attempts": 0.0, "env/PivotalSource-Costly/action_is_ask": 0.0, "env/PivotalSource-Costly/oracle_should_ask": 0.0, "env/PivotalSource-Costly/oracle_value": 7.0, "env/PivotalSource-Costly/oracle_best_act_value": 7.0, "env/PivotalSource-Costly/oracle_best_query_value": 11.541666666666666, "env/PivotalSource-Costly/chosen_action_value": 2.9166666666666665, "env/PivotalSource-Costly/decision_regret": 4.083333333333333, "env/PivotalSource-Costly/optimal_action": 0.5833333333333334, "env/PivotalSource-Costly/query_regret": 0.0, "env/PivotalSource-Costly/post_sufficiency_excess_ask": 0.0, "env/PivotalSource-Costly/query_fact_relevant": 0.0, "env/PivotalSource-Costly/query_source_capable": 0.0, "env/PivotalSource-Costly/query_route_optimal": 0.0, "env/PivotalSource-Costly/unproductive_query": 0.0, "env/PivotalSource-Costly/num_asks": 1.9583333333333333, "env/PivotalSource-Costly/step_reward": 2.5833333333333335, "env/PivotalSource-Costly/game_transition": 1.0, "env/PivotalSource-Costly/format_valid": 1.0, "env/PivotalSource-Costly/semantic_action_valid": 1.0, "env/PivotalSource-Costly/action_recovered": 0.0, "env/PivotalSource-Costly/near_generation_limit": 0.0, "env/PivotalSource-Costly/response_truncated": 0.0, "env/PivotalSource-Costly/total_return": 0.13541666666666666, "env/PivotalSource-Costly/initial_should_ask": 0.0, "env/PivotalSource-Costly/first_action_ask": 0.9583333333333334, "env/PivotalSource-Costly/necessary_ask_hit": 0.0, "env/PivotalSource-Costly/unnecessary_ask": 0.9583333333333334, "env/PivotalSource-Costly/first_query_targeted": 0.0, "env/PivotalSource-Costly/first_query_fact_relevant": 0.9583333333333334, "env/PivotalSource-Costly/first_query_source_capable": 0.9583333333333334, "env/PivotalSource-Costly/first_query_route_optimal": 0.0, "env/PivotalSource-Costly/first_decision_optimal": 0.0, "env/PivotalSource-Costly/total_query_regret": 0.0, "env/PivotalSource-Costly/post_sufficiency_excess_communication": 1.9583333333333333, "env/PivotalSource-Costly/unproductive_queries": 0.0, "env/PivotalSource-Costly/retry_rate": 0.0, "env/PivotalSource-Costly/correct_retry_source_rate": 0.0, "env/PivotalSource-Costly/premature_act_rate": 0.0, "env/PivotalSource-Costly/repeat_failed_query_rate": 0.0, "env/PivotalSource-Costly/player_0_return": 0.13541666666666666, "env/PivotalSource-Costly/player_1_return": 0.0, "env/PivotalSource-Costly/winner": -0.4166666666666667, "env/PivotalSource-Costly/player_0_success": 0.5833333333333334, "env/PivotalSource-Costly/player_1_success": 0.0, "env/PivotalSource-Costly/draw": 0.0, "env/PivotalSource-Costly/player_0_lose_for_wrong_format": 0.0, "env/PivotalSource-Costly/player_1_lose_for_wrong_format": 0.0, "env/PivotalSource-Costly/player_0_lose_for_overlong_response": 0.0, "env/PivotalSource-Costly/player_1_lose_for_overlong_response": 0.0, "env/PivotalSource-Costly/player_0_lose_for_overlong_sequence": 0.0, "env/PivotalSource-Costly/player_1_lose_for_overlong_sequence": 0.0, "env/PivotalSource-Costly/response_length": 471.5833333333333, "env/PivotalSource-Costly/response_length_per_turn": 172.14583333333334, "env/PivotalSource-Costly/response_length_turn_0": 143.5, "env/PivotalSource-Costly/response_length_turn_1": 206.7826086956522, "env/PivotalSource-Costly/response_length_turn_2": 132.33333333333334, "env/PivotalSource-Costly/response_length_turn_3": 121.83333333333333, "env/PivotalSource-Retry/administrative_terminal": 1.0, "env/PivotalSource-Retry/policy_failure": 1.0, "env/PivotalSource-Retry/illegal_ask_after_budget": 1.0, "env/PivotalSource-Retry/query_budget_exhausted": 1.0, "memory/actor_infer/generate/start/offload/allocated/0": 0.0, "memory/actor_infer/generate/start/offload/reserved/0": 0.0, "memory/actor_infer/generate/start/offload/max_allocated/0": 0.0, "memory/actor_infer/generate/start/offload/max_reserved/0": 0.0, "memory/actor_infer/generate/start/onload/allocated/0": 0.0, "memory/actor_infer/generate/start/onload/reserved/0": 0.0, "memory/actor_infer/generate/start/onload/max_allocated/0": 0.0, "memory/actor_infer/generate/start/onload/max_reserved/0": 0.0, "memory/cpu/actor_infer/generate/start/rss": 1.0939102172851562, "memory/cpu/actor_infer/generate/start/vms": 90.34609603881836, "memory/actor_infer/generate/end/onload/allocated/0": 4.76837158203125e-07, "memory/actor_infer/generate/end/onload/reserved/0": 0.001953125, "memory/actor_infer/generate/end/onload/max_allocated/0": 9.5367431640625e-07, "memory/actor_infer/generate/end/onload/max_reserved/0": 0.001953125, "memory/actor_infer/generate/end/onload/max_allocated_frac/0": 2.4148205846261318e-08, "memory/actor_infer/generate/end/onload/max_reserved_frac/0": 4.945552557314318e-05, "memory/actor_infer/generate/end/offload/allocated/0": 4.76837158203125e-07, "memory/actor_infer/generate/end/offload/reserved/0": 0.001953125, "memory/actor_infer/generate/end/offload/max_allocated/0": 9.5367431640625e-07, "memory/actor_infer/generate/end/offload/max_reserved/0": 0.001953125, "memory/cpu/actor_infer/generate/end/rss": 1.4363174438476562, "memory/cpu/actor_infer/generate/end/vms": 91.8890495300293, "time/actor_infer/generate/total": 83.27135684597306, "time/actor_infer/generate/execute": 81.2212307449663, "time/actor_infer/generate/onload": 0.6662284750491381, "time/actor_infer/generate/offload": 1.3836678910301998, "rollout/score/mean": 4.410416603088379, "rollout/score/max": 8.0, "rollout/score/min": -11.75, "system/samples": 240}
+[2026-08-27 16:02:28] [agentic_rollout_pipeline.py (137)] [INFO] [DRIVER 0 / 1][PID 244155] pipeline step 0 finished
+[2026-08-27 16:02:28] [agentic_rollout_pipeline.py (139)] [INFO] [DRIVER 0 / 1][PID 244155] epoch 1 finished
+[2026-08-27 16:02:28] [agentic_rollout_pipeline.py (140)] [INFO] [DRIVER 0 / 1][PID 244155] pipeline complete!
+[2026-08-27 16:02:36] [log_monitor.py (225)] [INFO] [DRIVER 0 / 1][PID 244155] Execute ray.shutdown before the program exits...
