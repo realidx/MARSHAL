@@ -5,6 +5,7 @@ import traceback
 from contextlib import nullcontext
 from dataclasses import dataclass, field, asdict
 from itertools import zip_longest
+from numbers import Real
 from threading import Thread, Lock
 from typing import Dict, List, Optional, Union, Tuple
 
@@ -56,7 +57,15 @@ index_table = {
 
 def _is_numeric_metric_value(value) -> bool:
     """Return whether an environment diagnostic can be aggregated numerically."""
-    return value is not None and not isinstance(value, str)
+    if isinstance(value, Real):
+        return True
+    # Keep numpy scalar metrics supported while excluding arrays and complex
+    # values.  Structured diagnostics such as Item Game's ``before`` snapshot
+    # are dicts and must not reach float() in the metric aggregation path.
+    return (
+        isinstance(value, np.number)
+        and not np.iscomplexobj(value)
+    )
 
 
 @dataclass

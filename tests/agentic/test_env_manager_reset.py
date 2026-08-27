@@ -56,5 +56,7 @@ def test_reset_seeds_history_for_built_in_opponent_that_moves_first():
 def test_optional_environment_diagnostics_are_not_numeric_metrics():
     assert _is_numeric_metric_value(None) is False
     assert _is_numeric_metric_value("metadata") is False
+    assert _is_numeric_metric_value({"before": {"EGO": ()}}) is False
+    assert _is_numeric_metric_value([1.0]) is False
     assert _is_numeric_metric_value(0.0) is True
     assert _is_numeric_metric_value(False) is True
