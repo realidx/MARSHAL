@@ -183,3 +183,40 @@ class ItemGameEnv(BaseLanguageBasedEnv):
     def get_retry_state(self, player_id: int = 0, hit_token_limit: bool = False):
         correction = "Your previous response reached the generation limit." if hit_token_limit else "Your previous response was not one listed action."
         return [{"current_player": player_id, "action": "", "rewards": [0.0, 0.0], "done": False, "info": {"retry_attempt": 1.0, "game_transition": 0.0}, "next_player": player_id, "observation": f"{correction}\n\n{self.render()}", "legal_actions": self.get_all_actions()}]
+
+    def get_losing_state(
+        self,
+        player_id: int = 0,
+        overlong_response: bool = False,
+        overlong_sequence: bool = False,
+    ):
+        """Close an invalid model response without creating a game reward."""
+        info = {
+            "success": False,
+            "artificial_truncation": 1.0,
+            "game_transition": 0.0,
+            "canonical_reward_player_0": 0.0,
+            "canonical_reward_player_1": 0.0,
+            "player_0_return": 0.0,
+            "player_1_return": 0.0,
+            "player_0_success": False,
+            "player_1_success": False,
+            "winner": -1,
+            "draw": False,
+            "player_0_lose_for_wrong_format": int(player_id == 0),
+            "player_1_lose_for_wrong_format": int(player_id == 1),
+            "player_0_lose_for_overlong_response": int(player_id == 0 and overlong_response),
+            "player_1_lose_for_overlong_response": int(player_id == 1 and overlong_response),
+            "player_0_lose_for_overlong_sequence": int(player_id == 0 and overlong_sequence),
+            "player_1_lose_for_overlong_sequence": int(player_id == 1 and overlong_sequence),
+        }
+        return [{
+            "current_player": player_id,
+            "action": "",
+            "rewards": [0.0, 0.0],
+            "done": True,
+            "info": info,
+            "next_player": None,
+            "observation": None,
+            "legal_actions": None,
+        }]

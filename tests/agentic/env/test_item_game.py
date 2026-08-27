@@ -238,3 +238,17 @@ def test_roll_adapter_returns_only_ego_reward_at_terminal():
     assert transition["rewards"] == [0.0, 0.0]
     assert transition["info"]["player_1_return"] == 0.0
     assert transition["info"]["player_1_success"] is False
+
+
+def test_roll_adapter_provides_invalid_response_losing_state():
+    env = ItemGameEnv(Config(randomize_items=False))
+    env.reset(seed=3)
+    transition = env.get_losing_state(
+        player_id=0, overlong_response=True, overlong_sequence=True
+    )[0]
+    assert transition["done"] is True
+    assert transition["rewards"] == [0.0, 0.0]
+    assert transition["info"]["artificial_truncation"] == 1.0
+    assert transition["info"]["player_0_lose_for_wrong_format"] == 1
+    assert transition["info"]["player_0_lose_for_overlong_response"] == 1
+    assert transition["info"]["player_0_lose_for_overlong_sequence"] == 1
