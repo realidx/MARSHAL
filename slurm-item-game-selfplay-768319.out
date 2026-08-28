@@ -1,0 +1,16 @@
+model=/home/e/e1300530/models/Qwen3-4B-Instruct-2507
+output=./runs/item_game_self_play/20260828-220724/trajectories.jsonl
+episodes=30 (10 Collaboration + 10 RequestSurplusReroute + 10 RespondToGiveRequest)
+/home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/runpy.py:126: RuntimeWarning: 'roll.agentic.env.item_game.self_play' found in sys.modules after import of package 'roll.agentic.env.item_game', but prior to execution of 'roll.agentic.env.item_game.self_play'; this may result in unpredictable behaviour
+  warn(RuntimeWarning(msg))
+[2026-08-28 22:07:40,617] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+Warning: The cache directory for DeepSpeed Triton autotune, /home/e/e1300530/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards:  33%|███▎      | 1/3 [00:09<00:18,  9.01s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:17<00:08,  8.95s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:18<00:00,  4.97s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:18<00:00,  6.05s/it]
+/home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:631: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.7` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+/home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:636: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.8` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+/home/e/e1300530/miniconda3/envs/marshal/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:653: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `20` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
+  warnings.warn(
+wrote self-play results to runs/item_game_self_play/20260828-220724/trajectories.jsonl
+ITEM GAME SELF-PLAY PILOT COMPLETE: ./runs/item_game_self_play/20260828-220724
