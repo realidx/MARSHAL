@@ -926,11 +926,16 @@ def test_synchronous_commit_deactivates_player_but_does_not_end_on_focal_success
     g.resolve_round({"P0": ("PROPOSE JOIN {P0,P1}",), "P1": ("PASS",)}, g.build_round_snapshot())
     g.resolve_responses({0: "ACT ACCEPT"})
     p0_items = _format_for_test(g.goals["P0"] & g.holdings["P0"])
-    g.resolve_round({"P0": (f"ACT COMMIT {p0_items}",), "P1": ("PASS",)}, g.build_round_snapshot())
+    g.resolve_round({
+        "P0": (f"ACT COMMIT {p0_items}",),
+        "P1": ("QUERY P0 GOAL",),
+    }, g.build_round_snapshot())
     assert not g.done
     assert g.active_players == ("P1",)
     assert not g.get_legal_actions("P0")
     assert g.player_success["P0"] is True
+    assert g.response_requests() == ()
+    assert g.metrics["messages_dropped_due_to_commit"] == 1
 
 
 def test_synchronous_commit_events_are_public_but_private_query_results_are_not():

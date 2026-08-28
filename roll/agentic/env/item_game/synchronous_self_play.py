@@ -152,6 +152,7 @@ class SynchronousItemGame:
             "request_responded": 0,
             "safe_give_correct": 0,
             "harmful_give_refused": 0,
+            "messages_dropped_due_to_commit": 0,
         }
 
     @property
@@ -235,7 +236,11 @@ class SynchronousItemGame:
             lines.extend(f"- {dict(event)}" for event in snap["public_events"])
         else:
             lines.append("- none")
-        lines.append("Decision bundle format: atom1 ; atom2 ; ... (at most one communication atom).")
+        lines.append(
+            "DECISION PHASE: output one bundle as atom1 ; atom2 ; ... . Use PASS when sending "
+            "no proactive communication. Include at most one proactive communication atom total; "
+            "ACT atoms may be added subject to legality."
+        )
         lines.append("Legal decision atoms:")
         lines.extend(f"- {action}" for action in self.get_legal_actions(agent, snap))
         return "\n".join(lines)
@@ -250,7 +255,10 @@ class SynchronousItemGame:
             f"Your goal: {_format_set(self.goals[agent])}",
             f"Your holdings: {_format_set(self.holdings[agent])}",
             f"Round: {self.round_index}/{self.config.max_rounds}",
-            "Respond to this direct message. This response does not use the proactive communication slot.",
+            "RESPONSE PHASE: output exactly one mandatory response action, not a decision bundle. "
+            "This response does not use the proactive communication slot.",
+            "For QUERY, output only the listed truthful INFORM. For PROPOSE, output only "
+            "ACT ACCEPT or ACT REJECT. Do not output QUERY, PROPOSE, PASS, COMMIT, or GIVE here.",
             f"Incoming message: {request['text']}",
             "Legal response actions:",
         ]
@@ -549,8 +557,12 @@ class SynchronousItemGame:
         for agent, actions in parsed.items():
             for action in actions:
                 if action["kind"] in {"QUERY", "INFORM", "TRANSFER", "JOIN"}:
-                    if action.get("recipient") in committing:
-                        raise SynchronousActionError("cannot send a message to a player committing this round")
+                    if action.get("recipient") in committing or agent in committing:
+                        # COMMIT wins the atomic resolution. A message involving
+                        # a player that exits at the end of this round cannot be
+                        # delivered to a future response phase.
+                        self.metrics["messages_dropped_due_to_commit"] += 1
+                        continue
                     if action["kind"] in {"TRANSFER", "JOIN"}:
                         message = dict(action)
                         message["round"] = self.round_index
@@ -881,9 +893,11 @@ class HuggingFaceSynchronousSelfPlayPolicy:
     def generate(self, *, agent: str, observation: str, legal_actions: Sequence[str], context: Sequence[Mapping[str, str]]) -> str:
         system = (
             f"You are {agent}. All players have equal status in a synchronous multi-agent game. "
-            "Use only the listed legal action atoms. You may combine atoms with ';', using at most "
-            "one proactive communication. Keep reasoning private. Return <reason>...</reason> "
-            "and exactly one decision bundle inside <answer>...</answer>."
+            "There are two distinct phases. In RESPONSE PHASE, output exactly one listed "
+            "mandatory response (truthful INFORM or ACT ACCEPT/REJECT), never a decision bundle. "
+            "In DECISION PHASE, output one bundle with at most one proactive communication; use PASS "
+            "when there is no communication, and optionally add legal ACT atoms. Keep reasoning private. "
+            "Return <reason>...</reason> and exactly one answer inside <answer>...</answer>."
         )
         messages: list[dict[str, str]] = [{"role": "system", "content": system}]
         messages.extend(dict(message) for message in context)
