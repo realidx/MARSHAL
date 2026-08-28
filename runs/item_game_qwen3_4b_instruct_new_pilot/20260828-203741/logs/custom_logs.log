@@ -1,0 +1,659 @@
+add logger: log_rank_DRIVER_0_1
+Created or verified log directory: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs
+Added logging to file: /home/e/e1300530/MARSHAL/runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs/log_rank_DRIVER_0_1.log
+custom_env:
+  SimpleSokoban:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      dim_x: 6
+      dim_y: 6
+      num_boxes: 1
+      max_steps: 100
+  LargerSokoban:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      dim_x: 8
+      dim_y: 8
+      num_boxes: 2
+      max_steps: 100
+      search_depth: 10
+  SokobanDifferentGridVocab:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      search_depth: 30
+      dim_x: 6
+      dim_y: 6
+      num_boxes: 1
+      max_steps: 100
+      grid_lookup:
+        0: W
+        1: .
+        2: G
+        3: C
+        4: B
+        5: A
+        6: '@'
+      grid_vocab:
+        W: wall
+        .: empty
+        G: target
+        C: box on target
+        B: box
+        A: player
+        '@': player on target
+  VisualSimpleSokoban:
+    env_type: sokoban
+    max_actions_per_traj: 10
+    env_instruction: You are solving the Sokoban puzzle. You are the player and you
+      need to push all boxes to targets. When you are right next to a box, you can
+      push it by moving in the same direction. You cannot push a box through a wall,
+      and you cannot pull a box. The answer should be a sequence of actions, like
+      <answer>Right || Right || Up</answer>
+    max_tokens: 100
+    env_config:
+      dim_x: 6
+      dim_y: 6
+      num_boxes: 1
+      max_steps: 100
+      render_mode: rgb_array
+  Countdown:
+    env_type: countdown
+    max_actions_per_traj: 1
+    env_instruction: 'You are solving the Countdown puzzle. You should use the num
+      list to create an equation that equals the target. Example answer format: <think>
+      To find an equation using [3, 5, 2] to get 4. Let''s check 2 + 5 = 7, 7 - 3
+      = 4. So the answer is 2 + 5 - 3 = 4. </think><answer>2 + 5 - 3</answer>'
+    max_tokens: 100
+    env_config: null
+  Bandit:
+    env_type: bandit
+    max_actions_per_traj: 1
+    env_instruction: ''
+    max_tokens: 100
+    env_config:
+      lo_arm_name: Phoenix
+      hi_arm_name: Dragon
+  BanditTest:
+    env_type: bandit
+    max_actions_per_traj: 1
+    env_instruction: ''
+    max_tokens: 100
+    env_config:
+      lo_arm_name: Trader
+      hi_arm_name: Librarian
+  FrozenLake:
+    env_type: frozen_lake
+    max_actions_per_traj: 10
+    env_instruction: You are solving the FrozenLake puzzle. Forbid the whole and go
+      to the target. You may move to the unintended direction due to the slippery
+      ice. The answer must be a sequence of actions, like <answer>Right || Right ||
+      Up</answer>
+    max_tokens: 100
+    env_config: null
+  MetamathQA:
+    env_type: metamathqa
+    max_actions_per_traj: 1
+    env_instruction: 'You are solving Math problems. '
+    max_tokens: 100
+    env_config: null
+  WebShop:
+    env_type: webshop
+    max_actions_per_traj: 30
+    env_instruction: 'You are browsing an online shop. Based on the instruction, find
+      the product that matches the production description. You need to iteratively
+      take action, read the website and decide what action to take next until finding
+      the product. Available actions depends on the page: in the search page you can
+      search keywords, in the search result page you can click an item url or click[next
+      >] to navigate to next page, in the product page you can click[description]
+      or click[features] to see the details, click[blue] or click[x-large] to choose
+      size and colors, click[buy now] when you decided to buy the product, click[back
+      to search] to return to search page. Example process: I need a gingko light
+      and 20x20 pillow cover that is hand painted. First search[gingko light 20x20
+      pillow cover hand painted], answer format: <answer>search[blanket with fleece
+      throw]</answer>. Valid answer is search[<keywords>] or click[<clickable>].'
+    max_tokens: 100
+    env_config: null
+deepspeed_zero:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 0
+  checkpoint:
+    tag_validation: IGNORE
+deepspeed_zero2:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 2
+    allgather_partitions: true
+    allgather_bucket_size: 1000000000.0
+    overlap_comm: true
+    reduce_scatter: true
+    reduce_bucket_size: 500000000.0
+    contiguous_gradients: true
+deepspeed_zero3:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 3
+    overlap_comm: true
+    contiguous_gradients: true
+    sub_group_size: 1000000000.0
+    reduce_bucket_size: auto
+    stage3_prefetch_bucket_size: auto
+    stage3_param_persistence_threshold: auto
+    stage3_max_live_parameters: 1000000000.0
+    stage3_max_reuse_distance: 1000000000.0
+    stage3_gather_16bit_weights_on_model_save: true
+deepspeed_zero3_cpuoffload:
+  train_micro_batch_size_per_gpu: auto
+  bf16:
+    enabled: true
+  fp16:
+    enabled: false
+    loss_scale: 0
+    initial_scale_power: 16
+    loss_scale_window: 1000
+    hysteresis: 2
+    min_loss_scale: 1
+  zero_optimization:
+    stage: 3
+    offload_optimizer:
+      device: cpu
+      pin_memory: true
+    overlap_comm: true
+    contiguous_gradients: true
+    sub_group_size: 1000000000.0
+    reduce_bucket_size: auto
+    stage3_prefetch_bucket_size: auto
+    stage3_param_persistence_threshold: auto
+    stage3_max_live_parameters: 1000000000.0
+    stage3_max_reuse_distance: 1000000000.0
+    stage3_gather_16bit_weights_on_model_save: true
+exp_name: item_game_qwen3_4b_instruct_new_pilot
+seed: 42
+logging_dir: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs
+output_dir: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741
+system_envs:
+  USE_MODELSCOPE: '1'
+track_with: tensorboard
+tracker_kwargs:
+  log_dir: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/tensorboard
+num_gpus_per_node: 1
+max_steps: 1
+save_steps: 1000000
+logging_steps: 1
+eval_steps: 10
+resume_from_checkpoint: false
+rollout_batch_size: 90
+val_batch_size: 32
+sequence_length: 8192
+dual_clip_loss: true
+ppo_epochs: 1
+adv_estimator: reinforce
+init_kl_coef: 0.0
+use_kl_loss: true
+kl_loss_coef: 0.2
+whiten_advantages: false
+entropy_loss_coef: 0
+pretrain: /home/e/e1300530/models/Qwen3-4B-Instruct-2507
+actor_train:
+  model_args:
+    flash_attn: fa2
+    disable_gradient_checkpointing: false
+    dtype: bf16
+    model_type: null
+  training_args:
+    lr_scheduler_type: cosine_with_min_lr
+    learning_rate: 1.0e-06
+    weight_decay: 0.05
+    adam_beta1: 0.9
+    adam_beta2: 0.95
+    per_device_train_batch_size: 1
+    gradient_accumulation_steps: 4
+    warmup_steps: 10
+  data_args:
+    template: qwen3
+  strategy_args:
+    strategy_name: megatron_train
+    strategy_config:
+      sequence_parallel: true
+      tensor_model_parallel_size: 2
+      pipeline_model_parallel_size: 1
+      expert_model_parallel_size: 1
+      use_distributed_optimizer: true
+      recompute_granularity: full
+      accumulate_allreduce_grads_in_fp32: true
+      check_for_nan_in_loss_and_grad: false
+  device_mapping: list(range(0,1))
+  infer_batch_size: 1
+actor_infer:
+  model_args:
+    flash_attn: fa2
+    disable_gradient_checkpointing: true
+    dtype: bf16
+  generating_args:
+    max_new_tokens: 1024
+    top_p: 0.8
+    top_k: 20
+    num_beams: 1
+    temperature: 0.7
+    num_return_sequences: 1
+    stop:
+    - </answer>
+    include_stop_str_in_output: true
+  data_args:
+    template: qwen3
+  strategy_args:
+    strategy_name: vllm
+    strategy_config:
+      gpu_memory_utilization: 0.8
+      block_size: 16
+      load_format: auto
+      max_model_len: 8192
+      tensor_parallel_size: 1
+  device_mapping: list(range(0,1))
+reference:
+  model_args:
+    flash_attn: fa2
+    disable_gradient_checkpointing: true
+    dtype: bf16
+    model_type: null
+  data_args:
+    template: qwen3
+  strategy_args:
+    strategy_name: hf_infer
+    strategy_config: null
+  device_mapping: list(range(0,1))
+  infer_batch_size: 1
+enable_response_mask: true
+action_sep: '||'
+use_turn_scores: true
+enable_think: true
+max_actions_per_traj: 8
+reward_normalization:
+  grouping: tags
+  method: identity
+  separate_norm_for_selfplay: false
+whiten_rewards: false
+advantage_norm: null
+pg_clip_high: 0.2
+custom_envs:
+  TicTacToe:
+    env_type: tictactoe
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: none
+      render_mode: text
+      response_token_limit: 600
+      reward_mode: minimax_counterfactual
+      minimax_discount: 0.9
+      precompute_minimax: true
+  TicTacToe-first-100:
+    env_type: tictactoe
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 0.9
+      precompute_minimax: true
+  TicTacToe-second-100:
+    env_type: tictactoe
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 0.9
+      precompute_minimax: true
+  TicTacToe-first-1000:
+    env_type: tictactoe
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      max_simulations: 1000
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 0.9
+      precompute_minimax: true
+  TicTacToe-second-1000:
+    env_type: tictactoe
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      max_simulations: 1000
+      render_mode: text
+      minimax_diagnostics: true
+      minimax_discount: 0.9
+      precompute_minimax: true
+  Connect4-first-100:
+    env_type: connect_four
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      render_mode: text
+  Connect4-second-100:
+    env_type: connect_four
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      render_mode: text
+  Connect4-first-1000:
+    env_type: connect_four
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      max_simulations: 1000
+      render_mode: text
+  Connect4-second-1000:
+    env_type: connect_four
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: mcts
+      opponent_player: 0
+      max_simulations: 1000
+      render_mode: text
+  KuhnPoker-first:
+    env_type: kuhn_poker
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: cfr
+      render_mode: text
+  KuhnPoker-second:
+    env_type: kuhn_poker
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: cfr
+      opponent_player: 0
+      render_mode: text
+  LeducPoker-first:
+    env_type: leduc_poker
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: ne
+      render_mode: text
+  LeducPoker-second:
+    env_type: leduc_poker
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      built_in_opponent: ne
+      opponent_player: 0
+      render_mode: text
+  MiniHanabi:
+    env_type: hanabi
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      render_mode: text
+  SimpleHanabi:
+    env_type: hanabi
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      render_mode: text
+      colors: 3
+      ranks: 2
+      hand_size: 5
+      max_information_tokens: 8
+      max_life_tokens: 3
+  FullHanabi:
+    env_type: hanabi
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      render_mode: text
+      colors: 3
+      ranks: 3
+      hand_size: 5
+      max_information_tokens: 8
+      max_life_tokens: 3
+  ItemGame-CollaborationV2:
+    env_type: item_game
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      generator: pure_collaboration
+      subtype: collaboration
+      max_ego_steps: 8
+      communication_budget: 6
+      response_token_limit: 128
+  ItemGame-RequestSurplusReroute:
+    env_type: item_game
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      generator: mixed_incentive
+      subtype: request_surplus_reroute
+      max_ego_steps: 8
+      communication_budget: 6
+      response_token_limit: 128
+  ItemGame-RespondToGiveRequest:
+    env_type: item_game
+    max_actions_per_traj: 8
+    grid_vocab: false
+    env_config:
+      generator: mixed_incentive
+      subtype: respond_to_give_request
+      max_ego_steps: 8
+      communication_budget: 6
+      response_token_limit: 128
+train_env_manager:
+  format_penalty: 0.0
+  max_env_num_per_worker: 60
+  env_groups: 90
+  group_size: 1
+  tags:
+  - ItemGame-CollaborationV2
+  - ItemGame-RequestSurplusReroute
+  - ItemGame-RespondToGiveRequest
+  n_groups:
+  - 30
+  - 30
+  - 30
+  minimax_length_penalty_beta: 0.0
+  minimax_length_soft_budget: 400
+  minimax_length_hard_budget: 600
+  max_invalid_retries_per_decision: 0
+  enable_length_penalty: false
+  group_seed_base: 840000
+val_env_manager:
+  max_env_num_per_worker: 32
+  env_groups: 32
+  group_size: 1
+  tags:
+  - TicTacToe-first-100
+  - TicTacToe-second-100
+  - TicTacToe-first-1000
+  - TicTacToe-second-1000
+  n_groups:
+  - 8
+  - 8
+  - 8
+  - 8
+  format_penalty: 0.0
+  enable_length_penalty: false
+gamma: 1.0
+game_step_discount: 0.9
+loss_agg_mode: seq-mean-token-mean
+markovian_turn_context: false
+use_reason_answer_format: true
+add_token_level_kl: false
+eval_at_end: true
+dump_debug_batches: false
+
+[2026-08-28 20:37:44] [agentic_config.py (113)] [INFO] [DRIVER 0 / 1][PID 364224] max_env_num_per_worker: 60
+[2026-08-28 20:37:44] [agentic_config.py (113)] [INFO] [DRIVER 0 / 1][PID 364224] max_env_num_per_worker: 32
+[2026-08-28 20:37:44] [worker_config.py (103)] [INFO] [DRIVER 0 / 1][PID 364224] set vllm num_gpus_per_worker to 1, tensor_parallel_size: 1, pipeline_parallel_size: 1
+[2026-08-28 20:37:44] [base_config.py (166)] [INFO] [DRIVER 0 / 1][PID 364224] add exp_name to logging_dir ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs
+[2026-08-28 20:37:44] [base_config.py (171)] [INFO] [DRIVER 0 / 1][PID 364224] add timestamp to tensorboard log_dir ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/tensorboard
+[2026-08-28 20:37:44] [agentic_config.py (387)] [INFO] [DRIVER 0 / 1][PID 364224] add timestamp to render_save_dir  None
+EnvManagerConfig(name='train_env', worker_cls='roll.pipeline.agentic.environment_worker.EnvironmentWorker', model_args=ModelArguments(model_name_or_path='/home/e/e1300530/models/Qwen3-4B-Instruct-2507', attn_implementation=None, moe_aux_loss_coef=None, disable_gradient_checkpointing=False, device_map='balanced', dtype='bf16', model_type=None, num_labels=1, model_config_kwargs={}, freeze_module_prefix=None), training_args=TrainingArguments(output_dir='', max_steps=-1, num_train_epochs=1.0, learning_rate=5e-05, lr_scheduler_type='linear', weight_decay=0.0, adam_beta1=0.9, adam_beta2=0.999, per_device_train_batch_size=8, gradient_accumulation_steps=1, seed=42, data_seed=None, dataloader_num_workers=0, fp16=False, bf16=False, tf32=None, warmup_ratio=0.03, warmup_steps=0), data_args=None, generating_args=GeneratingArguments(do_sample=True, temperature=0.7, top_p=0.8, top_k=20, num_beams=1, max_length=512, max_new_tokens=1024, repetition_penalty=1.0, length_penalty=1.0, num_return_sequences=1, stop=['</answer>'], include_stop_str_in_output=True), strategy_args=None, world_size=2, device_mapping=None, num_gpus_per_worker=1, model_update_frequency=1, infer_batch_size=16, backend_timeout=30, system_envs={}, env_groups=90, group_size=1, tags=['ItemGame-CollaborationV2', 'ItemGame-RequestSurplusReroute', 'ItemGame-RespondToGiveRequest'], n_groups=[30, 30, 30], group_seed_base=840000, max_traj_per_env=-1, format_penalty=0.0, valid_format_reward=0.0, marshal_length_reward_alpha=0.0, marshal_length_reward_penalty_only=False, marshal_length_reward_min_tokens=11, marshal_length_reward_max_tokens=2048, minimax_length_penalty_beta=0.0, minimax_length_soft_budget=400, minimax_length_hard_budget=600, max_invalid_retries_per_decision=0, enable_length_penalty=False, max_env_num_per_worker=60)
+EnvManagerConfig(name='val_env', worker_cls='roll.pipeline.agentic.environment_worker.EnvironmentWorker', model_args=ModelArguments(model_name_or_path='/home/e/e1300530/models/Qwen3-4B-Instruct-2507', attn_implementation=None, moe_aux_loss_coef=None, disable_gradient_checkpointing=False, device_map='balanced', dtype='bf16', model_type=None, num_labels=1, model_config_kwargs={}, freeze_module_prefix=None), training_args=TrainingArguments(output_dir='', max_steps=-1, num_train_epochs=1.0, learning_rate=5e-05, lr_scheduler_type='linear', weight_decay=0.0, adam_beta1=0.9, adam_beta2=0.999, per_device_train_batch_size=8, gradient_accumulation_steps=1, seed=42, data_seed=None, dataloader_num_workers=0, fp16=False, bf16=False, tf32=None, warmup_ratio=0.03, warmup_steps=0), data_args=None, generating_args=GeneratingArguments(do_sample=True, temperature=0.7, top_p=0.8, top_k=20, num_beams=1, max_length=512, max_new_tokens=1024, repetition_penalty=1.0, length_penalty=1.0, num_return_sequences=1, stop=['</answer>'], include_stop_str_in_output=True), strategy_args=None, world_size=1, device_mapping=None, num_gpus_per_worker=1, model_update_frequency=1, infer_batch_size=16, backend_timeout=30, system_envs={}, env_groups=32, group_size=1, tags=['TicTacToe-first-100', 'TicTacToe-second-100', 'TicTacToe-first-1000', 'TicTacToe-second-1000'], n_groups=[8, 8, 8, 8], group_seed_base=None, max_traj_per_env=-1, format_penalty=0.0, valid_format_reward=0.0, marshal_length_reward_alpha=0.0, marshal_length_reward_penalty_only=False, marshal_length_reward_min_tokens=11, marshal_length_reward_max_tokens=2048, minimax_length_penalty_beta=0.0, minimax_length_soft_budget=200, minimax_length_hard_budget=600, max_invalid_retries_per_decision=0, enable_length_penalty=False, max_env_num_per_worker=32)
+[2026-08-28 20:37:44] [agentic_config.py (405)] [INFO] [DRIVER 0 / 1][PID 364224] train_env_manager.max_traj_per_env: 1
+[2026-08-28 20:37:44] [agentic_config.py (412)] [INFO] [DRIVER 0 / 1][PID 364224] val_env_manager.max_traj_per_env: 1
+[2026-08-28 20:37:47] [initialize.py (63)] [INFO] [DRIVER 0 / 1][PID 364224] Starting ray cluster: ray start --head --port=6379 --node-name=127.0.0.1:0 --num-gpus=1
+[2026-08-28 20:37:58] [initialize.py (92)] [INFO] [DRIVER 0 / 1][PID 364224] Ray cluster initialized
+[2026-08-28 20:37:58] [initialize.py (99)] [INFO] [DRIVER 0 / 1][PID 364224] Current ray cluster resources: {'object_store_memory': 79900938240.0, 'node:__internal_head__': 1.0, 'CPU': 96.0, 'GPU': 1.0, 'node:192.168.51.98': 1.0, 'accelerator_type:A100': 1.0, 'memory': 186435522560.0}
+[2026-08-28 20:38:06,469] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+Warning: The cache directory for DeepSpeed Triton autotune, /home/e/e1300530/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+gpu ranks: [['0']]
+node2pg: {0: <ray.util.placement_group.PlacementGroup object at 0x7c848016b850>}
+[2026-08-28 20:38:23] [checkpoint_manager.py (55)] [INFO] [DRIVER 0 / 1][PID 364224] checkpoint_config: {}
+[2026-08-28 20:38:23] [tracking.py (132)] [INFO] [DRIVER 0 / 1][PID 364224] create tracker tensorboard, kwargs: {'log_dir': './runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/tensorboard'}
+[2026-08-28 20:38:23] [agentic_config.py (476)] [INFO] [DRIVER 0 / 1][PID 364224] pipeline max_steps: 1 to 1
+[2026-08-28 20:38:23] [agentic_config.py (477)] [INFO] [DRIVER 0 / 1][PID 364224] actor train max_steps without dp_size: 22
+[2026-08-28 20:38:23] [agentic_config.py (478)] [INFO] [DRIVER 0 / 1][PID 364224] critic train max_steps without dp_size: 11
+[2026-08-28 20:38:24] [cluster.py (63)] [INFO] [DRIVER 0 / 1][PID 364224] wrap ActorWorker to ray.remote()
+[36m(pid=371831, ip=192.168.51.98)[0m add logger: log_rank_actor_infer-0_0_1
+[36m(pid=371831, ip=192.168.51.98)[0m Created or verified log directory: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs
+[36m(pid=371831, ip=192.168.51.98)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs/log_rank_actor_infer-0_0_1.log
+[36m(pid=371831, ip=192.168.51.98)[0m [2026-08-28 20:38:31,547] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[36m(pid=371831, ip=192.168.51.98)[0m Warning: The cache directory for DeepSpeed Triton autotune, /home/e/e1300530/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+log redirect to filename: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs/SharedStorage.log
+[2026-08-28 20:38:35] [cluster.py (63)] [INFO] [DRIVER 0 / 1][PID 364224] wrap EnvironmentWorker to ray.remote()
+[36m(pid=372025, ip=192.168.51.98)[0m add logger: log_rank_DRIVER_0_1
+[36m(pid=372025, ip=192.168.51.98)[0m Created or verified log directory: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs
+[36m(pid=372025, ip=192.168.51.98)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs/log_rank_DRIVER_0_1.log
+[36m(RequestScheduler pid=372025, ip=192.168.51.98)[0m [2026-08-28 20:38:42,052] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+log redirect to filename: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs/RequestScheduler.log
+[36m(RequestScheduler pid=372025, ip=192.168.51.98)[0m Warning: The cache directory for DeepSpeed Triton autotune, /home/e/e1300530/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+[36m(pid=372026, ip=192.168.51.98)[0m add logger: log_rank_train_env-0_0_2
+[36m(pid=372026, ip=192.168.51.98)[0m Created or verified log directory: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs
+[36m(pid=372026, ip=192.168.51.98)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs/log_rank_train_env-0_0_2.log
+[36m(pid=372026, ip=192.168.51.98)[0m [2026-08-28 20:38:43,024] [WARNING] [real_accelerator.py:181:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.
+[36m(pid=372026, ip=192.168.51.98)[0m [2026-08-28 20:38:43,028] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cpu (auto detect)
+[36m(pid=374473, ip=192.168.51.98)[0m add logger: log_rank_train_env-1_1_2
+[36m(pid=374473, ip=192.168.51.98)[0m Created or verified log directory: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs
+[36m(pid=374473, ip=192.168.51.98)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs/log_rank_train_env-1_1_2.log
+[36m(pid=374473, ip=192.168.51.98)[0m [2026-08-28 20:39:03,168] [WARNING] [real_accelerator.py:181:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.
+[36m(pid=374473, ip=192.168.51.98)[0m [2026-08-28 20:39:03,170] [INFO] [real_accelerator.py:222:get_accelerator] Setting ds_accelerator to cpu (auto detect)
+[36m(EnvironmentWorker(train_env-1) pid=374473, ip=192.168.51.98)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}
+log redirect to filename: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs/EnvironmentWorker(train_env-1).log
+log redirect to filename: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs/EnvironmentWorker(train_env-0).log
+[36m(EnvironmentWorker(train_env-0) pid=372026, ip=192.168.51.98)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster] (Ray deduplicates logs by default. Set RAY_DEDUP_LOGS=0 to disable log deduplication, or see https://docs.ray.io/en/master/ray-observability/user-guides/configure-logging.html#log-deduplication for more options.)[0m
+[36m(EnvironmentWorker(train_env-1) pid=374473, ip=192.168.51.98)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=372026, ip=192.168.51.98)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 8x across cluster][0m
+[36m(EnvironmentWorker(train_env-1) pid=374473, ip=192.168.51.98)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 8x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=372026, ip=192.168.51.98)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=372026, ip=192.168.51.98)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 9x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=372026, ip=192.168.51.98)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 8x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=372026, ip=192.168.51.98)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 5x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=372026, ip=192.168.51.98)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 5x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=372026, ip=192.168.51.98)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 5x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=372026, ip=192.168.51.98)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 5x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=372026, ip=192.168.51.98)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 5x across cluster][0m
+[36m(EnvironmentWorker(train_env-0) pid=372026, ip=192.168.51.98)[0m Length reward scale: {'upper': 0.0, 'lower': 0.5, 'min_len': 11, 'max_len': 2048, 'coef': 1}[32m [repeated 4x across cluster][0m
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m [2026-08-28 20:40:32] [base_worker.py (66)] [INFO] [actor_infer-0 0 / 1][PID 371831] CUDA worker mapping: visible=0, device_count=1, local_rank=0
+log redirect to filename: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs/ActorWorker(actor_infer-0).log
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:40:45 [__init__.py:239] Automatically detected platform cuda.
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m [2026-08-28 20:40:48] [vllm_strategy.py (76)] [INFO] [actor_infer-0 0 / 1][PID 371831] vllm_config: {'gpu_memory_utilization': 0.8, 'block_size': 16, 'load_format': 'auto', 'max_model_len': 8192, 'tensor_parallel_size': 1, 'model': '/home/e/e1300530/models/Qwen3-4B-Instruct-2507', 'dtype': 'bfloat16', 'enforce_eager': True, 'trust_remote_code': True, 'seed': 42, 'disable_custom_all_reduce': True, 'enable_prefix_caching': False}
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:41:02 [config.py:689] This model supports multiple tasks: {'embed', 'classify', 'score', 'generate', 'reward'}. Defaulting to 'generate'.
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:41:02 [config.py:1901] Chunked prefill is enabled with max_num_batched_tokens=8192.
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m WARNING 08-28 20:41:02 [cuda.py:96] To see benefits of async output processing, enable CUDA graph. Since, enforce-eager is enabled, async output processor cannot be used
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m [2026-08-28 20:41:02] [llm_engine.py (179)] [INFO] [actor_infer-0 0 / 1][PID 371831] Using executor_class: <class 'vllm.v1.executor.abstract.UniProcExecutor'>
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m [2026-08-28 20:41:02] [llm_engine.py (180)] [INFO] [actor_infer-0 0 / 1][PID 371831] Using worker cls: roll.third_party.vllm.vllm_0_8_4.v1.worker.Worker084
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:41:10 [__init__.py:239] Automatically detected platform cuda.
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:41:13 [core.py:61] Initializing a V1 LLM engine (v0.8.4) with config: model='/home/e/e1300530/models/Qwen3-4B-Instruct-2507', speculative_config=None, tokenizer='/home/e/e1300530/models/Qwen3-4B-Instruct-2507', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, override_neuron_config=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=8192, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, disable_custom_all_reduce=True, quantization=None, enforce_eager=True, kv_cache_dtype=auto,  device_config=cuda, decoding_config=DecodingConfig(guided_decoding_backend='auto', reasoning_backend=None), observability_config=ObservabilityConfig(show_hidden_metrics=False, otlp_traces_endpoint=None, collect_model_forward_time=False, collect_model_execute_time=False), seed=42, served_model_name=/home/e/e1300530/models/Qwen3-4B-Instruct-2507, num_scheduler_steps=1, multi_step_stream_outputs=True, enable_prefix_caching=False, chunked_prefill_enabled=True, use_async_output_proc=False, disable_mm_preprocessor_cache=False, mm_processor_kwargs=None, pooler_config=None, compilation_config={"splitting_ops":[],"compile_sizes":[],"cudagraph_capture_sizes":[],"max_capture_size":0}
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m add logger: log_rank_actor_infer-0_0_1
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m Created or verified log directory: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs/log_rank_actor_infer-0_0_1.log
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m WARNING 08-28 20:41:15 [utils.py:2444] Methods determine_num_available_blocks,device_config,get_cache_block_size_bytes,initialize_cache not implemented in <roll.third_party.vllm.vllm_0_8_4.v1.worker.Worker084 object at 0x73ec44fbba60>
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:41:16 [parallel_state.py:959] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, TP rank 0
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:41:16 [cuda.py:221] Using Flash Attention backend on V1 engine.
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:41:16 [gpu_model_runner.py:1276] Starting to load model /home/e/e1300530/models/Qwen3-4B-Instruct-2507...
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m WARNING 08-28 20:41:16 [topk_topp_sampler.py:69] FlashInfer is not available. Falling back to the PyTorch-native implementation of top-p & top-k sampling. For the best performance, please install FlashInfer.
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:41:17 [loader.py:458] Loading weights took 1.71 seconds
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:41:18 [gpu_model_runner.py:1291] Model loading took 7.6064 GiB and 1.886657 seconds
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:41:19 [kv_cache_utils.py:634] GPU KV cache size: 160,240 tokens
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:41:19 [kv_cache_utils.py:637] Maximum concurrency for 8,192 tokens per request: 19.56x
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:41:19 [core.py:163] init engine (profile, create kv cache, warmup model) took 1.04 seconds
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:41:19 [core_client.py:435] Core engine process 0 ready.
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m [2026-08-28 20:41:19] [vllm_strategy.py (94)] [INFO] [actor_infer-0 0 / 1][PID 371831] add [AddedToken("<|endoftext|>", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True)] to additional_special_tokens: ['<|im_start|>', '<|im_end|>', '<|object_ref_start|>', '<|object_ref_end|>', '<|box_start|>', '<|box_end|>', '<|quad_start|>', '<|quad_end|>', '<|vision_start|>', '<|vision_end|>', '<|vision_pad|>', '<|image_pad|>', '<|video_pad|>', '<|endoftext|>']
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m [2026-08-28 20:41:19] [base_worker.py (85)] [INFO] [actor_infer-0 0 / 1][PID 371831] actor_infer-0 initialized
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:41:19 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:41:30 [gpu_worker.py:81] Sleep mode freed 31.04 GiB memory, 0.59 GiB memory is still in use.
+[2026-08-28 20:41:31] [agentic_rollout_pipeline.py (60)] [INFO] [DRIVER 0 / 1][PID 364224] pipeline rollout global step 0 start...
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m [2026-08-28 20:41:31] [base_worker.py (223)] [INFO] [actor_infer-0 0 / 1][PID 371831] actor_infer-0 generate server global step 0
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m [2026-08-28 20:41:31] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 371831] actor_infer/generate_start_offload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 1.1022834777832031
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m [2026-08-28 20:41:31] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 371831] actor_infer/generate_start_onload, memory allocated (GB): 0.0, memory reserved (GB): 0.0, memory max reserved (GB): 0.0, rss (GB): 1.1022872924804688
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m Elapsed time: 0.6787 seconds
+[36m(_QueueActor pid=372023, ip=192.168.51.98)[0m add logger: log_rank_DRIVER_0_1
+[36m(_QueueActor pid=372023, ip=192.168.51.98)[0m Created or verified log directory: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs
+[36m(_QueueActor pid=372023, ip=192.168.51.98)[0m Added logging to file: /home/e/e1300530/MARSHAL/runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs/log_rank_DRIVER_0_1.log
+log redirect to filename: ./runs/item_game_qwen3_4b_instruct_new_pilot/20260828-203741/logs/_QueueActor.log
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m Elapsed time: 82.7908 seconds
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m [2026-08-28 20:42:54] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 371831] actor_infer/generate_end_onload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.001953125, rss (GB): 1.4382133483886719
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:42:54 [block_pool.py:264] Successfully reset prefix cache
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m INFO 08-28 20:42:55 [gpu_worker.py:81] Sleep mode freed 31.01 GiB memory, 1.21 GiB memory is still in use.
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m [2026-08-28 20:42:56] [context_managers.py (37)] [INFO] [actor_infer-0 0 / 1][PID 371831] actor_infer/generate_end_offload, memory allocated (GB): 4.76837158203125e-07, memory reserved (GB): 0.001953125, memory max reserved (GB): 0.001953125, rss (GB): 1.4382133483886719
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m Elapsed time: 1.9709 seconds
+[36m(ActorWorker(actor_infer-0) pid=371831, ip=192.168.51.98)[0m Elapsed time: 85.4406 seconds
+[2026-08-28 20:42:57] [agentic_rollout_pipeline.py (96)] [INFO] [DRIVER 0 / 1][PID 364224] Preflight summary: {"game_count": 82, "observed_game_count": 90, "partial_game_count": 8, "turn_count": 381, "decision_count": 381, "first_attempt_valid_count": 373, "first_attempt_validity_rate": 0.979002624671916, "eventual_valid_count": 373, "eventual_validity_rate": 0.979002624671916, "retry_attempt_count": 0, "retry_success_count": 0, "retry_success_rate": 0.0, "additional_retry_tokens": 0, "final_episode_truncation_count": 8, "final_episode_truncation_rate": 0.08888888888888889, "role_first_attempt_validity_gap": 0.979002624671916, "role_eventual_validity_gap": 0.979002624671916, "single_model_outcomes_by_tag": {"ItemGame-RespondToGiveRequest": {"game_count": 30, "completed_count": 26, "invalid_or_truncated_count": 4, "win_count": 26, "draw_count": 0, "loss_count": 0, "completion_rate": 0.8666666666666667, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "ItemGame-RequestSurplusReroute": {"game_count": 30, "completed_count": 27, "invalid_or_truncated_count": 3, "win_count": 27, "draw_count": 0, "loss_count": 0, "completion_rate": 0.9, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}, "ItemGame-CollaborationV2": {"game_count": 30, "completed_count": 29, "invalid_or_truncated_count": 1, "win_count": 29, "draw_count": 0, "loss_count": 0, "completion_rate": 0.9666666666666667, "win_rate_when_completed": 1.0, "draw_rate_when_completed": 0.0, "loss_rate_when_completed": 0.0}}, "completed_legal_game_count": 82, "completed_legal_game_rate": 1.0, "valid_action_count": 373, "valid_action_rate": 0.979002624671916, "closing_answer_tag_count": 381, "closing_answer_tag_rate": 1.0, "token_limit_hit_count": 0, "token_limit_hit_rate": 0.0, "missing_answer_count": 0, "missing_answer_rate": 0.0, "capped_without_answer_count": 0, "capped_without_answer_rate": 0.0, "role_validity_asymmetry": 0.0, "counterfactual_optimal_action_count": 0, "counterfactual_optimality_rate": 0.0, "counterfactual_optimality_when_valid_rate": 0.0, "minimax_optimal_action_count": 0, "minimax_optimality_rate": 0.0, "minimax_optimality_when_valid_rate": 0.0, "role_minimax_optimality_gap": 0.0, "action_diversity": {"unique_action_count": 140, "action_counts": {"ACT ACCEPT": 20, "ACT COMMIT {item_F,item_K,item_L,item_M,item_T}": 1, "ACT COMMIT {item_F,item_K,item_L,item_M,item_V}": 1, "ACT COMMIT {item_F,item_K,item_L,item_Q,item_Z}": 1, "ACT COMMIT {item_F,item_K,item_T}": 1, "ACT COMMIT {item_F,item_K}": 2, "ACT COMMIT {item_F,item_L,item_M,item_Q,item_T,item_Z}": 1, "ACT COMMIT {item_F,item_L,item_M,item_Q,item_T}": 1, "ACT COMMIT {item_F,item_L,item_M,item_V}": 1, "ACT COMMIT {item_F,item_L,item_M,item_Z}": 1, "ACT COMMIT {item_F,item_L}": 3, "ACT COMMIT {item_F,item_M,item_Q,item_T,item_Z}": 1, "ACT COMMIT {item_F,item_M}": 1, "ACT COMMIT {item_F,item_Q,item_T,item_Z}": 1, "ACT COMMIT {item_F,item_Q,item_V}": 1, "ACT COMMIT {item_F,item_Q}": 1, "ACT COMMIT {item_F,item_T,item_Z}": 1, "ACT COMMIT {item_F,item_T}": 2, "ACT COMMIT {item_F,item_V}": 3, "ACT COMMIT {item_F,item_Z}": 4, "ACT COMMIT {item_F}": 2, "ACT COMMIT {item_K,item_L,item_M,item_Q,item_V}": 1, "ACT COMMIT {item_K,item_L,item_Q,item_Z}": 1, "ACT COMMIT {item_K,item_L,item_Z}": 1, "ACT COMMIT {item_K,item_L}": 1, "ACT COMMIT {item_K,item_M,item_Q,item_T,item_V}": 1, "ACT COMMIT {item_K,item_M,item_Q}": 2, "ACT COMMIT {item_K,item_M,item_T}": 1, "ACT COMMIT {item_K,item_Q}": 2, "ACT COMMIT {item_K,item_T,item_V}": 1, "ACT COMMIT {item_K,item_T,item_Z}": 1, "ACT COMMIT {item_K,item_V,item_Z}": 1, "ACT COMMIT {item_K}": 1, "ACT COMMIT {item_L,item_M,item_T,item_Z}": 1, "ACT COMMIT {item_L,item_M,item_T}": 1, "ACT COMMIT {item_L,item_M}": 2, "ACT COMMIT {item_L,item_Q,item_V,item_Z}": 1, "ACT COMMIT {item_L,item_Q}": 1, "ACT COMMIT {item_L,item_T}": 2, "ACT COMMIT {item_L,item_V}": 2, "ACT COMMIT {item_L,item_Z}": 1, "ACT COMMIT {item_L}": 1, "ACT COMMIT {item_M,item_Q}": 3, "ACT COMMIT {item_M,item_V,item_Z}": 1, "ACT COMMIT {item_M,item_V}": 1, "ACT COMMIT {item_M,item_Z}": 3, "ACT COMMIT {item_M}": 2, "ACT COMMIT {item_Q,item_T}": 1, "ACT COMMIT {item_Q,item_Z}": 1, "ACT COMMIT {item_Q}": 3, "ACT COMMIT {item_T,item_V}": 1, "ACT COMMIT {item_T,item_Z}": 1, "ACT COMMIT {item_T}": 3, "ACT COMMIT {item_V,item_Z}": 1, "ACT COMMIT {item_V}": 1, "ACT COMMIT {item_Z}": 4, "ACT GIVE {item_F}": 4, "ACT GIVE {item_L}": 2, "ACT GIVE {item_Q}": 4, "ACT GIVE {item_T}": 2, "ACT GIVE {item_V}": 4, "ACT GIVE {item_Z}": 4, "ACT REJECT": 10, "INFORM P1 GOAL {item_F,item_K,item_M,item_T}": 1, "INFORM P1 GOAL {item_F,item_K,item_M}": 1, "INFORM P1 GOAL {item_F,item_K,item_Q,item_Z}": 1, "INFORM P1 GOAL {item_F,item_K,item_T,item_V}": 1, "INFORM P1 GOAL {item_F,item_K,item_T,item_Z}": 1, "INFORM P1 GOAL {item_F,item_K,item_Z}": 1, "INFORM P1 GOAL {item_F,item_L,item_Q}": 1, "INFORM P1 GOAL {item_F,item_L,item_Z}": 1, "INFORM P1 GOAL {item_F,item_L}": 2, "INFORM P1 GOAL {item_F,item_Q,item_Z}": 1, "INFORM P1 GOAL {item_K,item_L,item_Q}": 1, "INFORM P1 GOAL {item_K,item_L,item_T}": 1, "INFORM P1 GOAL {item_K,item_M,item_Q,item_T}": 1, "INFORM P1 GOAL {item_K,item_M,item_Q}": 1, "INFORM P1 GOAL {item_K,item_M,item_V,item_Z}": 1, "INFORM P1 GOAL {item_K,item_M}": 1, "INFORM P1 GOAL {item_K,item_Q,item_V,item_Z}": 1, "INFORM P1 GOAL {item_K,item_T,item_Z}": 1, "INFORM P1 GOAL {item_K,item_V,item_Z}": 1, "INFORM P1 GOAL {item_L,item_M,item_Q,item_T}": 1, "INFORM P1 GOAL {item_L,item_M,item_V,item_Z}": 1, "INFORM P1 GOAL {item_L,item_T}": 1, "INFORM P1 GOAL {item_L,item_V,item_Z}": 1, "INFORM P1 GOAL {item_L,item_V}": 1, "INFORM P1 GOAL {item_M,item_Q,item_V}": 1, "INFORM P1 GOAL {item_M,item_Q,item_Z}": 1, "INFORM P1 GOAL {item_M,item_T,item_V,item_Z}": 1, "INFORM P1 GOAL {item_M,item_V}": 1, "INFORM P1 GOAL {item_Q,item_T}": 1, "INFORM P1 HOLDINGS {item_F,item_K,item_L,item_Q,item_Z}": 1, "INFORM P1 HOLDINGS {item_F,item_K,item_L,item_Q}": 1, "INFORM P1 HOLDINGS {item_F,item_K,item_Q,item_T}": 2, "INFORM P1 HOLDINGS {item_F,item_K,item_Q,item_V}": 1, "INFORM P1 HOLDINGS {item_F,item_M,item_T,item_Z}": 1, "INFORM P1 HOLDINGS {item_F,item_M,item_T}": 1, "INFORM P1 HOLDINGS {item_F,item_M,item_V,item_Z}": 1, "INFORM P1 HOLDINGS {item_F,item_M,item_Z}": 1, "INFORM P1 HOLDINGS {item_F,item_Q,item_T,item_Z}": 1, "INFORM P1 HOLDINGS {item_F,item_Q,item_V}": 2, "INFORM P1 HOLDINGS {item_F,item_T}": 1, "INFORM P1 HOLDINGS {item_F,item_Z}": 1, "INFORM P1 HOLDINGS {item_K,item_L,item_M,item_T}": 1, "INFORM P1 HOLDINGS {item_K,item_L,item_M}": 1, "INFORM P1 HOLDINGS {item_K,item_L,item_Q,item_Z}": 1, "INFORM P1 HOLDINGS {item_K,item_L,item_T,item_V}": 1, "INFORM P1 HOLDINGS {item_K,item_L,item_V,item_Z}": 1, "INFORM P1 HOLDINGS {item_K,item_M}": 1, "INFORM P1 HOLDINGS {item_K,item_Q,item_Z}": 1, "INFORM P1 HOLDINGS {item_K,item_Q}": 1, "INFORM P1 HOLDINGS {item_K,item_T}": 1, "INFORM P1 HOLDINGS {item_L,item_M}": 1, "INFORM P1 HOLDINGS {item_L,item_V}": 1, "INFORM P1 HOLDINGS {item_M,item_Q,item_Z}": 1, "INFORM P1 HOLDINGS {item_Q,item_V,item_Z}": 1, "INFORM P1 HOLDINGS {item_Q,item_Z}": 1, "INFORM P1 HOLDINGS {item_T,item_V}": 1, "INFORM P1 HOLDINGS {item_T,item_Z}": 1, "PROPOSE GIVE {giver=P1,receiver=EGO,items={item_F}}": 4, "PROPOSE GIVE {giver=P1,receiver=EGO,items={item_K}}": 1, "PROPOSE GIVE {giver=P1,receiver=EGO,items={item_L}}": 2, "PROPOSE GIVE {giver=P1,receiver=EGO,items={item_M}}": 3, "PROPOSE GIVE {giver=P1,receiver=EGO,items={item_Q}}": 1, "PROPOSE GIVE {giver=P1,receiver=EGO,items={item_T}}": 3, "PROPOSE GIVE {giver=P1,receiver=EGO,items={item_V}}": 2, "PROPOSE GIVE {giver=P1,receiver=EGO,items={item_Z}}": 3, "PROPOSE GIVE {giver=P2,receiver=EGO,items={item_F}}": 2, "PROPOSE GIVE {giver=P2,receiver=EGO,items={item_K}}": 1, "PROPOSE GIVE {giver=P2,receiver=EGO,items={item_L}}": 1, "PROPOSE GIVE {giver=P2,receiver=EGO,items={item_M}}": 1, "PROPOSE GIVE {giver=P2,receiver=EGO,items={item_T}}": 1, "PROPOSE GIVE {giver=P2,receiver=EGO,items={item_V}}": 3, "PROPOSE GIVE {giver=P2,receiver=EGO,items={item_Z}}": 4, "PROPOSE JOIN {EGO,P1}": 30, "QUERY P1 GOAL": 50, "QUERY P1 HOLDINGS": 45, "QUERY P2 GOAL": 14, "QUERY P2 HOLDINGS": 10}, "dominant_action_rate": 0.13404825737265416}, "response_length": {"median": 90.0, "p90": 151.0, "p95": 171.0, "p99": 206.39999999999992, "max": 616}, "by_player": {"0": {"turn_count": 381, "valid_action_rate": 0.979002624671916, "closing_answer_tag_rate": 1.0, "token_limit_hit_rate": 0.0, "missing_answer_rate": 0.0, "minimax_optimal_action_count": 0, "minimax_optimality_rate": 0.0, "minimax_optimality_when_valid_rate": 0.0, "first_attempt_count": 381, "first_attempt_validity_rate": 0.979002624671916, "retry_attempt_count": 0, "retry_success_rate": 0.0, "eventual_validity_rate": 0.979002624671916, "additional_retry_tokens": 0}, "1": {"turn_count": 0, "valid_action_rate": 0.0, "closing_answer_tag_rate": 0.0, "token_limit_hit_rate": 0.0, "missing_answer_rate": 0.0, "minimax_optimal_action_count": 0, "minimax_optimality_rate": 0.0, "minimax_optimality_when_valid_rate": 0.0, "first_attempt_count": 0, "first_attempt_validity_rate": 0.0, "retry_attempt_count": 0, "retry_success_rate": 0.0, "eventual_validity_rate": 0.0, "additional_retry_tokens": 0}}, "gate": {"valid_action_rate_at_least_0_95": true, "eventual_validity_rate_at_least_0_95": true, "closing_answer_tag_rate_at_least_0_95": true, "token_limit_hit_rate_at_most_0_02": true, "role_validity_asymmetry_at_most_0_05": true, "at_least_3_unique_actions": true, "dominant_action_rate_at_most_0_80": true}, "passed": true, "informative_decisions_by_remaining_optimal_distance": {}, "root_move_pass_at_k": {"ItemGame-CollaborationV2": {"graph_count": 30, "sample_count": 30, "valid_action_rate": 1.0, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 30, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "ItemGame-RequestSurplusReroute": {"graph_count": 30, "sample_count": 30, "valid_action_rate": 1.0, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 30, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "ItemGame-RespondToGiveRequest": {"graph_count": 30, "sample_count": 30, "valid_action_rate": 1.0, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 30, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}, "overall": {"graph_count": 90, "sample_count": 90, "valid_action_rate": 1.0, "token_limit_hit_rate": 0.0, "graphs_with_pass@1": 90, "pass@1": 0.0, "graphs_with_pass@8": 0, "pass@8": null, "graphs_with_pass@32": 0, "pass@32": null}}}
+[2026-08-28 20:42:57] [agentic_rollout_pipeline.py (134)] [INFO] [DRIVER 0 / 1][PID 364224] [{"prompt": "system\nYou are EGO in a two-agent Give Request game. Use only the listed structured actions. The active partner has requested one item from your holdings. You must decide whether giving it would preserve or damage your own goal. ACCEPT and REJECT are binding decisions; ACCEPT does not transfer the item.user\nTurn lifecycle:\n(1) The active partner first emits one GIVE proposal.\n(2) On the next Ego turn, output exactly ACT ACCEPT or ACT REJECT.\n(3) ACCEPT records an agreement but does not change holdings; on the following turn you must output the exact ACT GIVE item set from that proposal.\n(4) REJECT clears the proposal and does not change holdings.\n(5) After the interaction is resolved, output ACT COMMIT with items you still hold.\n\nThe partner proposal is shown in the form PROPOSE GIVE {giver: EGO, receiver: <partner>, items: {<item>}}. The requested item is a partner goal item.\n\nProtocol:\nACT ACCEPT | ACT REJECT | ACT GIVE {<exact requested item>} | ACT COMMIT {<items from your holdings>}\n\nThe requested item is critical to the partner's goal. If it is surplus for your own goal, the safe response is ACCEPT followed by the exact ACT GIVE. If it is critical to your own goal, REJECT and keep it. There is no reciprocity or exchange mechanism in this environment. An accepted proposal that is not fulfilled is not a completed interaction and cannot receive terminal success. The main reward is based on whether your committed holdings satisfy your own goal.\n\nReason briefly inside <reason>...</reason>, then emit exactly one listed action inside <answer>...</answer>.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_K}\nEGO holdings: {item_K,item_M,item_Q}\nTurn phase: proposal_response\nEgo steps: 0/8\nInteraction history:\n- P2 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P2,items: {item_K}}\nPending proposal: PROPOSE GIVE {giver: EGO,receiver: P2,items: {item_K}}\n\nLegal actions: ACT ACCEPT, ACT REJECTassistant\n", "response": "<reason>The requested item, item_K, is critical to my own goal and I currently hold it. Accepting would compromise my goal, so I must reject the proposal to preserve my critical item.</reason>\n<answer>ACT REJECT</answer>user\n\n\nEGO ACT REJECT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_K}\nEGO holdings: {item_K,item_M,item_Q}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P2 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P2,items: {item_K}}\n- EGO [mandatory_response]: ACT REJECT\n- P2 [binding_action]: ACT REJECT\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_K}, ACT COMMIT {item_M}, ACT COMMIT {item_K,item_M}, ACT COMMIT {item_Q}, ACT COMMIT {item_K,item_Q}, ACT COMMIT {item_M,item_Q}, ACT COMMIT {item_K,item_M,item_Q}assistant\n<reason>By rejecting the proposal, I preserved item_K, which is critical to my goal. Since no agreement was reached, I commit to my current holdings, which include item_K, item_M, and item_Q.</reason>\n<answer>ACT COMMIT {item_K,item_M,item_Q}</answer>", "episode_score": 0.936, "llm_raw_text": "<|im_start|>assistant\n<reason>The requested item, item_K, is critical to my own goal and I currently hold it. Accepting would compromise my goal, so I must reject the proposal to preserve my critical item.</reason>\n<answer>ACT REJECT</answer><|im_end|><|im_start|>user\n\n\nEGO ACT REJECT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_K}\nEGO holdings: {item_K,item_M,item_Q}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P2 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P2,items: {item_K}}\n- EGO [mandatory_response]: ACT REJECT\n- P2 [binding_action]: ACT REJECT\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_K}, ACT COMMIT {item_M}, ACT COMMIT {item_K,item_M}, ACT COMMIT {item_Q}, ACT COMMIT {item_K,item_Q}, ACT COMMIT {item_M,item_Q}, ACT COMMIT {item_K,item_M,item_Q}<|im_end|><|im_start|>assistant\n<reason>By rejecting the proposal, I preserved item_K, which is critical to my goal. Since no agreement was reached, I commit to my current holdings, which include item_K, item_M, and item_Q.</reason>\n<answer>ACT COMMIT {item_K,item_M,item_Q}</answer><|im_end|>"}, {"prompt": "system\nYou are EGO in a two-agent Give Request game. Use only the listed structured actions. The active partner has requested one item from your holdings. You must decide whether giving it would preserve or damage your own goal. ACCEPT and REJECT are binding decisions; ACCEPT does not transfer the item.user\nTurn lifecycle:\n(1) The active partner first emits one GIVE proposal.\n(2) On the next Ego turn, output exactly ACT ACCEPT or ACT REJECT.\n(3) ACCEPT records an agreement but does not change holdings; on the following turn you must output the exact ACT GIVE item set from that proposal.\n(4) REJECT clears the proposal and does not change holdings.\n(5) After the interaction is resolved, output ACT COMMIT with items you still hold.\n\nThe partner proposal is shown in the form PROPOSE GIVE {giver: EGO, receiver: <partner>, items: {<item>}}. The requested item is a partner goal item.\n\nProtocol:\nACT ACCEPT | ACT REJECT | ACT GIVE {<exact requested item>} | ACT COMMIT {<items from your holdings>}\n\nThe requested item is critical to the partner's goal. If it is surplus for your own goal, the safe response is ACCEPT followed by the exact ACT GIVE. If it is critical to your own goal, REJECT and keep it. There is no reciprocity or exchange mechanism in this environment. An accepted proposal that is not fulfilled is not a completed interaction and cannot receive terminal success. The main reward is based on whether your committed holdings satisfy your own goal.\n\nReason briefly inside <reason>...</reason>, then emit exactly one listed action inside <answer>...</answer>.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_L,item_Q,item_V}\nEGO holdings: {item_K,item_L,item_M,item_Q,item_V}\nTurn phase: proposal_response\nEgo steps: 0/8\nInteraction history:\n- P1 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P1,items: {item_Q}}\nPending proposal: PROPOSE GIVE {giver: EGO,receiver: P1,items: {item_Q}}\n\nLegal actions: ACT ACCEPT, ACT REJECTassistant\n", "response": "<reason>The requested item, item_Q, is critical to my own goal (goal: {item_L, item_Q, item_V}). Since it is not surplus and is essential to my objective, I must reject the request to preserve my goal.</reason>\n<answer>ACT REJECT</answer>user\n\n\nEGO ACT REJECT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_L,item_Q,item_V}\nEGO holdings: {item_K,item_L,item_M,item_Q,item_V}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P1 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P1,items: {item_Q}}\n- EGO [mandatory_response]: ACT REJECT\n- P1 [binding_action]: ACT REJECT\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_K}, ACT COMMIT {item_L}, ACT COMMIT {item_K,item_L}, ACT COMMIT {item_M}, ACT COMMIT {item_K,item_M}, ACT COMMIT {item_L,item_M}, ACT COMMIT {item_K,item_L,item_M}, ACT COMMIT {item_Q}, ACT COMMIT {item_K,item_Q}, ACT COMMIT {item_L,item_Q}, ACT COMMIT {item_K,item_L,item_Q}, ACT COMMIT {item_M,item_Q}, ACT COMMIT {item_K,item_M,item_Q}, ACT COMMIT {item_L,item_M,item_Q}, ACT COMMIT {item_K,item_L,item_M,item_Q}, ACT COMMIT {item_V}, ACT COMMIT {item_K,item_V}, ACT COMMIT {item_L,item_V}, ACT COMMIT {item_K,item_L,item_V}, ACT COMMIT {item_M,item_V}, ACT COMMIT {item_K,item_M,item_V}, ACT COMMIT {item_L,item_M,item_V}, ACT COMMIT {item_K,item_L,item_M,item_V}, ACT COMMIT {item_Q,item_V}, ACT COMMIT {item_K,item_Q,item_V}, ACT COMMIT {item_L,item_Q,item_V}, ACT COMMIT {item_K,item_L,item_Q,item_V}, ACT COMMIT {item_M,item_Q,item_V}, ACT COMMIT {item_K,item_M,item_Q,item_V}, ACT COMMIT {item_L,item_M,item_Q,item_V}, ACT COMMIT {item_K,item_L,item_M,item_Q,item_V}assistant\n<reason>After rejecting the request for item_Q, no item was transferred. My holdings remain unchanged: {item_K, item_L, item_M, item_Q, item_V}. Since my goal requires item_Q, and I retained it, I commit to the full set of items I still hold.</reason>\n<answer>ACT COMMIT {item_K,item_L,item_M,item_Q,item_V}</answer>", "episode_score": 0.936, "llm_raw_text": "<|im_start|>assistant\n<reason>The requested item, item_Q, is critical to my own goal (goal: {item_L, item_Q, item_V}). Since it is not surplus and is essential to my objective, I must reject the request to preserve my goal.</reason>\n<answer>ACT REJECT</answer><|im_end|><|im_start|>user\n\n\nEGO ACT REJECT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_L,item_Q,item_V}\nEGO holdings: {item_K,item_L,item_M,item_Q,item_V}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P1 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P1,items: {item_Q}}\n- EGO [mandatory_response]: ACT REJECT\n- P1 [binding_action]: ACT REJECT\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_K}, ACT COMMIT {item_L}, ACT COMMIT {item_K,item_L}, ACT COMMIT {item_M}, ACT COMMIT {item_K,item_M}, ACT COMMIT {item_L,item_M}, ACT COMMIT {item_K,item_L,item_M}, ACT COMMIT {item_Q}, ACT COMMIT {item_K,item_Q}, ACT COMMIT {item_L,item_Q}, ACT COMMIT {item_K,item_L,item_Q}, ACT COMMIT {item_M,item_Q}, ACT COMMIT {item_K,item_M,item_Q}, ACT COMMIT {item_L,item_M,item_Q}, ACT COMMIT {item_K,item_L,item_M,item_Q}, ACT COMMIT {item_V}, ACT COMMIT {item_K,item_V}, ACT COMMIT {item_L,item_V}, ACT COMMIT {item_K,item_L,item_V}, ACT COMMIT {item_M,item_V}, ACT COMMIT {item_K,item_M,item_V}, ACT COMMIT {item_L,item_M,item_V}, ACT COMMIT {item_K,item_L,item_M,item_V}, ACT COMMIT {item_Q,item_V}, ACT COMMIT {item_K,item_Q,item_V}, ACT COMMIT {item_L,item_Q,item_V}, ACT COMMIT {item_K,item_L,item_Q,item_V}, ACT COMMIT {item_M,item_Q,item_V}, ACT COMMIT {item_K,item_M,item_Q,item_V}, ACT COMMIT {item_L,item_M,item_Q,item_V}, ACT COMMIT {item_K,item_L,item_M,item_Q,item_V}<|im_end|><|im_start|>assistant\n<reason>After rejecting the request for item_Q, no item was transferred. My holdings remain unchanged: {item_K, item_L, item_M, item_Q, item_V}. Since my goal requires item_Q, and I retained it, I commit to the full set of items I still hold.</reason>\n<answer>ACT COMMIT {item_K,item_L,item_M,item_Q,item_V}</answer><|im_end|>"}, {"prompt": "system\nYou are EGO in a two-agent Give Request game. Use only the listed structured actions. The active partner has requested one item from your holdings. You must decide whether giving it would preserve or damage your own goal. ACCEPT and REJECT are binding decisions; ACCEPT does not transfer the item.user\nTurn lifecycle:\n(1) The active partner first emits one GIVE proposal.\n(2) On the next Ego turn, output exactly ACT ACCEPT or ACT REJECT.\n(3) ACCEPT records an agreement but does not change holdings; on the following turn you must output the exact ACT GIVE item set from that proposal.\n(4) REJECT clears the proposal and does not change holdings.\n(5) After the interaction is resolved, output ACT COMMIT with items you still hold.\n\nThe partner proposal is shown in the form PROPOSE GIVE {giver: EGO, receiver: <partner>, items: {<item>}}. The requested item is a partner goal item.\n\nProtocol:\nACT ACCEPT | ACT REJECT | ACT GIVE {<exact requested item>} | ACT COMMIT {<items from your holdings>}\n\nThe requested item is critical to the partner's goal. If it is surplus for your own goal, the safe response is ACCEPT followed by the exact ACT GIVE. If it is critical to your own goal, REJECT and keep it. There is no reciprocity or exchange mechanism in this environment. An accepted proposal that is not fulfilled is not a completed interaction and cannot receive terminal success. The main reward is based on whether your committed holdings satisfy your own goal.\n\nReason briefly inside <reason>...</reason>, then emit exactly one listed action inside <answer>...</answer>.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_L,item_V}\nEGO holdings: {item_F,item_K,item_L,item_M,item_V}\nTurn phase: proposal_response\nEgo steps: 0/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_L}}\nPending proposal: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_L}}\n\nLegal actions: ACT ACCEPT, ACT REJECTassistant\n", "response": "<reason>The requested item is item_L, which is critical to my own goal (item_L, item_V). Since item_L is essential to my goal, I must reject the request to preserve it.</reason>\n<answer>ACT REJECT</answer>user\n\n\nEGO ACT REJECT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_L,item_V}\nEGO holdings: {item_F,item_K,item_L,item_M,item_V}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_L}}\n- EGO [mandatory_response]: ACT REJECT\n- P3 [binding_action]: ACT REJECT\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_F}, ACT COMMIT {item_K}, ACT COMMIT {item_F,item_K}, ACT COMMIT {item_L}, ACT COMMIT {item_F,item_L}, ACT COMMIT {item_K,item_L}, ACT COMMIT {item_F,item_K,item_L}, ACT COMMIT {item_M}, ACT COMMIT {item_F,item_M}, ACT COMMIT {item_K,item_M}, ACT COMMIT {item_F,item_K,item_M}, ACT COMMIT {item_L,item_M}, ACT COMMIT {item_F,item_L,item_M}, ACT COMMIT {item_K,item_L,item_M}, ACT COMMIT {item_F,item_K,item_L,item_M}, ACT COMMIT {item_V}, ACT COMMIT {item_F,item_V}, ACT COMMIT {item_K,item_V}, ACT COMMIT {item_F,item_K,item_V}, ACT COMMIT {item_L,item_V}, ACT COMMIT {item_F,item_L,item_V}, ACT COMMIT {item_K,item_L,item_V}, ACT COMMIT {item_F,item_K,item_L,item_V}, ACT COMMIT {item_M,item_V}, ACT COMMIT {item_F,item_M,item_V}, ACT COMMIT {item_K,item_M,item_V}, ACT COMMIT {item_F,item_K,item_M,item_V}, ACT COMMIT {item_L,item_M,item_V}, ACT COMMIT {item_F,item_L,item_M,item_V}, ACT COMMIT {item_K,item_L,item_M,item_V}, ACT COMMIT {item_F,item_K,item_L,item_M,item_V}assistant\n<reason>After rejecting the request for item_L, I retain it in my holdings. My goal is {item_L, item_V}, so I must commit to a set that includes both item_L and item_V. The current holdings are {item_F, item_K, item_L, item_M, item_V}, so I can commit to all of them to satisfy my goal.</reason>\n<answer>ACT COMMIT {item_F,item_K,item_L,item_M,item_V}</answer>", "episode_score": 0.927, "llm_raw_text": "<|im_start|>assistant\n<reason>The requested item is item_L, which is critical to my own goal (item_L, item_V). Since item_L is essential to my goal, I must reject the request to preserve it.</reason>\n<answer>ACT REJECT</answer><|im_end|><|im_start|>user\n\n\nEGO ACT REJECT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_L,item_V}\nEGO holdings: {item_F,item_K,item_L,item_M,item_V}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_L}}\n- EGO [mandatory_response]: ACT REJECT\n- P3 [binding_action]: ACT REJECT\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_F}, ACT COMMIT {item_K}, ACT COMMIT {item_F,item_K}, ACT COMMIT {item_L}, ACT COMMIT {item_F,item_L}, ACT COMMIT {item_K,item_L}, ACT COMMIT {item_F,item_K,item_L}, ACT COMMIT {item_M}, ACT COMMIT {item_F,item_M}, ACT COMMIT {item_K,item_M}, ACT COMMIT {item_F,item_K,item_M}, ACT COMMIT {item_L,item_M}, ACT COMMIT {item_F,item_L,item_M}, ACT COMMIT {item_K,item_L,item_M}, ACT COMMIT {item_F,item_K,item_L,item_M}, ACT COMMIT {item_V}, ACT COMMIT {item_F,item_V}, ACT COMMIT {item_K,item_V}, ACT COMMIT {item_F,item_K,item_V}, ACT COMMIT {item_L,item_V}, ACT COMMIT {item_F,item_L,item_V}, ACT COMMIT {item_K,item_L,item_V}, ACT COMMIT {item_F,item_K,item_L,item_V}, ACT COMMIT {item_M,item_V}, ACT COMMIT {item_F,item_M,item_V}, ACT COMMIT {item_K,item_M,item_V}, ACT COMMIT {item_F,item_K,item_M,item_V}, ACT COMMIT {item_L,item_M,item_V}, ACT COMMIT {item_F,item_L,item_M,item_V}, ACT COMMIT {item_K,item_L,item_M,item_V}, ACT COMMIT {item_F,item_K,item_L,item_M,item_V}<|im_end|><|im_start|>assistant\n<reason>After rejecting the request for item_L, I retain it in my holdings. My goal is {item_L, item_V}, so I must commit to a set that includes both item_L and item_V. The current holdings are {item_F, item_K, item_L, item_M, item_V}, so I can commit to all of them to satisfy my goal.</reason>\n<answer>ACT COMMIT {item_F,item_K,item_L,item_M,item_V}</answer><|im_end|>"}, {"prompt": "system\nYou are EGO in a two-agent Give Request game. Use only the listed structured actions. The active partner has requested one item from your holdings. You must decide whether giving it would preserve or damage your own goal. ACCEPT and REJECT are binding decisions; ACCEPT does not transfer the item.user\nTurn lifecycle:\n(1) The active partner first emits one GIVE proposal.\n(2) On the next Ego turn, output exactly ACT ACCEPT or ACT REJECT.\n(3) ACCEPT records an agreement but does not change holdings; on the following turn you must output the exact ACT GIVE item set from that proposal.\n(4) REJECT clears the proposal and does not change holdings.\n(5) After the interaction is resolved, output ACT COMMIT with items you still hold.\n\nThe partner proposal is shown in the form PROPOSE GIVE {giver: EGO, receiver: <partner>, items: {<item>}}. The requested item is a partner goal item.\n\nProtocol:\nACT ACCEPT | ACT REJECT | ACT GIVE {<exact requested item>} | ACT COMMIT {<items from your holdings>}\n\nThe requested item is critical to the partner's goal. If it is surplus for your own goal, the safe response is ACCEPT followed by the exact ACT GIVE. If it is critical to your own goal, REJECT and keep it. There is no reciprocity or exchange mechanism in this environment. An accepted proposal that is not fulfilled is not a completed interaction and cannot receive terminal success. The main reward is based on whether your committed holdings satisfy your own goal.\n\nReason briefly inside <reason>...</reason>, then emit exactly one listed action inside <answer>...</answer>.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_Q,item_Z}\nEGO holdings: {item_F,item_M,item_Q,item_T,item_Z}\nTurn phase: proposal_response\nEgo steps: 0/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_Q}}\nPending proposal: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_Q}}\n\nLegal actions: ACT ACCEPT, ACT REJECTassistant\n", "response": "<reason>The requested item, item_Q, is critical to my own goal (goal: {item_Q, item_Z}). Since it is not surplus and is essential for my goal, I must reject the request to preserve my own objective.</reason>\n<answer>ACT REJECT</answer>user\n\n\nEGO ACT REJECT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_Q,item_Z}\nEGO holdings: {item_F,item_M,item_Q,item_T,item_Z}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_Q}}\n- EGO [mandatory_response]: ACT REJECT\n- P3 [binding_action]: ACT REJECT\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_F}, ACT COMMIT {item_M}, ACT COMMIT {item_F,item_M}, ACT COMMIT {item_Q}, ACT COMMIT {item_F,item_Q}, ACT COMMIT {item_M,item_Q}, ACT COMMIT {item_F,item_M,item_Q}, ACT COMMIT {item_T}, ACT COMMIT {item_F,item_T}, ACT COMMIT {item_M,item_T}, ACT COMMIT {item_F,item_M,item_T}, ACT COMMIT {item_Q,item_T}, ACT COMMIT {item_F,item_Q,item_T}, ACT COMMIT {item_M,item_Q,item_T}, ACT COMMIT {item_F,item_M,item_Q,item_T}, ACT COMMIT {item_Z}, ACT COMMIT {item_F,item_Z}, ACT COMMIT {item_M,item_Z}, ACT COMMIT {item_F,item_M,item_Z}, ACT COMMIT {item_Q,item_Z}, ACT COMMIT {item_F,item_Q,item_Z}, ACT COMMIT {item_M,item_Q,item_Z}, ACT COMMIT {item_F,item_M,item_Q,item_Z}, ACT COMMIT {item_T,item_Z}, ACT COMMIT {item_F,item_T,item_Z}, ACT COMMIT {item_M,item_T,item_Z}, ACT COMMIT {item_F,item_M,item_T,item_Z}, ACT COMMIT {item_Q,item_T,item_Z}, ACT COMMIT {item_F,item_Q,item_T,item_Z}, ACT COMMIT {item_M,item_Q,item_T,item_Z}, ACT COMMIT {item_F,item_M,item_Q,item_T,item_Z}assistant\n<reason>After rejecting the proposal to give item_Q, I retain all items in my holdings as no acceptance occurred. My goal is {item_Q, item_Z}, but since I rejected the request, I must commit to the set of items I still hold, which includes item_Q and item_Z. Therefore, the committed holdings must include both item_Q and item_Z to satisfy my goal.</reason>\n<answer>ACT COMMIT {item_F,item_M,item_Q,item_T,item_Z}</answer>", "episode_score": 0.927, "llm_raw_text": "<|im_start|>assistant\n<reason>The requested item, item_Q, is critical to my own goal (goal: {item_Q, item_Z}). Since it is not surplus and is essential for my goal, I must reject the request to preserve my own objective.</reason>\n<answer>ACT REJECT</answer><|im_end|><|im_start|>user\n\n\nEGO ACT REJECT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_Q,item_Z}\nEGO holdings: {item_F,item_M,item_Q,item_T,item_Z}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_Q}}\n- EGO [mandatory_response]: ACT REJECT\n- P3 [binding_action]: ACT REJECT\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_F}, ACT COMMIT {item_M}, ACT COMMIT {item_F,item_M}, ACT COMMIT {item_Q}, ACT COMMIT {item_F,item_Q}, ACT COMMIT {item_M,item_Q}, ACT COMMIT {item_F,item_M,item_Q}, ACT COMMIT {item_T}, ACT COMMIT {item_F,item_T}, ACT COMMIT {item_M,item_T}, ACT COMMIT {item_F,item_M,item_T}, ACT COMMIT {item_Q,item_T}, ACT COMMIT {item_F,item_Q,item_T}, ACT COMMIT {item_M,item_Q,item_T}, ACT COMMIT {item_F,item_M,item_Q,item_T}, ACT COMMIT {item_Z}, ACT COMMIT {item_F,item_Z}, ACT COMMIT {item_M,item_Z}, ACT COMMIT {item_F,item_M,item_Z}, ACT COMMIT {item_Q,item_Z}, ACT COMMIT {item_F,item_Q,item_Z}, ACT COMMIT {item_M,item_Q,item_Z}, ACT COMMIT {item_F,item_M,item_Q,item_Z}, ACT COMMIT {item_T,item_Z}, ACT COMMIT {item_F,item_T,item_Z}, ACT COMMIT {item_M,item_T,item_Z}, ACT COMMIT {item_F,item_M,item_T,item_Z}, ACT COMMIT {item_Q,item_T,item_Z}, ACT COMMIT {item_F,item_Q,item_T,item_Z}, ACT COMMIT {item_M,item_Q,item_T,item_Z}, ACT COMMIT {item_F,item_M,item_Q,item_T,item_Z}<|im_end|><|im_start|>assistant\n<reason>After rejecting the proposal to give item_Q, I retain all items in my holdings as no acceptance occurred. My goal is {item_Q, item_Z}, but since I rejected the request, I must commit to the set of items I still hold, which includes item_Q and item_Z. Therefore, the committed holdings must include both item_Q and item_Z to satisfy my goal.</reason>\n<answer>ACT COMMIT {item_F,item_M,item_Q,item_T,item_Z}</answer><|im_end|>"}, {"prompt": "system\nYou are EGO in a two-agent Give Request game. Use only the listed structured actions. The active partner has requested one item from your holdings. You must decide whether giving it would preserve or damage your own goal. ACCEPT and REJECT are binding decisions; ACCEPT does not transfer the item.user\nTurn lifecycle:\n(1) The active partner first emits one GIVE proposal.\n(2) On the next Ego turn, output exactly ACT ACCEPT or ACT REJECT.\n(3) ACCEPT records an agreement but does not change holdings; on the following turn you must output the exact ACT GIVE item set from that proposal.\n(4) REJECT clears the proposal and does not change holdings.\n(5) After the interaction is resolved, output ACT COMMIT with items you still hold.\n\nThe partner proposal is shown in the form PROPOSE GIVE {giver: EGO, receiver: <partner>, items: {<item>}}. The requested item is a partner goal item.\n\nProtocol:\nACT ACCEPT | ACT REJECT | ACT GIVE {<exact requested item>} | ACT COMMIT {<items from your holdings>}\n\nThe requested item is critical to the partner's goal. If it is surplus for your own goal, the safe response is ACCEPT followed by the exact ACT GIVE. If it is critical to your own goal, REJECT and keep it. There is no reciprocity or exchange mechanism in this environment. An accepted proposal that is not fulfilled is not a completed interaction and cannot receive terminal success. The main reward is based on whether your committed holdings satisfy your own goal.\n\nReason briefly inside <reason>...</reason>, then emit exactly one listed action inside <answer>...</answer>.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_M,item_T}\nEGO holdings: {item_F,item_L,item_M,item_Q,item_T}\nTurn phase: proposal_response\nEgo steps: 0/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_T}}\nPending proposal: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_T}}\n\nLegal actions: ACT ACCEPT, ACT REJECTassistant\n", "response": "<reason>The requested item is item_T, which is critical to my own goal (goal: {item_M, item_T}). Since item_T is essential for my goal, accepting it would not preserve my goal—giving it up would damage my objective. Therefore, I must reject the proposal to retain item_T.</reason>\n<answer>ACT REJECT</answer>user\n\n\nEGO ACT REJECT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_M,item_T}\nEGO holdings: {item_F,item_L,item_M,item_Q,item_T}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_T}}\n- EGO [mandatory_response]: ACT REJECT\n- P3 [binding_action]: ACT REJECT\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_F}, ACT COMMIT {item_L}, ACT COMMIT {item_F,item_L}, ACT COMMIT {item_M}, ACT COMMIT {item_F,item_M}, ACT COMMIT {item_L,item_M}, ACT COMMIT {item_F,item_L,item_M}, ACT COMMIT {item_Q}, ACT COMMIT {item_F,item_Q}, ACT COMMIT {item_L,item_Q}, ACT COMMIT {item_F,item_L,item_Q}, ACT COMMIT {item_M,item_Q}, ACT COMMIT {item_F,item_M,item_Q}, ACT COMMIT {item_L,item_M,item_Q}, ACT COMMIT {item_F,item_L,item_M,item_Q}, ACT COMMIT {item_T}, ACT COMMIT {item_F,item_T}, ACT COMMIT {item_L,item_T}, ACT COMMIT {item_F,item_L,item_T}, ACT COMMIT {item_M,item_T}, ACT COMMIT {item_F,item_M,item_T}, ACT COMMIT {item_L,item_M,item_T}, ACT COMMIT {item_F,item_L,item_M,item_T}, ACT COMMIT {item_Q,item_T}, ACT COMMIT {item_F,item_Q,item_T}, ACT COMMIT {item_L,item_Q,item_T}, ACT COMMIT {item_F,item_L,item_Q,item_T}, ACT COMMIT {item_M,item_Q,item_T}, ACT COMMIT {item_F,item_M,item_Q,item_T}, ACT COMMIT {item_L,item_M,item_Q,item_T}, ACT COMMIT {item_F,item_L,item_M,item_Q,item_T}assistant\n<reason>After rejecting the proposal to give item_T, I retain it as it is critical to my goal. My holdings now include all items except those given away, so I commit to the set that includes item_T and the others I hold: {item_F, item_L, item_M, item_Q, item_T}.</reason>\n<answer>ACT COMMIT {item_F,item_L,item_M,item_Q,item_T}</answer>", "episode_score": 0.927, "llm_raw_text": "<|im_start|>assistant\n<reason>The requested item is item_T, which is critical to my own goal (goal: {item_M, item_T}). Since item_T is essential for my goal, accepting it would not preserve my goal—giving it up would damage my objective. Therefore, I must reject the proposal to retain item_T.</reason>\n<answer>ACT REJECT</answer><|im_end|><|im_start|>user\n\n\nEGO ACT REJECT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_M,item_T}\nEGO holdings: {item_F,item_L,item_M,item_Q,item_T}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_T}}\n- EGO [mandatory_response]: ACT REJECT\n- P3 [binding_action]: ACT REJECT\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_F}, ACT COMMIT {item_L}, ACT COMMIT {item_F,item_L}, ACT COMMIT {item_M}, ACT COMMIT {item_F,item_M}, ACT COMMIT {item_L,item_M}, ACT COMMIT {item_F,item_L,item_M}, ACT COMMIT {item_Q}, ACT COMMIT {item_F,item_Q}, ACT COMMIT {item_L,item_Q}, ACT COMMIT {item_F,item_L,item_Q}, ACT COMMIT {item_M,item_Q}, ACT COMMIT {item_F,item_M,item_Q}, ACT COMMIT {item_L,item_M,item_Q}, ACT COMMIT {item_F,item_L,item_M,item_Q}, ACT COMMIT {item_T}, ACT COMMIT {item_F,item_T}, ACT COMMIT {item_L,item_T}, ACT COMMIT {item_F,item_L,item_T}, ACT COMMIT {item_M,item_T}, ACT COMMIT {item_F,item_M,item_T}, ACT COMMIT {item_L,item_M,item_T}, ACT COMMIT {item_F,item_L,item_M,item_T}, ACT COMMIT {item_Q,item_T}, ACT COMMIT {item_F,item_Q,item_T}, ACT COMMIT {item_L,item_Q,item_T}, ACT COMMIT {item_F,item_L,item_Q,item_T}, ACT COMMIT {item_M,item_Q,item_T}, ACT COMMIT {item_F,item_M,item_Q,item_T}, ACT COMMIT {item_L,item_M,item_Q,item_T}, ACT COMMIT {item_F,item_L,item_M,item_Q,item_T}<|im_end|><|im_start|>assistant\n<reason>After rejecting the proposal to give item_T, I retain it as it is critical to my goal. My holdings now include all items except those given away, so I commit to the set that includes item_T and the others I hold: {item_F, item_L, item_M, item_Q, item_T}.</reason>\n<answer>ACT COMMIT {item_F,item_L,item_M,item_Q,item_T}</answer><|im_end|>"}, {"prompt": "system\nYou are EGO in a two-agent Give Request game. Use only the listed structured actions. The active partner has requested one item from your holdings. You must decide whether giving it would preserve or damage your own goal. ACCEPT and REJECT are binding decisions; ACCEPT does not transfer the item.user\nTurn lifecycle:\n(1) The active partner first emits one GIVE proposal.\n(2) On the next Ego turn, output exactly ACT ACCEPT or ACT REJECT.\n(3) ACCEPT records an agreement but does not change holdings; on the following turn you must output the exact ACT GIVE item set from that proposal.\n(4) REJECT clears the proposal and does not change holdings.\n(5) After the interaction is resolved, output ACT COMMIT with items you still hold.\n\nThe partner proposal is shown in the form PROPOSE GIVE {giver: EGO, receiver: <partner>, items: {<item>}}. The requested item is a partner goal item.\n\nProtocol:\nACT ACCEPT | ACT REJECT | ACT GIVE {<exact requested item>} | ACT COMMIT {<items from your holdings>}\n\nThe requested item is critical to the partner's goal. If it is surplus for your own goal, the safe response is ACCEPT followed by the exact ACT GIVE. If it is critical to your own goal, REJECT and keep it. There is no reciprocity or exchange mechanism in this environment. An accepted proposal that is not fulfilled is not a completed interaction and cannot receive terminal success. The main reward is based on whether your committed holdings satisfy your own goal.\n\nReason briefly inside <reason>...</reason>, then emit exactly one listed action inside <answer>...</answer>.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_T}\nEGO holdings: {item_F,item_L,item_M,item_T}\nTurn phase: proposal_response\nEgo steps: 0/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_F}}\nPending proposal: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_F}}\n\nLegal actions: ACT ACCEPT, ACT REJECTassistant\n", "response": "<reason>The requested item, item_F, is not critical to my own goal (which requires item_T). Since item_F is surplus for my goal, I can safely accept the request and fulfill it with a subsequent ACT GIVE.</reason>\n<answer>ACT ACCEPT</answer>user\n\n\nEGO ACT ACCEPT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_T}\nEGO holdings: {item_F,item_L,item_M,item_T}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_F}}\n- EGO [mandatory_response]: ACT ACCEPT\n- P3 [binding_action]: ACT ACCEPT\nAccepted proposal: ACT GIVE {item_F} is required.\n\nLegal actions: ACT GIVE {item_F}assistant\n<reason>I have accepted the proposal and now must fulfill it by giving item_F as required. This action satisfies the binding agreement without compromising my own goal, which only requires item_T.</reason>\n<answer>ACT GIVE {item_F}</answer>user\n\n\nEGO ACT GIVE {item_F} TO P3.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_T}\nEGO holdings: {item_L,item_M,item_T}\nTurn phase: ego_action\nEgo steps: 2/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_F}}\n- EGO [mandatory_response]: ACT ACCEPT\n- P3 [binding_action]: ACT ACCEPT\n- EGO [ego_action]: ACT GIVE {item_F}\n- P3 [binding_action]: ACT GIVE {item_F}\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_L}, ACT COMMIT {item_M}, ACT COMMIT {item_L,item_M}, ACT COMMIT {item_T}, ACT COMMIT {item_L,item_T}, ACT COMMIT {item_M,item_T}, ACT COMMIT {item_L,item_M,item_T}assistant\n<reason>I have fulfilled the requested item (item_F) and no longer hold it. My remaining holdings are {item_L, item_M, item_T}, which satisfy my goal of having item_T.</reason>\n<answer>ACT COMMIT {item_L,item_M,item_T}</answer>", "episode_score": 0.8424, "llm_raw_text": "<|im_start|>assistant\n<reason>The requested item, item_F, is not critical to my own goal (which requires item_T). Since item_F is surplus for my goal, I can safely accept the request and fulfill it with a subsequent ACT GIVE.</reason>\n<answer>ACT ACCEPT</answer><|im_end|><|im_start|>user\n\n\nEGO ACT ACCEPT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_T}\nEGO holdings: {item_F,item_L,item_M,item_T}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_F}}\n- EGO [mandatory_response]: ACT ACCEPT\n- P3 [binding_action]: ACT ACCEPT\nAccepted proposal: ACT GIVE {item_F} is required.\n\nLegal actions: ACT GIVE {item_F}<|im_end|><|im_start|>assistant\n<reason>I have accepted the proposal and now must fulfill it by giving item_F as required. This action satisfies the binding agreement without compromising my own goal, which only requires item_T.</reason>\n<answer>ACT GIVE {item_F}</answer><|im_end|><|im_start|>user\n\n\nEGO ACT GIVE {item_F} TO P3.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_T}\nEGO holdings: {item_L,item_M,item_T}\nTurn phase: ego_action\nEgo steps: 2/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_F}}\n- EGO [mandatory_response]: ACT ACCEPT\n- P3 [binding_action]: ACT ACCEPT\n- EGO [ego_action]: ACT GIVE {item_F}\n- P3 [binding_action]: ACT GIVE {item_F}\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_L}, ACT COMMIT {item_M}, ACT COMMIT {item_L,item_M}, ACT COMMIT {item_T}, ACT COMMIT {item_L,item_T}, ACT COMMIT {item_M,item_T}, ACT COMMIT {item_L,item_M,item_T}<|im_end|><|im_start|>assistant\n<reason>I have fulfilled the requested item (item_F) and no longer hold it. My remaining holdings are {item_L, item_M, item_T}, which satisfy my goal of having item_T.</reason>\n<answer>ACT COMMIT {item_L,item_M,item_T}</answer><|im_end|>"}, {"prompt": "system\nYou are EGO in a two-agent Give Request game. Use only the listed structured actions. The active partner has requested one item from your holdings. You must decide whether giving it would preserve or damage your own goal. ACCEPT and REJECT are binding decisions; ACCEPT does not transfer the item.user\nTurn lifecycle:\n(1) The active partner first emits one GIVE proposal.\n(2) On the next Ego turn, output exactly ACT ACCEPT or ACT REJECT.\n(3) ACCEPT records an agreement but does not change holdings; on the following turn you must output the exact ACT GIVE item set from that proposal.\n(4) REJECT clears the proposal and does not change holdings.\n(5) After the interaction is resolved, output ACT COMMIT with items you still hold.\n\nThe partner proposal is shown in the form PROPOSE GIVE {giver: EGO, receiver: <partner>, items: {<item>}}. The requested item is a partner goal item.\n\nProtocol:\nACT ACCEPT | ACT REJECT | ACT GIVE {<exact requested item>} | ACT COMMIT {<items from your holdings>}\n\nThe requested item is critical to the partner's goal. If it is surplus for your own goal, the safe response is ACCEPT followed by the exact ACT GIVE. If it is critical to your own goal, REJECT and keep it. There is no reciprocity or exchange mechanism in this environment. An accepted proposal that is not fulfilled is not a completed interaction and cannot receive terminal success. The main reward is based on whether your committed holdings satisfy your own goal.\n\nReason briefly inside <reason>...</reason>, then emit exactly one listed action inside <answer>...</answer>.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_K}\nEGO holdings: {item_K,item_L,item_M,item_Q}\nTurn phase: proposal_response\nEgo steps: 0/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_L}}\nPending proposal: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_L}}\n\nLegal actions: ACT ACCEPT, ACT REJECTassistant\n", "response": "<reason>The requested item is item_L, which is not critical to my own goal (which requires item_K). Since item_L is surplus for my goal, I can safely accept the request and later fulfill it with an exact ACT GIVE.</reason>\n<answer>ACT ACCEPT</answer>user\n\n\nEGO ACT ACCEPT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_K}\nEGO holdings: {item_K,item_L,item_M,item_Q}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_L}}\n- EGO [mandatory_response]: ACT ACCEPT\n- P3 [binding_action]: ACT ACCEPT\nAccepted proposal: ACT GIVE {item_L} is required.\n\nLegal actions: ACT GIVE {item_L}assistant\n<reason>I have accepted the proposal and now must fulfill it by giving item_L as required. This action completes the interaction without compromising my goal, which only requires item_K.</reason>\n<answer>ACT GIVE {item_L}</answer>user\n\n\nEGO ACT GIVE {item_L} TO P3.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_K}\nEGO holdings: {item_K,item_M,item_Q}\nTurn phase: ego_action\nEgo steps: 2/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_L}}\n- EGO [mandatory_response]: ACT ACCEPT\n- P3 [binding_action]: ACT ACCEPT\n- EGO [ego_action]: ACT GIVE {item_L}\n- P3 [binding_action]: ACT GIVE {item_L}\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_K}, ACT COMMIT {item_M}, ACT COMMIT {item_K,item_M}, ACT COMMIT {item_Q}, ACT COMMIT {item_K,item_Q}, ACT COMMIT {item_M,item_Q}, ACT COMMIT {item_K,item_M,item_Q}assistant\n<reason>I have fulfilled the requested item (item_L) and no longer hold it. My remaining holdings are {item_K, item_M, item_Q}, which satisfy my goal of having item_K.</reason>\n<answer>ACT COMMIT {item_K,item_M,item_Q}</answer>", "episode_score": 0.8424, "llm_raw_text": "<|im_start|>assistant\n<reason>The requested item is item_L, which is not critical to my own goal (which requires item_K). Since item_L is surplus for my goal, I can safely accept the request and later fulfill it with an exact ACT GIVE.</reason>\n<answer>ACT ACCEPT</answer><|im_end|><|im_start|>user\n\n\nEGO ACT ACCEPT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_K}\nEGO holdings: {item_K,item_L,item_M,item_Q}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_L}}\n- EGO [mandatory_response]: ACT ACCEPT\n- P3 [binding_action]: ACT ACCEPT\nAccepted proposal: ACT GIVE {item_L} is required.\n\nLegal actions: ACT GIVE {item_L}<|im_end|><|im_start|>assistant\n<reason>I have accepted the proposal and now must fulfill it by giving item_L as required. This action completes the interaction without compromising my goal, which only requires item_K.</reason>\n<answer>ACT GIVE {item_L}</answer><|im_end|><|im_start|>user\n\n\nEGO ACT GIVE {item_L} TO P3.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_K}\nEGO holdings: {item_K,item_M,item_Q}\nTurn phase: ego_action\nEgo steps: 2/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_L}}\n- EGO [mandatory_response]: ACT ACCEPT\n- P3 [binding_action]: ACT ACCEPT\n- EGO [ego_action]: ACT GIVE {item_L}\n- P3 [binding_action]: ACT GIVE {item_L}\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_K}, ACT COMMIT {item_M}, ACT COMMIT {item_K,item_M}, ACT COMMIT {item_Q}, ACT COMMIT {item_K,item_Q}, ACT COMMIT {item_M,item_Q}, ACT COMMIT {item_K,item_M,item_Q}<|im_end|><|im_start|>assistant\n<reason>I have fulfilled the requested item (item_L) and no longer hold it. My remaining holdings are {item_K, item_M, item_Q}, which satisfy my goal of having item_K.</reason>\n<answer>ACT COMMIT {item_K,item_M,item_Q}</answer><|im_end|>"}, {"prompt": "system\nYou are EGO in a two-agent Give Request game. Use only the listed structured actions. The active partner has requested one item from your holdings. You must decide whether giving it would preserve or damage your own goal. ACCEPT and REJECT are binding decisions; ACCEPT does not transfer the item.user\nTurn lifecycle:\n(1) The active partner first emits one GIVE proposal.\n(2) On the next Ego turn, output exactly ACT ACCEPT or ACT REJECT.\n(3) ACCEPT records an agreement but does not change holdings; on the following turn you must output the exact ACT GIVE item set from that proposal.\n(4) REJECT clears the proposal and does not change holdings.\n(5) After the interaction is resolved, output ACT COMMIT with items you still hold.\n\nThe partner proposal is shown in the form PROPOSE GIVE {giver: EGO, receiver: <partner>, items: {<item>}}. The requested item is a partner goal item.\n\nProtocol:\nACT ACCEPT | ACT REJECT | ACT GIVE {<exact requested item>} | ACT COMMIT {<items from your holdings>}\n\nThe requested item is critical to the partner's goal. If it is surplus for your own goal, the safe response is ACCEPT followed by the exact ACT GIVE. If it is critical to your own goal, REJECT and keep it. There is no reciprocity or exchange mechanism in this environment. An accepted proposal that is not fulfilled is not a completed interaction and cannot receive terminal success. The main reward is based on whether your committed holdings satisfy your own goal.\n\nReason briefly inside <reason>...</reason>, then emit exactly one listed action inside <answer>...</answer>.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_Z}\nEGO holdings: {item_L,item_Q,item_V,item_Z}\nTurn phase: proposal_response\nEgo steps: 0/8\nInteraction history:\n- P1 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P1,items: {item_Z}}\nPending proposal: PROPOSE GIVE {giver: EGO,receiver: P1,items: {item_Z}}\n\nLegal actions: ACT ACCEPT, ACT REJECTassistant\n", "response": "<reason>The requested item is item_Z, which is critical to my own goal. Since I need item_Z to achieve my goal, accepting the request would compromise my own objective. Therefore, I must reject the proposal to preserve my goal.</reason>\n<answer>ACT REJECT</answer>user\n\n\nEGO ACT REJECT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_Z}\nEGO holdings: {item_L,item_Q,item_V,item_Z}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P1 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P1,items: {item_Z}}\n- EGO [mandatory_response]: ACT REJECT\n- P1 [binding_action]: ACT REJECT\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_L}, ACT COMMIT {item_Q}, ACT COMMIT {item_L,item_Q}, ACT COMMIT {item_V}, ACT COMMIT {item_L,item_V}, ACT COMMIT {item_Q,item_V}, ACT COMMIT {item_L,item_Q,item_V}, ACT COMMIT {item_Z}, ACT COMMIT {item_L,item_Z}, ACT COMMIT {item_Q,item_Z}, ACT COMMIT {item_L,item_Q,item_Z}, ACT COMMIT {item_V,item_Z}, ACT COMMIT {item_L,item_V,item_Z}, ACT COMMIT {item_Q,item_V,item_Z}, ACT COMMIT {item_L,item_Q,item_V,item_Z}assistant\n<reason>After rejecting the partner's request for item_Z, I retain control of item_Z as it is critical to my own goal. My holdings now include all items I originally possessed, including item_Z. Therefore, I commit to my current holdings without any loss.</reason>\n<answer>ACT COMMIT {item_L,item_Q,item_V,item_Z}</answer>", "episode_score": 0.927, "llm_raw_text": "<|im_start|>assistant\n<reason>The requested item is item_Z, which is critical to my own goal. Since I need item_Z to achieve my goal, accepting the request would compromise my own objective. Therefore, I must reject the proposal to preserve my goal.</reason>\n<answer>ACT REJECT</answer><|im_end|><|im_start|>user\n\n\nEGO ACT REJECT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_Z}\nEGO holdings: {item_L,item_Q,item_V,item_Z}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P1 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P1,items: {item_Z}}\n- EGO [mandatory_response]: ACT REJECT\n- P1 [binding_action]: ACT REJECT\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_L}, ACT COMMIT {item_Q}, ACT COMMIT {item_L,item_Q}, ACT COMMIT {item_V}, ACT COMMIT {item_L,item_V}, ACT COMMIT {item_Q,item_V}, ACT COMMIT {item_L,item_Q,item_V}, ACT COMMIT {item_Z}, ACT COMMIT {item_L,item_Z}, ACT COMMIT {item_Q,item_Z}, ACT COMMIT {item_L,item_Q,item_Z}, ACT COMMIT {item_V,item_Z}, ACT COMMIT {item_L,item_V,item_Z}, ACT COMMIT {item_Q,item_V,item_Z}, ACT COMMIT {item_L,item_Q,item_V,item_Z}<|im_end|><|im_start|>assistant\n<reason>After rejecting the partner's request for item_Z, I retain control of item_Z as it is critical to my own goal. My holdings now include all items I originally possessed, including item_Z. Therefore, I commit to my current holdings without any loss.</reason>\n<answer>ACT COMMIT {item_L,item_Q,item_V,item_Z}</answer><|im_end|>"}, {"prompt": "system\nYou are EGO in a two-agent Give Request game. Use only the listed structured actions. The active partner has requested one item from your holdings. You must decide whether giving it would preserve or damage your own goal. ACCEPT and REJECT are binding decisions; ACCEPT does not transfer the item.user\nTurn lifecycle:\n(1) The active partner first emits one GIVE proposal.\n(2) On the next Ego turn, output exactly ACT ACCEPT or ACT REJECT.\n(3) ACCEPT records an agreement but does not change holdings; on the following turn you must output the exact ACT GIVE item set from that proposal.\n(4) REJECT clears the proposal and does not change holdings.\n(5) After the interaction is resolved, output ACT COMMIT with items you still hold.\n\nThe partner proposal is shown in the form PROPOSE GIVE {giver: EGO, receiver: <partner>, items: {<item>}}. The requested item is a partner goal item.\n\nProtocol:\nACT ACCEPT | ACT REJECT | ACT GIVE {<exact requested item>} | ACT COMMIT {<items from your holdings>}\n\nThe requested item is critical to the partner's goal. If it is surplus for your own goal, the safe response is ACCEPT followed by the exact ACT GIVE. If it is critical to your own goal, REJECT and keep it. There is no reciprocity or exchange mechanism in this environment. An accepted proposal that is not fulfilled is not a completed interaction and cannot receive terminal success. The main reward is based on whether your committed holdings satisfy your own goal.\n\nReason briefly inside <reason>...</reason>, then emit exactly one listed action inside <answer>...</answer>.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_L,item_M,item_Z}\nEGO holdings: {item_F,item_L,item_M,item_Q,item_T,item_Z}\nTurn phase: proposal_response\nEgo steps: 0/8\nInteraction history:\n- P1 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P1,items: {item_L}}\nPending proposal: PROPOSE GIVE {giver: EGO,receiver: P1,items: {item_L}}\n\nLegal actions: ACT ACCEPT, ACT REJECTassistant\n", "response": "<reason>The requested item, item_L, is critical to my own goal (goal: {item_L, item_M, item_Z}). Since it is not surplus and is essential for my goal, I must reject the request to preserve my own objective.</reason>\n<answer>ACT REJECT</answer>user\n\n\nEGO ACT REJECT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_L,item_M,item_Z}\nEGO holdings: {item_F,item_L,item_M,item_Q,item_T,item_Z}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P1 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P1,items: {item_L}}\n- EGO [mandatory_response]: ACT REJECT\n- P1 [binding_action]: ACT REJECT\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_F}, ACT COMMIT {item_L}, ACT COMMIT {item_F,item_L}, ACT COMMIT {item_M}, ACT COMMIT {item_F,item_M}, ACT COMMIT {item_L,item_M}, ACT COMMIT {item_F,item_L,item_M}, ACT COMMIT {item_Q}, ACT COMMIT {item_F,item_Q}, ACT COMMIT {item_L,item_Q}, ACT COMMIT {item_F,item_L,item_Q}, ACT COMMIT {item_M,item_Q}, ACT COMMIT {item_F,item_M,item_Q}, ACT COMMIT {item_L,item_M,item_Q}, ACT COMMIT {item_F,item_L,item_M,item_Q}, ACT COMMIT {item_T}, ACT COMMIT {item_F,item_T}, ACT COMMIT {item_L,item_T}, ACT COMMIT {item_F,item_L,item_T}, ACT COMMIT {item_M,item_T}, ACT COMMIT {item_F,item_M,item_T}, ACT COMMIT {item_L,item_M,item_T}, ACT COMMIT {item_F,item_L,item_M,item_T}, ACT COMMIT {item_Q,item_T}, ACT COMMIT {item_F,item_Q,item_T}, ACT COMMIT {item_L,item_Q,item_T}, ACT COMMIT {item_F,item_L,item_Q,item_T}, ACT COMMIT {item_M,item_Q,item_T}, ACT COMMIT {item_F,item_M,item_Q,item_T}, ACT COMMIT {item_L,item_M,item_Q,item_T}, ACT COMMIT {item_F,item_L,item_M,item_Q,item_T}, ACT COMMIT {item_Z}, ACT COMMIT {item_F,item_Z}, ACT COMMIT {item_L,item_Z}, ACT COMMIT {item_F,item_L,item_Z}, ACT COMMIT {item_M,item_Z}, ACT COMMIT {item_F,item_M,item_Z}, ACT COMMIT {item_L,item_M,item_Z}, ACT COMMIT {item_F,item_L,item_M,item_Z}, ACT COMMIT {item_Q,item_Z}, ACT COMMIT {item_F,item_Q,item_Z}, ACT COMMIT {item_L,item_Q,item_Z}, ACT COMMIT {item_F,item_L,item_Q,item_Z}, ACT COMMIT {item_M,item_Q,item_Z}, ACT COMMIT {item_F,item_M,item_Q,item_Z}, ACT COMMIT {item_L,item_M,item_Q,item_Z}, ACT COMMIT {item_F,item_L,item_M,item_Q,item_Z}, ACT COMMIT {item_T,item_Z}, ACT COMMIT {item_F,item_T,item_Z}, ACT COMMIT {item_L,item_T,item_Z}, ACT COMMIT {item_F,item_L,item_T,item_Z}, ACT COMMIT {item_M,item_T,item_Z}, ACT COMMIT {item_F,item_M,item_T,item_Z}, ACT COMMIT {item_L,item_M,item_T,item_Z}, ACT COMMIT {item_F,item_L,item_M,item_T,item_Z}, ACT COMMIT {item_Q,item_T,item_Z}, ACT COMMIT {item_F,item_Q,item_T,item_Z}, ACT COMMIT {item_L,item_Q,item_T,item_Z}, ACT COMMIT {item_F,item_L,item_Q,item_T,item_Z}, ACT COMMIT {item_M,item_Q,item_T,item_Z}, ACT COMMIT {item_F,item_M,item_Q,item_T,item_Z}, ACT COMMIT {item_L,item_M,item_Q,item_T,item_Z}, ACT COMMIT {item_F,item_L,item_M,item_Q,item_T,item_Z}assistant\n<reason>After rejecting the proposal to give item_L, no item was transferred. My holdings remain unchanged. I now commit to the set of items I still hold: {item_F, item_L, item_M, item_Q, item_T, item_Z}.</reason>\n<answer>ACT COMMIT {item_F,item_L,item_M,item_Q,item_T,item_Z}</answer>", "episode_score": 0.927, "llm_raw_text": "<|im_start|>assistant\n<reason>The requested item, item_L, is critical to my own goal (goal: {item_L, item_M, item_Z}). Since it is not surplus and is essential for my goal, I must reject the request to preserve my own objective.</reason>\n<answer>ACT REJECT</answer><|im_end|><|im_start|>user\n\n\nEGO ACT REJECT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_L,item_M,item_Z}\nEGO holdings: {item_F,item_L,item_M,item_Q,item_T,item_Z}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P1 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P1,items: {item_L}}\n- EGO [mandatory_response]: ACT REJECT\n- P1 [binding_action]: ACT REJECT\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_F}, ACT COMMIT {item_L}, ACT COMMIT {item_F,item_L}, ACT COMMIT {item_M}, ACT COMMIT {item_F,item_M}, ACT COMMIT {item_L,item_M}, ACT COMMIT {item_F,item_L,item_M}, ACT COMMIT {item_Q}, ACT COMMIT {item_F,item_Q}, ACT COMMIT {item_L,item_Q}, ACT COMMIT {item_F,item_L,item_Q}, ACT COMMIT {item_M,item_Q}, ACT COMMIT {item_F,item_M,item_Q}, ACT COMMIT {item_L,item_M,item_Q}, ACT COMMIT {item_F,item_L,item_M,item_Q}, ACT COMMIT {item_T}, ACT COMMIT {item_F,item_T}, ACT COMMIT {item_L,item_T}, ACT COMMIT {item_F,item_L,item_T}, ACT COMMIT {item_M,item_T}, ACT COMMIT {item_F,item_M,item_T}, ACT COMMIT {item_L,item_M,item_T}, ACT COMMIT {item_F,item_L,item_M,item_T}, ACT COMMIT {item_Q,item_T}, ACT COMMIT {item_F,item_Q,item_T}, ACT COMMIT {item_L,item_Q,item_T}, ACT COMMIT {item_F,item_L,item_Q,item_T}, ACT COMMIT {item_M,item_Q,item_T}, ACT COMMIT {item_F,item_M,item_Q,item_T}, ACT COMMIT {item_L,item_M,item_Q,item_T}, ACT COMMIT {item_F,item_L,item_M,item_Q,item_T}, ACT COMMIT {item_Z}, ACT COMMIT {item_F,item_Z}, ACT COMMIT {item_L,item_Z}, ACT COMMIT {item_F,item_L,item_Z}, ACT COMMIT {item_M,item_Z}, ACT COMMIT {item_F,item_M,item_Z}, ACT COMMIT {item_L,item_M,item_Z}, ACT COMMIT {item_F,item_L,item_M,item_Z}, ACT COMMIT {item_Q,item_Z}, ACT COMMIT {item_F,item_Q,item_Z}, ACT COMMIT {item_L,item_Q,item_Z}, ACT COMMIT {item_F,item_L,item_Q,item_Z}, ACT COMMIT {item_M,item_Q,item_Z}, ACT COMMIT {item_F,item_M,item_Q,item_Z}, ACT COMMIT {item_L,item_M,item_Q,item_Z}, ACT COMMIT {item_F,item_L,item_M,item_Q,item_Z}, ACT COMMIT {item_T,item_Z}, ACT COMMIT {item_F,item_T,item_Z}, ACT COMMIT {item_L,item_T,item_Z}, ACT COMMIT {item_F,item_L,item_T,item_Z}, ACT COMMIT {item_M,item_T,item_Z}, ACT COMMIT {item_F,item_M,item_T,item_Z}, ACT COMMIT {item_L,item_M,item_T,item_Z}, ACT COMMIT {item_F,item_L,item_M,item_T,item_Z}, ACT COMMIT {item_Q,item_T,item_Z}, ACT COMMIT {item_F,item_Q,item_T,item_Z}, ACT COMMIT {item_L,item_Q,item_T,item_Z}, ACT COMMIT {item_F,item_L,item_Q,item_T,item_Z}, ACT COMMIT {item_M,item_Q,item_T,item_Z}, ACT COMMIT {item_F,item_M,item_Q,item_T,item_Z}, ACT COMMIT {item_L,item_M,item_Q,item_T,item_Z}, ACT COMMIT {item_F,item_L,item_M,item_Q,item_T,item_Z}<|im_end|><|im_start|>assistant\n<reason>After rejecting the proposal to give item_L, no item was transferred. My holdings remain unchanged. I now commit to the set of items I still hold: {item_F, item_L, item_M, item_Q, item_T, item_Z}.</reason>\n<answer>ACT COMMIT {item_F,item_L,item_M,item_Q,item_T,item_Z}</answer><|im_end|>"}, {"prompt": "system\nYou are EGO in a two-agent Give Request game. Use only the listed structured actions. The active partner has requested one item from your holdings. You must decide whether giving it would preserve or damage your own goal. ACCEPT and REJECT are binding decisions; ACCEPT does not transfer the item.user\nTurn lifecycle:\n(1) The active partner first emits one GIVE proposal.\n(2) On the next Ego turn, output exactly ACT ACCEPT or ACT REJECT.\n(3) ACCEPT records an agreement but does not change holdings; on the following turn you must output the exact ACT GIVE item set from that proposal.\n(4) REJECT clears the proposal and does not change holdings.\n(5) After the interaction is resolved, output ACT COMMIT with items you still hold.\n\nThe partner proposal is shown in the form PROPOSE GIVE {giver: EGO, receiver: <partner>, items: {<item>}}. The requested item is a partner goal item.\n\nProtocol:\nACT ACCEPT | ACT REJECT | ACT GIVE {<exact requested item>} | ACT COMMIT {<items from your holdings>}\n\nThe requested item is critical to the partner's goal. If it is surplus for your own goal, the safe response is ACCEPT followed by the exact ACT GIVE. If it is critical to your own goal, REJECT and keep it. There is no reciprocity or exchange mechanism in this environment. An accepted proposal that is not fulfilled is not a completed interaction and cannot receive terminal success. The main reward is based on whether your committed holdings satisfy your own goal.\n\nReason briefly inside <reason>...</reason>, then emit exactly one listed action inside <answer>...</answer>.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_L,item_T}\nEGO holdings: {item_F,item_L,item_M,item_T,item_V}\nTurn phase: proposal_response\nEgo steps: 0/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_F}}\nPending proposal: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_F}}\n\nLegal actions: ACT ACCEPT, ACT REJECTassistant\n", "response": "<reason>The requested item, item_F, is not critical to my goal, which requires item_L and item_T. Since item_F is surplus, I can safely accept the request and fulfill it later with an exact ACT GIVE.</reason>\n<answer>ACT ACCEPT</answer>user\n\n\nEGO ACT ACCEPT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_L,item_T}\nEGO holdings: {item_F,item_L,item_M,item_T,item_V}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_F}}\n- EGO [mandatory_response]: ACT ACCEPT\n- P3 [binding_action]: ACT ACCEPT\nAccepted proposal: ACT GIVE {item_F} is required.\n\nLegal actions: ACT GIVE {item_F}assistant\n<reason>I have accepted the proposal and now must fulfill it by giving item_F as required. This action completes the interaction without compromising my goal, which only requires item_L and item_T.</reason>\n<answer>ACT GIVE {item_F}</answer>user\n\n\nEGO ACT GIVE {item_F} TO P3.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_L,item_T}\nEGO holdings: {item_L,item_M,item_T,item_V}\nTurn phase: ego_action\nEgo steps: 2/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_F}}\n- EGO [mandatory_response]: ACT ACCEPT\n- P3 [binding_action]: ACT ACCEPT\n- EGO [ego_action]: ACT GIVE {item_F}\n- P3 [binding_action]: ACT GIVE {item_F}\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_L}, ACT COMMIT {item_M}, ACT COMMIT {item_L,item_M}, ACT COMMIT {item_T}, ACT COMMIT {item_L,item_T}, ACT COMMIT {item_M,item_T}, ACT COMMIT {item_L,item_M,item_T}, ACT COMMIT {item_V}, ACT COMMIT {item_L,item_V}, ACT COMMIT {item_M,item_V}, ACT COMMIT {item_L,item_M,item_V}, ACT COMMIT {item_T,item_V}, ACT COMMIT {item_L,item_T,item_V}, ACT COMMIT {item_M,item_T,item_V}, ACT COMMIT {item_L,item_M,item_T,item_V}assistant\n<reason>I have fulfilled the requested item, item_F, as required by the proposal. My goal remains satisfied as I still hold item_L and item_T. The final holdings that satisfy my goal are {item_L, item_T}.</reason>\n<answer>ACT COMMIT {item_L,item_T}</answer>", "episode_score": 0.8586, "llm_raw_text": "<|im_start|>assistant\n<reason>The requested item, item_F, is not critical to my goal, which requires item_L and item_T. Since item_F is surplus, I can safely accept the request and fulfill it later with an exact ACT GIVE.</reason>\n<answer>ACT ACCEPT</answer><|im_end|><|im_start|>user\n\n\nEGO ACT ACCEPT.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_L,item_T}\nEGO holdings: {item_F,item_L,item_M,item_T,item_V}\nTurn phase: ego_action\nEgo steps: 1/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_F}}\n- EGO [mandatory_response]: ACT ACCEPT\n- P3 [binding_action]: ACT ACCEPT\nAccepted proposal: ACT GIVE {item_F} is required.\n\nLegal actions: ACT GIVE {item_F}<|im_end|><|im_start|>assistant\n<reason>I have accepted the proposal and now must fulfill it by giving item_F as required. This action completes the interaction without compromising my goal, which only requires item_L and item_T.</reason>\n<answer>ACT GIVE {item_F}</answer><|im_end|><|im_start|>user\n\n\nEGO ACT GIVE {item_F} TO P3.\n\nGenerator: mixed_incentive/respond_to_give_request\nEGO goal: {item_L,item_T}\nEGO holdings: {item_L,item_M,item_T,item_V}\nTurn phase: ego_action\nEgo steps: 2/8\nInteraction history:\n- P3 [proposal]: PROPOSE GIVE {giver: EGO,receiver: P3,items: {item_F}}\n- EGO [mandatory_response]: ACT ACCEPT\n- P3 [binding_action]: ACT ACCEPT\n- EGO [ego_action]: ACT GIVE {item_F}\n- P3 [binding_action]: ACT GIVE {item_F}\n\nLegal actions: ACT COMMIT {}, ACT COMMIT {item_L}, ACT COMMIT {item_M}, ACT COMMIT {item_L,item_M}, ACT COMMIT {item_T}, ACT COMMIT {item_L,item_T}, ACT COMMIT {item_M,item_T}, ACT COMMIT {item_L,item_M,item_T}, ACT COMMIT {item_V}, ACT COMMIT {item_L,item_V}, ACT COMMIT {item_M,item_V}, ACT COMMIT {item_L,item_M,item_V}, ACT COMMIT {item_T,item_V}, ACT COMMIT {item_L,item_T,item_V}, ACT COMMIT {item_M,item_T,item_V}, ACT COMMIT {item_L,item_M,item_T,item_V}<|im_end|><|im_start|>assistant\n<reason>I have fulfilled the requested item, item_F, as required by the proposal. My goal remains satisfied as I still hold item_L and item_T. The final holdings that satisfy my goal are {item_L, item_T}.</reason>\n<answer>ACT COMMIT {item_L,item_T}</answer><|im_end|>"}]
+[2026-08-28 20:42:57] [agentic_rollout_pipeline.py (135)] [INFO] [DRIVER 0 / 1][PID 364224] {"time/rollout": 85.93293853895739, "env/ItemGame-RespondToGiveRequest/success": 0.8666666666666667, "env/ItemGame-RespondToGiveRequest/num_actions": 2.533333333333333, "env/ItemGame-RespondToGiveRequest/generation_attempts": 2.6666666666666665, "env/ItemGame-RespondToGiveRequest/retry_attempts": 0.0, "env/ItemGame-RespondToGiveRequest/action_is_ask": 0.0, "env/ItemGame-RespondToGiveRequest/action_is_say": 0.0, "env/ItemGame-RespondToGiveRequest/action_is_act": 1.1333333333333333, "env/ItemGame-RespondToGiveRequest/action_is_query": 0.0, "env/ItemGame-RespondToGiveRequest/action_is_inform": 0.0, "env/ItemGame-RespondToGiveRequest/action_is_propose": 0.0, "env/ItemGame-RespondToGiveRequest/communication_used": 0.0, "env/ItemGame-RespondToGiveRequest/ego_step": 2.6666666666666665, "env/ItemGame-RespondToGiveRequest/turn_index": 1.5333333333333334, "env/ItemGame-RespondToGiveRequest/step_reward": 0.9043333333333333, "env/ItemGame-RespondToGiveRequest/game_transition": 0.8666666666666667, "env/ItemGame-RespondToGiveRequest/agreement_formed": 0.8, "env/ItemGame-RespondToGiveRequest/agreement_followed_through": 0.6666666666666666, "env/ItemGame-RespondToGiveRequest/agreement_fulfilled": 0.6666666666666666, "env/ItemGame-RespondToGiveRequest/goal_satisfied": 0.8666666666666667, "env/ItemGame-RespondToGiveRequest/coalition_valid": 0.0, "env/ItemGame-RespondToGiveRequest/correct_join_commit": 0.0, "env/ItemGame-RespondToGiveRequest/rerouted_after_cannot": 0.0, "env/ItemGame-RespondToGiveRequest/rerouted_after_unavailability": 0.0, "env/ItemGame-RespondToGiveRequest/harmful_transfer_avoided": 0.3333333333333333, "env/ItemGame-RespondToGiveRequest/harmful_give_avoided": 0.3333333333333333, "env/ItemGame-RespondToGiveRequest/useful_give_request": 0.6666666666666666, "env/ItemGame-RespondToGiveRequest/useful_exchange_proposed": 0.0, "env/ItemGame-RespondToGiveRequest/mandatory_request_answered": 1.1333333333333333, "env/ItemGame-RespondToGiveRequest/asked_goal": 0.0, "env/ItemGame-RespondToGiveRequest/asked_holdings": 0.0, "env/ItemGame-RespondToGiveRequest/disclosed_own_state": 0.0, "env/ItemGame-RespondToGiveRequest/proposed_join": 0.0, "env/ItemGame-RespondToGiveRequest/successful_joint_commit": 0.0, "env/ItemGame-RespondToGiveRequest/identified_complementary_exchange": 0.0, "env/ItemGame-RespondToGiveRequest/executed_exchange": 0.0, "env/ItemGame-RespondToGiveRequest/coalition_commit_exact": 0.0, "env/ItemGame-RespondToGiveRequest/coalition_members_committed": 0.8666666666666667, "env/ItemGame-RespondToGiveRequest/asked_give": 0.0, "env/ItemGame-RespondToGiveRequest/refused_critical_item": 0.3333333333333333, "env/ItemGame-RespondToGiveRequest/accepted_cannot": 0.0, "env/ItemGame-RespondToGiveRequest/terminal_success": 0.8666666666666667, "env/ItemGame-RespondToGiveRequest/communication_budget_used": 0.0, "env/ItemGame-RespondToGiveRequest/ego_steps": 2.6666666666666665, "env/ItemGame-RespondToGiveRequest/unfulfilled_agreements": 0.13333333333333333, "env/ItemGame-RespondToGiveRequest/proposal_accepted": 0.8, "env/ItemGame-RespondToGiveRequest/proposal_rejected": 0.3333333333333333, "env/ItemGame-RespondToGiveRequest/coalition_formed": 0.0, "env/ItemGame-RespondToGiveRequest/commit_valid": 0.8666666666666667, "env/ItemGame-RespondToGiveRequest/ego_commit_item_count": 3.1, "env/ItemGame-RespondToGiveRequest/p1_commit_item_count": 0.0, "env/ItemGame-RespondToGiveRequest/redundant_commit_count": 1.4333333333333333, "env/ItemGame-RespondToGiveRequest/communication_efficiency_bonus": 0.05200000000000001, "env/ItemGame-RespondToGiveRequest/respond_request_safe": 0.5333333333333333, "env/ItemGame-RespondToGiveRequest/respond_request_harmful": 0.6, "env/ItemGame-RespondToGiveRequest/respond_partner_p1": 0.26666666666666666, "env/ItemGame-RespondToGiveRequest/respond_partner_p2": 0.36666666666666664, "env/ItemGame-RespondToGiveRequest/respond_partner_p3": 0.5, "env/ItemGame-RespondToGiveRequest/respond_accept": 0.8, "env/ItemGame-RespondToGiveRequest/respond_reject": 0.3333333333333333, "env/ItemGame-RespondToGiveRequest/respond_give_fulfilled": 0.6666666666666666, "env/ItemGame-RespondToGiveRequest/respond_exact_give": 0.6666666666666666, "env/ItemGame-RespondToGiveRequest/respond_safe_correct": 0.5333333333333333, "env/ItemGame-RespondToGiveRequest/respond_harmful_correct": 0.3333333333333333, "env/ItemGame-RespondToGiveRequest/respond_harmful_transfer": 0.13333333333333333, "env/ItemGame-RespondToGiveRequest/canonical_reward_player_0": 0.8976666666666665, "env/ItemGame-RespondToGiveRequest/canonical_reward_player_1": 0.0, "env/ItemGame-RespondToGiveRequest/format_valid": 0.8666666666666667, "env/ItemGame-RespondToGiveRequest/semantic_action_valid": 0.8666666666666667, "env/ItemGame-RespondToGiveRequest/action_recovered": 0.0, "env/ItemGame-RespondToGiveRequest/near_generation_limit": 0.0, "env/ItemGame-RespondToGiveRequest/response_truncated": 0.0, "env/ItemGame-RespondToGiveRequest/ego_success": 1.0, "env/ItemGame-RespondToGiveRequest/player_0_return": 0.8976666666666665, "env/ItemGame-RespondToGiveRequest/player_1_return": 0.0, "env/ItemGame-RespondToGiveRequest/player_0_success": 0.8666666666666667, "env/ItemGame-RespondToGiveRequest/player_1_success": 0.0, "env/ItemGame-RespondToGiveRequest/winner": -0.13333333333333333, "env/ItemGame-RespondToGiveRequest/draw": 0.0, "env/ItemGame-RespondToGiveRequest/player_0_lose_for_wrong_format": 0.13333333333333333, "env/ItemGame-RespondToGiveRequest/player_1_lose_for_wrong_format": 0.0, "env/ItemGame-RespondToGiveRequest/player_0_lose_for_overlong_response": 0.0, "env/ItemGame-RespondToGiveRequest/player_1_lose_for_overlong_response": 0.0, "env/ItemGame-RespondToGiveRequest/player_0_lose_for_overlong_sequence": 0.0, "env/ItemGame-RespondToGiveRequest/player_1_lose_for_overlong_sequence": 0.0, "env/ItemGame-RespondToGiveRequest/response_length": 190.36666666666667, "env/ItemGame-RespondToGiveRequest/response_length_per_turn": 71.17222222222222, "env/ItemGame-RespondToGiveRequest/response_length_turn_0": 66.63333333333334, "env/ItemGame-RespondToGiveRequest/response_length_turn_1": 74.56666666666666, "env/ItemGame-RespondToGiveRequest/response_length_turn_2": 71.25, "env/ItemGame-RespondToGiveRequest/artificial_truncation": 1.0, "env/ItemGame-RequestSurplusReroute/success": 0.9, "env/ItemGame-RequestSurplusReroute/num_actions": 3.966666666666667, "env/ItemGame-RequestSurplusReroute/generation_attempts": 4.066666666666666, "env/ItemGame-RequestSurplusReroute/retry_attempts": 0.0, "env/ItemGame-RequestSurplusReroute/action_is_ask": 0.0, "env/ItemGame-RequestSurplusReroute/action_is_say": 0.0, "env/ItemGame-RequestSurplusReroute/action_is_act": 0.9, "env/ItemGame-RequestSurplusReroute/action_is_query": 0.2, "env/ItemGame-RequestSurplusReroute/action_is_inform": 0.0, "env/ItemGame-RequestSurplusReroute/action_is_propose": 0.1, "env/ItemGame-RequestSurplusReroute/communication_used": 3.3666666666666667, "env/ItemGame-RequestSurplusReroute/ego_step": 4.266666666666667, "env/ItemGame-RequestSurplusReroute/turn_index": 3.066666666666667, "env/ItemGame-RequestSurplusReroute/step_reward": 0.9263333333333336, "env/ItemGame-RequestSurplusReroute/game_transition": 0.9, "env/ItemGame-RequestSurplusReroute/agreement_formed": 1.0, "env/ItemGame-RequestSurplusReroute/agreement_followed_through": 1.0, "env/ItemGame-RequestSurplusReroute/agreement_fulfilled": 1.0, "env/ItemGame-RequestSurplusReroute/goal_satisfied": 0.9, "env/ItemGame-RequestSurplusReroute/coalition_valid": 0.0, "env/ItemGame-RequestSurplusReroute/correct_join_commit": 0.0, "env/ItemGame-RequestSurplusReroute/rerouted_after_cannot": 0.06666666666666667, "env/ItemGame-RequestSurplusReroute/rerouted_after_unavailability": 0.06666666666666667, "env/ItemGame-RequestSurplusReroute/harmful_transfer_avoided": 0.0, "env/ItemGame-RequestSurplusReroute/harmful_give_avoided": 0.0, "env/ItemGame-RequestSurplusReroute/useful_give_request": 1.0, "env/ItemGame-RequestSurplusReroute/useful_exchange_proposed": 0.0, "env/ItemGame-RequestSurplusReroute/mandatory_request_answered": 0.0, "env/ItemGame-RequestSurplusReroute/asked_goal": 1.2, "env/ItemGame-RequestSurplusReroute/asked_holdings": 0.9, "env/ItemGame-RequestSurplusReroute/disclosed_own_state": 0.0, "env/ItemGame-RequestSurplusReroute/proposed_join": 0.0, "env/ItemGame-RequestSurplusReroute/successful_joint_commit": 0.0, "env/ItemGame-RequestSurplusReroute/identified_complementary_exchange": 0.0, "env/ItemGame-RequestSurplusReroute/executed_exchange": 0.0, "env/ItemGame-RequestSurplusReroute/coalition_commit_exact": 0.0, "env/ItemGame-RequestSurplusReroute/coalition_members_committed": 0.0, "env/ItemGame-RequestSurplusReroute/asked_give": 1.0, "env/ItemGame-RequestSurplusReroute/refused_critical_item": 0.0, "env/ItemGame-RequestSurplusReroute/accepted_cannot": 0.06666666666666667, "env/ItemGame-RequestSurplusReroute/terminal_success": 0.9, "env/ItemGame-RequestSurplusReroute/communication_budget_used": 3.3666666666666667, "env/ItemGame-RequestSurplusReroute/ego_steps": 4.266666666666667, "env/ItemGame-RequestSurplusReroute/unfulfilled_agreements": 0.0, "env/ItemGame-RequestSurplusReroute/proposal_accepted": 1.0, "env/ItemGame-RequestSurplusReroute/proposal_rejected": 0.06666666666666667, "env/ItemGame-RequestSurplusReroute/coalition_formed": 0.0, "env/ItemGame-RequestSurplusReroute/commit_valid": 0.9, "env/ItemGame-RequestSurplusReroute/ego_commit_item_count": 1.8, "env/ItemGame-RequestSurplusReroute/p1_commit_item_count": 0.0, "env/ItemGame-RequestSurplusReroute/redundant_commit_count": 0.0, "env/ItemGame-RequestSurplusReroute/communication_efficiency_bonus": 0.026333333333333334, "env/ItemGame-RequestSurplusReroute/reroute_blocker_inferable": 0.6666666666666666, "env/ItemGame-RequestSurplusReroute/reroute_blocker_hidden_unwilling": 0.5333333333333333, "env/ItemGame-RequestSurplusReroute/reroute_first_partner_is_helper": 0.9333333333333333, "env/ItemGame-RequestSurplusReroute/reroute_first_partner_is_blocker": 0.06666666666666667, "env/ItemGame-RequestSurplusReroute/reroute_first_proposal_rejected": 0.06666666666666667, "env/ItemGame-RequestSurplusReroute/rerouted_after_rejection": 0.06666666666666667, "env/ItemGame-RequestSurplusReroute/reroute_helper_reached": 1.0, "env/ItemGame-RequestSurplusReroute/reroute_unnecessary_exploration_after_success": 0.0, "env/ItemGame-RequestSurplusReroute/reroute_proposal_count": 1.0666666666666667, "env/ItemGame-RequestSurplusReroute/reroute_rejection_count": 0.06666666666666667, "env/ItemGame-RequestSurplusReroute/reroute_proposal_partner_count": 1.0666666666666667, "env/ItemGame-RequestSurplusReroute/canonical_reward_player_0": 0.9213333333333334, "env/ItemGame-RequestSurplusReroute/canonical_reward_player_1": 0.0, "env/ItemGame-RequestSurplusReroute/format_valid": 0.9, "env/ItemGame-RequestSurplusReroute/semantic_action_valid": 0.9, "env/ItemGame-RequestSurplusReroute/action_recovered": 0.0, "env/ItemGame-RequestSurplusReroute/near_generation_limit": 0.0, "env/ItemGame-RequestSurplusReroute/response_truncated": 0.0, "env/ItemGame-RequestSurplusReroute/ego_success": 1.0, "env/ItemGame-RequestSurplusReroute/player_0_return": 0.9213333333333334, "env/ItemGame-RequestSurplusReroute/player_1_return": 0.0, "env/ItemGame-RequestSurplusReroute/player_0_success": 0.9, "env/ItemGame-RequestSurplusReroute/player_1_success": 0.0, "env/ItemGame-RequestSurplusReroute/winner": -0.1, "env/ItemGame-RequestSurplusReroute/draw": 0.0, "env/ItemGame-RequestSurplusReroute/player_0_lose_for_wrong_format": 0.1, "env/ItemGame-RequestSurplusReroute/player_1_lose_for_wrong_format": 0.0, "env/ItemGame-RequestSurplusReroute/player_0_lose_for_overlong_response": 0.0, "env/ItemGame-RequestSurplusReroute/player_1_lose_for_overlong_response": 0.0, "env/ItemGame-RequestSurplusReroute/player_0_lose_for_overlong_sequence": 0.0, "env/ItemGame-RequestSurplusReroute/player_1_lose_for_overlong_sequence": 0.0, "env/ItemGame-RequestSurplusReroute/response_length": 555.4333333333333, "env/ItemGame-RequestSurplusReroute/response_length_per_turn": 132.9197619047619, "env/ItemGame-RequestSurplusReroute/response_length_turn_0": 167.36666666666667, "env/ItemGame-RequestSurplusReroute/response_length_turn_1": 137.53333333333333, "env/ItemGame-RequestSurplusReroute/response_length_turn_2": 112.16666666666667, "env/ItemGame-CollaborationV2/success": 0.9666666666666667, "env/ItemGame-CollaborationV2/num_actions": 5.933333333333334, "env/ItemGame-CollaborationV2/generation_attempts": 5.966666666666667, "env/ItemGame-CollaborationV2/retry_attempts": 0.0, "env/ItemGame-CollaborationV2/action_is_ask": 0.0, "env/ItemGame-CollaborationV2/action_is_say": 0.0, "env/ItemGame-CollaborationV2/action_is_act": 0.9666666666666667, "env/ItemGame-CollaborationV2/action_is_query": 0.06666666666666667, "env/ItemGame-CollaborationV2/action_is_inform": 0.06666666666666667, "env/ItemGame-CollaborationV2/action_is_propose": 0.03333333333333333, "env/ItemGame-CollaborationV2/communication_used": 5.3, "env/ItemGame-CollaborationV2/ego_step": 6.266666666666667, "env/ItemGame-CollaborationV2/turn_index": 5.133333333333334, "env/ItemGame-CollaborationV2/step_reward": 0.9760000000000004, "env/ItemGame-CollaborationV2/game_transition": 0.9666666666666667, "env/ItemGame-CollaborationV2/agreement_formed": 0.0, "env/ItemGame-CollaborationV2/agreement_followed_through": 0.0, "env/ItemGame-CollaborationV2/agreement_fulfilled": 0.0, "env/ItemGame-CollaborationV2/goal_satisfied": 0.9666666666666667, "env/ItemGame-CollaborationV2/coalition_valid": 1.0, "env/ItemGame-CollaborationV2/correct_join_commit": 0.0, "env/ItemGame-CollaborationV2/rerouted_after_cannot": 0.0, "env/ItemGame-CollaborationV2/rerouted_after_unavailability": 0.0, "env/ItemGame-CollaborationV2/harmful_transfer_avoided": 0.0, "env/ItemGame-CollaborationV2/harmful_give_avoided": 0.0, "env/ItemGame-CollaborationV2/useful_give_request": 0.0, "env/ItemGame-CollaborationV2/useful_exchange_proposed": 0.0, "env/ItemGame-CollaborationV2/mandatory_request_answered": 1.0333333333333334, "env/ItemGame-CollaborationV2/asked_goal": 1.1333333333333333, "env/ItemGame-CollaborationV2/asked_holdings": 1.0666666666666667, "env/ItemGame-CollaborationV2/disclosed_own_state": 1.0333333333333334, "env/ItemGame-CollaborationV2/proposed_join": 1.0666666666666667, "env/ItemGame-CollaborationV2/successful_joint_commit": 0.9666666666666667, "env/ItemGame-CollaborationV2/identified_complementary_exchange": 0.0, "env/ItemGame-CollaborationV2/executed_exchange": 0.0, "env/ItemGame-CollaborationV2/coalition_commit_exact": 0.9666666666666667, "env/ItemGame-CollaborationV2/coalition_members_committed": 1.9333333333333333, "env/ItemGame-CollaborationV2/asked_give": 0.0, "env/ItemGame-CollaborationV2/refused_critical_item": 0.0, "env/ItemGame-CollaborationV2/accepted_cannot": 0.0, "env/ItemGame-CollaborationV2/terminal_success": 0.9666666666666667, "env/ItemGame-CollaborationV2/communication_budget_used": 5.3, "env/ItemGame-CollaborationV2/ego_steps": 6.266666666666667, "env/ItemGame-CollaborationV2/unfulfilled_agreements": 0.0, "env/ItemGame-CollaborationV2/proposal_accepted": 1.0, "env/ItemGame-CollaborationV2/proposal_rejected": 0.0, "env/ItemGame-CollaborationV2/coalition_formed": 1.0, "env/ItemGame-CollaborationV2/commit_valid": 0.9666666666666667, "env/ItemGame-CollaborationV2/ego_commit_item_count": 1.6333333333333333, "env/ItemGame-CollaborationV2/p1_commit_item_count": 1.4333333333333333, "env/ItemGame-CollaborationV2/redundant_commit_count": 0.06666666666666667, "env/ItemGame-CollaborationV2/communication_efficiency_bonus": 0.010000000000000002, "env/ItemGame-CollaborationV2/canonical_reward_player_0": 0.9743333333333337, "env/ItemGame-CollaborationV2/canonical_reward_player_1": 0.0, "env/ItemGame-CollaborationV2/format_valid": 0.9666666666666667, "env/ItemGame-CollaborationV2/semantic_action_valid": 0.9666666666666667, "env/ItemGame-CollaborationV2/action_recovered": 0.0, "env/ItemGame-CollaborationV2/near_generation_limit": 0.0, "env/ItemGame-CollaborationV2/response_truncated": 0.0, "env/ItemGame-CollaborationV2/ego_success": 1.0, "env/ItemGame-CollaborationV2/player_0_return": 0.9743333333333337, "env/ItemGame-CollaborationV2/player_1_return": 0.0, "env/ItemGame-CollaborationV2/player_0_success": 0.9666666666666667, "env/ItemGame-CollaborationV2/player_1_success": 0.0, "env/ItemGame-CollaborationV2/winner": -0.03333333333333333, "env/ItemGame-CollaborationV2/draw": 0.0, "env/ItemGame-CollaborationV2/player_0_lose_for_wrong_format": 0.03333333333333333, "env/ItemGame-CollaborationV2/player_1_lose_for_wrong_format": 0.0, "env/ItemGame-CollaborationV2/player_0_lose_for_overlong_response": 0.0, "env/ItemGame-CollaborationV2/player_1_lose_for_overlong_response": 0.0, "env/ItemGame-CollaborationV2/player_0_lose_for_overlong_sequence": 0.0, "env/ItemGame-CollaborationV2/player_1_lose_for_overlong_sequence": 0.0, "env/ItemGame-CollaborationV2/response_length": 483.6666666666667, "env/ItemGame-CollaborationV2/response_length_per_turn": 80.09666666666666, "env/ItemGame-CollaborationV2/response_length_turn_0": 67.56666666666666, "env/ItemGame-CollaborationV2/response_length_turn_1": 89.53333333333333, "env/ItemGame-CollaborationV2/response_length_turn_2": 113.56666666666666, "env/ItemGame-CollaborationV2/response_length_turn_3": 49.2, "env/ItemGame-CollaborationV2/response_length_turn_4": 50.06666666666667, "env/ItemGame-CollaborationV2/response_length_turn_5": 111.89655172413794, "env/ItemGame-RequestSurplusReroute/artificial_truncation": 1.0, "env/ItemGame-RequestSurplusReroute/response_length_turn_3": 101.58333333333333, "env/ItemGame-CollaborationV2/artificial_truncation": 1.0, "env/ItemGame-RequestSurplusReroute/response_length_turn_4": 152.5, "env/ItemGame-RequestSurplusReroute/response_length_turn_5": 389.0, "env/ItemGame-RequestSurplusReroute/response_length_turn_6": 101.5, "memory/actor_infer/generate/start/offload/allocated/0": 0.0, "memory/actor_infer/generate/start/offload/reserved/0": 0.0, "memory/actor_infer/generate/start/offload/max_allocated/0": 0.0, "memory/actor_infer/generate/start/offload/max_reserved/0": 0.0, "memory/actor_infer/generate/start/onload/allocated/0": 0.0, "memory/actor_infer/generate/start/onload/reserved/0": 0.0, "memory/actor_infer/generate/start/onload/max_allocated/0": 0.0, "memory/actor_infer/generate/start/onload/max_reserved/0": 0.0, "memory/cpu/actor_infer/generate/start/rss": 1.1022987365722656, "memory/cpu/actor_infer/generate/start/vms": 91.20177459716797, "memory/actor_infer/generate/end/onload/allocated/0": 4.76837158203125e-07, "memory/actor_infer/generate/end/onload/reserved/0": 0.001953125, "memory/actor_infer/generate/end/onload/max_allocated/0": 9.5367431640625e-07, "memory/actor_infer/generate/end/onload/max_reserved/0": 0.001953125, "memory/actor_infer/generate/end/onload/max_allocated_frac/0": 2.4148205846261318e-08, "memory/actor_infer/generate/end/onload/max_reserved_frac/0": 4.945552557314318e-05, "memory/actor_infer/generate/end/offload/allocated/0": 4.76837158203125e-07, "memory/actor_infer/generate/end/offload/reserved/0": 0.001953125, "memory/actor_infer/generate/end/offload/max_allocated/0": 9.5367431640625e-07, "memory/actor_infer/generate/end/offload/max_reserved/0": 0.001953125, "memory/cpu/actor_infer/generate/end/rss": 1.4382133483886719, "memory/cpu/actor_infer/generate/end/vms": 92.7369155883789, "time/actor_infer/generate/total": 85.44059995899443, "time/actor_infer/generate/execute": 82.79078323801514, "time/actor_infer/generate/onload": 0.6787113599712029, "time/actor_infer/generate/offload": 1.970861267996952, "rollout/score/mean": 0.9355555176734924, "rollout/score/max": 1.059999942779541, "rollout/score/min": 0.0, "system/samples": 90}
+[2026-08-28 20:42:57] [agentic_rollout_pipeline.py (137)] [INFO] [DRIVER 0 / 1][PID 364224] pipeline step 0 finished
+[2026-08-28 20:42:57] [agentic_rollout_pipeline.py (139)] [INFO] [DRIVER 0 / 1][PID 364224] epoch 1 finished
+[2026-08-28 20:42:57] [agentic_rollout_pipeline.py (140)] [INFO] [DRIVER 0 / 1][PID 364224] pipeline complete!
+[2026-08-28 20:43:05] [log_monitor.py (225)] [INFO] [DRIVER 0 / 1][PID 364224] Execute ray.shutdown before the program exits...
