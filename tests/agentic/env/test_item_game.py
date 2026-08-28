@@ -643,6 +643,25 @@ def test_self_play_partner_proposal_is_not_accepted_or_transferred_by_environmen
     assert g.get_legal_actions("EGO")[0].startswith("ACT GIVE {")
 
 
+def test_self_play_impossible_accepted_give_becomes_deadlock_not_legal_transfer():
+    config = Config(
+        generator="mixed_incentive",
+        subtype="request_surplus_reroute",
+        randomize_items=False,
+        self_play=True,
+        max_total_turns=16,
+    )
+    instance = generate_instance(7, config=config)
+    g = SelfPlayItemGame(instance, config)
+    partner = "P1"
+    item_not_held = next(item for item in instance.items if item not in g.holdings[partner])
+    proposal = f"PROPOSE GIVE {{giver={partner},receiver=EGO,items={_format_for_test({item_not_held})}}}"
+    assert proposal in g.get_legal_actions("EGO")
+    g.step("EGO", proposal)
+    g.step(partner, "ACT ACCEPT")
+    assert g.get_legal_actions(partner) == ()
+
+
 def test_self_play_collaboration_requires_partner_accept_and_commit():
     config = Config(
         generator="pure_collaboration",
@@ -657,7 +676,9 @@ def test_self_play_collaboration_requires_partner_accept_and_commit():
     assert g.current_agent == "P1"
     assert g.join_coalition is None
     assert g.holdings["EGO"] == ego_before
-    assert g.get_legal_actions("P1") == ("ACT ACCEPT", "ACT REJECT")
+    assert g.get_legal_actions("P1") == (
+        "ACT ACCEPT", "ACT REJECT", "QUERY EGO GOAL", "QUERY EGO HOLDINGS"
+    )
 
     g.step("P1", "ACT ACCEPT")
     assert g.join_coalition == {"EGO", "P1"}
@@ -672,6 +693,32 @@ def test_self_play_collaboration_requires_partner_accept_and_commit():
     g.step("P1", f"ACT COMMIT {_format_for_test(p1_commit)}")
     assert g.done
     assert g.terminal_success
+
+
+def test_self_play_join_responder_can_query_proposer_before_accepting():
+    config = Config(
+        generator="pure_collaboration",
+        subtype="collaboration",
+        randomize_items=False,
+        self_play=True,
+        max_total_turns=16,
+    )
+    g = SelfPlayItemGame(generate_instance(7, config=config), config)
+    g.step("EGO", "PROPOSE JOIN {EGO,P1}")
+
+    g.step("P1", "QUERY EGO GOAL")
+    assert g.current_agent == "EGO"
+    g.step("EGO", f"INFORM P1 GOAL {_format_for_test(g.goals['EGO'])}")
+    assert g.current_agent == "P1"
+    assert g.pending_proposal is not None
+
+    g.step("P1", "QUERY EGO HOLDINGS")
+    g.step("EGO", f"INFORM P1 HOLDINGS {_format_for_test(g.holdings['EGO'])}")
+    assert g.current_agent == "P1"
+    assert g.get_legal_actions("P1")[:2] == ("ACT ACCEPT", "ACT REJECT")
+
+    g.step("P1", "ACT ACCEPT")
+    assert g.join_coalition == {"EGO", "P1"}
 
 
 def _format_for_test(items):

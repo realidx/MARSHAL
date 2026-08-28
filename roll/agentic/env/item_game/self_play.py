@@ -140,10 +140,22 @@ class SelfPlayItemGame:
         if self.pending_proposal is not None:
             if agent != self.pending_proposal["responder"]:
                 return ()
-            return ("ACT ACCEPT", "ACT REJECT")
+            actions = ["ACT ACCEPT", "ACT REJECT"]
+            # A JOIN responder may need the proposer's private state before
+            # deciding whether the coalition is feasible.  The proposal stays
+            # pending while this query/answer exchange takes place.
+            if self.pending_proposal["type"] == "JOIN" and self.communication_left:
+                proposer = self.pending_proposal["proposer"]
+                actions.extend((f"QUERY {proposer} GOAL", f"QUERY {proposer} HOLDINGS"))
+            return tuple(actions)
 
         required = self._required_give(agent)
         if required is not None:
+            if not required["items"].issubset(self.holdings[agent]):
+                # The proposal was accepted, but the giver cannot fulfill it.
+                # This is a model-level invalid commitment/deadlock, not a
+                # legal transfer that should be allowed to raise downstream.
+                return ()
             agreement = required
             return (
                 f"ACT GIVE {_format_set(agreement['items'])} TO "
@@ -263,8 +275,10 @@ class SelfPlayItemGame:
 
         if self.pending_query is not None:
             self._apply_inform(agent, action)
-        elif self.pending_proposal is not None:
+        elif self.pending_proposal is not None and action in ("ACT ACCEPT", "ACT REJECT"):
             self._apply_proposal_response(agent, action)
+        elif self.pending_proposal is not None and action.startswith("QUERY "):
+            self._apply_query(agent, action)
         elif self._required_give(agent) is not None:
             self._apply_give(agent, action)
         elif action.startswith("QUERY "):
@@ -597,7 +611,16 @@ class SelfPlayRunner:
             if not valid:
                 game.finish_invalid("invalid_action")
                 break
-            game.step(agent, action)
+            try:
+                game.step(agent, action)
+            except ValueError as exc:
+                # Keep a bad model commitment inside the episode result.  A
+                # test-only runner should report the failure, not crash the
+                # complete multi-agent pilot.
+                record["valid"] = False
+                record["error"] = str(exc)
+                game.finish_invalid("invalid_action")
+                break
 
         terminal = {
             "done": game.done,
