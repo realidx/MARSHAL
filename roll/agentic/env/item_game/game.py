@@ -1,11 +1,12 @@
-"""Shared sequential transition engine for Item Coalition Game v0.3.
+"""Shared transition engine for the structured Item Coalition Game.
 
 Each Ego decision has explicit phases: an optional mandatory response, one
 autonomous Ego action, a scripted partner response/action, and state update.
-ASK can create an agreement, but cannot itself commit a coalition. A partner
-that agrees to GIVE immediately performs that scripted action in the same
-transition. Ego-side commitments still require a later Ego action. Terminal
-success requires the goal and every accepted agreement to be satisfied.
+The five legacy subtypes use ASK/SAY/ACT: ASK can create an agreement, a
+partner that agrees to GIVE immediately performs that scripted action in the
+same transition, and Ego-side commitments still require a later Ego action.
+Collaboration uses its separate QUERY/INFORM/PROPOSE/COMMIT protocol. Terminal
+success requires the relevant goal and commitments to be satisfied.
 """
 
 from __future__ import annotations
@@ -20,6 +21,10 @@ from .generator import ItemGameInstance
 
 class BaseItemGame:
     """One Ego-centric episode with truthful, deterministic partners."""
+
+    _COLLAB_REDUNDANT_PENALTY = 0.01
+    _COLLAB_COMMUNICATION_BONUS = 0.01
+    _COLLAB_INVALID_ACTION_PENALTY = -0.05
 
     def __init__(self, instance: ItemGameInstance, config: ItemGameConfig):
         self.instance = instance
@@ -52,6 +57,29 @@ class BaseItemGame:
         self._mandatory_request_answered = False
         self._harmful_transfer_avoided = False
 
+        # Collaboration v2 has a separate decentralized protocol. The other
+        # subtypes continue to use the legacy v0.3 state below.
+        self.collaboration = instance.subtype == "collaboration"
+        self.p1_known = (
+            {
+                "own_goal": set(self.goals["P1"]),
+                "own_holdings": set(self.holdings["P1"]),
+                "ego_goal": None,
+                "ego_holdings": None,
+            }
+            if self.collaboration
+            else None
+        )
+        self.pending_proposal: dict[str, Any] | None = None
+        self.pending_partner_query: str | None = None
+        self.collaboration_coalition: frozenset[str] | None = None
+        self.collaboration_ego_commit: set[str] | None = None
+        self.collaboration_p1_commit: set[str] | None = None
+        self.collaboration_proposal_count = 0
+        self.collaboration_accept_count = 0
+        self.collaboration_reject_count = 0
+        self.collaboration_redundant_commit_count = 0
+
         if self.partner_event:
             self._record_partner("P1", self.partner_event, "P1 asks EGO to give the requested item.", "request")
 
@@ -70,6 +98,8 @@ class BaseItemGame:
     def legal_actions(self) -> tuple[str, ...]:
         if self.done:
             return ()
+        if self.collaboration:
+            return self._collaboration_legal_actions()
         # A partner request creates a response-only Ego turn.
         if self.pending_partner_request:
             partner = self.pending_request_partner or "P1"
@@ -109,6 +139,37 @@ class BaseItemGame:
                 actions.append(f"ACT JOIN_COMMIT {self._format_coalition(coalition)}")
         return tuple(dict.fromkeys(actions))
 
+    def _collaboration_legal_actions(self) -> tuple[str, ...]:
+        if self.pending_partner_query:
+            if self.pending_partner_query == "GOAL":
+                return (f"INFORM P1 GOAL {self._format_set(self.goals['EGO'])}",)
+            if self.pending_partner_query == "HOLDINGS":
+                return (f"INFORM P1 HOLDINGS {self._format_set(self.holdings['EGO'])}",)
+            return ()
+
+        actions: list[str] = []
+        if self.communication_left:
+            actions.extend(("QUERY P1 GOAL", "QUERY P1 HOLDINGS"))
+            actions.extend((
+                f"INFORM P1 GOAL {self._format_set(self.goals['EGO'])}",
+                f"INFORM P1 HOLDINGS {self._format_set(self.holdings['EGO'])}",
+            ))
+            if self.collaboration_coalition is None and self.pending_proposal is None:
+                actions.append("PROPOSE JOIN {EGO,P1}")
+
+        if self.collaboration_coalition is not None:
+            for committed in self._item_subsets(self.holdings["EGO"]):
+                actions.append(f"ACT COMMIT {self._format_set(committed)}")
+        return tuple(dict.fromkeys(actions))
+
+    @staticmethod
+    def _item_subsets(items: set[str]) -> tuple[frozenset[str], ...]:
+        ordered = tuple(sorted(items))
+        subsets: list[frozenset[str]] = []
+        for mask in range(1 << len(ordered)):
+            subsets.append(frozenset(item for index, item in enumerate(ordered) if mask & (1 << index)))
+        return tuple(subsets)
+
     def step(self, action: str):
         if self.done:
             raise RuntimeError("cannot act in a finished item game")
@@ -118,7 +179,9 @@ class BaseItemGame:
 
         before = self._snapshot()
         mandatory_response = self._is_mandatory_response(action)
-        if action.startswith(("ASK ", "SAY ")) and not mandatory_response:
+        if self.collaboration and action.startswith(("QUERY ", "INFORM ", "PROPOSE ")):
+            self.communication_used += 1
+        elif action.startswith(("ASK ", "SAY ")) and not mandatory_response:
             self.communication_used += 1
         self.ego_steps += 1
         phase = "mandatory_response" if mandatory_response else "ego_action"
@@ -131,19 +194,26 @@ class BaseItemGame:
         ego_message, operation = self._apply_ego(action)
         partner_messages = self._run_partner_phase(operation)
 
-        if action.startswith("ACT JOIN_COMMIT"):
+        if self.collaboration and action.startswith("ACT COMMIT "):
+            self.done = True
+        elif action.startswith("ACT JOIN_COMMIT"):
             self.done = True
         elif self.ego_steps >= self.config.max_ego_steps:
             self.done = True
-        self.turn_phase = "terminal" if self.done else "ego_action"
+        self.turn_phase = "terminal" if self.done else (
+            "mandatory_response" if self.pending_partner_query else "ego_action"
+        )
         self.turn_index += 1
         partner_message = "\n".join(m for m in [ego_message, *partner_messages] if m)
-        reward = float(self.ego_success) if self.done else 0.0
+        reward = self._terminal_reward() if self.done else 0.0
         record = {
             "action": action,
             "action_is_ask": float(action.startswith("ASK ")),
             "action_is_say": float(action.startswith("SAY ")),
             "action_is_act": float(action.startswith("ACT ")),
+            "action_is_query": float(action.startswith("QUERY ")),
+            "action_is_inform": float(action.startswith("INFORM ")),
+            "action_is_propose": float(action.startswith("PROPOSE ")),
             "communication_used": self.communication_used,
             "ego_step": self.ego_steps,
             "turn_index": self.turn_index - 1,
@@ -169,7 +239,19 @@ class BaseItemGame:
             })
         return partner_message, reward, self.done, info
 
+    def _terminal_reward(self) -> float:
+        if not self.collaboration:
+            return float(self.ego_success)
+        if not self.ego_success:
+            return 0.0
+        redundant = self.collaboration_redundant_commit_count
+        bonus = self.communication_left * self._COLLAB_COMMUNICATION_BONUS
+        penalty = redundant * self._COLLAB_REDUNDANT_PENALTY
+        return 1.0 + bonus - penalty
+
     def _apply_ego(self, action: str) -> tuple[str, dict[str, Any] | None]:
+        if self.collaboration:
+            return self._apply_collaboration_ego(action)
         if action.startswith("ASK "):
             return self._ask(action)
         if action.startswith("SAY "):
@@ -197,10 +279,49 @@ class BaseItemGame:
             return "", {"type": "join", "coalition": coalition, "action": action}
         raise ValueError(f"unsupported item-game action {action!r}")
 
+    def _apply_collaboration_ego(self, action: str) -> tuple[str, dict[str, Any] | None]:
+        if action.startswith("QUERY "):
+            match = re.fullmatch(r"QUERY P1 (GOAL|HOLDINGS)", action)
+            if match is None:
+                raise ValueError(f"invalid collaboration QUERY {action!r}")
+            return "", {"type": "collab_query_p1", "field": match.group(1)}
+
+        match = re.fullmatch(r"INFORM P1 (GOAL|HOLDINGS) (\{[^}]*\})", action)
+        if match is not None:
+            field, raw_items = match.groups()
+            items = self._parse_item_set(raw_items)
+            expected = self.goals["EGO"] if field == "GOAL" else self.holdings["EGO"]
+            if items != expected:
+                raise ValueError("EGO must truthfully INFORM its own state")
+            return "", {"type": "collab_inform", "field": field, "items": items}
+
+        match = re.fullmatch(r"PROPOSE JOIN (\{EGO,P1\})", action)
+        if match is not None:
+            if self.collaboration_coalition is not None or self.pending_proposal is not None:
+                raise ValueError("a collaboration JOIN proposal is already resolved or pending")
+            coalition = frozenset(("EGO", "P1"))
+            self.pending_proposal = {"type": "JOIN", "coalition": coalition}
+            self.collaboration_proposal_count += 1
+            return "", {"type": "collab_process_proposal"}
+
+        match = re.fullmatch(r"ACT COMMIT (\{[^}]*\})", action)
+        if match is not None:
+            if self.collaboration_coalition is None:
+                raise ValueError("ACT COMMIT requires an accepted JOIN coalition")
+            committed = self._parse_item_set(match.group(1))
+            if not committed.issubset(self.holdings["EGO"]):
+                raise ValueError("EGO can only commit items it holds")
+            return "", {"type": "collab_commit", "items": committed}
+
+        raise ValueError(f"unsupported collaboration action {action!r}")
+
     def _run_partner_phase(self, operation: dict[str, Any] | None) -> list[str]:
         messages: list[str] = []
         if operation is None:
             return messages
+
+        if self.collaboration:
+            return self._run_collaboration_partner_phase(operation)
 
         if operation["type"] == "partner_give":
             agreement = operation["agreement"]
@@ -252,6 +373,96 @@ class BaseItemGame:
                     self._record_partner(member, action, f"{member} emits the exact same JOIN_COMMIT.", "scripted_action")
                     messages.append(f"{member} {action}.")
         return messages
+
+    def _run_collaboration_partner_phase(self, operation: dict[str, Any]) -> list[str]:
+        messages: list[str] = []
+        if operation["type"] == "collab_query_p1":
+            field = operation["field"]
+            values = self.goals["P1"] if field == "GOAL" else self.holdings["P1"]
+            action = f"INFORM EGO {field} {self._format_set(values)}"
+            self._record_partner("P1", action, f"P1 informs EGO {field}.", "response")
+            messages.append(action)
+            self.known["P1"][field.lower()] = set(values)
+            return messages
+
+        if operation["type"] == "collab_inform":
+            field = operation["field"]
+            self.p1_known[f"ego_{field.lower()}"] = set(operation["items"])
+            self._clear_collaboration_partner_query()
+            messages.append(f"P1 receives EGO {field}.")
+            if self.pending_proposal is not None:
+                messages.extend(self._process_collaboration_proposal())
+            return messages
+
+        if operation["type"] == "collab_process_proposal":
+            messages.extend(self._process_collaboration_proposal())
+            return messages
+
+        if operation["type"] == "collab_commit":
+            ego_items = set(operation["items"])
+            p1_items = self._collaboration_partner_commit(ego_items)
+            self.collaboration_ego_commit = ego_items
+            self.collaboration_p1_commit = p1_items
+            self.member_commit_actions = {
+                "EGO": f"ACT COMMIT {self._format_set(ego_items)}",
+                "P1": f"ACT COMMIT {self._format_set(p1_items)}",
+            }
+            self.collaboration_redundant_commit_count = max(
+                0,
+                len(ego_items) + len(p1_items) - len(self.goals["EGO"]),
+            )
+            action = f"ACT COMMIT {self._format_set(p1_items)}"
+            self._record_partner("P1", action, "P1 commits its own items.", "scripted_action")
+            messages.append(f"P1 {action}.")
+            return messages
+
+        raise ValueError(f"unsupported collaboration partner operation {operation['type']!r}")
+
+    def _process_collaboration_proposal(self) -> list[str]:
+        if self.pending_proposal is None:
+            return []
+        if self.p1_known["ego_goal"] is None:
+            self.pending_partner_query = "GOAL"
+            self.turn_phase = "mandatory_response"
+            action = "QUERY EGO GOAL"
+            self._record_partner("P1", action, "P1 needs EGO's goal before deciding on JOIN.", "request")
+            return [action]
+        if self.p1_known["ego_holdings"] is None:
+            self.pending_partner_query = "HOLDINGS"
+            self.turn_phase = "mandatory_response"
+            action = "QUERY EGO HOLDINGS"
+            self._record_partner("P1", action, "P1 needs EGO's holdings before deciding on JOIN.", "request")
+            return [action]
+
+        coalition = self.pending_proposal["coalition"]
+        aligned = self.p1_known["ego_goal"] == self.p1_known["own_goal"]
+        pooled = set(self.p1_known["ego_holdings"]) | set(self.p1_known["own_holdings"])
+        feasible = set(self.p1_known["own_goal"]).issubset(pooled)
+        if aligned and feasible and coalition == frozenset(("EGO", "P1")):
+            self.collaboration_coalition = coalition
+            self.committed = set(coalition)
+            self.collaboration_accept_count += 1
+            action = "ACT ACCEPT"
+            self._record_partner("P1", action, "P1 accepts the JOIN proposal.", "scripted_action")
+            self.pending_proposal = None
+            self.pending_partner_query = None
+            self.turn_phase = "ego_action"
+            return [f"P1 {action}.", "Coalition {EGO,P1} is formed."]
+
+        self.collaboration_reject_count += 1
+        action = "ACT REJECT"
+        self._record_partner("P1", action, "P1 rejects the JOIN proposal.", "scripted_action")
+        self.pending_proposal = None
+        self.pending_partner_query = None
+        self.turn_phase = "ego_action"
+        return [f"P1 {action}."]
+
+    def _collaboration_partner_commit(self, ego_items: set[str]) -> set[str]:
+        needed = set(self.p1_known["own_goal"]) - ego_items
+        return needed & set(self.p1_known["own_holdings"])
+
+    def _clear_collaboration_partner_query(self) -> None:
+        self.pending_partner_query = None
 
     def _ask(self, action: str) -> tuple[str, dict[str, Any] | None]:
         parts = action.split()
@@ -396,6 +607,11 @@ class BaseItemGame:
         self.conversation_history.append({"turn": self.turn_index, "actor": partner, "phase": phase, "action": action, "message": message})
 
     def _is_mandatory_response(self, action: str) -> bool:
+        if self.collaboration:
+            return bool(
+                self.pending_partner_query
+                and re.fullmatch(r"INFORM P1 (?:GOAL|HOLDINGS) \{[^}]*\}", action)
+            )
         return bool(self.pending_partner_request and re.fullmatch(r"SAY P\d+ (?:CAN_GIVE|CANNOT_GIVE) \S+", action))
 
     def _coalitions(self) -> tuple[frozenset[str], ...]:
@@ -425,6 +641,19 @@ class BaseItemGame:
             raise ValueError(f"invalid coalition {raw!r}")
         return coalition
 
+    def _parse_item_set(self, raw: str) -> frozenset[str]:
+        if not (raw.startswith("{") and raw.endswith("}")):
+            raise ValueError(f"invalid item set {raw!r}")
+        values = tuple(item for item in raw[1:-1].split(",") if item)
+        items = frozenset(values)
+        if (
+            len(items) != len(values)
+            or not items.issubset(set(self.items))
+            or self._format_set(items) != raw
+        ):
+            raise ValueError(f"invalid item set {raw!r}")
+        return items
+
     @staticmethod
     def _requested_item(request: str) -> str | None:
         match = re.search(r"GIVE (\S+)$", request)
@@ -439,11 +668,22 @@ class BaseItemGame:
 
     @property
     def ego_success(self) -> bool:
+        if self.collaboration:
+            return bool(
+                self.collaboration_coalition == frozenset(("EGO", "P1"))
+                and self.collaboration_ego_commit is not None
+                and self.collaboration_p1_commit is not None
+                and self.collaboration_ego_commit.issubset(self.holdings["EGO"])
+                and self.collaboration_p1_commit.issubset(self.holdings["P1"])
+                and self._committed_goal_satisfied()
+            )
         if "EGO" not in self.committed or not all(agreement["fulfilled"] for agreement in self.agreements):
             return False
         return self._committed_goal_satisfied()
 
     def diagnostics(self) -> dict[str, float]:
+        if self.collaboration:
+            return self._collaboration_diagnostics()
         actions = [record["action"] for record in self.records]
         partner_messages = [str(record.get("partner_message", "")) for record in self.records]
         asked_goal = any(action.startswith("ASK ") and action.endswith(" GOAL") for action in actions)
@@ -493,13 +733,77 @@ class BaseItemGame:
             "unfulfilled_agreements": float(sum(not a["fulfilled"] for a in self.agreements)),
         }
 
+    def _collaboration_diagnostics(self) -> dict[str, float]:
+        goal_satisfied = self._committed_goal_satisfied()
+        commit_valid = bool(
+            self.collaboration_ego_commit is not None
+            and self.collaboration_p1_commit is not None
+            and self.collaboration_ego_commit.issubset(self.holdings["EGO"])
+            and self.collaboration_p1_commit.issubset(self.holdings["P1"])
+        )
+        success = self.ego_success
+        return {
+            "agreement_formed": 0.0,
+            "agreement_followed_through": 0.0,
+            "agreement_fulfilled": 0.0,
+            "goal_satisfied": float(goal_satisfied),
+            "coalition_valid": float(self.collaboration_coalition is not None),
+            "correct_join_commit": 0.0,
+            "rerouted_after_cannot": 0.0,
+            "rerouted_after_unavailability": 0.0,
+            "harmful_transfer_avoided": 0.0,
+            "harmful_give_avoided": 0.0,
+            "useful_give_request": 0.0,
+            "useful_exchange_proposed": 0.0,
+            "mandatory_request_answered": float(any(
+                r["turn_phase"] == "mandatory_response" and r["action"].startswith("INFORM P1 ")
+                for r in self.records
+            )),
+            "asked_goal": float(any(r["action"] == "QUERY P1 GOAL" for r in self.records)),
+            "asked_holdings": float(any(r["action"] == "QUERY P1 HOLDINGS" for r in self.records)),
+            "disclosed_own_state": float(any(r["action"].startswith("INFORM P1 ") for r in self.records)),
+            "proposed_join": float(self.collaboration_proposal_count > 0),
+            "successful_joint_commit": float(success),
+            "identified_complementary_exchange": 0.0,
+            "executed_exchange": 0.0,
+            "coalition_commit_exact": float(commit_valid),
+            "coalition_members_committed": float(
+                2 if self.collaboration_ego_commit is not None and self.collaboration_p1_commit is not None else 0
+            ),
+            "asked_give": 0.0,
+            "refused_critical_item": 0.0,
+            "accepted_cannot": 0.0,
+            "success": float(success if self.done else False),
+            "terminal_success": float(self.done and success),
+            "communication_budget_used": float(self.communication_used),
+            "ego_steps": float(self.ego_steps),
+            "unfulfilled_agreements": 0.0,
+            "proposal_accepted": float(self.collaboration_accept_count > 0),
+            "proposal_rejected": float(self.collaboration_reject_count > 0),
+            "coalition_formed": float(self.collaboration_coalition is not None),
+            "commit_valid": float(commit_valid),
+            "ego_commit_item_count": float(len(self.collaboration_ego_commit or set())),
+            "p1_commit_item_count": float(len(self.collaboration_p1_commit or set())),
+            "redundant_commit_count": float(self.collaboration_redundant_commit_count),
+            "communication_efficiency_bonus": float(
+                self.communication_left * self._COLLAB_COMMUNICATION_BONUS if success else 0.0
+            ),
+        }
+
     def _committed_goal_satisfied(self) -> bool:
+        if self.collaboration:
+            if self.collaboration_ego_commit is None or self.collaboration_p1_commit is None:
+                return False
+            pool = set(self.collaboration_ego_commit) | set(self.collaboration_p1_commit)
+            return self.goals["EGO"].issubset(pool)
         if not self.committed:
             return False
         pool = set().union(*(self.holdings[player] for player in self.committed))
         return self.goals["EGO"].issubset(pool)
 
     def _coalition_valid(self) -> bool:
+        if self.collaboration:
+            return self.collaboration_coalition == frozenset(("EGO", "P1"))
         if self.committed == {"EGO"}:
             return True
         return bool(

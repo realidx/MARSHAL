@@ -1,4 +1,4 @@
-"""Deterministic regression tests for Item Coalition Game v0.3."""
+"""Deterministic regression tests for the structured Item Coalition Game."""
 
 import importlib.util
 import sys
@@ -48,6 +48,19 @@ def finish(g, action):
     return reward, info
 
 
+def establish_collaboration(g):
+    """Use the decentralized proposal path and return the acceptance message."""
+    message, reward, done, _ = g.step("PROPOSE JOIN {EGO,P1}")
+    assert "QUERY EGO GOAL" in message
+    assert reward == 0.0 and not done
+    g.step(f"INFORM P1 GOAL {g._format_set(g.goals['EGO'])}")
+    assert g.pending_partner_query == "HOLDINGS"
+    message, reward, done, _ = g.step(f"INFORM P1 HOLDINGS {g._format_set(g.holdings['EGO'])}")
+    assert "ACT ACCEPT" in message
+    assert reward == 0.0 and not done
+    return message
+
+
 def test_all_generators_are_deterministic_and_validate_invariants():
     cases = (
         ("pure_collaboration", None),
@@ -74,23 +87,94 @@ def test_all_generators_are_deterministic_and_validate_invariants():
         validate_instance(generate_instance(11, config=six))
 
 
-def test_collaboration_is_agreement_then_exact_joint_commit():
+def test_collaboration_requires_local_information_then_accepts_and_commits_items():
     g = game("pure_collaboration")
-    g.step("ASK P1 GOAL")
-    g.step("ASK P1 HOLDINGS")
-    message, reward, done, _ = g.step("ASK P1 JOIN {EGO,P1}")
-    assert "AGREE_JOIN" in message
+    goal = set(g.goals["EGO"])
+    ego_items = set(g.holdings["EGO"])
+    p1_items = set(g.holdings["P1"])
+    assert g.goals["P1"] == goal
+    assert not goal.issubset(ego_items)
+    assert not goal.issubset(p1_items)
+    assert goal.issubset(ego_items | p1_items)
+    assert goal & ego_items
+    assert goal & p1_items
+
+    message, reward, done, _ = g.step("PROPOSE JOIN {EGO,P1}")
+    assert "QUERY EGO GOAL" in message
     assert reward == 0.0 and not done
-    assert g.holdings["EGO"] == {"item_K", "item_M"}
-    assert "ACT JOIN_COMMIT {EGO,P1}" in g.legal_actions()
-    reward, info = finish(g, "ACT JOIN_COMMIT {EGO,P1}")
-    assert reward == 1.0
-    assert info["agreement_followed_through"] == 1.0
-    assert info["correct_join_commit"] == 1.0
-    assert g.member_commit_actions == {
-        "EGO": "ACT JOIN_COMMIT {EGO,P1}",
-        "P1": "ACT JOIN_COMMIT {EGO,P1}",
-    }
+    assert g.pending_proposal is not None
+    assert g.collaboration_coalition is None
+    assert g.legal_actions() == (f"INFORM P1 GOAL {g._format_set(g.goals['EGO'])}",)
+
+    g.step(f"INFORM P1 GOAL {g._format_set(g.goals['EGO'])}")
+    assert g.pending_partner_query == "HOLDINGS"
+    assert g.legal_actions() == (f"INFORM P1 HOLDINGS {g._format_set(g.holdings['EGO'])}",)
+    message, reward, done, info = g.step(f"INFORM P1 HOLDINGS {g._format_set(g.holdings['EGO'])}")
+    assert "ACT ACCEPT" in message
+    assert g.collaboration_coalition == {"EGO", "P1"}
+    assert not done
+    assert reward == 0.0
+    assert "ACT COMMIT" in " ".join(g.legal_actions())
+    assert "ACT JOIN_COMMIT" not in " ".join(g.legal_actions())
+
+    ego_commit = goal & ego_items
+    message, reward, done, info = g.step(f"ACT COMMIT {g._format_set(ego_commit)}")
+    assert done
+    assert "P1 ACT COMMIT" in message
+    assert done
+    assert reward == pytest.approx(1.0 + 3 * g._COLLAB_COMMUNICATION_BONUS)
+    assert info["proposal_accepted"] == 1.0
+    assert info["commit_valid"] == 1.0
+    assert info["terminal_success"] == 1.0
+
+
+def test_collaboration_commit_is_item_scoped_and_missing_goal_item_fails():
+    g = game("pure_collaboration")
+    establish_collaboration(g)
+    foreign_item = next(iter(set(g.holdings["P1"]) - set(g.holdings["EGO"])))
+    with pytest.raises(ValueError):
+        g.step(f"ACT COMMIT {{{foreign_item}}}")
+
+    incomplete = game("pure_collaboration")
+    establish_collaboration(incomplete)
+    reward, info = finish(incomplete, "ACT COMMIT {}")
+    assert reward == 0.0
+    assert info["commit_valid"] == 1.0
+    assert info["goal_satisfied"] == 0.0
+    assert info["terminal_success"] == 0.0
+
+
+def test_collaboration_redundant_commit_only_has_small_penalty():
+    g = game("pure_collaboration")
+    establish_collaboration(g)
+    all_ego_items = frozenset(g.holdings["EGO"])
+    reward, info = finish(g, f"ACT COMMIT {g._format_set(all_ego_items)}")
+    assert reward > 0.0
+    assert reward < 1.0 + 6 * g._COLLAB_COMMUNICATION_BONUS
+    assert info["redundant_commit_count"] >= 1.0
+
+
+def test_collaboration_partner_rejects_when_disclosed_goal_is_not_aligned():
+    config = Config(generator="pure_collaboration", subtype="collaboration", randomize_items=False)
+    instance = ItemGameInstance(
+        episode_seed=8,
+        generator="pure_collaboration",
+        subtype="collaboration",
+        items=("item_K", "item_Q", "item_M", "item_V", "item_T", "item_Z"),
+        goals={"EGO": frozenset({"item_K"}), "P1": frozenset({"item_K", "item_Q"})},
+        holdings={"EGO": frozenset({"item_K", "item_M"}), "P1": frozenset({"item_Q", "item_T"})},
+    )
+    g = BaseItemGame(instance, config)
+
+    message, _, done, _ = g.step("PROPOSE JOIN {EGO,P1}")
+    assert "QUERY EGO GOAL" in message
+    g.step("INFORM P1 GOAL {item_K}")
+    assert g.pending_partner_query == "HOLDINGS"
+    message, reward, done, info = g.step("INFORM P1 HOLDINGS {item_K,item_M}")
+    assert "ACT REJECT" in message
+    assert reward == 0.0 and not done
+    assert g.collaboration_coalition is None
+    assert info["proposal_rejected"] == 1.0
 
 
 def test_exchange_requires_ego_fulfillment_and_partner_fulfillment():
@@ -185,29 +269,13 @@ def test_refuse_harmful_request_is_safe_singleton_and_transfer_fails():
 
 
 def test_two_partner_join_requires_every_partner_consent_and_same_commit():
-    config = Config(randomize_items=False)
-    instance = ItemGameInstance(
-        episode_seed=7,
-        generator="pure_collaboration",
-        subtype="collaboration",
-        items=("item_K", "item_Q", "item_M", "item_V", "item_T", "item_Z"),
-        goals={"EGO": frozenset({"item_K", "item_Q"}), "P1": frozenset({"item_K", "item_Q"}), "P2": frozenset({"item_K", "item_Q"})},
-        holdings={"EGO": frozenset({"item_K"}), "P1": frozenset({"item_Q"}), "P2": frozenset({"item_M"})},
-    )
-    g = BaseItemGame(instance, config)
-    g.step("ASK P1 JOIN {EGO,P1,P2}")
-    assert "ACT JOIN_COMMIT {EGO,P1,P2}" not in g.legal_actions()
-    g.step("ASK P2 JOIN {EGO,P1,P2}")
-    action = "ACT JOIN_COMMIT {EGO,P1,P2}"
-    assert action in g.legal_actions()
-    reward, info = finish(g, action)
-    assert reward == 1.0
-    assert info["correct_join_commit"] == 1.0
-    assert set(g.member_commit_actions.values()) == {action}
+    g = game("pure_collaboration")
+    assert "PROPOSE JOIN {EGO,P1}" in g.legal_actions()
+    assert "ACT COMMIT {}" not in g.legal_actions()
 
 
 def test_communication_budget_is_hard_but_mandatory_response_is_free():
-    g = game("pure_collaboration")
+    g = game("mixed_incentive", "exchange")
     for action in (
         "ASK P1 GOAL", "ASK P1 HOLDINGS", "ASK P1 GIVE item_K",
         "ASK P1 GIVE item_M", "ASK P1 GIVE item_V", "ASK P1 GIVE item_Q",
@@ -228,13 +296,16 @@ def test_roll_adapter_prompt_and_terminal_protocol():
     assert not execute_results
     prompt = env.get_prompt(think=False)
     assert "response-only" in prompt["user"]
-    assert "accepted but unfulfilled agreement" in prompt["user"]
+    assert "PROPOSE JOIN" in prompt["user"]
+    assert "ACT COMMIT" in prompt["user"]
+    assert "ACT JOIN_COMMIT" not in prompt["user"]
     assert "Pending scripted action" not in env.render()
     assert env.validate_response(f"<answer>{next(iter(initial['legal_actions'].values()))}</answer>", initial["legal_actions"])
-    transition = env.step("ACT JOIN_COMMIT {EGO}")[0]
-    assert transition["done"] is True
+    transition = env.step("QUERY P1 GOAL")[0]
+    assert transition["done"] is False
     assert transition["rewards"] == [0.0, 0.0]
-    assert transition["info"]["player_1_return"] == 0.0
+    assert transition["info"]["canonical_reward_player_1"] == 0.0
+    assert "QUERY P1 GOAL" in transition["observation"]
 
 
 def test_logging_exposes_separate_behavioral_diagnostics():
@@ -259,6 +330,6 @@ def test_roll_adapter_provides_invalid_response_losing_state():
     env.reset(seed=3)
     transition = env.get_losing_state(player_id=0, overlong_response=True, overlong_sequence=True)[0]
     assert transition["done"] is True
-    assert transition["rewards"] == [0.0, 0.0]
+    assert transition["rewards"] == [-0.05, 0.0]
     assert transition["info"]["artificial_truncation"] == 1.0
     assert transition["info"]["player_0_lose_for_wrong_format"] == 1

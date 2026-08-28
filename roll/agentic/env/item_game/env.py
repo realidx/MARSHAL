@@ -99,6 +99,8 @@ class ItemGameEnv(BaseLanguageBasedEnv):
             )
         else:
             output_format = "Emit exactly one listed action inside <answer>...</answer>, with no reasoning text."
+        if self.config.generator == "pure_collaboration" or self.config.subtype == "collaboration":
+            return self._collaboration_prompt(output_format)
         system = (
             "You are the EGO in a sequential Item Coalition Game. Use only the listed structured actions. "
             "ASK and ordinary SAY consume communication budget; a mandatory response to a partner request does not. "
@@ -131,6 +133,34 @@ class ItemGameEnv(BaseLanguageBasedEnv):
         )
         return {"system": system, "user": user}
 
+    @staticmethod
+    def _collaboration_prompt(output_format: str) -> dict[str, str]:
+        return {
+            "system": (
+                "You are EGO in a decentralized Collaboration game. Use only the listed structured actions. "
+                "You initially know only your own goal and holdings; P1's goal, holdings, and alignment are unknown. "
+                "QUERY, INFORM, and PROPOSE consume communication budget. ACCEPT, REJECT, and COMMIT are scripted "
+                "or binding actions and do not consume communication budget."
+            ),
+            "user": (
+                "At every turn choose exactly one legal action. If P1 asks for your GOAL or HOLDINGS, this is a "
+                "mandatory response-only turn: output exactly the matching INFORM P1 action. Otherwise choose one "
+                "QUERY, INFORM, PROPOSE, or (after P1 accepts JOIN) ACT COMMIT action.\n\n"
+                "Protocol:\n"
+                "QUERY P1 GOAL | QUERY P1 HOLDINGS\n"
+                "INFORM P1 GOAL {<your goal>} | INFORM P1 HOLDINGS {<your holdings>}\n"
+                "PROPOSE JOIN {EGO,P1}\n"
+                "ACT COMMIT {<items from your holdings>}\n\n"
+                "P1 processes a JOIN proposal immediately. If P1 lacks your goal or holdings, P1 asks you for the "
+                "missing information; answer with the corresponding INFORM action. P1 then emits ACT ACCEPT or "
+                "ACT REJECT. ACCEPT forms the coalition but does not commit items and does not end the episode. "
+                "After acceptance, commit only items you actually hold. P1 then commits its own items. The coalition "
+                "succeeds when the union of committed items covers the shared goal. Extra committed items are allowed "
+                "but receive a small efficiency penalty.\n\n"
+                + output_format
+            ),
+        }
+
     def format_turn_prompt(self, state, legal_actions, player_id=0):
         del player_id
         return f"\n\n{state}\n\nLegal actions: {', '.join((legal_actions or {}).values())}"
@@ -141,6 +171,30 @@ class ItemGameEnv(BaseLanguageBasedEnv):
         if mode not in ("text", "rgb_array"):
             raise ValueError(f"invalid render mode {mode!r}")
         g = self.game
+        if g.collaboration:
+            lines = [
+                "Generator: pure_collaboration/collaboration",
+                f"EGO goal: {g._format_set(g.goals['EGO'])}",
+                f"EGO holdings: {g._format_set(g.holdings['EGO'])}",
+                f"Turn phase: {g.turn_phase}",
+                f"Communication: {g.communication_used}/{g.config.communication_budget}; Ego steps: {g.ego_steps}/{g.config.max_ego_steps}",
+                "P1 goal/holdings/alignment are initially unknown to EGO.",
+            ]
+            if g.conversation_history:
+                lines.append("Interaction history:")
+                lines.extend(
+                    f"- {entry['actor']} [{entry['phase']}]: {entry['action']}"
+                    for entry in g.conversation_history
+                )
+            if g.pending_proposal is not None:
+                lines.append("Pending proposal: PROPOSE JOIN {EGO,P1}")
+            if g.collaboration_coalition is not None:
+                lines.append("Coalition: {EGO,P1} (formed)")
+            if g.collaboration_ego_commit is not None:
+                lines.append(f"EGO committed: {g._format_set(g.collaboration_ego_commit)}")
+            if g.collaboration_p1_commit is not None:
+                lines.append(f"P1 committed: {g._format_set(g.collaboration_p1_commit)}")
+            return "\n".join(lines)
         lines = [
             f"Generator: {g.instance.generator}/{g.instance.subtype}",
             f"EGO goal: {g._format_set(g.goals['EGO'])}",
@@ -187,8 +241,9 @@ class ItemGameEnv(BaseLanguageBasedEnv):
         """Expose the standard terminal fields without rewarding the partner."""
         assert self.game is not None
         success = bool(self.game.ego_success)
+        terminal_return = self.game._terminal_reward() if success else 0.0
         return {
-            "player_0_return": float(success),
+            "player_0_return": terminal_return,
             "player_1_return": 0.0,
             "player_0_success": success,
             "player_1_success": False,
@@ -212,14 +267,19 @@ class ItemGameEnv(BaseLanguageBasedEnv):
         overlong_response: bool = False,
         overlong_sequence: bool = False,
     ):
-        """Close an invalid model response without creating a game reward."""
+        """Close an invalid model response; Collaboration applies its small invalid-action penalty."""
+        invalid_reward = (
+            BaseItemGame._COLLAB_INVALID_ACTION_PENALTY
+            if self.game is not None and self.game.collaboration
+            else 0.0
+        )
         info = {
             "success": False,
             "artificial_truncation": 1.0,
             "game_transition": 0.0,
-            "canonical_reward_player_0": 0.0,
+            "canonical_reward_player_0": invalid_reward,
             "canonical_reward_player_1": 0.0,
-            "player_0_return": 0.0,
+            "player_0_return": invalid_reward,
             "player_1_return": 0.0,
             "player_0_success": False,
             "player_1_success": False,
@@ -235,7 +295,7 @@ class ItemGameEnv(BaseLanguageBasedEnv):
         return [{
             "current_player": player_id,
             "action": "",
-            "rewards": [0.0, 0.0],
+            "rewards": [invalid_reward, 0.0],
             "done": True,
             "info": info,
             "next_player": None,

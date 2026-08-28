@@ -1,4 +1,4 @@
-"""Deterministic structural generators for the v0.3 item game.
+"""Deterministic structural generators for the structured item game.
 
 The generators create only hidden game state.  Transition rules live in
 ``game.py`` so the six cases remain instances of one mechanism.
@@ -111,6 +111,8 @@ def validate_instance(instance: ItemGameInstance) -> None:
             ego_goal, set(ego_holdings) | set(instance.holdings["P1"])
         ):
             raise AssertionError("collaboration pool must cover the shared goal")
+        if not set(ego_goal) & set(ego_holdings) or not set(ego_goal) & set(instance.holdings["P1"]):
+            raise AssertionError("collaboration requires both agents to contribute a goal item")
 
     elif instance.subtype == "exchange":
         partner = "P1"
@@ -212,8 +214,12 @@ def _validate_config(config: ItemGameConfig) -> None:
         raise ValueError("item_vocabulary must contain 6 to 8 unique item names")
 
 
-def _labels(seed: int, config: ItemGameConfig) -> dict[str, str]:
-    symbols = list(DEFAULT_SYMBOLS[: len(config.item_vocabulary)])
+def _labels(
+    seed: int,
+    config: ItemGameConfig,
+    symbols: tuple[str, ...] | None = None,
+) -> dict[str, str]:
+    symbols = list(symbols or DEFAULT_SYMBOLS[: len(config.item_vocabulary)])
     if config.randomize_items:
         random.Random(seed + 17_311).shuffle(symbols)
     vocabulary = list(config.item_vocabulary)
@@ -230,9 +236,11 @@ def _instance(
     holdings: dict[str, set[str]],
     partner_event: str | None = None,
     config: ItemGameConfig | None = None,
+    symbols: tuple[str, ...] | None = None,
 ) -> ItemGameInstance:
     config = config or ItemGameConfig(generator=generator, subtype=subtype)
-    labels = _labels(seed, config)
+    symbols = symbols or tuple(DEFAULT_SYMBOLS[: len(config.item_vocabulary)])
+    labels = _labels(seed, config, symbols)
     instance = ItemGameInstance(
         episode_seed=seed,
         generator=generator,
@@ -241,7 +249,7 @@ def _instance(
         # distractor is held by nobody; this keeps every episode in the fixed
         # 6--8 item-type range and prevents the action space from shrinking by
         # structural subtype.
-        items=tuple(labels[symbol] for symbol in DEFAULT_SYMBOLS[: len(config.item_vocabulary)]),
+        items=tuple(labels[symbol] for symbol in symbols),
         goals={
             player: frozenset(labels[item] for item in values)
             for player, values in goals.items()
@@ -260,13 +268,38 @@ class PureCollaborationGenerator:
     name = "pure_collaboration"
 
     def generate(self, seed: int, config: ItemGameConfig | None = None) -> ItemGameInstance:
+        config = config or ItemGameConfig(generator=self.name, subtype="collaboration")
+        rng = random.Random(seed + 61_731)
+        available_symbols = list(DEFAULT_SYMBOLS[: len(config.item_vocabulary)])
+        rng.shuffle(available_symbols)
+        universe_size = rng.randint(6, len(available_symbols))
+        symbols = tuple(available_symbols[:universe_size])
+
+        goal_size = rng.randint(2, min(4, universe_size - 2))
+        goal = set(rng.sample(list(symbols), goal_size))
+        shuffled_goal = sorted(goal)
+        rng.shuffle(shuffled_goal)
+        split = rng.randint(1, goal_size - 1)
+        ego_goal = set(shuffled_goal[:split])
+        p1_goal = set(shuffled_goal[split:])
+
+        distractors = [symbol for symbol in symbols if symbol not in goal]
+        rng.shuffle(distractors)
+        ego_holdings = set(ego_goal) | {distractors.pop()}
+        p1_holdings = set(p1_goal) | {distractors.pop()}
+        for item in distractors:
+            target = rng.choice((ego_holdings, p1_holdings, None))
+            if target is not None:
+                target.add(item)
+
         return _instance(
             seed,
             self.name,
             "collaboration",
-            goals={"EGO": {"K", "Q", "V"}, "P1": {"K", "Q", "V"}},
-            holdings={"EGO": {"K", "M"}, "P1": {"Q", "V", "T"}},
+            goals={"EGO": goal, "P1": goal},
+            holdings={"EGO": ego_holdings, "P1": p1_holdings},
             config=config,
+            symbols=symbols,
         )
 
 

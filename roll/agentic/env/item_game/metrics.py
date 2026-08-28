@@ -17,6 +17,9 @@ DIAGNOSTIC_KEYS = (
     "asked_give", "refused_critical_item", "accepted_cannot", "rerouted_after_cannot",
     "success", "terminal_success", "unfulfilled_agreements",
     "rerouted_after_unavailability",
+    "proposal_accepted", "proposal_rejected", "coalition_formed", "commit_valid",
+    "ego_commit_item_count", "p1_commit_item_count", "redundant_commit_count",
+    "communication_efficiency_bonus",
 )
 
 
