@@ -102,23 +102,30 @@ class ItemGameEnv(BaseLanguageBasedEnv):
         system = (
             "You are the EGO in a sequential Item Coalition Game. Use only the listed structured actions. "
             "ASK and ordinary SAY consume communication budget; a mandatory response to a partner request does not. "
-            "Only ACT GIVE and ACT JOIN_COMMIT change state. "
-            "Your terminal reward is 1 exactly when your committed pool satisfies your goal. "
+            "ASK creates agreements but does not transfer items; terminal reward is 1 only when your committed pool "
+            "satisfies your goal and every accepted agreement is fulfilled. "
         )
         user = (
+            "Turn lifecycle:\n"
+            "(1) If Partner initiated an event is shown, this is a response-only turn: output exactly SAY CAN_GIVE or SAY CANNOT_GIVE; ACT is illegal.\n"
+            "(2) Otherwise EGO chooses exactly one autonomous ASK, SAY, or ACT action.\n"
+            "(3) The scripted partner emits its truthful response/action.\n"
+            "(4) Only after that partner phase are holdings and commitments updated.\n\n"
             "At every turn choose exactly one legal action. The available structured protocol is:\n"
             "ASK <partner> GOAL | ASK <partner> HOLDINGS | ASK <partner> GIVE <item> | "
             "ASK <partner> EXCHANGE give=<item> receive=<item> | ASK <partner> JOIN <coalition>\n"
             "SAY <partner> CAN_GIVE <item> | SAY <partner> CANNOT_GIVE <item> | "
             "SAY <partner> PROFILE goal=<...> holdings=<...>\n"
             "ACT GIVE <item> TO <partner> | ACT JOIN_COMMIT <coalition>\n\n"
-            "ASK GIVE forms an agreement; a truthful partner then performs its scripted ACT GIVE to EGO. "
-            "ASK EXCHANGE only forms an agreement. Execute an accepted exchange with ACT GIVE for your item; "
-            "the partner then gives the agreed receive item; do not use a separate ACT form for exchange. "
-            "If a partner asks EGO to GIVE an item, the next decision must be SAY CAN_GIVE or SAY CANNOT_GIVE. "
-            "CAN_GIVE does not transfer the item; follow it with ACT GIVE. "
+            "ASK GIVE, ASK EXCHANGE, and ASK JOIN form agreements only after AGREE; they do not transfer items "
+            "or commit a coalition in that transition. ASK GIVE: the partner's scripted ACT GIVE occurs after "
+            "your next Ego action. Do not output the partner's action. ASK EXCHANGE: execute it with ACT GIVE "
+            "for your item, after which the partner gives the agreed receive item. "
+            "If a partner asks EGO to GIVE an item, the current turn is response-only: SAY CAN_GIVE or SAY CANNOT_GIVE. "
+            "CAN_GIVE forms an agreement but does not transfer the item; follow it on a later turn with ACT GIVE. "
             "A JOIN agreement is not a commit: every listed partner must agree, then output the exact same "
-            "ACT JOIN_COMMIT coalition. The episode ends at JOIN_COMMIT or after eight Ego steps.\n\n"
+            "ACT JOIN_COMMIT coalition. An accepted but unfulfilled agreement makes terminal reward 0. "
+            "The episode ends at JOIN_COMMIT or after eight Ego steps.\n\n"
             + output_format
         )
         return {"system": system, "user": user}
@@ -137,22 +144,20 @@ class ItemGameEnv(BaseLanguageBasedEnv):
             f"Generator: {g.instance.generator}/{g.instance.subtype}",
             f"EGO goal: {g._format_set(g.goals['EGO'])}",
             f"EGO holdings: {g._format_set(g.holdings['EGO'])}",
+            f"Turn phase: {g.turn_phase}",
             f"Communication: {g.communication_used}/{g.config.communication_budget}; Ego steps: {g.ego_steps}/{g.config.max_ego_steps}",
         ]
         if g.partner_event:
             lines.append(f"Partner initiated event: {g.partner_event}")
         if g.pending_transfer:
             partner, item = g.pending_transfer
-            lines.append(f"Pending agreement: EGO will ACT GIVE {item} TO {partner}.")
+            lines.append(f"Accepted GIVE agreement: EGO must ACT GIVE {item} TO {partner}.")
         if g.pending_exchange:
             partner, give, receive = g.pending_exchange
             lines.append(
-                f"Pending exchange agreement: EGO will ACT GIVE {give} TO {partner}; "
-                f"{partner} will ACT GIVE {receive} TO EGO."
+                f"Accepted exchange agreement: EGO must ACT GIVE {give} TO {partner}; "
+                f"then {partner} will ACT GIVE {receive} TO EGO."
             )
-        if g.pending_partner_give:
-            partner, item = g.pending_partner_give
-            lines.append(f"Pending scripted partner action: {partner} will ACT GIVE {item} TO EGO.")
         if g.agreements:
             active = []
             for agreement in g.agreements:
@@ -162,7 +167,7 @@ class ItemGameEnv(BaseLanguageBasedEnv):
                     label = f"EXCHANGE give={agreement['give']} receive={agreement['receive']}"
                 else:
                     label = f"GIVE {agreement['item']} ({agreement['direction']})"
-                status = "followed" if agreement.get("followed_through") else "awaiting ACT"
+                status = "fulfilled" if agreement.get("fulfilled") else "accepted_unfulfilled"
                 active.append(f"{label}:{status}")
             lines.append("Agreements: " + "; ".join(active))
         known_facts = {

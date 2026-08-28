@@ -1,4 +1,4 @@
-"""Structured v0.1 Item Coalition Game."""
+"""Structured v0.2 Item Coalition Game."""
 
 from .config import ItemGameConfig
 from .env import ItemGameEnv
@@ -11,6 +11,7 @@ from .generator import (
     PureCollaborationGenerator,
     ResourceConflictGenerator,
     generate_instance,
+    validate_instance,
 )
 
 __all__ = [
@@ -24,4 +25,5 @@ __all__ = [
     "ResourceConflictGenerator",
     "SUBTYPES",
     "generate_instance",
+    "validate_instance",
 ]

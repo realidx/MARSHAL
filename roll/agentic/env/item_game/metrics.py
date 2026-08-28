@@ -1,4 +1,4 @@
-"""Behavioral diagnostics for Item Coalition Game v0.1 rollouts."""
+"""Behavioral diagnostics for Item Coalition Game v0.2 rollouts."""
 
 from __future__ import annotations
 
@@ -7,13 +7,16 @@ from typing import Iterable, Mapping
 
 
 DIAGNOSTIC_KEYS = (
-    "agreement_formed", "agreement_followed_through", "correct_join_commit",
-    "harmful_transfer_avoided", "useful_give_request", "useful_exchange_proposed",
-    "mandatory_request_answered",
+    "goal_satisfied", "agreement_formed", "agreement_fulfilled",
+    "agreement_followed_through", "coalition_valid", "correct_join_commit",
+    "harmful_transfer_avoided", "harmful_give_avoided", "useful_give_request",
+    "useful_exchange_proposed", "mandatory_request_answered",
     "asked_goal", "asked_holdings", "disclosed_own_state", "proposed_join",
     "successful_joint_commit", "identified_complementary_exchange", "executed_exchange",
     "coalition_commit_exact", "coalition_members_committed",
-    "asked_give", "refused_critical_item", "accepted_cannot", "rerouted_after_cannot", "success",
+    "asked_give", "refused_critical_item", "accepted_cannot", "rerouted_after_cannot",
+    "success", "terminal_success", "unfulfilled_agreements",
+    "rerouted_after_unavailability",
 )
 
 

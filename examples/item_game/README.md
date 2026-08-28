@@ -1,6 +1,10 @@
-# Structured Item Coalition Game v0.1
+# Structured Item Coalition Game v0.2
 
-The v0.1 runtime uses one shared sequential engine and six structural cases:
+The v0.2 runtime uses one shared sequential engine and six structural cases.
+Each Ego turn is explicit: an incoming request is answered in a mandatory
+response-only turn; Ego then chooses one autonomous ASK/SAY/ACT action; the
+scripted partner responds or acts; and only then are holdings and commitments
+updated.
 
 ```yaml
 custom_envs:
@@ -23,10 +27,11 @@ Available generator/subtype pairs are:
 * `resource_conflict / cannot_help`
 * `resource_conflict / refuse_harmful_request`
 
-Item labels are permuted deterministically from the episode seed.  The
-partner is truthful and scripted.  ASK/SAY communication is hard-budgeted,
-mandatory responses to partner requests are free, all nonterminal rewards are
-zero, and the terminal Ego reward is binary.
+Item labels are permuted deterministically from the episode seed. The partner
+is truthful and scripted. ASK/SAY communication is hard-budgeted, mandatory
+responses to partner requests are free, all nonterminal rewards are zero, and
+the terminal Ego reward is binary. Every generated instance is checked against
+its subtype's mathematical invariants.
 
 The only state-changing Ego actions are:
 
@@ -35,9 +40,12 @@ ACT GIVE <item> TO <partner>
 ACT JOIN_COMMIT <coalition>
 ```
 
-An accepted exchange is executed as two GIVE actions: Ego gives its item and
-the scripted partner gives the agreed receive item.  JOIN requires an explicit
-partner agreement and an exact shared `JOIN_COMMIT` action.
+`ASK GIVE`, `ASK EXCHANGE`, and `ASK JOIN` create an agreement only after an
+explicit partner `AGREE` response. They do not transfer holdings or commit a
+coalition in that transition. Ego must fulfill Ego-side `GIVE` or
+`JOIN_COMMIT`; partner-side actions are scripted and recorded separately. An
+accepted but unfulfilled agreement makes terminal reward zero, even when the
+goal is otherwise satisfied.
 
 To run the Qwen-3-4B-Instruct pilot on a server, point `EVAL_MODEL_DIR` at a
 local Hugging Face model directory containing `config.json`, then run from the

@@ -1,4 +1,4 @@
-"""Deterministic structural generators for the v0.1 item game.
+"""Deterministic structural generators for the v0.2 item game.
 
 The generators create only hidden game state.  Transition rules live in
 ``game.py`` so the six cases remain instances of one mechanism.
@@ -39,6 +39,166 @@ class ItemGameInstance:
         return self.holdings[player]
 
 
+def _goal_satisfied(goal: set[str] | frozenset[str], holdings: set[str] | frozenset[str]) -> bool:
+    return set(goal).issubset(holdings)
+
+
+def _after_exchange(
+    ego_goal: set[str] | frozenset[str],
+    ego_holdings: set[str] | frozenset[str],
+    partner_goal: set[str] | frozenset[str],
+    partner_holdings: set[str] | frozenset[str],
+    give: str,
+    receive: str,
+) -> tuple[set[str], set[str]]:
+    ego_after = (set(ego_holdings) - {give}) | {receive}
+    partner_after = (set(partner_holdings) - {receive}) | {give}
+    return ego_after, partner_after
+
+
+def _strictly_beneficial_exchange(
+    ego_goal: set[str] | frozenset[str],
+    ego_holdings: set[str] | frozenset[str],
+    partner_goal: set[str] | frozenset[str],
+    partner_holdings: set[str] | frozenset[str],
+    give: str,
+    receive: str,
+) -> bool:
+    if give not in ego_holdings or receive not in partner_holdings:
+        return False
+    ego_after, partner_after = _after_exchange(
+        ego_goal, ego_holdings, partner_goal, partner_holdings, give, receive
+    )
+    ego_before_score = len(set(ego_goal) & set(ego_holdings))
+    partner_before_score = len(set(partner_goal) & set(partner_holdings))
+    ego_after_score = len(set(ego_goal) & ego_after)
+    partner_after_score = len(set(partner_goal) & partner_after)
+    ego_benefits = _goal_satisfied(ego_goal, ego_after) or ego_after_score > ego_before_score
+    partner_benefits = _goal_satisfied(partner_goal, partner_after) or partner_after_score > partner_before_score
+    return ego_benefits and partner_benefits
+
+
+def validate_instance(instance: ItemGameInstance) -> None:
+    """Validate structural and subtype-specific mathematical invariants."""
+
+    players = set(instance.goals)
+    if "EGO" not in players or len(players) not in (2, 3):
+        raise AssertionError("Item Game must contain EGO and one or two partners")
+    if set(instance.holdings) != players:
+        raise AssertionError("goals and holdings must contain the same players")
+    item_set = set(instance.items)
+    if not item_set:
+        raise AssertionError("item vocabulary must be nonempty")
+    if any(not set(goal).issubset(item_set) for goal in instance.goals.values()):
+        raise AssertionError("goals must use only episode items")
+    if any(not set(holding).issubset(item_set) for holding in instance.holdings.values()):
+        raise AssertionError("holdings must use only episode items")
+    if len(set().union(*(set(instance.holdings[p]) - set(instance.goals[p]) for p in players))) < 2:
+        raise AssertionError("each instance must contain at least two goal-irrelevant distractors")
+
+    ego_goal = instance.goals["EGO"]
+    ego_holdings = instance.holdings["EGO"]
+    if instance.subtype == "collaboration":
+        if set(instance.goals) != {"EGO", "P1"}:
+            raise AssertionError("collaboration must contain exactly EGO and P1")
+        if instance.goals["P1"] != ego_goal:
+            raise AssertionError("collaboration requires identical goals")
+        if _goal_satisfied(ego_goal, ego_holdings) or _goal_satisfied(
+            instance.goals["P1"], instance.holdings["P1"]
+        ):
+            raise AssertionError("collaboration agents must each need cooperation")
+        if not _goal_satisfied(
+            ego_goal, set(ego_holdings) | set(instance.holdings["P1"])
+        ):
+            raise AssertionError("collaboration pool must cover the shared goal")
+
+    elif instance.subtype == "exchange":
+        partner = "P1"
+        if _goal_satisfied(ego_goal, ego_holdings) or _goal_satisfied(
+            instance.goals[partner], instance.holdings[partner]
+        ):
+            raise AssertionError("exchange must require both agents to improve")
+        if not any(
+            _strictly_beneficial_exchange(
+                ego_goal,
+                ego_holdings,
+                instance.goals[partner],
+                instance.holdings[partner],
+                give,
+                receive,
+            )
+            for give in ego_holdings
+            for receive in instance.holdings[partner]
+        ):
+            raise AssertionError("exchange must contain a mutual-benefit exchange")
+
+    elif instance.subtype == "give_first":
+        partner = "P1"
+        event = instance.partner_event
+        if event is None or event not in ego_holdings:
+            raise AssertionError("give_first requires an initial item request from P1")
+        if event in ego_goal:
+            raise AssertionError("give_first request must be non-critical to EGO")
+        partner_after = set(instance.holdings[partner]) | {event}
+        if not _goal_satisfied(instance.goals[partner], partner_after):
+            raise AssertionError("give_first concession must make P1's goal feasible")
+        if not any(
+            item in partner_after
+            and item not in instance.goals[partner]
+            and item not in ego_holdings
+            and item in ego_goal
+            for item in partner_after
+        ):
+            raise AssertionError("give_first must expose an Ego-needed surplus after concession")
+
+    elif instance.subtype == "request_surplus":
+        partner = "P1"
+        if _goal_satisfied(ego_goal, ego_holdings) or not _goal_satisfied(
+            instance.goals[partner], instance.holdings[partner]
+        ):
+            raise AssertionError("request_surplus requires Ego to need help and P1 to be satisfied")
+        if not any(
+            item in instance.holdings[partner]
+            and item not in instance.goals[partner]
+            and item in ego_goal
+            and item not in ego_holdings
+            for item in instance.items
+        ):
+            raise AssertionError("request_surplus requires a goal-relevant P1 surplus")
+
+    elif instance.subtype == "cannot_help":
+        if set(instance.goals) != {"EGO", "P1", "P2"}:
+            raise AssertionError("cannot_help requires two partners")
+        critical = set(ego_goal) - set(ego_holdings)
+        if not critical:
+            raise AssertionError("cannot_help requires Ego to miss a goal item")
+        if not any(
+            item in instance.holdings["P1"]
+            and not _goal_satisfied(instance.goals["P1"], set(instance.holdings["P1"]) - {item})
+            and item in ego_goal
+            for item in critical
+        ):
+            raise AssertionError("P1 must hold an Ego-needed item that P1 cannot give")
+        if not any(
+            item in instance.holdings["P2"]
+            and _goal_satisfied(instance.goals["P2"], set(instance.holdings["P2"]) - {item})
+            and item in critical
+            for item in critical
+        ):
+            raise AssertionError("P2 must hold a safe surplus reroute item")
+
+    elif instance.subtype == "refuse_harmful_request":
+        event = instance.partner_event
+        if set(instance.goals) != {"EGO", "P1"}:
+            raise AssertionError("refuse_harmful_request must isolate one requesting partner")
+        if event is None or event not in ego_holdings or event not in ego_goal:
+            raise AssertionError("harmful request must target an Ego goal item")
+        if not _goal_satisfied(ego_goal, ego_holdings):
+            raise AssertionError("refusal case should permit safe singleton commit after refusal")
+        if _goal_satisfied(ego_goal, set(ego_holdings) - {event}):
+            raise AssertionError("requested item must be critical to Ego")
+
+
 def _validate_config(config: ItemGameConfig) -> None:
     if config.generator not in GENERATOR_NAMES:
         raise ValueError(f"unknown item-game generator {config.generator!r}")
@@ -73,12 +233,7 @@ def _instance(
 ) -> ItemGameInstance:
     config = config or ItemGameConfig(generator=generator, subtype=subtype)
     labels = _labels(seed, config)
-    # Keep two goal-irrelevant distractors in every generated episode.  The
-    # templates below already reserve them, but this check catches regressions.
-    irrelevant_instances = sum(len(holdings[player] - goals[player]) for player in holdings)
-    if irrelevant_instances < 2:
-        raise AssertionError("item-game template must contain two irrelevant distractors")
-    return ItemGameInstance(
+    instance = ItemGameInstance(
         episode_seed=seed,
         generator=generator,
         subtype=subtype,
@@ -97,6 +252,8 @@ def _instance(
         },
         partner_event=(labels[partner_event] if partner_event is not None else None),
     )
+    validate_instance(instance)
+    return instance
 
 
 class PureCollaborationGenerator:
@@ -123,9 +280,7 @@ class MixedIncentiveGenerator:
             raise ValueError(f"unknown mixed-incentive subtype {subtype!r}")
         if subtype == "request_surplus":
             goals = {"EGO": {"K", "Q"}, "P1": {"T", "Z"}}
-            holdings = {"EGO": {"K", "M", "V"}, "P1": {"T", "Z", "Q", "F"}}
-            if config is not None and len(config.item_vocabulary) < 7:
-                holdings = {"EGO": {"K", "M", "V"}, "P1": {"T", "Z", "Q", "M"}}
+            holdings = {"EGO": {"K", "M", "V"}, "P1": {"T", "Z", "Q", "M"}}
             event = None
         else:
             goals = {"EGO": {"K", "Q"}, "P1": {"V", "T"}}
@@ -143,30 +298,20 @@ class ResourceConflictGenerator:
         if subtype not in SUBTYPES[self.name]:
             raise ValueError(f"unknown resource-conflict subtype {subtype!r}")
         if subtype == "cannot_help":
-            goals = {"EGO": {"K", "Q"}, "P1": {"Q", "T"}, "P2": {"Z", "F"}}
+            goals = {"EGO": {"K", "Q"}, "P1": {"Q", "T"}, "P2": {"Z", "V"}}
             holdings = {
                 "EGO": {"K", "M"},
-                "P1": {"Q", "T", "V"},
-                "P2": {"Q", "Z", "F", "L"},
+                "P1": {"Q", "T", "M"},
+                "P2": {"Q", "Z", "V", "M"},
             }
-            if config is not None and len(config.item_vocabulary) < 8:
-                # Six opaque item types are enough when the two irrelevant
-                # distractors are held by more than one agent.
-                goals = {"EGO": {"K", "Q"}, "P1": {"Q", "T"}, "P2": {"Z", "V"}}
-                holdings = {"EGO": {"K", "V"}, "P1": {"Q", "T", "M"}, "P2": {"Q", "Z", "V", "M"}}
         else:
-            # Ego starts one useful item short.  P1's request for Q is
-            # harmful because Q is critical to Ego, while P2 owns the other
-            # missing item as surplus and can be used for a safe reroute.
             goals = {
-                "EGO": {"K", "Q", "V"},
+                "EGO": {"K", "Q"},
                 "P1": {"Q", "T"},
-                "P2": {"M", "Z"},
             }
             holdings = {
-                "EGO": {"K", "Q", "M"},
+                "EGO": {"K", "Q", "M", "V"},
                 "P1": {"T", "Z"},
-                "P2": {"V", "M", "Z", "T"},
             }
         event = "Q" if subtype == "refuse_harmful_request" else None
         return _instance(seed, self.name, subtype, goals, holdings, event, config)
