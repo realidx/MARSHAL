@@ -1,4 +1,4 @@
-"""Structured v0 strategic communication item game."""
+"""Structured v0.1 Item Coalition Game."""
 
 from .config import ItemGameConfig
 from .env import ItemGameEnv
@@ -25,4 +25,3 @@ __all__ = [
     "SUBTYPES",
     "generate_instance",
 ]
-

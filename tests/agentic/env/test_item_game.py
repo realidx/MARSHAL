@@ -1,4 +1,4 @@
-"""Regression tests for the structured v0 item game."""
+"""Regression tests for the structured Item Coalition Game v0.1."""
 
 import importlib.util
 import sys
@@ -40,14 +40,13 @@ def game(generator, subtype=None):
     return BaseItemGame(generate_instance(7, config=config), config)
 
 
-def play(game, actions):
-    for action in actions:
-        _, reward, done, info = game.step(action)
+def finish(g, action):
+    _, reward, done, info = g.step(action)
     assert done
     return reward, info
 
 
-def test_all_generators_use_the_same_runtime_budget_and_randomize_opaque_items():
+def test_v01_uses_eight_steps_and_six_communication_actions():
     for generator, subtype in (
         ("pure_collaboration", None),
         ("mixed_incentive", "exchange"),
@@ -57,115 +56,156 @@ def test_all_generators_use_the_same_runtime_budget_and_randomize_opaque_items()
         ("resource_conflict", "refuse_harmful_request"),
     ):
         config = Config(generator=generator, subtype=subtype)
+        assert config.max_ego_steps == 8
+        assert config.communication_budget == 6
         first = generate_instance(11, config=config)
         second = generate_instance(12, config=config)
         assert first == generate_instance(11, config=config)
         assert first.items != second.items
-        assert config.max_ego_steps == 6
-        assert config.communication_budget == 4
-        assert all(2 <= len(first.goal(player)) <= 3 for player in first.goals)
-        assert all(2 <= len(first.holding(player)) <= 4 for player in first.holdings)
+
+    # The v0.1 templates remain valid at the recommended 6-item minimum.
+    six_items = tuple(f"item_{symbol}" for symbol in ("K", "Q", "M", "V", "T", "Z"))
+    for generator, subtype in (
+        ("pure_collaboration", None),
+        ("mixed_incentive", "exchange"),
+        ("mixed_incentive", "give_first"),
+        ("mixed_incentive", "request_surplus"),
+        ("resource_conflict", "cannot_help"),
+        ("resource_conflict", "refuse_harmful_request"),
+    ):
+        config = Config(
+            generator=generator,
+            subtype=subtype,
+            item_vocabulary=six_items,
+            randomize_items=False,
+        )
+        instance = generate_instance(11, config=config)
+        assert len(instance.items) == 6
 
 
-def test_pure_collaboration_uses_joint_commit_with_exact_member_action():
+def test_pure_collaboration_forms_agreement_then_exact_joint_commit():
     g = game("pure_collaboration")
     g.step("ASK P1 GOAL")
     g.step("ASK P1 HOLDINGS")
-    message, _, _, _ = g.step("ASK P1 JOIN {EGO,P1}")
-    assert "YES" in message
+    message, reward, done, _ = g.step("ASK P1 JOIN {EGO,P1}")
+    assert "AGREE_JOIN" in message
+    assert reward == 0.0 and not done
+    assert g.holdings["EGO"] == {"item_K", "item_M"}
     assert "ACT JOIN_COMMIT {EGO,P1}" in g.legal_actions()
-    reward, info = play(g, ["ACT JOIN_COMMIT {EGO,P1}"])
+
+    reward, info = finish(g, "ACT JOIN_COMMIT {EGO,P1}")
     assert reward == 1.0
-    assert info["successful_joint_commit"] == 1.0
-    assert info["coalition_commit_exact"] == 1.0
+    assert info["agreement_formed"] == 1.0
+    assert info["agreement_followed_through"] == 1.0
+    assert info["correct_join_commit"] == 1.0
     assert g.member_commit_actions == {
         "EGO": "ACT JOIN_COMMIT {EGO,P1}",
         "P1": "ACT JOIN_COMMIT {EGO,P1}",
     }
-    assert info["canonical_reward_player_1"] == 0.0
 
 
-def test_exchange_is_partner_approved_then_ego_executed():
+def test_exchange_is_agreement_then_two_give_actions():
     g = game("mixed_incentive", "exchange")
     g.step("ASK P1 GOAL")
     g.step("ASK P1 HOLDINGS")
-    message, reward, done, _ = g.step("ASK P1 EXCHANGE give=item_V receive=item_Q")
-    assert "YES" in message and reward == 0.0 and not done
+    message, reward, done, _ = g.step(
+        "ASK P1 EXCHANGE give=item_V receive=item_Q"
+    )
+    assert "AGREE_EXCHANGE" in message
+    assert reward == 0.0 and not done
     assert g.holdings["EGO"] == {"item_K", "item_V", "item_M"}
-    assert "ACT EXCHANGE P1 give=item_V receive=item_Q" in g.legal_actions()
-    g.step("ACT EXCHANGE P1 give=item_V receive=item_Q")
-    reward, info = play(g, ["ACT JOIN_COMMIT {EGO}"])
+    assert "ACT EXCHANGE P1 give=item_V receive=item_Q" not in g.legal_actions()
+    assert "ACT GIVE item_V TO P1" in g.legal_actions()
+
+    _, reward, done, info = g.step("ACT GIVE item_V TO P1")
+    assert reward == 0.0 and not done
+    assert g.holdings["EGO"] == {"item_K", "item_M", "item_Q"}
+    assert g.holdings["P1"] == {"item_V", "item_T", "item_Z"}
+    reward, info = finish(g, "ACT JOIN_COMMIT {EGO}")
     assert reward == 1.0
+    assert info["agreement_followed_through"] == 1.0
     assert info["executed_exchange"] == 1.0
 
 
-def test_give_first_unlocks_delayed_reciprocity_and_refusal_cannot_succeed():
+def test_give_first_requires_mandatory_response_and_ego_give_followthrough():
     g = game("mixed_incentive", "give_first")
-    g.step("SAY P1 CAN_GIVE item_V")
-    g.step("ACT TRANSFER P1 item_V")
+    assert set(g.legal_actions()) == {
+        "SAY P1 CANNOT_GIVE item_V",
+        "SAY P1 CAN_GIVE item_V",
+    }
+    _, reward, done, info = g.step("SAY P1 CAN_GIVE item_V")
+    assert reward == 0.0 and not done
+    assert g.communication_used == 0
+    assert g.holdings["EGO"] == {"item_K", "item_V", "item_M"}
+    assert "ACT GIVE item_V TO P1" in g.legal_actions()
+
+    g.step("ACT GIVE item_V TO P1")
+    assert g.holdings["EGO"] == {"item_K", "item_M"}
+    assert g.holdings["P1"] == {"item_Q", "item_T", "item_Z", "item_V"}
     message, _, _, _ = g.step("ASK P1 GIVE item_Q")
-    assert "YES" in message
-    assert g.holdings["EGO"] == {"item_K", "item_M", "item_Q"}
-    reward, _ = play(g, ["ACT JOIN_COMMIT {EGO}"])
+    assert "CAN_GIVE item_Q" in message
+    assert g.holdings["EGO"] == {"item_K", "item_M"}
+    assert g.pending_partner_give == ("P1", "item_Q")
+    reward, info = finish(g, "ACT JOIN_COMMIT {EGO}")
     assert reward == 1.0
+    assert g.holdings["EGO"] == {"item_K", "item_M", "item_Q"}
+    assert info["mandatory_request_answered"] == 1.0
+    assert info["agreement_followed_through"] == 1.0
 
     refused = game("mixed_incentive", "give_first")
     refused.step("SAY P1 CANNOT_GIVE item_V")
     refused.step("ASK P1 GIVE item_Q")
-    reward, _ = play(refused, ["ACT JOIN_COMMIT {EGO}"])
+    reward, _ = finish(refused, "ACT JOIN_COMMIT {EGO}")
     assert reward == 0.0
 
 
-def test_cannot_help_reroutes_and_critical_request_is_refused():
-    g = game("resource_conflict", "cannot_help")
-    g.step("ASK P1 HOLDINGS")
-    assert "CANNOT" in g.step("ASK P1 GIVE item_Q")[0]
-    g.step("ASK P2 HOLDINGS")
-    assert "YES" in g.step("ASK P2 GIVE item_Q")[0]
-    reward, info = play(g, ["ACT JOIN_COMMIT {EGO}"])
-    assert reward == 1.0
-    assert info["rerouted_after_cannot"] == 1.0
-
-    refused = game("resource_conflict", "refuse_harmful_request")
-    assert refused.pending_partner_request == "ASK EGO GIVE item_Q"
-    refused.step("SAY P1 CANNOT_GIVE item_Q")
-    reward, info = play(refused, ["ACT JOIN_COMMIT {EGO}"])
-    assert reward == 1.0
-    assert info["refused_critical_item"] == 1.0
-
-
-def test_request_surplus_is_an_ask_then_partner_to_ego_transfer():
+def test_request_surplus_is_partner_agreement_then_scripted_partner_give():
     g = game("mixed_incentive", "request_surplus")
     message, reward, done, _ = g.step("ASK P1 GIVE item_Q")
-    assert "YES" in message and reward == 0.0 and not done
-    assert g.holdings["EGO"] == {"item_K", "item_M", "item_V", "item_Q"}
-    reward, _ = play(g, ["ACT JOIN_COMMIT {EGO}"])
+    assert "CAN_GIVE item_Q" in message
+    assert reward == 0.0 and not done
+    assert g.holdings["EGO"] == {"item_K", "item_M", "item_V"}
+    assert g.holdings["P1"] == {"item_T", "item_Z", "item_Q", "item_F"}
+    reward, info = finish(g, "ACT JOIN_COMMIT {EGO}")
     assert reward == 1.0
-
-
-def test_partner_give_request_executes_as_a_scripted_partner_action():
-    g = game("mixed_incentive", "request_surplus")
-    g.step("ASK P1 GIVE item_Q")
-    assert g.holdings["P1"] == {"item_T", "item_Z", "item_F"}
     assert g.holdings["EGO"] == {"item_K", "item_M", "item_V", "item_Q"}
+    assert info["useful_give_request"] == 1.0
 
 
-def test_join_requires_matching_goals_and_all_members_consent():
+def test_cannot_help_reroutes_to_surplus_partner():
     g = game("resource_conflict", "cannot_help")
-    message, _, _, _ = g.step("ASK P1 JOIN {EGO,P1}")
-    assert "CANNOT" in message
-    assert "ACT JOIN_COMMIT {EGO,P1}" not in g.legal_actions()
+    message, _, _, _ = g.step("ASK P1 GIVE item_Q")
+    assert "CANNOT_GIVE item_Q" in message
+    message, _, _, _ = g.step("ASK P2 GIVE item_Q")
+    assert "CAN_GIVE item_Q" in message
+    assert g.holdings["EGO"] == {"item_K", "item_M"}
+    assert g.pending_partner_give == ("P2", "item_Q")
+    reward, info = finish(g, "ACT JOIN_COMMIT {EGO}")
+    assert reward == 1.0
+    assert g.holdings["EGO"] == {"item_K", "item_M", "item_Q"}
+    assert info["rerouted_after_cannot"] == 1.0
+    assert info["useful_give_request"] == 1.0
 
-    # A two-partner instance also supports the general coalition syntax.  A
-    # joint commit is exposed only after every member has approved that exact
-    # coalition, and the scripted members then emit the exact same action.
-    g = game("pure_collaboration")
-    g.step("ASK P1 JOIN {EGO,P1}")
-    assert g.join_approved[frozenset({"EGO", "P1"})] == {"P1"}
-    assert g.member_commit_actions == {}
+
+def test_refuse_harmful_request_requires_refusal_then_safe_reroute():
+    g = game("resource_conflict", "refuse_harmful_request")
+    assert g.pending_partner_request == "ASK EGO GIVE item_Q"
+    assert set(g.legal_actions()) == {
+        "SAY P1 CANNOT_GIVE item_Q",
+        "SAY P1 CAN_GIVE item_Q",
+    }
+    g.step("SAY P1 CANNOT_GIVE item_Q")
+    assert g.communication_used == 0
+    assert g.pending_partner_request is None
+    g.step("ASK P2 GIVE item_V")
+    reward, info = finish(g, "ACT JOIN_COMMIT {EGO}")
+    assert reward == 1.0
+    assert info["mandatory_request_answered"] == 1.0
+    assert info["harmful_transfer_avoided"] == 1.0
+    assert info["rerouted_after_cannot"] == 1.0
 
 
-def test_two_partner_coalition_waits_for_every_exact_join_approval():
+def test_two_partner_join_waits_for_every_exact_join_agreement():
     config = Config(randomize_items=False)
     instance = ItemGameInstance(
         episode_seed=7,
@@ -189,45 +229,47 @@ def test_two_partner_coalition_waits_for_every_exact_join_approval():
     g.step("ASK P2 JOIN {EGO,P1,P2}")
     action = "ACT JOIN_COMMIT {EGO,P1,P2}"
     assert action in g.legal_actions()
-    reward, info = play(g, [action])
+    reward, info = finish(g, action)
     assert reward == 1.0
-    assert info["coalition_commit_exact"] == 1.0
+    assert info["correct_join_commit"] == 1.0
     assert set(g.member_commit_actions.values()) == {action}
 
 
-def test_communication_budget_is_hard_and_rewards_are_terminal_only():
+def test_communication_budget_is_hard_but_mandatory_response_is_free():
     g = game("pure_collaboration")
-    for action in ("ASK P1 GOAL", "ASK P1 HOLDINGS", next(a for a in g.legal_actions() if a.startswith("SAY P1 PROFILE")), "ASK P1 GOAL"):
+    for action in (
+        "ASK P1 GOAL",
+        "ASK P1 HOLDINGS",
+        "ASK P1 GIVE item_K",
+        "ASK P1 GIVE item_M",
+        "ASK P1 GIVE item_V",
+        "ASK P1 GIVE item_Q",
+    ):
         _, reward, done, _ = g.step(action)
         assert reward == 0.0 and not done
     assert not any(action.startswith(("ASK ", "SAY ")) for action in g.legal_actions())
+    assert "ACT JOIN_COMMIT {EGO}" in g.legal_actions()
     with pytest.raises(ValueError):
         g.step("ASK P1 GOAL")
 
-    legal_loss = game("pure_collaboration")
-    _, reward, done, info = legal_loss.step("ACT JOIN_COMMIT {EGO}")
-    assert done and reward == 0.0
-    assert info["success"] is True
-    assert info["player_0_success"] is False
-    assert info["canonical_reward_player_1"] == 0.0
+    mandatory = game("mixed_incentive", "give_first")
+    mandatory.step("SAY P1 CANNOT_GIVE item_V")
+    assert mandatory.communication_used == 0
 
 
-def test_roll_adapter_uses_structured_answer_protocol():
+def test_roll_adapter_exposes_only_v01_actions_and_answer_protocol():
     env = ItemGameEnv(Config(randomize_items=False))
     initial, execute_results = env.reset(seed=3)
     assert not execute_results
     prompt = env.get_prompt(think=False)
-    assert "ACT EXCHANGE" in prompt["user"]
-    assert "<reason>" not in prompt["user"]
+    assert "ACT GIVE <item> TO <partner>" in prompt["user"]
+    assert "ACT EXCHANGE" not in prompt["user"]
+    assert "ACT TRANSFER" not in prompt["user"]
     action = next(iter(initial["legal_actions"].values()))
-    assert env.validate_response(f"<reason>query</reason><answer>{action}</answer>", initial["legal_actions"])
+    assert env.validate_response(f"<answer>{action}</answer>", initial["legal_actions"])
     transition = env.step(action)[0]
     assert transition["current_player"] == 0
     assert transition["info"]["step_reward"] == 0.0
-    assert "holdings (not necessarily known)" not in initial["observation"]
-    assert env.validate_response(
-        f"<reason>query</reason><answer>{action}</answer>", initial["legal_actions"]
-    )
 
 
 def test_roll_adapter_returns_only_ego_reward_at_terminal():

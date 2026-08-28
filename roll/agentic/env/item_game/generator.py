@@ -1,4 +1,4 @@
-"""Deterministic structural generators for the v0 item game.
+"""Deterministic structural generators for the v0.1 item game.
 
 The generators create only hidden game state.  Transition rules live in
 ``game.py`` so the six cases remain instances of one mechanism.
@@ -155,8 +155,19 @@ class ResourceConflictGenerator:
                 goals = {"EGO": {"K", "Q"}, "P1": {"Q", "T"}, "P2": {"Z", "V"}}
                 holdings = {"EGO": {"K", "V"}, "P1": {"Q", "T", "M"}, "P2": {"Q", "Z", "V", "M"}}
         else:
-            goals = {"EGO": {"K", "Q"}, "P1": {"Q", "T"}}
-            holdings = {"EGO": {"K", "Q", "M", "V"}, "P1": {"T", "Z"}}
+            # Ego starts one useful item short.  P1's request for Q is
+            # harmful because Q is critical to Ego, while P2 owns the other
+            # missing item as surplus and can be used for a safe reroute.
+            goals = {
+                "EGO": {"K", "Q", "V"},
+                "P1": {"Q", "T"},
+                "P2": {"M", "Z"},
+            }
+            holdings = {
+                "EGO": {"K", "Q", "M"},
+                "P1": {"T", "Z"},
+                "P2": {"V", "M", "Z", "T"},
+            }
         event = "Q" if subtype == "refuse_harmful_request" else None
         return _instance(seed, self.name, subtype, goals, holdings, event, config)
 

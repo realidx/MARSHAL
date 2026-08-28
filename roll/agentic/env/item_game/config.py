@@ -1,11 +1,11 @@
-"""Configuration for the v0 ego-centric item game."""
+"""Configuration for the v0.1 ego-centric Item Coalition Game."""
 
 from dataclasses import dataclass, field
 
 
 @dataclass
 class ItemGameConfig:
-    """Stable v0 runtime knobs shared by all item-game generators."""
+    """Stable v0.1 runtime knobs shared by all item-game generators."""
 
     seed: int = 42
     seed_offset: int = 0
@@ -22,8 +22,8 @@ class ItemGameConfig:
     # ``refuse_harmful_request``.  The default is selected from generator.
     subtype: str | None = None
 
-    max_ego_steps: int = 6
-    communication_budget: int = 4
+    max_ego_steps: int = 8
+    communication_budget: int = 6
     item_vocabulary: tuple[str, ...] = field(
         default_factory=lambda: (
             "item_K", "item_Q", "item_M", "item_V",

@@ -1,4 +1,4 @@
-"""ROLL adapter for the ego-centric sequential item game."""
+"""ROLL adapter for the ego-centric sequential Item Coalition Game."""
 
 from __future__ import annotations
 
@@ -100,11 +100,10 @@ class ItemGameEnv(BaseLanguageBasedEnv):
         else:
             output_format = "Emit exactly one listed action inside <answer>...</answer>, with no reasoning text."
         system = (
-            "You are the EGO in a sequential item game. Use only the listed structured actions. "
-            "ASK and SAY consume communication budget; partner replies are free. "
-            "Ego's ACT TRANSFER, ACT EXCHANGE, and ACT JOIN_COMMIT change Ego-controlled state; "
-            "an approved partner GIVE is executed by the scripted partner in its reply. "
-            "Your terminal reward is 1 exactly when your committed pool satisfies your goal, otherwise 0. "
+            "You are the EGO in a sequential Item Coalition Game. Use only the listed structured actions. "
+            "ASK and ordinary SAY consume communication budget; a mandatory response to a partner request does not. "
+            "Only ACT GIVE and ACT JOIN_COMMIT change state. "
+            "Your terminal reward is 1 exactly when your committed pool satisfies your goal. "
         )
         user = (
             "At every turn choose exactly one legal action. The available structured protocol is:\n"
@@ -112,14 +111,14 @@ class ItemGameEnv(BaseLanguageBasedEnv):
             "ASK <partner> EXCHANGE give=<item> receive=<item> | ASK <partner> JOIN <coalition>\n"
             "SAY <partner> CAN_GIVE <item> | SAY <partner> CANNOT_GIVE <item> | "
             "SAY <partner> PROFILE goal=<...> holdings=<...>\n"
-            "ACT TRANSFER <partner> <item> | ACT EXCHANGE <partner> give=<item> receive=<item> | "
-            "ACT JOIN_COMMIT <coalition>\n\n"
-            "ASK GIVE requests partner approval; a YES response makes the scripted partner immediately transfer the item to EGO. "
-            "ASK EXCHANGE requests partner approval; use ACT EXCHANGE to execute an approved exchange. "
-            "ACT TRANSFER moves an item held by EGO to the named partner (including after SAY CAN_GIVE). "
-            "A partner-initiated GIVE is answered with SAY CAN_GIVE or SAY CANNOT_GIVE before any transfer. "
-            "A joint JOIN_COMMIT is legal only after every listed partner accepts the same coalition; all members then output the exact same JOIN_COMMIT action. "
-            "The episode ends at JOIN_COMMIT or after six Ego steps.\n\n"
+            "ACT GIVE <item> TO <partner> | ACT JOIN_COMMIT <coalition>\n\n"
+            "ASK GIVE forms an agreement; a truthful partner then performs its scripted ACT GIVE to EGO. "
+            "ASK EXCHANGE only forms an agreement. Execute an accepted exchange with ACT GIVE for your item; "
+            "the partner then gives the agreed receive item; do not use a separate ACT form for exchange. "
+            "If a partner asks EGO to GIVE an item, the next decision must be SAY CAN_GIVE or SAY CANNOT_GIVE. "
+            "CAN_GIVE does not transfer the item; follow it with ACT GIVE. "
+            "A JOIN agreement is not a commit: every listed partner must agree, then output the exact same "
+            "ACT JOIN_COMMIT coalition. The episode ends at JOIN_COMMIT or after eight Ego steps.\n\n"
             + output_format
         )
         return {"system": system, "user": user}
@@ -143,12 +142,29 @@ class ItemGameEnv(BaseLanguageBasedEnv):
         if g.partner_event:
             lines.append(f"Partner initiated event: {g.partner_event}")
         if g.pending_transfer:
-            direction = (
-                f"{g.pending_transfer[0]} gives EGO"
-                if g.pending_transfer_direction == "partner_to_ego"
-                else f"EGO gives {g.pending_transfer[0]}"
+            partner, item = g.pending_transfer
+            lines.append(f"Pending agreement: EGO will ACT GIVE {item} TO {partner}.")
+        if g.pending_exchange:
+            partner, give, receive = g.pending_exchange
+            lines.append(
+                f"Pending exchange agreement: EGO will ACT GIVE {give} TO {partner}; "
+                f"{partner} will ACT GIVE {receive} TO EGO."
             )
-            lines.append(f"Pending transfer: {direction} {g.pending_transfer[1]}")
+        if g.pending_partner_give:
+            partner, item = g.pending_partner_give
+            lines.append(f"Pending scripted partner action: {partner} will ACT GIVE {item} TO EGO.")
+        if g.agreements:
+            active = []
+            for agreement in g.agreements:
+                if agreement.get("type") == "join":
+                    label = f"JOIN {agreement['coalition']}"
+                elif agreement.get("type") == "exchange":
+                    label = f"EXCHANGE give={agreement['give']} receive={agreement['receive']}"
+                else:
+                    label = f"GIVE {agreement['item']} ({agreement['direction']})"
+                status = "followed" if agreement.get("followed_through") else "awaiting ACT"
+                active.append(f"{label}:{status}")
+            lines.append("Agreements: " + "; ".join(active))
         known_facts = {
             player: {
                 key: g._format_set(value) if isinstance(value, set) else value
