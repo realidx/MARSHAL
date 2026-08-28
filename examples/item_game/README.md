@@ -33,7 +33,7 @@ responses to partner requests are free, all nonterminal rewards are zero, and
 the terminal Ego reward is binary. Every generated instance is checked against
 its subtype's mathematical invariants.
 
-The only state-changing Ego actions are:
+For the five legacy subtypes, the state-changing Ego actions are:
 
 ```text
 ACT GIVE <item> TO <partner>
@@ -47,6 +47,21 @@ holdings. `ASK JOIN` does not commit a coalition. Ego must fulfill Ego-side `GIV
 `JOIN_COMMIT`; partner-side actions are scripted and recorded separately. An
 accepted but unfulfilled agreement makes terminal reward zero, even when the
 goal is otherwise satisfied.
+
+Collaboration v2 uses a separate decentralized protocol:
+
+```text
+QUERY P1 GOAL | QUERY P1 HOLDINGS
+INFORM P1 GOAL {...} | INFORM P1 HOLDINGS {...}
+PROPOSE JOIN {EGO,P1}
+ACT COMMIT {...}
+```
+
+P1 asks for missing Ego information before accepting or rejecting a proposal.
+`ACT ACCEPT` forms the coalition but does not commit items; after Ego commits
+its own holdings, P1 commits its own necessary items in the same transition.
+Collaboration success requires the accepted coalition and the union of both
+item-level commits to cover the shared goal.
 
 To run the Qwen-3-4B-Instruct pilot on a server, point `EVAL_MODEL_DIR` at a
 local Hugging Face model directory containing `config.json`, then run from the
@@ -62,3 +77,17 @@ and an exact `<answer>...</answer>` action envelope.  It uses
 `max_new_tokens: 1024`, `sequence_length: 8192`, and vLLM
 `max_model_len: 8192`; the per-decision answer is still stopped at
 `</answer>`.
+
+To run only the new Collaboration v2 at larger scale, use the dedicated
+Collaboration-only config. It defaults to 240 independent seeds and does not
+schedule the other five item-game subtypes:
+
+```bash
+export EVAL_MODEL_DIR=/path/to/Qwen3-4B-Instruct
+bash examples/item_game/run_agentic_rollout_item_game_collaboration.sh
+```
+
+The dedicated config uses `group_seed_base: 840000`, so episode `g` uses the
+reproducible environment seed `840000 + g`. Change `rollout_batch_size`,
+`env_groups`, and `n_groups` together if you want a different number of
+distinct Collaboration scenarios.
