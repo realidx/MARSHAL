@@ -1,0 +1,94 @@
+defaults:
+  - /tictactoe/agentic_train_tictactoe_minimax_selfplay_2gpu@_global_
+  - _self_
+
+hydra:
+  searchpath:
+    - file://${oc.env:PWD}/examples
+
+exp_name: "item_game_qwen3_4b_instruct_new_pilot"
+pretrain: ${oc.env:EVAL_MODEL_DIR}
+
+# Generation-only evaluation: equal numbers of the currently implemented new
+# environments. Legacy six-environment pilot remains separate.
+max_steps: 1
+rollout_batch_size: 90
+sequence_length: 8192
+max_actions_per_traj: 8
+num_gpus_per_node: 1
+
+actor_train:
+  device_mapping: list(range(0,1))
+
+reference:
+  device_mapping: list(range(0,1))
+
+actor_infer:
+  generating_args:
+    max_new_tokens: 1024
+    top_p: 0.8
+    top_k: 20
+    num_beams: 1
+    temperature: 0.7
+    num_return_sequences: 1
+    stop: ["</answer>"]
+    include_stop_str_in_output: true
+  strategy_args:
+    strategy_config:
+      tensor_parallel_size: 1
+      max_model_len: 8192
+      gpu_memory_utilization: 0.8
+  device_mapping: list(range(0,1))
+
+enable_think: true
+markovian_turn_context: false
+use_reason_answer_format: true
+
+custom_envs:
+  ItemGame-CollaborationV2:
+    env_type: item_game
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      generator: pure_collaboration
+      subtype: collaboration
+      max_ego_steps: 8
+      communication_budget: 6
+      response_token_limit: 128
+
+  ItemGame-RequestSurplusReroute:
+    env_type: item_game
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      generator: mixed_incentive
+      subtype: request_surplus_reroute
+      max_ego_steps: 8
+      communication_budget: 6
+      response_token_limit: 128
+
+  ItemGame-RespondToGiveRequest:
+    env_type: item_game
+    max_actions_per_traj: ${max_actions_per_traj}
+    grid_vocab: false
+    env_config:
+      generator: mixed_incentive
+      subtype: respond_to_give_request
+      max_ego_steps: 8
+      communication_budget: 6
+      response_token_limit: 128
+
+train_env_manager:
+  max_invalid_retries_per_decision: 0
+  format_penalty: 0.0
+  minimax_length_penalty_beta: 0.0
+  enable_length_penalty: false
+  max_env_num_per_worker: 60
+  env_groups: 90
+  group_size: 1
+  group_seed_base: 840000
+  tags:
+    - ItemGame-CollaborationV2
+    - ItemGame-RequestSurplusReroute
+    - ItemGame-RespondToGiveRequest
+  n_groups: [30, 30, 30]

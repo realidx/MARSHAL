@@ -36,6 +36,7 @@ class BaseItemGame:
         self.communication_used = 0
         self.ego_steps = 0
         self.turn_index = 0
+        self.respond_to_give_request = instance.subtype == "respond_to_give_request"
         self.turn_phase = "mandatory_response" if instance.partner_event else "ego_action"
         self.records: list[dict[str, Any]] = []
         self.conversation_history: list[dict[str, Any]] = []
@@ -57,9 +58,29 @@ class BaseItemGame:
         self._mandatory_request_answered = False
         self._harmful_transfer_avoided = False
 
+        self.give_request_proposal: dict[str, Any] | None = None
+        self.give_request_accepted = False
+        self.give_request_accepted_items: frozenset[str] = frozenset()
+        self.give_request_rejected = False
+        self.give_request_fulfilled = False
+        self.give_request_ego_commit: set[str] | None = None
+        if self.respond_to_give_request:
+            partner = instance.active_partner
+            if partner is None or instance.partner_event is None:
+                raise ValueError("respond_to_give_request instance is missing its active proposal")
+            self.pending_partner_request = None
+            self.pending_request_partner = None
+            self.turn_phase = "proposal_response"
+            self.give_request_proposal = {
+                "giver": "EGO",
+                "receiver": partner,
+                "items": frozenset({instance.partner_event}),
+            }
+
         # Collaboration v2 has a separate decentralized protocol. The other
         # subtypes continue to use the legacy v0.3 state below.
         self.collaboration = instance.subtype == "collaboration"
+        self.reroute = instance.subtype == "request_surplus_reroute"
         self.p1_known = (
             {
                 "own_goal": set(self.goals["P1"]),
@@ -80,7 +101,22 @@ class BaseItemGame:
         self.collaboration_reject_count = 0
         self.collaboration_redundant_commit_count = 0
 
-        if self.partner_event:
+        self.reroute_status: dict[str, str] = {}
+        self.reroute_received_item: str | None = None
+        self.reroute_received_turn_index: int | None = None
+        self.reroute_ego_commit: set[str] | None = None
+        self.reroute_proposal_count = 0
+        self.reroute_accept_count = 0
+        self.reroute_reject_count = 0
+        self.reroute_first_partner: str | None = None
+        self.reroute_after_rejection_count = 0
+
+        if self.respond_to_give_request:
+            partner = str(instance.active_partner)
+            item = str(instance.partner_event)
+            action = self._format_give_request_proposal(partner, item)
+            self._record_partner(partner, action, f"{partner} proposes GIVE {item} to EGO.", "proposal")
+        elif self.partner_event:
             self._record_partner("P1", self.partner_event, "P1 asks EGO to give the requested item.", "request")
 
     @property
@@ -100,6 +136,10 @@ class BaseItemGame:
             return ()
         if self.collaboration:
             return self._collaboration_legal_actions()
+        if self.reroute:
+            return self._reroute_legal_actions()
+        if self.respond_to_give_request:
+            return self._give_request_legal_actions()
         # A partner request creates a response-only Ego turn.
         if self.pending_partner_request:
             partner = self.pending_request_partner or "P1"
@@ -139,6 +179,19 @@ class BaseItemGame:
                 actions.append(f"ACT JOIN_COMMIT {self._format_coalition(coalition)}")
         return tuple(dict.fromkeys(actions))
 
+    def _give_request_legal_actions(self) -> tuple[str, ...]:
+        if self.give_request_proposal is not None:
+            return ("ACT ACCEPT", "ACT REJECT")
+        if self.give_request_accepted and not self.give_request_fulfilled:
+            item = next(iter(self.give_request_accepted_items))
+            return (f"ACT GIVE {self._format_set({item})}",)
+        if self.goals["EGO"].issubset(self.holdings["EGO"]):
+            return tuple(
+                f"ACT COMMIT {self._format_set(committed)}"
+                for committed in self._item_subsets(self.holdings["EGO"])
+            )
+        return ()
+
     def _collaboration_legal_actions(self) -> tuple[str, ...]:
         if self.pending_partner_query:
             if self.pending_partner_query == "GOAL":
@@ -162,6 +215,25 @@ class BaseItemGame:
                 actions.append(f"ACT COMMIT {self._format_set(committed)}")
         return tuple(dict.fromkeys(actions))
 
+    def _reroute_legal_actions(self) -> tuple[str, ...]:
+        actions: list[str] = []
+        partners = [player for player in self.players if player != "EGO"]
+        target = self._reroute_target_item()
+        if self.communication_left:
+            for partner in partners:
+                actions.extend((f"QUERY {partner} GOAL", f"QUERY {partner} HOLDINGS"))
+                actions.extend((
+                    f"INFORM {partner} GOAL {self._format_set(self.goals['EGO'])}",
+                    f"INFORM {partner} HOLDINGS {self._format_set(self.holdings['EGO'])}",
+                ))
+                if target is not None and self.reroute_status.get(partner) is None:
+                    actions.append(self._format_give_proposal(partner, target))
+
+        if self.goals["EGO"].issubset(self.holdings["EGO"]):
+            for committed in self._item_subsets(self.holdings["EGO"]):
+                actions.append(f"ACT COMMIT {self._format_set(committed)}")
+        return tuple(dict.fromkeys(actions))
+
     @staticmethod
     def _item_subsets(items: set[str]) -> tuple[frozenset[str], ...]:
         ordered = tuple(sorted(items))
@@ -179,7 +251,7 @@ class BaseItemGame:
 
         before = self._snapshot()
         mandatory_response = self._is_mandatory_response(action)
-        if self.collaboration and action.startswith(("QUERY ", "INFORM ", "PROPOSE ")):
+        if (self.collaboration or self.reroute) and action.startswith(("QUERY ", "INFORM ", "PROPOSE ")):
             self.communication_used += 1
         elif action.startswith(("ASK ", "SAY ")) and not mandatory_response:
             self.communication_used += 1
@@ -194,7 +266,7 @@ class BaseItemGame:
         ego_message, operation = self._apply_ego(action)
         partner_messages = self._run_partner_phase(operation)
 
-        if self.collaboration and action.startswith("ACT COMMIT "):
+        if (self.collaboration or self.reroute or self.respond_to_give_request) and action.startswith("ACT COMMIT "):
             self.done = True
         elif action.startswith("ACT JOIN_COMMIT"):
             self.done = True
@@ -240,11 +312,16 @@ class BaseItemGame:
         return partner_message, reward, self.done, info
 
     def _terminal_reward(self) -> float:
-        if not self.collaboration:
+        if not self.collaboration and not self.reroute and not self.respond_to_give_request:
             return float(self.ego_success)
         if not self.ego_success:
             return 0.0
-        redundant = self.collaboration_redundant_commit_count
+        if self.collaboration:
+            redundant = self.collaboration_redundant_commit_count
+        elif self.reroute:
+            redundant = max(0, len(self.reroute_ego_commit or set()) - len(self.goals["EGO"]))
+        else:
+            redundant = max(0, len(self.give_request_ego_commit or set()) - len(self.goals["EGO"]))
         bonus = self.communication_left * self._COLLAB_COMMUNICATION_BONUS
         penalty = redundant * self._COLLAB_REDUNDANT_PENALTY
         return 1.0 + bonus - penalty
@@ -252,6 +329,10 @@ class BaseItemGame:
     def _apply_ego(self, action: str) -> tuple[str, dict[str, Any] | None]:
         if self.collaboration:
             return self._apply_collaboration_ego(action)
+        if self.reroute:
+            return self._apply_reroute_ego(action)
+        if self.respond_to_give_request:
+            return self._apply_give_request_ego(action)
         if action.startswith("ASK "):
             return self._ask(action)
         if action.startswith("SAY "):
@@ -315,6 +396,77 @@ class BaseItemGame:
 
         raise ValueError(f"unsupported collaboration action {action!r}")
 
+    def _apply_reroute_ego(self, action: str) -> tuple[str, dict[str, Any] | None]:
+        match = re.fullmatch(r"QUERY (P[12]) (GOAL|HOLDINGS)", action)
+        if match is not None:
+            partner, field = match.groups()
+            return "", {"type": "reroute_query_partner", "partner": partner, "field": field}
+
+        match = re.fullmatch(r"INFORM (P[12]) (GOAL|HOLDINGS) (\{[^}]*\})", action)
+        if match is not None:
+            partner, field, raw_items = match.groups()
+            items = self._parse_item_set(raw_items)
+            expected = self.goals["EGO"] if field == "GOAL" else self.holdings["EGO"]
+            if items != expected:
+                raise ValueError("EGO must truthfully INFORM its own state")
+            return "", {"type": "reroute_inform_partner", "partner": partner, "field": field}
+
+        match = re.fullmatch(
+            r"PROPOSE GIVE \{giver=(P[12]),receiver=EGO,items=(\{[^}]*\})\}", action
+        )
+        if match is not None:
+            partner, raw_items = match.groups()
+            items = self._parse_item_set(raw_items)
+            target = self._reroute_target_item()
+            if len(items) != 1 or target is None or items != {target}:
+                raise ValueError("reroute GIVE proposal must request the single missing Ego goal item")
+            if self.reroute_status.get(partner) is not None:
+                raise ValueError("this partner's GIVE proposal has already been resolved")
+            if self.reroute_first_partner is None:
+                self.reroute_first_partner = partner
+            elif any(status == "rejected" for status in self.reroute_status.values()):
+                self.reroute_after_rejection_count += 1
+            self.reroute_status[partner] = "pending"
+            self.reroute_proposal_count += 1
+            return "", {"type": "reroute_process_give", "partner": partner, "item": target}
+
+        match = re.fullmatch(r"ACT COMMIT (\{[^}]*\})", action)
+        if match is not None:
+            if not self.goals["EGO"].issubset(self.holdings["EGO"]):
+                raise ValueError("ACT COMMIT requires Ego to have received the missing goal item")
+            committed = self._parse_item_set(match.group(1))
+            if not committed.issubset(self.holdings["EGO"]):
+                raise ValueError("EGO can only commit items it holds")
+            return "", {"type": "reroute_commit", "items": set(committed)}
+
+        raise ValueError(f"unsupported reroute action {action!r}")
+
+    def _apply_give_request_ego(self, action: str) -> tuple[str, dict[str, Any] | None]:
+        if self.give_request_proposal is not None:
+            if action == "ACT ACCEPT":
+                return "", {"type": "give_request_accept"}
+            if action == "ACT REJECT":
+                return "", {"type": "give_request_reject"}
+            raise ValueError("Ego must accept or reject the pending GIVE proposal")
+
+        if self.give_request_accepted and not self.give_request_fulfilled:
+            match = re.fullmatch(r"ACT GIVE (\{[^}]*\})", action)
+            if match is None:
+                raise ValueError("accepted GIVE proposal requires an exact ACT GIVE item set")
+            items = self._parse_item_set(match.group(1))
+            if items != self.give_request_accepted_items:
+                raise ValueError("ACT GIVE items must exactly match the accepted proposal")
+            return "", {"type": "give_request_transfer", "items": items}
+
+        match = re.fullmatch(r"ACT COMMIT (\{[^}]*\})", action)
+        if match is not None:
+            committed = self._parse_item_set(match.group(1))
+            if not committed.issubset(self.holdings["EGO"]):
+                raise ValueError("EGO can only commit items it holds")
+            return "", {"type": "give_request_commit", "items": set(committed)}
+
+        raise ValueError(f"unsupported give-request action {action!r}")
+
     def _run_partner_phase(self, operation: dict[str, Any] | None) -> list[str]:
         messages: list[str] = []
         if operation is None:
@@ -322,6 +474,10 @@ class BaseItemGame:
 
         if self.collaboration:
             return self._run_collaboration_partner_phase(operation)
+        if self.reroute:
+            return self._run_reroute_partner_phase(operation)
+        if self.respond_to_give_request:
+            return self._run_give_request_partner_phase(operation)
 
         if operation["type"] == "partner_give":
             agreement = operation["agreement"]
@@ -417,6 +573,98 @@ class BaseItemGame:
             return messages
 
         raise ValueError(f"unsupported collaboration partner operation {operation['type']!r}")
+
+    def _run_give_request_partner_phase(self, operation: dict[str, Any]) -> list[str]:
+        partner = str(self.instance.active_partner)
+        item = str(self.instance.partner_event)
+        if operation["type"] == "give_request_accept":
+            if self.give_request_proposal is None:
+                raise RuntimeError("cannot accept a resolved GIVE proposal")
+            self.give_request_accepted = True
+            self.give_request_accepted_items = frozenset(self.give_request_proposal["items"])
+            self.give_request_proposal = None
+            self._record_partner(partner, "ACT ACCEPT", f"EGO accepts GIVE {item}.", "binding_action")
+            return ["EGO ACT ACCEPT."]
+
+        if operation["type"] == "give_request_reject":
+            if self.give_request_proposal is None:
+                raise RuntimeError("cannot reject a resolved GIVE proposal")
+            self.give_request_rejected = True
+            self.give_request_proposal = None
+            self._record_partner(partner, "ACT REJECT", f"EGO rejects GIVE {item}.", "binding_action")
+            return ["EGO ACT REJECT."]
+
+        if operation["type"] == "give_request_transfer":
+            if not self.give_request_accepted or self.give_request_fulfilled:
+                raise RuntimeError("GIVE transfer requires an accepted unresolved proposal")
+            if item not in self.give_request_accepted_items:
+                raise RuntimeError("GIVE transfer item differs from accepted proposal")
+            if item not in self.holdings["EGO"]:
+                raise ValueError(f"EGO no longer holds committed item {item!r}")
+            self.holdings["EGO"].remove(item)
+            self.holdings[partner].add(item)
+            self.give_request_fulfilled = True
+            self._record_partner(partner, f"ACT GIVE {self._format_set({item})}", f"EGO gives {item} to {partner}.", "binding_action")
+            return [f"EGO ACT GIVE {self._format_set({item})} TO {partner}."]
+
+        if operation["type"] == "give_request_commit":
+            self.give_request_ego_commit = set(operation["items"])
+            return []
+
+        raise ValueError(f"unsupported give-request operation {operation['type']!r}")
+
+    def _run_reroute_partner_phase(self, operation: dict[str, Any]) -> list[str]:
+        if operation["type"] == "reroute_query_partner":
+            partner, field = operation["partner"], operation["field"]
+            values = self.goals[partner] if field == "GOAL" else self.holdings[partner]
+            action = f"INFORM EGO {field} {self._format_set(values)}"
+            self.known[partner][field.lower()] = set(values)
+            self._record_partner(partner, action, f"{partner} informs EGO {field}.", "response")
+            return [action]
+
+        if operation["type"] == "reroute_inform_partner":
+            partner, field = operation["partner"], operation["field"]
+            self._record_partner(
+                partner,
+                f"INFORM {partner} {field}",
+                f"EGO informs {partner} {field}.",
+                "message",
+            )
+            return [f"{partner} receives EGO {field}."]
+
+        if operation["type"] == "reroute_process_give":
+            partner, item = operation["partner"], operation["item"]
+            can_give = item in self.holdings[partner] and self.goals[partner].issubset(
+                set(self.holdings[partner]) - {item}
+            )
+            policy = self.instance.partner_policies.get(partner, "HELPFUL")
+            accepts = can_give and policy == "HELPFUL"
+            if not accepts:
+                self.reroute_status[partner] = "rejected"
+                self.reroute_reject_count += 1
+                action = f"ACT REJECT GIVE {item}"
+                self._record_partner(partner, action, f"{partner} rejects the GIVE proposal.", "scripted_action")
+                return [f"{partner} {action}."]
+
+            self.reroute_status[partner] = "accepted"
+            self.reroute_accept_count += 1
+            accept_action = "ACT ACCEPT"
+            give_action = f"ACT GIVE {item} TO EGO"
+            self._record_partner(partner, accept_action, f"{partner} accepts the GIVE proposal.", "scripted_action")
+            if item not in self.holdings[partner]:
+                raise RuntimeError(f"partner {partner} violated accepted GIVE commitment for {item!r}")
+            self.holdings[partner].remove(item)
+            self.holdings["EGO"].add(item)
+            self.reroute_received_item = item
+            self.reroute_received_turn_index = self.turn_index
+            self._record_partner(partner, give_action, f"{partner} fulfills GIVE {item} to EGO.", "scripted_action")
+            return [f"{partner} {accept_action}.", f"{partner} {give_action}."]
+
+        if operation["type"] == "reroute_commit":
+            self.reroute_ego_commit = set(operation["items"])
+            return []
+
+        raise ValueError(f"unsupported reroute partner operation {operation['type']!r}")
 
     def _process_collaboration_proposal(self) -> list[str]:
         if self.pending_proposal is None:
@@ -612,6 +860,8 @@ class BaseItemGame:
                 self.pending_partner_query
                 and re.fullmatch(r"INFORM P1 (?:GOAL|HOLDINGS) \{[^}]*\}", action)
             )
+        if self.respond_to_give_request:
+            return self.give_request_proposal is not None and action in {"ACT ACCEPT", "ACT REJECT"}
         return bool(self.pending_partner_request and re.fullmatch(r"SAY P\d+ (?:CAN_GIVE|CANNOT_GIVE) \S+", action))
 
     def _coalitions(self) -> tuple[frozenset[str], ...]:
@@ -663,6 +913,14 @@ class BaseItemGame:
     def _format_set(items: set[str] | frozenset[str]) -> str:
         return "{" + ",".join(sorted(items)) + "}"
 
+    def _reroute_target_item(self) -> str | None:
+        missing = sorted(set(self.goals["EGO"]) - set(self.holdings["EGO"]))
+        return missing[0] if len(missing) == 1 else None
+
+    @classmethod
+    def _format_give_proposal(cls, partner: str, item: str) -> str:
+        return f"PROPOSE GIVE {{giver={partner},receiver=EGO,items={cls._format_set({item})}}}"
+
     def _snapshot(self) -> dict[str, tuple[str, ...]]:
         return {player: tuple(sorted(items)) for player, items in self.holdings.items()}
 
@@ -677,6 +935,21 @@ class BaseItemGame:
                 and self.collaboration_p1_commit.issubset(self.holdings["P1"])
                 and self._committed_goal_satisfied()
             )
+        if self.reroute:
+            return bool(
+                self.reroute_received_item is not None
+                and self.reroute_ego_commit is not None
+                and self.reroute_ego_commit.issubset(self.holdings["EGO"])
+                and self._committed_goal_satisfied()
+            )
+        if self.respond_to_give_request:
+            accepted_commitment_fulfilled = not self.give_request_accepted or self.give_request_fulfilled
+            return bool(
+                self.give_request_ego_commit is not None
+                and self.give_request_ego_commit.issubset(self.holdings["EGO"])
+                and self._committed_goal_satisfied()
+                and accepted_commitment_fulfilled
+            )
         if "EGO" not in self.committed or not all(agreement["fulfilled"] for agreement in self.agreements):
             return False
         return self._committed_goal_satisfied()
@@ -684,6 +957,10 @@ class BaseItemGame:
     def diagnostics(self) -> dict[str, float]:
         if self.collaboration:
             return self._collaboration_diagnostics()
+        if self.reroute:
+            return self._reroute_diagnostics()
+        if self.respond_to_give_request:
+            return self._give_request_diagnostics()
         actions = [record["action"] for record in self.records]
         partner_messages = [str(record.get("partner_message", "")) for record in self.records]
         asked_goal = any(action.startswith("ASK ") and action.endswith(" GOAL") for action in actions)
@@ -731,6 +1008,158 @@ class BaseItemGame:
             "communication_budget_used": float(self.communication_used),
             "ego_steps": float(self.ego_steps),
             "unfulfilled_agreements": float(sum(not a["fulfilled"] for a in self.agreements)),
+        }
+
+    def _reroute_diagnostics(self) -> dict[str, float]:
+        actions = [record["action"] for record in self.records]
+        partner_roles = self.instance.partner_roles
+        helper = next((partner for partner, role in partner_roles.items() if role == "HELPER"), None)
+        blocker = next((partner for partner, role in partner_roles.items() if role != "HELPER"), None)
+        blocker_role = partner_roles.get(blocker or "", "")
+        commit_valid = bool(
+            self.reroute_ego_commit is not None
+            and self.reroute_ego_commit.issubset(self.holdings["EGO"])
+        )
+        success = self.ego_success
+        proposal_partners = [
+            partner for partner in ("P1", "P2")
+            if any(action.startswith(f"PROPOSE GIVE {{giver={partner},") for action in actions)
+        ]
+        explored_after_success = bool(
+            self.reroute_received_turn_index is not None
+            and any(
+                record["turn_index"] > self.reroute_received_turn_index
+                and record["action"].startswith(("QUERY ", "INFORM ", "PROPOSE "))
+                for record in self.records
+            )
+        )
+        first_rejected = bool(
+            self.reroute_first_partner is not None
+            and self.reroute_status.get(self.reroute_first_partner) == "rejected"
+        )
+        return {
+            "agreement_formed": float(self.reroute_accept_count > 0),
+            "agreement_followed_through": float(self.reroute_received_item is not None),
+            "agreement_fulfilled": float(self.reroute_received_item is not None),
+            "goal_satisfied": float(self._committed_goal_satisfied()),
+            "coalition_valid": 0.0,
+            "correct_join_commit": 0.0,
+            "rerouted_after_cannot": float(self.reroute_after_rejection_count > 0),
+            "rerouted_after_unavailability": float(self.reroute_after_rejection_count > 0),
+            "harmful_transfer_avoided": 0.0,
+            "harmful_give_avoided": 0.0,
+            "useful_give_request": float(self.reroute_received_item is not None),
+            "useful_exchange_proposed": 0.0,
+            "mandatory_request_answered": 0.0,
+            "asked_goal": float(any(action.startswith("QUERY ") and action.endswith(" GOAL") for action in actions)),
+            "asked_holdings": float(any(action.startswith("QUERY ") and action.endswith(" HOLDINGS") for action in actions)),
+            "disclosed_own_state": float(any(action.startswith("INFORM ") for action in actions)),
+            "proposed_join": 0.0,
+            "successful_joint_commit": 0.0,
+            "identified_complementary_exchange": 0.0,
+            "executed_exchange": 0.0,
+            "coalition_commit_exact": 0.0,
+            "coalition_members_committed": 0.0,
+            "asked_give": float(self.reroute_proposal_count > 0),
+            "refused_critical_item": 0.0,
+            "accepted_cannot": float(self.reroute_reject_count > 0),
+            "success": float(success if self.done else False),
+            "terminal_success": float(self.done and success),
+            "communication_budget_used": float(self.communication_used),
+            "ego_steps": float(self.ego_steps),
+            "unfulfilled_agreements": 0.0,
+            "proposal_accepted": float(self.reroute_accept_count > 0),
+            "proposal_rejected": float(self.reroute_reject_count > 0),
+            "coalition_formed": 0.0,
+            "commit_valid": float(commit_valid),
+            "ego_commit_item_count": float(len(self.reroute_ego_commit or set())),
+            "p1_commit_item_count": 0.0,
+            "redundant_commit_count": float(
+                max(0, len(self.reroute_ego_commit or set()) - len(self.goals["EGO"]))
+            ),
+            "communication_efficiency_bonus": float(
+                self.communication_left * self._COLLAB_COMMUNICATION_BONUS if success else 0.0
+            ),
+            "reroute_blocker_inferable": float(blocker_role == "BLOCKER_INFERABLE"),
+            "reroute_blocker_hidden_unwilling": float(blocker_role == "BLOCKER_HIDDEN_UNWILLING"),
+            "reroute_first_partner_is_helper": float(self.reroute_first_partner == helper),
+            "reroute_first_partner_is_blocker": float(self.reroute_first_partner == blocker),
+            "reroute_first_proposal_rejected": float(first_rejected),
+            "rerouted_after_rejection": float(self.reroute_after_rejection_count > 0),
+            "reroute_helper_reached": float(self.reroute_status.get(helper) == "accepted"),
+            "reroute_unnecessary_exploration_after_success": float(explored_after_success),
+            "reroute_proposal_count": float(self.reroute_proposal_count),
+            "reroute_rejection_count": float(self.reroute_reject_count),
+            "reroute_proposal_partner_count": float(len(proposal_partners)),
+        }
+
+    def _give_request_diagnostics(self) -> dict[str, float]:
+        actions = [record["action"] for record in self.records]
+        case = self.instance.request_case
+        success = self.ego_success
+        accepted = self.give_request_accepted
+        rejected = self.give_request_rejected
+        fulfilled = self.give_request_fulfilled
+        return {
+            "agreement_formed": float(accepted),
+            "agreement_followed_through": float(fulfilled),
+            "agreement_fulfilled": float(fulfilled),
+            "goal_satisfied": float(self._committed_goal_satisfied()),
+            "coalition_valid": 0.0,
+            "correct_join_commit": 0.0,
+            "rerouted_after_cannot": 0.0,
+            "rerouted_after_unavailability": 0.0,
+            "harmful_transfer_avoided": float(case == "harmful" and rejected),
+            "harmful_give_avoided": float(case == "harmful" and rejected),
+            "useful_give_request": float(accepted and fulfilled),
+            "useful_exchange_proposed": 0.0,
+            "mandatory_request_answered": float(accepted or rejected),
+            "asked_goal": 0.0,
+            "asked_holdings": 0.0,
+            "disclosed_own_state": 0.0,
+            "proposed_join": 0.0,
+            "successful_joint_commit": 0.0,
+            "identified_complementary_exchange": 0.0,
+            "executed_exchange": 0.0,
+            "coalition_commit_exact": 0.0,
+            "coalition_members_committed": 1.0 if self.give_request_ego_commit is not None else 0.0,
+            "asked_give": 0.0,
+            "refused_critical_item": float(case == "harmful" and rejected),
+            "accepted_cannot": 0.0,
+            "success": float(success if self.done else False),
+            "terminal_success": float(self.done and success),
+            "communication_budget_used": float(self.communication_used),
+            "ego_steps": float(self.ego_steps),
+            "unfulfilled_agreements": float(accepted and not fulfilled),
+            "proposal_accepted": float(accepted),
+            "proposal_rejected": float(rejected),
+            "coalition_formed": 0.0,
+            "commit_valid": float(
+                self.give_request_ego_commit is not None
+                and self.give_request_ego_commit.issubset(self.holdings["EGO"])
+            ),
+            "ego_commit_item_count": float(len(self.give_request_ego_commit or set())),
+            "p1_commit_item_count": 0.0,
+            "redundant_commit_count": float(
+                max(0, len(self.give_request_ego_commit or set()) - len(self.goals["EGO"]))
+            ),
+            "communication_efficiency_bonus": float(
+                self.communication_left * self._COLLAB_COMMUNICATION_BONUS if success else 0.0
+            ),
+            "respond_request_safe": float(case == "safe"),
+            "respond_request_harmful": float(case == "harmful"),
+            "respond_partner_p1": float(self.instance.active_partner == "P1"),
+            "respond_partner_p2": float(self.instance.active_partner == "P2"),
+            "respond_partner_p3": float(self.instance.active_partner == "P3"),
+            "respond_accept": float(accepted),
+            "respond_reject": float(rejected),
+            "respond_give_fulfilled": float(fulfilled),
+            "respond_exact_give": float(
+                any(action.startswith("ACT GIVE {") for action in actions) and fulfilled
+            ),
+            "respond_safe_correct": float(case == "safe" and accepted and fulfilled and success),
+            "respond_harmful_correct": float(case == "harmful" and rejected and success),
+            "respond_harmful_transfer": float(case == "harmful" and fulfilled),
         }
 
     def _collaboration_diagnostics(self) -> dict[str, float]:
@@ -796,6 +1225,16 @@ class BaseItemGame:
                 return False
             pool = set(self.collaboration_ego_commit) | set(self.collaboration_p1_commit)
             return self.goals["EGO"].issubset(pool)
+        if self.reroute:
+            return bool(
+                self.reroute_ego_commit is not None
+                and self.goals["EGO"].issubset(self.reroute_ego_commit)
+            )
+        if self.respond_to_give_request:
+            return bool(
+                self.give_request_ego_commit is not None
+                and self.goals["EGO"].issubset(self.give_request_ego_commit)
+            )
         if not self.committed:
             return False
         pool = set().union(*(self.holdings[player] for player in self.committed))
@@ -804,6 +1243,8 @@ class BaseItemGame:
     def _coalition_valid(self) -> bool:
         if self.collaboration:
             return self.collaboration_coalition == frozenset(("EGO", "P1"))
+        if self.reroute:
+            return False
         if self.committed == {"EGO"}:
             return True
         return bool(
@@ -812,6 +1253,9 @@ class BaseItemGame:
             and len(set(self.member_commit_actions.values())) == 1
             and all(self.goals[member] == self.goals["EGO"] for member in self.committed)
         )
+
+    def _format_give_request_proposal(self, partner: str, item: str) -> str:
+        return f"PROPOSE GIVE {{giver: EGO,receiver: {partner},items: {self._format_set({item})}}}"
 
     def get_prompt(self, mode="prefix", think=True, player_id=0):
         del player_id

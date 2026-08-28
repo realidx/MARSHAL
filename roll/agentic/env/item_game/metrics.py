@@ -20,6 +20,16 @@ DIAGNOSTIC_KEYS = (
     "proposal_accepted", "proposal_rejected", "coalition_formed", "commit_valid",
     "ego_commit_item_count", "p1_commit_item_count", "redundant_commit_count",
     "communication_efficiency_bonus",
+    "reroute_blocker_inferable", "reroute_blocker_hidden_unwilling",
+    "reroute_first_partner_is_helper", "reroute_first_partner_is_blocker",
+    "reroute_first_proposal_rejected", "rerouted_after_rejection",
+    "reroute_helper_reached", "reroute_unnecessary_exploration_after_success",
+    "reroute_proposal_count", "reroute_rejection_count", "reroute_proposal_partner_count",
+    "respond_request_safe", "respond_request_harmful",
+    "respond_partner_p1", "respond_partner_p2", "respond_partner_p3",
+    "respond_accept", "respond_reject", "respond_give_fulfilled",
+    "respond_exact_give", "respond_safe_correct", "respond_harmful_correct",
+    "respond_harmful_transfer",
 )
 
 

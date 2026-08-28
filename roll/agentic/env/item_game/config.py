@@ -18,7 +18,8 @@ class ItemGameConfig:
 
     # ``pure_collaboration``, ``mixed_incentive`` or ``resource_conflict``.
     generator: str = "pure_collaboration"
-    # ``exchange``, ``give_first``, ``request_surplus``, ``cannot_help`` or
+    # ``exchange``, ``give_first``, ``request_surplus``,
+    # ``request_surplus_reroute``, ``respond_to_give_request``, ``cannot_help`` or
     # ``refuse_harmful_request``.  The default is selected from generator.
     subtype: str | None = None
 

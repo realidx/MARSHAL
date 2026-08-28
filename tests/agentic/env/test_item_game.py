@@ -66,7 +66,9 @@ def test_all_generators_are_deterministic_and_validate_invariants():
         ("pure_collaboration", None),
         ("mixed_incentive", "exchange"),
         ("mixed_incentive", "give_first"),
-        ("mixed_incentive", "request_surplus"),
+            ("mixed_incentive", "request_surplus"),
+            ("mixed_incentive", "request_surplus_reroute"),
+            ("mixed_incentive", "respond_to_give_request"),
         ("resource_conflict", "cannot_help"),
         ("resource_conflict", "refuse_harmful_request"),
     )
@@ -85,6 +87,56 @@ def test_all_generators_are_deterministic_and_validate_invariants():
             randomize_items=False,
         )
         validate_instance(generate_instance(11, config=six))
+
+
+def test_request_surplus_reroute_randomizes_helper_identity_and_blocker_mode():
+    config = Config(
+        generator="mixed_incentive",
+        subtype="request_surplus_reroute",
+        randomize_items=True,
+    )
+    helper_ids = set()
+    blocker_modes = set()
+    for seed in range(100):
+        instance = generate_instance(seed, config=config)
+        helper = next(partner for partner, role in instance.partner_roles.items() if role == "HELPER")
+        blocker = next(partner for partner, role in instance.partner_roles.items() if role != "HELPER")
+        helper_ids.add(helper)
+        blocker_modes.add(instance.partner_roles[blocker])
+    assert helper_ids == {"P1", "P2"}
+    assert blocker_modes == {"BLOCKER_INFERABLE", "BLOCKER_HIDDEN_UNWILLING"}
+
+
+def test_respond_to_give_request_randomizes_partner_case_and_structure():
+    config = Config(
+        generator="mixed_incentive",
+        subtype="respond_to_give_request",
+        randomize_items=True,
+    )
+    partners = set()
+    cases = set()
+    item_universe_sizes = set()
+    ego_goal_sizes = set()
+    partner_goal_sizes = set()
+    ego_holding_sizes = set()
+    partner_holding_sizes = set()
+    for seed in range(100):
+        instance = generate_instance(seed, config=config)
+        validate_instance(instance)
+        partners.add(instance.active_partner)
+        cases.add(instance.request_case)
+        item_universe_sizes.add(len(instance.items))
+        ego_goal_sizes.add(len(instance.goals["EGO"]))
+        partner_goal_sizes.add(len(instance.goals[instance.active_partner]))
+        ego_holding_sizes.add(len(instance.holdings["EGO"]))
+        partner_holding_sizes.add(len(instance.holdings[instance.active_partner]))
+    assert partners == {"P1", "P2", "P3"}
+    assert cases == {"safe", "harmful"}
+    assert len(item_universe_sizes) > 1
+    assert len(ego_goal_sizes) > 1
+    assert len(partner_goal_sizes) > 1
+    assert len(ego_holding_sizes) > 1
+    assert len(partner_holding_sizes) > 1
 
 
 def test_collaboration_requires_local_information_then_accepts_and_commits_items():
@@ -175,6 +227,173 @@ def test_collaboration_partner_rejects_when_disclosed_goal_is_not_aligned():
     assert reward == 0.0 and not done
     assert g.collaboration_coalition is None
     assert info["proposal_rejected"] == 1.0
+
+
+def reroute_game(blocker_role):
+    for seed in range(100):
+        config = Config(generator="mixed_incentive", subtype="request_surplus_reroute", randomize_items=False)
+        instance = generate_instance(seed, config=config)
+        helper = next(partner for partner, role in instance.partner_roles.items() if role == "HELPER")
+        blocker = next(partner for partner, role in instance.partner_roles.items() if role != "HELPER")
+        if instance.partner_roles[blocker] == blocker_role:
+            return BaseItemGame(instance, config), helper, blocker
+    raise AssertionError(f"no deterministic reroute seed for {blocker_role}")
+
+
+def reroute_target(g):
+    return next(iter(set(g.goals["EGO"]) - set(g.holdings["EGO"])))
+
+
+def query_partner(g, partner):
+    g.step(f"QUERY {partner} GOAL")
+    g.step(f"QUERY {partner} HOLDINGS")
+
+
+def commit_reroute_goal(g):
+    return finish(g, f"ACT COMMIT {g._format_set(g.goals['EGO'])}")
+
+
+def test_request_surplus_reroute_helper_first_accepts_and_transfers_immediately():
+    g, helper, blocker = reroute_game("BLOCKER_INFERABLE")
+    target = reroute_target(g)
+    query_partner(g, helper)
+    message, reward, done, _ = g.step(g._format_give_proposal(helper, target))
+    assert f"{helper} ACT ACCEPT" in message
+    assert f"{helper} ACT GIVE {target} TO EGO" in message
+    assert reward == 0.0 and not done
+    assert target in g.holdings["EGO"]
+    assert g.reroute_status == {helper: "accepted"}
+    assert blocker not in g.reroute_status
+    reward, info = commit_reroute_goal(g)
+    assert reward == pytest.approx(1.0 + 3 * g._COLLAB_COMMUNICATION_BONUS)
+    assert info["terminal_success"] == 1.0
+    assert info["reroute_first_partner_is_helper"] == 1.0
+
+
+def test_request_surplus_reroute_logs_exploration_after_item_is_received():
+    g, helper, blocker = reroute_game("BLOCKER_INFERABLE")
+    target = reroute_target(g)
+    query_partner(g, helper)
+    g.step(g._format_give_proposal(helper, target))
+    g.step(f"QUERY {blocker} GOAL")
+    reward, info = commit_reroute_goal(g)
+    assert reward == pytest.approx(1.0 + 2 * g._COLLAB_COMMUNICATION_BONUS)
+    assert info["terminal_success"] == 1.0
+    assert info["reroute_unnecessary_exploration_after_success"] == 1.0
+
+
+def test_request_surplus_reroute_inferable_blocker_is_skipped():
+    g, helper, blocker = reroute_game("BLOCKER_INFERABLE")
+    target = reroute_target(g)
+    query_partner(g, blocker)
+    assert target in g.goals[blocker]
+    query_partner(g, helper)
+    message, _, done, _ = g.step(g._format_give_proposal(helper, target))
+    assert f"{helper} ACT ACCEPT" in message
+    assert blocker not in g.reroute_status
+    assert not done
+    reward, info = commit_reroute_goal(g)
+    assert reward == pytest.approx(1.0 + g._COLLAB_COMMUNICATION_BONUS)
+    assert info["terminal_success"] == 1.0
+    assert info["reroute_blocker_inferable"] == 1.0
+    assert info["rerouted_after_rejection"] == 0.0
+
+
+def test_request_surplus_reroute_hidden_unwilling_rejects_then_reroutes():
+    g, helper, blocker = reroute_game("BLOCKER_HIDDEN_UNWILLING")
+    target = reroute_target(g)
+    query_partner(g, blocker)
+    assert target not in g.goals[blocker]
+    message, reward, done, _ = g.step(g._format_give_proposal(blocker, target))
+    assert f"{blocker} ACT REJECT GIVE {target}" in message
+    assert reward == 0.0 and not done
+    query_partner(g, helper)
+    message, reward, done, _ = g.step(g._format_give_proposal(helper, target))
+    assert f"{helper} ACT ACCEPT" in message
+    assert f"{helper} ACT GIVE {target} TO EGO" in message
+    assert reward == 0.0 and not done
+    reward, info = commit_reroute_goal(g)
+    assert reward == pytest.approx(1.0)
+    assert info["terminal_success"] == 1.0
+    assert info["reroute_blocker_hidden_unwilling"] == 1.0
+    assert info["reroute_first_proposal_rejected"] == 1.0
+    assert info["rerouted_after_rejection"] == 1.0
+
+
+def give_request_game(request_case):
+    for seed in range(100):
+        config = Config(
+            generator="mixed_incentive",
+            subtype="respond_to_give_request",
+            randomize_items=False,
+        )
+        instance = generate_instance(seed, config=config)
+        if instance.request_case == request_case:
+            return BaseItemGame(instance, config)
+    raise AssertionError(f"no deterministic give-request seed for {request_case}")
+
+
+def give_request_item(g):
+    return g.instance.partner_event
+
+
+def test_respond_to_give_request_safe_requires_accept_then_exact_give():
+    g = give_request_game("safe")
+    partner = g.instance.active_partner
+    item = give_request_item(g)
+    before = set(g.holdings["EGO"])
+    proposal = f"PROPOSE GIVE {{giver: EGO,receiver: {partner},items: {g._format_set({item})}}}"
+    assert proposal in g.conversation_history[0]["action"]
+    assert g.legal_actions() == ("ACT ACCEPT", "ACT REJECT")
+
+    g.step("ACT ACCEPT")
+    assert g.holdings["EGO"] == before
+    assert g.give_request_accepted
+    assert g.give_request_fulfilled is False
+    assert g.legal_actions() == (f"ACT GIVE {g._format_set({item})}",)
+
+    g.step(f"ACT GIVE {g._format_set({item})}")
+    assert item not in g.holdings["EGO"]
+    assert g.holdings[partner] >= {item}
+    assert g.give_request_fulfilled
+    reward, info = finish(g, f"ACT COMMIT {g._format_set(g.goals['EGO'])}")
+    assert reward == pytest.approx(1.0 + g.communication_left * g._COLLAB_COMMUNICATION_BONUS)
+    assert info["respond_request_safe"] == 1.0
+    assert info["respond_safe_correct"] == 1.0
+    assert info["respond_give_fulfilled"] == 1.0
+
+
+def test_respond_to_give_request_harmful_reject_preserves_critical_item():
+    g = give_request_game("harmful")
+    partner = g.instance.active_partner
+    item = give_request_item(g)
+    before = set(g.holdings["EGO"])
+    assert item in g.goals["EGO"]
+    assert g.legal_actions() == ("ACT ACCEPT", "ACT REJECT")
+
+    message, reward, done, _ = g.step("ACT REJECT")
+    assert "ACT REJECT" in message
+    assert reward == 0.0 and not done
+    assert g.holdings["EGO"] == before
+    assert g.give_request_rejected
+    assert g.legal_actions() != (f"ACT GIVE {g._format_set({item})}",)
+    reward, info = finish(g, f"ACT COMMIT {g._format_set(g.goals['EGO'])}")
+    assert reward == pytest.approx(1.0 + g.communication_left * g._COLLAB_COMMUNICATION_BONUS)
+    assert info["respond_request_harmful"] == 1.0
+    assert info["respond_harmful_correct"] == 1.0
+    assert info["harmful_give_avoided"] == 1.0
+    assert partner in g.holdings
+
+
+def test_respond_to_give_request_accept_does_not_allow_wrong_or_skipped_give():
+    g = give_request_game("safe")
+    item = give_request_item(g)
+    g.step("ACT ACCEPT")
+    with pytest.raises(ValueError):
+        g.step("ACT COMMIT {}")
+    wrong_item = next(candidate for candidate in g.items if candidate != item)
+    with pytest.raises(ValueError):
+        g.step(f"ACT GIVE {g._format_set({wrong_item})}")
 
 
 def test_exchange_requires_ego_fulfillment_and_partner_fulfillment():
@@ -306,6 +525,43 @@ def test_roll_adapter_prompt_and_terminal_protocol():
     assert transition["rewards"] == [0.0, 0.0]
     assert transition["info"]["canonical_reward_player_1"] == 0.0
     assert "QUERY P1 GOAL" in transition["observation"]
+
+
+def test_reroute_prompt_hides_partner_role_and_exposes_only_reroute_protocol():
+    config = Config(
+        generator="mixed_incentive",
+        subtype="request_surplus_reroute",
+        randomize_items=False,
+    )
+    env = ItemGameEnv(config)
+    initial, _ = env.reset(seed=2)
+    prompt = env.get_prompt(think=False)
+    assert "PROPOSE GIVE" in prompt["user"]
+    assert "ACT COMMIT" in prompt["user"]
+    assert "HELPER" not in env.render()
+    assert "UNWILLING" not in env.render()
+    assert env.validate_response(
+        f"<answer>{next(iter(initial['legal_actions'].values()))}</answer>",
+        initial["legal_actions"],
+    )
+
+
+def test_respond_to_give_request_prompt_exposes_no_legacy_exchange_protocol():
+    config = Config(
+        generator="mixed_incentive",
+        subtype="respond_to_give_request",
+        randomize_items=False,
+    )
+    env = ItemGameEnv(config)
+    initial, _ = env.reset(seed=2)
+    prompt = env.get_prompt(think=False)
+    assert "ACT ACCEPT" in prompt["user"]
+    assert "ACT REJECT" in prompt["user"]
+    assert "ACT GIVE {<exact requested item>}" in prompt["user"]
+    assert "ASK EXCHANGE" not in prompt["user"]
+    assert "CAN_GIVE" not in prompt["user"]
+    assert tuple(initial["legal_actions"].values()) == ("ACT ACCEPT", "ACT REJECT")
+    assert "request_case" not in env.render()
 
 
 def test_logging_exposes_separate_behavioral_diagnostics():

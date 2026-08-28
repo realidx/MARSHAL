@@ -1,4 +1,4 @@
-"""Structured Item Coalition Game with Collaboration v2 support."""
+"""Structured Item Coalition Game with collaboration and rerouting support."""
 
 from .config import ItemGameConfig
 from .env import ItemGameEnv

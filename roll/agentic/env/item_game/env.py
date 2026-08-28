@@ -101,6 +101,10 @@ class ItemGameEnv(BaseLanguageBasedEnv):
             output_format = "Emit exactly one listed action inside <answer>...</answer>, with no reasoning text."
         if self.config.generator == "pure_collaboration" or self.config.subtype == "collaboration":
             return self._collaboration_prompt(output_format)
+        if self.config.subtype == "respond_to_give_request":
+            return self._give_request_prompt(output_format)
+        if self.config.subtype == "request_surplus_reroute":
+            return self._reroute_prompt(output_format)
         system = (
             "You are the EGO in a sequential Item Coalition Game. Use only the listed structured actions. "
             "ASK and ordinary SAY consume communication budget; a mandatory response to a partner request does not. "
@@ -161,6 +165,64 @@ class ItemGameEnv(BaseLanguageBasedEnv):
             ),
         }
 
+    @staticmethod
+    def _reroute_prompt(output_format: str) -> dict[str, str]:
+        return {
+            "system": (
+                "You are EGO in a three-agent mixed-incentive rerouting game. Use only the listed structured actions. "
+                "You initially know only your own goal and holdings; P1 and P2 roles, goals, holdings, and willingness "
+                "to help are unknown. QUERY, INFORM, and PROPOSE consume communication budget. ACCEPT, REJECT, GIVE, "
+                "and COMMIT are scripted or binding actions and do not consume communication budget."
+            ),
+            "user": (
+                "At every turn choose exactly one legal action. QUERY a partner's GOAL or HOLDINGS to learn only that "
+                "partner's publicly available state. You may propose a GIVE to either partner. The partner immediately "
+                "responds with ACT ACCEPT or ACT REJECT; after ACCEPT, that same partner immediately performs ACT GIVE. "
+                "A rejection is new information: continue with the other partner rather than treating the episode as over.\n\n"
+                "Protocol:\n"
+                "QUERY P1 GOAL | QUERY P1 HOLDINGS | QUERY P2 GOAL | QUERY P2 HOLDINGS\n"
+                "INFORM P1 GOAL {...} | INFORM P1 HOLDINGS {...} | INFORM P2 GOAL {...} | INFORM P2 HOLDINGS {...}\n"
+                "PROPOSE GIVE {giver=P1,receiver=EGO,items={...}} | PROPOSE GIVE {giver=P2,receiver=EGO,items={...}}\n"
+                "ACT COMMIT {...}\n\n"
+                "There is exactly one missing Ego goal item. Use a partner's disclosed goal and holdings to determine "
+                "whether giving that item would prevent the partner from satisfying its own goal. If the partner rejects "
+                "a proposal, update your strategy and query or propose to the other partner. After receiving the missing "
+                "item, commit your own held items that cover your goal. Extra committed items remain valid but receive "
+                "a small efficiency penalty.\n\n"
+                + output_format
+            ),
+        }
+
+    @staticmethod
+    def _give_request_prompt(output_format: str) -> dict[str, str]:
+        return {
+            "system": (
+                "You are EGO in a two-agent Give Request game. Use only the listed structured actions. "
+                "The active partner has requested one item from your holdings. You must decide whether giving it "
+                "would preserve or damage your own goal. ACCEPT and REJECT are binding decisions; ACCEPT does not "
+                "transfer the item."
+            ),
+            "user": (
+                "Turn lifecycle:\n"
+                "(1) The active partner first emits one GIVE proposal.\n"
+                "(2) On the next Ego turn, output exactly ACT ACCEPT or ACT REJECT.\n"
+                "(3) ACCEPT records an agreement but does not change holdings; on the following turn you must output "
+                "the exact ACT GIVE item set from that proposal.\n"
+                "(4) REJECT clears the proposal and does not change holdings.\n"
+                "(5) After the interaction is resolved, output ACT COMMIT with items you still hold.\n\n"
+                "The partner proposal is shown in the form PROPOSE GIVE {giver: EGO, receiver: <partner>, "
+                "items: {<item>}}. The requested item is a partner goal item.\n\n"
+                "Protocol:\n"
+                "ACT ACCEPT | ACT REJECT | ACT GIVE {<exact requested item>} | ACT COMMIT {<items from your holdings>}\n\n"
+                "The requested item is critical to the partner's goal. If it is surplus for your own goal, the safe "
+                "response is ACCEPT followed by the exact ACT GIVE. If it is critical to your own goal, REJECT and "
+                "keep it. There is no reciprocity or exchange mechanism in this environment. An accepted proposal "
+                "that is not fulfilled is not a completed interaction and cannot receive terminal success. The main "
+                "reward is based on whether your committed holdings satisfy your own goal.\n\n"
+                + output_format
+            ),
+        }
+
     def format_turn_prompt(self, state, legal_actions, player_id=0):
         del player_id
         return f"\n\n{state}\n\nLegal actions: {', '.join((legal_actions or {}).values())}"
@@ -171,6 +233,51 @@ class ItemGameEnv(BaseLanguageBasedEnv):
         if mode not in ("text", "rgb_array"):
             raise ValueError(f"invalid render mode {mode!r}")
         g = self.game
+        if g.respond_to_give_request:
+            lines = [
+                f"Generator: {g.instance.generator}/respond_to_give_request",
+                f"EGO goal: {g._format_set(g.goals['EGO'])}",
+                f"EGO holdings: {g._format_set(g.holdings['EGO'])}",
+                f"Turn phase: {g.turn_phase}",
+                f"Ego steps: {g.ego_steps}/{g.config.max_ego_steps}",
+            ]
+            if g.conversation_history:
+                lines.append("Interaction history:")
+                lines.extend(
+                    f"- {entry['actor']} [{entry['phase']}]: {entry['action']}"
+                    for entry in g.conversation_history
+                )
+            if g.give_request_proposal is not None:
+                partner = g.give_request_proposal["receiver"]
+                item = g._format_set(g.give_request_proposal["items"])
+                lines.append(f"Pending proposal: PROPOSE GIVE {{giver: EGO,receiver: {partner},items: {item}}}")
+            if g.give_request_accepted and not g.give_request_fulfilled:
+                lines.append(
+                    f"Accepted proposal: ACT GIVE {g._format_set(g.give_request_accepted_items)} is required."
+                )
+            if g.give_request_ego_commit is not None:
+                lines.append(f"EGO committed: {g._format_set(g.give_request_ego_commit)}")
+            return "\n".join(lines)
+        if g.reroute:
+            lines = [
+                "Generator: mixed_incentive/request_surplus_reroute",
+                f"EGO goal: {g._format_set(g.goals['EGO'])}",
+                f"EGO holdings: {g._format_set(g.holdings['EGO'])}",
+                f"Turn phase: {g.turn_phase}",
+                f"Communication: {g.communication_used}/{g.config.communication_budget}; Ego steps: {g.ego_steps}/{g.config.max_ego_steps}",
+                "P1/P2 roles, goals, holdings, and willingness are initially unknown to EGO.",
+            ]
+            if g.conversation_history:
+                lines.append("Interaction history:")
+                lines.extend(
+                    f"- {entry['actor']} [{entry['phase']}]: {entry['action']}"
+                    for entry in g.conversation_history
+                )
+            if g.reroute_received_item is not None:
+                lines.append(f"Received item from partner: {g.reroute_received_item}")
+            if g.reroute_ego_commit is not None:
+                lines.append(f"EGO committed: {g._format_set(g.reroute_ego_commit)}")
+            return "\n".join(lines)
         if g.collaboration:
             lines = [
                 "Generator: pure_collaboration/collaboration",
@@ -270,7 +377,9 @@ class ItemGameEnv(BaseLanguageBasedEnv):
         """Close an invalid model response; Collaboration applies its small invalid-action penalty."""
         invalid_reward = (
             BaseItemGame._COLLAB_INVALID_ACTION_PENALTY
-            if self.game is not None and self.game.collaboration
+            if self.game is not None and (
+                self.game.collaboration or self.game.reroute or self.game.respond_to_give_request
+            )
             else 0.0
         )
         info = {

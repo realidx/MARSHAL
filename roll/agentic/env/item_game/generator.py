@@ -1,13 +1,13 @@
 """Deterministic structural generators for the structured item game.
 
 The generators create only hidden game state.  Transition rules live in
-``game.py`` so the six cases remain instances of one mechanism.
+``game.py`` so the subtypes remain instances of one mechanism.
 """
 
 from __future__ import annotations
 
 import random
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Mapping
 
 from .config import ItemGameConfig
@@ -17,7 +17,13 @@ DEFAULT_SYMBOLS = ("K", "Q", "M", "V", "T", "Z", "F", "L")
 GENERATOR_NAMES = ("pure_collaboration", "mixed_incentive", "resource_conflict")
 SUBTYPES = {
     "pure_collaboration": ("collaboration",),
-    "mixed_incentive": ("exchange", "give_first", "request_surplus"),
+    "mixed_incentive": (
+        "exchange",
+        "give_first",
+        "request_surplus",
+        "request_surplus_reroute",
+        "respond_to_give_request",
+    ),
     "resource_conflict": ("cannot_help", "refuse_harmful_request"),
 }
 
@@ -31,6 +37,12 @@ class ItemGameInstance:
     goals: Mapping[str, frozenset[str]]
     holdings: Mapping[str, frozenset[str]]
     partner_event: str | None = None
+    # Internal-only metadata for the rerouting subtype. Never rendered to Ego.
+    partner_policies: Mapping[str, str] = field(default_factory=dict)
+    partner_roles: Mapping[str, str] = field(default_factory=dict)
+    # Metadata for the RespondToGiveRequest subtype. Never rendered to Ego.
+    active_partner: str | None = None
+    request_case: str | None = None
 
     def goal(self, player: str) -> frozenset[str]:
         return self.goals[player]
@@ -168,6 +180,79 @@ def validate_instance(instance: ItemGameInstance) -> None:
         ):
             raise AssertionError("request_surplus requires a goal-relevant P1 surplus")
 
+    elif instance.subtype == "request_surplus_reroute":
+        if set(instance.goals) != {"EGO", "P1", "P2"}:
+            raise AssertionError("request_surplus_reroute requires two partners")
+        if instance.partner_event is not None:
+            raise AssertionError("request_surplus_reroute has no initial partner event")
+        critical = set(ego_goal) - set(ego_holdings)
+        if len(critical) != 1:
+            raise AssertionError("reroute must have exactly one missing Ego goal item")
+        target = next(iter(critical))
+        if not all(target in instance.holdings[partner] for partner in ("P1", "P2")):
+            raise AssertionError("both reroute partners must hold the target item")
+        role_values = set(instance.partner_roles.values())
+        if role_values not in (
+            {"HELPER", "BLOCKER_INFERABLE"},
+            {"HELPER", "BLOCKER_HIDDEN_UNWILLING"},
+        ):
+            raise AssertionError("reroute must designate one helper and one blocker")
+        helper = next(partner for partner, role in instance.partner_roles.items() if role == "HELPER")
+        blocker = next(
+            partner
+            for partner, role in instance.partner_roles.items()
+            if role in {"BLOCKER_INFERABLE", "BLOCKER_HIDDEN_UNWILLING"}
+        )
+        if instance.goals[helper] == ego_goal or instance.goals[blocker] == ego_goal:
+            raise AssertionError("reroute partner goals must differ from Ego goal")
+        if not _goal_satisfied(instance.goals[helper], instance.holdings[helper]):
+            raise AssertionError("helper must already satisfy its own goal")
+        if target in instance.goals[helper] or not _goal_satisfied(
+            instance.goals[helper], set(instance.holdings[helper]) - {target}
+        ):
+            raise AssertionError("helper target item must be genuine surplus")
+        blocker_role = instance.partner_roles[blocker]
+        if blocker_role == "BLOCKER_INFERABLE":
+            if target not in instance.goals[blocker] or _goal_satisfied(
+                instance.goals[blocker], set(instance.holdings[blocker]) - {target}
+            ):
+                raise AssertionError("inferable blocker target must be critical")
+            if instance.partner_policies.get(blocker) != "HELPFUL":
+                raise AssertionError("inferable blocker must use the helpful policy")
+        elif blocker_role == "BLOCKER_HIDDEN_UNWILLING":
+            if target in instance.goals[blocker] or not _goal_satisfied(
+                instance.goals[blocker], set(instance.holdings[blocker]) - {target}
+            ):
+                raise AssertionError("hidden-unwilling blocker target must be surplus")
+            if instance.partner_policies.get(blocker) != "UNWILLING":
+                raise AssertionError("hidden-unwilling blocker must use the unwilling policy")
+        else:
+            raise AssertionError(f"unknown reroute blocker role {blocker_role!r}")
+
+    elif instance.subtype == "respond_to_give_request":
+        if len(players) != 2 or "EGO" not in players:
+            raise AssertionError("respond_to_give_request requires EGO and one active partner")
+        partner = instance.active_partner
+        if partner is None or partner not in players or partner == "EGO":
+            raise AssertionError("respond_to_give_request must identify its active partner")
+        if instance.partner_event is None or instance.partner_event not in ego_holdings:
+            raise AssertionError("give request must target an item held by Ego")
+        requested = instance.partner_event
+        if requested not in instance.goals[partner] or requested in instance.holdings[partner]:
+            raise AssertionError("partner request must target a missing partner goal item")
+        if not _goal_satisfied(instance.goals[partner], set(instance.holdings[partner]) | {requested}):
+            raise AssertionError("partner must be able to complete its goal after receiving the request")
+        if instance.request_case not in {"safe", "harmful"}:
+            raise AssertionError("give request must be either safe or harmful")
+        ego_after_give = set(ego_holdings) - {requested}
+        if instance.request_case == "safe":
+            if requested in ego_goal or not _goal_satisfied(ego_goal, ego_after_give):
+                raise AssertionError("safe give must leave Ego's goal satisfied")
+        elif requested not in ego_goal or _goal_satisfied(ego_goal, ego_after_give):
+            raise AssertionError("harmful give must remove an Ego-critical item")
+        if not instance.partner_policies.get(partner, "ACTIVE_REQUESTER") == "ACTIVE_REQUESTER":
+            raise AssertionError("give requester must use the explicit active-requester policy")
+
     elif instance.subtype == "cannot_help":
         if set(instance.goals) != {"EGO", "P1", "P2"}:
             raise AssertionError("cannot_help requires two partners")
@@ -237,6 +322,10 @@ def _instance(
     partner_event: str | None = None,
     config: ItemGameConfig | None = None,
     symbols: tuple[str, ...] | None = None,
+    partner_policies: Mapping[str, str] | None = None,
+    partner_roles: Mapping[str, str] | None = None,
+    active_partner: str | None = None,
+    request_case: str | None = None,
 ) -> ItemGameInstance:
     config = config or ItemGameConfig(generator=generator, subtype=subtype)
     symbols = symbols or tuple(DEFAULT_SYMBOLS[: len(config.item_vocabulary)])
@@ -259,6 +348,10 @@ def _instance(
             for player, values in holdings.items()
         },
         partner_event=(labels[partner_event] if partner_event is not None else None),
+        partner_policies=dict(partner_policies or {}),
+        partner_roles=dict(partner_roles or {}),
+        active_partner=active_partner,
+        request_case=request_case,
     )
     validate_instance(instance)
     return instance
@@ -315,11 +408,108 @@ class MixedIncentiveGenerator:
             goals = {"EGO": {"K", "Q"}, "P1": {"T", "Z"}}
             holdings = {"EGO": {"K", "M", "V"}, "P1": {"T", "Z", "Q", "M"}}
             event = None
+        elif subtype == "request_surplus_reroute":
+            return self._generate_reroute(seed, config)
+        elif subtype == "respond_to_give_request":
+            return self._generate_respond_to_give_request(seed, config)
         else:
             goals = {"EGO": {"K", "Q"}, "P1": {"V", "T"}}
             holdings = {"EGO": {"K", "V", "M"}, "P1": {"Q", "T", "Z"}}
             event = "V" if subtype == "give_first" else None
         return _instance(seed, self.name, subtype, goals, holdings, event, config)
+
+    def _generate_reroute(self, seed: int, config: ItemGameConfig | None) -> ItemGameInstance:
+        rng = random.Random(seed + 73_419)
+        symbols = list(DEFAULT_SYMBOLS[: len((config or ItemGameConfig()).item_vocabulary)])
+        rng.shuffle(symbols)
+        target, ego_required, helper_goal_a, helper_goal_b, blocker_required, spare = symbols[:6]
+        helper_goal = {helper_goal_a, helper_goal_b}
+        blocker_mode = rng.choice(("inferable", "hidden_unwilling"))
+        helper = rng.choice(("P1", "P2"))
+        blocker = "P2" if helper == "P1" else "P1"
+
+        goals = {
+            "EGO": {ego_required, target},
+            helper: helper_goal,
+            blocker: ({target, blocker_required} if blocker_mode == "inferable" else {blocker_required, spare}),
+        }
+        holdings = {
+            "EGO": {ego_required, spare},
+            helper: helper_goal | {target, spare},
+            blocker: (
+                {target, blocker_required, spare}
+                if blocker_mode == "inferable"
+                else {blocker_required, spare, target}
+            ),
+        }
+        for extra in symbols[6:]:
+            rng.choice((holdings["EGO"], holdings[helper], holdings[blocker])).add(extra)
+        roles = {helper: "HELPER", blocker: "BLOCKER_INFERABLE" if blocker_mode == "inferable" else "BLOCKER_HIDDEN_UNWILLING"}
+        policies = {helper: "HELPFUL", blocker: "HELPFUL" if blocker_mode == "inferable" else "UNWILLING"}
+        return _instance(
+            seed,
+            self.name,
+            "request_surplus_reroute",
+            goals=goals,
+            holdings=holdings,
+            config=config,
+            symbols=tuple(symbols),
+            partner_policies=policies,
+            partner_roles=roles,
+        )
+
+    def _generate_respond_to_give_request(
+        self, seed: int, config: ItemGameConfig | None
+    ) -> ItemGameInstance:
+        rng = random.Random(seed + 91_247)
+        config = config or ItemGameConfig(generator=self.name, subtype="respond_to_give_request")
+        universe_size = rng.randint(6, len(config.item_vocabulary))
+        symbols = list(DEFAULT_SYMBOLS[:universe_size])
+        rng.shuffle(symbols)
+        requested = symbols[0]
+        active_partner = rng.choice(("P1", "P2", "P3"))
+        request_case = rng.choice(("safe", "harmful"))
+
+        ego_goal_size = rng.randint(1, min(3, universe_size - 2))
+        partner_goal_size = rng.randint(1, min(3, universe_size - 1))
+        remaining = symbols[1:]
+        if request_case == "safe":
+            ego_goal = set(rng.sample(remaining, ego_goal_size))
+        else:
+            ego_goal = {requested}
+            ego_goal.update(rng.sample(remaining, ego_goal_size - 1))
+
+        partner_goal = {requested}
+        partner_goal.update(rng.sample(remaining, partner_goal_size - 1))
+        ego_holdings = set(ego_goal) | {requested}
+        partner_holdings = set(partner_goal) - {requested}
+
+        # Keep holdings variable while guaranteeing the base validator's two
+        # distractors.  For a harmful request, the requested item is goal-
+        # critical, so two additional non-goal holdings are required.
+        ego_extra_pool = [item for item in symbols if item not in ego_goal and item != requested]
+        minimum_ego_extras = 2 if request_case == "harmful" else 1
+        ego_extra_count = rng.randint(minimum_ego_extras, min(3, len(ego_extra_pool)))
+        ego_holdings.update(rng.sample(ego_extra_pool, ego_extra_count))
+        partner_extra_pool = [item for item in symbols if item not in partner_goal]
+        partner_extra_count = rng.randint(0, min(2, len(partner_extra_pool)))
+        partner_holdings.update(rng.sample(partner_extra_pool, partner_extra_count))
+
+        goals = {"EGO": ego_goal, active_partner: partner_goal}
+        holdings = {"EGO": ego_holdings, active_partner: partner_holdings}
+        return _instance(
+            seed,
+            self.name,
+            "respond_to_give_request",
+            goals=goals,
+            holdings=holdings,
+            partner_event=requested,
+            config=config,
+            symbols=tuple(symbols),
+            partner_policies={active_partner: "ACTIVE_REQUESTER"},
+            active_partner=active_partner,
+            request_case=request_case,
+        )
 
 
 class ResourceConflictGenerator:
