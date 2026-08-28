@@ -13,11 +13,12 @@ mkdir -p "${OUTPUT_DIR}"
 
 echo "model=${EVAL_MODEL_DIR}"
 echo "output=${OUTPUT_DIR}/trajectories.jsonl"
-echo "episodes=30 (10 Collaboration + 10 RequestSurplusReroute + 10 RespondToGiveRequest)"
+EPISODES="${SELF_PLAY_EPISODES:-5}"
+echo "episodes=$((EPISODES * 3)) (${EPISODES} per subtype: Collaboration + RequestSurplusReroute + RespondToGiveRequest)"
 
 "${PYTHON_BIN:-python}" -m roll.agentic.env.item_game.synchronous_self_play \
   --model "${EVAL_MODEL_DIR}" \
-  --episodes 10 \
+  --episodes "${EPISODES}" \
   --max-new-tokens "${SELF_PLAY_MAX_NEW_TOKENS:-1024}" \
   --max-rounds "${SELF_PLAY_MAX_ROUNDS:-6}" \
   --output "${OUTPUT_DIR}/trajectories.jsonl"
