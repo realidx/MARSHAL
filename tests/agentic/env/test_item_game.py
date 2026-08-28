@@ -20,7 +20,7 @@ base_spec.loader.exec_module(base_module)
 sub_package = types.ModuleType(f"{PACKAGE}.item_game")
 sub_package.__path__ = [str(ENV_DIR / "item_game")]
 sys.modules[sub_package.__name__] = sub_package
-for module_name in ("config", "generator", "game", "env", "self_play"):
+for module_name in ("config", "generator", "game", "env", "self_play", "synchronous_self_play"):
     module_spec = importlib.util.spec_from_file_location(
         f"{PACKAGE}.item_game.{module_name}", ENV_DIR / "item_game" / f"{module_name}.py"
     )
@@ -38,6 +38,10 @@ ItemGameInstance = generator_module.ItemGameInstance
 self_play_module = sys.modules[f"{PACKAGE}.item_game.self_play"]
 SelfPlayItemGame = self_play_module.SelfPlayItemGame
 SelfPlayRunner = self_play_module.SelfPlayRunner
+sync_module = sys.modules[f"{PACKAGE}.item_game.synchronous_self_play"]
+SynchronousItemGame = sync_module.SynchronousItemGame
+SynchronousSelfPlayRunner = sync_module.SynchronousSelfPlayRunner
+SynchronousActionError = sync_module.SynchronousActionError
 
 
 def game(generator, subtype=None):
@@ -836,3 +840,116 @@ def test_self_play_runner_supports_all_three_new_subtypes_with_fake_policy():
     ])
     result = SelfPlayRunner(Policy(scripted), config).run_episode(7)
     assert result.terminal["terminal_success"] is True
+
+
+def test_synchronous_round_gives_every_active_player_the_same_decision_snapshot():
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+
+    class PassPolicy:
+        def generate(self, *, agent, observation, legal_actions, context):
+            assert "PASS" in legal_actions
+            return "<reason>private</reason><answer>PASS</answer>"
+
+    result = SynchronousSelfPlayRunner(PassPolicy(), config).run_episode(7)
+    assert result.terminal["reason"] == "max_rounds"
+    assert [len(round_data["decisions"]) for round_data in result.rounds] == [2, 2]
+    for round_data in result.rounds:
+        assert {record["agent"] for record in round_data["decisions"]} == {"P0", "P1"}
+        assert {line for record in round_data["decisions"] for line in record["observation"].splitlines() if line.startswith("Round:")} == {f"Round: {round_data['round']}/2"}
+    assert all("EGO" not in record["observation"] for round_data in result.rounds for record in round_data["decisions"])
+
+
+def test_synchronous_query_is_answered_next_round_without_using_proactive_slot():
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=3,
+    )
+    g = SynchronousItemGame(generate_instance(7, config=config), config)
+    snapshot = g.build_round_snapshot()
+    g.resolve_round({"P0": ("QUERY P1 GOAL",), "P1": ("PASS",)}, snapshot)
+    assert g.metrics["communications_per_player"]["P0"] == 1
+    assert len(g.response_requests()) == 1
+    request = g.response_requests()[0]
+    assert request["kind"] == "QUERY"
+    assert g.response_actions(request) == (
+        f"INFORM P0 GOAL {_format_for_test(g.goals['P1'])}",
+    )
+    p1_observation = g.get_observation("P1")
+    p1_direct_messages = p1_observation.split("Direct messages:\n", 1)[1].split("Public commit events:\n", 1)[0]
+    assert "INFORM P0 GOAL" not in p1_direct_messages
+    g.resolve_responses({0: g.response_actions(request)[0]})
+    assert g.known["P0"]["P1"]["GOAL"] == g.goals["P1"]
+    assert g.metrics["communications_per_player"]["P0"] == 1
+
+
+def test_synchronous_transfer_acceptance_is_deferred_until_explicit_give():
+    config = Config(
+        generator="mixed_incentive", subtype="request_surplus_reroute",
+        randomize_items=False, self_play=True, max_rounds=3,
+    )
+    instance = generate_instance(7, config=config)
+    g = SynchronousItemGame(instance, config)
+    target = next(iter(set(g.goals["P0"]) - set(g.holdings["P0"])))
+    proposal = f"PROPOSE TRANSFER {{from=P1,to=P0,items={_format_for_test({target})}}}"
+    before = {agent: set(items) for agent, items in g.holdings.items()}
+    g.resolve_round({"P0": (proposal,), "P1": ("PASS",), "P2": ("PASS",)}, g.build_round_snapshot())
+    assert g.holdings == before
+    assert g.response_actions(g.response_requests()[0]) == ("ACT ACCEPT", "ACT REJECT")
+    g.resolve_responses({0: "ACT ACCEPT"})
+    assert g.holdings == before
+    assert f"ACT GIVE {{{target}}} TO P0" in g.get_legal_actions("P1")
+
+
+def test_synchronous_bundle_limits_communication_and_commit_is_exclusive():
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+    g = SynchronousItemGame(generate_instance(7, config=config), config)
+    snapshot = g.build_round_snapshot()
+    with pytest.raises(SynchronousActionError, match="at most one"):
+        g.resolve_round({
+            "P0": ("QUERY P1 GOAL", "QUERY P1 HOLDINGS"),
+            "P1": ("PASS",),
+        }, snapshot)
+
+
+def test_synchronous_commit_deactivates_player_but_does_not_end_on_focal_success():
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=4,
+    )
+    g = SynchronousItemGame(generate_instance(7, config=config), config)
+    g.resolve_round({"P0": ("PROPOSE JOIN {P0,P1}",), "P1": ("PASS",)}, g.build_round_snapshot())
+    g.resolve_responses({0: "ACT ACCEPT"})
+    p0_items = _format_for_test(g.goals["P0"] & g.holdings["P0"])
+    g.resolve_round({"P0": (f"ACT COMMIT {p0_items}",), "P1": ("PASS",)}, g.build_round_snapshot())
+    assert not g.done
+    assert g.active_players == ("P1",)
+    assert not g.get_legal_actions("P0")
+    assert g.player_success["P0"] is True
+
+
+def test_synchronous_commit_events_are_public_but_private_query_results_are_not():
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=3,
+    )
+    g = SynchronousItemGame(generate_instance(7, config=config), config)
+    g.resolve_round({"P0": ("QUERY P1 GOAL",), "P1": ("PASS",)}, g.build_round_snapshot())
+    request = g.response_requests()[0]
+    g.resolve_responses({0: g.response_actions(request)[0]})
+    assert "INFORM P0 GOAL" in g.get_observation("P0")
+    p1_observation = g.get_observation("P1")
+    p1_direct_messages = p1_observation.split("Direct messages:\n", 1)[1].split("Public commit events:\n", 1)[0]
+    assert "INFORM P0 GOAL" not in p1_direct_messages
+
+    g.join_accepted = True
+    g.resolve_round({
+        "P0": (f"ACT COMMIT {_format_for_test(g.goals['P0'] & g.holdings['P0'])}",),
+        "P1": ("PASS",),
+    }, g.build_round_snapshot())
+    assert "ACT COMMIT" in g.get_observation("P1")

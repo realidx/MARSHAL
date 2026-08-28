@@ -92,13 +92,28 @@ reproducible environment seed `840000 + g`. Change `rollout_batch_size`,
 `env_groups`, and `n_groups` together if you want a different number of
 distinct Collaboration scenarios.
 
-## Test-only self-play v0
+## Test-only synchronous self-play v0
 
-The new self-play path is separate from the Ego-centric ROLL adapter. It
-supports `collaboration`, `request_surplus_reroute`, and
-`respond_to_give_request`; one shared model object drives EGO and every
-partner, while each agent receives its own private observation and context.
-The environment performs no scripted ACCEPT, REJECT, GIVE, or COMMIT actions.
+The synchronous self-play path is separate from the Ego-centric ROLL adapter.
+It supports `collaboration`, `request_surplus_reroute`, and
+`respond_to_give_request`; one shared model object drives P0 and every other
+active player. Each round has a mandatory response phase followed by one
+simultaneous decision phase. All decisions use the same round-start snapshot;
+communications are delivered in the next round, while accepted transfers and
+commits are resolved atomically. The environment performs no scripted social
+actions.
+
+Decision answers use semicolon-separated atoms, for example:
+
+```text
+QUERY P1 HOLDINGS ; ACT COMMIT {item_K}
+```
+
+There is at most one proactive communication per player per round. `ACT
+COMMIT` is exclusive among ACT actions, and a committed player becomes
+inactive permanently. The runtime uses `max_rounds: 6` and player ids
+`P0/P1/P2/P3`; `P0` is only the evaluation focal player, not a privileged
+engine role.
 
 With a local Hugging Face model directory, run a 30-episode pilot (10 per
 subtype):
@@ -109,6 +124,6 @@ bash examples/item_game/run_item_game_self_play_pilot.sh
 ```
 
 Results are written as JSONL trajectories containing per-agent observations,
-private reasoning, public actions, hidden ground truth for offline analysis,
-terminal status, and diagnostics. This mode is evaluation-only and does not
-update model weights.
+private reasoning, response/decision actions, hidden ground truth for offline
+analysis, terminal status, and per-player diagnostics. This mode is
+evaluation-only and does not update model weights.

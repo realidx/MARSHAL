@@ -29,6 +29,8 @@ class ItemGameConfig:
     # these fields and keeps its Ego-centric semantics.
     self_play: bool = False
     max_total_turns: int = 16
+    max_rounds: int = 6
+    focal_player: str = "P0"
     item_vocabulary: tuple[str, ...] = field(
         default_factory=lambda: (
             "item_K", "item_Q", "item_M", "item_V",

@@ -15,11 +15,11 @@ echo "model=${EVAL_MODEL_DIR}"
 echo "output=${OUTPUT_DIR}/trajectories.jsonl"
 echo "episodes=30 (10 Collaboration + 10 RequestSurplusReroute + 10 RespondToGiveRequest)"
 
-"${PYTHON_BIN:-python}" -m roll.agentic.env.item_game.self_play \
+"${PYTHON_BIN:-python}" -m roll.agentic.env.item_game.synchronous_self_play \
   --model "${EVAL_MODEL_DIR}" \
   --episodes 10 \
   --max-new-tokens "${SELF_PLAY_MAX_NEW_TOKENS:-1024}" \
-  --max-total-turns "${SELF_PLAY_MAX_TOTAL_TURNS:-16}" \
+  --max-rounds "${SELF_PLAY_MAX_ROUNDS:-6}" \
   --output "${OUTPUT_DIR}/trajectories.jsonl"
 
 echo "ITEM GAME SELF-PLAY PILOT COMPLETE: ${OUTPUT_DIR}"

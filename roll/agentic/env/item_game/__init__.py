@@ -4,6 +4,12 @@ from .config import ItemGameConfig
 from .env import ItemGameEnv
 from .game import BaseItemGame
 from .self_play import HuggingFaceSelfPlayPolicy, SelfPlayEpisodeResult, SelfPlayItemGame, SelfPlayRunner
+from .synchronous_self_play import (
+    HuggingFaceSynchronousSelfPlayPolicy,
+    SynchronousEpisodeResult,
+    SynchronousItemGame,
+    SynchronousSelfPlayRunner,
+)
 from .generator import (
     GENERATOR_NAMES,
     SUBTYPES,
@@ -24,6 +30,10 @@ __all__ = [
     "SelfPlayEpisodeResult",
     "SelfPlayItemGame",
     "SelfPlayRunner",
+    "HuggingFaceSynchronousSelfPlayPolicy",
+    "SynchronousEpisodeResult",
+    "SynchronousItemGame",
+    "SynchronousSelfPlayRunner",
     "ItemGameInstance",
     "MixedIncentiveGenerator",
     "PureCollaborationGenerator",
