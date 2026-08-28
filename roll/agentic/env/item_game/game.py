@@ -1,10 +1,11 @@
-"""Shared sequential transition engine for Item Coalition Game v0.2.
+"""Shared sequential transition engine for Item Coalition Game v0.3.
 
 Each Ego decision has explicit phases: an optional mandatory response, one
 autonomous Ego action, a scripted partner response/action, and state update.
-ASK can create an agreement, but cannot itself transfer an item or commit a
-coalition. Terminal success requires the goal and every accepted agreement to
-be satisfied.
+ASK can create an agreement, but cannot itself commit a coalition. A partner
+that agrees to GIVE immediately performs that scripted action in the same
+transition. Ego-side commitments still require a later Ego action. Terminal
+success requires the goal and every accepted agreement to be satisfied.
 """
 
 from __future__ import annotations
@@ -46,9 +47,6 @@ class BaseItemGame:
         )
         self.pending_partner_request: str | None = self.partner_event
         self.pending_request_partner: str | None = "P1" if self.partner_event else None
-        # These partner actions run after the next autonomous Ego action.
-        self.pending_partner_gives: list[tuple[str, str]] = []
-        self.pending_partner_give: tuple[str, str] | None = None  # compatibility view
         self.pending_exchange: tuple[str, str, str] | None = None
         self.pending_transfer: tuple[str, str] | None = None  # compatibility view
         self._mandatory_request_answered = False
@@ -128,13 +126,10 @@ class BaseItemGame:
             "turn": self.turn_index, "actor": "EGO", "phase": phase, "action": action, "message": ""
         })
 
-        # _apply_ego only creates an operation. Holdings and commitments are
+        # _apply_ego creates an operation. Holdings and commitments are
         # updated in _run_partner_phase after the scripted partner acts.
-        scheduled_partner_gives = list(self.pending_partner_gives)
-        self.pending_partner_gives.clear()
-        self.pending_partner_give = None
         ego_message, operation = self._apply_ego(action)
-        partner_messages = self._run_partner_phase(operation, scheduled_partner_gives)
+        partner_messages = self._run_partner_phase(operation)
 
         if action.startswith("ACT JOIN_COMMIT"):
             self.done = True
@@ -176,7 +171,7 @@ class BaseItemGame:
 
     def _apply_ego(self, action: str) -> tuple[str, dict[str, Any] | None]:
         if action.startswith("ASK "):
-            return self._ask(action), None
+            return self._ask(action)
         if action.startswith("SAY "):
             return self._say(action), None
         if action.startswith("ACT GIVE "):
@@ -202,15 +197,14 @@ class BaseItemGame:
             return "", {"type": "join", "coalition": coalition, "action": action}
         raise ValueError(f"unsupported item-game action {action!r}")
 
-    def _run_partner_phase(
-        self,
-        operation: dict[str, Any] | None,
-        scheduled_partner_gives: list[tuple[str, str]],
-    ) -> list[str]:
+    def _run_partner_phase(self, operation: dict[str, Any] | None) -> list[str]:
         messages: list[str] = []
-        # Fulfill earlier partner-to-Ego GIVE commitments only after this Ego
-        # action. This is a partner scripted action, not an Ego action.
-        for partner, item in scheduled_partner_gives:
+        if operation is None:
+            return messages
+
+        if operation["type"] == "partner_give":
+            agreement = operation["agreement"]
+            partner, item = agreement["partner"], agreement["item"]
             if item not in self.holdings[partner]:
                 raise RuntimeError(f"partner {partner} violated accepted GIVE commitment for {item!r}")
             self.holdings[partner].remove(item)
@@ -218,10 +212,8 @@ class BaseItemGame:
             self._mark_fulfilled("give", partner=partner, item=item, direction="partner_to_ego")
             self._record_partner(partner, f"ACT GIVE {item} TO EGO", f"{partner} fulfills GIVE {item} to EGO.", "scripted_action")
             messages.append(f"{partner} ACT GIVE {item} TO EGO.")
-        self.pending_partner_give = self.pending_partner_gives[-1] if self.pending_partner_gives else None
-
-        if operation is None:
             return messages
+
         if operation["type"] == "ego_give":
             agreement = operation["agreement"]
             item, partner = agreement["item"], agreement["partner"]
@@ -261,40 +253,38 @@ class BaseItemGame:
                     messages.append(f"{member} {action}.")
         return messages
 
-    def _ask(self, action: str) -> str:
+    def _ask(self, action: str) -> tuple[str, dict[str, Any] | None]:
         parts = action.split()
         partner = parts[1]
         if parts[2] == "GOAL":
             self.known[partner]["goal"] = set(self.goals[partner])
-            return self._reply(partner, f"SAY {partner} GOAL", f"{partner} answers GOAL {self._format_set(self.goals[partner])}.")
+            return self._reply(partner, f"SAY {partner} GOAL", f"{partner} answers GOAL {self._format_set(self.goals[partner])}."), None
         if parts[2] == "HOLDINGS":
             self.known[partner]["holdings"] = set(self.holdings[partner])
-            return self._reply(partner, f"SAY {partner} HOLDINGS", f"{partner} answers HOLDINGS {self._format_set(self.holdings[partner])}.")
+            return self._reply(partner, f"SAY {partner} HOLDINGS", f"{partner} answers HOLDINGS {self._format_set(self.holdings[partner])}."), None
         if parts[2] == "JOIN":
             coalition = self._parse_coalition(parts[3])
             if self._partner_accepts_join(partner, coalition):
                 self.join_approved.setdefault(coalition, set()).add(partner)
                 self._new_agreement("join", partner=partner, coalition=coalition)
-                return self._reply(partner, f"SAY {partner} AGREE_JOIN {parts[3]}", f"{partner} says AGREE_JOIN {parts[3]}.")
-            return self._reply(partner, f"SAY {partner} CANNOT_JOIN {parts[3]}", f"{partner} says CANNOT_JOIN {parts[3]}.")
+                return self._reply(partner, f"SAY {partner} AGREE_JOIN {parts[3]}", f"{partner} says AGREE_JOIN {parts[3]}."), None
+            return self._reply(partner, f"SAY {partner} CANNOT_JOIN {parts[3]}", f"{partner} says CANNOT_JOIN {parts[3]}.") , None
         if parts[2] == "GIVE":
             item = parts[3]
             if not self._partner_accepts_give(partner, item):
-                return self._reply(partner, f"SAY {partner} CANNOT_GIVE {item}", f"{partner} says CANNOT_GIVE {item}.")
-            self._new_agreement("give", partner=partner, item=item, direction="partner_to_ego")
-            self.pending_partner_gives.append((partner, item))
-            self.pending_partner_give = (partner, item)
-            return self._reply(partner, f"SAY {partner} AGREE_GIVE {item}", f"{partner} says AGREE_GIVE {item}. Agreement formed; partner ACT GIVE occurs after Ego's next action.")
+                return self._reply(partner, f"SAY {partner} CANNOT_GIVE {item}", f"{partner} says CANNOT_GIVE {item}."), None
+            agreement = self._new_agreement("give", partner=partner, item=item, direction="partner_to_ego")
+            return self._reply(partner, f"SAY {partner} AGREE_GIVE {item}", f"{partner} says AGREE_GIVE {item}. Agreement formed; partner ACT GIVE follows immediately."), {"type": "partner_give", "agreement": agreement}
         if parts[2] == "EXCHANGE":
             match = re.fullmatch(r"ASK (P\d+) EXCHANGE give=(\S+) receive=(\S+)", action)
             if match is None:
                 raise ValueError(f"invalid EXCHANGE request {action!r}")
             _, give, receive = match.groups()
             if not self._partner_accepts_exchange(partner, give, receive):
-                return self._reply(partner, f"SAY {partner} CANNOT_EXCHANGE", f"{partner} says CANNOT_EXCHANGE.")
+                return self._reply(partner, f"SAY {partner} CANNOT_EXCHANGE", f"{partner} says CANNOT_EXCHANGE."), None
             self._new_agreement("exchange", partner=partner, give=give, receive=receive)
             self.pending_exchange = (partner, give, receive)
-            return self._reply(partner, f"SAY {partner} AGREE_EXCHANGE give={give} receive={receive}", f"{partner} says AGREE_EXCHANGE give={give} receive={receive}. Agreement formed; Ego must ACT GIVE {give} TO {partner}.")
+            return self._reply(partner, f"SAY {partner} AGREE_EXCHANGE give={give} receive={receive}", f"{partner} says AGREE_EXCHANGE give={give} receive={receive}. Agreement formed; Ego must ACT GIVE {give} TO {partner}."), None
         raise ValueError(f"unsupported ASK action {action!r}")
 
     def _say(self, action: str) -> str:
@@ -537,8 +527,7 @@ class BaseItemGame:
             "(2) Otherwise EGO chooses exactly one autonomous ASK, SAY, or ACT.\n"
             "(3) The scripted partner emits its truthful response/action.\n"
             "(4) Only after that partner phase are holdings and commitments updated.\n\n"
-            "ASK JOIN, ASK GIVE, and ASK EXCHANGE create an agreement only after AGREE. They do not transfer items or commit a coalition in that turn.\n"
-            "ASK GIVE: the partner's ACT GIVE to EGO executes after Ego's next action. Do not output the partner's action.\n"
+            "ASK JOIN, ASK GIVE, and ASK EXCHANGE create an agreement only after AGREE. ASK GIVE then immediately runs the partner's ACT GIVE to EGO in the same transition; do not output the partner's action.\n"
             "ASK EXCHANGE: after AGREE_EXCHANGE, Ego must output ACT GIVE <give> TO <partner>; the partner then gives the receive item.\n"
             "ASK JOIN: after every member agrees, Ego must output the exact ACT JOIN_COMMIT coalition; partners then output the same commit.\n"
             "An accepted but unfulfilled agreement makes terminal reward 0.\n\n"

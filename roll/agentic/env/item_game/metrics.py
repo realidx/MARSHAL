@@ -1,4 +1,4 @@
-"""Behavioral diagnostics for Item Coalition Game v0.2 rollouts."""
+"""Behavioral diagnostics for Item Coalition Game v0.3 rollouts."""
 
 from __future__ import annotations
 

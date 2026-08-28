@@ -1,6 +1,6 @@
-# Structured Item Coalition Game v0.2
+# Structured Item Coalition Game v0.3
 
-The v0.2 runtime uses one shared sequential engine and six structural cases.
+The v0.3 runtime uses one shared sequential engine and six structural cases.
 Each Ego turn is explicit: an incoming request is answered in a mandatory
 response-only turn; Ego then chooses one autonomous ASK/SAY/ACT action; the
 scripted partner responds or acts; and only then are holdings and commitments
@@ -41,8 +41,9 @@ ACT JOIN_COMMIT <coalition>
 ```
 
 `ASK GIVE`, `ASK EXCHANGE`, and `ASK JOIN` create an agreement only after an
-explicit partner `AGREE` response. They do not transfer holdings or commit a
-coalition in that transition. Ego must fulfill Ego-side `GIVE` or
+explicit partner `AGREE` response. A partner-side `GIVE` is then executed
+immediately in the same transition; the agreement itself does not transfer
+holdings. `ASK JOIN` does not commit a coalition. Ego must fulfill Ego-side `GIVE` or
 `JOIN_COMMIT`; partner-side actions are scripted and recorded separately. An
 accepted but unfulfilled agreement makes terminal reward zero, even when the
 goal is otherwise satisfied.

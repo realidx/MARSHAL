@@ -1,4 +1,4 @@
-"""Deterministic regression tests for Item Coalition Game v0.2."""
+"""Deterministic regression tests for Item Coalition Game v0.3."""
 
 import importlib.util
 import sys
@@ -113,7 +113,7 @@ def test_exchange_requires_ego_fulfillment_and_partner_fulfillment():
     assert info["unfulfilled_agreements"] == 1.0
 
 
-def test_give_first_has_response_only_turn_and_later_partner_action():
+def test_give_first_has_response_only_turn_and_ego_must_follow_through():
     g = game("mixed_incentive", "give_first")
     assert set(g.legal_actions()) == {
         "SAY P1 CANNOT_GIVE item_V",
@@ -125,22 +125,24 @@ def test_give_first_has_response_only_turn_and_later_partner_action():
     assert g.holdings["EGO"] == {"item_K", "item_V", "item_M"}
     g.step("ACT GIVE item_V TO P1")
     assert g.holdings["EGO"] == {"item_K", "item_M"}
-    g.step("ASK P1 GIVE item_Q")
-    assert g.holdings["EGO"] == {"item_K", "item_M"}
-    message, reward, done, _ = g.step("ACT JOIN_COMMIT {EGO}")
+    message, reward, done, _ = g.step("ASK P1 GIVE item_Q")
+    assert "AGREE_GIVE item_Q" in message
     assert "ACT GIVE item_Q TO EGO" in message
-    assert reward == 1.0 and done
+    assert g.holdings["EGO"] == {"item_K", "item_M", "item_Q"}
     assert g.agreements[-1]["fulfilled"] is True
+    message, reward, done, _ = g.step("ACT JOIN_COMMIT {EGO}")
+    assert reward == 1.0 and done
 
 
-def test_request_surplus_agreement_does_not_transfer_until_partner_phase():
+def test_request_surplus_partner_give_executes_in_same_transition():
     g = game("mixed_incentive", "request_surplus")
     message, reward, done, _ = g.step("ASK P1 GIVE item_Q")
     assert "AGREE_GIVE" in message
-    assert reward == 0.0 and not done
-    assert "item_Q" not in g.holdings["EGO"]
-    message, reward, done, info = g.step("ACT JOIN_COMMIT {EGO}")
     assert "ACT GIVE item_Q TO EGO" in message
+    assert reward == 0.0 and not done
+    assert "item_Q" in g.holdings["EGO"]
+    assert g.agreements[-1]["fulfilled"] is True
+    message, reward, done, info = g.step("ACT JOIN_COMMIT {EGO}")
     assert reward == 1.0 and done
     assert info["useful_give_request"] == 1.0
 

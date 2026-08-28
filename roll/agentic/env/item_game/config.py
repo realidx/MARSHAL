@@ -1,11 +1,11 @@
-"""Configuration for the v0.2 ego-centric Item Coalition Game."""
+"""Configuration for the v0.3 ego-centric Item Coalition Game."""
 
 from dataclasses import dataclass, field
 
 
 @dataclass
 class ItemGameConfig:
-    """Stable v0.2 runtime knobs shared by all item-game generators."""
+    """Stable v0.3 runtime knobs shared by all item-game generators."""
 
     seed: int = 42
     seed_offset: int = 0

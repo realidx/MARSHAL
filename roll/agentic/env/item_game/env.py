@@ -102,7 +102,8 @@ class ItemGameEnv(BaseLanguageBasedEnv):
         system = (
             "You are the EGO in a sequential Item Coalition Game. Use only the listed structured actions. "
             "ASK and ordinary SAY consume communication budget; a mandatory response to a partner request does not. "
-            "ASK creates agreements but does not transfer items; terminal reward is 1 only when your committed pool "
+            "ASK creates agreements; a partner that agrees to GIVE immediately performs that scripted transfer, while "
+            "Ego-side GIVE still requires a later ACT. Terminal reward is 1 only when your committed pool "
             "satisfies your goal and every accepted agreement is fulfilled. "
         )
         user = (
@@ -117,9 +118,9 @@ class ItemGameEnv(BaseLanguageBasedEnv):
             "SAY <partner> CAN_GIVE <item> | SAY <partner> CANNOT_GIVE <item> | "
             "SAY <partner> PROFILE goal=<...> holdings=<...>\n"
             "ACT GIVE <item> TO <partner> | ACT JOIN_COMMIT <coalition>\n\n"
-            "ASK GIVE, ASK EXCHANGE, and ASK JOIN form agreements only after AGREE; they do not transfer items "
-            "or commit a coalition in that transition. ASK GIVE: the partner's scripted ACT GIVE occurs after "
-            "your next Ego action. Do not output the partner's action. ASK EXCHANGE: execute it with ACT GIVE "
+            "ASK GIVE, ASK EXCHANGE, and ASK JOIN form agreements only after AGREE; ASK GIVE then immediately "
+            "runs the partner's scripted ACT GIVE in the same transition. Do not output the partner's action. "
+            "ASK EXCHANGE: execute it with ACT GIVE "
             "for your item, after which the partner gives the agreed receive item. "
             "If a partner asks EGO to GIVE an item, the current turn is response-only: SAY CAN_GIVE or SAY CANNOT_GIVE. "
             "CAN_GIVE forms an agreement but does not transfer the item; follow it on a later turn with ACT GIVE. "

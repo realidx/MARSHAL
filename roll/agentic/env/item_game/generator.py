@@ -1,4 +1,4 @@
-"""Deterministic structural generators for the v0.2 item game.
+"""Deterministic structural generators for the v0.3 item game.
 
 The generators create only hidden game state.  Transition rules live in
 ``game.py`` so the six cases remain instances of one mechanism.
