@@ -25,6 +25,10 @@ class ItemGameConfig:
 
     max_ego_steps: int = 8
     communication_budget: int = 6
+    # Test-only model-vs-model runner knobs.  The legacy ROLL adapter ignores
+    # these fields and keeps its Ego-centric semantics.
+    self_play: bool = False
+    max_total_turns: int = 16
     item_vocabulary: tuple[str, ...] = field(
         default_factory=lambda: (
             "item_K", "item_Q", "item_M", "item_V",

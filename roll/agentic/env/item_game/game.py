@@ -246,6 +246,7 @@ class BaseItemGame:
         if self.done:
             raise RuntimeError("cannot act in a finished item game")
         action = " ".join(str(action).strip().split())
+        action = self._normalize_set_spacing(action)
         if action not in self.legal_actions():
             raise ValueError(f"illegal item-game action {action!r}")
 
@@ -352,7 +353,7 @@ class BaseItemGame:
             raise ValueError("ACT GIVE does not fulfill an accepted Ego commitment")
         if action == "ACT JOIN_COMMIT {EGO}":
             return "", {"type": "join", "coalition": frozenset({"EGO"}), "action": action}
-        match = re.fullmatch(r"ACT JOIN_COMMIT (\{EGO(?:,P\d+)+\})", action)
+        match = re.fullmatch(r"ACT JOIN_COMMIT (\{[^}]*\})", action)
         if match:
             coalition = self._parse_coalition(match.group(1))
             if not self._coalition_is_approved(coalition):
@@ -376,7 +377,7 @@ class BaseItemGame:
                 raise ValueError("EGO must truthfully INFORM its own state")
             return "", {"type": "collab_inform", "field": field, "items": items}
 
-        match = re.fullmatch(r"PROPOSE JOIN (\{EGO,P1\})", action)
+        match = re.fullmatch(r"PROPOSE JOIN (\{[^}]*\})", action)
         if match is not None:
             if self.collaboration_coalition is not None or self.pending_proposal is not None:
                 raise ValueError("a collaboration JOIN proposal is already resolved or pending")
@@ -885,21 +886,20 @@ class BaseItemGame:
     def _parse_coalition(self, raw: str) -> frozenset[str]:
         if not (raw.startswith("{") and raw.endswith("}")):
             raise ValueError(f"invalid coalition {raw!r}")
-        members = tuple(member for member in raw[1:-1].split(",") if member)
+        members = tuple(member.strip() for member in raw[1:-1].split(",") if member.strip())
         coalition = frozenset(members)
-        if not members or len(coalition) != len(members) or "EGO" not in coalition or not coalition.issubset(set(self.players)) or self._format_coalition(coalition) != raw:
+        if not members or len(coalition) != len(members) or "EGO" not in coalition or not coalition.issubset(set(self.players)):
             raise ValueError(f"invalid coalition {raw!r}")
         return coalition
 
     def _parse_item_set(self, raw: str) -> frozenset[str]:
         if not (raw.startswith("{") and raw.endswith("}")):
             raise ValueError(f"invalid item set {raw!r}")
-        values = tuple(item for item in raw[1:-1].split(",") if item)
+        values = tuple(item.strip() for item in raw[1:-1].split(",") if item.strip())
         items = frozenset(values)
         if (
             len(items) != len(values)
             or not items.issubset(set(self.items))
-            or self._format_set(items) != raw
         ):
             raise ValueError(f"invalid item set {raw!r}")
         return items
@@ -912,6 +912,16 @@ class BaseItemGame:
     @staticmethod
     def _format_set(items: set[str] | frozenset[str]) -> str:
         return "{" + ",".join(sorted(items)) + "}"
+
+    @staticmethod
+    def _normalize_set_spacing(action: str) -> str:
+        """Treat whitespace around comma-separated set members as formatting."""
+
+        def normalize(match: re.Match[str]) -> str:
+            values = [value.strip() for value in match.group(1).split(",") if value.strip()]
+            return "{" + ",".join(values) + "}"
+
+        return re.sub(r"\{([^{}]*)\}", normalize, action)
 
     def _reroute_target_item(self) -> str | None:
         missing = sorted(set(self.goals["EGO"]) - set(self.holdings["EGO"]))

@@ -293,6 +293,8 @@ def _validate_config(config: ItemGameConfig) -> None:
         raise ValueError(f"subtype {config.subtype!r} is invalid for {config.generator!r}")
     if config.max_ego_steps < 1:
         raise ValueError("max_ego_steps must be positive")
+    if config.max_total_turns < 1:
+        raise ValueError("max_total_turns must be positive")
     if config.communication_budget < 0:
         raise ValueError("communication_budget must be nonnegative")
     if not 6 <= len(config.item_vocabulary) <= 8 or len(set(config.item_vocabulary)) != len(config.item_vocabulary):

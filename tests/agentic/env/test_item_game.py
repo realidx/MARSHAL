@@ -20,7 +20,7 @@ base_spec.loader.exec_module(base_module)
 sub_package = types.ModuleType(f"{PACKAGE}.item_game")
 sub_package.__path__ = [str(ENV_DIR / "item_game")]
 sys.modules[sub_package.__name__] = sub_package
-for module_name in ("config", "generator", "game", "env"):
+for module_name in ("config", "generator", "game", "env", "self_play"):
     module_spec = importlib.util.spec_from_file_location(
         f"{PACKAGE}.item_game.{module_name}", ENV_DIR / "item_game" / f"{module_name}.py"
     )
@@ -35,6 +35,9 @@ validate_instance = generator_module.validate_instance
 BaseItemGame = sys.modules[f"{PACKAGE}.item_game.game"].BaseItemGame
 ItemGameEnv = sys.modules[f"{PACKAGE}.item_game.env"].ItemGameEnv
 ItemGameInstance = generator_module.ItemGameInstance
+self_play_module = sys.modules[f"{PACKAGE}.item_game.self_play"]
+SelfPlayItemGame = self_play_module.SelfPlayItemGame
+SelfPlayRunner = self_play_module.SelfPlayRunner
 
 
 def game(generator, subtype=None):
@@ -527,6 +530,24 @@ def test_roll_adapter_prompt_and_terminal_protocol():
     assert "QUERY P1 GOAL" in transition["observation"]
 
 
+def test_structured_set_parser_accepts_optional_spaces():
+    legal_actions = {0: "ACT COMMIT {item_K,item_M}"}
+    env = ItemGameEnv(Config(randomize_items=False))
+    spaced = "<reason>commit the required items</reason><answer>ACT COMMIT {item_K, item_M}</answer>"
+
+    assert env.validate_response(spaced, legal_actions)
+    assert env.recover_action(spaced, legal_actions) == legal_actions[0]
+
+    g = game("pure_collaboration")
+    establish_collaboration(g)
+    ego_commit = g.goals["EGO"] & g.holdings["EGO"]
+    canonical = f"ACT COMMIT {g._format_set(ego_commit)}"
+    assert canonical in g.legal_actions()
+    _, reward, done, _ = g.step(canonical.replace(",", ", "))
+    assert done
+    assert reward > 0.0
+
+
 def test_reroute_prompt_hides_partner_role_and_exposes_only_reroute_protocol():
     config = Config(
         generator="mixed_incentive",
@@ -589,3 +610,182 @@ def test_roll_adapter_provides_invalid_response_losing_state():
     assert transition["rewards"] == [-0.05, 0.0]
     assert transition["info"]["artificial_truncation"] == 1.0
     assert transition["info"]["player_0_lose_for_wrong_format"] == 1
+
+
+def test_self_play_partner_proposal_is_not_accepted_or_transferred_by_environment():
+    config = Config(
+        generator="mixed_incentive",
+        subtype="respond_to_give_request",
+        randomize_items=False,
+        self_play=True,
+        max_total_turns=16,
+    )
+    instance = generate_instance(7, config=config)
+    g = SelfPlayItemGame(instance, config)
+    partner = instance.active_partner
+    assert g.current_agent == partner
+    assert not g.public_history
+
+    proposal = next(
+        action for action in g.get_legal_actions(partner)
+        if action.startswith("PROPOSE GIVE {giver=EGO,receiver=")
+    )
+    ego_before = set(g.holdings["EGO"])
+    g.step(partner, proposal)
+    assert g.current_agent == "EGO"
+    assert g.pending_proposal is not None
+    assert g.holdings["EGO"] == ego_before
+    assert g.get_legal_actions("EGO") == ("ACT ACCEPT", "ACT REJECT")
+
+    g.step("EGO", "ACT ACCEPT")
+    assert g.holdings["EGO"] == ego_before
+    assert g.current_agent == "EGO"
+    assert g.get_legal_actions("EGO")[0].startswith("ACT GIVE {")
+
+
+def test_self_play_collaboration_requires_partner_accept_and_commit():
+    config = Config(
+        generator="pure_collaboration",
+        subtype="collaboration",
+        randomize_items=False,
+        self_play=True,
+        max_total_turns=16,
+    )
+    g = SelfPlayItemGame(generate_instance(7, config=config), config)
+    ego_before = set(g.holdings["EGO"])
+    g.step("EGO", "PROPOSE JOIN {EGO,P1}")
+    assert g.current_agent == "P1"
+    assert g.join_coalition is None
+    assert g.holdings["EGO"] == ego_before
+    assert g.get_legal_actions("P1") == ("ACT ACCEPT", "ACT REJECT")
+
+    g.step("P1", "ACT ACCEPT")
+    assert g.join_coalition == {"EGO", "P1"}
+    assert not g.done
+    assert g.current_agent == "EGO"
+
+    ego_commit = g.goals["EGO"] & g.holdings["EGO"]
+    p1_commit = g.goals["P1"] & g.holdings["P1"]
+    g.step("EGO", f"ACT COMMIT {_format_for_test(ego_commit)}")
+    assert not g.done
+    assert g.current_agent == "P1"
+    g.step("P1", f"ACT COMMIT {_format_for_test(p1_commit)}")
+    assert g.done
+    assert g.terminal_success
+
+
+def _format_for_test(items):
+    return "{" + ",".join(sorted(items)) + "}"
+
+
+def test_self_play_runner_keeps_reasoning_private_between_agent_contexts():
+    config = Config(
+        generator="pure_collaboration",
+        subtype="collaboration",
+        randomize_items=False,
+        self_play=True,
+        max_total_turns=16,
+    )
+
+    class Policy:
+        def __init__(self):
+            self.calls = []
+
+        def generate(self, *, agent, observation, legal_actions, context):
+            self.calls.append((agent, observation, tuple(context)))
+            if "PROPOSE JOIN {EGO,P1}" in legal_actions:
+                action = "PROPOSE JOIN {EGO,P1}"
+            elif agent == "P1" and "ACT ACCEPT" in legal_actions:
+                action = "ACT ACCEPT"
+            else:
+                goal = next(line for line in observation.splitlines() if line.startswith("Your goal: "))
+                holdings = next(line for line in observation.splitlines() if line.startswith("Your holdings: "))
+                goal_items = set(goal.split("{", 1)[1].rstrip("}").split(","))
+                held_items = set(holdings.split("{", 1)[1].rstrip("}").split(","))
+                required = _format_for_test(goal_items & held_items)
+                action = f"ACT COMMIT {required}"
+                assert action in legal_actions
+            return f"<reason>private reasoning for {agent}</reason><answer>{action}</answer>"
+
+    policy = Policy()
+    result = SelfPlayRunner(policy, config).run_episode(7)
+    assert result.terminal["terminal_success"] is True
+    p1_observation = next(observation for agent, observation, _ in policy.calls if agent == "P1")
+    assert "private reasoning" not in p1_observation
+    assert [turn["agent"] for turn in result.turns] == ["EGO", "P1", "EGO", "P1"]
+
+
+def test_self_play_runner_supports_all_three_new_subtypes_with_fake_policy():
+    class Policy:
+        def __init__(self, scripted):
+            self.scripted = iter(scripted)
+
+        def generate(self, *, agent, observation, legal_actions, context):
+            expected_agent, action = next(self.scripted)
+            assert agent == expected_agent
+            assert action in legal_actions
+            return f"<reason>private {agent}</reason><answer>{action}</answer>"
+
+    # Collaboration: proposal, consent, then both independent commits.
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_total_turns=16,
+    )
+    instance = generate_instance(7, config=config)
+    ego_commit = _format_for_test(set(instance.goals["EGO"]) & set(instance.holdings["EGO"]))
+    p1_commit = _format_for_test(set(instance.goals["P1"]) & set(instance.holdings["P1"]))
+    result = SelfPlayRunner(
+        Policy([
+            ("EGO", "PROPOSE JOIN {EGO,P1}"),
+            ("P1", "ACT ACCEPT"),
+            ("EGO", f"ACT COMMIT {ego_commit}"),
+            ("P1", f"ACT COMMIT {p1_commit}"),
+        ]), config,
+    ).run_episode(7)
+    assert result.terminal["terminal_success"] is True
+
+    # Reroute: query the known helper, then make the helper own the GIVE action.
+    config = Config(
+        generator="mixed_incentive", subtype="request_surplus_reroute",
+        randomize_items=False, self_play=True, max_total_turns=16,
+    )
+    instance = generate_instance(7, config=config)
+    helper = next(agent for agent, role in instance.partner_roles.items() if role == "HELPER")
+    target = next(iter(set(instance.goals["EGO"]) - set(instance.holdings["EGO"])))
+    ego_goal = _format_for_test(set(instance.goals["EGO"]))
+    result = SelfPlayRunner(
+        Policy([
+            ("EGO", f"QUERY {helper} GOAL"),
+            (helper, f"INFORM EGO GOAL {_format_for_test(set(instance.goals[helper]))}"),
+            ("EGO", f"QUERY {helper} HOLDINGS"),
+            (helper, f"INFORM EGO HOLDINGS {_format_for_test(set(instance.holdings[helper]))}"),
+            ("EGO", f"PROPOSE GIVE {{giver={helper},receiver=EGO,items={_format_for_test({target})}}}"),
+            (helper, "ACT ACCEPT"),
+            (helper, f"ACT GIVE {_format_for_test({target})} TO EGO"),
+            ("EGO", f"ACT COMMIT {ego_goal}"),
+        ]), config,
+    ).run_episode(7)
+    assert result.terminal["terminal_success"] is True
+
+    # RespondToGiveRequest: the partner proposes; Ego decides and, when safe,
+    # must execute its own accepted GIVE.
+    config = Config(
+        generator="mixed_incentive", subtype="respond_to_give_request",
+        randomize_items=False, self_play=True, max_total_turns=16,
+    )
+    instance = generate_instance(7, config=config)
+    partner = str(instance.active_partner)
+    item = str(instance.partner_event)
+    ego_action = "ACT ACCEPT" if instance.request_case == "safe" else "ACT REJECT"
+    scripted = [
+        (partner, f"PROPOSE GIVE {{giver=EGO,receiver={partner},items={_format_for_test({item})}}}"),
+        ("EGO", ego_action),
+    ]
+    if instance.request_case == "safe":
+        scripted.append(("EGO", f"ACT GIVE {_format_for_test({item})} TO {partner}"))
+    scripted.extend([
+        (partner, f"ACT COMMIT {_format_for_test(set(instance.goals[partner]) & set(instance.holdings[partner]))}"),
+        ("EGO", f"ACT COMMIT {_format_for_test(set(instance.goals['EGO']) & set(instance.holdings['EGO']))}"),
+    ])
+    result = SelfPlayRunner(Policy(scripted), config).run_episode(7)
+    assert result.terminal["terminal_success"] is True

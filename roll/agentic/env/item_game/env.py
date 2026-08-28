@@ -74,6 +74,7 @@ class ItemGameEnv(BaseLanguageBasedEnv):
         if match is None:
             return None
         candidate = " ".join(match.group(1).split())
+        candidate = self._normalize_set_spacing(candidate)
         canonical = {action.lower(): action for action in legal_actions.values()}
         return canonical.get(candidate.lower())
 
@@ -86,7 +87,24 @@ class ItemGameEnv(BaseLanguageBasedEnv):
         if match is None:
             return False
         candidate = " ".join(match.group(1).split()).lower()
+        candidate = self._normalize_set_spacing(candidate)
         return candidate in {action.lower() for action in legal_actions.values()}
+
+    @staticmethod
+    def _normalize_set_spacing(action: str) -> str:
+        """Normalize optional whitespace in flat brace-delimited sets.
+
+        The environment emits canonical sets such as ``{item_K,item_M}``,
+        but models commonly return ``{item_K, item_M}``.  This is a formatting
+        difference, not a different structured action, so normalize it before
+        comparing a response with the legal-action table.
+        """
+
+        def normalize(match: re.Match[str]) -> str:
+            values = [value.strip() for value in match.group(1).split(",") if value.strip()]
+            return "{" + ",".join(values) + "}"
+
+        return re.sub(r"\{([^{}]*)\}", normalize, action)
 
     def get_prompt(self, mode="prefix", think=True, player_id=0):
         del player_id

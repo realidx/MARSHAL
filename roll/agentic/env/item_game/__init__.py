@@ -3,6 +3,7 @@
 from .config import ItemGameConfig
 from .env import ItemGameEnv
 from .game import BaseItemGame
+from .self_play import HuggingFaceSelfPlayPolicy, SelfPlayEpisodeResult, SelfPlayItemGame, SelfPlayRunner
 from .generator import (
     GENERATOR_NAMES,
     SUBTYPES,
@@ -19,6 +20,10 @@ __all__ = [
     "GENERATOR_NAMES",
     "ItemGameConfig",
     "ItemGameEnv",
+    "HuggingFaceSelfPlayPolicy",
+    "SelfPlayEpisodeResult",
+    "SelfPlayItemGame",
+    "SelfPlayRunner",
     "ItemGameInstance",
     "MixedIncentiveGenerator",
     "PureCollaborationGenerator",

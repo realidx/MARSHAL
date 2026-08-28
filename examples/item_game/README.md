@@ -91,3 +91,24 @@ The dedicated config uses `group_seed_base: 840000`, so episode `g` uses the
 reproducible environment seed `840000 + g`. Change `rollout_batch_size`,
 `env_groups`, and `n_groups` together if you want a different number of
 distinct Collaboration scenarios.
+
+## Test-only self-play v0
+
+The new self-play path is separate from the Ego-centric ROLL adapter. It
+supports `collaboration`, `request_surplus_reroute`, and
+`respond_to_give_request`; one shared model object drives EGO and every
+partner, while each agent receives its own private observation and context.
+The environment performs no scripted ACCEPT, REJECT, GIVE, or COMMIT actions.
+
+With a local Hugging Face model directory, run a 30-episode pilot (10 per
+subtype):
+
+```bash
+export EVAL_MODEL_DIR=/path/to/Qwen3-4B-Instruct
+bash examples/item_game/run_item_game_self_play_pilot.sh
+```
+
+Results are written as JSONL trajectories containing per-agent observations,
+private reasoning, public actions, hidden ground truth for offline analysis,
+terminal status, and diagnostics. This mode is evaluation-only and does not
+update model weights.
