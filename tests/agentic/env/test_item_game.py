@@ -850,8 +850,8 @@ def test_synchronous_round_gives_every_active_player_the_same_decision_snapshot(
 
     class PassPolicy:
         def generate(self, *, agent, observation, legal_actions, context):
-            assert "PASS" in legal_actions
-            return "<reason>private</reason><answer>PASS</answer>"
+            assert "NO MESSAGE" not in legal_actions
+            return "<reason>private</reason><answer>MESSAGE: NO MESSAGE\nACTIONS:\n- NONE</answer>"
 
     result = SynchronousSelfPlayRunner(PassPolicy(), config).run_episode(7)
     assert result.terminal["reason"] == "max_rounds"
@@ -869,18 +869,21 @@ def test_synchronous_query_is_answered_next_round_without_using_proactive_slot()
     )
     g = SynchronousItemGame(generate_instance(7, config=config), config)
     snapshot = g.build_round_snapshot()
-    g.resolve_round({"P0": ("QUERY P1 GOAL",), "P1": ("PASS",)}, snapshot)
+    g.resolve_round({
+        "P0": {"message": "ASK P1 FOR THEIR GOAL", "actions": ()},
+        "P1": {"message": "NO MESSAGE", "actions": ()},
+    }, snapshot)
     assert g.metrics["communications_per_player"]["P0"] == 1
     assert len(g.response_requests()) == 1
     request = g.response_requests()[0]
     assert request["kind"] == "QUERY"
     assert g.response_actions(request) == (
-        f"INFORM P0 GOAL {_format_for_test(g.goals['P1'])}",
+        f"RESPOND #{request['id']}: TELL P0 MY GOAL IS {_format_for_test(g.goals['P1'])}",
     )
     p1_observation = g.get_observation("P1")
     p1_direct_messages = p1_observation.split("Direct messages:\n", 1)[1].split("Public commit events:\n", 1)[0]
-    assert "INFORM P0 GOAL" not in p1_direct_messages
-    g.resolve_responses({0: g.response_actions(request)[0]})
+    assert "TELL P0 MY GOAL" not in p1_direct_messages
+    g.resolve_responses({request["id"]: g.response_actions(request)[0]})
     assert g.known["P0"]["P1"]["GOAL"] == g.goals["P1"]
     assert g.metrics["communications_per_player"]["P0"] == 1
 
@@ -893,14 +896,22 @@ def test_synchronous_transfer_acceptance_is_deferred_until_explicit_give():
     instance = generate_instance(7, config=config)
     g = SynchronousItemGame(instance, config)
     target = next(iter(set(g.goals["P0"]) - set(g.holdings["P0"])))
-    proposal = f"PROPOSE TRANSFER {{from=P1,to=P0,items={_format_for_test({target})}}}"
+    proposal = f"PROPOSE TRANSFER {_format_for_test({target})} FROM P1 TO P0"
     before = {agent: set(items) for agent, items in g.holdings.items()}
-    g.resolve_round({"P0": (proposal,), "P1": ("PASS",), "P2": ("PASS",)}, g.build_round_snapshot())
+    g.resolve_round({
+        "P0": {"message": proposal, "actions": ()},
+        "P1": {"message": "NO MESSAGE", "actions": ()},
+        "P2": {"message": "NO MESSAGE", "actions": ()},
+    }, g.build_round_snapshot())
     assert g.holdings == before
-    assert g.response_actions(g.response_requests()[0]) == ("ACT ACCEPT", "ACT REJECT")
-    g.resolve_responses({0: "ACT ACCEPT"})
+    request = g.response_requests()[0]
+    assert g.response_actions(request) == (
+        f"RESPOND #{request['id']}: ACCEPT",
+        f"RESPOND #{request['id']}: REJECT",
+    )
+    g.resolve_responses({request["id"]: f"RESPOND #{request['id']}: ACCEPT"})
     assert g.holdings == before
-    assert f"ACT GIVE {{{target}}} TO P0" in g.get_legal_actions("P1")
+    assert f"GIVE {{{target}}} TO P0" in g.get_legal_actions("P1")
 
 
 def test_synchronous_bundle_limits_communication_and_commit_is_exclusive():
@@ -910,10 +921,13 @@ def test_synchronous_bundle_limits_communication_and_commit_is_exclusive():
     )
     g = SynchronousItemGame(generate_instance(7, config=config), config)
     snapshot = g.build_round_snapshot()
-    with pytest.raises(SynchronousActionError, match="at most one"):
+    with pytest.raises(SynchronousActionError, match="ACTIONS contains"):
         g.resolve_round({
-            "P0": ("QUERY P1 GOAL", "QUERY P1 HOLDINGS"),
-            "P1": ("PASS",),
+            "P0": {
+                "message": "ASK P1 FOR THEIR GOAL",
+                "actions": ("ASK P1 FOR THEIR HOLDINGS",),
+            },
+            "P1": {"message": "NO MESSAGE", "actions": ()},
         }, snapshot)
 
 
@@ -923,17 +937,21 @@ def test_synchronous_commit_deactivates_player_but_does_not_end_on_focal_success
         randomize_items=False, self_play=True, max_rounds=4,
     )
     g = SynchronousItemGame(generate_instance(7, config=config), config)
-    g.resolve_round({"P0": ("PROPOSE JOIN {P0,P1}",), "P1": ("PASS",)}, g.build_round_snapshot())
-    g.resolve_responses({0: "ACT ACCEPT"})
+    g.resolve_round({
+        "P0": {"message": "PROPOSE JOIN WITH P1", "actions": ()},
+        "P1": {"message": "NO MESSAGE", "actions": ()},
+    }, g.build_round_snapshot())
+    request = g.response_requests()[0]
+    g.resolve_responses({request["id"]: f"RESPOND #{request['id']}: ACCEPT"})
     p0_items = _format_for_test(g.goals["P0"] & g.holdings["P0"])
     g.resolve_round({
-        "P0": (f"ACT COMMIT {p0_items}",),
-        "P1": ("QUERY P0 GOAL",),
+        "P0": {"message": "NO MESSAGE", "actions": (f"COMMIT {p0_items}",)},
+        "P1": {"message": "ASK P0 FOR THEIR GOAL", "actions": ()},
     }, g.build_round_snapshot())
     assert not g.done
     assert g.active_players == ("P1",)
     assert not g.get_legal_actions("P0")
-    assert g.player_success["P0"] is True
+    assert g.diagnostics()["player_success"]["P0"] is False
     assert g.response_requests() == ()
     assert g.metrics["messages_dropped_due_to_commit"] == 1
 
@@ -944,17 +962,116 @@ def test_synchronous_commit_events_are_public_but_private_query_results_are_not(
         randomize_items=False, self_play=True, max_rounds=3,
     )
     g = SynchronousItemGame(generate_instance(7, config=config), config)
-    g.resolve_round({"P0": ("QUERY P1 GOAL",), "P1": ("PASS",)}, g.build_round_snapshot())
+    g.resolve_round({
+        "P0": {"message": "ASK P1 FOR THEIR GOAL", "actions": ()},
+        "P1": {"message": "NO MESSAGE", "actions": ()},
+    }, g.build_round_snapshot())
     request = g.response_requests()[0]
-    g.resolve_responses({0: g.response_actions(request)[0]})
-    assert "INFORM P0 GOAL" in g.get_observation("P0")
+    g.resolve_responses({request["id"]: g.response_actions(request)[0]})
+    assert "TELL P0 MY GOAL" in g.get_observation("P0")
     p1_observation = g.get_observation("P1")
     p1_direct_messages = p1_observation.split("Direct messages:\n", 1)[1].split("Public commit events:\n", 1)[0]
-    assert "INFORM P0 GOAL" not in p1_direct_messages
+    assert "TELL P0 MY GOAL" not in p1_direct_messages
 
-    g.join_accepted = True
     g.resolve_round({
-        "P0": (f"ACT COMMIT {_format_for_test(g.goals['P0'] & g.holdings['P0'])}",),
-        "P1": ("PASS",),
+        "P0": {"message": "NO MESSAGE", "actions": (f"COMMIT {_format_for_test(g.goals['P0'] & g.holdings['P0'])}",)},
+        "P1": {"message": "NO MESSAGE", "actions": ()},
     }, g.build_round_snapshot())
-    assert "ACT COMMIT" in g.get_observation("P1")
+    assert "COMMIT" in g.get_observation("P1")
+
+
+def test_synchronous_protocol_uses_explicit_message_and_actions_sections():
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+    g = SynchronousItemGame(generate_instance(7, config=config), config)
+    observation = g.get_observation("P0")
+    assert "MESSAGE: <one message or NO MESSAGE>" in observation
+    assert "ACTIONS:" in observation
+    assert "ASK P1 FOR THEIR GOAL" in observation
+    assert "COMMIT" in observation
+    assert "PROPOSE JOIN WITH P1" in observation
+    assert "PASS" not in observation
+
+
+def test_synchronous_response_batches_multiple_messages_and_matches_ids():
+    config = Config(
+        generator="mixed_incentive", subtype="request_surplus_reroute",
+        randomize_items=False, self_play=True, max_rounds=3,
+    )
+    g = SynchronousItemGame(generate_instance(7, config=config), config)
+    g.resolve_round({
+        "P0": {"message": "NO MESSAGE", "actions": ()},
+        "P1": {"message": "ASK P0 FOR THEIR GOAL", "actions": ()},
+        "P2": {"message": "ASK P0 FOR THEIR HOLDINGS", "actions": ()},
+    }, g.build_round_snapshot())
+    requests = g.response_requests()
+    assert len(requests) == 2
+    assert {request["recipient"] for request in requests} == {"P0"}
+    response_prompt = g.get_response_observation(requests)
+    assert "Message #" in response_prompt
+    assert "P1 asks YOU to reveal YOUR GOAL" in response_prompt
+    assert "P2 asks YOU to reveal YOUR HOLDINGS" in response_prompt
+    responses = {request["id"]: g.response_actions(request)[0] for request in requests}
+    g.resolve_responses(responses)
+    assert g.known["P1"]["P0"]["GOAL"] == g.goals["P0"]
+    assert g.known["P2"]["P0"]["HOLDINGS"] == g.holdings["P0"]
+
+
+def test_synchronous_decision_rejects_response_actions():
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+    g = SynchronousItemGame(generate_instance(7, config=config), config)
+    with pytest.raises(SynchronousActionError, match="ACTIONS contains"):
+        g._parse_decision(
+            "P0",
+            {"message": "NO MESSAGE", "actions": ("ACCEPT",)},
+            g.build_round_snapshot(),
+        )
+
+
+def test_synchronous_commit_is_allowed_without_join_but_cannot_create_coalition_success():
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+    g = SynchronousItemGame(generate_instance(7, config=config), config)
+    contribution = _format_for_test(g.goals["P0"] & g.holdings["P0"])
+    g.resolve_round({
+        "P0": {"message": "NO MESSAGE", "actions": (f"COMMIT {contribution}",)},
+        "P1": {"message": "NO MESSAGE", "actions": ()},
+    }, g.build_round_snapshot())
+    assert "P0" in g.committed
+    assert g.join_accepted is False
+    assert g.scenario_objective_success() is False
+
+
+def test_synchronous_join_settles_only_after_all_members_commit():
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=4,
+    )
+    g = SynchronousItemGame(generate_instance(7, config=config), config)
+    g.resolve_round({
+        "P0": {"message": "PROPOSE JOIN WITH P1", "actions": ()},
+        "P1": {"message": "NO MESSAGE", "actions": ()},
+    }, g.build_round_snapshot())
+    request = g.response_requests()[0]
+    g.resolve_responses({request["id"]: f"RESPOND #{request['id']}: ACCEPT"})
+    p0 = _format_for_test(g.goals["P0"] & g.holdings["P0"])
+    p1 = _format_for_test(g.goals["P1"] & g.holdings["P1"])
+    g.resolve_round({
+        "P0": {"message": "NO MESSAGE", "actions": (f"COMMIT {p0}",)},
+        "P1": {"message": "NO MESSAGE", "actions": ()},
+    }, g.build_round_snapshot())
+    assert g.done is False
+    assert g.scenario_objective_success() is False
+    g.resolve_round({
+        "P1": {"message": "NO MESSAGE", "actions": (f"COMMIT {p1}",)},
+    }, g.build_round_snapshot())
+    assert g.done is True
+    assert g.coalition_success() is True
+    assert g.scenario_objective_success() is True
