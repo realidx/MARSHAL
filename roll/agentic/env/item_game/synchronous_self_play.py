@@ -462,15 +462,21 @@ class SynchronousItemGame:
         return message
 
     def _message_text(self, action: Mapping[str, Any]) -> str:
-        if action["kind"] == "QUERY":
+        kind = action.get("kind")
+        if kind == "QUERY":
             field = "GOAL" if action["field"] == "GOAL" else "HOLDINGS"
             return f"{action['sender']} asks {action['recipient']} to reveal {action['recipient']}'s {field}."
-        if action["kind"] == "JOIN":
+        if kind == "INFORM":
+            field = "GOAL" if action["field"] == "GOAL" else "HOLDINGS"
+            return f"{action['sender']} tells {action['recipient']} their {field}."
+        if kind == "JOIN":
             return f"{action['sender']} proposes JOIN WITH {action['recipient']}."
-        return (
+        if kind == "TRANSFER":
+            return (
             f"{action['sender']} proposes TRANSFER {_format_set(set(action['items']))} "
             f"FROM {action['from']} TO {action['to']}."
-        )
+            )
+        raise SynchronousActionError(f"cannot format unknown message kind {kind!r}")
 
     def resolve_responses(
         self, responses: Mapping[int | str, str], snapshot: Mapping[str, Any] | None = None

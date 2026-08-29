@@ -995,6 +995,19 @@ def test_synchronous_protocol_uses_explicit_message_and_actions_sections():
     assert "PASS" not in observation
 
 
+def test_synchronous_tell_message_does_not_enter_transfer_formatter():
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+    g = SynchronousItemGame(generate_instance(7, config=config), config)
+    g.resolve_round({
+        "P0": {"message": f"TELL P1 MY GOAL IS {_format_for_test(g.goals['P0'])}", "actions": ()},
+        "P1": {"message": "NO MESSAGE", "actions": ()},
+    }, g.build_round_snapshot())
+    assert g.known["P1"]["P0"]["GOAL"] == g.goals["P0"]
+
+
 def test_synchronous_response_batches_multiple_messages_and_matches_ids():
     config = Config(
         generator="mixed_incentive", subtype="request_surplus_reroute",
