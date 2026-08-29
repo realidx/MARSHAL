@@ -878,11 +878,11 @@ def test_synchronous_query_is_answered_next_round_without_using_proactive_slot()
     request = g.response_requests()[0]
     assert request["kind"] == "QUERY"
     assert g.response_actions(request) == (
-        f"RESPOND #{request['id']}: TELL P0 MY GOAL IS {_format_for_test(g.goals['P1'])}",
+        f"RESPOND #{request['id']}: INFORM P0 MY GOAL IS {_format_for_test(g.goals['P1'])}",
     )
     p1_observation = g.get_observation("P1")
     p1_direct_messages = p1_observation.split("Direct messages:\n", 1)[1].split("Public commit events:\n", 1)[0]
-    assert "TELL P0 MY GOAL" not in p1_direct_messages
+    assert "INFORM P0 MY GOAL" not in p1_direct_messages
     g.resolve_responses({request["id"]: g.response_actions(request)[0]})
     assert g.known["P0"]["P1"]["GOAL"] == g.goals["P1"]
     assert g.metrics["communications_per_player"]["P0"] == 1
@@ -968,10 +968,10 @@ def test_synchronous_commit_events_are_public_but_private_query_results_are_not(
     }, g.build_round_snapshot())
     request = g.response_requests()[0]
     g.resolve_responses({request["id"]: g.response_actions(request)[0]})
-    assert "TELL P0 MY GOAL" in g.get_observation("P0")
+    assert "INFORM P0 MY GOAL" in g.get_observation("P0")
     p1_observation = g.get_observation("P1")
     p1_direct_messages = p1_observation.split("Direct messages:\n", 1)[1].split("Public commit events:\n", 1)[0]
-    assert "TELL P0 MY GOAL" not in p1_direct_messages
+    assert "INFORM P0 MY GOAL" not in p1_direct_messages
 
     g.resolve_round({
         "P0": {"message": "NO MESSAGE", "actions": (f"COMMIT {_format_for_test(g.goals['P0'] & g.holdings['P0'])}",)},
@@ -980,29 +980,45 @@ def test_synchronous_commit_events_are_public_but_private_query_results_are_not(
     assert "COMMIT" in g.get_observation("P1")
 
 
-def test_synchronous_protocol_uses_explicit_message_and_actions_sections():
+def test_synchronous_protocol_uses_one_action_per_line():
     config = Config(
         generator="pure_collaboration", subtype="collaboration",
         randomize_items=False, self_play=True, max_rounds=2,
     )
     g = SynchronousItemGame(generate_instance(7, config=config), config)
     observation = g.get_observation("P0")
-    assert "MESSAGE: <one message or NO MESSAGE>" in observation
-    assert "ACTIONS:" in observation
-    assert "ASK P1 FOR THEIR GOAL" in observation
+    assert "one short legal action per line" in observation
+    assert "do not use MESSAGE: or ACTIONS: labels" in observation
+    assert "QUERY P1 FOR THEIR GOAL" in observation
+    assert "INFORM P1 MY GOAL" in observation
     assert "COMMIT" in observation
     assert "PROPOSE JOIN WITH P1" in observation
     assert "PASS" not in observation
 
 
-def test_synchronous_tell_message_does_not_enter_transfer_formatter():
+def test_synchronous_parser_accepts_bare_lines_and_legacy_wrappers():
+    parsed = sync_module._parse_decision_output(
+        "<reason>private</reason>\n"
+        "<answer>\nQUERY P1 FOR THEIR GOAL\nGIVE {item_Q} TO P1\n</answer>"
+    )
+    assert parsed == {
+        "message": "QUERY P1 FOR THEIR GOAL",
+        "actions": ("GIVE {item_Q} TO P1",),
+    }
+    legacy = sync_module._parse_decision_output(
+        "<answer>MESSAGE: ASK P1 FOR THEIR GOAL\nACTIONS:\n- NONE</answer>"
+    )
+    assert legacy == {"message": "QUERY P1 FOR THEIR GOAL", "actions": ()}
+
+
+def test_synchronous_inform_message_does_not_enter_transfer_formatter():
     config = Config(
         generator="pure_collaboration", subtype="collaboration",
         randomize_items=False, self_play=True, max_rounds=2,
     )
     g = SynchronousItemGame(generate_instance(7, config=config), config)
     g.resolve_round({
-        "P0": {"message": f"TELL P1 MY GOAL IS {_format_for_test(g.goals['P0'])}", "actions": ()},
+        "P0": {"message": f"INFORM P1 MY GOAL IS {_format_for_test(g.goals['P0'])}", "actions": ()},
         "P1": {"message": "NO MESSAGE", "actions": ()},
     }, g.build_round_snapshot())
     assert g.known["P1"]["P0"]["GOAL"] == g.goals["P0"]
@@ -1016,8 +1032,8 @@ def test_synchronous_response_batches_multiple_messages_and_matches_ids():
     g = SynchronousItemGame(generate_instance(7, config=config), config)
     g.resolve_round({
         "P0": {"message": "NO MESSAGE", "actions": ()},
-        "P1": {"message": "ASK P0 FOR THEIR GOAL", "actions": ()},
-        "P2": {"message": "ASK P0 FOR THEIR HOLDINGS", "actions": ()},
+        "P1": {"message": "QUERY P0 FOR THEIR GOAL", "actions": ()},
+        "P2": {"message": "QUERY P0 FOR THEIR HOLDINGS", "actions": ()},
     }, g.build_round_snapshot())
     requests = g.response_requests()
     assert len(requests) == 2

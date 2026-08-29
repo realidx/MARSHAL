@@ -2,7 +2,7 @@
 
 The runtime has two separate phases per round.  First, each agent answers all
 mandatory messages from the previous round.  Then all active agents choose one
-optional MESSAGE and zero or more ACTIONS from the same immutable snapshot.
+optional message and zero or more state actions from the same immutable snapshot.
 """
 
 from __future__ import annotations
@@ -217,16 +217,13 @@ class SynchronousItemGame:
         lines.extend([
             "DECISION PHASE.",
             "All mandatory responses from the previous round have already been completed.",
-            "Do NOT output ACCEPT, REJECT, or response-only TELL actions here.",
-            "Choose exactly one MESSAGE (or NO MESSAGE) and zero or more ACTIONS.",
-            "MESSAGE may be at most one ASK, TELL, or PROPOSE. ACTIONS may contain multiple legal actions.",
-            "COMMIT is exclusive: if you COMMIT, do not include any other ACTION.",
-            "Return exactly:",
-            "MESSAGE: <one message or NO MESSAGE>",
-            "ACTIONS:",
-            "- <action>",
-            "Use ACTIONS: followed by no entries, or - NONE, when there are no actions.",
-            "Legal MESSAGE choices:",
+            "Output one short legal action per line; do not use MESSAGE: or ACTIONS: labels.",
+            "QUERY, INFORM, and PROPOSE are messages. GIVE and COMMIT change the state.",
+            "Send at most one message per round, plus any compatible state actions.",
+            "Do NOT output ACCEPT, REJECT, or a response-only INFORM in this phase.",
+            "COMMIT is exclusive: if you COMMIT, do not include any other action.",
+            "Output NO MESSAGE only when you send no message.",
+            "Legal message choices:",
         ])
         legal = self.get_legal_actions(agent, snap)
         lines.extend(f"- {action}" for action in legal if self._is_message_atom(action))
@@ -282,7 +279,7 @@ class SynchronousItemGame:
             noun = "GOAL" if request["field"] == "GOAL" else "HOLDINGS"
             verb = "IS" if noun == "GOAL" else "ARE"
             values = self.goals[request["recipient"]] if noun == "GOAL" else self.holdings[request["recipient"]]
-            return (f"RESPOND #{message_id}: TELL {request['sender']} MY {noun} {verb} {_format_set(values)}",)
+            return (f"RESPOND #{message_id}: INFORM {request['sender']} MY {noun} {verb} {_format_set(values)}",)
         return (f"RESPOND #{message_id}: ACCEPT", f"RESPOND #{message_id}: REJECT")
 
     def _response_message_text(self, message: Mapping[str, Any]) -> str:
@@ -319,10 +316,10 @@ class SynchronousItemGame:
         for other in self.players:
             if other == agent or other not in active:
                 continue
-            actions.extend((f"ASK {other} FOR THEIR GOAL", f"ASK {other} FOR THEIR HOLDINGS"))
+            actions.extend((f"QUERY {other} FOR THEIR GOAL", f"QUERY {other} FOR THEIR HOLDINGS"))
             actions.extend((
-                f"TELL {other} MY GOAL IS {_format_set(set(snap['goals'][agent]))}",
-                f"TELL {other} MY HOLDINGS ARE {_format_set(set(snap['holdings'][agent]))}",
+                f"INFORM {other} MY GOAL IS {_format_set(set(snap['goals'][agent]))}",
+                f"INFORM {other} MY HOLDINGS ARE {_format_set(set(snap['holdings'][agent]))}",
             ))
         actions.extend(self._proposal_atoms(agent, snap))
         if self.subtype == "collaboration" and set(self.players) == {"P0", "P1"}:
@@ -342,7 +339,7 @@ class SynchronousItemGame:
 
     @staticmethod
     def _is_message_atom(action: str) -> bool:
-        return action.startswith(("ASK ", "TELL ", "PROPOSE "))
+        return action.startswith(("QUERY ", "INFORM ", "PROPOSE "))
 
     def _parse_set(self, raw: str) -> frozenset[str]:
         if not raw.startswith("{") or not raw.endswith("}"):
@@ -368,13 +365,13 @@ class SynchronousItemGame:
     def _parse_message(self, agent: str, action: str, snapshot: Mapping[str, Any]) -> dict[str, Any] | None:
         if action == "NO MESSAGE":
             return None
-        match = re.fullmatch(r"ASK (\w+) FOR THEIR (GOAL|HOLDINGS)", action)
+        match = re.fullmatch(r"QUERY (\w+) FOR THEIR (GOAL|HOLDINGS)", action)
         if match:
             target, field = match.groups()
             if target not in snapshot["active"] or target == agent:
-                raise SynchronousActionError(f"invalid ASK target {target!r}")
+                raise SynchronousActionError(f"invalid QUERY target {target!r}")
             return {"kind": "QUERY", "sender": agent, "recipient": target, "field": field}
-        match = re.fullmatch(r"TELL (\w+) MY (GOAL|HOLDINGS) (IS|ARE) (\{[^}]*\})", action)
+        match = re.fullmatch(r"INFORM (\w+) MY (GOAL|HOLDINGS) (IS|ARE) (\{[^}]*\})", action)
         if match:
             target, field, verb, raw = match.groups()
             expected = snapshot["goals"][agent] if field == "GOAL" else snapshot["holdings"][agent]
@@ -384,7 +381,7 @@ class SynchronousItemGame:
                 or verb != ("IS" if field == "GOAL" else "ARE")
                 or self._parse_set(raw) != expected
             ):
-                raise SynchronousActionError("TELL must truthfully disclose current state")
+                raise SynchronousActionError("INFORM must truthfully disclose current state")
             return {"kind": "INFORM", "sender": agent, "recipient": target, "field": field}
         match = re.fullmatch(r"PROPOSE TRANSFER (\{[^}]*\}) FROM (\w+) TO (\w+)", action)
         if match:
@@ -428,17 +425,17 @@ class SynchronousItemGame:
         if isinstance(decision, str):
             decision = _parse_decision_output(decision)
         if isinstance(decision, Mapping):
-            message = str(decision.get("message", "NO MESSAGE"))
-            actions = tuple(str(action) for action in decision.get("actions", ()))
+            message = _canonicalize_protocol(str(decision.get("message", "NO MESSAGE")))
+            actions = tuple(_canonicalize_protocol(str(action)) for action in decision.get("actions", ()))
         else:
-            atoms = tuple(str(atom) for atom in decision)
+            atoms = tuple(_canonicalize_protocol(str(atom)) for atom in decision)
             messages = [atom for atom in atoms if self._is_message_atom(atom)]
             if len(messages) > 1:
                 raise SynchronousActionError("at most one MESSAGE is allowed per round")
             message = messages[0] if messages else "NO MESSAGE"
             actions = tuple(atom for atom in atoms if atom not in messages)
         if message != "NO MESSAGE" and not self._is_message_atom(message):
-            raise SynchronousActionError("MESSAGE must be one ASK, TELL, PROPOSE, or NO MESSAGE")
+            raise SynchronousActionError("MESSAGE must be one QUERY, INFORM, PROPOSE, or NO MESSAGE")
         legal = set(self.get_legal_actions(agent, snapshot))
         if message != "NO MESSAGE" and message not in legal:
             raise SynchronousActionError("MESSAGE is not legal in the round snapshot")
@@ -468,7 +465,7 @@ class SynchronousItemGame:
             return f"{action['sender']} asks {action['recipient']} to reveal {action['recipient']}'s {field}."
         if kind == "INFORM":
             field = "GOAL" if action["field"] == "GOAL" else "HOLDINGS"
-            return f"{action['sender']} tells {action['recipient']} their {field}."
+            return f"{action['sender']} informs {action['recipient']} of their {field}."
         if kind == "JOIN":
             return f"{action['sender']} proposes JOIN WITH {action['recipient']}."
         if kind == "TRANSFER":
@@ -750,43 +747,94 @@ class SynchronousItemGame:
 
 
 def _parse_response_output(response: str) -> dict[int, str]:
-    answer = _answer_text(response)
+    # Models sometimes wrap the same answer in XML, markdown bullets, or an
+    # extra RESPONSE label.  Keep the protocol strict after extracting the
+    # individual response lines, but do not make formatting part of the task.
+    answer = _protocol_text(response)
     parsed: dict[int, str] = {}
-    for line in answer.splitlines():
-        line = _normalize(line.lstrip("- "))
-        if not line:
-            continue
-        match = re.fullmatch(r"RESPOND #(\d+): (.+)", line)
+    for line in _split_protocol_lines(answer):
+        match = re.fullmatch(r"(?:RESPOND|RESPONSE)\s*#(\d+)\s*:\s*(.+)", line, re.IGNORECASE)
         if match is None:
-            raise SynchronousActionError("response must use RESPOND #<id>: <response>")
+            continue
         message_id = int(match.group(1))
         if message_id in parsed:
             raise SynchronousActionError("a message received more than one response")
-        parsed[message_id] = line
+        response_text = _canonicalize_protocol(_normalize(match.group(2)))
+        parsed[message_id] = f"RESPOND #{message_id}: {response_text}"
+    if not parsed:
+        raise SynchronousActionError("response must contain RESPOND #<id>: <response>")
     return parsed
 
 
 def _parse_decision_output(response: str) -> dict[str, Any]:
-    answer = _answer_text(response)
-    lines = [line.rstrip() for line in answer.splitlines() if line.strip()]
-    message_line = next((line for line in lines if line.strip().upper().startswith("MESSAGE:")), None)
-    actions_index = next((index for index, line in enumerate(lines) if line.strip().upper().startswith("ACTIONS:")), None)
-    if message_line is None or actions_index is None:
-        raise SynchronousActionError("decision must contain MESSAGE: and ACTIONS:")
-    message = _normalize(message_line.split(":", 1)[1])
-    actions: list[str] = []
-    actions_header = lines[actions_index].split(":", 1)[1].strip()
-    action_lines = lines[actions_index + 1:]
-    if actions_header and actions_header.upper() not in {"NONE", "- NONE"}:
-        action_lines.insert(0, actions_header)
-    for line in action_lines:
-        line = line.strip()
-        if line.upper() in {"NONE", "- NONE"}:
+    lines = _split_protocol_lines(_protocol_text(response))
+    candidates: list[str] = []
+    saw_empty = False
+    for line in lines:
+        upper = line.upper()
+        if upper in {"NONE", "- NONE", "NO MESSAGE"}:
+            saw_empty = True
             continue
-        if not line.startswith("-"):
-            raise SynchronousActionError("each ACTIONS entry must start with '-'")
-        actions.append(_normalize(line[1:]))
+        # Backward-compatible extraction for old outputs.  The prompt no
+        # longer asks for these headings, but accepting them prevents a
+        # formatting mistake from becoming an environment failure.
+        if upper.startswith(("MESSAGE:", "ACTIONS:", "ACTION:")):
+            payload = line.split(":", 1)[1].strip()
+            if not payload or payload.upper() in {"NONE", "- NONE", "NO MESSAGE"}:
+                saw_empty = True
+                continue
+            line = payload
+        line = _canonicalize_protocol(line)
+        if line == "NO MESSAGE":
+            continue
+        if line.startswith(("QUERY ", "INFORM ", "PROPOSE ", "GIVE ", "COMMIT ")):
+            candidates.append(line)
+    candidates = list(dict.fromkeys(candidates))
+    if not candidates:
+        if saw_empty:
+            return {"message": "NO MESSAGE", "actions": ()}
+        raise SynchronousActionError("decision contains no recognizable protocol action")
+    messages = [line for line in candidates if SynchronousItemGame._is_message_atom(line)]
+    if len(messages) > 1:
+        raise SynchronousActionError("at most one MESSAGE is allowed per round")
+    message = messages[0] if messages else "NO MESSAGE"
+    actions = [line for line in candidates if line not in messages]
     return {"message": message, "actions": tuple(actions)}
+
+
+def _protocol_text(response: str) -> str:
+    """Return protocol-bearing text while excluding private reasoning."""
+    without_reason = re.sub(
+        r"<reason>.*?</reason>", "", response, flags=re.DOTALL | re.IGNORECASE
+    )
+    blocks = re.findall(
+        r"<(?:answer|message|actions)>\s*(.*?)\s*</(?:answer|message|actions)>",
+        without_reason,
+        flags=re.DOTALL | re.IGNORECASE,
+    )
+    return "\n".join(blocks) if blocks else without_reason
+
+
+def _split_protocol_lines(text: str) -> list[str]:
+    lines: list[str] = []
+    for raw_line in re.split(r"[\n;]+", text):
+        line = raw_line.strip().strip("`").strip()
+        line = re.sub(r"^(?:[-*•]|\d+[.)])\s*", "", line)
+        if line:
+            lines.append(_normalize(line))
+    return list(dict.fromkeys(lines))
+
+
+def _canonicalize_protocol(line: str) -> str:
+    """Normalize vocabulary aliases used by older pilots.
+
+    ASK/TELL are accepted only as parser aliases.  Legal actions and all
+    prompts expose QUERY/INFORM, so new model outputs use the new vocabulary.
+    """
+    line = _normalize(line)
+    line = re.sub(r"^ASK(?=\s)", "QUERY", line, flags=re.IGNORECASE)
+    line = re.sub(r"^TELL(?=\s)", "INFORM", line, flags=re.IGNORECASE)
+    return line
 
 
 class SynchronousSelfPlayRunner:
@@ -968,9 +1016,10 @@ class HuggingFaceSynchronousSelfPlayPolicy:
             "There are two completely separate phases. In RESPONSE PHASE, respond to every "
             "previous-round message exactly once using RESPOND #<id>: ..., and take no new action. "
             "In DECISION PHASE, all previous mandatory responses are complete. Do not output "
-            "ACCEPT, REJECT, or response-only TELL actions. Output exactly MESSAGE: ... and "
-            "ACTIONS: with zero or more dash-prefixed actions. MESSAGE is at most one ASK, TELL, "
-            "PROPOSE, or NO MESSAGE; ACTIONS are state-changing actions only. COMMIT is exclusive. "
+            "ACCEPT, REJECT, or response-only INFORM actions. Output one short legal action per line; "
+            "do not output MESSAGE: or ACTIONS: labels. QUERY, INFORM, and PROPOSE are messages; "
+            "GIVE and COMMIT are state-changing actions. Send at most one message per round. "
+            "COMMIT is exclusive. "
             "Keep reasoning private. Return <reason>...</reason> and exactly one <answer>...</answer>."
         )
         messages: list[dict[str, str]] = [{"role": "system", "content": system}]

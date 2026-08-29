@@ -103,38 +103,37 @@ communications are delivered in the next round, while accepted transfers and
 commits are resolved atomically. The environment performs no scripted social
 actions.
 
-Decision answers use an explicit MESSAGE/ACTIONS structure, for example:
+Decision answers use one short protocol action per line.  There is no required
+`MESSAGE`/`ACTIONS` wrapper, for example:
 
 ```text
-MESSAGE: ASK P1 FOR THEIR HOLDINGS
-ACTIONS:
-- NONE
+QUERY P1 FOR THEIR HOLDINGS
 ```
 
 The controlled-natural-language protocol is:
 
 ```text
-ASK P1 FOR THEIR GOAL
-ASK P1 FOR THEIR HOLDINGS
-TELL P0 MY GOAL IS {item_A,item_B}
-TELL P0 MY HOLDINGS ARE {item_A,item_C}
+QUERY P1 FOR THEIR GOAL
+QUERY P1 FOR THEIR HOLDINGS
+INFORM P0 MY GOAL IS {item_A,item_B}
+INFORM P0 MY HOLDINGS ARE {item_A,item_C}
 PROPOSE TRANSFER {item_Q} FROM P1 TO P0
 PROPOSE JOIN WITH P1
 GIVE {item_Q} TO P0
 COMMIT {item_A,item_B}
 ```
 
-Each active player may send at most one MESSAGE (`ASK`, `TELL`, `PROPOSE`,
-or `NO MESSAGE`) and zero or more ACTIONS per round. `COMMIT` is exclusive
-among ACTIONS. Mandatory responses are batched by recipient and addressed by
+Each active player may send at most one message (`QUERY`, `INFORM`, `PROPOSE`,
+or `NO MESSAGE`) and zero or more state actions per round. `COMMIT` is
+exclusive among state actions. Mandatory responses are batched by recipient and addressed by
 message id, for example:
 
 ```text
-RESPOND #12: TELL P0 MY GOAL IS {item_A,item_B}
+RESPOND #12: INFORM P0 MY GOAL IS {item_A,item_B}
 RESPOND #13: ACCEPT
 ```
 
-Response messages are free and do not consume the MESSAGE opportunity.
+Response messages are free and do not consume the proactive communication opportunity.
 Accepted transfer proposals create agreements but do not transfer items until
 the giver explicitly uses `GIVE`. `COMMIT` is independent of JOIN; a JOIN
 only creates a persistent coalition agreement. Coalition success is settled
