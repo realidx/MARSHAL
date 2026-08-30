@@ -6,9 +6,12 @@ from .game import BaseItemGame
 from .self_play import HuggingFaceSelfPlayPolicy, SelfPlayEpisodeResult, SelfPlayItemGame, SelfPlayRunner
 from .synchronous_self_play import (
     HuggingFaceSynchronousSelfPlayPolicy,
+    SelfPlayPolicyOutput,
     SynchronousEpisodeResult,
     SynchronousItemGame,
     SynchronousSelfPlayRunner,
+    VLLMSynchronousSelfPlayPolicy,
+    VLLMSelfPlayPolicy,
 )
 from .generator import (
     GENERATOR_NAMES,
@@ -31,9 +34,12 @@ __all__ = [
     "SelfPlayItemGame",
     "SelfPlayRunner",
     "HuggingFaceSynchronousSelfPlayPolicy",
+    "SelfPlayPolicyOutput",
     "SynchronousEpisodeResult",
     "SynchronousItemGame",
     "SynchronousSelfPlayRunner",
+    "VLLMSynchronousSelfPlayPolicy",
+    "VLLMSelfPlayPolicy",
     "ItemGameInstance",
     "MixedIncentiveGenerator",
     "PureCollaborationGenerator",

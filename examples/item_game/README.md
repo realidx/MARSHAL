@@ -102,40 +102,48 @@ simultaneous decision phase. All decisions use the same round-start snapshot;
 communications are delivered in the next round, while state actions are
 resolved atomically. The environment performs no scripted social actions.
 
-Decision answers use one short protocol action per line. The prompt exposes
-general templates rather than a pre-enumerated legal-action table, and there
-is no required `MESSAGE`/`ACTIONS` wrapper. For example:
+Decision answers use typed JSON inside the existing `<answer>` block. The
+prompt exposes action shapes rather than a pre-enumerated legal-action table;
+the model supplies the semantic values and the environment validates them. For example:
 
-```text
-QUERY P1 FOR THEIR HOLDINGS
-REQUEST TRANSFER {item_Q} FROM P1 TO P0
-GIVE {item_M} TO P1
-COMMIT {item_A,item_B}
+```json
+{"action":"QUERY","recipient":"P1","field":"HOLDINGS"}
+{"action":"REQUEST_TRANSFER","recipient":"P1","items":["item_Q"]}
+{"action":"GIVE","recipient":"P1","items":["item_M"]}
+{"action":"COMMIT","items":["item_A","item_B"]}
 ```
 
-The decision-phase templates are:
+When a decision needs both a message and a compatible state action, return a
+JSON array of objects. `PASS` means no message and no state action. The typed
+action shapes are:
 
 ```text
-QUERY <WHO> FOR THEIR <WHAT>
-INFORM <WHO> MY <WHAT> IS/ARE <VALUE>
-REQUEST TRANSFER <ITEMS> FROM <WHO> TO <WHO>
-PROPOSE JOIN WITH <WHO>
-GIVE <ITEMS> TO <WHO>
-COMMIT <ITEMS>
+QUERY:            {"action":"QUERY","recipient":"P1","field":"GOAL"}
+INFORM:           {"action":"INFORM","recipient":"P1","field":"HOLDINGS","value":["item_Q"]}
+REQUEST_TRANSFER: {"action":"REQUEST_TRANSFER","recipient":"P1","items":["item_Q"]}
+PROPOSE_JOIN:     {"action":"PROPOSE_JOIN","recipient":"P1"}
+GIVE:             {"action":"GIVE","recipient":"P1","items":["item_Q"]}
+COMMIT:           {"action":"COMMIT","items":["item_Q"]}
+PASS:             {"action":"PASS"}
 ```
 
-The environment validates the filled-in template against the current snapshot.
+`recipient` must be a real player id, `field` must be `GOAL` or `HOLDINGS`,
+and every item/value must be an array of real item names. The environment
+does not fill in an `INFORM` value: a wrong self-report is a semantic error.
+The environment validates the filled-in action against the current snapshot.
 Each active player may send at most one message (`QUERY`, `INFORM`, `REQUEST
 TRANSFER`, `PROPOSE JOIN`, or no message) and zero or more state actions per
 round. `COMMIT` is exclusive and public. A `GIVE` state action transfers the
 sender's own unfrozen items immediately; it does not require a prior agreement.
-Mandatory responses are batched by recipient and addressed by message id, for
-example:
+Mandatory responses are JSON objects batched by recipient and addressed by
+message id, for example:
 
-```text
-RESPOND #12: INFORM P0 MY GOAL IS {item_A,item_B}
-RESPOND #13: GIVE {item_Q} TO P0
-RESPOND #14: REJECT
+```json
+[
+  {"message_id":12,"action":"INFORM","recipient":"P0","field":"GOAL","value":["item_A","item_B"]},
+  {"message_id":13,"action":"GIVE","recipient":"P0","items":["item_Q"]},
+  {"message_id":14,"action":"REJECT_TRANSFER","requester":"P0","items":["item_X"]}
+]
 ```
 
 Response messages are free and do not consume the proactive communication
@@ -158,6 +166,26 @@ bash examples/item_game/run_item_game_self_play_pilot.sh
 ```
 
 Results are written as JSONL trajectories containing per-agent observations,
-private reasoning, response/decision actions, hidden ground truth for offline
-analysis, terminal status, and per-player diagnostics. This mode is
-evaluation-only and does not update model weights.
+private reasoning, response/decision actions, schema-validity and
+game-semantic-validity fields, hidden ground truth for offline analysis,
+terminal status, and per-player diagnostics. This mode is evaluation-only and
+does not update model weights.
+
+The pilot script now defaults to the vLLM backend. For a vLLM
+OpenAI-compatible server, start Qwen3 on the remote server, for
+example with `--enable-reasoning --reasoning-parser qwen3`, then run the same
+pilot with `ITEM_GAME_BACKEND=vllm`, `VLLM_MODEL=<server model id>`, and
+`VLLM_BASE_URL=http://<server>:8000/v1`. The vLLM policy sends the dynamic
+per-agent JSON schema as `response_format`; the environment still performs all
+semantic checks.
+
+Before the pilot, run the independent 100-case smoke test:
+
+```bash
+python examples/item_game/smoke_test_vllm_structured_output.py \
+  --model Qwen/Qwen3-4B-Instruct \
+  --base-url http://<server>:8000/v1
+```
+
+Set `ITEM_GAME_BACKEND=hf` and `EVAL_MODEL_DIR=<local model directory>` to use
+the original Transformers fallback.

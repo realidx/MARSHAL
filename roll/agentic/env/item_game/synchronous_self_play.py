@@ -8,14 +8,25 @@ optional message and zero or more state actions from the same immutable snapshot
 from __future__ import annotations
 
 import argparse
+import inspect
 import json
 import re
+import urllib.error
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol, Sequence
 
 from .config import ItemGameConfig
 from .generator import ItemGameInstance, generate_instance
+
+
+@dataclass(frozen=True)
+class SelfPlayPolicyOutput:
+    """Backend-neutral model result; ``content`` is the only parsed action text."""
+
+    reasoning: str
+    content: str
 
 
 class SynchronousSelfPlayPolicy(Protocol):
@@ -26,12 +37,25 @@ class SynchronousSelfPlayPolicy(Protocol):
         observation: str,
         legal_actions: Sequence[str],
         context: Sequence[Mapping[str, str]],
-    ) -> str:
+        action_schema: Mapping[str, Any] | None = None,
+    ) -> str | SelfPlayPolicyOutput:
         ...
 
 
 class SynchronousActionError(ValueError):
     """A model action or response is not legal in the supplied snapshot."""
+
+
+class StructuredActionError(SynchronousActionError):
+    """The model answer is not a typed JSON action."""
+
+
+DECISION_ACTION_NAMES = {
+    "PASS", "QUERY", "INFORM", "REQUEST_TRANSFER", "GIVE", "PROPOSE_JOIN", "COMMIT",
+}
+RESPONSE_ACTION_NAMES = {
+    "INFORM", "GIVE", "REJECT_TRANSFER", "ACCEPT_JOIN", "REJECT_JOIN", "INACTIVE",
+}
 
 
 def _format_set(items: set[str] | frozenset[str]) -> str:
@@ -45,12 +69,130 @@ def _normalize(text: str) -> str:
 
 def _answer_text(response: str) -> str:
     match = re.search(r"<answer>\s*(.*?)\s*</answer>\s*$", response, re.DOTALL | re.IGNORECASE)
-    return match.group(1).strip() if match else response.strip()
+    if match:
+        return match.group(1).strip()
+    return re.sub(r"<(?:reason|think)>.*?</(?:reason|think)>", "", response, flags=re.DOTALL | re.IGNORECASE).strip()
 
 
 def _parse_reason(response: str) -> str:
-    match = re.search(r"<reason>\s*(.*?)\s*</reason>", response, re.DOTALL | re.IGNORECASE)
-    return match.group(1).strip() if match else ""
+    matches = re.findall(r"<(?:reason|think)>\s*(.*?)\s*</(?:reason|think)>", response, re.DOTALL | re.IGNORECASE)
+    return "\n".join(match.strip() for match in matches)
+
+
+def _answer_is_json(response: str) -> bool:
+    """Whether the answer block uses the new structured-output interface."""
+    answer = _answer_text(response).strip()
+    answer = re.sub(r"^```(?:json)?\s*|\s*```$", "", answer, flags=re.IGNORECASE | re.DOTALL).strip()
+    return answer.startswith(("{", "["))
+
+
+def _load_json_answer(response: str) -> Any:
+    answer = _answer_text(response).strip()
+    answer = re.sub(r"^```(?:json)?\s*|\s*```$", "", answer, flags=re.IGNORECASE | re.DOTALL).strip()
+    try:
+        return json.loads(answer)
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise StructuredActionError("answer must contain one JSON action object or an array of action objects") from exc
+
+
+def _require_json_action_object(value: Any, *, allowed: set[str]) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise StructuredActionError("each JSON action must be an object")
+    if set(value) - {"action", "recipient", "field", "value", "items", "message_id", "requester", "proposer"}:
+        raise StructuredActionError("JSON action contains an unknown field")
+    action = value.get("action")
+    if not isinstance(action, str) or action.upper() not in allowed:
+        raise StructuredActionError(f"unknown JSON action {action!r}")
+    result = dict(value)
+    result["action"] = action.upper()
+    return result
+
+
+def _validate_action_fields(obj: Mapping[str, Any], *, response: bool) -> None:
+    action = str(obj["action"])
+    fields = set(obj)
+    required: dict[str, set[str]] = {
+        "PASS": {"action"},
+        "QUERY": {"action", "recipient", "field"},
+        "INFORM": {"action", "recipient", "field", "value"},
+        "REQUEST_TRANSFER": {"action", "recipient", "items"},
+        "GIVE": {"action", "recipient", "items"},
+        "PROPOSE_JOIN": {"action", "recipient"},
+        "COMMIT": {"action", "items"},
+        "REJECT_TRANSFER": {"action", "requester", "items"},
+        "ACCEPT_JOIN": {"action", "proposer"},
+        "REJECT_JOIN": {"action", "proposer"},
+        "INACTIVE": {"action"},
+    }
+    if action not in required:
+        raise StructuredActionError(f"unknown JSON action {action!r}")
+    expected = required[action] | ({"message_id"} if response else set())
+    if fields != expected:
+        missing = sorted(expected - fields)
+        extra = sorted(fields - expected)
+        details = []
+        if missing:
+            details.append(f"missing {missing}")
+        if extra:
+            details.append(f"unknown {extra}")
+        raise StructuredActionError(f"wrong fields for {action}: {', '.join(details)}")
+
+
+def _require_json_string(value: Any, field: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise StructuredActionError(f"JSON field {field!r} must be a non-empty string")
+    return value
+
+
+def _require_json_items(value: Any, field: str = "items") -> list[str]:
+    if not isinstance(value, list) or not value or any(not isinstance(item, str) or not item for item in value):
+        raise StructuredActionError(f"JSON field {field!r} must be a non-empty array of item names")
+    if len(set(value)) != len(value):
+        raise StructuredActionError(f"JSON field {field!r} must not contain duplicates")
+    return value
+
+
+def _json_field(value: Any) -> str:
+    field = _require_json_string(value, "field").upper()
+    if field not in {"GOAL", "HOLDINGS"}:
+        raise StructuredActionError("JSON field 'field' must be GOAL or HOLDINGS")
+    return field
+
+
+def _validate_json_enums(value: Any, *, players: Sequence[str], items: Sequence[str], response: bool, message_ids: Sequence[int] = ()) -> None:
+    """Validate the episode-dependent enum slots of a typed answer."""
+    objects = value if isinstance(value, list) else [value]
+    player_set = set(players)
+    item_set = set(items)
+    message_id_set = set(message_ids)
+    for obj in objects:
+        if not isinstance(obj, dict):
+            raise StructuredActionError("each JSON action must be an object")
+        for key in ("recipient", "requester", "proposer"):
+            if key in obj and obj[key] not in player_set:
+                raise StructuredActionError(f"JSON field {key!r} is not a player in this episode")
+        for key in ("items", "value"):
+            if key in obj and any(item not in item_set for item in obj[key]):
+                raise StructuredActionError(f"JSON field {key!r} contains an item not in this episode")
+        if response and obj.get("message_id") not in message_id_set:
+            raise StructuredActionError("response message_id is not pending for this agent")
+
+
+def _validate_json_response_references(value: Any, requests: Sequence[Mapping[str, Any]]) -> None:
+    objects = value if isinstance(value, list) else [value]
+    by_id = {int(obj["message_id"]): obj for obj in objects}
+    for request in requests:
+        obj = by_id[int(request["id"])]
+        action = obj["action"]
+        if request["kind"] == "TRANSFER" and action == "REJECT_TRANSFER":
+            if (
+                obj["requester"] != request["sender"]
+                or set(obj["items"]) != set(request["items"])
+            ):
+                raise SynchronousActionError("REJECT_TRANSFER must refer to the exact incoming request")
+        if request["kind"] == "JOIN" and action in {"ACCEPT_JOIN", "REJECT_JOIN"}:
+            if obj["proposer"] != request["sender"]:
+                raise SynchronousActionError("JOIN response must refer to the exact proposer")
 
 
 def _remap_instance(instance: ItemGameInstance) -> dict[str, Any]:
@@ -90,15 +232,19 @@ class SynchronousEpisodeResult:
 class SynchronousItemGame:
     """Pure transition engine for symmetric P0/P1/P2/P3 self-play."""
 
+    # These are descriptions, not concrete legal-action lists.  Concrete
+    # player/item values are supplied by the observation and checked by the
+    # environment after parsing.
     MESSAGE_TEMPLATES = (
-        "QUERY <WHO> FOR THEIR <WHAT>",
-        "INFORM <WHO> MY <WHAT> IS/ARE <VALUE>",
-        "REQUEST TRANSFER <ITEMS> FROM <WHO> TO <WHO>",
-        "PROPOSE JOIN WITH <WHO>",
+        '{"action":"QUERY","recipient":"<agent_id>","field":"GOAL"}',
+        '{"action":"INFORM","recipient":"<agent_id>","field":"HOLDINGS","value":["<item_1>","<item_2>"]}',
+        '{"action":"REQUEST_TRANSFER","recipient":"<agent_id>","items":["<item_1>"]}',
+        '{"action":"PROPOSE_JOIN","recipient":"<agent_id>"}',
     )
     STATE_ACTION_TEMPLATES = (
-        "GIVE <ITEMS> TO <WHO>",
-        "COMMIT <ITEMS>",
+        '{"action":"GIVE","recipient":"<agent_id>","items":["<item_1>"]}',
+        '{"action":"COMMIT","items":["<item_1>","<item_2>"]}',
+        '{"action":"PASS"}',
     )
 
     SUPPORTED_SUBTYPES = (
@@ -145,6 +291,14 @@ class SynchronousItemGame:
             "requests_sent": 0,
             "requests_given": 0,
             "requests_rejected": 0,
+            "schema_valid_actions": 0,
+            "schema_invalid_actions": 0,
+            "schema_valid_responses": 0,
+            "schema_invalid_responses": 0,
+            "semantic_valid_actions": 0,
+            "semantic_invalid_actions": 0,
+            "semantic_valid_responses": 0,
+            "semantic_invalid_responses": 0,
             "transfers": 0,
             "commits": 0,
             "passes": 0,
@@ -217,6 +371,61 @@ class SynchronousItemGame:
             return ()
         return self.MESSAGE_TEMPLATES + self.STATE_ACTION_TEMPLATES
 
+    def get_action_schema(self, agent: str, *, response: bool = False) -> dict[str, Any]:
+        """Return a dynamic typed schema without enumerating grounded actions."""
+        if agent not in self.players:
+            raise ValueError(f"unknown player {agent!r}")
+        players = [player for player in self.players if player != agent]
+        items = list(self.items)
+        def obj_schema(action: str, properties: dict[str, Any], required: list[str]) -> dict[str, Any]:
+            return {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {"action": {"type": "string", "enum": [action]}, **properties},
+                "required": ["action", *required],
+            }
+        item_array = {"type": "array", "minItems": 1, "uniqueItems": True, "items": {"type": "string", "enum": items}}
+        if response:
+            message_ids = [message["id"] for message in self.pending_messages if message["recipient"] == agent]
+            message_id = {"type": "integer", "enum": message_ids}
+            recipient = {"type": "string", "enum": players + [agent]}
+            return {
+                "type": "array",
+                "minItems": 1,
+                "items": {"oneOf": [
+                    obj_schema("INFORM", {"message_id": message_id, "recipient": recipient, "field": {"type": "string", "enum": ["GOAL", "HOLDINGS"]}, "value": item_array}, ["message_id", "recipient", "field", "value"]),
+                    obj_schema("GIVE", {"message_id": message_id, "recipient": recipient, "items": item_array}, ["message_id", "recipient", "items"]),
+                    obj_schema("REJECT_TRANSFER", {"message_id": message_id, "requester": recipient, "items": item_array}, ["message_id", "requester", "items"]),
+                    obj_schema("ACCEPT_JOIN", {"message_id": message_id, "proposer": recipient}, ["message_id", "proposer"]),
+                    obj_schema("REJECT_JOIN", {"message_id": message_id, "proposer": recipient}, ["message_id", "proposer"]),
+                    obj_schema("INACTIVE", {"message_id": message_id}, ["message_id"]),
+                ]},
+            }
+        recipient = {"type": "string", "enum": players}
+        field = {"type": "string", "enum": ["GOAL", "HOLDINGS"]}
+        single = {"oneOf": [
+            obj_schema("PASS", {}, []),
+            obj_schema("QUERY", {"recipient": recipient, "field": field}, ["recipient", "field"]),
+            obj_schema("INFORM", {"recipient": recipient, "field": field, "value": item_array}, ["recipient", "field", "value"]),
+            obj_schema("REQUEST_TRANSFER", {"recipient": recipient, "items": item_array}, ["recipient", "items"]),
+            obj_schema("GIVE", {"recipient": recipient, "items": item_array}, ["recipient", "items"]),
+            obj_schema("PROPOSE_JOIN", {"recipient": recipient}, ["recipient"]),
+            obj_schema("COMMIT", {"items": item_array}, ["items"]),
+        ]}
+        return {
+            "oneOf": [single, {"type": "array", "minItems": 1, "items": single}],
+        }
+
+    def get_response_action_templates(self, agent: str) -> tuple[str, ...]:
+        if agent not in self.players:
+            raise ValueError(f"unknown player {agent!r}")
+        return (
+            '{"message_id":0,"action":"INFORM","recipient":"<sender>","field":"GOAL","value":["<item_1>"]}',
+            '{"message_id":0,"action":"GIVE","recipient":"<request_receiver>","items":["<item_1>"]}',
+            '{"message_id":0,"action":"REJECT_TRANSFER","requester":"<sender>","items":["<item_1>"]}',
+            '{"message_id":0,"action":"ACCEPT_JOIN","proposer":"<sender>"}',
+        )
+
     def get_observation(self, agent: str, snapshot: Mapping[str, Any] | None = None) -> str:
         if agent not in self.goals:
             raise ValueError(f"unknown player {agent!r}")
@@ -243,24 +452,25 @@ class SynchronousItemGame:
         lines.extend([
             "DECISION PHASE.",
             "All mandatory responses from the previous round have already been completed.",
-            "Output one short action per line; do not use MESSAGE: or ACTIONS: labels.",
-            "Use the general templates below and fill in WHO, WHAT, VALUE, and ITEMS yourself.",
-            "The environment checks whether your filled template is legal in this snapshot.",
-            "QUERY and INFORM are directed messages. REQUEST TRANSFER asks the FROM player to give ITEMS to the TO player.",
+            "Return one JSON action object inside <answer>...</answer>.",
+            "If you need both one message and a compatible state action in this round, return a JSON array of action objects.",
+            "Do not output prose, MESSAGE/ACTIONS labels, or placeholder values such as <agent_id>.",
+            "Use an exact player id from Active players and exact item names from the state or your known information.",
+            "QUERY field must be exactly GOAL or HOLDINGS.",
+            "INFORM must include your own truthful GOAL or current HOLDINGS in value as an array of item names.",
+            "REQUEST_TRANSFER asks the named recipient to give items to you; you do not need to hold the requested items.",
             "A transfer request never needs the requester to hold the requested item.",
-            "For a transfer request, the FROM player responds with GIVE or REJECT; GIVE transfers immediately.",
+            "The requested owner responds with GIVE or REJECT; GIVE transfers immediately.",
             "GIVE is also allowed as a proactive transfer of your own unfrozen items.",
-            "Send at most one message per round, plus compatible state actions.",
-            "Do NOT output ACCEPT, REJECT, or a response-only INFORM in this phase.",
+            "Send at most one proactive communication per round.",
+            "Do not output response-only ACCEPT, REJECT, or INFORM in this phase.",
             "COMMIT is a one-shot public action and is exclusive: if you COMMIT, do not include any other action.",
-            "Output NO MESSAGE only when you send no message.",
-            "Message templates:",
+            "PASS means choose no message and no state action.",
+            "Action shapes:",
         ])
         lines.extend(f"- {action}" for action in self.MESSAGE_TEMPLATES)
-        lines.append("- NO MESSAGE")
-        lines.append("State action templates:")
+        lines.append("State-action shapes:")
         lines.extend(f"- {action}" for action in self.STATE_ACTION_TEMPLATES)
-        lines.append("- NONE")
         return "\n".join(lines)
 
     def get_response_observation(
@@ -294,13 +504,16 @@ class SynchronousItemGame:
                 "",
                 f"Message #{message['id']} from {message['sender']}:",
                 self._response_message_text(message),
-                "Legal response:",
+                "Choose one JSON response object for this message.",
             ))
-            lines.extend(f"- {action}" for action in self.response_actions(message))
         lines.extend((
             "",
-            "Return exactly one response line per message inside <answer>...</answer>:",
-            "RESPOND #<id>: <response>",
+            "Return exactly one JSON array inside <answer>...</answer>, with one object per message:",
+            "Use a JSON array. Each object must contain message_id and action.",
+            "For QUERY use INFORM with recipient, field, and truthful value.",
+            "For a transfer request use GIVE with recipient and the exact requested items, or REJECT_TRANSFER.",
+            "For JOIN use ACCEPT_JOIN or REJECT_JOIN with proposer.",
+            "Use the exact message_id shown above. Do not invent or omit value/items.",
         ))
         return "\n".join(lines)
 
@@ -333,12 +546,12 @@ class SynchronousItemGame:
     def _response_message_text(self, message: Mapping[str, Any]) -> str:
         if message["kind"] == "QUERY":
             field = "GOAL" if message["field"] == "GOAL" else "HOLDINGS"
-            return f"{message['sender']} asks YOU to reveal YOUR {field}."
+            return f"{message['sender']} asks you to reveal your {field}."
         if message["kind"] == "JOIN":
-            return f"{message['sender']} proposes JOIN WITH {message['recipient']}."
+            return f"{message['sender']} asks to form a coalition with you."
         return (
-            f"{message['sender']} requests TRANSFER {_format_set(set(message['items']))} "
-            f"FROM {message['from']} TO {message['to']}."
+            f"{message['sender']} asks you to give {_format_set(set(message['items']))} "
+            f"to {message['to']}."
         )
 
     def _proposal_atoms(self, agent: str, snapshot: Mapping[str, Any]) -> list[str]:
@@ -443,7 +656,13 @@ class SynchronousItemGame:
                 or self._parse_set(raw) != expected
             ):
                 raise SynchronousActionError("INFORM must truthfully disclose current state")
-            return {"kind": "INFORM", "sender": agent, "recipient": target, "field": field}
+            return {
+                "kind": "INFORM",
+                "sender": agent,
+                "recipient": target,
+                "field": field,
+                "value": frozenset(expected),
+            }
         match = re.fullmatch(r"REQUEST TRANSFER (\{[^}]*\}) FROM (\w+) TO (\w+)", action)
         if match:
             raw_items, giver, receiver = match.groups()
@@ -484,7 +703,7 @@ class SynchronousItemGame:
         snapshot: Mapping[str, Any],
     ) -> tuple[dict[str, Any], ...]:
         if isinstance(decision, str):
-            decision = _parse_decision_output(decision)
+            decision = _parse_decision_output(decision, agent=agent)
         if isinstance(decision, Mapping):
             message = _canonicalize_protocol(str(decision.get("message", "NO MESSAGE")))
             actions = tuple(_canonicalize_protocol(str(action)) for action in decision.get("actions", ()))
@@ -532,13 +751,19 @@ class SynchronousItemGame:
             return f"{action['sender']} asks {action['recipient']} to reveal {action['recipient']}'s {field}."
         if kind == "INFORM":
             field = "GOAL" if action["field"] == "GOAL" else "HOLDINGS"
-            return f"{action['sender']} informs {action['recipient']} of their {field}."
+            value = action.get("value")
+            if value is None:
+                return f"{action['sender']} informs {action['recipient']} of their {field}."
+            return (
+                f"{action['sender']} informs {action['recipient']} that their {field} are "
+                f"{_format_set(set(value))}."
+            )
         if kind == "JOIN":
-            return f"{action['sender']} proposes JOIN WITH {action['recipient']}."
+            return f"{action['sender']} asks {action['recipient']} to form a coalition."
         if kind == "TRANSFER":
             return (
-                f"{action['sender']} requests TRANSFER {_format_set(set(action['items']))} "
-                f"FROM {action['from']} TO {action['to']}."
+                f"{action['sender']} asks {action['from']} to give "
+                f"{_format_set(set(action['items']))} to {action['to']}."
             )
         raise SynchronousActionError(f"cannot format unknown message kind {kind!r}")
 
@@ -592,7 +817,11 @@ class SynchronousItemGame:
                 self.inboxes[requester].append({
                     "round": self.round_index,
                     "message_id": message["id"],
-                    "text": response,
+                    "text": (
+                        f"{responder} informs you that their {field} "
+                        f"{'is' if field == 'GOAL' else 'are'} "
+                        f"{_format_set(values)}."
+                    ),
                     "from": responder,
                 })
                 self.metrics["informs_sent"] += 1
@@ -602,7 +831,7 @@ class SynchronousItemGame:
             self.inboxes[proposer].append({
                 "round": self.round_index,
                 "message_id": message["id"],
-                "text": response,
+                "text": self._response_event_text(message, response),
                 "from": recipient,
             })
             if message["kind"] == "TRANSFER":
@@ -654,6 +883,18 @@ class SynchronousItemGame:
         for giver, receiver, items, is_request in response_transfers:
             self._apply_transfer(giver, receiver, items, request=is_request)
         self.pending_messages = []
+
+    def _response_event_text(self, message: Mapping[str, Any], response: str) -> str:
+        if message["kind"] == "TRANSFER":
+            items = _format_set(set(message["items"]))
+            if response.endswith(": REJECT"):
+                return f"{message['recipient']} rejected the request to give {items}."
+            return f"{message['recipient']} gave {items} to {message['to']}."
+        if response.endswith(": ACCEPT"):
+            return f"{message['recipient']} accepted the coalition proposal."
+        if response.endswith(": INACTIVE"):
+            return f"{message['recipient']} is inactive and cannot join."
+        return f"{message['recipient']} rejected the coalition proposal."
 
     def resolve_round(
         self,
@@ -803,8 +1044,23 @@ class SynchronousItemGame:
             "safe_give_correct": float(self.metrics["safe_give_correct"]),
             "harmful_give_refused": float(self.metrics["harmful_give_refused"]),
             "terminal_success": float(self.done and self.scenario_objective_success()),
+            "task_success": float(self.scenario_objective_success()),
             "invalid_actions": float(self.metrics["invalid_actions"]),
         }
+        schema_total = self.metrics["schema_valid_actions"] + self.metrics["schema_invalid_actions"]
+        schema_response_total = self.metrics["schema_valid_responses"] + self.metrics["schema_invalid_responses"]
+        semantic_total = self.metrics["semantic_valid_actions"] + self.metrics["semantic_invalid_actions"]
+        semantic_response_total = self.metrics["semantic_valid_responses"] + self.metrics["semantic_invalid_responses"]
+        result.update({
+            "schema_valid_rate": float(
+                (self.metrics["schema_valid_actions"] + self.metrics["schema_valid_responses"])
+                / (schema_total + schema_response_total)
+            ) if schema_total + schema_response_total else 0.0,
+            "semantic_valid_rate": float(
+                (self.metrics["semantic_valid_actions"] + self.metrics["semantic_valid_responses"])
+                / (semantic_total + semantic_response_total)
+            ) if semantic_total + semantic_response_total else 0.0,
+        })
         result.update({key: value for key, value in self.metrics.items() if key not in result})
         return result
 
@@ -826,7 +1082,97 @@ class SynchronousItemGame:
         self.terminal_reason = reason
 
 
+def _typed_decision_to_legacy(value: Any, *, agent: str | None) -> dict[str, Any]:
+    raw_actions = value if isinstance(value, list) else [value]
+    if not raw_actions:
+        raise StructuredActionError("JSON action array must not be empty")
+    actions: list[str] = []
+    for raw in raw_actions:
+        obj = _require_json_action_object(raw, allowed=DECISION_ACTION_NAMES)
+        _validate_action_fields(obj, response=False)
+        action = obj["action"]
+        if action == "PASS":
+            if len(raw_actions) != 1:
+                raise StructuredActionError("PASS cannot be combined with another action")
+            actions.append("NO MESSAGE")
+        elif action == "QUERY":
+            recipient = _require_json_string(obj.get("recipient"), "recipient")
+            field = _json_field(obj.get("field"))
+            actions.append(f"QUERY {recipient} FOR THEIR {field}")
+        elif action == "INFORM":
+            recipient = _require_json_string(obj.get("recipient"), "recipient")
+            field = _json_field(obj.get("field"))
+            values = _require_json_items(obj.get("value"), "value")
+            verb = "IS" if field == "GOAL" else "ARE"
+            actions.append(f"INFORM {recipient} MY {field} {verb} {_format_set(set(values))}")
+        elif action == "REQUEST_TRANSFER":
+            if agent is None:
+                raise StructuredActionError("agent identity is required to parse REQUEST_TRANSFER")
+            recipient = _require_json_string(obj.get("recipient"), "recipient")
+            values = _require_json_items(obj.get("items"))
+            actions.append(f"REQUEST TRANSFER {_format_set(set(values))} FROM {recipient} TO {agent}")
+        elif action == "GIVE":
+            recipient = _require_json_string(obj.get("recipient"), "recipient")
+            values = _require_json_items(obj.get("items"))
+            actions.append(f"GIVE {_format_set(set(values))} TO {recipient}")
+        elif action == "PROPOSE_JOIN":
+            recipient = _require_json_string(obj.get("recipient"), "recipient")
+            actions.append(f"PROPOSE JOIN WITH {recipient}")
+        elif action == "COMMIT":
+            values = _require_json_items(obj.get("items"))
+            actions.append(f"COMMIT {_format_set(set(values))}")
+    if actions == ["NO MESSAGE"]:
+        return {"message": "NO MESSAGE", "actions": ()}
+    messages = [action for action in actions if SynchronousItemGame._is_message_atom(action)]
+    if len(messages) > 1:
+        raise StructuredActionError("at most one proactive communication is allowed per round")
+    message = messages[0] if messages else "NO MESSAGE"
+    return {"message": message, "actions": tuple(action for action in actions if action not in messages)}
+
+
+def _typed_response_to_legacy(value: Any) -> dict[int, str]:
+    raw_actions = value if isinstance(value, list) else [value]
+    if not raw_actions:
+        raise StructuredActionError("response JSON array must not be empty")
+    parsed: dict[int, str] = {}
+    for raw in raw_actions:
+        obj = _require_json_action_object(raw, allowed=RESPONSE_ACTION_NAMES)
+        _validate_action_fields(obj, response=True)
+        if not isinstance(obj.get("message_id"), int) or isinstance(obj.get("message_id"), bool):
+            raise StructuredActionError("response JSON requires integer message_id")
+        message_id = obj["message_id"]
+        if message_id in parsed:
+            raise StructuredActionError("a message received more than one response")
+        action = obj["action"]
+        if action == "INFORM":
+            recipient = _require_json_string(obj.get("recipient"), "recipient")
+            field = _json_field(obj.get("field"))
+            values = _require_json_items(obj.get("value"), "value")
+            verb = "IS" if field == "GOAL" else "ARE"
+            response = f"INFORM {recipient} MY {field} {verb} {_format_set(set(values))}"
+        elif action == "GIVE":
+            recipient = _require_json_string(obj.get("recipient"), "recipient")
+            values = _require_json_items(obj.get("items"))
+            response = f"GIVE {_format_set(set(values))} TO {recipient}"
+        elif action == "REJECT_TRANSFER":
+            _require_json_string(obj.get("requester"), "requester")
+            _require_json_items(obj.get("items"))
+            response = "REJECT"
+        elif action == "ACCEPT_JOIN":
+            _require_json_string(obj.get("proposer"), "proposer")
+            response = "ACCEPT"
+        elif action == "REJECT_JOIN":
+            _require_json_string(obj.get("proposer"), "proposer")
+            response = "REJECT"
+        else:
+            response = "INACTIVE"
+        parsed[message_id] = response
+    return parsed
+
+
 def _parse_response_output(response: str) -> dict[int, str]:
+    if _answer_is_json(response):
+        return _typed_response_to_legacy(_load_json_answer(response))
     # Models sometimes wrap the same answer in XML, markdown bullets, or an
     # extra RESPONSE label.  Keep the protocol strict after extracting the
     # individual response lines, but do not make formatting part of the task.
@@ -848,7 +1194,9 @@ def _parse_response_output(response: str) -> dict[int, str]:
     return parsed
 
 
-def _parse_decision_output(response: str) -> dict[str, Any]:
+def _parse_decision_output(response: str, *, agent: str | None = None) -> dict[str, Any]:
+    if _answer_is_json(response):
+        return _typed_decision_to_legacy(_load_json_answer(response), agent=agent)
     lines = _split_protocol_lines(_protocol_text(response))
     candidates: list[str] = []
     saw_empty = False
@@ -887,7 +1235,7 @@ def _parse_decision_output(response: str) -> dict[str, Any]:
 def _protocol_text(response: str) -> str:
     """Return protocol-bearing text while excluding private reasoning."""
     without_reason = re.sub(
-        r"<reason>.*?</reason>", "", response, flags=re.DOTALL | re.IGNORECASE
+        r"<(?:reason|think)>.*?</(?:reason|think)>", "", response, flags=re.DOTALL | re.IGNORECASE
     )
     blocks = re.findall(
         r"<(?:answer|message|actions)>\s*(.*?)\s*</(?:answer|message|actions)>",
@@ -970,29 +1318,72 @@ class SynchronousSelfPlayRunner:
         self.contexts: dict[str, list[dict[str, str]]] = {}
 
     def _call_policy(
-        self, *, agent: str, observation: str, legal: Sequence[str], phase: str
+        self,
+        *,
+        agent: str,
+        observation: str,
+        legal: Sequence[str],
+        phase: str,
+        action_schema: Mapping[str, Any] | None = None,
     ) -> tuple[str, dict[str, Any], dict[str, Any]]:
-        raw = str(self.policy.generate(
-            agent=agent,
-            observation=observation,
-            legal_actions=legal,
-            context=tuple(self.contexts[agent]),
-        ))
+        kwargs: dict[str, Any] = {
+            "agent": agent,
+            "observation": observation,
+            "legal_actions": legal,
+            "context": tuple(self.contexts[agent]),
+        }
+        # Keep compatibility with small test policies written before the
+        # schema hook existed.  The vLLM policy consumes this argument.
+        if "action_schema" in inspect.signature(self.policy.generate).parameters:
+            kwargs["action_schema"] = action_schema
+        backend_output = self.policy.generate(**kwargs)
+        if isinstance(backend_output, SelfPlayPolicyOutput):
+            reasoning = backend_output.reasoning
+            content = backend_output.content
+            raw_response: str | dict[str, str] = {
+                "reasoning": reasoning,
+                "content": content,
+            }
+            context_response = content
+        else:
+            raw = str(backend_output)
+            reasoning = _parse_reason(raw)
+            content = _answer_text(raw)
+            raw_response = raw
+            context_response = raw
         record = {
             "agent": agent,
             "phase": phase,
             "observation": observation,
             "legal_actions": list(legal),
-            "reason": _parse_reason(raw),
-            "raw_response": raw,
-            "answer": _answer_text(raw),
+            "reason": reasoning,
+            "raw_response": raw_response,
+            "answer": content,
+            "content": content,
+            "output_format": "json" if _answer_is_json(content) else "legacy_text",
+            "schema_valid": None,
+            "semantic_valid": None,
             "valid": True,
         }
         self.contexts[agent].extend((
             {"role": "user", "content": observation},
-            {"role": "assistant", "content": raw},
+            {"role": "assistant", "content": context_response},
         ))
-        return raw, {}, record
+        return content, {}, record
+
+    @staticmethod
+    def _record_schema_result(
+        game: SynchronousItemGame,
+        record: dict[str, Any],
+        *,
+        phase: str,
+        valid: bool | None = None,
+    ) -> None:
+        valid = bool(_answer_is_json(record["content"])) if valid is None else valid
+        record["schema_valid"] = valid
+        key = "schema_valid_actions" if phase == "decision" else "schema_valid_responses"
+        invalid_key = "schema_invalid_actions" if phase == "decision" else "schema_invalid_responses"
+        game.metrics[key if valid else invalid_key] += 1
 
     def run_episode(self, seed: int) -> SynchronousEpisodeResult:
         instance = self.instance_factory(seed, self.config)
@@ -1031,19 +1422,44 @@ class SynchronousSelfPlayRunner:
                 if not model_requests:
                     continue
                 observation = game.get_response_observation(model_requests, response_snapshot)
-                legal = tuple(action for request in model_requests for action in game.response_actions(request))
-                raw, _, record = self._call_policy(agent=agent, observation=observation, legal=legal, phase="response")
+                legal = game.get_response_action_templates(agent)
+                raw, _, record = self._call_policy(
+                    agent=agent,
+                    observation=observation,
+                    legal=legal,
+                    phase="response",
+                    action_schema=game.get_action_schema(agent, response=True),
+                )
                 try:
                     parsed = _parse_response_output(raw)
+                    record["semantic_valid"] = True
+                    if _answer_is_json(raw):
+                        _validate_json_enums(
+                            _load_json_answer(raw),
+                            players=game.players,
+                            items=game.items,
+                            response=True,
+                            message_ids=tuple(message["id"] for message in model_requests),
+                        )
+                    self._record_schema_result(game, record, phase="response")
                     expected = {message["id"] for message in model_requests}
                     if set(parsed) != expected:
                         raise SynchronousActionError("response must cover every incoming message exactly once")
+                    if _answer_is_json(raw):
+                        _validate_json_response_references(_load_json_answer(raw), model_requests)
                     for message in model_requests:
                         if parsed[message["id"]] not in game.response_actions(message):
                             raise SynchronousActionError("response is not legal for its message")
+                    game.metrics["semantic_valid_responses"] += 1
                     responses.update(parsed)
                 except SynchronousActionError as exc:
+                    if record["schema_valid"] is None:
+                        self._record_schema_result(game, record, phase="response", valid=False)
+                    record["semantic_valid"] = False
+                    if record["schema_valid"] is True:
+                        game.metrics["semantic_invalid_responses"] += 1
                     record["valid"] = False
+                    record["error_type"] = "schema" if isinstance(exc, StructuredActionError) else "semantic"
                     record["error"] = str(exc)
                     round_record["responses"].append(record)
                     game.finish_invalid("invalid_response")
@@ -1066,13 +1482,35 @@ class SynchronousSelfPlayRunner:
             for agent in decision_snapshot["active"]:
                 observation = game.get_observation(agent, decision_snapshot)
                 legal = game.get_action_templates(agent)
-                raw, _, record = self._call_policy(agent=agent, observation=observation, legal=legal, phase="decision")
+                raw, _, record = self._call_policy(
+                    agent=agent,
+                    observation=observation,
+                    legal=legal,
+                    phase="decision",
+                    action_schema=game.get_action_schema(agent),
+                )
                 try:
-                    decision = _parse_decision_output(raw)
+                    decision = _parse_decision_output(raw, agent=agent)
+                    record["semantic_valid"] = True
+                    if _answer_is_json(raw):
+                        _validate_json_enums(
+                            _load_json_answer(raw),
+                            players=game.players,
+                            items=game.items,
+                            response=False,
+                        )
+                    self._record_schema_result(game, record, phase="decision")
                     game._parse_decision(agent, decision, decision_snapshot)
+                    game.metrics["semantic_valid_actions"] += 1
                     decisions[agent] = decision
                 except SynchronousActionError as exc:
+                    if record["schema_valid"] is None:
+                        self._record_schema_result(game, record, phase="decision", valid=False)
+                    record["semantic_valid"] = False
+                    if record["schema_valid"] is True:
+                        game.metrics["semantic_invalid_actions"] += 1
                     record["valid"] = False
+                    record["error_type"] = "schema" if isinstance(exc, StructuredActionError) else "semantic"
                     record["error"] = str(exc)
                     decisions[agent] = {"message": "NO MESSAGE", "actions": ()}
                 round_record["decisions"].append(record)
@@ -1120,6 +1558,91 @@ class SynchronousSelfPlayRunner:
         )
 
 
+class VLLMSelfPlayPolicy:
+    """OpenAI-compatible vLLM policy with per-call JSON-schema guidance."""
+
+    def __init__(
+        self,
+        base_url: str,
+        model: str,
+        *,
+        api_key: str = "EMPTY",
+        max_new_tokens: int = 1024,
+        temperature: float = 0.0,
+        timeout: float = 300.0,
+    ):
+        self.base_url = base_url.rstrip("/")
+        if not self.base_url.endswith("/v1"):
+            self.base_url += "/v1"
+        self.model = model
+        self.api_key = api_key
+        self.max_new_tokens = max_new_tokens
+        self.temperature = temperature
+        self.timeout = timeout
+
+    def generate(
+        self,
+        *,
+        agent: str,
+        observation: str,
+        legal_actions: Sequence[str],
+        context: Sequence[Mapping[str, str]],
+        action_schema: Mapping[str, Any] | None = None,
+    ) -> str:
+        if action_schema is None:
+            raise ValueError("vLLM policy requires a dynamic action schema")
+        system = (
+            f"You are {agent}. All players have equal status in a synchronous multi-agent game. "
+            "Follow the action semantics in the user message. Return only JSON matching the supplied "
+            "schema in the final answer. Do not invent players or items. Every INFORM value must be "
+            "your own truthful current state. Keep any reasoning private."
+        )
+        messages: list[dict[str, str]] = [{"role": "system", "content": system}]
+        messages.extend(dict(message) for message in context)
+        messages.append({
+            "role": "user",
+            "content": observation + "\n\nTyped action shapes:\n" + "\n".join(legal_actions),
+        })
+        body = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_new_tokens,
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "item_game_action",
+                    "schema": dict(action_schema),
+                },
+            },
+        }
+        request = urllib.request.Request(
+            f"{self.base_url}/chat/completions",
+            data=json.dumps(body).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            message = payload["choices"][0]["message"]
+            content = message.get("content", "")
+            if not isinstance(content, str) or not content.strip():
+                raise ValueError("vLLM response did not contain final JSON content")
+            reasoning = message.get("reasoning") or message.get("reasoning_content") or ""
+            return SelfPlayPolicyOutput(reasoning=str(reasoning), content=content)
+        except (urllib.error.URLError, KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise RuntimeError(f"vLLM request failed: {exc}") from exc
+
+
+# Compatibility name for callers that used the initial synchronous-specific
+# class name.
+VLLMSynchronousSelfPlayPolicy = VLLMSelfPlayPolicy
+
+
 class HuggingFaceSynchronousSelfPlayPolicy:
     """One shared HF model used for every active player."""
 
@@ -1154,22 +1677,24 @@ class HuggingFaceSynchronousSelfPlayPolicy:
         system = (
             f"You are {agent}. All players have equal status in a synchronous multi-agent game. "
             "There are two completely separate phases. In RESPONSE PHASE, respond to every "
-            "previous-round message exactly once using RESPOND #<id>: ..., and take no new action. "
+            "previous-round message exactly once using one JSON response object per message, and take no new action. "
             "In DECISION PHASE, all previous mandatory responses are complete. Do not output "
-            "ACCEPT, REJECT, or response-only INFORM actions. Output one short action per line; "
-            "do not output MESSAGE: or ACTIONS: labels. Use the general templates in the user message. "
+            "ACCEPT, REJECT, or response-only INFORM actions. Output one JSON action object, or a JSON "
+            "array when combining a message with a compatible state action. Do not output prose or "
+            "MESSAGE/ACTIONS labels. Use the typed action shapes in the user message. "
             "QUERY and INFORM send directed information messages. REQUEST TRANSFER asks the FROM "
-            "player to give ITEMS to the TO player; the requester is the TO player and does not need "
-            "to hold the requested item. The owner responds with GIVE or REJECT, and GIVE transfers "
-            "the items immediately. GIVE can also be a proactive transfer of your own items. "
+            "player to give ITEMS to the requester; the requester does not need to hold the requested "
+            "item. The owner responds with GIVE or REJECT, and GIVE transfers the items immediately. "
+            "GIVE can also be a proactive transfer of your own items. "
             "PROPOSE JOIN creates an agreement only after ACCEPT. COMMIT is public, one-shot, and exclusive. "
-            "Keep reasoning private. Return <reason>...</reason> and exactly one <answer>...</answer>."
+            "Every INFORM value must be supplied by you and must be truthful. Keep reasoning private. "
+            "Return <reason>...</reason> and exactly one <answer>...</answer> containing JSON."
         )
         messages: list[dict[str, str]] = [{"role": "system", "content": system}]
         messages.extend(dict(message) for message in context)
         messages.append({
             "role": "user",
-            "content": observation + "\n\nProtocol templates:\n" + "\n".join(legal_actions),
+            "content": observation + "\n\nTyped action shapes:\n" + "\n".join(legal_actions),
         })
         prompt = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         inputs = self.tokenizer(prompt, return_tensors="pt")
@@ -1189,6 +1714,9 @@ def _build_config(subtype: str, max_rounds: int) -> ItemGameConfig:
 def main() -> None:  # pragma: no cover
     parser = argparse.ArgumentParser(description="Run synchronous ItemGame self-play")
     parser.add_argument("--model", required=True)
+    parser.add_argument("--backend", choices=("hf", "vllm"), default="hf")
+    parser.add_argument("--vllm-base-url", default="http://localhost:8000/v1")
+    parser.add_argument("--vllm-api-key", default="EMPTY")
     parser.add_argument("--episodes", type=int, default=10)
     parser.add_argument("--seed", type=int, default=840000)
     parser.add_argument("--max-new-tokens", type=int, default=1024)
@@ -1196,7 +1724,15 @@ def main() -> None:  # pragma: no cover
     parser.add_argument("--subtype", choices=("all", *SynchronousItemGame.SUPPORTED_SUBTYPES), default="all")
     parser.add_argument("--output", type=Path, default=Path("item_game_synchronous_self_play.jsonl"))
     args = parser.parse_args()
-    policy = HuggingFaceSynchronousSelfPlayPolicy(args.model, max_new_tokens=args.max_new_tokens)
+    if args.backend == "vllm":
+        policy = VLLMSynchronousSelfPlayPolicy(
+            args.vllm_base_url,
+            args.model,
+            api_key=args.vllm_api_key,
+            max_new_tokens=args.max_new_tokens,
+        )
+    else:
+        policy = HuggingFaceSynchronousSelfPlayPolicy(args.model, max_new_tokens=args.max_new_tokens)
     subtypes = list(SynchronousItemGame.SUPPORTED_SUBTYPES) if args.subtype == "all" else [args.subtype]
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("w", encoding="utf-8") as handle:

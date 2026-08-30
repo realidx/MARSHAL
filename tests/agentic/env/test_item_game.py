@@ -1,6 +1,7 @@
 """Deterministic regression tests for the structured Item Coalition Game."""
 
 import importlib.util
+import json
 import sys
 import types
 from pathlib import Path
@@ -42,6 +43,7 @@ sync_module = sys.modules[f"{PACKAGE}.item_game.synchronous_self_play"]
 SynchronousItemGame = sync_module.SynchronousItemGame
 SynchronousSelfPlayRunner = sync_module.SynchronousSelfPlayRunner
 SynchronousActionError = sync_module.SynchronousActionError
+VLLMSelfPlayPolicy = sync_module.VLLMSelfPlayPolicy
 
 
 def game(generator, subtype=None):
@@ -1107,7 +1109,7 @@ def test_synchronous_commit_events_are_public_but_private_query_results_are_not(
     }, g.build_round_snapshot())
     request = g.response_requests()[0]
     g.resolve_responses({request["id"]: g.response_actions(request)[0]})
-    assert "INFORM P0 MY GOAL" in g.get_observation("P0")
+    assert "P1 informs you that their GOAL is" in g.get_observation("P0")
     p1_observation = g.get_observation("P1")
     p1_direct_messages = p1_observation.split("Direct messages:\n", 1)[1].split("Public commit events:\n", 1)[0]
     assert "INFORM P0 MY GOAL" not in p1_direct_messages
@@ -1126,15 +1128,16 @@ def test_synchronous_protocol_uses_one_action_per_line():
     )
     g = SynchronousItemGame(generate_instance(7, config=config), config)
     observation = g.get_observation("P0")
-    assert "one short action per line" in observation
-    assert "do not use MESSAGE: or ACTIONS: labels" in observation
-    assert "QUERY <WHO> FOR THEIR <WHAT>" in observation
-    assert "INFORM <WHO> MY <WHAT> IS/ARE <VALUE>" in observation
-    assert "COMMIT <ITEMS>" in observation
-    assert "PROPOSE JOIN WITH <WHO>" in observation
+    assert "one JSON action object" in observation
+    assert "Do not output prose, MESSAGE/ACTIONS labels" in observation
+    assert '"action":"QUERY"' in observation
+    assert '"action":"INFORM"' in observation
+    assert '"action":"COMMIT"' in observation
+    assert '"action":"PROPOSE_JOIN"' in observation
+    assert "<WHAT>" not in observation
     assert "QUERY P1 FOR THEIR GOAL" not in observation
     assert "INFORM P1 MY GOAL" not in observation
-    assert "PASS" not in observation
+    assert '"action":"PASS"' in observation
 
 
 def test_synchronous_template_fills_are_validated_by_the_environment():
@@ -1184,6 +1187,131 @@ def test_synchronous_parser_accepts_bare_lines_and_legacy_wrappers():
         "message": "QUERY P1 FOR THEIR GOAL",
         "actions": ("GIVE {item_Q} TO P1",),
     }
+
+
+def test_synchronous_parser_accepts_typed_json_without_filling_semantic_values():
+    parsed = sync_module._parse_decision_output(
+        '<reason>private</reason><answer>{"action":"QUERY","recipient":"P1","field":"HOLDINGS"}</answer>',
+        agent="P0",
+    )
+    assert parsed == {"message": "QUERY P1 FOR THEIR HOLDINGS", "actions": ()}
+    parsed = sync_module._parse_decision_output(
+        '<answer>{"action":"GIVE","recipient":"P0","items":["item_Q"]}</answer>',
+        agent="P1",
+    )
+    assert parsed == {"message": "NO MESSAGE", "actions": ("GIVE {item_Q} TO P0",)}
+    parsed = sync_module._parse_decision_output(
+        '<answer>[{"action":"QUERY","recipient":"P1","field":"GOAL"},'
+        '{"action":"GIVE","recipient":"P1","items":["item_K"]}]</answer>',
+        agent="P0",
+    )
+    assert parsed["message"] == "QUERY P1 FOR THEIR GOAL"
+    assert parsed["actions"] == ("GIVE {item_K} TO P1",)
+
+
+def test_synchronous_typed_json_rejects_untyped_items_and_placeholder_fields():
+    with pytest.raises(sync_module.StructuredActionError):
+        sync_module._parse_decision_output('<answer>{"action":"GIVE","recipient":"P0","items":"item_Q"}</answer>', agent="P1")
+    with pytest.raises(sync_module.StructuredActionError):
+        sync_module._parse_decision_output('<answer>{"action":"QUERY","recipient":"P1","field":"WHAT"}</answer>', agent="P0")
+
+
+def test_synchronous_typed_json_response_requires_model_supplied_value():
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+    g = SynchronousItemGame(generate_instance(7, config=config), config)
+    g.resolve_round({
+        "P0": {"message": "QUERY P1 FOR THEIR GOAL", "actions": ()},
+        "P1": {"message": "NO MESSAGE", "actions": ()},
+    }, g.build_round_snapshot())
+    request = g.response_requests()[0]
+    item = next(iter(g.goals["P1"]))
+    parsed = sync_module._parse_response_output(
+        f'<answer>[{{"message_id":{request["id"]},"action":"INFORM",'
+        f'"recipient":"P0","field":"GOAL","value":["{item}"]}}]</answer>'
+    )
+    assert item in parsed[request["id"]]
+    with pytest.raises(sync_module.SynchronousActionError):
+        g.resolve_responses(parsed)
+
+
+def test_synchronous_runner_separates_json_schema_and_game_semantic_validity():
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+
+    class JsonPassPolicy:
+        def generate(self, *, agent, observation, legal_actions, context):
+            return '<reason>private</reason><answer>{"action":"PASS"}</answer>'
+
+    result = SynchronousSelfPlayRunner(JsonPassPolicy(), config).run_episode(7)
+    assert result.diagnostics["schema_valid_actions"] == 4
+    assert result.diagnostics["schema_invalid_actions"] == 0
+    assert result.diagnostics["schema_valid_rate"] == 1.0
+    assert result.diagnostics["semantic_valid_rate"] == 1.0
+    assert result.diagnostics["task_success"] == 0.0
+    assert all(record["schema_valid"] is True for round_data in result.rounds for record in round_data["decisions"])
+
+
+def test_synchronous_json_grounding_sanity_has_100_typed_cases():
+    """A cheap pre-pilot check that varied trivial intents reach the typed parser."""
+    for seed in range(100):
+        config = Config(
+            generator="pure_collaboration", subtype="collaboration",
+            randomize_items=True, self_play=True, max_rounds=2,
+        )
+        g = SynchronousItemGame(generate_instance(seed, config=config), config)
+        other = next(player for player in g.players if player != "P0")
+        item = sorted(g.holdings["P0"])[0]
+        query = sync_module._parse_decision_output(
+            f'<answer>{{"action":"QUERY","recipient":"{other}","field":"HOLDINGS"}}</answer>',
+            agent="P0",
+        )
+        give = sync_module._parse_decision_output(
+            f'<answer>{{"action":"GIVE","recipient":"{other}","items":["{item}"]}}</answer>',
+            agent="P0",
+        )
+        assert query["message"].endswith("FOR THEIR HOLDINGS")
+        assert give["actions"] == (f"GIVE {{{item}}} TO {other}",)
+
+
+def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monkeypatch):
+    captured = {}
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self):
+            return b'{"choices":[{"message":{"reasoning":"private plan","content":"{\\"action\\":\\"PASS\\"}"}}]}'
+
+    def fake_urlopen(request, timeout):
+        captured["url"] = request.full_url
+        captured["body"] = request.data
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr(sync_module.urllib.request, "urlopen", fake_urlopen)
+    policy = VLLMSelfPlayPolicy("http://server:8000/v1", "Qwen/Qwen3-4B-Instruct")
+    output = policy.generate(
+        agent="P0",
+        observation="state",
+        legal_actions=(SynchronousItemGame.STATE_ACTION_TEMPLATES[-1],),
+        context=(),
+        action_schema={"type": "object"},
+    )
+    assert output.reasoning == "private plan"
+    assert output.content == '{"action":"PASS"}'
+    body = json.loads(captured["body"])
+    assert captured["url"] == "http://server:8000/v1/chat/completions"
+    assert body["response_format"]["type"] == "json_schema"
+    assert body["response_format"]["json_schema"]["schema"] == {"type": "object"}
 
 
 def test_synchronous_inform_message_does_not_enter_transfer_formatter():
@@ -1270,8 +1398,8 @@ def test_synchronous_response_batches_multiple_messages_and_matches_ids():
     assert {request["recipient"] for request in requests} == {"P0"}
     response_prompt = g.get_response_observation(requests)
     assert "Message #" in response_prompt
-    assert "P1 asks YOU to reveal YOUR GOAL" in response_prompt
-    assert "P2 asks YOU to reveal YOUR HOLDINGS" in response_prompt
+    assert "P1 asks you to reveal your GOAL" in response_prompt
+    assert "P2 asks you to reveal your HOLDINGS" in response_prompt
     responses = {request["id"]: g.response_actions(request)[0] for request in requests}
     g.resolve_responses(responses)
     assert g.known["P1"]["P0"]["GOAL"] == g.goals["P0"]
