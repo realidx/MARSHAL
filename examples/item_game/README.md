@@ -99,46 +99,53 @@ It supports `collaboration`, `request_surplus_reroute`, and
 `respond_to_give_request`; one shared model object drives P0 and every other
 active player. Each round has a mandatory response phase followed by one
 simultaneous decision phase. All decisions use the same round-start snapshot;
-communications are delivered in the next round, while accepted transfers and
-commits are resolved atomically. The environment performs no scripted social
-actions.
+communications are delivered in the next round, while state actions are
+resolved atomically. The environment performs no scripted social actions.
 
-Decision answers use one short protocol action per line.  There is no required
-`MESSAGE`/`ACTIONS` wrapper, for example:
+Decision answers use one short protocol action per line. The prompt exposes
+general templates rather than a pre-enumerated legal-action table, and there
+is no required `MESSAGE`/`ACTIONS` wrapper. For example:
 
 ```text
 QUERY P1 FOR THEIR HOLDINGS
-```
-
-The controlled-natural-language protocol is:
-
-```text
-QUERY P1 FOR THEIR GOAL
-QUERY P1 FOR THEIR HOLDINGS
-INFORM P0 MY GOAL IS {item_A,item_B}
-INFORM P0 MY HOLDINGS ARE {item_A,item_C}
-PROPOSE TRANSFER {item_Q} FROM P1 TO P0
-PROPOSE JOIN WITH P1
-GIVE {item_Q} TO P0
+REQUEST TRANSFER {item_Q} FROM P1 TO P0
+GIVE {item_M} TO P1
 COMMIT {item_A,item_B}
 ```
 
-Each active player may send at most one message (`QUERY`, `INFORM`, `PROPOSE`,
-or `NO MESSAGE`) and zero or more state actions per round. `COMMIT` is
-exclusive among state actions. Mandatory responses are batched by recipient and addressed by
-message id, for example:
+The decision-phase templates are:
+
+```text
+QUERY <WHO> FOR THEIR <WHAT>
+INFORM <WHO> MY <WHAT> IS/ARE <VALUE>
+REQUEST TRANSFER <ITEMS> FROM <WHO> TO <WHO>
+PROPOSE JOIN WITH <WHO>
+GIVE <ITEMS> TO <WHO>
+COMMIT <ITEMS>
+```
+
+The environment validates the filled-in template against the current snapshot.
+Each active player may send at most one message (`QUERY`, `INFORM`, `REQUEST
+TRANSFER`, `PROPOSE JOIN`, or no message) and zero or more state actions per
+round. `COMMIT` is exclusive and public. A `GIVE` state action transfers the
+sender's own unfrozen items immediately; it does not require a prior agreement.
+Mandatory responses are batched by recipient and addressed by message id, for
+example:
 
 ```text
 RESPOND #12: INFORM P0 MY GOAL IS {item_A,item_B}
-RESPOND #13: ACCEPT
+RESPOND #13: GIVE {item_Q} TO P0
+RESPOND #14: REJECT
 ```
 
-Response messages are free and do not consume the proactive communication opportunity.
-Accepted transfer proposals create agreements but do not transfer items until
-the giver explicitly uses `GIVE`. `COMMIT` is independent of JOIN; a JOIN
-only creates a persistent coalition agreement. Coalition success is settled
-at episode end and requires every accepted coalition member to have committed
-and the union of their committed contributions to cover the shared goal.
+Response messages are free and do not consume the proactive communication
+opportunity. `REQUEST TRANSFER` is a request, not an agreement: the requested
+owner responds with `GIVE` or `REJECT`; an accepted `GIVE` transfers items in
+that response transition. `PROPOSE JOIN` is the exception: it creates a
+persistent agreement only after `ACCEPT`, and it does not commit holdings.
+Coalition success is settled at episode end and requires every accepted
+coalition member to have committed and the union of their committed
+contributions to cover the shared goal.
 The runtime uses `max_rounds: 6` and player ids `P0/P1/P2/P3`; `P0` is only
 the evaluation focal player, not a privileged engine role.
 

@@ -90,6 +90,17 @@ class SynchronousEpisodeResult:
 class SynchronousItemGame:
     """Pure transition engine for symmetric P0/P1/P2/P3 self-play."""
 
+    MESSAGE_TEMPLATES = (
+        "QUERY <WHO> FOR THEIR <WHAT>",
+        "INFORM <WHO> MY <WHAT> IS/ARE <VALUE>",
+        "REQUEST TRANSFER <ITEMS> FROM <WHO> TO <WHO>",
+        "PROPOSE JOIN WITH <WHO>",
+    )
+    STATE_ACTION_TEMPLATES = (
+        "GIVE <ITEMS> TO <WHO>",
+        "COMMIT <ITEMS>",
+    )
+
     SUPPORTED_SUBTYPES = (
         "collaboration",
         "request_surplus_reroute",
@@ -131,6 +142,9 @@ class SynchronousItemGame:
             "proposals_sent": 0,
             "proposals_accepted": 0,
             "proposals_rejected": 0,
+            "requests_sent": 0,
+            "requests_given": 0,
+            "requests_rejected": 0,
             "transfers": 0,
             "commits": 0,
             "passes": 0,
@@ -163,6 +177,7 @@ class SynchronousItemGame:
             "active": tuple(self.active_players),
             "goals": {agent: frozenset(self.goals[agent]) for agent in self.players},
             "holdings": {agent: frozenset(self.holdings[agent]) for agent in self.players},
+            "committed": {agent: frozenset(self.committed.get(agent, ())) for agent in self.players},
             "known": {
                 agent: {
                     other: {field: frozenset(values) for field, values in fields.items()}
@@ -191,6 +206,17 @@ class SynchronousItemGame:
     def _format_inbox(self, agent: str) -> list[str]:
         return [f"- round {message['round']}: {message['text']}" for message in self.inboxes[agent]]
 
+    def get_action_templates(self, agent: str) -> tuple[str, ...]:
+        """Return the protocol grammar shown to the model.
+
+        Concrete legality is deliberately checked by ``_parse_decision``
+        against the round snapshot.  The model should learn the protocol
+        semantics, not copy a large pre-enumerated action table.
+        """
+        if agent not in self.active:
+            return ()
+        return self.MESSAGE_TEMPLATES + self.STATE_ACTION_TEMPLATES
+
     def get_observation(self, agent: str, snapshot: Mapping[str, Any] | None = None) -> str:
         if agent not in self.goals:
             raise ValueError(f"unknown player {agent!r}")
@@ -217,19 +243,23 @@ class SynchronousItemGame:
         lines.extend([
             "DECISION PHASE.",
             "All mandatory responses from the previous round have already been completed.",
-            "Output one short legal action per line; do not use MESSAGE: or ACTIONS: labels.",
-            "QUERY, INFORM, and PROPOSE are messages. GIVE and COMMIT change the state.",
-            "Send at most one message per round, plus any compatible state actions.",
+            "Output one short action per line; do not use MESSAGE: or ACTIONS: labels.",
+            "Use the general templates below and fill in WHO, WHAT, VALUE, and ITEMS yourself.",
+            "The environment checks whether your filled template is legal in this snapshot.",
+            "QUERY and INFORM are directed messages. REQUEST TRANSFER asks the FROM player to give ITEMS to the TO player.",
+            "A transfer request never needs the requester to hold the requested item.",
+            "For a transfer request, the FROM player responds with GIVE or REJECT; GIVE transfers immediately.",
+            "GIVE is also allowed as a proactive transfer of your own unfrozen items.",
+            "Send at most one message per round, plus compatible state actions.",
             "Do NOT output ACCEPT, REJECT, or a response-only INFORM in this phase.",
-            "COMMIT is exclusive: if you COMMIT, do not include any other action.",
+            "COMMIT is a one-shot public action and is exclusive: if you COMMIT, do not include any other action.",
             "Output NO MESSAGE only when you send no message.",
-            "Legal message choices:",
+            "Message templates:",
         ])
-        legal = self.get_legal_actions(agent, snap)
-        lines.extend(f"- {action}" for action in legal if self._is_message_atom(action))
+        lines.extend(f"- {action}" for action in self.MESSAGE_TEMPLATES)
         lines.append("- NO MESSAGE")
-        lines.append("Legal ACTION choices:")
-        lines.extend(f"- {action}" for action in legal if not self._is_message_atom(action))
+        lines.append("State action templates:")
+        lines.extend(f"- {action}" for action in self.STATE_ACTION_TEMPLATES)
         lines.append("- NONE")
         return "\n".join(lines)
 
@@ -244,16 +274,20 @@ class SynchronousItemGame:
         agent = str(requests[0]["recipient"])
         if any(str(message["recipient"]) != agent for message in requests):
             raise SynchronousActionError("all batched response messages must have one recipient")
+        snap = snapshot or self._snapshot()
         lines = [
             "You are an agent in a synchronous Item Coalition Game.",
             f"Your identity: {agent}",
-            f"Your goal: {_format_set(self.goals[agent])}",
-            f"Your holdings: {_format_set(self.holdings[agent])}",
-            f"Round: {self.round_index}/{self.config.max_rounds}",
+            f"Your goal: {_format_set(set(snap['goals'][agent]))}",
+            f"Your holdings: {_format_set(set(snap['holdings'][agent]))}",
+            f"Round: {snap['round']}/{self.config.max_rounds}",
             "RESPONSE PHASE.",
             "You are responding to messages from the previous round.",
-            "Do not take any new action in this phase.",
-            "Respond to every listed message exactly once. Responses are free and do not use the decision MESSAGE slot.",
+            "Do not take any new decision-phase action in this phase.",
+            "Respond to every listed message exactly once. Responses are free and do not use the proactive message slot.",
+            "QUERY requires a truthful INFORM response.",
+            "REQUEST TRANSFER requires either GIVE of the requested items or REJECT.",
+            "JOIN requires ACCEPT or REJECT while the recipient is active; an inactive recipient returns INACTIVE.",
         ]
         for message in requests:
             lines.extend((
@@ -280,6 +314,20 @@ class SynchronousItemGame:
             verb = "IS" if noun == "GOAL" else "ARE"
             values = self.goals[request["recipient"]] if noun == "GOAL" else self.holdings[request["recipient"]]
             return (f"RESPOND #{message_id}: INFORM {request['sender']} MY {noun} {verb} {_format_set(values)}",)
+        if request["kind"] == "TRANSFER":
+            requested_items = set(request["items"])
+            giver = request["from"]
+            if (
+                not requested_items.issubset(self.holdings[giver])
+                or requested_items.intersection(self.committed.get(giver, ()))
+            ):
+                return (f"RESPOND #{message_id}: REJECT",)
+            return (
+                f"RESPOND #{message_id}: GIVE {_format_set(set(request['items']))} TO {request['to']}",
+                f"RESPOND #{message_id}: REJECT",
+            )
+        if request["recipient"] not in self.active:
+            return (f"RESPOND #{message_id}: INACTIVE",)
         return (f"RESPOND #{message_id}: ACCEPT", f"RESPOND #{message_id}: REJECT")
 
     def _response_message_text(self, message: Mapping[str, Any]) -> str:
@@ -289,20 +337,20 @@ class SynchronousItemGame:
         if message["kind"] == "JOIN":
             return f"{message['sender']} proposes JOIN WITH {message['recipient']}."
         return (
-            f"{message['sender']} proposes TRANSFER {_format_set(set(message['items']))} "
+            f"{message['sender']} requests TRANSFER {_format_set(set(message['items']))} "
             f"FROM {message['from']} TO {message['to']}."
         )
 
     def _proposal_atoms(self, agent: str, snapshot: Mapping[str, Any]) -> list[str]:
         actions = []
-        active = set(snapshot["active"])
         for other in self.players:
-            if other == agent or other not in active:
+            if other == agent:
                 continue
-            for item in self.items:
-                item_set = _format_set({item})
-                actions.append(f"PROPOSE TRANSFER {item_set} FROM {agent} TO {other}")
-                actions.append(f"PROPOSE TRANSFER {item_set} FROM {other} TO {agent}")
+            # A request is sent by the receiver to the owner.  The owner can
+            # already be inactive: committed players remain response-only.
+            for item_set in self._subsets(set(self.items)):
+                if item_set:
+                    actions.append(f"REQUEST TRANSFER {_format_set(set(item_set))} FROM {other} TO {agent}")
         return actions
 
     def get_legal_actions(
@@ -312,9 +360,8 @@ class SynchronousItemGame:
         if agent not in snap["active"]:
             return ()
         actions: list[str] = []
-        active = set(snap["active"])
         for other in self.players:
-            if other == agent or other not in active:
+            if other == agent:
                 continue
             actions.extend((f"QUERY {other} FOR THEIR GOAL", f"QUERY {other} FOR THEIR HOLDINGS"))
             actions.extend((
@@ -322,16 +369,19 @@ class SynchronousItemGame:
                 f"INFORM {other} MY HOLDINGS ARE {_format_set(set(snap['holdings'][agent]))}",
             ))
         actions.extend(self._proposal_atoms(agent, snap))
-        if self.subtype == "collaboration" and set(self.players) == {"P0", "P1"}:
-            actions.append("PROPOSE JOIN WITH P1" if agent == "P0" else "PROPOSE JOIN WITH P0")
-        for agreement in snap["agreements"]:
-            if (
-                agreement["type"] == "TRANSFER"
-                and not agreement["fulfilled"]
-                and agreement["from"] == agent
-                and set(agreement["items"]).issubset(set(snap["holdings"][agent]))
-            ):
-                actions.append(f"GIVE {_format_set(set(agreement['items']))} TO {agreement['to']}")
+        # JOIN must target an active player in the decision snapshot.  If the
+        # target commits in this same atomic round, the queued JOIN is still
+        # delivered and receives an automatic INACTIVE response next round.
+        if self.subtype == "collaboration":
+            for other in self.players:
+                if other != agent and other in snap["active"]:
+                    actions.append(f"PROPOSE JOIN WITH {other}")
+        for other in self.players:
+            if other == agent:
+                continue
+            for item_set in self._subsets(set(snap["holdings"][agent])):
+                if item_set:
+                    actions.append(f"GIVE {_format_set(set(item_set))} TO {other}")
         # JOIN is intentionally not required before COMMIT. Final settlement
         # decides whether committed contributions formed a valid coalition.
         actions.extend(f"COMMIT {_format_set(set(subset))}" for subset in self._subsets(set(snap["holdings"][agent])))
@@ -339,7 +389,7 @@ class SynchronousItemGame:
 
     @staticmethod
     def _is_message_atom(action: str) -> bool:
-        return action.startswith(("QUERY ", "INFORM ", "PROPOSE "))
+        return action.startswith(("QUERY ", "INFORM ", "REQUEST ", "PROPOSE "))
 
     def _parse_set(self, raw: str) -> frozenset[str]:
         if not raw.startswith("{") or not raw.endswith("}"):
@@ -350,11 +400,22 @@ class SynchronousItemGame:
             raise SynchronousActionError(f"invalid item set {raw!r}")
         return result
 
-    def _parse_give(self, action: str) -> dict[str, Any]:
+    def _parse_give(
+        self, agent: str, action: str, snapshot: Mapping[str, Any]
+    ) -> dict[str, Any]:
         match = re.fullmatch(r"GIVE (\{[^}]*\}) TO (\w+)", action)
         if match is None:
             raise SynchronousActionError(f"invalid GIVE action {action!r}")
-        return {"kind": "GIVE", "items": self._parse_set(match.group(1)), "to": match.group(2)}
+        items, target = self._parse_set(match.group(1)), match.group(2)
+        if target not in self.players or target == agent:
+            raise SynchronousActionError("GIVE target must be another player")
+        if not items:
+            raise SynchronousActionError("GIVE must contain at least one item")
+        if not items.issubset(snapshot["holdings"][agent]):
+            raise SynchronousActionError("giver does not hold every item in GIVE")
+        if set(items).intersection(snapshot.get("committed", {}).get(agent, ())):
+            raise SynchronousActionError("committed items cannot be given")
+        return {"kind": "GIVE", "items": items, "to": target}
 
     def _parse_commit(self, action: str) -> dict[str, Any]:
         match = re.fullmatch(r"COMMIT (\{[^}]*\})", action)
@@ -368,7 +429,7 @@ class SynchronousItemGame:
         match = re.fullmatch(r"QUERY (\w+) FOR THEIR (GOAL|HOLDINGS)", action)
         if match:
             target, field = match.groups()
-            if target not in snapshot["active"] or target == agent:
+            if target not in self.players or target == agent:
                 raise SynchronousActionError(f"invalid QUERY target {target!r}")
             return {"kind": "QUERY", "sender": agent, "recipient": target, "field": field}
         match = re.fullmatch(r"INFORM (\w+) MY (GOAL|HOLDINGS) (IS|ARE) (\{[^}]*\})", action)
@@ -376,25 +437,25 @@ class SynchronousItemGame:
             target, field, verb, raw = match.groups()
             expected = snapshot["goals"][agent] if field == "GOAL" else snapshot["holdings"][agent]
             if (
-                target not in snapshot["active"]
+                target not in self.players
                 or target == agent
                 or verb != ("IS" if field == "GOAL" else "ARE")
                 or self._parse_set(raw) != expected
             ):
                 raise SynchronousActionError("INFORM must truthfully disclose current state")
             return {"kind": "INFORM", "sender": agent, "recipient": target, "field": field}
-        match = re.fullmatch(r"PROPOSE TRANSFER (\{[^}]*\}) FROM (\w+) TO (\w+)", action)
+        match = re.fullmatch(r"REQUEST TRANSFER (\{[^}]*\}) FROM (\w+) TO (\w+)", action)
         if match:
             raw_items, giver, receiver = match.groups()
             items = self._parse_set(raw_items)
             if (
-                giver not in snapshot["active"]
-                or receiver not in snapshot["active"]
+                giver not in self.players
+                or receiver not in self.players
                 or giver == receiver
-                or agent not in {giver, receiver}
+                or agent != receiver
                 or not items
             ):
-                raise SynchronousActionError("transfer proposal has invalid participants")
+                raise SynchronousActionError("transfer request has invalid participants or direction")
             return {
                 "kind": "TRANSFER",
                 "from": giver,
@@ -408,11 +469,11 @@ class SynchronousItemGame:
             target = match.group(1)
             if (
                 self.subtype != "collaboration"
-                or set(snapshot["active"]) != {"P0", "P1"}
+                or agent not in snapshot["active"]
                 or target == agent
                 or target not in snapshot["active"]
             ):
-                raise SynchronousActionError("JOIN is only available to active Collaboration players")
+                raise SynchronousActionError("JOIN is only available from an active Collaboration player")
             return {"kind": "JOIN", "sender": agent, "recipient": target}
         raise SynchronousActionError(f"unsupported MESSAGE {action!r}")
 
@@ -435,19 +496,25 @@ class SynchronousItemGame:
             message = messages[0] if messages else "NO MESSAGE"
             actions = tuple(atom for atom in atoms if atom not in messages)
         if message != "NO MESSAGE" and not self._is_message_atom(message):
-            raise SynchronousActionError("MESSAGE must be one QUERY, INFORM, PROPOSE, or NO MESSAGE")
+            raise SynchronousActionError("MESSAGE must be one QUERY, INFORM, REQUEST, PROPOSE, or NO MESSAGE")
         legal = set(self.get_legal_actions(agent, snapshot))
         if message != "NO MESSAGE" and message not in legal:
             raise SynchronousActionError("MESSAGE is not legal in the round snapshot")
         if any(action not in legal or self._is_message_atom(action) for action in actions):
             raise SynchronousActionError("ACTIONS contains an illegal or communication action")
-        if any(action.startswith("COMMIT ") for action in actions) and len(actions) != 1:
+        if any(action.startswith("COMMIT ") for action in actions) and (
+            len(actions) != 1 or message != "NO MESSAGE"
+        ):
             raise SynchronousActionError("COMMIT is exclusive within a round")
         parsed: list[dict[str, Any]] = []
         if message != "NO MESSAGE":
             parsed.append(self._parse_message(agent, message, snapshot))
         for action in actions:
-            parsed.append(self._parse_give(action) if action.startswith("GIVE ") else self._parse_commit(action))
+            parsed.append(
+                self._parse_give(agent, action, snapshot)
+                if action.startswith("GIVE ")
+                else self._parse_commit(action)
+            )
         return tuple(parsed)
 
     def _new_message(self, action: Mapping[str, Any]) -> dict[str, Any]:
@@ -470,10 +537,29 @@ class SynchronousItemGame:
             return f"{action['sender']} proposes JOIN WITH {action['recipient']}."
         if kind == "TRANSFER":
             return (
-            f"{action['sender']} proposes TRANSFER {_format_set(set(action['items']))} "
-            f"FROM {action['from']} TO {action['to']}."
+                f"{action['sender']} requests TRANSFER {_format_set(set(action['items']))} "
+                f"FROM {action['from']} TO {action['to']}."
             )
         raise SynchronousActionError(f"cannot format unknown message kind {kind!r}")
+
+    def _apply_transfer(
+        self, giver: str, receiver: str, items: frozenset[str], *, request: bool = False
+    ) -> None:
+        self.holdings[giver] -= set(items)
+        self.holdings[receiver].update(items)
+        self.transfers.append({
+            "round": self.round_index,
+            "from": giver,
+            "to": receiver,
+            "items": sorted(items),
+            "request": request,
+        })
+        self.metrics["transfers"] += 1
+        self.inboxes[receiver].append({
+            "round": self.round_index,
+            "text": f"{giver}: GIVE {_format_set(items)} TO {receiver}",
+            "from": giver,
+        })
 
     def resolve_responses(
         self, responses: Mapping[int | str, str], snapshot: Mapping[str, Any] | None = None
@@ -491,6 +577,8 @@ class SynchronousItemGame:
             normalized[message_id] = _normalize(value)
         if set(normalized) != expected_ids:
             raise SynchronousActionError("every pending communication needs exactly one response")
+        response_transfers: list[tuple[str, str, frozenset[str], bool]] = []
+        consumed: dict[str, set[str]] = {}
         for message in pending:
             response = normalized[message["id"]]
             if response not in self.response_actions(message):
@@ -511,43 +599,60 @@ class SynchronousItemGame:
                 continue
             proposer = message["sender"]
             recipient = message["recipient"]
-            accepted = response.endswith(": ACCEPT")
             self.inboxes[proposer].append({
                 "round": self.round_index,
                 "message_id": message["id"],
                 "text": response,
                 "from": recipient,
             })
-            is_request = (
-                self.subtype == "respond_to_give_request"
-                and message["kind"] == "TRANSFER"
-                and message["from"] == "P0"
-                and message["to"] != "P0"
-                and message["sender"] != "P0"
-            )
-            self.metrics["request_responded"] += int(is_request)
-            if is_request and not accepted and self.instance.request_case == "harmful":
-                self.metrics["harmful_give_refused"] += 1
+            if message["kind"] == "TRANSFER":
+                is_request = (
+                    self.subtype == "respond_to_give_request"
+                    and message["from"] == "P0"
+                    and message["to"] != "P0"
+                    and message["sender"] != "P0"
+                )
+                self.metrics["request_responded"] += int(is_request)
+                if response.endswith(": REJECT"):
+                    self.metrics["requests_rejected"] += 1
+                    self.metrics["proposals_rejected"] += 1
+                    if is_request and self.instance.request_case == "harmful":
+                        self.metrics["harmful_give_refused"] += 1
+                    continue
+                self.metrics["requests_given"] += 1
+                self.metrics["proposals_accepted"] += 1
+                giver = message["from"]
+                items = frozenset(message["items"])
+                if message["recipient"] != giver:
+                    raise SynchronousActionError("only the requested giver can respond with GIVE")
+                if not items.issubset(snapshot["holdings"][giver]):
+                    raise SynchronousActionError("response GIVE contains an item not held by the giver")
+                if set(items).intersection(self.committed.get(giver, ())):
+                    raise SynchronousActionError("committed items cannot be given in response")
+                if set(items) & consumed.setdefault(giver, set()):
+                    raise SynchronousActionError("the same item cannot be given twice in one response phase")
+                consumed[giver].update(items)
+                response_transfers.append((giver, message["to"], items, is_request))
+                if is_request and self.instance.request_case == "safe":
+                    self.metrics["safe_give_correct"] += 1
+                continue
+
+            if response.endswith(": INACTIVE"):
+                self.metrics["proposals_rejected"] += 1
+                continue
+            accepted = response.endswith(": ACCEPT")
             if accepted:
                 self.metrics["proposals_accepted"] += 1
-                if message["kind"] == "JOIN":
-                    members = frozenset({message["sender"], message["recipient"]})
-                    self.coalition = {"members": members, "accepted": True}
-                    self.join_accepted = True
-                    self.agreements.append({
-                        "type": "JOIN", "members": members, "accepted": True, "fulfilled": False,
-                    })
-                else:
-                    self.agreements.append({
-                        "type": "TRANSFER",
-                        "from": message["from"],
-                        "to": message["to"],
-                        "items": frozenset(message["items"]),
-                        "fulfilled": False,
-                        "request": is_request,
-                    })
+                members = frozenset({message["sender"], message["recipient"]})
+                self.coalition = {"members": members, "accepted": True}
+                self.join_accepted = True
+                self.agreements.append({
+                    "type": "JOIN", "members": members, "accepted": True, "fulfilled": False,
+                })
             else:
                 self.metrics["proposals_rejected"] += 1
+        for giver, receiver, items, is_request in response_transfers:
+            self._apply_transfer(giver, receiver, items, request=is_request)
         self.pending_messages = []
 
     def resolve_round(
@@ -575,46 +680,36 @@ class SynchronousItemGame:
             for action in actions:
                 if action["kind"] != "GIVE":
                     continue
-                matching = [
-                    agreement for agreement in self.agreements
-                    if agreement["type"] == "TRANSFER"
-                    and not agreement["fulfilled"]
-                    and agreement["from"] == agent
-                    and agreement["to"] == action["to"]
-                    and agreement["items"] == action["items"]
-                ]
-                if not matching:
-                    raise SynchronousActionError("GIVE must match an accepted transfer agreement")
                 if not action["items"].issubset(snapshot["holdings"][agent]):
-                    raise SynchronousActionError("giver does not hold every transferred item")
+                    raise SynchronousActionError("giver does not hold every item in GIVE")
+                if set(action["items"]).intersection(snapshot.get("committed", {}).get(agent, ())):
+                    raise SynchronousActionError("committed items cannot be given")
                 if consumed[agent] & set(action["items"]):
-                    raise SynchronousActionError("the same item cannot be transferred twice in one round")
+                    raise SynchronousActionError("the same item cannot be given twice in one round")
                 consumed[agent].update(action["items"])
                 transfer_actions.append((agent, action))
 
         outgoing: list[dict[str, Any]] = []
-        committing = {agent for agent, action in commits.items() if action is not None}
         for agent, actions in parsed.items():
             for action in actions:
                 if action["kind"] not in {"QUERY", "INFORM", "TRANSFER", "JOIN"}:
-                    continue
-                if action.get("recipient") in committing or agent in committing:
-                    self.metrics["messages_dropped_due_to_commit"] += 1
                     continue
                 if action["kind"] in {"TRANSFER", "JOIN", "QUERY"}:
                     outgoing.append(self._new_message(action))
                     if action["kind"] == "QUERY":
                         self.metrics["queries_sent"] += 1
-                    else:
-                        self.metrics["proposals_sent"] += 1
+                    elif action["kind"] == "TRANSFER":
+                        self.metrics["requests_sent"] += 1
+                        self.metrics["proposals_sent"] += 1  # compatibility alias
                         if (
                             self.subtype == "respond_to_give_request"
-                            and action["kind"] == "TRANSFER"
                             and action["from"] == "P0"
                             and action["to"] != "P0"
                             and action["sender"] != "P0"
                         ):
                             self.metrics["request_proposed"] += 1
+                    else:
+                        self.metrics["proposals_sent"] += 1
                 else:
                     target = action["recipient"]
                     field = action["field"]
@@ -628,39 +723,7 @@ class SynchronousItemGame:
                     self.metrics["informs_sent"] += 1
 
         for agent, action in transfer_actions:
-            self.holdings[agent] -= set(action["items"])
-            self.holdings[action["to"]].update(action["items"])
-            for agreement in self.agreements:
-                if (
-                    agreement["type"] == "TRANSFER"
-                    and not agreement["fulfilled"]
-                    and agreement["from"] == agent
-                    and agreement["to"] == action["to"]
-                    and agreement["items"] == action["items"]
-                ):
-                    agreement["fulfilled"] = True
-                    break
-            self.transfers.append({"round": self.round_index, "from": agent, **action})
-            self.metrics["transfers"] += 1
-            self.inboxes[action["to"]].append({
-                "round": self.round_index,
-                "text": f"{agent}: GIVE {_format_set(action['items'])} TO {action['to']}",
-                "from": agent,
-            })
-            if (
-                self.subtype == "respond_to_give_request"
-                and agent == "P0"
-                and action["to"] != "P0"
-                and any(
-                    agreement.get("request")
-                    and agreement["type"] == "TRANSFER"
-                    and agreement["from"] == agent
-                    and agreement["to"] == action["to"]
-                    and agreement["items"] == action["items"]
-                    for agreement in self.agreements
-                )
-            ):
-                self.metrics["safe_give_correct"] += int(self.instance.request_case == "safe")
+            self._apply_transfer(agent, action["to"], action["items"])
 
         for agent, commit in commits.items():
             if commit is None:
@@ -674,6 +737,8 @@ class SynchronousItemGame:
                 "action": f"COMMIT {_format_set(commit['items'])}",
             })
 
+        # Keep messages addressed to a player that commits in this same
+        # round.  That player is inactive next round but remains response-only.
         self.pending_messages = outgoing
         for agent, actions in parsed.items():
             if not actions:
@@ -698,10 +763,27 @@ class SynchronousItemGame:
         return self.goals["P0"].issubset(pool)
 
     def scenario_objective_success(self) -> bool:
-        if not all(agreement["fulfilled"] for agreement in self.agreements if agreement["type"] == "TRANSFER"):
+        # Transfer requests are not agreements.  They either cause an
+        # immediate response-phase GIVE or are rejected; only JOIN creates a
+        # persistent agreement whose fulfillment is settled at episode end.
+        if not all(agreement["fulfilled"] for agreement in self.agreements):
             return False
         if self.subtype == "collaboration":
             return self.coalition_success()
+        if self.subtype == "respond_to_give_request":
+            # This subtype evaluates a response to an active partner request,
+            # not merely whether P0 can commit its own goal.  The partner
+            # must have proposed the request and P0 must have responded with
+            # the case-appropriate outcome.
+            if not (
+                self.metrics["request_proposed"] > 0
+                and self.metrics["request_responded"] > 0
+            ):
+                return False
+            if self.instance.request_case == "safe" and self.metrics["safe_give_correct"] <= 0:
+                return False
+            if self.instance.request_case == "harmful" and self.metrics["harmful_give_refused"] <= 0:
+                return False
         return "P0" in self.committed and self.goals["P0"].issubset(self.committed["P0"])
 
     def diagnostics(self) -> dict[str, Any]:
@@ -714,9 +796,7 @@ class SynchronousItemGame:
             "all_players_success": float(bool(self.players) and all(player_success.values())),
             "scenario_objective_success": float(self.scenario_objective_success()),
             "rounds_used": float(self.round_index),
-            "agreements_fulfilled": float(all(
-                agreement["fulfilled"] for agreement in self.agreements if agreement["type"] == "TRANSFER"
-            )),
+            "agreements_fulfilled": float(all(agreement["fulfilled"] for agreement in self.agreements)),
             "join_accepted": float(self.join_accepted),
             "request_proposed": float(self.metrics["request_proposed"] > 0),
             "request_responded": float(self.metrics["request_responded"] > 0),
@@ -760,6 +840,8 @@ def _parse_response_output(response: str) -> dict[int, str]:
         if message_id in parsed:
             raise SynchronousActionError("a message received more than one response")
         response_text = _canonicalize_protocol(_normalize(match.group(2)))
+        if response_text.upper() in {"ACCEPT", "REJECT", "INACTIVE"}:
+            response_text = response_text.upper()
         parsed[message_id] = f"RESPOND #{message_id}: {response_text}"
     if not parsed:
         raise SynchronousActionError("response must contain RESPOND #<id>: <response>")
@@ -787,7 +869,7 @@ def _parse_decision_output(response: str) -> dict[str, Any]:
         line = _canonicalize_protocol(line)
         if line == "NO MESSAGE":
             continue
-        if line.startswith(("QUERY ", "INFORM ", "PROPOSE ", "GIVE ", "COMMIT ")):
+        if line.startswith(("QUERY ", "INFORM ", "REQUEST ", "PROPOSE ", "GIVE ", "COMMIT ")):
             candidates.append(line)
     candidates = list(dict.fromkeys(candidates))
     if not candidates:
@@ -831,9 +913,46 @@ def _canonicalize_protocol(line: str) -> str:
     ASK/TELL are accepted only as parser aliases.  Legal actions and all
     prompts expose QUERY/INFORM, so new model outputs use the new vocabulary.
     """
-    line = _normalize(line)
+    line = _normalize(line).rstrip(".")
+    # Normalize command vocabulary and fixed grammar words while preserving
+    # opaque item/player identifiers exactly as supplied.
     line = re.sub(r"^ASK(?=\s)", "QUERY", line, flags=re.IGNORECASE)
     line = re.sub(r"^TELL(?=\s)", "INFORM", line, flags=re.IGNORECASE)
+    line = re.sub(r"^PROPOSE TRANSFER(?=\s)", "REQUEST TRANSFER", line, flags=re.IGNORECASE)
+    match = re.fullmatch(r"QUERY\s+(\w+)\s+FOR\s+THEIR\s+(GOAL|HOLDINGS)", line, re.IGNORECASE)
+    if match:
+        return f"QUERY {match.group(1)} FOR THEIR {match.group(2).upper()}"
+    match = re.fullmatch(
+        r"INFORM\s+(\w+)\s+MY\s+(GOAL|HOLDINGS)\s+(IS|ARE)\s+(\{[^}]*\})",
+        line,
+        re.IGNORECASE,
+    )
+    if match:
+        return (
+            f"INFORM {match.group(1)} MY {match.group(2).upper()} "
+            f"{match.group(3).upper()} {_normalize(match.group(4))}"
+        )
+    match = re.fullmatch(
+        r"REQUEST\s+TRANSFER\s+(\{[^}]*\})\s+FROM\s+(\w+)\s+TO\s+(\w+)",
+        line,
+        re.IGNORECASE,
+    )
+    if match:
+        return (
+            f"REQUEST TRANSFER {_normalize(match.group(1))} FROM "
+            f"{match.group(2)} TO {match.group(3)}"
+        )
+    match = re.fullmatch(r"PROPOSE\s+JOIN\s+WITH\s+(\w+)", line, re.IGNORECASE)
+    if match:
+        return f"PROPOSE JOIN WITH {match.group(1)}"
+    match = re.fullmatch(r"GIVE\s+(\{[^}]*\})\s+TO\s+(\w+)", line, re.IGNORECASE)
+    if match:
+        return f"GIVE {_normalize(match.group(1))} TO {match.group(2)}"
+    match = re.fullmatch(r"COMMIT\s+(\{[^}]*\})", line, re.IGNORECASE)
+    if match:
+        return f"COMMIT {_normalize(match.group(1))}"
+    if line.upper() == "NO MESSAGE":
+        return "NO MESSAGE"
     return line
 
 
@@ -890,15 +1009,36 @@ class SynchronousSelfPlayRunner:
             for request in requests:
                 by_recipient.setdefault(str(request["recipient"]), []).append(request)
             for agent, agent_requests in by_recipient.items():
-                observation = game.get_response_observation(agent_requests, response_snapshot)
-                legal = tuple(action for request in agent_requests for action in game.response_actions(request))
+                automatic = {
+                    request["id"]: f"RESPOND #{request['id']}: INACTIVE"
+                    for request in agent_requests
+                    if request["kind"] == "JOIN" and request["recipient"] not in game.active
+                }
+                model_requests = [request for request in agent_requests if request["id"] not in automatic]
+                if automatic:
+                    round_record["responses"].append({
+                        "agent": agent,
+                        "phase": "response",
+                        "observation": "automatic INACTIVE response for committed player",
+                        "legal_actions": [automatic[request["id"]] for request in agent_requests if request["id"] in automatic],
+                        "reason": "",
+                        "raw_response": "",
+                        "answer": "\n".join(automatic.values()),
+                        "valid": True,
+                        "automatic": True,
+                    })
+                    responses.update(automatic)
+                if not model_requests:
+                    continue
+                observation = game.get_response_observation(model_requests, response_snapshot)
+                legal = tuple(action for request in model_requests for action in game.response_actions(request))
                 raw, _, record = self._call_policy(agent=agent, observation=observation, legal=legal, phase="response")
                 try:
                     parsed = _parse_response_output(raw)
-                    expected = {message["id"] for message in agent_requests}
+                    expected = {message["id"] for message in model_requests}
                     if set(parsed) != expected:
                         raise SynchronousActionError("response must cover every incoming message exactly once")
-                    for message in agent_requests:
+                    for message in model_requests:
                         if parsed[message["id"]] not in game.response_actions(message):
                             raise SynchronousActionError("response is not legal for its message")
                     responses.update(parsed)
@@ -925,7 +1065,7 @@ class SynchronousSelfPlayRunner:
             decisions: dict[str, Mapping[str, Any]] = {}
             for agent in decision_snapshot["active"]:
                 observation = game.get_observation(agent, decision_snapshot)
-                legal = game.get_legal_actions(agent, decision_snapshot)
+                legal = game.get_action_templates(agent)
                 raw, _, record = self._call_policy(agent=agent, observation=observation, legal=legal, phase="decision")
                 try:
                     decision = _parse_decision_output(raw)
@@ -1016,17 +1156,20 @@ class HuggingFaceSynchronousSelfPlayPolicy:
             "There are two completely separate phases. In RESPONSE PHASE, respond to every "
             "previous-round message exactly once using RESPOND #<id>: ..., and take no new action. "
             "In DECISION PHASE, all previous mandatory responses are complete. Do not output "
-            "ACCEPT, REJECT, or response-only INFORM actions. Output one short legal action per line; "
-            "do not output MESSAGE: or ACTIONS: labels. QUERY, INFORM, and PROPOSE are messages; "
-            "GIVE and COMMIT are state-changing actions. Send at most one message per round. "
-            "COMMIT is exclusive. "
+            "ACCEPT, REJECT, or response-only INFORM actions. Output one short action per line; "
+            "do not output MESSAGE: or ACTIONS: labels. Use the general templates in the user message. "
+            "QUERY and INFORM send directed information messages. REQUEST TRANSFER asks the FROM "
+            "player to give ITEMS to the TO player; the requester is the TO player and does not need "
+            "to hold the requested item. The owner responds with GIVE or REJECT, and GIVE transfers "
+            "the items immediately. GIVE can also be a proactive transfer of your own items. "
+            "PROPOSE JOIN creates an agreement only after ACCEPT. COMMIT is public, one-shot, and exclusive. "
             "Keep reasoning private. Return <reason>...</reason> and exactly one <answer>...</answer>."
         )
         messages: list[dict[str, str]] = [{"role": "system", "content": system}]
         messages.extend(dict(message) for message in context)
         messages.append({
             "role": "user",
-            "content": observation + "\n\nLegal actions:\n" + "\n".join(legal_actions),
+            "content": observation + "\n\nProtocol templates:\n" + "\n".join(legal_actions),
         })
         prompt = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         inputs = self.tokenizer(prompt, return_tensors="pt")
