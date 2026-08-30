@@ -187,5 +187,11 @@ python examples/item_game/smoke_test_vllm_structured_output.py \
   --base-url http://<server>:8000/v1
 ```
 
+The smoke test first polls `GET /v1/models` and waits up to 600 seconds by
+default, which accommodates Qwen3 CUDA-graph and `torch.compile` startup. Use
+`--ready-timeout` or `--ready-interval` to override this. The self-play pilot
+has the same readiness gate through `VLLM_READY_TIMEOUT` and
+`VLLM_READY_INTERVAL` (both configurable environment variables).
+
 Set `ITEM_GAME_BACKEND=hf` and `EVAL_MODEL_DIR=<local model directory>` to use
 the original Transformers fallback.

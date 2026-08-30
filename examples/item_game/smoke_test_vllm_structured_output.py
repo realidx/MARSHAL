@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
+import urllib.error
+import urllib.request
 from collections import Counter
 
 from roll.agentic.env.item_game.config import ItemGameConfig
@@ -21,6 +24,52 @@ from roll.agentic.env.item_game.synchronous_self_play import (
 )
 
 
+def wait_for_vllm(
+    base_url: str,
+    api_key: str,
+    *,
+    timeout: float,
+    interval: float,
+) -> None:
+    """Wait for the OpenAI-compatible vLLM server to finish startup."""
+    normalized_url = base_url.rstrip("/")
+    if not normalized_url.endswith("/v1"):
+        normalized_url += "/v1"
+    ready_url = f"{normalized_url}/models"
+    deadline = time.monotonic() + timeout
+    started = time.monotonic()
+    next_status = started
+
+    while True:
+        request = urllib.request.Request(
+            ready_url,
+            headers={"Authorization": f"Bearer {api_key}"} if api_key else {},
+            method="GET",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=5.0) as response:
+                if 200 <= response.status < 300:
+                    elapsed = time.monotonic() - started
+                    print(f"vLLM ready after {elapsed:.1f}s: {ready_url}", flush=True)
+                    return
+        except (urllib.error.HTTPError, urllib.error.URLError, OSError, ValueError):
+            pass
+
+        now = time.monotonic()
+        if now >= deadline:
+            raise RuntimeError(
+                f"vLLM did not become ready within {timeout:.0f}s: {ready_url}"
+            )
+        if now >= next_status:
+            elapsed = now - started
+            print(
+                f"waiting for vLLM readiness ({elapsed:.0f}/{timeout:.0f}s): {ready_url}",
+                flush=True,
+            )
+            next_status = now + 30.0
+        time.sleep(min(interval, deadline - now))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Smoke-test Qwen3 vLLM structured action output")
     parser.add_argument("--model", required=True)
@@ -28,7 +77,29 @@ def main() -> int:
     parser.add_argument("--api-key", default="EMPTY")
     parser.add_argument("--cases", type=int, default=100)
     parser.add_argument("--max-tokens", type=int, default=1024)
+    parser.add_argument(
+        "--ready-timeout",
+        type=float,
+        default=600.0,
+        help="Maximum seconds to wait for GET /v1/models (default: 600)",
+    )
+    parser.add_argument(
+        "--ready-interval",
+        type=float,
+        default=5.0,
+        help="Seconds between vLLM readiness checks (default: 5)",
+    )
     args = parser.parse_args()
+
+    if args.ready_timeout <= 0 or args.ready_interval <= 0:
+        parser.error("--ready-timeout and --ready-interval must be positive")
+
+    wait_for_vllm(
+        args.base_url,
+        args.api_key,
+        timeout=args.ready_timeout,
+        interval=args.ready_interval,
+    )
 
     config = ItemGameConfig(
         generator="pure_collaboration",
