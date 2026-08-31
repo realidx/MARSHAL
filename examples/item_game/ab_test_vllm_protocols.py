@@ -78,6 +78,7 @@ def main() -> int:
         "C_native_tools": VLLMSelfPlayPolicy(
             args.base_url, args.model, api_key=args.api_key,
             max_new_tokens=args.max_tokens, output_mode="native_tools",
+            native_tool_choice="auto",
         ),
     }
     stats = defaultdict(Counter)

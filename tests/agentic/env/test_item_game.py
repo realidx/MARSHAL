@@ -1407,7 +1407,8 @@ def test_synchronous_generic_message_json_is_not_an_item_game_action():
         )
 
 
-def test_vllm_policy_sends_native_tools_and_keeps_reasoning_separate(monkeypatch):
+@pytest.mark.parametrize("tool_choice", ["auto", "required"])
+def test_vllm_policy_sends_native_tools_and_keeps_reasoning_separate(monkeypatch, tool_choice):
     captured = {}
 
     class FakeResponse:
@@ -1427,7 +1428,10 @@ def test_vllm_policy_sends_native_tools_and_keeps_reasoning_separate(monkeypatch
         return FakeResponse()
 
     monkeypatch.setattr(sync_module.urllib.request, "urlopen", fake_urlopen)
-    policy = VLLMSelfPlayPolicy("http://server:8000/v1", "Qwen3-4B-Instruct-2507")
+    policy = VLLMSelfPlayPolicy(
+        "http://server:8000/v1", "Qwen3-4B-Instruct-2507",
+        native_tool_choice=tool_choice,
+    )
     schema = {"type": "object"}
     available = ({
         "name": "PASS", "description": "Take no action.",
@@ -1449,7 +1453,7 @@ def test_vllm_policy_sends_native_tools_and_keeps_reasoning_separate(monkeypatch
     assert captured["url"] == "http://server:8000/v1/chat/completions"
     assert body["tools"][0]["function"]["name"] == "PASS"
     assert body["tools"][0]["function"]["parameters"] == available[0]["arguments"]
-    assert body["tool_choice"] == "required"
+    assert body["tool_choice"] == tool_choice
     assert "parallel_tool_calls" not in body
     assert "response_format" not in body
     assert "guided_json" not in body

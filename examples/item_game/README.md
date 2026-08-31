@@ -217,8 +217,14 @@ debugging the runner itself. To run the preflight directly:
 ```bash
 python examples/item_game/smoke_test_vllm_tool_calling.py \
   --model Qwen/Qwen3-4B-Instruct-2507 \
-  --base-url http://<server>:8000/v1
+  --base-url http://<server>:8000/v1 \
+  --tool-choice auto
 ```
+
+The native smoke test deliberately defaults to `tool_choice=auto`. This tests
+the Qwen Hermes-tag generation/parser path without vLLM 0.9's separate
+`required` guided-decoding path. Exactly-one and argument-schema requirements
+remain application-level smoke-test checks.
 
 After the native smoke test passes, compare the three serialization protocols
 on the same trivial intents:

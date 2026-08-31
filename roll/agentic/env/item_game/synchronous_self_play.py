@@ -2020,9 +2020,12 @@ class VLLMSelfPlayPolicy:
         timeout: float = 300.0,
         enable_thinking: bool = False,
         output_mode: str = "native_tools",
+        native_tool_choice: str = "required",
     ):
         if output_mode not in {"native_tools", "reason_action", "action_only"}:
             raise ValueError("unknown output_mode")
+        if native_tool_choice not in {"auto", "required"}:
+            raise ValueError("native_tool_choice must be 'auto' or 'required'")
         self.base_url = base_url.rstrip("/")
         if not self.base_url.endswith("/v1"):
             self.base_url += "/v1"
@@ -2033,6 +2036,7 @@ class VLLMSelfPlayPolicy:
         self.timeout = timeout
         self.enable_thinking = enable_thinking
         self.output_mode = output_mode
+        self.native_tool_choice = native_tool_choice
 
     def generate(
         self,
@@ -2095,7 +2099,7 @@ class VLLMSelfPlayPolicy:
                     }
                     for definition in available_actions
                 ],
-                "tool_choice": "required",
+                "tool_choice": self.native_tool_choice,
             })
         else:
             if action_schema is None:

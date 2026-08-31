@@ -68,6 +68,7 @@ if [[ "${ITEM_GAME_BACKEND}" == "vllm" ]]; then
       --api-key "${VLLM_API_KEY}" \
       --cases "${SELF_PLAY_PREFLIGHT_CASES:-100}" \
       --max-tokens "${SELF_PLAY_MAX_NEW_TOKENS:-1024}" \
+      --tool-choice "${SELF_PLAY_SMOKE_TOOL_CHOICE:-auto}" \
       --ready-timeout "${VLLM_READY_TIMEOUT:-600}" \
       --ready-interval "${VLLM_READY_INTERVAL:-5}"
   fi

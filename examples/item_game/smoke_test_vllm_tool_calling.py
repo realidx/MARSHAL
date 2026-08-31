@@ -29,6 +29,10 @@ def main() -> int:
     parser.add_argument("--api-key", default="EMPTY")
     parser.add_argument("--cases", type=int, default=100)
     parser.add_argument("--max-tokens", type=int, default=256)
+    parser.add_argument(
+        "--tool-choice", choices=("auto", "required"), default="auto",
+        help="Use auto to isolate the Qwen/Hermes parser path from required guided decoding.",
+    )
     parser.add_argument("--ready-timeout", type=float, default=600.0)
     parser.add_argument("--ready-interval", type=float, default=5.0)
     parser.add_argument("--output", help="Optional JSONL file containing per-case results")
@@ -61,6 +65,7 @@ def main() -> int:
     policy = VLLMSelfPlayPolicy(
         args.base_url, args.model, api_key=args.api_key,
         max_new_tokens=args.max_tokens, output_mode="native_tools",
+        native_tool_choice=args.tool_choice,
     )
     counts = Counter()
     details: list[dict[str, object]] = []
@@ -131,7 +136,8 @@ def main() -> int:
     total = counts["cases"]
     summary = {
         "protocol": "native_tools",
-        "constraint_transport": "tools + tool_choice=required",
+        "constraint_transport": f"tools + tool_choice={args.tool_choice}",
+        "tool_choice": args.tool_choice,
         "server_identity": identity,
         "cases": total,
         "reason_nonempty_rate": counts["reason_nonempty"] / total,
