@@ -187,15 +187,15 @@ backend. The direct Hugging Face backend is retained only as an unconstrained
 legacy ablation; do not use it to measure protocol grounding. For a vLLM
 OpenAI-compatible server, start Qwen3 on the remote server. The repository
 provides a launcher whose default `--max-model-len` is 8192, which is suitable
-for the A100-40 setup:
+for the A100-40 setup (legacy/fallback profile):
 
 ```bash
 export VLLM_MODEL=Qwen/Qwen3-4B-Instruct-2507
 bash examples/item_game/run_item_game_vllm_server.sh
 ```
 
-Native vLLM reasoning is intentionally disabled. The server uses Qwen's
-Hermes-style tool parser. Each policy response places a concise private reason
+Native vLLM reasoning is intentionally disabled. The fallback server uses
+Qwen's Hermes-style tool parser. Each policy response places a concise private reason
 in ordinary assistant `content` and exactly one executable action in
 `tool_calls[0]`. The environment never extracts actions from content. The
 default `native_tools` mode is the formal candidate protocol;
@@ -225,10 +225,40 @@ python examples/item_game/smoke_test_vllm_tool_calling.py \
   --tool-choice auto
 ```
 
-The native smoke test deliberately defaults to `tool_choice=auto`. This tests
-the Qwen Hermes-tag generation/parser path without vLLM 0.9's separate
-`required` guided-decoding path. Exactly-one and argument-schema requirements
-remain application-level smoke-test checks.
+The native smoke test defaults to `tool_choice=auto`; the parser name is
+reported explicitly with `--tool-call-parser` and does not alter the client
+request. Exactly-one and argument-schema requirements remain application-level
+smoke-test checks.
+
+To test the separate vLLM 0.28 profile before changing formal self-play, start
+the new server in another shell:
+
+```bash
+export VLLM_MODEL=Qwen/Qwen3-4B-Instruct-2507
+bash examples/item_game/run_item_game_vllm_028_server.sh
+```
+
+The 0.28 profile defaults to `--tool-call-parser qwen3` as the non-Hermes
+candidate under test, with `VLLM_TOOL_CALL_PARSER` available for an explicit
+comparison. There is an important model/parser distinction: vLLM 0.28 has a
+`qwen3` parser API, but its tool-calling guide explicitly maps
+`qwen3_xml` to Qwen3-Coder and does not certify `qwen3` for this exact
+Qwen3-4B-Instruct-2507 checkpoint. Qwen's own function-calling guide still
+recommends Hermes-style tool use for Qwen3. Therefore this run treats `qwen3`
+as an empirical candidate; if it fails, rerun the same matrix with
+`VLLM_TOOL_CALL_PARSER=hermes` and record the parser result rather than
+changing ItemGame.
+Run the smoke matrix, which does not launch self-play:
+
+```bash
+bash examples/item_game/smoke_test_vllm_028_tool_calling.sh
+```
+
+It runs 100-case `auto`, 100-case `required`, and `auto`/typed-`PASS`
+no-op checks, always with `parallel_tool_calls=false`, and requires the
+server identity to report vLLM `0.28.0`. The existing server launcher and
+self-play pilot remain the fallback path until this matrix passes. After a
+successful matrix, point the unchanged self-play pilot at the 0.28 server.
 
 After the native smoke test passes, compare the three serialization protocols
 on the same trivial intents:

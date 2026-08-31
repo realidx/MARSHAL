@@ -1464,8 +1464,9 @@ def test_vllm_policy_sends_native_tools_and_keeps_reasoning_separate(monkeypatch
     assert captured["url"] == "http://server:8000/v1/chat/completions"
     assert body["tools"][0]["function"]["name"] == "PASS"
     assert body["tools"][0]["function"]["parameters"] == available[0]["arguments"]
+    assert body["tools"][0]["function"]["strict"] is True
     assert body["tool_choice"] == tool_choice
-    assert "parallel_tool_calls" not in body
+    assert body["parallel_tool_calls"] is False
     assert "response_format" not in body
     assert "guided_json" not in body
     assert "guided_decoding_backend" not in body

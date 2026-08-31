@@ -70,6 +70,8 @@ if [[ "${ITEM_GAME_BACKEND}" == "vllm" ]]; then
       --max-tokens "${SELF_PLAY_MAX_NEW_TOKENS:-1024}" \
       --tool-choice "${SELF_PLAY_SMOKE_TOOL_CHOICE:-auto}" \
       --pass-schema "${SELF_PLAY_SMOKE_PASS_SCHEMA:-confirm}" \
+      --tool-call-parser "${VLLM_TOOL_CALL_PARSER:-hermes}" \
+      --parallel-tool-calls "${SELF_PLAY_PARALLEL_TOOL_CALLS:-false}" \
       --ready-timeout "${VLLM_READY_TIMEOUT:-600}" \
       --ready-interval "${VLLM_READY_INTERVAL:-5}"
   fi
@@ -88,6 +90,7 @@ echo "episodes=$((EPISODES * 3)) (${EPISODES} per subtype: Collaboration + Reque
   --vllm-api-key "${VLLM_API_KEY}" \
   --output-mode "${SELF_PLAY_OUTPUT_MODE:-native_tools}" \
   --tool-choice "${SELF_PLAY_TOOL_CHOICE:-auto}" \
+  --parallel-tool-calls "${SELF_PLAY_PARALLEL_TOOL_CALLS:-false}" \
   --episodes "${EPISODES}" \
   --max-new-tokens "${SELF_PLAY_MAX_NEW_TOKENS:-1024}" \
   --max-rounds "${SELF_PLAY_MAX_ROUNDS:-6}" \

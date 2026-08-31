@@ -2045,6 +2045,7 @@ class VLLMSelfPlayPolicy:
         enable_thinking: bool = False,
         output_mode: str = "native_tools",
         native_tool_choice: str = "auto",
+        parallel_tool_calls: bool = False,
     ):
         if output_mode not in {"native_tools", "reason_action", "action_only"}:
             raise ValueError("unknown output_mode")
@@ -2061,6 +2062,7 @@ class VLLMSelfPlayPolicy:
         self.enable_thinking = enable_thinking
         self.output_mode = output_mode
         self.native_tool_choice = native_tool_choice
+        self.parallel_tool_calls = parallel_tool_calls
 
     def generate(
         self,
@@ -2119,11 +2121,19 @@ class VLLMSelfPlayPolicy:
                             "name": str(definition["name"]),
                             "description": str(definition.get("description", "")),
                             "parameters": dict(definition["arguments"]),
+                            # vLLM 0.28 uses this opt-in for schema-constrained
+                            # decoding in tool_choice=auto. It changes only
+                            # transport enforcement, not ItemGame semantics.
+                            "strict": True,
                         },
                     }
                     for definition in available_actions
                 ],
                 "tool_choice": self.native_tool_choice,
+                # ItemGame resolves one decision per agent and round.  Send
+                # this explicitly instead of relying on the server default;
+                # the smoke test also verifies that the endpoint honors it.
+                "parallel_tool_calls": self.parallel_tool_calls,
             })
         else:
             if action_schema is None:
@@ -2294,7 +2304,13 @@ def main() -> None:  # pragma: no cover
         "--tool-choice",
         choices=("auto", "required"),
         default="auto",
-        help="vLLM native tool choice; auto matches the validated Qwen3/Hermes smoke test",
+        help="vLLM native tool choice",
+    )
+    parser.add_argument(
+        "--parallel-tool-calls",
+        choices=("true", "false"),
+        default="false",
+        help="whether vLLM may return multiple tool calls in one decision (default: false)",
     )
     parser.add_argument("--subtype", choices=("all", *SynchronousItemGame.SUPPORTED_SUBTYPES), default="all")
     parser.add_argument("--output", type=Path, default=Path("item_game_synchronous_self_play.jsonl"))
@@ -2309,6 +2325,7 @@ def main() -> None:  # pragma: no cover
             max_new_tokens=args.max_new_tokens,
             output_mode=args.output_mode,
             native_tool_choice=args.tool_choice,
+            parallel_tool_calls=args.parallel_tool_calls == "true",
         )
     else:
         policy = HuggingFaceSynchronousSelfPlayPolicy(args.model, max_new_tokens=args.max_new_tokens)

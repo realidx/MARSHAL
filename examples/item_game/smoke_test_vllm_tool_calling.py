@@ -33,7 +33,15 @@ def main() -> int:
     parser.add_argument("--max-tokens", type=int, default=256)
     parser.add_argument(
         "--tool-choice", choices=("auto", "required"), default="auto",
-        help="Use auto to isolate the Qwen/Hermes parser path from required guided decoding.",
+        help="OpenAI-compatible tool choice sent to vLLM.",
+    )
+    parser.add_argument(
+        "--tool-call-parser", default="qwen3",
+        help="Parser profile used by the server; recorded for reproducibility only.",
+    )
+    parser.add_argument(
+        "--parallel-tool-calls", choices=("true", "false"), default="false",
+        help="Whether the server may return multiple tool calls (default: false).",
     )
     parser.add_argument(
         "--case-set", choices=("all", "pass-only"), default="all",
@@ -45,6 +53,10 @@ def main() -> int:
     )
     parser.add_argument("--ready-timeout", type=float, default=600.0)
     parser.add_argument("--ready-interval", type=float, default=5.0)
+    parser.add_argument(
+        "--expected-vllm-version",
+        help="Optional version prefix, e.g. 0.28.0; fail before inference if it does not match.",
+    )
     parser.add_argument("--output", help="Optional JSONL file containing per-case results")
     args = parser.parse_args()
     if args.cases < 50:
@@ -54,6 +66,18 @@ def main() -> int:
         args.base_url, args.api_key,
         timeout=args.ready_timeout, interval=args.ready_interval,
     )
+    if args.expected_vllm_version:
+        version = identity.get("version")
+        if not isinstance(version, str) or not version.startswith(args.expected_vllm_version):
+            print(json.dumps({
+                "protocol": "native_tools",
+                "tool_call_parser": args.tool_call_parser,
+                "expected_vllm_version": args.expected_vllm_version,
+                "server_identity": identity,
+                "request_failed": 0,
+                "preflight_error": "unexpected_vllm_version",
+            }, ensure_ascii=False, indent=2))
+            return 1
     config = ItemGameConfig(
         generator="pure_collaboration", subtype="collaboration",
         self_play=True, randomize_items=False, max_rounds=2,
@@ -90,6 +114,7 @@ def main() -> int:
         args.base_url, args.model, api_key=args.api_key,
         max_new_tokens=args.max_tokens, output_mode="native_tools",
         native_tool_choice=args.tool_choice,
+        parallel_tool_calls=args.parallel_tool_calls == "true",
     )
     counts = Counter()
     details: list[dict[str, object]] = []
@@ -168,6 +193,8 @@ def main() -> int:
         "protocol": "native_tools",
         "constraint_transport": f"tools + tool_choice={args.tool_choice}",
         "tool_choice": args.tool_choice,
+        "tool_call_parser": args.tool_call_parser,
+        "parallel_tool_calls": args.parallel_tool_calls == "true",
         "case_set": args.case_set,
         "pass_schema": args.pass_schema,
         "server_identity": identity,
@@ -177,6 +204,7 @@ def main() -> int:
         "reason_contaminated_rate": counts["reason_contaminated"] / total,
         "textual_tool_fallback_rate": counts["textual_tool_fallback"] / total,
         "tool_call_present_rate": counts["tool_call_present"] / total,
+        "max_tool_calls": max((len(row.get("tool_calls", [])) for row in details), default=0),
         "exactly_one_tool_call_rate": counts["exactly_one"] / total,
         "tool_schema_valid_rate": counts["schema_valid"] / total,
         "trivial_semantic_match_rate": counts["semantic_match"] / total,
