@@ -1451,7 +1451,11 @@ def _typed_response_to_legacy(value: Any) -> dict[int, str]:
             response = "REJECT"
         else:
             response = "INACTIVE"
-        parsed[message_id] = response
+        # Keep the same internal representation as the legacy response-line
+        # parser.  The message id is part of the environment response atom;
+        # omitting it makes an otherwise valid native tool call look like a
+        # semantic mismatch during response validation.
+        parsed[message_id] = f"RESPOND #{message_id}: {response}"
     return parsed
 
 
