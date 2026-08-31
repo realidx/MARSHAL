@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import sys
 from collections import Counter
@@ -16,6 +17,7 @@ from roll.agentic.env.item_game.synchronous_self_play import (
     SynchronousItemGame,
     VLLMSelfPlayPolicy,
     _reason_is_english,
+    _reason_is_natural_content,
     _validate_tool_call_schema,
 )
 
@@ -32,6 +34,14 @@ def main() -> int:
     parser.add_argument(
         "--tool-choice", choices=("auto", "required"), default="auto",
         help="Use auto to isolate the Qwen/Hermes parser path from required guided decoding.",
+    )
+    parser.add_argument(
+        "--case-set", choices=("all", "pass-only"), default="all",
+        help="Use pass-only for the zero-argument PASS serialization micro-test.",
+    )
+    parser.add_argument(
+        "--pass-schema", choices=("empty", "confirm"), default="empty",
+        help="confirm adds required confirm=true to test whether empty arguments cause the failure.",
     )
     parser.add_argument("--ready-timeout", type=float, default=600.0)
     parser.add_argument("--ready-interval", type=float, default=5.0)
@@ -59,9 +69,23 @@ def main() -> int:
         (f"Ask {other} to transfer {own_item} to you.", "REQUEST_TRANSFER", {"recipient": other, "items": [own_item]}),
         (f"Propose a coalition with {other}.", "PROPOSE_JOIN", {"recipient": other}),
         (f"Commit {own_item}.", "COMMIT", {"items": [own_item]}),
-        ("Take no proactive action.", "PASS", {}),
+        ("Take no proactive action. Represent this by calling the PASS tool.", "PASS", {}),
     )
-    available = game.get_available_actions("P0", phase="decision")
+    if args.case_set == "pass-only":
+        cases = (cases[-1],)
+    available = list(copy.deepcopy(game.get_available_actions("P0", phase="decision")))
+    if args.pass_schema == "confirm":
+        for definition in available:
+            if definition["name"] == "PASS":
+                definition["arguments"]["properties"] = {
+                    "confirm": {"type": "boolean", "enum": [True]},
+                }
+                definition["arguments"]["required"] = ["confirm"]
+        cases = tuple(
+            (intent, name, ({"confirm": True} if name == "PASS" else expected))
+            for intent, name, expected in cases
+        )
+    available = tuple(available)
     policy = VLLMSelfPlayPolicy(
         args.base_url, args.model, api_key=args.api_key,
         max_new_tokens=args.max_tokens, output_mode="native_tools",
@@ -93,10 +117,15 @@ def main() -> int:
             continue
 
         reason = output.reason.strip()
-        if reason:
+        reason_is_natural = _reason_is_natural_content(reason)
+        if reason and not reason_is_natural:
+            counts["reason_contaminated"] += 1
+        if reason_is_natural:
             counts["reason_nonempty"] += 1
             if _reason_is_english(reason):
                 counts["reason_english"] += 1
+        if "<tool_call" in reason.lower():
+            counts["textual_tool_fallback"] += 1
         calls = output.tool_calls
         if calls:
             counts["tool_call_present"] += 1
@@ -124,6 +153,7 @@ def main() -> int:
         counts["completion_tokens"] += int(usage.get("completion_tokens", 0))
         row.update(
             reason=output.reason,
+            reason_is_natural=reason_is_natural,
             tool_call_count=len(calls),
             tool_calls=[{"tool_name": call.tool_name, "arguments": dict(call.arguments)} for call in calls],
             tool_schema_valid=schema_valid,
@@ -138,10 +168,14 @@ def main() -> int:
         "protocol": "native_tools",
         "constraint_transport": f"tools + tool_choice={args.tool_choice}",
         "tool_choice": args.tool_choice,
+        "case_set": args.case_set,
+        "pass_schema": args.pass_schema,
         "server_identity": identity,
         "cases": total,
         "reason_nonempty_rate": counts["reason_nonempty"] / total,
         "english_reason_rate": counts["reason_english"] / total,
+        "reason_contaminated_rate": counts["reason_contaminated"] / total,
+        "textual_tool_fallback_rate": counts["textual_tool_fallback"] / total,
         "tool_call_present_rate": counts["tool_call_present"] / total,
         "exactly_one_tool_call_rate": counts["exactly_one"] / total,
         "tool_schema_valid_rate": counts["schema_valid"] / total,

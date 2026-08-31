@@ -1407,6 +1407,14 @@ def test_synchronous_generic_message_json_is_not_an_item_game_action():
         )
 
 
+def test_native_reason_diagnostic_rejects_tool_call_leakage():
+    assert sync_module._reason_is_natural_content("I should wait this round.")
+    assert not sync_module._reason_is_natural_content("")
+    assert not sync_module._reason_is_natural_content(
+        '<tool_call>{"name":"PASS","arguments: {}"}</tool_call>'
+    )
+
+
 @pytest.mark.parametrize("tool_choice", ["auto", "required"])
 def test_vllm_policy_sends_native_tools_and_keeps_reasoning_separate(monkeypatch, tool_choice):
     captured = {}

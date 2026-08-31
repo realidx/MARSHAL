@@ -122,6 +122,19 @@ def _reason_is_english(reason: str) -> bool:
     return bool(reason.strip()) and re.search(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]", reason) is None
 
 
+def _reason_is_natural_content(reason: str) -> bool:
+    """Exclude leaked/raw tool serialization from reason diagnostics."""
+    text = reason.strip()
+    if not text:
+        return False
+    lowered = text.lower()
+    if "<tool_call" in lowered or "</tool_call" in lowered:
+        return False
+    if re.fullmatch(r"\s*\{.*\}\s*", text, re.DOTALL) and '"name"' in text:
+        return False
+    return True
+
+
 def _answer_is_json(response: str) -> bool:
     """Whether the answer block uses the new structured-output interface."""
     answer = _answer_text(response).strip()
@@ -284,6 +297,7 @@ def _validate_tool_call_schema(
         type_ok = {
             "string": isinstance(value, str),
             "integer": isinstance(value, int) and not isinstance(value, bool),
+            "boolean": isinstance(value, bool),
             "array": isinstance(value, list),
             "object": isinstance(value, dict),
         }.get(expected_type, True)
