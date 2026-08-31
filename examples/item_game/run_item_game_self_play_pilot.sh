@@ -7,7 +7,7 @@ if [[ "${ITEM_GAME_BACKEND}" == "hf" ]]; then
   test -f "${EVAL_MODEL_DIR}/config.json"
   ITEM_GAME_MODEL="${EVAL_MODEL_DIR}"
 else
-  ITEM_GAME_MODEL="${VLLM_MODEL:-${EVAL_MODEL_DIR:-Qwen/Qwen3-4B-Instruct}}"
+  ITEM_GAME_MODEL="${VLLM_MODEL:-${EVAL_MODEL_DIR:-Qwen/Qwen3-4B-Instruct-2507}}"
 fi
 
 ROLL_PATH=${PWD}

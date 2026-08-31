@@ -23,7 +23,7 @@ from .generator import ItemGameInstance, generate_instance
 
 @dataclass(frozen=True)
 class SelfPlayPolicyOutput:
-    """Backend-neutral model result; ``content`` is the only parsed action text."""
+    """Backend-neutral model result returned by an inference policy."""
 
     reasoning: str
     content: str
@@ -102,6 +102,19 @@ def _load_json_answer(response: str) -> Any:
             except (TypeError, json.JSONDecodeError):
                 pass
         raise StructuredActionError("answer must contain one JSON action object or an array of action objects") from exc
+
+
+def _unwrap_reason_action(value: Any) -> tuple[str, Any]:
+    """Extract the user-level private reason and executable action payload."""
+    if not isinstance(value, dict) or set(value) != {"reason", "action"}:
+        raise StructuredActionError("answer must contain exactly reason and action")
+    reason = value["reason"]
+    if not isinstance(reason, str):
+        raise StructuredActionError("JSON field 'reason' must be a string")
+    action = value["action"]
+    if not isinstance(action, (dict, list)):
+        raise StructuredActionError("JSON field 'action' must be an object or array of objects")
+    return reason, action
 
 
 def _require_json_action_object(value: Any, *, allowed: set[str]) -> dict[str, Any]:
@@ -381,11 +394,11 @@ class SynchronousItemGame:
         return self.MESSAGE_TEMPLATES + self.STATE_ACTION_TEMPLATES
 
     def get_action_schema(self, agent: str, *, response: bool = False) -> dict[str, Any]:
-        """Return an xgrammar-safe typed envelope.
+        """Return an xgrammar-safe ``reason`` + ``action`` envelope.
 
         The schema deliberately describes only the JSON envelope and primitive
-        value types.  Action-specific required fields and game legality remain
-        semantic checks in the environment.  In particular, avoid ``oneOf``,
+        value types. Action-specific required fields and game legality remain
+        semantic checks in the environment. In particular, avoid ``oneOf``,
         ``minItems``, and ``uniqueItems`` here because they are not accepted by
         the xgrammar backend used by older vLLM releases.
         """
@@ -414,8 +427,13 @@ class SynchronousItemGame:
                 "required": ["action"],
             }
             return {
-                "type": "array",
-                "items": action_object,
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "reason": {"type": "string"},
+                    "action": {"type": "array", "items": action_object},
+                },
+                "required": ["reason", "action"],
             }
         recipient = {"type": "string", "enum": players}
         action_object = {
@@ -431,8 +449,13 @@ class SynchronousItemGame:
             "required": ["action"],
         }
         return {
-            "type": "array",
-            "items": action_object,
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "reason": {"type": "string"},
+                "action": action_object,
+            },
+            "required": ["reason", "action"],
         }
 
     def get_response_action_templates(self, agent: str) -> tuple[str, ...]:
@@ -471,8 +494,9 @@ class SynchronousItemGame:
         lines.extend([
             "DECISION PHASE.",
             "All mandatory responses from the previous round have already been completed.",
-            "Return a JSON array of action objects inside <answer>...</answer>.",
-            "Use a one-element array when you need only one action; use multiple objects when you need one message and compatible state actions.",
+            "Return one JSON object with exactly two fields: reason and action.",
+            "Put your private concise reasoning in the string field reason. Put exactly one executable action object in action.",
+            "Do not put reasoning, XML, markdown, or prose inside action.",
             "Do not output prose, MESSAGE/ACTIONS labels, or placeholder values such as <agent_id>.",
             "Use an exact player id from Active players and exact item names from the state or your known information.",
             "QUERY field must be exactly GOAL or HOLDINGS.",
@@ -527,8 +551,9 @@ class SynchronousItemGame:
             ))
         lines.extend((
             "",
-            "Return exactly one JSON array inside <answer>...</answer>, with one object per message:",
-            "Use a JSON array. Each object must contain message_id and action.",
+            "Return exactly one JSON object with fields reason and action:",
+            "Put your private concise reasoning in reason. Put a JSON array in action, with one response object per message.",
+            "Each response object must contain message_id and action.",
             "For QUERY use INFORM with recipient, field, and truthful value.",
             "For a transfer request use GIVE with recipient and the exact requested items, or REJECT_TRANSFER.",
             "For JOIN use ACCEPT_JOIN or REJECT_JOIN with proposer.",
@@ -1357,11 +1382,23 @@ class SynchronousSelfPlayRunner:
             kwargs["action_schema"] = action_schema
         backend_output = self.policy.generate(**kwargs)
         if isinstance(backend_output, SelfPlayPolicyOutput):
-            reasoning = backend_output.reasoning
-            content = backend_output.content
+            # vLLM native reasoning is intentionally not used.  The model's
+            # user-level private scratchpad lives in the typed `reason` field
+            # of content; only the nested `action` is sent to the environment.
+            reasoning = ""
+            raw_content = backend_output.content
+            content = raw_content
+            try:
+                envelope = _load_json_answer(content)
+                reasoning, action = _unwrap_reason_action(envelope)
+                content = json.dumps(action, separators=(",", ":"))
+            except StructuredActionError:
+                # Leave malformed envelope content untouched so the normal
+                # parser records it as an invalid model output.
+                pass
             raw_response: str | dict[str, str] = {
-                "reasoning": reasoning,
-                "content": content,
+                "reasoning": backend_output.reasoning,
+                "content": raw_content,
             }
             context_response = content
         else:
@@ -1589,7 +1626,7 @@ class VLLMSelfPlayPolicy:
         max_new_tokens: int = 1024,
         temperature: float = 0.0,
         timeout: float = 300.0,
-        enable_thinking: bool = True,
+        enable_thinking: bool = False,
     ):
         self.base_url = base_url.rstrip("/")
         if not self.base_url.endswith("/v1"):
@@ -1609,14 +1646,15 @@ class VLLMSelfPlayPolicy:
         legal_actions: Sequence[str],
         context: Sequence[Mapping[str, str]],
         action_schema: Mapping[str, Any] | None = None,
-    ) -> str:
+    ) -> SelfPlayPolicyOutput:
         if action_schema is None:
             raise ValueError("vLLM policy requires a dynamic action schema")
         system = (
             f"You are {agent}. All players have equal status in a synchronous multi-agent game. "
             "Follow the action semantics in the user message. Return only JSON matching the supplied "
-            "schema in the final answer. Do not invent players or items. Every INFORM value must be "
-            "your own truthful current state. Keep any reasoning private."
+            "schema in the final answer. Put your concise private reasoning in the required string "
+            "field 'reason', and put only the executable protocol action in the required field 'action'. "
+            "Do not invent players or items. Every INFORM value must be your own truthful current state."
         )
         messages: list[dict[str, str]] = [{"role": "system", "content": system}]
         messages.extend(dict(message) for message in context)
@@ -1654,8 +1692,9 @@ class VLLMSelfPlayPolicy:
             content = message.get("content", "")
             if not isinstance(content, str) or not content.strip():
                 raise ValueError("vLLM response did not contain final JSON content")
-            reasoning = message.get("reasoning") or message.get("reasoning_content") or ""
-            return SelfPlayPolicyOutput(reasoning=str(reasoning), content=content)
+            # Native vLLM reasoning is intentionally disabled.  The private
+            # model scratchpad is the typed `reason` field in content.
+            return SelfPlayPolicyOutput(reasoning="", content=content)
         except (urllib.error.URLError, KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise RuntimeError(f"vLLM request failed: {exc}") from exc
 

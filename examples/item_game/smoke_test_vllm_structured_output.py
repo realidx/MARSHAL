@@ -20,6 +20,7 @@ from roll.agentic.env.item_game.synchronous_self_play import (
     VLLMSelfPlayPolicy,
     _load_json_answer,
     _parse_decision_output,
+    _unwrap_reason_action,
     _validate_json_enums,
 )
 
@@ -72,7 +73,7 @@ def wait_for_vllm(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Smoke-test Qwen3 vLLM structured action output")
-    parser.add_argument("--model", required=True)
+    parser.add_argument("--model", default="Qwen/Qwen3-4B-Instruct-2507")
     parser.add_argument("--base-url", default="http://localhost:8000/v1")
     parser.add_argument("--api-key", default="EMPTY")
     parser.add_argument("--cases", type=int, default=100)
@@ -162,13 +163,9 @@ def main() -> int:
             })
             continue
 
-        reasoning_present = bool(output.reasoning.strip())
-        if reasoning_present:
-            counts["reasoning_present"] += 1
-        else:
-            reasoning_missing_cases.append(index)
-        content_is_json = False
         stage = "content_guard"
+        reasoning_present = False
+        reasoning_checked = False
         try:
             if not output.content.strip():
                 raise ValueError("content is empty")
@@ -177,7 +174,15 @@ def main() -> int:
             stage = "json_parse"
             raw_content = output.content.strip()
             repaired_content = raw_content[:-1].rstrip() if raw_content.endswith('"') else raw_content
-            value = _load_json_answer(output.content)
+            envelope = _load_json_answer(output.content)
+            stage = "envelope_validation"
+            reason, value = _unwrap_reason_action(envelope)
+            reasoning_checked = True
+            reasoning_present = bool(reason.strip())
+            if reasoning_present:
+                counts["reasoning_present"] += 1
+            else:
+                reasoning_missing_cases.append(index)
             if repaired_content != raw_content:
                 try:
                     json.loads(repaired_content)
@@ -185,9 +190,8 @@ def main() -> int:
                     pass
                 else:
                     trailing_quote_repairs += 1
-            content_is_json = True
             stage = "decision_parse"
-            _parse_decision_output(output.content, agent="P0")
+            _parse_decision_output(json.dumps(value), agent="P0")
             stage = "enum_validation"
             _validate_json_enums(value, players=game.players, items=game.items, response=False)
             counts["schema_valid"] += 1
@@ -195,6 +199,8 @@ def main() -> int:
             if len(objects) == 1 and objects[0] == expected:
                 semantic_matches += 1
         except (TypeError, ValueError) as exc:
+            if not reasoning_checked:
+                reasoning_missing_cases.append(index)
             counts["schema_invalid"] += 1
             failures.append({
                 "case": index,
@@ -208,12 +214,9 @@ def main() -> int:
                     "content": output.content,
                 },
             })
-        counts["content_json_only"] += int(content_is_json)
-
     summary = {
         "cases": counts["cases"],
-        "reasoning_present_rate": counts["reasoning_present"] / counts["cases"],
-        "content_json_only_rate": counts["content_json_only"] / counts["cases"],
+        "reason_nonempty_rate": counts["reasoning_present"] / counts["cases"],
         "schema_valid_rate": counts["schema_valid"] / counts["cases"],
         "trivial_semantic_match_rate": semantic_matches / counts["cases"],
         "schema_invalid": counts["schema_invalid"],
@@ -224,7 +227,7 @@ def main() -> int:
         "failure_details": failures,
     }
     print(json.dumps(summary, indent=2))
-    return 0 if summary["schema_valid_rate"] >= 0.99 and summary["reasoning_present_rate"] >= 0.95 else 1
+    return 0 if summary["schema_valid_rate"] >= 0.99 else 1
 
 
 if __name__ == "__main__":

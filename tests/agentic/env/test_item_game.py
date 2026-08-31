@@ -1128,7 +1128,7 @@ def test_synchronous_protocol_uses_one_action_per_line():
     )
     g = SynchronousItemGame(generate_instance(7, config=config), config)
     observation = g.get_observation("P0")
-    assert "JSON array of action objects" in observation
+    assert "JSON object with exactly two fields: reason and action" in observation
     assert "Do not output prose, MESSAGE/ACTIONS labels" in observation
     assert '"action":"QUERY"' in observation
     assert '"action":"INFORM"' in observation
@@ -1286,7 +1286,7 @@ def test_synchronous_json_grounding_sanity_has_100_typed_cases():
         assert give["actions"] == (f"GIVE {{{item}}} TO {other}",)
 
 
-def test_synchronous_structured_schema_uses_flat_xgrammar_safe_arrays():
+def test_synchronous_structured_schema_uses_reason_action_envelope():
     config = Config(
         generator="pure_collaboration", subtype="collaboration",
         randomize_items=False, self_play=True, max_rounds=2,
@@ -1295,9 +1295,14 @@ def test_synchronous_structured_schema_uses_flat_xgrammar_safe_arrays():
 
     for schema in (game.get_action_schema("P0"), game.get_action_schema("P0", response=True)):
         serialized = json.dumps(schema)
-        assert schema["type"] == "array"
-        assert schema["items"]["type"] == "object"
-        assert schema["items"]["required"] == ["action"]
+        assert schema["type"] == "object"
+        assert schema["required"] == ["reason", "action"]
+        assert schema["properties"]["reason"] == {"type": "string"}
+        action_schema = schema["properties"]["action"]
+        if action_schema["type"] == "array":
+            action_schema = action_schema["items"]
+        assert action_schema["type"] == "object"
+        assert action_schema["required"] == ["action"]
         assert "oneOf" not in serialized
         assert "minItems" not in serialized
         assert "maxItems" not in serialized
@@ -1315,7 +1320,7 @@ def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monk
             return False
 
         def read(self):
-            return b'{"choices":[{"message":{"reasoning":"private plan","content":"{\\"action\\":\\"PASS\\"}"}}]}'
+            return b'{"choices":[{"message":{"content":"{\\"reason\\":\\"private plan\\",\\"action\\":{\\"action\\":\\"PASS\\"}}"}}]}'
 
     def fake_urlopen(request, timeout):
         captured["url"] = request.full_url
@@ -1324,7 +1329,7 @@ def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monk
         return FakeResponse()
 
     monkeypatch.setattr(sync_module.urllib.request, "urlopen", fake_urlopen)
-    policy = VLLMSelfPlayPolicy("http://server:8000/v1", "Qwen/Qwen3-4B-Instruct")
+    policy = VLLMSelfPlayPolicy("http://server:8000/v1", "Qwen3-4B-Instruct-2507")
     output = policy.generate(
         agent="P0",
         observation="state",
@@ -1332,13 +1337,40 @@ def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monk
         context=(),
         action_schema={"type": "object"},
     )
-    assert output.reasoning == "private plan"
-    assert output.content == '{"action":"PASS"}'
+    assert output.reasoning == ""
+    assert output.content == '{"reason":"private plan","action":{"action":"PASS"}}'
     body = json.loads(captured["body"])
     assert captured["url"] == "http://server:8000/v1/chat/completions"
     assert body["response_format"]["type"] == "json_schema"
     assert body["response_format"]["json_schema"]["schema"] == {"type": "object"}
-    assert body["chat_template_kwargs"] == {"enable_thinking": True}
+    assert body["chat_template_kwargs"] == {"enable_thinking": False}
+
+
+def test_self_play_runner_extracts_reason_and_only_executes_nested_action():
+    class EnvelopePolicy:
+        def generate(self, **kwargs):
+            return sync_module.SelfPlayPolicyOutput(
+                reasoning="native reasoning must be ignored",
+                content='{"reason":"private plan","action":{"action":"PASS"}}',
+            )
+
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+    runner = SynchronousSelfPlayRunner(EnvelopePolicy(), config)
+    runner.contexts = {"P0": []}
+    content, _, record = runner._call_policy(
+        agent="P0",
+        observation="state",
+        legal=("PASS",),
+        phase="decision",
+        action_schema={"type": "object"},
+    )
+    assert content == '{"action":"PASS"}'
+    assert record["reason"] == "private plan"
+    assert record["raw_response"]["content"] == '{"reason":"private plan","action":{"action":"PASS"}}'
+    assert runner.contexts["P0"][-1] == {"role": "assistant", "content": content}
 
 
 def test_synchronous_inform_message_does_not_enter_transfer_formatter():

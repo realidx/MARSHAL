@@ -102,21 +102,21 @@ simultaneous decision phase. All decisions use the same round-start snapshot;
 communications are delivered in the next round, while state actions are
 resolved atomically. The environment performs no scripted social actions.
 
-Decision answers use typed JSON arrays inside the existing `<answer>` block.
-The schema constrains only the JSON envelope and primitive value types; the
-environment validates action-specific fields and game semantics. The model
-always returns an array, including for one action. For example:
+Decision answers use one typed JSON object in the vLLM `content` field. The
+root has a private `reason` string and an executable `action` object. The
+schema constrains only the envelope and primitive value types;
+the environment validates action-specific fields and game semantics. For
+example:
 
 ```json
-[{"action":"QUERY","recipient":"P1","field":"HOLDINGS"}]
-[{"action":"REQUEST_TRANSFER","recipient":"P1","items":["item_Q"]}]
-[{"action":"GIVE","recipient":"P1","items":["item_M"]}]
-[{"action":"COMMIT","items":["item_A","item_B"]}]
+{"reason":"P1 may know an item I need.","action":{"action":"QUERY","recipient":"P1","field":"HOLDINGS"}}
+{"reason":"Request the missing item from P1.","action":{"action":"REQUEST_TRANSFER","recipient":"P1","items":["item_Q"]}}
+{"reason":"Transfer my surplus item.","action":{"action":"GIVE","recipient":"P1","items":["item_M"]}}
+{"reason":"My committed items cover my goal.","action":{"action":"COMMIT","items":["item_A","item_B"]}}
 ```
 
-When a decision needs both a message and a compatible state action, return one
-array containing both objects. `PASS` means no message and no state action. The typed
-action shapes are:
+The model returns one executable action per turn. `PASS` means no message and
+no state action. The typed action shapes are:
 
 ```text
 QUERY:            {"action":"QUERY","recipient":"P1","field":"GOAL"}
@@ -136,15 +136,15 @@ Each active player may send at most one message (`QUERY`, `INFORM`, `REQUEST
 TRANSFER`, `PROPOSE JOIN`, or no message) and zero or more state actions per
 round. `COMMIT` is exclusive and public. A `GIVE` state action transfers the
 sender's own unfrozen items immediately; it does not require a prior agreement.
-Mandatory responses are JSON objects batched by recipient and addressed by
-message id, for example:
+Mandatory responses use the same root object; `action` is an array because a
+response may cover multiple incoming messages. For example:
 
 ```json
-[
+{"reason":"Answer each incoming request truthfully.","action":[
   {"message_id":12,"action":"INFORM","recipient":"P0","field":"GOAL","value":["item_A","item_B"]},
   {"message_id":13,"action":"GIVE","recipient":"P0","items":["item_Q"]},
   {"message_id":14,"action":"REJECT_TRANSFER","requester":"P0","items":["item_X"]}
-]
+]}
 ```
 
 Response messages are free and do not consume the proactive communication
@@ -178,14 +178,13 @@ provides a launcher whose default `--max-model-len` is 8192, which is suitable
 for the A100-40 setup:
 
 ```bash
-export VLLM_MODEL=Qwen/Qwen3-4B-Instruct
+export VLLM_MODEL=Qwen/Qwen3-4B-Instruct-2507
 bash examples/item_game/run_item_game_vllm_server.sh
 ```
 
-It starts Qwen3 with `--enable-reasoning --reasoning-parser qwen3`.
-Each policy request also explicitly sends
-`chat_template_kwargs: {"enable_thinking": true}`, so the instruct model is
-asked to produce a separate reasoning trace when supported by the server.
+Native vLLM reasoning is intentionally disabled. Each policy request asks the
+model to put a concise private scratchpad in the typed `reason` field and the
+executable protocol action in the typed `action` field.
 Override the context limit explicitly with `VLLM_MAX_MODEL_LEN=<length>` if
 the server has enough memory. Then run the pilot with
 `ITEM_GAME_BACKEND=vllm`, `VLLM_MODEL=<server model id>`, and
@@ -197,7 +196,7 @@ Before the pilot, run the independent 100-case smoke test:
 
 ```bash
 python examples/item_game/smoke_test_vllm_structured_output.py \
-  --model Qwen/Qwen3-4B-Instruct \
+  --model Qwen/Qwen3-4B-Instruct-2507 \
   --base-url http://<server>:8000/v1
 ```
 
