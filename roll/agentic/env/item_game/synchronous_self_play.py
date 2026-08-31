@@ -41,6 +41,7 @@ class SynchronousSelfPlayPolicy(Protocol):
         legal_actions: Sequence[str],
         context: Sequence[Mapping[str, str]],
         action_schema: Mapping[str, Any] | None = None,
+        available_actions: Sequence[Mapping[str, Any]] | None = None,
     ) -> str | SelfPlayPolicyOutput:
         ...
 
@@ -283,6 +284,8 @@ class SynchronousItemGame:
             raise ValueError(f"unsupported synchronous subtype {instance.subtype!r}")
         if config.max_rounds < 1:
             raise ValueError("max_rounds must be positive")
+        if config.max_invalid_retries_per_decision < 0:
+            raise ValueError("max_invalid_retries_per_decision must be non-negative")
         data = _remap_instance(instance)
         self.instance = instance
         self.config = config
@@ -324,6 +327,8 @@ class SynchronousItemGame:
             "semantic_invalid_actions": 0,
             "semantic_valid_responses": 0,
             "semantic_invalid_responses": 0,
+            "invalid_action_retries": 0,
+            "invalid_response_retries": 0,
             "transfers": 0,
             "commits": 0,
             "passes": 0,
@@ -396,12 +401,84 @@ class SynchronousItemGame:
             return ()
         return self.MESSAGE_TEMPLATES + self.STATE_ACTION_TEMPLATES
 
+    def get_available_actions(
+        self,
+        agent: str,
+        *,
+        phase: str,
+        snapshot: Mapping[str, Any] | None = None,
+        requests: Sequence[Mapping[str, Any]] = (),
+    ) -> tuple[dict[str, Any], ...]:
+        """Return the environment-owned typed action families for a decision point.
+
+        Concrete recipients/items remain model-selected arguments.  The
+        returned definitions describe only the action family and its typed
+        fields; no legacy MESSAGE/ACTIONS DSL is exposed to the vLLM prompt.
+        """
+        if agent not in self.players:
+            raise ValueError(f"unknown player {agent!r}")
+        if phase not in {"decision", "response"}:
+            raise ValueError(f"unknown action phase {phase!r}")
+        other_players = [player for player in self.players if player != agent]
+        item_array = {"type": "array", "items": {"type": "string", "enum": list(self.items)}}
+        recipient = {"type": "string", "enum": other_players}
+
+        def definition(
+            name: str,
+            properties: Mapping[str, Any],
+            required: Sequence[str] = (),
+        ) -> dict[str, Any]:
+            return {
+                "name": name,
+                "arguments": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": dict(properties),
+                    "required": list(required),
+                },
+            }
+
+        if phase == "decision":
+            definitions = [
+                definition("QUERY", {"recipient": recipient, "field": {"type": "string", "enum": ["GOAL", "HOLDINGS"]}}, ("recipient", "field")),
+                definition("INFORM", {"recipient": recipient, "field": {"type": "string", "enum": ["GOAL", "HOLDINGS"]}, "value": item_array}, ("recipient", "field", "value")),
+                definition("REQUEST_TRANSFER", {"recipient": recipient, "items": item_array}, ("recipient", "items")),
+                definition("GIVE", {"recipient": recipient, "items": item_array}, ("recipient", "items")),
+                definition("COMMIT", {"items": item_array}, ("items",)),
+                definition("PASS", {}, ()),
+            ]
+            if self.subtype == "collaboration":
+                definitions.insert(4, definition("PROPOSE_JOIN", {"recipient": recipient}, ("recipient",)))
+            return tuple(definitions)
+
+        response_names: set[str] = set()
+        effective_requests = tuple(requests) if requests else tuple(
+            message for message in self.pending_messages if message["recipient"] == agent
+        )
+        for request in effective_requests:
+            if request["kind"] == "QUERY":
+                response_names.add("INFORM")
+            elif request["kind"] == "TRANSFER":
+                response_names.update({"GIVE", "REJECT_TRANSFER"})
+            elif request["kind"] == "JOIN":
+                response_names.update({"ACCEPT_JOIN", "REJECT_JOIN"})
+        response_definitions = {
+            "INFORM": definition("INFORM", {"message_id": {"type": "integer"}, "recipient": recipient, "field": {"type": "string", "enum": ["GOAL", "HOLDINGS"]}, "value": item_array}, ("message_id", "recipient", "field", "value")),
+            "GIVE": definition("GIVE", {"message_id": {"type": "integer"}, "recipient": recipient, "items": item_array}, ("message_id", "recipient", "items")),
+            "REJECT_TRANSFER": definition("REJECT_TRANSFER", {"message_id": {"type": "integer"}, "requester": recipient, "items": item_array}, ("message_id", "requester", "items")),
+            "ACCEPT_JOIN": definition("ACCEPT_JOIN", {"message_id": {"type": "integer"}, "proposer": recipient}, ("message_id", "proposer")),
+            "REJECT_JOIN": definition("REJECT_JOIN", {"message_id": {"type": "integer"}, "proposer": recipient}, ("message_id", "proposer")),
+            "INACTIVE": definition("INACTIVE", {"message_id": {"type": "integer"}}, ("message_id",)),
+        }
+        return tuple(response_definitions[name] for name in sorted(response_names) if name in response_definitions)
+
     def get_action_schema(
         self,
         agent: str,
         *,
         response: bool = False,
         output_mode: str = "reason_action",
+        requests: Sequence[Mapping[str, Any]] = (),
     ) -> dict[str, Any]:
         """Return the schema for the selected self-play output mode.
 
@@ -419,14 +496,21 @@ class SynchronousItemGame:
         items = list(self.items)
         item_array = {"type": "array", "items": {"type": "string", "enum": items}}
         if response:
-            message_ids = [message["id"] for message in self.pending_messages if message["recipient"] == agent]
+            effective_requests = tuple(requests) if requests else tuple(
+                message for message in self.pending_messages if message["recipient"] == agent
+            )
+            available_names = {
+                definition["name"]
+                for definition in self.get_available_actions(agent, phase="response", requests=effective_requests)
+            }
+            message_ids = [message["id"] for message in effective_requests]
             message_id = {"type": "integer", "enum": message_ids}
-            recipient = {"type": "string", "enum": players + [agent]}
+            recipient = {"type": "string", "enum": players}
             action_object = {
                 "type": "object",
                 "additionalProperties": False,
                 "properties": {
-                    "action": {"type": "string", "enum": sorted(RESPONSE_ACTION_NAMES)},
+                    "action": {"type": "string", "enum": sorted(available_names or RESPONSE_ACTION_NAMES)},
                     "message_id": message_id,
                     "recipient": recipient,
                     "requester": recipient,
@@ -451,12 +535,16 @@ class SynchronousItemGame:
             return {
                 **action_schema,
             }
+        available_names = {
+            definition["name"]
+            for definition in self.get_available_actions(agent, phase="decision")
+        }
         recipient = {"type": "string", "enum": players}
         action_object = {
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                "action": {"type": "string", "enum": sorted(DECISION_ACTION_NAMES)},
+                "action": {"type": "string", "enum": sorted(available_names)},
                 "recipient": recipient,
                 "field": {"type": "string", "enum": ["GOAL", "HOLDINGS"]},
                 "value": item_array,
@@ -1399,6 +1487,7 @@ class SynchronousSelfPlayRunner:
         legal: Sequence[str],
         phase: str,
         action_schema: Mapping[str, Any] | None = None,
+        available_actions: Sequence[Mapping[str, Any]] = (),
     ) -> tuple[str, dict[str, Any], dict[str, Any]]:
         kwargs: dict[str, Any] = {
             "agent": agent,
@@ -1410,6 +1499,8 @@ class SynchronousSelfPlayRunner:
         # schema hook existed.  The vLLM policy consumes this argument.
         if "action_schema" in inspect.signature(self.policy.generate).parameters:
             kwargs["action_schema"] = action_schema
+        if "available_actions" in inspect.signature(self.policy.generate).parameters:
+            kwargs["available_actions"] = tuple(available_actions)
         backend_output = self.policy.generate(**kwargs)
         if isinstance(backend_output, SelfPlayPolicyOutput):
             # vLLM native reasoning is intentionally not used.  The model's
@@ -1455,6 +1546,10 @@ class SynchronousSelfPlayRunner:
             "phase": phase,
             "observation": observation,
             "legal_actions": list(legal),
+            # This is the environment-owned action space used to build the
+            # structured schema. Keep it in the trajectory so a rollout can
+            # be audited without reconstructing the game state.
+            "available_actions": [dict(definition) for definition in available_actions],
             "reason": reasoning,
             "raw_response": raw_response,
             "answer": content,
@@ -1483,6 +1578,24 @@ class SynchronousSelfPlayRunner:
         key = "schema_valid_actions" if phase == "decision" else "schema_valid_responses"
         invalid_key = "schema_invalid_actions" if phase == "decision" else "schema_invalid_responses"
         game.metrics[key if valid else invalid_key] += 1
+
+    def _retry_observation(
+        self,
+        observation: str,
+        *,
+        phase: str,
+        error: str,
+        attempt: int,
+        limit: int,
+    ) -> str:
+        """Add deterministic environment feedback without changing the snapshot."""
+        return (
+            f"{observation}\n\n"
+            f"Environment feedback (retry {attempt + 1}/{limit}): the previous {phase} "
+            f"action was semantically invalid: {error}\n"
+            "The game state has not changed. Choose one different action from the "
+            "currently available typed actions."
+        )
 
     def run_episode(self, seed: int) -> SynchronousEpisodeResult:
         instance = self.instance_factory(seed, self.config)
@@ -1530,50 +1643,80 @@ class SynchronousSelfPlayRunner:
                     continue
                 observation = game.get_response_observation(model_requests, response_snapshot)
                 legal = game.get_response_action_templates(agent)
-                raw, _, record = self._call_policy(
-                    agent=agent,
-                    observation=observation,
-                    legal=legal,
-                    phase="response",
-                    action_schema=game.get_action_schema(
-                        agent, response=True, output_mode=output_mode
-                    ),
+                available_actions = game.get_available_actions(
+                    agent, phase="response", requests=model_requests, snapshot=response_snapshot
                 )
-                try:
-                    parsed = _parse_response_output(raw)
-                    record["semantic_valid"] = True
-                    if _answer_is_json(raw):
-                        _validate_json_enums(
-                            _load_json_answer(raw),
-                            players=game.players,
-                            items=game.items,
-                            response=True,
-                            message_ids=tuple(message["id"] for message in model_requests),
-                        )
-                    self._record_schema_result(game, record, phase="response")
-                    expected = {message["id"] for message in model_requests}
-                    if set(parsed) != expected:
-                        raise SynchronousActionError("response must cover every incoming message exactly once")
-                    if _answer_is_json(raw):
-                        _validate_json_response_references(_load_json_answer(raw), model_requests)
-                    for message in model_requests:
-                        if parsed[message["id"]] not in game.response_actions(message):
-                            raise SynchronousActionError("response is not legal for its message")
-                    game.metrics["semantic_valid_responses"] += 1
-                    responses.update(parsed)
-                except SynchronousActionError as exc:
-                    if record["schema_valid"] is None:
-                        self._record_schema_result(game, record, phase="response", valid=False)
-                    record["semantic_valid"] = False
-                    if record["schema_valid"] is True:
-                        game.metrics["semantic_invalid_responses"] += 1
-                    record["valid"] = False
-                    record["error_type"] = "schema" if isinstance(exc, StructuredActionError) else "semantic"
-                    record["error"] = str(exc)
-                    round_record["responses"].append(record)
+                action_schema = game.get_action_schema(
+                    agent,
+                    response=True,
+                    output_mode=output_mode,
+                    requests=model_requests,
+                )
+                response_succeeded = False
+                for retry_index in range(self.config.max_invalid_retries_per_decision + 1):
+                    raw, _, record = self._call_policy(
+                        agent=agent,
+                        observation=observation,
+                        legal=legal,
+                        phase="response",
+                        action_schema=action_schema,
+                        available_actions=available_actions,
+                    )
+                    record["retry_index"] = retry_index
+                    try:
+                        parsed = _parse_response_output(raw)
+                        record["semantic_valid"] = True
+                        if _answer_is_json(raw):
+                            _validate_json_enums(
+                                _load_json_answer(raw),
+                                players=game.players,
+                                items=game.items,
+                                response=True,
+                                message_ids=tuple(message["id"] for message in model_requests),
+                            )
+                        self._record_schema_result(game, record, phase="response")
+                        expected = {message["id"] for message in model_requests}
+                        if set(parsed) != expected:
+                            raise SynchronousActionError("response must cover every incoming message exactly once")
+                        if _answer_is_json(raw):
+                            _validate_json_response_references(_load_json_answer(raw), model_requests)
+                        for message in model_requests:
+                            if parsed[message["id"]] not in game.response_actions(message):
+                                raise SynchronousActionError("response is not legal for its message")
+                        game.metrics["semantic_valid_responses"] += 1
+                        responses.update(parsed)
+                        round_record["responses"].append(record)
+                        response_succeeded = True
+                        break
+                    except SynchronousActionError as exc:
+                        if record["schema_valid"] is None:
+                            self._record_schema_result(game, record, phase="response", valid=False)
+                        record["semantic_valid"] = False
+                        retryable = record["schema_valid"] is True and not isinstance(exc, StructuredActionError)
+                        if retryable:
+                            game.metrics["semantic_invalid_responses"] += 1
+                        record["valid"] = False
+                        record["error_type"] = "schema" if isinstance(exc, StructuredActionError) else "semantic"
+                        record["error"] = str(exc)
+                        record["retryable"] = retryable
+                        round_record["responses"].append(record)
+                        if retryable and retry_index < self.config.max_invalid_retries_per_decision:
+                            game.metrics["invalid_response_retries"] += 1
+                            observation = self._retry_observation(
+                                observation,
+                                phase="response",
+                                error=str(exc),
+                                attempt=retry_index,
+                                limit=self.config.max_invalid_retries_per_decision,
+                            )
+                            continue
+                        game.finish_invalid("invalid_response")
+                        break
+                if game.done:
+                    break
+                if not response_succeeded:
                     game.finish_invalid("invalid_response")
                     break
-                round_record["responses"].append(record)
             if game.done:
                 rounds.append(round_record)
                 break
@@ -1595,41 +1738,70 @@ class SynchronousSelfPlayRunner:
                     include_action_templates=include_action_templates,
                 )
                 legal = game.get_action_templates(agent)
-                raw, _, record = self._call_policy(
-                    agent=agent,
-                    observation=observation,
-                    legal=legal,
-                    phase="decision",
-                    action_schema=game.get_action_schema(agent, output_mode=output_mode),
+                available_actions = game.get_available_actions(
+                    agent, phase="decision", snapshot=decision_snapshot
                 )
-                try:
-                    decision = _parse_decision_output(raw, agent=agent)
-                    record["semantic_valid"] = True
-                    if _answer_is_json(raw):
-                        _validate_json_enums(
-                            _load_json_answer(raw),
-                            players=game.players,
-                            items=game.items,
-                            response=False,
-                        )
-                    self._record_schema_result(game, record, phase="decision")
-                    game._parse_decision(agent, decision, decision_snapshot)
-                    game.metrics["semantic_valid_actions"] += 1
-                    decisions[agent] = decision
-                except SynchronousActionError as exc:
-                    if record["schema_valid"] is None:
-                        self._record_schema_result(game, record, phase="decision", valid=False)
-                    record["semantic_valid"] = False
-                    if record["schema_valid"] is True:
-                        game.metrics["semantic_invalid_actions"] += 1
-                    record["valid"] = False
-                    record["error_type"] = "schema" if isinstance(exc, StructuredActionError) else "semantic"
-                    record["error"] = str(exc)
-                    decisions[agent] = {"message": "NO MESSAGE", "actions": ()}
-                round_record["decisions"].append(record)
-            invalid = next((record for record in round_record["decisions"] if not record["valid"]), None)
-            if invalid is not None:
-                game.finish_invalid("invalid_action")
+                action_schema = game.get_action_schema(
+                    agent, output_mode=output_mode
+                )
+                decision_succeeded = False
+                for retry_index in range(self.config.max_invalid_retries_per_decision + 1):
+                    raw, _, record = self._call_policy(
+                        agent=agent,
+                        observation=observation,
+                        legal=legal,
+                        phase="decision",
+                        action_schema=action_schema,
+                        available_actions=available_actions,
+                    )
+                    record["retry_index"] = retry_index
+                    try:
+                        decision = _parse_decision_output(raw, agent=agent)
+                        record["semantic_valid"] = True
+                        if _answer_is_json(raw):
+                            _validate_json_enums(
+                                _load_json_answer(raw),
+                                players=game.players,
+                                items=game.items,
+                                response=False,
+                            )
+                        self._record_schema_result(game, record, phase="decision")
+                        game._parse_decision(agent, decision, decision_snapshot)
+                        game.metrics["semantic_valid_actions"] += 1
+                        decisions[agent] = decision
+                        round_record["decisions"].append(record)
+                        decision_succeeded = True
+                        break
+                    except SynchronousActionError as exc:
+                        if record["schema_valid"] is None:
+                            self._record_schema_result(game, record, phase="decision", valid=False)
+                        record["semantic_valid"] = False
+                        retryable = record["schema_valid"] is True and not isinstance(exc, StructuredActionError)
+                        if retryable:
+                            game.metrics["semantic_invalid_actions"] += 1
+                        record["valid"] = False
+                        record["error_type"] = "schema" if isinstance(exc, StructuredActionError) else "semantic"
+                        record["error"] = str(exc)
+                        record["retryable"] = retryable
+                        round_record["decisions"].append(record)
+                        if retryable and retry_index < self.config.max_invalid_retries_per_decision:
+                            game.metrics["invalid_action_retries"] += 1
+                            observation = self._retry_observation(
+                                observation,
+                                phase="decision",
+                                error=str(exc),
+                                attempt=retry_index,
+                                limit=self.config.max_invalid_retries_per_decision,
+                            )
+                            continue
+                        break
+                if not decision_succeeded:
+                    game.finish_invalid("invalid_action")
+                    break
+            # A retryable failed attempt is intentionally retained in the
+            # trajectory. It must not invalidate the round when a later
+            # attempt for the same agent succeeded.
+            if game.done:
                 rounds.append(round_record)
                 break
             try:
@@ -1707,9 +1879,23 @@ class VLLMSelfPlayPolicy:
         legal_actions: Sequence[str],
         context: Sequence[Mapping[str, str]],
         action_schema: Mapping[str, Any] | None = None,
+        available_actions: Sequence[Mapping[str, Any]] | None = None,
     ) -> SelfPlayPolicyOutput:
         if action_schema is None:
             raise ValueError("vLLM policy requires a dynamic action schema")
+        if available_actions is None or not available_actions:
+            raise ValueError("vLLM policy requires environment-owned available_actions")
+        available_names = {str(action.get("name")) for action in available_actions}
+        schema_properties = action_schema.get("properties", {})
+        schema_action = schema_properties.get("action", {}) if isinstance(schema_properties, Mapping) else {}
+        if isinstance(schema_action, Mapping) and schema_action.get("type") == "array":
+            schema_action = schema_action.get("items", {})
+        schema_action_properties = schema_action.get("properties", {}) if isinstance(schema_action, Mapping) else {}
+        schema_names = set(schema_action_properties.get("action", {}).get("enum", ()))
+        if schema_names != available_names:
+            raise ValueError(
+                "dynamic action schema does not match environment available_actions"
+            )
         if self.output_mode == "reason_action":
             output_instructions = (
                 "Return a JSON object with a non-empty string field 'reason' and an 'action' field. "
@@ -1863,9 +2049,12 @@ def main() -> None:  # pragma: no cover
     parser.add_argument("--seed", type=int, default=840000)
     parser.add_argument("--max-new-tokens", type=int, default=1024)
     parser.add_argument("--max-rounds", type=int, default=6)
+    parser.add_argument("--max-invalid-retries", type=int, default=1)
     parser.add_argument("--subtype", choices=("all", *SynchronousItemGame.SUPPORTED_SUBTYPES), default="all")
     parser.add_argument("--output", type=Path, default=Path("item_game_synchronous_self_play.jsonl"))
     args = parser.parse_args()
+    if args.max_invalid_retries < 0:
+        parser.error("--max-invalid-retries must be non-negative")
     if args.backend == "vllm":
         policy = VLLMSynchronousSelfPlayPolicy(
             args.vllm_base_url,
@@ -1881,6 +2070,7 @@ def main() -> None:  # pragma: no cover
     with args.output.open("w", encoding="utf-8") as handle:
         for subtype_index, subtype in enumerate(subtypes):
             config = _build_config(subtype, args.max_rounds)
+            config.max_invalid_retries_per_decision = args.max_invalid_retries
             config.output_mode = args.output_mode
             runner = SynchronousSelfPlayRunner(policy, config)
             for episode in range(args.episodes):

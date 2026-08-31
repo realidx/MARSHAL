@@ -102,11 +102,17 @@ simultaneous decision phase. All decisions use the same round-start snapshot;
 communications are delivered in the next round, while state actions are
 resolved atomically. The environment performs no scripted social actions.
 
+At every model decision point the environment builds `available_actions`: a
+phase-specific list of ItemGame action families and typed argument definitions.
+The same definitions produce the per-agent JSON schema sent to vLLM. There is
+no generic `message`/`to`/`content` action in this interface, and concrete
+recipient/item combinations are not pre-enumerated.
+
 Decision answers use one typed JSON object in the vLLM `content` field. The
-root has a mandatory non-empty private `reason` string and an executable `action` object. The
-schema constrains only the envelope and primitive value types;
-the environment validates action-specific fields and game semantics. For
-example:
+root has a mandatory non-empty private `reason` string and an executable
+`action` object. The schema constrains the action family, enums, and primitive
+value types; the environment validates action-specific fields and game
+semantics. For example:
 
 ```json
 {"reason":"P1 may know an item I need.","action":{"action":"QUERY","recipient":"P1","field":"HOLDINGS"}}
@@ -155,6 +161,10 @@ persistent agreement only after `ACCEPT`, and it does not commit holdings.
 Coalition success is settled at episode end and requires every accepted
 coalition member to have committed and the union of their committed
 contributions to cover the shared goal.
+If a returned action passes JSON/schema validation but is invalid in the
+current game state, the environment appends a deterministic error observation
+and allows a finite retry budget. A syntax/schema failure is reported
+separately and is not silently converted into another action.
 The runtime uses `max_rounds: 6` and player ids `P0/P1/P2/P3`; `P0` is only
 the evaluation focal player, not a privileged engine role.
 

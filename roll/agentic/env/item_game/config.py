@@ -30,6 +30,10 @@ class ItemGameConfig:
     self_play: bool = False
     max_total_turns: int = 16
     max_rounds: int = 6
+    # A schema-valid but game-semantic-invalid action gets this many extra
+    # attempts before the episode is terminated.  Syntax/schema failures are
+    # not retried because they did not select a typed ItemGame action.
+    max_invalid_retries_per_decision: int = 1
     focal_player: str = "P0"
     # vLLM self-play output format.  ``reason_action`` is the default
     # baseline; ``action_only`` is retained for ablation experiments.

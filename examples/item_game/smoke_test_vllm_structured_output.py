@@ -134,6 +134,7 @@ def main() -> int:
         output_mode=args.output_mode,
     )
     schema = game.get_action_schema("P0", output_mode=args.output_mode)
+    available_actions = game.get_available_actions("P0", phase="decision")
     if args.output_mode == "reason_action":
         action_schema = schema.get("properties", {}).get("action", {})
         if action_schema.get("type") != "object":
@@ -147,6 +148,7 @@ def main() -> int:
             )
     counts = Counter()
     semantic_matches = 0
+    generic_message_outputs = 0
     failures: list[dict[str, object]] = []
     reason_empty_cases: list[int] = []
     trailing_quote_repairs = 0
@@ -171,6 +173,7 @@ def main() -> int:
                 legal_actions=SynchronousItemGame.MESSAGE_TEMPLATES + SynchronousItemGame.STATE_ACTION_TEMPLATES,
                 context=(),
                 action_schema=schema,
+                available_actions=available_actions,
             )
         except Exception as exc:  # pragma: no cover - exercised against a live server
             counts["request_failed"] += 1
@@ -196,6 +199,17 @@ def main() -> int:
             raw_content = output.content.strip()
             repaired_content = raw_content[:-1].rstrip() if raw_content.endswith('"') else raw_content
             envelope = _load_json_answer(output.content)
+            def has_generic_message_shape(value):
+                if isinstance(value, dict):
+                    if any(key in value for key in ("type", "to", "content")):
+                        return True
+                    return any(has_generic_message_shape(child) for child in value.values())
+                if isinstance(value, list):
+                    return any(has_generic_message_shape(child) for child in value)
+                return False
+
+            if has_generic_message_shape(envelope):
+                generic_message_outputs += 1
             stage = "envelope_validation"
             if args.output_mode == "reason_action":
                 # Count application-level reasoning independently of action
@@ -249,6 +263,7 @@ def main() -> int:
         "reason_nonempty_rate": counts["reasoning_present"] / counts["cases"],
         "schema_valid_rate": counts["schema_valid"] / counts["cases"],
         "trivial_semantic_match_rate": semantic_matches / counts["cases"],
+        "generic_message_output": generic_message_outputs,
         "schema_invalid": counts["schema_invalid"],
         "request_failed": counts["request_failed"],
         "reason_empty_or_missing": len(reason_empty_cases),
@@ -261,6 +276,7 @@ def main() -> int:
         summary["schema_valid_rate"] >= 0.99
         and summary["trivial_semantic_match_rate"] >= 0.99
         and summary["request_failed"] == 0
+        and summary["generic_message_output"] == 0
         and (
             args.output_mode == "action_only"
             or summary["reason_nonempty_rate"] >= 0.99

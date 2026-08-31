@@ -1314,6 +1314,74 @@ def test_synchronous_structured_schema_uses_reason_action_envelope():
     assert action_only["required"] == ["action"]
 
 
+def test_synchronous_available_actions_are_typed_and_phase_specific():
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+    game = SynchronousItemGame(generate_instance(7, config=config), config)
+    decision_actions = game.get_available_actions("P0", phase="decision")
+    decision_names = {definition["name"] for definition in decision_actions}
+    assert decision_names == {
+        "QUERY", "INFORM", "REQUEST_TRANSFER", "GIVE", "PROPOSE_JOIN", "COMMIT", "PASS",
+    }
+    assert all("message" not in definition and "content" not in definition for definition in decision_actions)
+    assert all(definition["arguments"]["type"] == "object" for definition in decision_actions)
+    assert all("required" in definition["arguments"] for definition in decision_actions)
+
+    game.resolve_round({
+        "P0": {"message": "QUERY P1 FOR THEIR GOAL", "actions": ()},
+        "P1": {"message": "NO MESSAGE", "actions": ()},
+    }, game.build_round_snapshot())
+    request = game.response_requests()[0]
+    response_actions = game.get_available_actions(
+        "P1", phase="response", requests=(request,)
+    )
+    assert {definition["name"] for definition in response_actions} == {"INFORM"}
+    response_schema = game.get_action_schema(
+        "P1", response=True, requests=(request,)
+    )
+    response_item = response_schema["properties"]["action"]["items"]
+    assert response_item["properties"]["action"]["enum"] == ["INFORM"]
+
+
+def test_synchronous_semantic_invalid_action_gets_bounded_retry():
+    class RetryPolicy:
+        def __init__(self):
+            self.calls = {}
+
+        def generate(self, **kwargs):
+            agent = kwargs["agent"]
+            call = self.calls.get(agent, 0)
+            self.calls[agent] = call + 1
+            if agent == "P0" and call == 0:
+                action = {"action": "GIVE", "recipient": "P0", "items": ["item_K"]}
+            else:
+                action = {"action": "PASS"}
+            return sync_module.SelfPlayPolicyOutput(
+                reasoning="short reason",
+                content=json.dumps({"reason": "short reason", "action": action}),
+            )
+
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=1,
+        max_invalid_retries_per_decision=1,
+    )
+    result = SynchronousSelfPlayRunner(RetryPolicy(), config).run_episode(7)
+    assert result.terminal["reason"] == "max_rounds"
+    assert result.diagnostics["invalid_action_retries"] == 1
+    assert result.diagnostics["invalid_actions"] == 0
+    assert result.diagnostics["semantic_invalid_actions"] == 1
+    decisions = result.rounds[0]["decisions"]
+    p0_attempts = [record for record in decisions if record["agent"] == "P0"]
+    assert [record["retry_index"] for record in p0_attempts] == [0, 1]
+    assert p0_attempts[0]["error_type"] == "semantic"
+    assert p0_attempts[0]["retryable"] is True
+    assert p0_attempts[1]["valid"] is True
+    assert "ACTIONS contains" in p0_attempts[0]["error"]
+
+
 def test_synchronous_reason_is_mandatory_and_non_empty():
     with pytest.raises(SynchronousActionError, match="exactly reason and action"):
         sync_module._unwrap_reason_action({"action": {"action": "PASS"}})
@@ -1342,12 +1410,22 @@ def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monk
 
     monkeypatch.setattr(sync_module.urllib.request, "urlopen", fake_urlopen)
     policy = VLLMSelfPlayPolicy("http://server:8000/v1", "Qwen3-4B-Instruct-2507")
+    schema = {
+        "type": "object",
+        "properties": {
+            "action": {
+                "type": "object",
+                "properties": {"action": {"type": "string", "enum": ["PASS"]}},
+            }
+        },
+    }
     output = policy.generate(
         agent="P0",
         observation="state",
         legal_actions=(SynchronousItemGame.STATE_ACTION_TEMPLATES[-1],),
         context=(),
-        action_schema={"type": "object"},
+        action_schema=schema,
+        available_actions=({"name": "PASS"},),
     )
     assert output.reasoning == ""
     assert output.content == '{"reason":"private plan","action":{"action":"PASS"}}'
@@ -1355,8 +1433,8 @@ def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monk
     body = json.loads(captured["body"])
     assert captured["url"] == "http://server:8000/v1/chat/completions"
     assert body["response_format"]["type"] == "json_schema"
-    assert body["response_format"]["json_schema"]["schema"] == {"type": "object"}
-    assert body["guided_json"] == {"type": "object"}
+    assert body["response_format"]["json_schema"]["schema"] == schema
+    assert body["guided_json"] == schema
     assert body["chat_template_kwargs"] == {"enable_thinking": False}
     assert "Typed action shapes:" not in body["messages"][-1]["content"]
 
