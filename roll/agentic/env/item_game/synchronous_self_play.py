@@ -1589,6 +1589,7 @@ class VLLMSelfPlayPolicy:
         max_new_tokens: int = 1024,
         temperature: float = 0.0,
         timeout: float = 300.0,
+        enable_thinking: bool = True,
     ):
         self.base_url = base_url.rstrip("/")
         if not self.base_url.endswith("/v1"):
@@ -1598,6 +1599,7 @@ class VLLMSelfPlayPolicy:
         self.max_new_tokens = max_new_tokens
         self.temperature = temperature
         self.timeout = timeout
+        self.enable_thinking = enable_thinking
 
     def generate(
         self,
@@ -1627,6 +1629,7 @@ class VLLMSelfPlayPolicy:
             "messages": messages,
             "temperature": self.temperature,
             "max_tokens": self.max_new_tokens,
+            "chat_template_kwargs": {"enable_thinking": self.enable_thinking},
             "response_format": {
                 "type": "json_schema",
                 "json_schema": {

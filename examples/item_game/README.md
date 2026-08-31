@@ -183,6 +183,9 @@ bash examples/item_game/run_item_game_vllm_server.sh
 ```
 
 It starts Qwen3 with `--enable-reasoning --reasoning-parser qwen3`.
+Each policy request also explicitly sends
+`chat_template_kwargs: {"enable_thinking": true}`, so the instruct model is
+asked to produce a separate reasoning trace when supported by the server.
 Override the context limit explicitly with `VLLM_MAX_MODEL_LEN=<length>` if
 the server has enough memory. Then run the pilot with
 `ITEM_GAME_BACKEND=vllm`, `VLLM_MODEL=<server model id>`, and
