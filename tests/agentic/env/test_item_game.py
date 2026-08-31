@@ -1129,8 +1129,9 @@ def test_synchronous_protocol_uses_one_action_per_line():
     )
     g = SynchronousItemGame(generate_instance(7, config=config), config)
     observation = g.get_observation("P0")
-    assert "JSON object with a non-empty reason string and an action field" in observation
-    assert "Do not output prose, MESSAGE/ACTIONS labels" in observation
+    assert "reason in assistant content" in observation
+    assert "exactly one available ItemGame tool call" in observation
+    assert "JSON reason/action envelope" in observation
     assert '"action":"QUERY"' in observation
     assert '"action":"INFORM"' in observation
     assert '"action":"COMMIT"' in observation
@@ -1406,7 +1407,7 @@ def test_synchronous_generic_message_json_is_not_an_item_game_action():
         )
 
 
-def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monkeypatch):
+def test_vllm_policy_sends_native_tools_and_keeps_reasoning_separate(monkeypatch):
     captured = {}
 
     class FakeResponse:
@@ -1417,7 +1418,7 @@ def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monk
             return False
 
         def read(self):
-            return b'{"choices":[{"message":{"content":"{\\"reason\\":\\"private plan\\",\\"action\\":{\\"action\\":\\"PASS\\"}}"}}]}'
+            return b'{"choices":[{"message":{"content":"private plan","tool_calls":[{"id":"call_1","type":"function","function":{"name":"PASS","arguments":"{}"}}]}}],"usage":{"prompt_tokens":20,"completion_tokens":5}}'
 
     def fake_urlopen(request, timeout):
         captured["url"] = request.full_url
@@ -1427,35 +1428,34 @@ def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monk
 
     monkeypatch.setattr(sync_module.urllib.request, "urlopen", fake_urlopen)
     policy = VLLMSelfPlayPolicy("http://server:8000/v1", "Qwen3-4B-Instruct-2507")
-    schema = {
-        "type": "object",
-        "properties": {
-            "action": {
-                "type": "object",
-                "properties": {"action": {"type": "string", "enum": ["PASS"]}},
-            }
-        },
-    }
+    schema = {"type": "object"}
+    available = ({
+        "name": "PASS", "description": "Take no action.",
+        "arguments": {"type": "object", "properties": {}, "required": [], "additionalProperties": False},
+    },)
     output = policy.generate(
         agent="P0",
         observation="state",
         legal_actions=(SynchronousItemGame.STATE_ACTION_TEMPLATES[-1],),
         context=(),
         action_schema=schema,
-        available_actions=({"name": "PASS"},),
+        available_actions=available,
     )
-    assert output.reasoning == ""
-    assert output.content == '{"reason":"private plan","action":{"action":"PASS"}}'
-    assert output.output_mode == "reason_action"
+    assert output.reason == "private plan"
+    assert output.tool_calls[0].tool_name == "PASS"
+    assert output.tool_calls[0].arguments == {}
+    assert output.output_mode == "native_tools"
     body = json.loads(captured["body"])
     assert captured["url"] == "http://server:8000/v1/chat/completions"
-    assert body["response_format"]["type"] == "json_schema"
-    assert body["response_format"]["json_schema"]["schema"] == schema
-    assert body["response_format"]["json_schema"]["strict"] is True
+    assert body["tools"][0]["function"]["name"] == "PASS"
+    assert body["tools"][0]["function"]["parameters"] == available[0]["arguments"]
+    assert body["tool_choice"] == "required"
+    assert "parallel_tool_calls" not in body
+    assert "response_format" not in body
     assert "guided_json" not in body
     assert "guided_decoding_backend" not in body
     assert body["chat_template_kwargs"] == {"enable_thinking": False}
-    assert "English only" in body["messages"][0]["content"]
+    assert "exactly one" in body["messages"][0]["content"]
     assert "Typed action shapes:" not in body["messages"][-1]["content"]
 
 
@@ -1470,7 +1470,9 @@ def test_vllm_policy_preserves_http_error_body(monkeypatch):
         )
 
     monkeypatch.setattr(sync_module.urllib.request, "urlopen", fake_urlopen)
-    policy = VLLMSelfPlayPolicy("http://server:8000/v1", "Qwen3-4B-Instruct")
+    policy = VLLMSelfPlayPolicy(
+        "http://server:8000/v1", "Qwen3-4B-Instruct", output_mode="reason_action"
+    )
     schema = {
         "type": "object",
         "properties": {
@@ -1490,6 +1492,69 @@ def test_vllm_policy_preserves_http_error_body(monkeypatch):
             available_actions=({"name": "PASS"},),
         )
 
+
+def test_native_tool_policy_output_is_logged_and_only_tool_call_is_executed():
+    class NativePolicy:
+        output_mode = "native_tools"
+
+        def generate(self, **kwargs):
+            return sync_module.SelfPlayPolicyOutput(
+                reason="I need P1's goal before proposing a coalition.",
+                tool_calls=(sync_module.ItemGameToolCall(
+                    "QUERY", {"recipient": "P1", "field": "GOAL"}, "call_1"
+                ),),
+                raw_message={"content": "I need P1's goal before proposing a coalition."},
+                output_mode="native_tools",
+            )
+
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+    game = SynchronousItemGame(generate_instance(7, config=config), config)
+    runner = SynchronousSelfPlayRunner(NativePolicy(), config)
+    runner.contexts = {agent: [] for agent in game.players}
+    available = game.get_available_actions("P0", phase="decision")
+    content, _, record = runner._call_policy(
+        agent="P0", observation="state", legal=(), phase="decision",
+        available_actions=available,
+    )
+    assert json.loads(content) == {"action": "QUERY", "recipient": "P1", "field": "GOAL"}
+    assert record["reason"] == "I need P1's goal before proposing a coalition."
+    assert record["action"] == {
+        "tool_name": "QUERY", "arguments": {"recipient": "P1", "field": "GOAL"},
+    }
+    assert record["tool_call_present"] is True
+    assert record["exactly_one_tool_call"] is True
+    assert record["tool_schema_valid"] is True
+    assert runner.contexts["P0"][-1]["content"] == record["reason"]
+
+
+@pytest.mark.parametrize("calls", [(), (
+    sync_module.ItemGameToolCall("PASS", {}),
+    sync_module.ItemGameToolCall("QUERY", {"recipient": "P1", "field": "GOAL"}),
+)])
+def test_native_tool_policy_rejects_missing_or_multiple_calls(calls):
+    class NativePolicy:
+        def generate(self, **kwargs):
+            return sync_module.SelfPlayPolicyOutput(
+                reason="short reason", tool_calls=calls, output_mode="native_tools"
+            )
+
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+    game = SynchronousItemGame(generate_instance(7, config=config), config)
+    runner = SynchronousSelfPlayRunner(NativePolicy(), config)
+    runner.contexts = {agent: [] for agent in game.players}
+    content, _, record = runner._call_policy(
+        agent="P0", observation="state", legal=(), phase="decision",
+        available_actions=game.get_available_actions("P0", phase="decision"),
+    )
+    assert content == ""
+    assert record["tool_schema_valid"] is False
+    assert record["exactly_one_tool_call"] is False
 
 def test_self_play_runner_extracts_reason_and_only_executes_nested_action():
     class EnvelopePolicy:

@@ -35,9 +35,9 @@ class ItemGameConfig:
     # not retried because they did not select a typed ItemGame action.
     max_invalid_retries_per_decision: int = 1
     focal_player: str = "P0"
-    # vLLM self-play output format.  ``reason_action`` is the default
-    # baseline; ``action_only`` is retained for ablation experiments.
-    output_mode: str = "reason_action"
+    # vLLM self-play output protocol. Native tools are the candidate formal
+    # protocol; JSON-envelope modes are retained only for comparisons.
+    output_mode: str = "native_tools"
     item_vocabulary: tuple[str, ...] = field(
         default_factory=lambda: (
             "item_K", "item_Q", "item_M", "item_V",

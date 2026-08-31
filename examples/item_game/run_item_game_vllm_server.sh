@@ -11,9 +11,12 @@ MAX_MODEL_LEN="${VLLM_MAX_MODEL_LEN:-8192}"
 
 echo "starting vLLM model=${MODEL} served_model=${SERVED_MODEL_NAME}"
 echo "host=${HOST} port=${PORT} max_model_len=${MAX_MODEL_LEN} native_reasoning=disabled"
+echo "tool_call_parser=hermes auto_tool_choice=enabled"
 
 exec vllm serve "${MODEL}" \
   --served-model-name "${SERVED_MODEL_NAME}" \
   --host "${HOST}" \
   --port "${PORT}" \
-  --max-model-len "${MAX_MODEL_LEN}"
+  --max-model-len "${MAX_MODEL_LEN}" \
+  --enable-auto-tool-choice \
+  --tool-call-parser hermes

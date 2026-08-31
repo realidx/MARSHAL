@@ -22,13 +22,29 @@ from .generator import ItemGameInstance, generate_instance
 
 
 @dataclass(frozen=True)
-class SelfPlayPolicyOutput:
-    """Backend-neutral model result returned by an inference policy."""
+class ItemGameToolCall:
+    """One OpenAI-compatible function call selected by the policy."""
 
-    reasoning: str
-    content: str
-    # ``reason_action`` is the application-level reasoning baseline.  The
-    # field is also carried for the action-only ablation.
+    tool_name: str
+    arguments: Mapping[str, Any]
+    tool_call_id: str = ""
+
+
+@dataclass(frozen=True)
+class SelfPlayPolicyOutput:
+    """Backend-neutral policy result: private text plus native tool calls.
+
+    ``content``/``reasoning`` remain optional compatibility fields for the two
+    legacy protocol baselines. Native ItemGame rollouts use ``reason`` and
+    ``tool_calls`` only.
+    """
+
+    reason: str = ""
+    tool_calls: tuple[ItemGameToolCall, ...] = ()
+    raw_message: Mapping[str, Any] | None = None
+    usage: Mapping[str, Any] | None = None
+    reasoning: str = ""
+    content: str = ""
     output_mode: str = "reason_action"
 
 
@@ -59,6 +75,20 @@ DECISION_ACTION_NAMES = {
 }
 RESPONSE_ACTION_NAMES = {
     "INFORM", "GIVE", "REJECT_TRANSFER", "ACCEPT_JOIN", "REJECT_JOIN", "INACTIVE",
+}
+
+ACTION_DESCRIPTIONS = {
+    "QUERY": "Ask another agent for their private GOAL or current HOLDINGS.",
+    "INFORM": "Truthfully tell another agent your GOAL or current HOLDINGS.",
+    "REQUEST_TRANSFER": "Ask another agent to transfer the specified items to you.",
+    "GIVE": "Transfer specified items that you currently hold to another agent.",
+    "REJECT_TRANSFER": "Refuse the pending transfer request.",
+    "PROPOSE_JOIN": "Propose forming a coalition with another active agent.",
+    "ACCEPT_JOIN": "Accept the pending coalition proposal.",
+    "REJECT_JOIN": "Reject the pending coalition proposal.",
+    "COMMIT": "Publicly and permanently commit the specified items.",
+    "PASS": "Take no proactive action this round.",
+    "INACTIVE": "Environment-only response for an inactive recipient.",
 }
 
 
@@ -230,6 +260,49 @@ def _validate_json_response_references(value: Any, requests: Sequence[Mapping[st
                 raise SynchronousActionError("JOIN response must refer to the exact proposer")
 
 
+def _validate_tool_call_schema(
+    call: ItemGameToolCall,
+    available_actions: Sequence[Mapping[str, Any]],
+) -> None:
+    """Validate function name and arguments independently of game legality."""
+    by_name = {str(definition.get("name")): definition for definition in available_actions}
+    if call.tool_name not in by_name:
+        raise StructuredActionError(f"unknown tool {call.tool_name!r}")
+    schema = by_name[call.tool_name].get("arguments", {})
+    properties = schema.get("properties", {})
+    required = set(schema.get("required", ()))
+    arguments = dict(call.arguments)
+    missing = required - set(arguments)
+    extra = set(arguments) - set(properties)
+    if missing or extra:
+        raise StructuredActionError(
+            f"wrong arguments for {call.tool_name}: missing={sorted(missing)}, unknown={sorted(extra)}"
+        )
+    for key, value in arguments.items():
+        spec = properties[key]
+        expected_type = spec.get("type")
+        type_ok = {
+            "string": isinstance(value, str),
+            "integer": isinstance(value, int) and not isinstance(value, bool),
+            "array": isinstance(value, list),
+            "object": isinstance(value, dict),
+        }.get(expected_type, True)
+        if not type_ok:
+            raise StructuredActionError(f"tool argument {key!r} has wrong type")
+        if "enum" in spec and value not in spec["enum"]:
+            raise StructuredActionError(f"tool argument {key!r} is outside its enum")
+        if expected_type == "array":
+            if not value:
+                raise StructuredActionError(f"tool argument {key!r} must not be empty")
+            item_spec = spec.get("items", {})
+            if any(not isinstance(item, str) for item in value):
+                raise StructuredActionError(f"tool argument {key!r} must contain strings")
+            if "enum" in item_spec and any(item not in item_spec["enum"] for item in value):
+                raise StructuredActionError(f"tool argument {key!r} contains a value outside its enum")
+            if len(set(value)) != len(value):
+                raise StructuredActionError(f"tool argument {key!r} contains duplicates")
+
+
 def _remap_instance(instance: ItemGameInstance) -> dict[str, Any]:
     mapping = {"EGO": "P0"}
     mapping.update({agent: agent for agent in instance.goals if agent != "EGO"})
@@ -332,6 +405,10 @@ class SynchronousItemGame:
             "schema_invalid_actions": 0,
             "schema_valid_responses": 0,
             "schema_invalid_responses": 0,
+            "tool_call_present": 0,
+            "tool_call_missing": 0,
+            "exactly_one_tool_call": 0,
+            "not_exactly_one_tool_call": 0,
             "semantic_valid_actions": 0,
             "semantic_invalid_actions": 0,
             "semantic_valid_responses": 0,
@@ -439,6 +516,7 @@ class SynchronousItemGame:
         ) -> dict[str, Any]:
             return {
                 "name": name,
+                "description": ACTION_DESCRIPTIONS[name],
                 "arguments": {
                     "type": "object",
                     "additionalProperties": False,
@@ -471,13 +549,15 @@ class SynchronousItemGame:
                 response_names.update({"GIVE", "REJECT_TRANSFER"})
             elif request["kind"] == "JOIN":
                 response_names.update({"ACCEPT_JOIN", "REJECT_JOIN"})
+        message_ids = [int(request["id"]) for request in effective_requests]
+        message_id = {"type": "integer", "enum": message_ids}
         response_definitions = {
-            "INFORM": definition("INFORM", {"message_id": {"type": "integer"}, "recipient": recipient, "field": {"type": "string", "enum": ["GOAL", "HOLDINGS"]}, "value": item_array}, ("message_id", "recipient", "field", "value")),
-            "GIVE": definition("GIVE", {"message_id": {"type": "integer"}, "recipient": recipient, "items": item_array}, ("message_id", "recipient", "items")),
-            "REJECT_TRANSFER": definition("REJECT_TRANSFER", {"message_id": {"type": "integer"}, "requester": recipient, "items": item_array}, ("message_id", "requester", "items")),
-            "ACCEPT_JOIN": definition("ACCEPT_JOIN", {"message_id": {"type": "integer"}, "proposer": recipient}, ("message_id", "proposer")),
-            "REJECT_JOIN": definition("REJECT_JOIN", {"message_id": {"type": "integer"}, "proposer": recipient}, ("message_id", "proposer")),
-            "INACTIVE": definition("INACTIVE", {"message_id": {"type": "integer"}}, ("message_id",)),
+            "INFORM": definition("INFORM", {"message_id": message_id, "recipient": recipient, "field": {"type": "string", "enum": ["GOAL", "HOLDINGS"]}, "value": item_array}, ("message_id", "recipient", "field", "value")),
+            "GIVE": definition("GIVE", {"message_id": message_id, "recipient": recipient, "items": item_array}, ("message_id", "recipient", "items")),
+            "REJECT_TRANSFER": definition("REJECT_TRANSFER", {"message_id": message_id, "requester": recipient, "items": item_array}, ("message_id", "requester", "items")),
+            "ACCEPT_JOIN": definition("ACCEPT_JOIN", {"message_id": message_id, "proposer": recipient}, ("message_id", "proposer")),
+            "REJECT_JOIN": definition("REJECT_JOIN", {"message_id": message_id, "proposer": recipient}, ("message_id", "proposer")),
+            "INACTIVE": definition("INACTIVE", {"message_id": message_id}, ("message_id",)),
         }
         return tuple(response_definitions[name] for name in sorted(response_names) if name in response_definitions)
 
@@ -499,6 +579,10 @@ class SynchronousItemGame:
         """
         if agent not in self.players:
             raise ValueError(f"unknown player {agent!r}")
+        if output_mode == "native_tools":
+            # Native function calling carries one schema per tool, not a
+            # response_format envelope schema.
+            return {}
         if output_mode not in {"reason_action", "action_only"}:
             raise ValueError(f"unknown output_mode {output_mode!r}")
         players = [player for player in self.players if player != agent]
@@ -621,11 +705,10 @@ class SynchronousItemGame:
         lines.extend([
             "DECISION PHASE.",
             "All mandatory responses from the previous round have already been completed.",
-            "Return one JSON object with a non-empty reason string and an action field.",
-            "Briefly reason about relevant private state and interaction history. Keep the reason concise.",
-            "Put exactly one executable action object in action. The reason is private logging only.",
-            "Do not put reasoning, XML, markdown, or prose inside action.",
-            "Do not output prose, MESSAGE/ACTIONS labels, or placeholder values such as <agent_id>.",
+            "Briefly reason in assistant content about the relevant private state, interaction history, and next interaction.",
+            "Keep that private reason concise, then make exactly one available ItemGame tool call.",
+            "The environment consumes only the tool call; never encode an action in prose.",
+            "Do not use XML, a JSON reason/action envelope, MESSAGE/ACTIONS labels, or placeholder values.",
             "Use an exact player id from Active players and exact item names from the state or your known information.",
             "QUERY field must be exactly GOAL or HOLDINGS.",
             "INFORM must include your own truthful GOAL or current HOLDINGS in value as an array of item names.",
@@ -680,10 +763,9 @@ class SynchronousItemGame:
             ))
         lines.extend((
             "",
-            "Return exactly one JSON object with a non-empty reason string and an action field:",
-            "Briefly reason about the relevant private state and interaction history. Keep the reason concise.",
-            "Put a JSON array in action, with one response object per message. The reason is private logging only.",
-            "Each response object must contain message_id and action.",
+            "Briefly reason in assistant content about the relevant private state and interaction history.",
+            "Keep that private reason concise, then make exactly one available ItemGame tool call.",
+            "The tool arguments must contain the exact message_id shown above.",
             "For QUERY use INFORM with recipient, field, and truthful value.",
             "For a transfer request use GIVE with recipient and the exact requested items, or REJECT_TRANSFER.",
             "For JOIN use ACCEPT_JOIN or REJECT_JOIN with proposer.",
@@ -1234,6 +1316,18 @@ class SynchronousItemGame:
                 (self.metrics["semantic_valid_actions"] + self.metrics["semantic_valid_responses"])
                 / (semantic_total + semantic_response_total)
             ) if semantic_total + semantic_response_total else 0.0,
+            "tool_call_present_rate": float(
+                self.metrics["tool_call_present"]
+                / (self.metrics["tool_call_present"] + self.metrics["tool_call_missing"])
+            ) if self.metrics["tool_call_present"] + self.metrics["tool_call_missing"] else 0.0,
+            "exactly_one_tool_call_rate": float(
+                self.metrics["exactly_one_tool_call"]
+                / (self.metrics["exactly_one_tool_call"] + self.metrics["not_exactly_one_tool_call"])
+            ) if self.metrics["exactly_one_tool_call"] + self.metrics["not_exactly_one_tool_call"] else 0.0,
+            "tool_schema_valid_rate": float(
+                (self.metrics["schema_valid_actions"] + self.metrics["schema_valid_responses"])
+                / (schema_total + schema_response_total)
+            ) if schema_total + schema_response_total else 0.0,
         })
         result.update({key: value for key, value in self.metrics.items() if key not in result})
         return result
@@ -1515,44 +1609,77 @@ class SynchronousSelfPlayRunner:
             kwargs["available_actions"] = tuple(available_actions)
         backend_output = self.policy.generate(**kwargs)
         if isinstance(backend_output, SelfPlayPolicyOutput):
-            # vLLM native reasoning is intentionally not used.  The model's
-            # application-level private scratchpad lives in the typed `reason`
-            # field of content; only the nested action is sent to the environment.
-            reasoning = ""
-            raw_content = backend_output.content
-            content = raw_content
-            try:
-                parsed_content = _load_json_answer(content)
-                if backend_output.output_mode == "reason_action":
-                    # Preserve a valid application-level reason even when
-                    # the action later fails envelope/schema validation.
-                    if isinstance(parsed_content, dict) and isinstance(parsed_content.get("reason"), str):
-                        reasoning = parsed_content["reason"]
-                    reasoning, action = _unwrap_reason_action(parsed_content)
-                elif backend_output.output_mode == "action_only":
-                    action = parsed_content
-                    if not isinstance(action, (dict, list)):
-                        raise StructuredActionError("action-only content must be an object or array of objects")
-                else:
-                    raise StructuredActionError(
-                        f"unknown self-play output mode {backend_output.output_mode!r}"
-                    )
-                content = json.dumps(action, separators=(",", ":"))
-            except StructuredActionError:
-                # Leave malformed envelope content untouched so the normal
-                # parser records it as an invalid model output.
-                pass
-            raw_response: str | dict[str, str] = {
-                "reasoning": backend_output.reasoning,
-                "content": raw_content,
-            }
-            context_response = content
+            if backend_output.output_mode == "native_tools":
+                reasoning = backend_output.reason
+                calls = backend_output.tool_calls
+                tool_call_present = bool(calls)
+                exactly_one_tool_call = len(calls) == 1
+                content = ""
+                tool_schema_valid = False
+                tool_error = None
+                policy_action = None
+                if exactly_one_tool_call:
+                    call = calls[0]
+                    policy_action = {
+                        "tool_name": call.tool_name,
+                        "arguments": dict(call.arguments),
+                    }
+                    try:
+                        _validate_tool_call_schema(call, available_actions)
+                        tool_schema_valid = True
+                        content = json.dumps(
+                            {"action": call.tool_name, **dict(call.arguments)},
+                            separators=(",", ":"),
+                        )
+                    except StructuredActionError as exc:
+                        tool_error = str(exc)
+                raw_response = dict(backend_output.raw_message or {
+                    "content": reasoning,
+                    "tool_calls": [
+                        {"id": call.tool_call_id, "type": "function", "function": {
+                            "name": call.tool_name,
+                            "arguments": json.dumps(dict(call.arguments), separators=(",", ":")),
+                        }} for call in calls
+                    ],
+                })
+                context_response = reasoning
+            else:
+                reasoning = ""
+                raw_content = backend_output.content
+                content = raw_content
+                try:
+                    parsed_content = _load_json_answer(content)
+                    if backend_output.output_mode == "reason_action":
+                        if isinstance(parsed_content, dict) and isinstance(parsed_content.get("reason"), str):
+                            reasoning = parsed_content["reason"]
+                        reasoning, action = _unwrap_reason_action(parsed_content)
+                    elif backend_output.output_mode == "action_only":
+                        action = parsed_content
+                        if not isinstance(action, (dict, list)):
+                            raise StructuredActionError("action-only content must be an object or array of objects")
+                    else:
+                        raise StructuredActionError(f"unknown self-play output mode {backend_output.output_mode!r}")
+                    content = json.dumps(action, separators=(",", ":"))
+                except StructuredActionError:
+                    pass
+                raw_response = {"reasoning": backend_output.reasoning, "content": raw_content}
+                context_response = content
+                tool_call_present = None
+                exactly_one_tool_call = None
+                tool_schema_valid = None
+                tool_error = None
+                policy_action = None
         else:
             raw = str(backend_output)
             reasoning = _parse_reason(raw)
             content = _answer_text(raw)
             raw_response = raw
             context_response = raw
+            tool_call_present = None
+            exactly_one_tool_call = None
+            tool_schema_valid = None
+            tool_error = None
+            policy_action = None
         record = {
             "agent": agent,
             "phase": phase,
@@ -1563,14 +1690,25 @@ class SynchronousSelfPlayRunner:
             # be audited without reconstructing the game state.
             "available_actions": [dict(definition) for definition in available_actions],
             "reason": reasoning,
+            "action": policy_action,
             "reason_is_english": (
                 _reason_is_english(reasoning) if reasoning else None
             ),
             "raw_response": raw_response,
             "answer": content,
             "content": content,
-            "output_format": "json" if _answer_is_json(content) else "legacy_text",
-            "schema_valid": None,
+            "output_format": (
+                "native_tool_call"
+                if isinstance(backend_output, SelfPlayPolicyOutput) and backend_output.output_mode == "native_tools"
+                else ("json" if _answer_is_json(content) else "legacy_text")
+            ),
+            "tool_call_present": tool_call_present,
+            "tool_call_count": len(backend_output.tool_calls) if isinstance(backend_output, SelfPlayPolicyOutput) and backend_output.output_mode == "native_tools" else None,
+            "exactly_one_tool_call": exactly_one_tool_call,
+            "tool_schema_valid": tool_schema_valid,
+            "tool_error": tool_error,
+            "schema_valid": tool_schema_valid,
+            "_schema_recorded": False,
             "semantic_valid": None,
             "valid": True,
         }
@@ -1593,6 +1731,12 @@ class SynchronousSelfPlayRunner:
         key = "schema_valid_actions" if phase == "decision" else "schema_valid_responses"
         invalid_key = "schema_invalid_actions" if phase == "decision" else "schema_invalid_responses"
         game.metrics[key if valid else invalid_key] += 1
+        record["_schema_recorded"] = True
+        if record.get("tool_call_present") is not None:
+            game.metrics["tool_call_present" if record["tool_call_present"] else "tool_call_missing"] += 1
+            game.metrics[
+                "exactly_one_tool_call" if record["exactly_one_tool_call"] else "not_exactly_one_tool_call"
+            ] += 1
 
     def _retry_observation(
         self,
@@ -1616,9 +1760,9 @@ class SynchronousSelfPlayRunner:
         instance = self.instance_factory(seed, self.config)
         game = SynchronousItemGame(instance, self.config)
         self.contexts = {agent: [] for agent in game.players}
-        output_mode = getattr(self.config, "output_mode", "reason_action")
-        if output_mode not in {"reason_action", "action_only"}:
-            raise ValueError("config.output_mode must be 'reason_action' or 'action_only'")
+        output_mode = getattr(self.config, "output_mode", "native_tools")
+        if output_mode not in {"native_tools", "reason_action", "action_only"}:
+            raise ValueError("unknown config.output_mode")
         if isinstance(self.policy, VLLMSelfPlayPolicy):
             # Keep direct ``ItemGameConfig(output_mode=...)`` construction
             # consistent with the CLI path.
@@ -1631,10 +1775,14 @@ class SynchronousSelfPlayRunner:
             response_snapshot = game.build_response_snapshot()
             requests = game.response_requests()
             responses: dict[int, str] = {}
-            by_recipient: dict[str, list[dict[str, Any]]] = {}
-            for request in requests:
-                by_recipient.setdefault(str(request["recipient"]), []).append(request)
-            for agent, agent_requests in by_recipient.items():
+            # Native protocol requires exactly one tool call per model turn.
+            # Resolve multiple pending messages as separate response turns,
+            # while retaining the same immutable response snapshot and atomic
+            # environment resolution at the end of the phase.
+            request_batches = [
+                (str(request["recipient"]), [request]) for request in requests
+            ]
+            for agent, agent_requests in request_batches:
                 automatic = {
                     request["id"]: f"RESPOND #{request['id']}: INACTIVE"
                     for request in agent_requests
@@ -1704,7 +1852,7 @@ class SynchronousSelfPlayRunner:
                         response_succeeded = True
                         break
                     except SynchronousActionError as exc:
-                        if record["schema_valid"] is None:
+                        if not record["_schema_recorded"]:
                             self._record_schema_result(game, record, phase="response", valid=False)
                         record["semantic_valid"] = False
                         retryable = record["schema_valid"] is True and not isinstance(exc, StructuredActionError)
@@ -1788,7 +1936,7 @@ class SynchronousSelfPlayRunner:
                         decision_succeeded = True
                         break
                     except SynchronousActionError as exc:
-                        if record["schema_valid"] is None:
+                        if not record["_schema_recorded"]:
                             self._record_schema_result(game, record, phase="decision", valid=False)
                         record["semantic_valid"] = False
                         retryable = record["schema_valid"] is True and not isinstance(exc, StructuredActionError)
@@ -1859,7 +2007,7 @@ class SynchronousSelfPlayRunner:
 
 
 class VLLMSelfPlayPolicy:
-    """OpenAI-compatible vLLM policy with per-call JSON-schema guidance."""
+    """OpenAI-compatible vLLM policy using Qwen-native function calls."""
 
     def __init__(
         self,
@@ -1871,10 +2019,10 @@ class VLLMSelfPlayPolicy:
         temperature: float = 0.0,
         timeout: float = 300.0,
         enable_thinking: bool = False,
-        output_mode: str = "reason_action",
+        output_mode: str = "native_tools",
     ):
-        if output_mode not in {"reason_action", "action_only"}:
-            raise ValueError("output_mode must be 'reason_action' or 'action_only'")
+        if output_mode not in {"native_tools", "reason_action", "action_only"}:
+            raise ValueError("unknown output_mode")
         self.base_url = base_url.rstrip("/")
         if not self.base_url.endswith("/v1"):
             self.base_url += "/v1"
@@ -1896,22 +2044,15 @@ class VLLMSelfPlayPolicy:
         action_schema: Mapping[str, Any] | None = None,
         available_actions: Sequence[Mapping[str, Any]] | None = None,
     ) -> SelfPlayPolicyOutput:
-        if action_schema is None:
-            raise ValueError("vLLM policy requires a dynamic action schema")
         if available_actions is None or not available_actions:
             raise ValueError("vLLM policy requires environment-owned available_actions")
-        available_names = {str(action.get("name")) for action in available_actions}
-        schema_properties = action_schema.get("properties", {})
-        schema_action = schema_properties.get("action", {}) if isinstance(schema_properties, Mapping) else {}
-        if isinstance(schema_action, Mapping) and schema_action.get("type") == "array":
-            schema_action = schema_action.get("items", {})
-        schema_action_properties = schema_action.get("properties", {}) if isinstance(schema_action, Mapping) else {}
-        schema_names = set(schema_action_properties.get("action", {}).get("enum", ()))
-        if schema_names != available_names:
-            raise ValueError(
-                "dynamic action schema does not match environment available_actions"
+        if self.output_mode == "native_tools":
+            output_instructions = (
+                "Briefly reason about the relevant private state, interaction history, and next interaction "
+                "in normal assistant content. Keep it concise. Then make exactly one available ItemGame "
+                "tool call. The content is private and must not contain or serialize the action."
             )
-        if self.output_mode == "reason_action":
+        elif self.output_mode == "reason_action":
             output_instructions = (
                 "Return a JSON object with a non-empty string field 'reason' and an 'action' field. "
                 "The value of 'action' must be a JSON object, never a natural-language string. "
@@ -1925,8 +2066,7 @@ class VLLMSelfPlayPolicy:
             )
         system = (
             f"You are {agent}. All players have equal status in a synchronous multi-agent game. "
-            "Follow the action semantics in the user message. Return only JSON matching the supplied "
-            f"schema in the final answer. {output_instructions} "
+            f"Follow the action semantics in the user message. {output_instructions} "
             "Do not invent players or items. Every INFORM value must be your own truthful current state."
         )
         messages: list[dict[str, str]] = [{"role": "system", "content": system}]
@@ -1935,24 +2075,39 @@ class VLLMSelfPlayPolicy:
             "role": "user",
             "content": observation,
         })
-        body = {
+        body: dict[str, Any] = {
             "model": self.model,
             "messages": messages,
             "temperature": self.temperature,
             "max_tokens": self.max_new_tokens,
             "chat_template_kwargs": {"enable_thinking": self.enable_thinking},
-            "response_format": {
+        }
+        if self.output_mode == "native_tools":
+            body.update({
+                "tools": [
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": str(definition["name"]),
+                            "description": str(definition.get("description", "")),
+                            "parameters": dict(definition["arguments"]),
+                        },
+                    }
+                    for definition in available_actions
+                ],
+                "tool_choice": "required",
+            })
+        else:
+            if action_schema is None:
+                raise ValueError("legacy envelope mode requires an action schema")
+            body["response_format"] = {
                 "type": "json_schema",
                 "json_schema": {
                     "name": "item_game_action",
                     "schema": dict(action_schema),
                     "strict": True,
                 },
-            },
-            # vLLM 0.9 maps response_format.json_schema to guided decoding in
-            # ChatCompletionRequest.to_sampling_params(). Backend selection is
-            # server-owned in 0.9 and must not be overridden per request.
-        }
+            }
         request = urllib.request.Request(
             f"{self.base_url}/chat/completions",
             data=json.dumps(body).encode("utf-8"),
@@ -1966,12 +2121,39 @@ class VLLMSelfPlayPolicy:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 payload = json.loads(response.read().decode("utf-8"))
             message = payload["choices"][0]["message"]
-            content = message.get("content", "")
-            if not isinstance(content, str) or not content.strip():
-                raise ValueError("vLLM response did not contain final JSON content")
-            # Native vLLM reasoning is intentionally disabled.  The private
-            # model scratchpad is the typed `reason` field in content.
-            return SelfPlayPolicyOutput(reasoning="", content=content, output_mode=self.output_mode)
+            content = message.get("content") or ""
+            if not isinstance(content, str):
+                content = str(content)
+            if self.output_mode != "native_tools":
+                if not content.strip():
+                    raise ValueError("vLLM response did not contain final JSON content")
+                return SelfPlayPolicyOutput(
+                    content=content,
+                    usage=dict(payload.get("usage") or {}),
+                    output_mode=self.output_mode,
+                )
+            parsed_calls: list[ItemGameToolCall] = []
+            for raw_call in message.get("tool_calls") or ():
+                function = raw_call.get("function") or {}
+                raw_arguments = function.get("arguments", "")
+                try:
+                    arguments = json.loads(raw_arguments) if isinstance(raw_arguments, str) else raw_arguments
+                except json.JSONDecodeError:
+                    arguments = {"__malformed_arguments__": raw_arguments}
+                if not isinstance(arguments, Mapping):
+                    arguments = {"__non_object_arguments__": arguments}
+                parsed_calls.append(ItemGameToolCall(
+                    tool_name=str(function.get("name", "")),
+                    arguments=dict(arguments),
+                    tool_call_id=str(raw_call.get("id", "")),
+                ))
+            return SelfPlayPolicyOutput(
+                reason=content,
+                tool_calls=tuple(parsed_calls),
+                raw_message=dict(message),
+                usage=dict(payload.get("usage") or {}),
+                output_mode="native_tools",
+            )
         except urllib.error.HTTPError as exc:
             try:
                 error_body = exc.read().decode("utf-8", errors="replace")
@@ -2071,9 +2253,9 @@ def main() -> None:  # pragma: no cover
     parser.add_argument("--vllm-api-key", default="EMPTY")
     parser.add_argument(
         "--output-mode",
-        choices=("reason_action", "action_only"),
-        default="reason_action",
-        help="vLLM output format; reason_action is the default baseline",
+        choices=("native_tools", "reason_action", "action_only"),
+        default="native_tools",
+        help="vLLM protocol; native_tools is the formal protocol, others are A/B baselines",
     )
     parser.add_argument("--episodes", type=int, default=10)
     parser.add_argument("--seed", type=int, default=840000)

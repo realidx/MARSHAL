@@ -194,17 +194,20 @@ export VLLM_MODEL=Qwen/Qwen3-4B-Instruct-2507
 bash examples/item_game/run_item_game_vllm_server.sh
 ```
 
-Native vLLM reasoning is intentionally disabled. Each policy request asks the
-model to put a concise private scratchpad in the typed `reason` field and the
-executable protocol action in the typed `action` field. Set
-`SELF_PLAY_OUTPUT_MODE=action_only` for the action-only ablation; the default
-`reason_action` mode is the formal baseline.
+Native vLLM reasoning is intentionally disabled. The server uses Qwen's
+Hermes-style tool parser. Each policy response places a concise private reason
+in ordinary assistant `content` and exactly one executable action in
+`tool_calls[0]`. The environment never extracts actions from content. The
+default `native_tools` mode is the formal candidate protocol;
+`reason_action` and `action_only` remain comparison baselines only.
 Override the context limit explicitly with `VLLM_MAX_MODEL_LEN=<length>` if
 the server has enough memory. Then run the pilot with
 `ITEM_GAME_BACKEND=vllm`, `VLLM_MODEL=<server model id>`, and
 `VLLM_BASE_URL=http://<server>:8000/v1`. The vLLM policy sends the dynamic
-per-agent JSON schema as `response_format`; the environment still performs all
-semantic checks.
+phase-specific function definitions through `tools` with
+`tool_choice=required`; it never sends a request-level guided-decoding backend.
+The runner separately records tool presence/count, tool-schema validity, and
+game-semantic validity.
 
 Before starting any episodes, the pilot script runs the independent 100-case
 smoke test below and aborts unless schema validity and trivial intent matching
@@ -212,7 +215,16 @@ are both at least 99%. Set `SELF_PLAY_SKIP_GROUNDING_PREFLIGHT=1` only for
 debugging the runner itself. To run the preflight directly:
 
 ```bash
-python examples/item_game/smoke_test_vllm_structured_output.py \
+python examples/item_game/smoke_test_vllm_tool_calling.py \
+  --model Qwen/Qwen3-4B-Instruct-2507 \
+  --base-url http://<server>:8000/v1
+```
+
+After the native smoke test passes, compare the three serialization protocols
+on the same trivial intents:
+
+```bash
+python examples/item_game/ab_test_vllm_protocols.py \
   --model Qwen/Qwen3-4B-Instruct-2507 \
   --base-url http://<server>:8000/v1
 ```
