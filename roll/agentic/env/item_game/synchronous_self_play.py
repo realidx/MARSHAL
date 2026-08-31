@@ -535,7 +535,7 @@ class SynchronousItemGame:
                 "additionalProperties": False,
                 "properties": {
                     # Keep the decoder schema inside the conservative vLLM
-                    # 0.9/xgrammar subset. Non-empty/English checks are
+                    # 0.9 structured-output subset. Non-empty/English checks are
                     # application-level envelope diagnostics below.
                     "reason": {"type": "string"},
                     "action": {"type": "array", "items": action_object},
@@ -1950,10 +1950,8 @@ class VLLMSelfPlayPolicy:
                 },
             },
             # vLLM 0.9 maps response_format.json_schema to guided decoding in
-            # ChatCompletionRequest.to_sampling_params(). Do not also send the
-            # legacy guided_json field: one request should have one auditable
-            # constraint transport.
-            "guided_decoding_backend": "xgrammar",
+            # ChatCompletionRequest.to_sampling_params(). Backend selection is
+            # server-owned in 0.9 and must not be overridden per request.
         }
         request = urllib.request.Request(
             f"{self.base_url}/chat/completions",

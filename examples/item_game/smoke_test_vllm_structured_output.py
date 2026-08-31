@@ -293,7 +293,6 @@ def main() -> int:
         "cases": counts["cases"],
         "server_identity": server_identity,
         "constraint_transport": "response_format.json_schema",
-        "requested_guided_decoding_backend": "xgrammar",
         "reason_nonempty_rate": counts["reasoning_present"] / counts["cases"],
         "english_reason_rate": (
             counts["english_reason"] / counts["cases"]

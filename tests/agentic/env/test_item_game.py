@@ -1453,7 +1453,7 @@ def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monk
     assert body["response_format"]["json_schema"]["schema"] == schema
     assert body["response_format"]["json_schema"]["strict"] is True
     assert "guided_json" not in body
-    assert body["guided_decoding_backend"] == "xgrammar"
+    assert "guided_decoding_backend" not in body
     assert body["chat_template_kwargs"] == {"enable_thinking": False}
     assert "English only" in body["messages"][0]["content"]
     assert "Typed action shapes:" not in body["messages"][-1]["content"]
