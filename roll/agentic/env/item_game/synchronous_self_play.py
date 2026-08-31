@@ -546,7 +546,10 @@ class SynchronousItemGame:
                 definition("REQUEST_TRANSFER", {"recipient": recipient, "items": item_array}, ("recipient", "items")),
                 definition("GIVE", {"recipient": recipient, "items": item_array}, ("recipient", "items")),
                 definition("COMMIT", {"items": item_array}, ("items",)),
-                definition("PASS", {}, ()),
+                # Qwen3 + Hermes is more reliable when even a no-op tool has
+                # one explicit, schema-constrained argument.  The runner
+                # strips this transport-only confirmation before execution.
+                definition("PASS", {"confirm": {"type": "boolean", "enum": [True]}}, ("confirm",)),
             ]
             if self.subtype == "collaboration":
                 definitions.insert(4, definition("PROPOSE_JOIN", {"recipient": recipient}, ("recipient",)))
@@ -1641,8 +1644,11 @@ class SynchronousSelfPlayRunner:
                     try:
                         _validate_tool_call_schema(call, available_actions)
                         tool_schema_valid = True
+                        environment_arguments = dict(call.arguments)
+                        if call.tool_name == "PASS" and environment_arguments.get("confirm") is True:
+                            environment_arguments.pop("confirm")
                         content = json.dumps(
-                            {"action": call.tool_name, **dict(call.arguments)},
+                            {"action": call.tool_name, **environment_arguments},
                             separators=(",", ":"),
                         )
                     except StructuredActionError as exc:
@@ -2034,7 +2040,7 @@ class VLLMSelfPlayPolicy:
         timeout: float = 300.0,
         enable_thinking: bool = False,
         output_mode: str = "native_tools",
-        native_tool_choice: str = "required",
+        native_tool_choice: str = "auto",
     ):
         if output_mode not in {"native_tools", "reason_action", "action_only"}:
             raise ValueError("unknown output_mode")
@@ -2280,6 +2286,12 @@ def main() -> None:  # pragma: no cover
     parser.add_argument("--max-new-tokens", type=int, default=1024)
     parser.add_argument("--max-rounds", type=int, default=6)
     parser.add_argument("--max-invalid-retries", type=int, default=1)
+    parser.add_argument(
+        "--tool-choice",
+        choices=("auto", "required"),
+        default="auto",
+        help="vLLM native tool choice; auto matches the validated Qwen3/Hermes smoke test",
+    )
     parser.add_argument("--subtype", choices=("all", *SynchronousItemGame.SUPPORTED_SUBTYPES), default="all")
     parser.add_argument("--output", type=Path, default=Path("item_game_synchronous_self_play.jsonl"))
     args = parser.parse_args()
@@ -2292,6 +2304,7 @@ def main() -> None:  # pragma: no cover
             api_key=args.vllm_api_key,
             max_new_tokens=args.max_new_tokens,
             output_mode=args.output_mode,
+            native_tool_choice=args.tool_choice,
         )
     else:
         policy = HuggingFaceSynchronousSelfPlayPolicy(args.model, max_new_tokens=args.max_new_tokens)

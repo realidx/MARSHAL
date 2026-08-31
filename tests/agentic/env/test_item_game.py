@@ -1332,6 +1332,9 @@ def test_synchronous_available_actions_are_typed_and_phase_specific():
     assert all("message" not in definition and "content" not in definition for definition in decision_actions)
     assert all(definition["arguments"]["type"] == "object" for definition in decision_actions)
     assert all("required" in definition["arguments"] for definition in decision_actions)
+    pass_definition = next(definition for definition in decision_actions if definition["name"] == "PASS")
+    assert pass_definition["arguments"]["required"] == ["confirm"]
+    assert pass_definition["arguments"]["properties"]["confirm"]["enum"] == [True]
 
     game.resolve_round({
         "P0": {"message": "QUERY P1 FOR THEIR GOAL", "actions": ()},

@@ -40,8 +40,8 @@ def main() -> int:
         help="Use pass-only for the zero-argument PASS serialization micro-test.",
     )
     parser.add_argument(
-        "--pass-schema", choices=("empty", "confirm"), default="empty",
-        help="confirm adds required confirm=true to test whether empty arguments cause the failure.",
+        "--pass-schema", choices=("empty", "confirm"), default="confirm",
+        help="confirm adds required confirm=true; the self-play pilot uses this reliable form.",
     )
     parser.add_argument("--ready-timeout", type=float, default=600.0)
     parser.add_argument("--ready-interval", type=float, default=5.0)

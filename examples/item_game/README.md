@@ -205,7 +205,9 @@ the server has enough memory. Then run the pilot with
 `ITEM_GAME_BACKEND=vllm`, `VLLM_MODEL=<server model id>`, and
 `VLLM_BASE_URL=http://<server>:8000/v1`. The vLLM policy sends the dynamic
 phase-specific function definitions through `tools` with
-`tool_choice=required`; it never sends a request-level guided-decoding backend.
+`tool_choice=auto` by default, matching the validated Qwen3/Hermes smoke test;
+set `SELF_PLAY_TOOL_CHOICE=required` only for an explicit comparison. It never
+sends a request-level guided-decoding backend.
 The runner separately records tool presence/count, tool-schema validity, and
 game-semantic validity.
 
