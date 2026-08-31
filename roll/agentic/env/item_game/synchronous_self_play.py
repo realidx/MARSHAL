@@ -372,48 +372,58 @@ class SynchronousItemGame:
         return self.MESSAGE_TEMPLATES + self.STATE_ACTION_TEMPLATES
 
     def get_action_schema(self, agent: str, *, response: bool = False) -> dict[str, Any]:
-        """Return a dynamic typed schema without enumerating grounded actions."""
+        """Return an xgrammar-safe typed envelope.
+
+        The schema deliberately describes only the JSON envelope and primitive
+        value types.  Action-specific required fields and game legality remain
+        semantic checks in the environment.  In particular, avoid ``oneOf``,
+        ``minItems``, and ``uniqueItems`` here because they are not accepted by
+        the xgrammar backend used by older vLLM releases.
+        """
         if agent not in self.players:
             raise ValueError(f"unknown player {agent!r}")
         players = [player for player in self.players if player != agent]
         items = list(self.items)
-        def obj_schema(action: str, properties: dict[str, Any], required: list[str]) -> dict[str, Any]:
-            return {
-                "type": "object",
-                "additionalProperties": False,
-                "properties": {"action": {"type": "string", "enum": [action]}, **properties},
-                "required": ["action", *required],
-            }
-        item_array = {"type": "array", "minItems": 1, "uniqueItems": True, "items": {"type": "string", "enum": items}}
+        item_array = {"type": "array", "items": {"type": "string", "enum": items}}
         if response:
             message_ids = [message["id"] for message in self.pending_messages if message["recipient"] == agent]
             message_id = {"type": "integer", "enum": message_ids}
             recipient = {"type": "string", "enum": players + [agent]}
+            action_object = {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "action": {"type": "string", "enum": sorted(RESPONSE_ACTION_NAMES)},
+                    "message_id": message_id,
+                    "recipient": recipient,
+                    "requester": recipient,
+                    "proposer": recipient,
+                    "field": {"type": "string", "enum": ["GOAL", "HOLDINGS"]},
+                    "value": item_array,
+                    "items": item_array,
+                },
+                "required": ["action"],
+            }
             return {
                 "type": "array",
-                "minItems": 1,
-                "items": {"oneOf": [
-                    obj_schema("INFORM", {"message_id": message_id, "recipient": recipient, "field": {"type": "string", "enum": ["GOAL", "HOLDINGS"]}, "value": item_array}, ["message_id", "recipient", "field", "value"]),
-                    obj_schema("GIVE", {"message_id": message_id, "recipient": recipient, "items": item_array}, ["message_id", "recipient", "items"]),
-                    obj_schema("REJECT_TRANSFER", {"message_id": message_id, "requester": recipient, "items": item_array}, ["message_id", "requester", "items"]),
-                    obj_schema("ACCEPT_JOIN", {"message_id": message_id, "proposer": recipient}, ["message_id", "proposer"]),
-                    obj_schema("REJECT_JOIN", {"message_id": message_id, "proposer": recipient}, ["message_id", "proposer"]),
-                    obj_schema("INACTIVE", {"message_id": message_id}, ["message_id"]),
-                ]},
+                "items": action_object,
             }
         recipient = {"type": "string", "enum": players}
-        field = {"type": "string", "enum": ["GOAL", "HOLDINGS"]}
-        single = {"oneOf": [
-            obj_schema("PASS", {}, []),
-            obj_schema("QUERY", {"recipient": recipient, "field": field}, ["recipient", "field"]),
-            obj_schema("INFORM", {"recipient": recipient, "field": field, "value": item_array}, ["recipient", "field", "value"]),
-            obj_schema("REQUEST_TRANSFER", {"recipient": recipient, "items": item_array}, ["recipient", "items"]),
-            obj_schema("GIVE", {"recipient": recipient, "items": item_array}, ["recipient", "items"]),
-            obj_schema("PROPOSE_JOIN", {"recipient": recipient}, ["recipient"]),
-            obj_schema("COMMIT", {"items": item_array}, ["items"]),
-        ]}
+        action_object = {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "action": {"type": "string", "enum": sorted(DECISION_ACTION_NAMES)},
+                "recipient": recipient,
+                "field": {"type": "string", "enum": ["GOAL", "HOLDINGS"]},
+                "value": item_array,
+                "items": item_array,
+            },
+            "required": ["action"],
+        }
         return {
-            "oneOf": [single, {"type": "array", "minItems": 1, "items": single}],
+            "type": "array",
+            "items": action_object,
         }
 
     def get_response_action_templates(self, agent: str) -> tuple[str, ...]:
@@ -452,8 +462,8 @@ class SynchronousItemGame:
         lines.extend([
             "DECISION PHASE.",
             "All mandatory responses from the previous round have already been completed.",
-            "Return one JSON action object inside <answer>...</answer>.",
-            "If you need both one message and a compatible state action in this round, return a JSON array of action objects.",
+            "Return a JSON array of action objects inside <answer>...</answer>.",
+            "Use a one-element array when you need only one action; use multiple objects when you need one message and compatible state actions.",
             "Do not output prose, MESSAGE/ACTIONS labels, or placeholder values such as <agent_id>.",
             "Use an exact player id from Active players and exact item names from the state or your known information.",
             "QUERY field must be exactly GOAL or HOLDINGS.",

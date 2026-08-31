@@ -1128,7 +1128,7 @@ def test_synchronous_protocol_uses_one_action_per_line():
     )
     g = SynchronousItemGame(generate_instance(7, config=config), config)
     observation = g.get_observation("P0")
-    assert "one JSON action object" in observation
+    assert "JSON array of action objects" in observation
     assert "Do not output prose, MESSAGE/ACTIONS labels" in observation
     assert '"action":"QUERY"' in observation
     assert '"action":"INFORM"' in observation
@@ -1276,6 +1276,24 @@ def test_synchronous_json_grounding_sanity_has_100_typed_cases():
         )
         assert query["message"].endswith("FOR THEIR HOLDINGS")
         assert give["actions"] == (f"GIVE {{{item}}} TO {other}",)
+
+
+def test_synchronous_structured_schema_uses_flat_xgrammar_safe_arrays():
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+    game = SynchronousItemGame(generate_instance(7, config=config), config)
+
+    for schema in (game.get_action_schema("P0"), game.get_action_schema("P0", response=True)):
+        serialized = json.dumps(schema)
+        assert schema["type"] == "array"
+        assert schema["items"]["type"] == "object"
+        assert schema["items"]["required"] == ["action"]
+        assert "oneOf" not in serialized
+        assert "minItems" not in serialized
+        assert "maxItems" not in serialized
+        assert "uniqueItems" not in serialized
 
 
 def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monkeypatch):

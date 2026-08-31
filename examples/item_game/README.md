@@ -102,19 +102,20 @@ simultaneous decision phase. All decisions use the same round-start snapshot;
 communications are delivered in the next round, while state actions are
 resolved atomically. The environment performs no scripted social actions.
 
-Decision answers use typed JSON inside the existing `<answer>` block. The
-prompt exposes action shapes rather than a pre-enumerated legal-action table;
-the model supplies the semantic values and the environment validates them. For example:
+Decision answers use typed JSON arrays inside the existing `<answer>` block.
+The schema constrains only the JSON envelope and primitive value types; the
+environment validates action-specific fields and game semantics. The model
+always returns an array, including for one action. For example:
 
 ```json
-{"action":"QUERY","recipient":"P1","field":"HOLDINGS"}
-{"action":"REQUEST_TRANSFER","recipient":"P1","items":["item_Q"]}
-{"action":"GIVE","recipient":"P1","items":["item_M"]}
-{"action":"COMMIT","items":["item_A","item_B"]}
+[{"action":"QUERY","recipient":"P1","field":"HOLDINGS"}]
+[{"action":"REQUEST_TRANSFER","recipient":"P1","items":["item_Q"]}]
+[{"action":"GIVE","recipient":"P1","items":["item_M"]}]
+[{"action":"COMMIT","items":["item_A","item_B"]}]
 ```
 
-When a decision needs both a message and a compatible state action, return a
-JSON array of objects. `PASS` means no message and no state action. The typed
+When a decision needs both a message and a compatible state action, return one
+array containing both objects. `PASS` means no message and no state action. The typed
 action shapes are:
 
 ```text
@@ -172,9 +173,19 @@ terminal status, and per-player diagnostics. This mode is evaluation-only and
 does not update model weights.
 
 The pilot script now defaults to the vLLM backend. For a vLLM
-OpenAI-compatible server, start Qwen3 on the remote server, for
-example with `--enable-reasoning --reasoning-parser qwen3`, then run the same
-pilot with `ITEM_GAME_BACKEND=vllm`, `VLLM_MODEL=<server model id>`, and
+OpenAI-compatible server, start Qwen3 on the remote server. The repository
+provides a launcher whose default `--max-model-len` is 8192, which is suitable
+for the A100-40 setup:
+
+```bash
+export VLLM_MODEL=Qwen/Qwen3-4B-Instruct
+bash examples/item_game/run_item_game_vllm_server.sh
+```
+
+It starts Qwen3 with `--enable-reasoning --reasoning-parser qwen3`.
+Override the context limit explicitly with `VLLM_MAX_MODEL_LEN=<length>` if
+the server has enough memory. Then run the pilot with
+`ITEM_GAME_BACKEND=vllm`, `VLLM_MODEL=<server model id>`, and
 `VLLM_BASE_URL=http://<server>:8000/v1`. The vLLM policy sends the dynamic
 per-agent JSON schema as `response_format`; the environment still performs all
 semantic checks.

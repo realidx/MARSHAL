@@ -138,7 +138,7 @@ def main() -> int:
                 f"Your identity is P0. Other active player: {other}.\n"
                 f"Your holdings: {sorted(game.holdings['P0'])}.\n"
                 f"Smoke-test intent: {intent}\n"
-                "Return the JSON action that realizes exactly this intent."
+                "Return a one-element JSON action array that realizes exactly this intent."
             ),
             legal_actions=SynchronousItemGame.MESSAGE_TEMPLATES + SynchronousItemGame.STATE_ACTION_TEMPLATES,
             context=(),
