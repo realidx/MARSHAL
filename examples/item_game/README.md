@@ -212,9 +212,11 @@ The runner separately records tool presence/count, tool-schema validity, and
 game-semantic validity.
 
 Before starting any episodes, the pilot script runs the independent 100-case
-smoke test below and aborts unless schema validity and trivial intent matching
-are both at least 99%. Set `SELF_PLAY_SKIP_GROUNDING_PREFLIGHT=1` only for
-debugging the runner itself. To run the preflight directly:
+smoke test below and aborts unless exactly-one tool-call rate, tool-schema
+validity, and trivial intent matching are all at least 99%. The reported
+`reason_nonempty_rate` is diagnostic only and does not block the pilot. Set
+`SELF_PLAY_SKIP_GROUNDING_PREFLIGHT=1` only for debugging the runner itself.
+To run the preflight directly:
 
 ```bash
 python examples/item_game/smoke_test_vllm_tool_calling.py \
