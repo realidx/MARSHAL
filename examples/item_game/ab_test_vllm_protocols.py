@@ -66,7 +66,6 @@ def main() -> int:
         (f"Ask {other} for their goal.", {"action": "QUERY", "recipient": other, "field": "GOAL"}),
         (f"Ask {other} for their holdings.", {"action": "QUERY", "recipient": other, "field": "HOLDINGS"}),
         (f"Give {item} to {other}.", {"action": "GIVE", "recipient": other, "items": [item]}),
-        ("Take no action.", {"action": "PASS"}),
     )
     available = game.get_available_actions("P0", phase="decision")
     envelope_schema = game.get_action_schema("P0", output_mode="reason_action")

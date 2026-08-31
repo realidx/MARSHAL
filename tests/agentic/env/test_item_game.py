@@ -1130,7 +1130,8 @@ def test_synchronous_protocol_uses_one_action_per_line():
     g = SynchronousItemGame(generate_instance(7, config=config), config)
     observation = g.get_observation("P0")
     assert "reason in assistant content" in observation
-    assert "exactly one available ItemGame tool call" in observation
+    assert "make exactly one available ItemGame tool call" in observation
+    assert "otherwise make no tool call (PASS)" in observation
     assert "JSON reason/action envelope" in observation
     assert '"action":"QUERY"' in observation
     assert '"action":"INFORM"' in observation
@@ -1139,7 +1140,7 @@ def test_synchronous_protocol_uses_one_action_per_line():
     assert "<WHAT>" not in observation
     assert "QUERY P1 FOR THEIR GOAL" not in observation
     assert "INFORM P1 MY GOAL" not in observation
-    assert '"action":"PASS"' in observation
+    assert '"action":"PASS"' not in observation
 
 
 def test_synchronous_template_fills_are_validated_by_the_environment():
@@ -1327,14 +1328,12 @@ def test_synchronous_available_actions_are_typed_and_phase_specific():
     decision_actions = game.get_available_actions("P0", phase="decision")
     decision_names = {definition["name"] for definition in decision_actions}
     assert decision_names == {
-        "QUERY", "INFORM", "REQUEST_TRANSFER", "GIVE", "PROPOSE_JOIN", "COMMIT", "PASS",
+        "QUERY", "INFORM", "REQUEST_TRANSFER", "GIVE", "PROPOSE_JOIN", "COMMIT",
     }
     assert all("message" not in definition and "content" not in definition for definition in decision_actions)
     assert all(definition["arguments"]["type"] == "object" for definition in decision_actions)
     assert all("required" in definition["arguments"] for definition in decision_actions)
-    pass_definition = next(definition for definition in decision_actions if definition["name"] == "PASS")
-    assert pass_definition["arguments"]["required"] == ["confirm"]
-    assert pass_definition["arguments"]["properties"]["confirm"]["enum"] == [True]
+    assert "PASS" not in decision_names
 
     game.resolve_round({
         "P0": {"message": "QUERY P1 FOR THEIR GOAL", "actions": ()},
@@ -1571,6 +1570,96 @@ def test_native_tool_policy_rejects_missing_or_multiple_calls(calls):
     assert content == ""
     assert record["tool_schema_valid"] is False
     assert record["exactly_one_tool_call"] is False
+
+
+def test_self_play_auto_no_tool_is_a_valid_decision_pass():
+    class NoToolPolicy:
+        def generate(self, **kwargs):
+            return sync_module.SelfPlayPolicyOutput(
+                reason="No proactive action is needed.",
+                tool_calls=(),
+                output_mode="native_tools",
+            )
+
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=1,
+    )
+    result = SynchronousSelfPlayRunner(NoToolPolicy(), config).run_episode(7)
+    assert result.terminal["reason"] == "max_rounds"
+    assert result.diagnostics["invalid_actions"] == 0.0
+    assert result.diagnostics["auto_no_tool_passes"] == 2
+    assert all(
+        record["protocol_outcome"] == "auto_no_tool_pass"
+        for record in result.rounds[0]["decisions"]
+    )
+
+
+def test_self_play_response_auto_no_tool_retries_required():
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+    instance = generate_instance(7, config=config)
+    p1_goal = sorted(instance.goals["P1"])
+
+    class ResponseFallbackPolicy:
+        def __init__(self):
+            self.sent_query = False
+
+        def generate(self, *, agent, observation, legal_actions, context,
+                     action_schema=None, available_actions=None, tool_choice=None):
+            if "RESPONSE PHASE" in observation:
+                if tool_choice == "auto":
+                    return sync_module.SelfPlayPolicyOutput(
+                        reason="I need to answer, but omit the tool on the first attempt.",
+                        tool_calls=(), output_mode="native_tools",
+                    )
+                message_id = next(
+                    definition["arguments"]["properties"]["message_id"]["enum"][0]
+                    for definition in available_actions
+                    if definition["name"] == "INFORM"
+                )
+                return sync_module.SelfPlayPolicyOutput(
+                    reason="Now I will provide the required truthful response.",
+                    tool_calls=(sync_module.ItemGameToolCall(
+                        "INFORM", {
+                            "message_id": message_id,
+                            "recipient": "P0",
+                            "field": "GOAL",
+                            "value": p1_goal,
+                        },
+                    ),),
+                    output_mode="native_tools",
+                )
+            if agent == "P0" and not self.sent_query:
+                self.sent_query = True
+                return sync_module.SelfPlayPolicyOutput(
+                    reason="Ask P1 for its goal.",
+                    tool_calls=(sync_module.ItemGameToolCall(
+                        "QUERY", {"recipient": "P1", "field": "GOAL"},
+                    ),),
+                    output_mode="native_tools",
+                )
+            return sync_module.SelfPlayPolicyOutput(
+                reason="No proactive action is needed.",
+                tool_calls=(), output_mode="native_tools",
+            )
+
+    runner = SynchronousSelfPlayRunner(
+        ResponseFallbackPolicy(), config,
+        instance_factory=lambda _seed, _config: instance,
+    )
+    result = runner.run_episode(7)
+    response_records = [
+        record
+        for round_data in result.rounds
+        for record in round_data["responses"]
+    ]
+    assert any(record.get("protocol_outcome") == "auto_no_tool_retry_required" for record in response_records)
+    assert any(record.get("tool_choice") == "required" and record.get("tool_call_count") == 1 for record in response_records)
+    assert result.diagnostics["auto_response_no_tool_retries"] == 1
+    assert result.diagnostics["invalid_actions"] == 0.0
 
 def test_self_play_runner_extracts_reason_and_only_executes_nested_action():
     class EnvelopePolicy:

@@ -45,11 +45,11 @@ def main() -> int:
     )
     parser.add_argument(
         "--case-set", choices=("all", "pass-only"), default="all",
-        help="Use pass-only for the zero-argument PASS serialization micro-test.",
+        help="Use pass-only to test auto + no-tool as PASS.",
     )
     parser.add_argument(
         "--pass-schema", choices=("empty", "confirm"), default="confirm",
-        help="confirm adds required confirm=true; the self-play pilot uses this reliable form.",
+        help="Deprecated compatibility option; no-op PASS is now represented by no tool call.",
     )
     parser.add_argument("--ready-timeout", type=float, default=600.0)
     parser.add_argument("--ready-interval", type=float, default=5.0)
@@ -93,22 +93,10 @@ def main() -> int:
         (f"Ask {other} to transfer {own_item} to you.", "REQUEST_TRANSFER", {"recipient": other, "items": [own_item]}),
         (f"Propose a coalition with {other}.", "PROPOSE_JOIN", {"recipient": other}),
         (f"Commit {own_item}.", "COMMIT", {"items": [own_item]}),
-        ("Take no proactive action. Represent this by calling the PASS tool.", "PASS", {}),
     )
     if args.case_set == "pass-only":
-        cases = (cases[-1],)
+        cases = (("Take no proactive action. Do not call any tool.", None, {}),)
     available = list(copy.deepcopy(game.get_available_actions("P0", phase="decision")))
-    if args.pass_schema == "confirm":
-        for definition in available:
-            if definition["name"] == "PASS":
-                definition["arguments"]["properties"] = {
-                    "confirm": {"type": "boolean", "enum": [True]},
-                }
-                definition["arguments"]["required"] = ["confirm"]
-        cases = tuple(
-            (intent, name, ({"confirm": True} if name == "PASS" else expected))
-            for intent, name, expected in cases
-        )
     available = tuple(available)
     policy = VLLMSelfPlayPolicy(
         args.base_url, args.model, api_key=args.api_key,
@@ -167,10 +155,19 @@ def main() -> int:
                 counts["schema_valid"] += 1
             except ValueError as exc:
                 schema_error = str(exc)
-        semantic_match = bool(
-            schema_valid
-            and calls[0].tool_name == expected_name
-            and dict(calls[0].arguments) == expected_arguments
+        no_tool_expected = expected_name is None
+        no_tool_match = no_tool_expected and not calls and args.tool_choice == "auto"
+        if no_tool_match:
+            counts["no_tool_as_pass"] += 1
+        semantic_match = (
+            no_tool_match
+            if no_tool_expected
+            else bool(
+                schema_valid
+                and len(calls) == 1
+                and calls[0].tool_name == expected_name
+                and dict(calls[0].arguments) == expected_arguments
+            )
         )
         counts["semantic_match"] += int(semantic_match)
         usage = dict(output.usage or {})
@@ -204,6 +201,7 @@ def main() -> int:
         "reason_contaminated_rate": counts["reason_contaminated"] / total,
         "textual_tool_fallback_rate": counts["textual_tool_fallback"] / total,
         "tool_call_present_rate": counts["tool_call_present"] / total,
+        "no_tool_as_pass_rate": counts["no_tool_as_pass"] / total,
         "max_tool_calls": max((len(row.get("tool_calls", [])) for row in details), default=0),
         "exactly_one_tool_call_rate": counts["exactly_one"] / total,
         "tool_schema_valid_rate": counts["schema_valid"] / total,
@@ -219,16 +217,22 @@ def main() -> int:
         with open(args.output, "w", encoding="utf-8") as handle:
             for row in details:
                 handle.write(json.dumps(row, ensure_ascii=False) + "\n")
-    passed = (
-        # Qwen3/vLLM may place no ordinary assistant text alongside a valid
-        # native tool call.  Keep reason_nonempty_rate as a diagnostic, but do
-        # not let it block the native tool protocol or the self-play pilot.
-        summary["exactly_one_tool_call_rate"] >= 0.99
-        and summary["tool_schema_valid_rate"] >= 0.99
-        and summary["trivial_semantic_match_rate"] >= 0.99
-        and summary["generic_message_tool_rate"] == 0
-        and summary["request_failed"] == 0
-    )
+    if args.case_set == "pass-only":
+        passed = (
+            summary["no_tool_as_pass_rate"] >= 0.99
+            and summary["generic_message_tool_rate"] == 0
+            and summary["request_failed"] == 0
+        )
+    else:
+        passed = (
+            # Qwen3/vLLM may place no ordinary assistant text alongside a
+            # valid native tool call. Keep reason_nonempty_rate diagnostic.
+            summary["exactly_one_tool_call_rate"] >= 0.99
+            and summary["tool_schema_valid_rate"] >= 0.99
+            and summary["trivial_semantic_match_rate"] >= 0.99
+            and summary["generic_message_tool_rate"] == 0
+            and summary["request_failed"] == 0
+        )
     return 0 if passed else 1
 
 

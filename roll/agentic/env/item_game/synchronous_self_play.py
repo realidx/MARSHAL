@@ -366,7 +366,6 @@ class SynchronousItemGame:
     STATE_ACTION_TEMPLATES = (
         '{"action":"GIVE","recipient":"<agent_id>","items":["<item_1>"]}',
         '{"action":"COMMIT","items":["<item_1>","<item_2>"]}',
-        '{"action":"PASS"}',
     )
 
     SUPPORTED_SUBTYPES = (
@@ -429,6 +428,8 @@ class SynchronousItemGame:
             "semantic_invalid_responses": 0,
             "invalid_action_retries": 0,
             "invalid_response_retries": 0,
+            "auto_response_no_tool_retries": 0,
+            "auto_no_tool_passes": 0,
             "transfers": 0,
             "commits": 0,
             "passes": 0,
@@ -546,10 +547,6 @@ class SynchronousItemGame:
                 definition("REQUEST_TRANSFER", {"recipient": recipient, "items": item_array}, ("recipient", "items")),
                 definition("GIVE", {"recipient": recipient, "items": item_array}, ("recipient", "items")),
                 definition("COMMIT", {"items": item_array}, ("items",)),
-                # Qwen3 + Hermes is more reliable when even a no-op tool has
-                # one explicit, schema-constrained argument.  The runner
-                # strips this transport-only confirmation before execution.
-                definition("PASS", {"confirm": {"type": "boolean", "enum": [True]}}, ("confirm",)),
             ]
             if self.subtype == "collaboration":
                 definitions.insert(4, definition("PROPOSE_JOIN", {"recipient": recipient}, ("recipient",)))
@@ -723,7 +720,7 @@ class SynchronousItemGame:
             "DECISION PHASE.",
             "All mandatory responses from the previous round have already been completed.",
             "Briefly reason in assistant content about the relevant private state, interaction history, and next interaction.",
-            "Keep that private reason concise, then make exactly one available ItemGame tool call.",
+            "Keep that private reason concise. If a proactive action is needed, make exactly one available ItemGame tool call; otherwise make no tool call (PASS).",
             "The environment consumes only the tool call; never encode an action in prose.",
             "Do not use XML, a JSON reason/action envelope, MESSAGE/ACTIONS labels, or placeholder values.",
             "Use an exact player id from Active players and exact item names from the state or your known information.",
@@ -736,7 +733,7 @@ class SynchronousItemGame:
             "Send at most one proactive communication per round.",
             "Do not output response-only ACCEPT, REJECT, or INFORM in this phase.",
             "COMMIT is a one-shot public action and is exclusive: if you COMMIT, do not include any other action.",
-            "PASS means choose no message and no state action.",
+            "If no proactive action is needed in DECISION PHASE, make no tool call; this is PASS.",
         ])
         if include_action_templates:
             lines.append("Action shapes:")
@@ -1615,6 +1612,7 @@ class SynchronousSelfPlayRunner:
         phase: str,
         action_schema: Mapping[str, Any] | None = None,
         available_actions: Sequence[Mapping[str, Any]] = (),
+        tool_choice: str | None = None,
     ) -> tuple[str, dict[str, Any], dict[str, Any]]:
         kwargs: dict[str, Any] = {
             "agent": agent,
@@ -1628,6 +1626,8 @@ class SynchronousSelfPlayRunner:
             kwargs["action_schema"] = action_schema
         if "available_actions" in inspect.signature(self.policy.generate).parameters:
             kwargs["available_actions"] = tuple(available_actions)
+        if tool_choice is not None and "tool_choice" in inspect.signature(self.policy.generate).parameters:
+            kwargs["tool_choice"] = tool_choice
         backend_output = self.policy.generate(**kwargs)
         if isinstance(backend_output, SelfPlayPolicyOutput):
             if backend_output.output_mode == "native_tools":
@@ -1707,6 +1707,7 @@ class SynchronousSelfPlayRunner:
         record = {
             "agent": agent,
             "phase": phase,
+            "tool_choice": tool_choice,
             "observation": observation,
             "legal_actions": list(legal),
             # This is the environment-owned action space used to build the
@@ -1799,8 +1800,9 @@ class SynchronousSelfPlayRunner:
             response_snapshot = game.build_response_snapshot()
             requests = game.response_requests()
             responses: dict[int, str] = {}
-            # Native protocol requires exactly one tool call per model turn.
-            # Resolve multiple pending messages as separate response turns,
+            # Response phase normally requires one tool call. A first auto
+            # no-tool response gets one required fallback. Resolve multiple
+            # pending messages as separate response turns,
             # while retaining the same immutable response snapshot and atomic
             # environment resolution at the end of the phase.
             request_batches = [
@@ -1840,7 +1842,11 @@ class SynchronousSelfPlayRunner:
                     requests=model_requests,
                 )
                 response_succeeded = False
-                for retry_index in range(self.config.max_invalid_retries_per_decision + 1):
+                auto_response_fallback_used = False
+                semantic_retry_count = 0
+                retry_index = 0
+                while True:
+                    response_tool_choice = "required" if auto_response_fallback_used else "auto"
                     raw, _, record = self._call_policy(
                         agent=agent,
                         observation=observation,
@@ -1848,8 +1854,57 @@ class SynchronousSelfPlayRunner:
                         phase="response",
                         action_schema=action_schema,
                         available_actions=available_actions,
+                        tool_choice=response_tool_choice,
                     )
                     record["retry_index"] = retry_index
+                    record["tool_choice"] = response_tool_choice
+
+                    # In response phase auto is intentionally permissive on
+                    # the first call. If the model emits only a reason and no
+                    # tool, make one protocol fallback call with required.
+                    # This is not a semantic failure and must not pollute the
+                    # schema-invalid metric.
+                    if (
+                        record.get("tool_call_present") is False
+                        and response_tool_choice == "auto"
+                    ):
+                        record.update({
+                            "no_tool_call": True,
+                            "protocol_outcome": "auto_no_tool_retry_required",
+                            "schema_valid": None,
+                            "tool_schema_valid": None,
+                            "semantic_valid": None,
+                            "valid": True,
+                            "retryable": True,
+                        })
+                        record["_schema_recorded"] = True
+                        game.metrics["tool_call_missing"] += 1
+                        game.metrics["auto_response_no_tool_retries"] += 1
+                        round_record["responses"].append(record)
+                        auto_response_fallback_used = True
+                        retry_index += 1
+                        continue
+
+                    # A required response with no tool is a genuine protocol
+                    # failure: the fallback was specifically intended to
+                    # force one of the phase-specific response tools.
+                    if (
+                        record.get("tool_call_present") is False
+                        and response_tool_choice == "required"
+                    ):
+                        if not record["_schema_recorded"]:
+                            self._record_schema_result(game, record, phase="response", valid=False)
+                        record.update({
+                            "semantic_valid": False,
+                            "valid": False,
+                            "error_type": "tool_call",
+                            "error": "required response must contain exactly one tool call",
+                            "retryable": False,
+                        })
+                        round_record["responses"].append(record)
+                        game.finish_invalid("invalid_response")
+                        break
+
                     try:
                         parsed = _parse_response_output(raw)
                         record["semantic_valid"] = True
@@ -1887,8 +1942,10 @@ class SynchronousSelfPlayRunner:
                         record["error"] = str(exc)
                         record["retryable"] = retryable
                         round_record["responses"].append(record)
-                        if retryable and retry_index < self.config.max_invalid_retries_per_decision:
+                        if retryable and semantic_retry_count < self.config.max_invalid_retries_per_decision:
                             game.metrics["invalid_response_retries"] += 1
+                            semantic_retry_count += 1
+                            retry_index += 1
                             observation = self._retry_observation(
                                 observation,
                                 phase="response",
@@ -1940,8 +1997,32 @@ class SynchronousSelfPlayRunner:
                         phase="decision",
                         action_schema=action_schema,
                         available_actions=available_actions,
+                        tool_choice="auto",
                     )
                     record["retry_index"] = retry_index
+                    record["tool_choice"] = "auto"
+
+                    # In a normal decision phase, no tool is a valid no-op.
+                    # Do not manufacture a PASS tool call; convert the empty
+                    # native-tool result directly into the legacy no-message
+                    # representation consumed by the environment.
+                    if record.get("tool_call_present") is False:
+                        record.update({
+                            "no_tool_call": True,
+                            "protocol_outcome": "auto_no_tool_pass",
+                            "schema_valid": None,
+                            "tool_schema_valid": None,
+                            "semantic_valid": True,
+                            "valid": True,
+                        })
+                        record["_schema_recorded"] = True
+                        game.metrics["tool_call_missing"] += 1
+                        game.metrics["auto_no_tool_passes"] += 1
+                        decisions[agent] = {"message": "NO MESSAGE", "actions": ()}
+                        round_record["decisions"].append(record)
+                        decision_succeeded = True
+                        break
+
                     try:
                         decision = _parse_decision_output(raw, agent=agent)
                         record["semantic_valid"] = True
@@ -2073,14 +2154,20 @@ class VLLMSelfPlayPolicy:
         context: Sequence[Mapping[str, str]],
         action_schema: Mapping[str, Any] | None = None,
         available_actions: Sequence[Mapping[str, Any]] | None = None,
+        tool_choice: str | None = None,
     ) -> SelfPlayPolicyOutput:
         if available_actions is None or not available_actions:
             raise ValueError("vLLM policy requires environment-owned available_actions")
+        request_tool_choice = tool_choice or self.native_tool_choice
+        if request_tool_choice not in {"auto", "required"}:
+            raise ValueError("tool_choice must be 'auto' or 'required'")
         if self.output_mode == "native_tools":
             output_instructions = (
                 "Briefly reason about the relevant private state, interaction history, and next interaction "
-                "in normal assistant content. Keep it concise. Then make exactly one available ItemGame "
-                "tool call. The content is private and must not contain or serialize the action."
+                "in normal assistant content. Keep it concise. In DECISION PHASE, make exactly one available "
+                "ItemGame tool call only when a proactive action is needed; if no action is needed, make no "
+                "tool call. In RESPONSE PHASE, make exactly one available response tool call. The content is "
+                "private and must not contain or serialize the action."
             )
         elif self.output_mode == "reason_action":
             output_instructions = (
@@ -2129,7 +2216,7 @@ class VLLMSelfPlayPolicy:
                     }
                     for definition in available_actions
                 ],
-                "tool_choice": self.native_tool_choice,
+                "tool_choice": request_tool_choice,
                 # ItemGame resolves one decision per agent and round.  Send
                 # this explicitly instead of relying on the server default;
                 # the smoke test also verifies that the endpoint honors it.
@@ -2304,7 +2391,7 @@ def main() -> None:  # pragma: no cover
         "--tool-choice",
         choices=("auto", "required"),
         default="auto",
-        help="vLLM native tool choice",
+        help="legacy default; native self-play uses auto, then required only for response fallback",
     )
     parser.add_argument(
         "--parallel-tool-calls",

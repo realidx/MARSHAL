@@ -69,7 +69,6 @@ if [[ "${ITEM_GAME_BACKEND}" == "vllm" ]]; then
       --cases "${SELF_PLAY_PREFLIGHT_CASES:-100}" \
       --max-tokens "${SELF_PLAY_MAX_NEW_TOKENS:-1024}" \
       --tool-choice "${SELF_PLAY_SMOKE_TOOL_CHOICE:-auto}" \
-      --pass-schema "${SELF_PLAY_SMOKE_PASS_SCHEMA:-confirm}" \
       --tool-call-parser "${VLLM_TOOL_CALL_PARSER:-hermes}" \
       --parallel-tool-calls "${SELF_PLAY_PARALLEL_TOOL_CALLS:-false}" \
       --ready-timeout "${VLLM_READY_TIMEOUT:-600}" \

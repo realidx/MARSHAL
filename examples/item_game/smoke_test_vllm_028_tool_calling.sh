@@ -34,15 +34,14 @@ run_test() {
 
 # 1. Normal automatic tool selection over 100 trivial intents.
 STATUS=0
-run_test "auto / all trivial cases" --tool-choice auto --case-set all --pass-schema confirm || STATUS=1
+run_test "auto / all trivial cases" --tool-choice auto --case-set all || STATUS=1
 
-# 2. Required selection, including the PASS and typed-argument cases that
+# 2. Required selection, including typed-argument cases that
 # previously exercised vLLM's Invalid JSON path.
-run_test "required / previous Invalid JSON coverage" --tool-choice required --case-set all --pass-schema confirm || STATUS=1
+run_test "required / previous Invalid JSON coverage" --tool-choice required --case-set all || STATUS=1
 
-# 3. Explicit no-op path under auto.  PASS is a typed tool call, not a
-# content-only answer, so the test verifies exactly one tool call as well.
-run_test "auto / no-op PASS" --tool-choice auto --case-set pass-only --pass-schema confirm || STATUS=1
+# 3. Explicit no-op path under auto.  No tool call is the PASS path.
+run_test "auto / no-op PASS" --tool-choice auto --case-set pass-only || STATUS=1
 
 if [[ "${STATUS}" != "0" ]]; then
   echo "vLLM 0.28 tool-calling smoke matrix FAILED" >&2
