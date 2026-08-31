@@ -1713,6 +1713,7 @@ class VLLMSelfPlayPolicy:
         if self.output_mode == "reason_action":
             output_instructions = (
                 "Return a JSON object with a non-empty string field 'reason' and an 'action' field. "
+                "The value of 'action' must be a JSON object, never a natural-language string. "
                 "Briefly reason about the relevant private state, interaction history, and what should happen next. "
                 "Keep the reasoning concise. The reason is private and must not be put inside action."
             )
@@ -1745,6 +1746,10 @@ class VLLMSelfPlayPolicy:
                     "schema": dict(action_schema),
                 },
             },
+            # vLLM 0.9.x also exposes its native guided-decoding request
+            # field. Keep the same schema in both forms so older 0.9 servers
+            # cannot silently fall back to unconstrained JSON generation.
+            "guided_json": dict(action_schema),
         }
         request = urllib.request.Request(
             f"{self.base_url}/chat/completions",

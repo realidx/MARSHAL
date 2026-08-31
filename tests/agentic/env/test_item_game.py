@@ -1356,6 +1356,7 @@ def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monk
     assert captured["url"] == "http://server:8000/v1/chat/completions"
     assert body["response_format"]["type"] == "json_schema"
     assert body["response_format"]["json_schema"]["schema"] == {"type": "object"}
+    assert body["guided_json"] == {"type": "object"}
     assert body["chat_template_kwargs"] == {"enable_thinking": False}
     assert "Typed action shapes:" not in body["messages"][-1]["content"]
 
