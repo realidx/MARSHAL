@@ -1,6 +1,7 @@
 """Deterministic regression tests for the structured Item Coalition Game."""
 
 import importlib.util
+import io
 import json
 import sys
 import types
@@ -1297,11 +1298,7 @@ def test_synchronous_structured_schema_uses_reason_action_envelope():
         serialized = json.dumps(schema)
         assert schema["type"] == "object"
         assert schema["required"] == ["reason", "action"]
-        assert schema["properties"]["reason"] == {
-            "type": "string",
-            "minLength": 1,
-            "description": "A concise private reason written in English.",
-        }
+        assert schema["properties"]["reason"] == {"type": "string"}
         action_schema = schema["properties"]["action"]
         if action_schema["type"] == "array":
             action_schema = action_schema["items"]
@@ -1309,6 +1306,8 @@ def test_synchronous_structured_schema_uses_reason_action_envelope():
         assert action_schema["required"] == ["action"]
         assert action_schema["properties"]["action"]["type"] == "string"
         assert "oneOf" not in serialized
+        assert "minLength" not in serialized
+        assert "description" not in serialized
         assert "minItems" not in serialized
         assert "maxItems" not in serialized
         assert "uniqueItems" not in serialized
@@ -1458,6 +1457,38 @@ def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monk
     assert body["chat_template_kwargs"] == {"enable_thinking": False}
     assert "English only" in body["messages"][0]["content"]
     assert "Typed action shapes:" not in body["messages"][-1]["content"]
+
+
+def test_vllm_policy_preserves_http_error_body(monkeypatch):
+    def fake_urlopen(request, timeout):
+        raise sync_module.urllib.error.HTTPError(
+            request.full_url,
+            400,
+            "Bad Request",
+            hdrs=None,
+            fp=io.BytesIO(b'{"message":"unsupported schema keyword: minLength"}'),
+        )
+
+    monkeypatch.setattr(sync_module.urllib.request, "urlopen", fake_urlopen)
+    policy = VLLMSelfPlayPolicy("http://server:8000/v1", "Qwen3-4B-Instruct")
+    schema = {
+        "type": "object",
+        "properties": {
+            "action": {
+                "type": "object",
+                "properties": {"action": {"type": "string", "enum": ["PASS"]}},
+            }
+        },
+    }
+    with pytest.raises(RuntimeError, match="unsupported schema keyword: minLength"):
+        policy.generate(
+            agent="P0",
+            observation="state",
+            legal_actions=(SynchronousItemGame.STATE_ACTION_TEMPLATES[-1],),
+            context=(),
+            action_schema=schema,
+            available_actions=({"name": "PASS"},),
+        )
 
 
 def test_self_play_runner_extracts_reason_and_only_executes_nested_action():

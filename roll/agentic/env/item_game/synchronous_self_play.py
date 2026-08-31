@@ -534,11 +534,10 @@ class SynchronousItemGame:
                 "type": "object",
                 "additionalProperties": False,
                 "properties": {
-                    "reason": {
-                        "type": "string",
-                        "minLength": 1,
-                        "description": "A concise private reason written in English.",
-                    },
+                    # Keep the decoder schema inside the conservative vLLM
+                    # 0.9/xgrammar subset. Non-empty/English checks are
+                    # application-level envelope diagnostics below.
+                    "reason": {"type": "string"},
                     "action": {"type": "array", "items": action_object},
                 },
                 "required": ["reason", "action"],
@@ -569,11 +568,7 @@ class SynchronousItemGame:
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                "reason": {
-                    "type": "string",
-                    "minLength": 1,
-                    "description": "A concise private reason written in English.",
-                },
+                "reason": {"type": "string"},
                 "action": action_object,
             },
             "required": ["reason", "action"],
@@ -1979,6 +1974,15 @@ class VLLMSelfPlayPolicy:
             # Native vLLM reasoning is intentionally disabled.  The private
             # model scratchpad is the typed `reason` field in content.
             return SelfPlayPolicyOutput(reasoning="", content=content, output_mode=self.output_mode)
+        except urllib.error.HTTPError as exc:
+            try:
+                error_body = exc.read().decode("utf-8", errors="replace")
+            except OSError:
+                error_body = ""
+            detail = f": {error_body}" if error_body else ""
+            raise RuntimeError(
+                f"vLLM request failed with HTTP {exc.code}{detail}"
+            ) from exc
         except (urllib.error.URLError, KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise RuntimeError(f"vLLM request failed: {exc}") from exc
 
