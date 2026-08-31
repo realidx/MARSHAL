@@ -1216,6 +1216,14 @@ def test_synchronous_typed_json_rejects_untyped_items_and_placeholder_fields():
         sync_module._parse_decision_output('<answer>{"action":"QUERY","recipient":"P1","field":"WHAT"}</answer>', agent="P0")
 
 
+def test_synchronous_typed_json_accepts_one_stray_trailing_quote():
+    parsed = sync_module._parse_decision_output(
+        '<answer>[{"action":"PASS"}]"</answer>',
+        agent="P0",
+    )
+    assert parsed == {"message": "NO MESSAGE", "actions": ()}
+
+
 def test_synchronous_typed_json_response_requires_model_supplied_value():
     config = Config(
         generator="pure_collaboration", subtype="collaboration",

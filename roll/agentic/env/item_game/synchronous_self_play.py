@@ -92,6 +92,15 @@ def _load_json_answer(response: str) -> Any:
     try:
         return json.loads(answer)
     except (TypeError, json.JSONDecodeError) as exc:
+        # Tolerate one stray quote after an otherwise complete JSON array or
+        # object. Keep this repair deliberately narrow so real malformed
+        # outputs still reach the normal syntax/semantic error path.
+        if answer.endswith('"'):
+            repaired = answer[:-1].rstrip()
+            try:
+                return json.loads(repaired)
+            except (TypeError, json.JSONDecodeError):
+                pass
         raise StructuredActionError("answer must contain one JSON action object or an array of action objects") from exc
 
 

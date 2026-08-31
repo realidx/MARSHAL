@@ -131,6 +131,7 @@ def main() -> int:
     semantic_matches = 0
     failures: list[dict[str, object]] = []
     reasoning_missing_cases: list[int] = []
+    trailing_quote_repairs = 0
     for index in range(args.cases):
         name, intent, expected = intents[index % len(intents)]
         counts["cases"] += 1
@@ -174,7 +175,16 @@ def main() -> int:
             if any(tag in output.content for tag in ("<reason>", "<answer>", "```")):
                 raise ValueError("content contains a reasoning/answer wrapper or code fence")
             stage = "json_parse"
+            raw_content = output.content.strip()
+            repaired_content = raw_content[:-1].rstrip() if raw_content.endswith('"') else raw_content
             value = _load_json_answer(output.content)
+            if repaired_content != raw_content:
+                try:
+                    json.loads(repaired_content)
+                except (TypeError, json.JSONDecodeError):
+                    pass
+                else:
+                    trailing_quote_repairs += 1
             content_is_json = True
             stage = "decision_parse"
             _parse_decision_output(output.content, agent="P0")
@@ -210,6 +220,7 @@ def main() -> int:
         "request_failed": counts["request_failed"],
         "reasoning_missing": len(reasoning_missing_cases),
         "reasoning_missing_cases": reasoning_missing_cases,
+        "trailing_quote_repairs": trailing_quote_repairs,
         "failure_details": failures,
     }
     print(json.dumps(summary, indent=2))
