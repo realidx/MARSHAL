@@ -20,6 +20,7 @@ from roll.agentic.env.item_game.synchronous_self_play import (
     VLLMSelfPlayPolicy,
     _load_json_answer,
     _parse_decision_output,
+    _reason_is_english,
     _unwrap_reason_action,
     _validate_json_enums,
 )
@@ -31,7 +32,7 @@ def wait_for_vllm(
     *,
     timeout: float,
     interval: float,
-) -> None:
+) -> dict[str, object]:
     """Wait for the OpenAI-compatible vLLM server to finish startup."""
     normalized_url = base_url.rstrip("/")
     if not normalized_url.endswith("/v1"):
@@ -50,9 +51,33 @@ def wait_for_vllm(
         try:
             with urllib.request.urlopen(request, timeout=5.0) as response:
                 if 200 <= response.status < 300:
+                    models_payload = json.loads(response.read().decode("utf-8"))
+                    model_ids = [
+                        entry.get("id")
+                        for entry in models_payload.get("data", [])
+                        if isinstance(entry, dict)
+                    ]
+                    version_url = f"{normalized_url[:-3]}/version"
+                    version = None
+                    try:
+                        version_request = urllib.request.Request(
+                            version_url,
+                            headers={"Authorization": f"Bearer {api_key}"} if api_key else {},
+                            method="GET",
+                        )
+                        with urllib.request.urlopen(version_request, timeout=5.0) as version_response:
+                            version_payload = json.loads(version_response.read().decode("utf-8"))
+                            version = version_payload.get("version")
+                    except (urllib.error.HTTPError, urllib.error.URLError, OSError, ValueError, json.JSONDecodeError):
+                        pass
                     elapsed = time.monotonic() - started
                     print(f"vLLM ready after {elapsed:.1f}s: {ready_url}", flush=True)
-                    return
+                    print(
+                        "server_identity="
+                        + json.dumps({"version": version, "model_ids": model_ids}),
+                        flush=True,
+                    )
+                    return {"version": version, "model_ids": model_ids}
         except (urllib.error.HTTPError, urllib.error.URLError, OSError, ValueError):
             pass
 
@@ -100,7 +125,7 @@ def main() -> int:
     if args.ready_timeout <= 0 or args.ready_interval <= 0:
         parser.error("--ready-timeout and --ready-interval must be positive")
 
-    wait_for_vllm(
+    server_identity = wait_for_vllm(
         args.base_url,
         args.api_key,
         timeout=args.ready_timeout,
@@ -151,6 +176,7 @@ def main() -> int:
     generic_message_outputs = 0
     failures: list[dict[str, object]] = []
     reason_empty_cases: list[int] = []
+    non_english_reason_cases: list[int] = []
     trailing_quote_repairs = 0
     for index in range(args.cases):
         name, intent, expected = intents[index % len(intents)]
@@ -229,6 +255,11 @@ def main() -> int:
             reason_present = bool(reason.strip())
             if not reason_present:
                 reason_empty_cases.append(index)
+            elif args.output_mode == "reason_action":
+                if _reason_is_english(reason):
+                    counts["english_reason"] += 1
+                else:
+                    non_english_reason_cases.append(index)
             if repaired_content != raw_content:
                 try:
                     json.loads(repaired_content)
@@ -260,7 +291,15 @@ def main() -> int:
             })
     summary = {
         "cases": counts["cases"],
+        "server_identity": server_identity,
+        "constraint_transport": "response_format.json_schema",
+        "guided_decoding_backend": "xgrammar",
         "reason_nonempty_rate": counts["reasoning_present"] / counts["cases"],
+        "english_reason_rate": (
+            counts["english_reason"] / counts["cases"]
+            if args.output_mode == "reason_action"
+            else None
+        ),
         "schema_valid_rate": counts["schema_valid"] / counts["cases"],
         "trivial_semantic_match_rate": semantic_matches / counts["cases"],
         "generic_message_output": generic_message_outputs,
@@ -268,6 +307,7 @@ def main() -> int:
         "request_failed": counts["request_failed"],
         "reason_empty_or_missing": len(reason_empty_cases),
         "reason_empty_or_missing_cases": reason_empty_cases,
+        "non_english_reason_cases": non_english_reason_cases,
         "trailing_quote_repairs": trailing_quote_repairs,
         "failure_details": failures,
     }
@@ -279,7 +319,10 @@ def main() -> int:
         and summary["generic_message_output"] == 0
         and (
             args.output_mode == "action_only"
-            or summary["reason_nonempty_rate"] >= 0.99
+            or (
+                summary["reason_nonempty_rate"] >= 0.99
+                and summary["english_reason_rate"] >= 0.99
+            )
         )
     )
     return 0 if passed else 1

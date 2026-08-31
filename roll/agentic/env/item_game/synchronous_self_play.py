@@ -83,6 +83,15 @@ def _parse_reason(response: str) -> str:
     return "\n".join(match.strip() for match in matches)
 
 
+def _reason_is_english(reason: str) -> bool:
+    """Cheap language guard for the English-reason protocol baseline.
+
+    This is deliberately a separate diagnostic rather than part of action
+    schema validity. Item/player identifiers and punctuation remain allowed.
+    """
+    return bool(reason.strip()) and re.search(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]", reason) is None
+
+
 def _answer_is_json(response: str) -> bool:
     """Whether the answer block uses the new structured-output interface."""
     answer = _answer_text(response).strip()
@@ -525,7 +534,11 @@ class SynchronousItemGame:
                 "type": "object",
                 "additionalProperties": False,
                 "properties": {
-                    "reason": {"type": "string", "minLength": 1},
+                    "reason": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A concise private reason written in English.",
+                    },
                     "action": {"type": "array", "items": action_object},
                 },
                 "required": ["reason", "action"],
@@ -556,7 +569,11 @@ class SynchronousItemGame:
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                "reason": {"type": "string", "minLength": 1},
+                "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "A concise private reason written in English.",
+                },
                 "action": action_object,
             },
             "required": ["reason", "action"],
@@ -1551,6 +1568,9 @@ class SynchronousSelfPlayRunner:
             # be audited without reconstructing the game state.
             "available_actions": [dict(definition) for definition in available_actions],
             "reason": reasoning,
+            "reason_is_english": (
+                _reason_is_english(reasoning) if reasoning else None
+            ),
             "raw_response": raw_response,
             "answer": content,
             "content": content,
@@ -1901,7 +1921,8 @@ class VLLMSelfPlayPolicy:
                 "Return a JSON object with a non-empty string field 'reason' and an 'action' field. "
                 "The value of 'action' must be a JSON object, never a natural-language string. "
                 "Briefly reason about the relevant private state, interaction history, and what should happen next. "
-                "Keep the reasoning concise. The reason is private and must not be put inside action."
+                "Keep the reasoning concise and write it in English only. "
+                "The reason is private and must not be put inside action."
             )
         else:
             output_instructions = (
@@ -1930,12 +1951,14 @@ class VLLMSelfPlayPolicy:
                 "json_schema": {
                     "name": "item_game_action",
                     "schema": dict(action_schema),
+                    "strict": True,
                 },
             },
-            # vLLM 0.9.x also exposes its native guided-decoding request
-            # field. Keep the same schema in both forms so older 0.9 servers
-            # cannot silently fall back to unconstrained JSON generation.
-            "guided_json": dict(action_schema),
+            # vLLM 0.9 maps response_format.json_schema to guided decoding in
+            # ChatCompletionRequest.to_sampling_params(). Do not also send the
+            # legacy guided_json field: one request should have one auditable
+            # constraint transport.
+            "guided_decoding_backend": "xgrammar",
         }
         request = urllib.request.Request(
             f"{self.base_url}/chat/completions",
@@ -2036,7 +2059,12 @@ def _build_config(subtype: str, max_rounds: int) -> ItemGameConfig:
 def main() -> None:  # pragma: no cover
     parser = argparse.ArgumentParser(description="Run synchronous ItemGame self-play")
     parser.add_argument("--model", required=True)
-    parser.add_argument("--backend", choices=("hf", "vllm"), default="hf")
+    parser.add_argument(
+        "--backend",
+        choices=("hf", "vllm"),
+        default="vllm",
+        help="inference backend; vllm is the schema-constrained default, hf is an unconstrained legacy ablation",
+    )
     parser.add_argument("--vllm-base-url", default="http://localhost:8000/v1")
     parser.add_argument("--vllm-api-key", default="EMPTY")
     parser.add_argument(

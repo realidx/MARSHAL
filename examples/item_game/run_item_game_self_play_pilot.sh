@@ -59,6 +59,19 @@ if [[ "${ITEM_GAME_BACKEND}" == "vllm" ]]; then
   done
   READY_NOW="$(date +%s)"
   echo "vLLM ready after $((READY_NOW - READY_START))s"
+
+  if [[ "${SELF_PLAY_SKIP_GROUNDING_PREFLIGHT:-0}" != "1" ]]; then
+    echo "running schema-grounding preflight"
+    "${PYTHON_BIN:-python}" examples/item_game/smoke_test_vllm_structured_output.py \
+      --model "${ITEM_GAME_MODEL}" \
+      --base-url "${VLLM_BASE_URL}" \
+      --api-key "${VLLM_API_KEY}" \
+      --cases "${SELF_PLAY_PREFLIGHT_CASES:-100}" \
+      --max-tokens "${SELF_PLAY_MAX_NEW_TOKENS:-1024}" \
+      --output-mode "${SELF_PLAY_OUTPUT_MODE:-reason_action}" \
+      --ready-timeout "${VLLM_READY_TIMEOUT:-600}" \
+      --ready-interval "${VLLM_READY_INTERVAL:-5}"
+  fi
 fi
 
 echo "backend=${ITEM_GAME_BACKEND}"

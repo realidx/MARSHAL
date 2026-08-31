@@ -182,7 +182,9 @@ game-semantic-validity fields, hidden ground truth for offline analysis,
 terminal status, and per-player diagnostics. This mode is evaluation-only and
 does not update model weights.
 
-The pilot script now defaults to the vLLM backend. For a vLLM
+The pilot script and Python CLI now default to the schema-constrained vLLM
+backend. The direct Hugging Face backend is retained only as an unconstrained
+legacy ablation; do not use it to measure protocol grounding. For a vLLM
 OpenAI-compatible server, start Qwen3 on the remote server. The repository
 provides a launcher whose default `--max-model-len` is 8192, which is suitable
 for the A100-40 setup:
@@ -204,7 +206,10 @@ the server has enough memory. Then run the pilot with
 per-agent JSON schema as `response_format`; the environment still performs all
 semantic checks.
 
-Before the pilot, run the independent 100-case smoke test:
+Before starting any episodes, the pilot script runs the independent 100-case
+smoke test below and aborts unless schema validity and trivial intent matching
+are both at least 99%. Set `SELF_PLAY_SKIP_GROUNDING_PREFLIGHT=1` only for
+debugging the runner itself. To run the preflight directly:
 
 ```bash
 python examples/item_game/smoke_test_vllm_structured_output.py \

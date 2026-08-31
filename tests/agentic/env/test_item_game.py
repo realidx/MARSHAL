@@ -1297,7 +1297,11 @@ def test_synchronous_structured_schema_uses_reason_action_envelope():
         serialized = json.dumps(schema)
         assert schema["type"] == "object"
         assert schema["required"] == ["reason", "action"]
-        assert schema["properties"]["reason"] == {"type": "string", "minLength": 1}
+        assert schema["properties"]["reason"] == {
+            "type": "string",
+            "minLength": 1,
+            "description": "A concise private reason written in English.",
+        }
         action_schema = schema["properties"]["action"]
         if action_schema["type"] == "array":
             action_schema = action_schema["items"]
@@ -1387,6 +1391,20 @@ def test_synchronous_reason_is_mandatory_and_non_empty():
         sync_module._unwrap_reason_action({"action": {"action": "PASS"}})
     with pytest.raises(SynchronousActionError, match="non-empty string"):
         sync_module._unwrap_reason_action({"reason": " ", "action": {"action": "PASS"}})
+    assert sync_module._reason_is_english("I need P1's HOLDINGS before I can act.")
+    assert not sync_module._reason_is_english("我需要先了解 P1 的持有物。")
+
+
+def test_synchronous_generic_message_json_is_not_an_item_game_action():
+    with pytest.raises(SynchronousActionError, match="unknown field"):
+        sync_module._parse_decision_output(
+            json.dumps({
+                "type": "message",
+                "to": "P1",
+                "content": "What is your goal?",
+            }),
+            agent="P0",
+        )
 
 
 def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monkeypatch):
@@ -1434,8 +1452,11 @@ def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monk
     assert captured["url"] == "http://server:8000/v1/chat/completions"
     assert body["response_format"]["type"] == "json_schema"
     assert body["response_format"]["json_schema"]["schema"] == schema
-    assert body["guided_json"] == schema
+    assert body["response_format"]["json_schema"]["strict"] is True
+    assert "guided_json" not in body
+    assert body["guided_decoding_backend"] == "xgrammar"
     assert body["chat_template_kwargs"] == {"enable_thinking": False}
+    assert "English only" in body["messages"][0]["content"]
     assert "Typed action shapes:" not in body["messages"][-1]["content"]
 
 
