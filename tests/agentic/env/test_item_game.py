@@ -1303,6 +1303,7 @@ def test_synchronous_structured_schema_uses_reason_action_envelope():
             action_schema = action_schema["items"]
         assert action_schema["type"] == "object"
         assert action_schema["required"] == ["action"]
+        assert action_schema["properties"]["action"]["type"] == "string"
         assert "oneOf" not in serialized
         assert "minItems" not in serialized
         assert "maxItems" not in serialized
@@ -1384,6 +1385,31 @@ def test_self_play_runner_extracts_reason_and_only_executes_nested_action():
     assert record["reason"] == "private plan"
     assert record["raw_response"]["content"] == '{"reason":"private plan","action":{"action":"PASS"}}'
     assert runner.contexts["P0"][-1] == {"role": "assistant", "content": content}
+
+
+def test_self_play_runner_preserves_reason_when_nested_action_has_wrong_type():
+    class MalformedEnvelopePolicy:
+        def generate(self, **kwargs):
+            return sync_module.SelfPlayPolicyOutput(
+                reasoning="",
+                content='{"reason":"query P1 first","action":"ask P1 what their goal is"}',
+            )
+
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+    runner = SynchronousSelfPlayRunner(MalformedEnvelopePolicy(), config)
+    runner.contexts = {"P0": []}
+    content, _, record = runner._call_policy(
+        agent="P0",
+        observation="state",
+        legal=("PASS",),
+        phase="decision",
+        action_schema={"type": "object"},
+    )
+    assert content == '{"reason":"query P1 first","action":"ask P1 what their goal is"}'
+    assert record["reason"] == "query P1 first"
 
 
 def test_self_play_runner_supports_action_only_ablation():

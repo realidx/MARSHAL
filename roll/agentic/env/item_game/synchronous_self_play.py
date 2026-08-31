@@ -1421,6 +1421,10 @@ class SynchronousSelfPlayRunner:
             try:
                 parsed_content = _load_json_answer(content)
                 if backend_output.output_mode == "reason_action":
+                    # Preserve a valid application-level reason even when
+                    # the action later fails envelope/schema validation.
+                    if isinstance(parsed_content, dict) and isinstance(parsed_content.get("reason"), str):
+                        reasoning = parsed_content["reason"]
                     reasoning, action = _unwrap_reason_action(parsed_content)
                 elif backend_output.output_mode == "action_only":
                     action = parsed_content

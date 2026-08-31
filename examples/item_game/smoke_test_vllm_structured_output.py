@@ -134,6 +134,17 @@ def main() -> int:
         output_mode=args.output_mode,
     )
     schema = game.get_action_schema("P0", output_mode=args.output_mode)
+    if args.output_mode == "reason_action":
+        action_schema = schema.get("properties", {}).get("action", {})
+        if action_schema.get("type") != "object":
+            raise RuntimeError(
+                "reason_action smoke schema is malformed: root action must be an object"
+            )
+        nested_action = action_schema.get("properties", {}).get("action", {})
+        if nested_action.get("type") != "string":
+            raise RuntimeError(
+                "reason_action smoke schema is malformed: action.action must be a string enum"
+            )
     counts = Counter()
     semantic_matches = 0
     failures: list[dict[str, object]] = []
@@ -187,15 +198,22 @@ def main() -> int:
             envelope = _load_json_answer(output.content)
             stage = "envelope_validation"
             if args.output_mode == "reason_action":
+                # Count application-level reasoning independently of action
+                # shape validation.  A malformed action must not hide the
+                # fact that the model produced a non-empty reason.
+                if (
+                    isinstance(envelope, dict)
+                    and isinstance(envelope.get("reason"), str)
+                    and envelope["reason"].strip()
+                ):
+                    counts["reasoning_present"] += 1
                 reason, value = _unwrap_reason_action(envelope)
             else:
                 reason, value = "", envelope
                 if not isinstance(value, (dict, list)):
                     raise ValueError("action-only content must be an object or array of objects")
             reason_present = bool(reason.strip())
-            if reason_present:
-                counts["reasoning_present"] += 1
-            else:
+            if not reason_present:
                 reason_empty_cases.append(index)
             if repaired_content != raw_content:
                 try:
