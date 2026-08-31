@@ -72,6 +72,7 @@ echo "episodes=$((EPISODES * 3)) (${EPISODES} per subtype: Collaboration + Reque
   --backend "${ITEM_GAME_BACKEND}" \
   --vllm-base-url "${VLLM_BASE_URL}" \
   --vllm-api-key "${VLLM_API_KEY}" \
+  --output-mode "${SELF_PLAY_OUTPUT_MODE:-reason_action}" \
   --episodes "${EPISODES}" \
   --max-new-tokens "${SELF_PLAY_MAX_NEW_TOKENS:-1024}" \
   --max-rounds "${SELF_PLAY_MAX_ROUNDS:-6}" \

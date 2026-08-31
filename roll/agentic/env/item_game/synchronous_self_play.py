@@ -27,6 +27,9 @@ class SelfPlayPolicyOutput:
 
     reasoning: str
     content: str
+    # ``reason_action`` is the application-level reasoning baseline.  The
+    # field is also carried for the action-only ablation.
+    output_mode: str = "reason_action"
 
 
 class SynchronousSelfPlayPolicy(Protocol):
@@ -105,12 +108,12 @@ def _load_json_answer(response: str) -> Any:
 
 
 def _unwrap_reason_action(value: Any) -> tuple[str, Any]:
-    """Extract the user-level private reason and executable action payload."""
+    """Extract mandatory private reasoning and the executable action payload."""
     if not isinstance(value, dict) or set(value) != {"reason", "action"}:
         raise StructuredActionError("answer must contain exactly reason and action")
     reason = value["reason"]
-    if not isinstance(reason, str):
-        raise StructuredActionError("JSON field 'reason' must be a string")
+    if not isinstance(reason, str) or not reason.strip():
+        raise StructuredActionError("JSON field 'reason' must be a non-empty string")
     action = value["action"]
     if not isinstance(action, (dict, list)):
         raise StructuredActionError("JSON field 'action' must be an object or array of objects")
@@ -393,8 +396,14 @@ class SynchronousItemGame:
             return ()
         return self.MESSAGE_TEMPLATES + self.STATE_ACTION_TEMPLATES
 
-    def get_action_schema(self, agent: str, *, response: bool = False) -> dict[str, Any]:
-        """Return an xgrammar-safe ``reason`` + ``action`` envelope.
+    def get_action_schema(
+        self,
+        agent: str,
+        *,
+        response: bool = False,
+        output_mode: str = "reason_action",
+    ) -> dict[str, Any]:
+        """Return the schema for the selected self-play output mode.
 
         The schema deliberately describes only the JSON envelope and primitive
         value types. Action-specific required fields and game legality remain
@@ -404,6 +413,8 @@ class SynchronousItemGame:
         """
         if agent not in self.players:
             raise ValueError(f"unknown player {agent!r}")
+        if output_mode not in {"reason_action", "action_only"}:
+            raise ValueError(f"unknown output_mode {output_mode!r}")
         players = [player for player in self.players if player != agent]
         items = list(self.items)
         item_array = {"type": "array", "items": {"type": "string", "enum": items}}
@@ -426,14 +437,19 @@ class SynchronousItemGame:
                 },
                 "required": ["action"],
             }
-            return {
+            action_schema: dict[str, Any] = {
                 "type": "object",
                 "additionalProperties": False,
                 "properties": {
-                    "reason": {"type": "string"},
+                    "reason": {"type": "string", "minLength": 1},
                     "action": {"type": "array", "items": action_object},
                 },
                 "required": ["reason", "action"],
+            }
+            if output_mode == "action_only":
+                return action_schema["properties"]["action"]
+            return {
+                **action_schema,
             }
         recipient = {"type": "string", "enum": players}
         action_object = {
@@ -448,14 +464,19 @@ class SynchronousItemGame:
             },
             "required": ["action"],
         }
-        return {
+        action_schema = {
             "type": "object",
             "additionalProperties": False,
             "properties": {
-                "reason": {"type": "string"},
+                "reason": {"type": "string", "minLength": 1},
                 "action": action_object,
             },
             "required": ["reason", "action"],
+        }
+        if output_mode == "action_only":
+            return action_schema["properties"]["action"]
+        return {
+            **action_schema,
         }
 
     def get_response_action_templates(self, agent: str) -> tuple[str, ...]:
@@ -468,7 +489,13 @@ class SynchronousItemGame:
             '{"message_id":0,"action":"ACCEPT_JOIN","proposer":"<sender>"}',
         )
 
-    def get_observation(self, agent: str, snapshot: Mapping[str, Any] | None = None) -> str:
+    def get_observation(
+        self,
+        agent: str,
+        snapshot: Mapping[str, Any] | None = None,
+        *,
+        include_action_templates: bool = True,
+    ) -> str:
         if agent not in self.goals:
             raise ValueError(f"unknown player {agent!r}")
         snap = snapshot or self._snapshot()
@@ -494,8 +521,9 @@ class SynchronousItemGame:
         lines.extend([
             "DECISION PHASE.",
             "All mandatory responses from the previous round have already been completed.",
-            "Return one JSON object with exactly two fields: reason and action.",
-            "Put your private concise reasoning in the string field reason. Put exactly one executable action object in action.",
+            "Return one JSON object with a non-empty reason string and an action field.",
+            "Briefly reason about relevant private state and interaction history. Keep the reason concise.",
+            "Put exactly one executable action object in action. The reason is private logging only.",
             "Do not put reasoning, XML, markdown, or prose inside action.",
             "Do not output prose, MESSAGE/ACTIONS labels, or placeholder values such as <agent_id>.",
             "Use an exact player id from Active players and exact item names from the state or your known information.",
@@ -509,11 +537,12 @@ class SynchronousItemGame:
             "Do not output response-only ACCEPT, REJECT, or INFORM in this phase.",
             "COMMIT is a one-shot public action and is exclusive: if you COMMIT, do not include any other action.",
             "PASS means choose no message and no state action.",
-            "Action shapes:",
         ])
-        lines.extend(f"- {action}" for action in self.MESSAGE_TEMPLATES)
-        lines.append("State-action shapes:")
-        lines.extend(f"- {action}" for action in self.STATE_ACTION_TEMPLATES)
+        if include_action_templates:
+            lines.append("Action shapes:")
+            lines.extend(f"- {action}" for action in self.MESSAGE_TEMPLATES)
+            lines.append("State-action shapes:")
+            lines.extend(f"- {action}" for action in self.STATE_ACTION_TEMPLATES)
         return "\n".join(lines)
 
     def get_response_observation(
@@ -551,8 +580,9 @@ class SynchronousItemGame:
             ))
         lines.extend((
             "",
-            "Return exactly one JSON object with fields reason and action:",
-            "Put your private concise reasoning in reason. Put a JSON array in action, with one response object per message.",
+            "Return exactly one JSON object with a non-empty reason string and an action field:",
+            "Briefly reason about the relevant private state and interaction history. Keep the reason concise.",
+            "Put a JSON array in action, with one response object per message. The reason is private logging only.",
             "Each response object must contain message_id and action.",
             "For QUERY use INFORM with recipient, field, and truthful value.",
             "For a transfer request use GIVE with recipient and the exact requested items, or REJECT_TRANSFER.",
@@ -1383,14 +1413,23 @@ class SynchronousSelfPlayRunner:
         backend_output = self.policy.generate(**kwargs)
         if isinstance(backend_output, SelfPlayPolicyOutput):
             # vLLM native reasoning is intentionally not used.  The model's
-            # user-level private scratchpad lives in the typed `reason` field
-            # of content; only the nested `action` is sent to the environment.
+            # application-level private scratchpad lives in the typed `reason`
+            # field of content; only the nested action is sent to the environment.
             reasoning = ""
             raw_content = backend_output.content
             content = raw_content
             try:
-                envelope = _load_json_answer(content)
-                reasoning, action = _unwrap_reason_action(envelope)
+                parsed_content = _load_json_answer(content)
+                if backend_output.output_mode == "reason_action":
+                    reasoning, action = _unwrap_reason_action(parsed_content)
+                elif backend_output.output_mode == "action_only":
+                    action = parsed_content
+                    if not isinstance(action, (dict, list)):
+                        raise StructuredActionError("action-only content must be an object or array of objects")
+                else:
+                    raise StructuredActionError(
+                        f"unknown self-play output mode {backend_output.output_mode!r}"
+                    )
                 content = json.dumps(action, separators=(",", ":"))
             except StructuredActionError:
                 # Leave malformed envelope content untouched so the normal
@@ -1445,6 +1484,14 @@ class SynchronousSelfPlayRunner:
         instance = self.instance_factory(seed, self.config)
         game = SynchronousItemGame(instance, self.config)
         self.contexts = {agent: [] for agent in game.players}
+        output_mode = getattr(self.config, "output_mode", "reason_action")
+        if output_mode not in {"reason_action", "action_only"}:
+            raise ValueError("config.output_mode must be 'reason_action' or 'action_only'")
+        if isinstance(self.policy, VLLMSelfPlayPolicy):
+            # Keep direct ``ItemGameConfig(output_mode=...)`` construction
+            # consistent with the CLI path.
+            self.policy.output_mode = output_mode
+        include_action_templates = not isinstance(self.policy, VLLMSelfPlayPolicy)
         rounds: list[dict[str, Any]] = []
 
         while not game.done:
@@ -1484,7 +1531,9 @@ class SynchronousSelfPlayRunner:
                     observation=observation,
                     legal=legal,
                     phase="response",
-                    action_schema=game.get_action_schema(agent, response=True),
+                    action_schema=game.get_action_schema(
+                        agent, response=True, output_mode=output_mode
+                    ),
                 )
                 try:
                     parsed = _parse_response_output(raw)
@@ -1536,14 +1585,18 @@ class SynchronousSelfPlayRunner:
             decision_snapshot = game.build_round_snapshot()
             decisions: dict[str, Mapping[str, Any]] = {}
             for agent in decision_snapshot["active"]:
-                observation = game.get_observation(agent, decision_snapshot)
+                observation = game.get_observation(
+                    agent,
+                    decision_snapshot,
+                    include_action_templates=include_action_templates,
+                )
                 legal = game.get_action_templates(agent)
                 raw, _, record = self._call_policy(
                     agent=agent,
                     observation=observation,
                     legal=legal,
                     phase="decision",
-                    action_schema=game.get_action_schema(agent),
+                    action_schema=game.get_action_schema(agent, output_mode=output_mode),
                 )
                 try:
                     decision = _parse_decision_output(raw, agent=agent)
@@ -1627,7 +1680,10 @@ class VLLMSelfPlayPolicy:
         temperature: float = 0.0,
         timeout: float = 300.0,
         enable_thinking: bool = False,
+        output_mode: str = "reason_action",
     ):
+        if output_mode not in {"reason_action", "action_only"}:
+            raise ValueError("output_mode must be 'reason_action' or 'action_only'")
         self.base_url = base_url.rstrip("/")
         if not self.base_url.endswith("/v1"):
             self.base_url += "/v1"
@@ -1637,6 +1693,7 @@ class VLLMSelfPlayPolicy:
         self.temperature = temperature
         self.timeout = timeout
         self.enable_thinking = enable_thinking
+        self.output_mode = output_mode
 
     def generate(
         self,
@@ -1649,18 +1706,27 @@ class VLLMSelfPlayPolicy:
     ) -> SelfPlayPolicyOutput:
         if action_schema is None:
             raise ValueError("vLLM policy requires a dynamic action schema")
+        if self.output_mode == "reason_action":
+            output_instructions = (
+                "Return a JSON object with a non-empty string field 'reason' and an 'action' field. "
+                "Briefly reason about the relevant private state, interaction history, and what should happen next. "
+                "Keep the reasoning concise. The reason is private and must not be put inside action."
+            )
+        else:
+            output_instructions = (
+                "Return only the executable JSON action value required by the schema. Do not include a reason field."
+            )
         system = (
             f"You are {agent}. All players have equal status in a synchronous multi-agent game. "
             "Follow the action semantics in the user message. Return only JSON matching the supplied "
-            "schema in the final answer. Put your concise private reasoning in the required string "
-            "field 'reason', and put only the executable protocol action in the required field 'action'. "
+            f"schema in the final answer. {output_instructions} "
             "Do not invent players or items. Every INFORM value must be your own truthful current state."
         )
         messages: list[dict[str, str]] = [{"role": "system", "content": system}]
         messages.extend(dict(message) for message in context)
         messages.append({
             "role": "user",
-            "content": observation + "\n\nTyped action shapes:\n" + "\n".join(legal_actions),
+            "content": observation,
         })
         body = {
             "model": self.model,
@@ -1694,7 +1760,7 @@ class VLLMSelfPlayPolicy:
                 raise ValueError("vLLM response did not contain final JSON content")
             # Native vLLM reasoning is intentionally disabled.  The private
             # model scratchpad is the typed `reason` field in content.
-            return SelfPlayPolicyOutput(reasoning="", content=content)
+            return SelfPlayPolicyOutput(reasoning="", content=content, output_mode=self.output_mode)
         except (urllib.error.URLError, KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise RuntimeError(f"vLLM request failed: {exc}") from exc
 
@@ -1778,6 +1844,12 @@ def main() -> None:  # pragma: no cover
     parser.add_argument("--backend", choices=("hf", "vllm"), default="hf")
     parser.add_argument("--vllm-base-url", default="http://localhost:8000/v1")
     parser.add_argument("--vllm-api-key", default="EMPTY")
+    parser.add_argument(
+        "--output-mode",
+        choices=("reason_action", "action_only"),
+        default="reason_action",
+        help="vLLM output format; reason_action is the default baseline",
+    )
     parser.add_argument("--episodes", type=int, default=10)
     parser.add_argument("--seed", type=int, default=840000)
     parser.add_argument("--max-new-tokens", type=int, default=1024)
@@ -1791,6 +1863,7 @@ def main() -> None:  # pragma: no cover
             args.model,
             api_key=args.vllm_api_key,
             max_new_tokens=args.max_new_tokens,
+            output_mode=args.output_mode,
         )
     else:
         policy = HuggingFaceSynchronousSelfPlayPolicy(args.model, max_new_tokens=args.max_new_tokens)
@@ -1799,6 +1872,7 @@ def main() -> None:  # pragma: no cover
     with args.output.open("w", encoding="utf-8") as handle:
         for subtype_index, subtype in enumerate(subtypes):
             config = _build_config(subtype, args.max_rounds)
+            config.output_mode = args.output_mode
             runner = SynchronousSelfPlayRunner(policy, config)
             for episode in range(args.episodes):
                 seed = args.seed + subtype_index * 10000 + episode

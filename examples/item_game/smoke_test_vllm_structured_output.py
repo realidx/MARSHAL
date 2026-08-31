@@ -79,6 +79,11 @@ def main() -> int:
     parser.add_argument("--cases", type=int, default=100)
     parser.add_argument("--max-tokens", type=int, default=1024)
     parser.add_argument(
+        "--output-mode",
+        choices=("reason_action", "action_only"),
+        default="reason_action",
+    )
+    parser.add_argument(
         "--ready-timeout",
         type=float,
         default=600.0,
@@ -126,12 +131,13 @@ def main() -> int:
         args.model,
         api_key=args.api_key,
         max_new_tokens=args.max_tokens,
+        output_mode=args.output_mode,
     )
-    schema = game.get_action_schema("P0")
+    schema = game.get_action_schema("P0", output_mode=args.output_mode)
     counts = Counter()
     semantic_matches = 0
     failures: list[dict[str, object]] = []
-    reasoning_missing_cases: list[int] = []
+    reason_empty_cases: list[int] = []
     trailing_quote_repairs = 0
     for index in range(args.cases):
         name, intent, expected = intents[index % len(intents)]
@@ -144,7 +150,12 @@ def main() -> int:
                     f"Your identity is P0. Other active player: {other}.\n"
                     f"Your holdings: {sorted(game.holdings['P0'])}.\n"
                     f"Smoke-test intent: {intent}\n"
-                    "Return a one-element JSON action array that realizes exactly this intent."
+                    + (
+                        "Return a JSON object with a concise non-empty reason string and an action field. "
+                        "The action field must realize exactly this intent."
+                        if args.output_mode == "reason_action"
+                        else "Return the JSON action value that realizes exactly this intent."
+                    )
                 ),
                 legal_actions=SynchronousItemGame.MESSAGE_TEMPLATES + SynchronousItemGame.STATE_ACTION_TEMPLATES,
                 context=(),
@@ -164,8 +175,7 @@ def main() -> int:
             continue
 
         stage = "content_guard"
-        reasoning_present = False
-        reasoning_checked = False
+        reason_present = False
         try:
             if not output.content.strip():
                 raise ValueError("content is empty")
@@ -176,13 +186,17 @@ def main() -> int:
             repaired_content = raw_content[:-1].rstrip() if raw_content.endswith('"') else raw_content
             envelope = _load_json_answer(output.content)
             stage = "envelope_validation"
-            reason, value = _unwrap_reason_action(envelope)
-            reasoning_checked = True
-            reasoning_present = bool(reason.strip())
-            if reasoning_present:
+            if args.output_mode == "reason_action":
+                reason, value = _unwrap_reason_action(envelope)
+            else:
+                reason, value = "", envelope
+                if not isinstance(value, (dict, list)):
+                    raise ValueError("action-only content must be an object or array of objects")
+            reason_present = bool(reason.strip())
+            if reason_present:
                 counts["reasoning_present"] += 1
             else:
-                reasoning_missing_cases.append(index)
+                reason_empty_cases.append(index)
             if repaired_content != raw_content:
                 try:
                     json.loads(repaired_content)
@@ -199,8 +213,6 @@ def main() -> int:
             if len(objects) == 1 and objects[0] == expected:
                 semantic_matches += 1
         except (TypeError, ValueError) as exc:
-            if not reasoning_checked:
-                reasoning_missing_cases.append(index)
             counts["schema_invalid"] += 1
             failures.append({
                 "case": index,
@@ -221,13 +233,22 @@ def main() -> int:
         "trivial_semantic_match_rate": semantic_matches / counts["cases"],
         "schema_invalid": counts["schema_invalid"],
         "request_failed": counts["request_failed"],
-        "reasoning_missing": len(reasoning_missing_cases),
-        "reasoning_missing_cases": reasoning_missing_cases,
+        "reason_empty_or_missing": len(reason_empty_cases),
+        "reason_empty_or_missing_cases": reason_empty_cases,
         "trailing_quote_repairs": trailing_quote_repairs,
         "failure_details": failures,
     }
     print(json.dumps(summary, indent=2))
-    return 0 if summary["schema_valid_rate"] >= 0.99 else 1
+    passed = (
+        summary["schema_valid_rate"] >= 0.99
+        and summary["trivial_semantic_match_rate"] >= 0.99
+        and summary["request_failed"] == 0
+        and (
+            args.output_mode == "action_only"
+            or summary["reason_nonempty_rate"] >= 0.99
+        )
+    )
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":

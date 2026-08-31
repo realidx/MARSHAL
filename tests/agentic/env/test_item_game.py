@@ -1128,7 +1128,7 @@ def test_synchronous_protocol_uses_one_action_per_line():
     )
     g = SynchronousItemGame(generate_instance(7, config=config), config)
     observation = g.get_observation("P0")
-    assert "JSON object with exactly two fields: reason and action" in observation
+    assert "JSON object with a non-empty reason string and an action field" in observation
     assert "Do not output prose, MESSAGE/ACTIONS labels" in observation
     assert '"action":"QUERY"' in observation
     assert '"action":"INFORM"' in observation
@@ -1297,7 +1297,7 @@ def test_synchronous_structured_schema_uses_reason_action_envelope():
         serialized = json.dumps(schema)
         assert schema["type"] == "object"
         assert schema["required"] == ["reason", "action"]
-        assert schema["properties"]["reason"] == {"type": "string"}
+        assert schema["properties"]["reason"] == {"type": "string", "minLength": 1}
         action_schema = schema["properties"]["action"]
         if action_schema["type"] == "array":
             action_schema = action_schema["items"]
@@ -1307,6 +1307,17 @@ def test_synchronous_structured_schema_uses_reason_action_envelope():
         assert "minItems" not in serialized
         assert "maxItems" not in serialized
         assert "uniqueItems" not in serialized
+    action_only = game.get_action_schema("P0", output_mode="action_only")
+    assert action_only["type"] == "object"
+    assert "reason" not in action_only["properties"]
+    assert action_only["required"] == ["action"]
+
+
+def test_synchronous_reason_is_mandatory_and_non_empty():
+    with pytest.raises(SynchronousActionError, match="exactly reason and action"):
+        sync_module._unwrap_reason_action({"action": {"action": "PASS"}})
+    with pytest.raises(SynchronousActionError, match="non-empty string"):
+        sync_module._unwrap_reason_action({"reason": " ", "action": {"action": "PASS"}})
 
 
 def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monkeypatch):
@@ -1339,11 +1350,13 @@ def test_vllm_policy_sends_dynamic_json_schema_and_keeps_reasoning_separate(monk
     )
     assert output.reasoning == ""
     assert output.content == '{"reason":"private plan","action":{"action":"PASS"}}'
+    assert output.output_mode == "reason_action"
     body = json.loads(captured["body"])
     assert captured["url"] == "http://server:8000/v1/chat/completions"
     assert body["response_format"]["type"] == "json_schema"
     assert body["response_format"]["json_schema"]["schema"] == {"type": "object"}
     assert body["chat_template_kwargs"] == {"enable_thinking": False}
+    assert "Typed action shapes:" not in body["messages"][-1]["content"]
 
 
 def test_self_play_runner_extracts_reason_and_only_executes_nested_action():
@@ -1371,6 +1384,34 @@ def test_self_play_runner_extracts_reason_and_only_executes_nested_action():
     assert record["reason"] == "private plan"
     assert record["raw_response"]["content"] == '{"reason":"private plan","action":{"action":"PASS"}}'
     assert runner.contexts["P0"][-1] == {"role": "assistant", "content": content}
+
+
+def test_self_play_runner_supports_action_only_ablation():
+    class ActionOnlyPolicy:
+        output_mode = "action_only"
+
+        def generate(self, **kwargs):
+            return sync_module.SelfPlayPolicyOutput(
+                reasoning="",
+                content='{"action":"PASS"}',
+                output_mode="action_only",
+            )
+
+    config = Config(
+        generator="pure_collaboration", subtype="collaboration",
+        randomize_items=False, self_play=True, max_rounds=2,
+    )
+    runner = SynchronousSelfPlayRunner(ActionOnlyPolicy(), config)
+    runner.contexts = {"P0": []}
+    content, _, record = runner._call_policy(
+        agent="P0",
+        observation="state",
+        legal=("PASS",),
+        phase="decision",
+        action_schema={"type": "object"},
+    )
+    assert content == '{"action":"PASS"}'
+    assert record["reason"] == ""
 
 
 def test_synchronous_inform_message_does_not_enter_transfer_formatter():

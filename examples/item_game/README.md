@@ -103,7 +103,7 @@ communications are delivered in the next round, while state actions are
 resolved atomically. The environment performs no scripted social actions.
 
 Decision answers use one typed JSON object in the vLLM `content` field. The
-root has a private `reason` string and an executable `action` object. The
+root has a mandatory non-empty private `reason` string and an executable `action` object. The
 schema constrains only the envelope and primitive value types;
 the environment validates action-specific fields and game semantics. For
 example:
@@ -184,7 +184,9 @@ bash examples/item_game/run_item_game_vllm_server.sh
 
 Native vLLM reasoning is intentionally disabled. Each policy request asks the
 model to put a concise private scratchpad in the typed `reason` field and the
-executable protocol action in the typed `action` field.
+executable protocol action in the typed `action` field. Set
+`SELF_PLAY_OUTPUT_MODE=action_only` for the action-only ablation; the default
+`reason_action` mode is the formal baseline.
 Override the context limit explicitly with `VLLM_MAX_MODEL_LEN=<length>` if
 the server has enough memory. Then run the pilot with
 `ITEM_GAME_BACKEND=vllm`, `VLLM_MODEL=<server model id>`, and
