@@ -129,39 +129,75 @@ def main() -> int:
     schema = game.get_action_schema("P0")
     counts = Counter()
     semantic_matches = 0
+    failures: list[dict[str, object]] = []
+    reasoning_missing_cases: list[int] = []
     for index in range(args.cases):
         name, intent, expected = intents[index % len(intents)]
-        output = policy.generate(
-            agent="P0",
-            observation=(
-                "You are running a protocol grounding smoke test.\n"
-                f"Your identity is P0. Other active player: {other}.\n"
-                f"Your holdings: {sorted(game.holdings['P0'])}.\n"
-                f"Smoke-test intent: {intent}\n"
-                "Return a one-element JSON action array that realizes exactly this intent."
-            ),
-            legal_actions=SynchronousItemGame.MESSAGE_TEMPLATES + SynchronousItemGame.STATE_ACTION_TEMPLATES,
-            context=(),
-            action_schema=schema,
-        )
         counts["cases"] += 1
-        if output.reasoning.strip():
+        try:
+            output = policy.generate(
+                agent="P0",
+                observation=(
+                    "You are running a protocol grounding smoke test.\n"
+                    f"Your identity is P0. Other active player: {other}.\n"
+                    f"Your holdings: {sorted(game.holdings['P0'])}.\n"
+                    f"Smoke-test intent: {intent}\n"
+                    "Return a one-element JSON action array that realizes exactly this intent."
+                ),
+                legal_actions=SynchronousItemGame.MESSAGE_TEMPLATES + SynchronousItemGame.STATE_ACTION_TEMPLATES,
+                context=(),
+                action_schema=schema,
+            )
+        except Exception as exc:  # pragma: no cover - exercised against a live server
+            counts["request_failed"] += 1
+            failures.append({
+                "case": index,
+                "intent_name": name,
+                "intent": intent,
+                "stage": "request",
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+                "raw_response": None,
+            })
+            continue
+
+        reasoning_present = bool(output.reasoning.strip())
+        if reasoning_present:
             counts["reasoning_present"] += 1
-        content_is_json = False
-        if output.content.strip() and not any(tag in output.content for tag in ("<reason>", "<answer>", "```")):
-            try:
-                value = _load_json_answer(output.content)
-                content_is_json = True
-                _parse_decision_output(output.content, agent="P0")
-                _validate_json_enums(value, players=game.players, items=game.items, response=False)
-                counts["schema_valid"] += 1
-                objects = value if isinstance(value, list) else [value]
-                if len(objects) == 1 and objects[0] == expected:
-                    semantic_matches += 1
-            except (TypeError, ValueError):
-                counts["schema_invalid"] += 1
         else:
+            reasoning_missing_cases.append(index)
+        content_is_json = False
+        stage = "content_guard"
+        try:
+            if not output.content.strip():
+                raise ValueError("content is empty")
+            if any(tag in output.content for tag in ("<reason>", "<answer>", "```")):
+                raise ValueError("content contains a reasoning/answer wrapper or code fence")
+            stage = "json_parse"
+            value = _load_json_answer(output.content)
+            content_is_json = True
+            stage = "decision_parse"
+            _parse_decision_output(output.content, agent="P0")
+            stage = "enum_validation"
+            _validate_json_enums(value, players=game.players, items=game.items, response=False)
+            counts["schema_valid"] += 1
+            objects = value if isinstance(value, list) else [value]
+            if len(objects) == 1 and objects[0] == expected:
+                semantic_matches += 1
+        except (TypeError, ValueError) as exc:
             counts["schema_invalid"] += 1
+            failures.append({
+                "case": index,
+                "intent_name": name,
+                "intent": intent,
+                "stage": stage,
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+                "raw_response": {
+                    "reasoning": output.reasoning,
+                    "content": output.content,
+                },
+            })
         counts["content_json_only"] += int(content_is_json)
 
     summary = {
@@ -171,6 +207,10 @@ def main() -> int:
         "schema_valid_rate": counts["schema_valid"] / counts["cases"],
         "trivial_semantic_match_rate": semantic_matches / counts["cases"],
         "schema_invalid": counts["schema_invalid"],
+        "request_failed": counts["request_failed"],
+        "reasoning_missing": len(reasoning_missing_cases),
+        "reasoning_missing_cases": reasoning_missing_cases,
+        "failure_details": failures,
     }
     print(json.dumps(summary, indent=2))
     return 0 if summary["schema_valid_rate"] >= 0.99 and summary["reasoning_present_rate"] >= 0.95 else 1
