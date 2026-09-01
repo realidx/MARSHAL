@@ -40,7 +40,8 @@ run_test "auto / all trivial cases" --tool-choice auto --case-set all || STATUS=
 # previously exercised vLLM's Invalid JSON path.
 run_test "required / previous Invalid JSON coverage" --tool-choice required --case-set all || STATUS=1
 
-# 3. Explicit no-op path under auto.  No tool call is the PASS path.
+# 3. Explicit no-op compatibility path under auto.  The self-play runner does
+# not use this path; it requires an explicit PASS tool call instead.
 run_test "auto / no-op PASS" --tool-choice auto --case-set pass-only || STATUS=1
 
 if [[ "${STATUS}" != "0" ]]; then

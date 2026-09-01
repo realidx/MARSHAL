@@ -865,7 +865,7 @@ def test_synchronous_round_gives_every_active_player_the_same_decision_snapshot(
     assert [len(round_data["decisions"]) for round_data in result.rounds] == [2, 2]
     for round_data in result.rounds:
         assert {record["agent"] for record in round_data["decisions"]} == {"P0", "P1"}
-        assert {line for record in round_data["decisions"] for line in record["observation"].splitlines() if line.startswith("Round:")} == {f"Round: {round_data['round']}/2"}
+        assert {line for record in round_data["decisions"] for line in record["observation"].splitlines() if line.startswith("Round:")} == {f"Round: {round_data['round']} of 2"}
     assert all("EGO" not in record["observation"] for round_data in result.rounds for record in round_data["decisions"])
 
 
@@ -1084,9 +1084,9 @@ def test_synchronous_runner_does_not_call_committed_player_for_join_response():
 
         def generate(self, *, agent, observation, legal_actions, context):
             self.calls.append((agent, observation, tuple(legal_actions)))
-            if agent == "P0" and "Round: 0/3" in observation:
+            if agent == "P0" and "Round: 0 of 3" in observation:
                 action = "PROPOSE JOIN WITH P1"
-            elif agent == "P1" and "Round: 0/3" in observation:
+            elif agent == "P1" and "Round: 0 of 3" in observation:
                 action = "COMMIT {}"
             else:
                 action = "NO MESSAGE"
@@ -1129,10 +1129,10 @@ def test_synchronous_protocol_uses_one_action_per_line():
     )
     g = SynchronousItemGame(generate_instance(7, config=config), config)
     observation = g.get_observation("P0")
-    assert "reason in assistant content" in observation
-    assert "make exactly one available ItemGame tool call" in observation
-    assert "otherwise make no tool call (PASS)" in observation
-    assert "JSON reason/action envelope" in observation
+    assert "reason in assistant content" not in observation
+    assert "Choose one available action and use exactly one available tool call" in observation
+    assert "otherwise make no tool call (PASS)" not in observation
+    assert "JSON reason/action envelope" not in observation
     assert '"action":"QUERY"' in observation
     assert '"action":"INFORM"' in observation
     assert '"action":"COMMIT"' in observation
@@ -1140,7 +1140,7 @@ def test_synchronous_protocol_uses_one_action_per_line():
     assert "<WHAT>" not in observation
     assert "QUERY P1 FOR THEIR GOAL" not in observation
     assert "INFORM P1 MY GOAL" not in observation
-    assert '"action":"PASS"' not in observation
+    assert '"action":"PASS"' in observation
 
 
 def test_synchronous_template_fills_are_validated_by_the_environment():
@@ -1328,12 +1328,15 @@ def test_synchronous_available_actions_are_typed_and_phase_specific():
     decision_actions = game.get_available_actions("P0", phase="decision")
     decision_names = {definition["name"] for definition in decision_actions}
     assert decision_names == {
-        "QUERY", "INFORM", "REQUEST_TRANSFER", "GIVE", "PROPOSE_JOIN", "COMMIT",
+        "QUERY", "INFORM", "REQUEST_TRANSFER", "GIVE", "PROPOSE_JOIN", "COMMIT", "PASS",
     }
     assert all("message" not in definition and "content" not in definition for definition in decision_actions)
     assert all(definition["arguments"]["type"] == "object" for definition in decision_actions)
     assert all("required" in definition["arguments"] for definition in decision_actions)
-    assert "PASS" not in decision_names
+    assert "PASS" in decision_names
+    pass_definition = next(definition for definition in decision_actions if definition["name"] == "PASS")
+    assert pass_definition["arguments"]["properties"] == {}
+    assert pass_definition["arguments"]["required"] == []
 
     game.resolve_round({
         "P0": {"message": "QUERY P1 FOR THEIR GOAL", "actions": ()},
@@ -1572,7 +1575,7 @@ def test_native_tool_policy_rejects_missing_or_multiple_calls(calls):
     assert record["exactly_one_tool_call"] is False
 
 
-def test_self_play_auto_no_tool_is_a_valid_decision_pass():
+def test_self_play_missing_decision_tool_is_a_protocol_failure():
     class NoToolPolicy:
         def generate(self, **kwargs):
             return sync_module.SelfPlayPolicyOutput(
@@ -1586,11 +1589,11 @@ def test_self_play_auto_no_tool_is_a_valid_decision_pass():
         randomize_items=False, self_play=True, max_rounds=1,
     )
     result = SynchronousSelfPlayRunner(NoToolPolicy(), config).run_episode(7)
-    assert result.terminal["reason"] == "max_rounds"
-    assert result.diagnostics["invalid_actions"] == 0.0
-    assert result.diagnostics["auto_no_tool_passes"] == 2
+    assert result.terminal["reason"] == "invalid_action"
+    assert result.diagnostics["invalid_actions"] == 1.0
+    assert result.diagnostics["auto_no_tool_passes"] == 0
     assert all(
-        record["protocol_outcome"] == "auto_no_tool_pass"
+        record["protocol_outcome"] == "required_tool_missing"
         for record in result.rounds[0]["decisions"]
     )
 
@@ -1638,12 +1641,13 @@ def test_self_play_response_auto_no_tool_retries_required():
                     reason="Ask P1 for its goal.",
                     tool_calls=(sync_module.ItemGameToolCall(
                         "QUERY", {"recipient": "P1", "field": "GOAL"},
-                    ),),
-                    output_mode="native_tools",
-                )
+                        ),),
+                        output_mode="native_tools",
+                    )
             return sync_module.SelfPlayPolicyOutput(
-                reason="No proactive action is needed.",
-                tool_calls=(), output_mode="native_tools",
+                reason="I intentionally take no proactive action this round.",
+                tool_calls=(sync_module.ItemGameToolCall("PASS", {}),),
+                output_mode="native_tools",
             )
 
     runner = SynchronousSelfPlayRunner(

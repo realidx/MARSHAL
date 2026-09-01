@@ -121,9 +121,10 @@ semantics. For example:
 {"reason":"My committed items cover my goal.","action":{"action":"COMMIT","items":["item_A","item_B"]}}
 ```
 
-The model returns one executable tool action when an action is needed. In a
-normal decision phase, no tool call means `PASS` (no message and no state
-action). The typed action shapes are:
+The model returns exactly one explicit decision tool call in every normal
+decision phase. `PASS` is an ordinary decision tool for intentionally taking
+no proactive action; a missing tool call is a protocol failure. The typed
+action shapes are:
 
 ```text
 QUERY:            {"action":"QUERY","recipient":"P1","field":"GOAL"}
@@ -132,6 +133,7 @@ REQUEST_TRANSFER: {"action":"REQUEST_TRANSFER","recipient":"P1","items":["item_Q
 PROPOSE_JOIN:     {"action":"PROPOSE_JOIN","recipient":"P1"}
 GIVE:             {"action":"GIVE","recipient":"P1","items":["item_Q"]}
 COMMIT:           {"action":"COMMIT","items":["item_Q"]}
+PASS:             {"action":"PASS"}
 ```
 
 `recipient` must be a real player id, `field` must be `GOAL` or `HOLDINGS`,
@@ -205,10 +207,11 @@ the server has enough memory. Then run the pilot with
 `ITEM_GAME_BACKEND=vllm`, `VLLM_MODEL=<server model id>`, and
 `VLLM_BASE_URL=http://<server>:8000/v1`. The vLLM policy sends the dynamic
 phase-specific function definitions through `tools` with
-`tool_choice=auto` by default, matching the validated Qwen3/Hermes smoke test;
-normal decision turns use `auto`, while a response turn retries once with
-`required` only when the first auto call returns no tool. It never sends a
-request-level guided-decoding backend on ordinary decision turns.
+`tool_choice=required` for native decision turns, so intentional PASS is
+represented by an explicit tool call and a missing call is distinguishable
+from a strategic no-op. Response turns retain the auto-then-required fallback
+for compatibility. It never sends a request-level guided-decoding backend on
+ordinary decision turns.
 The runner separately records tool presence/count, tool-schema validity, and
 game-semantic validity.
 
@@ -255,8 +258,9 @@ Run the smoke matrix, which does not launch self-play:
 bash examples/item_game/smoke_test_vllm_028_tool_calling.sh
 ```
 
-It runs 100-case `auto`, 100-case `required`, and `auto`/no-tool `PASS`
-no-op checks, always with `parallel_tool_calls=false`, and requires the
+It runs 100-case `auto`, 100-case `required`, and an `auto`/no-tool
+compatibility check for the explicit PASS transport, always with
+`parallel_tool_calls=false`, and requires the
 server identity to report vLLM `0.28.0`. The existing server launcher and
 self-play pilot remain the fallback path until this matrix passes. After a
 successful matrix, point the unchanged self-play pilot at the 0.28 server.

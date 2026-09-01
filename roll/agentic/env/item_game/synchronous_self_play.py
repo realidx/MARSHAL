@@ -78,16 +78,16 @@ RESPONSE_ACTION_NAMES = {
 }
 
 ACTION_DESCRIPTIONS = {
-    "QUERY": "Ask another agent for their private GOAL or current HOLDINGS.",
-    "INFORM": "Truthfully tell another agent your GOAL or current HOLDINGS.",
-    "REQUEST_TRANSFER": "Ask another agent to transfer the specified items to you.",
-    "GIVE": "Transfer specified items that you currently hold to another agent.",
-    "REJECT_TRANSFER": "Refuse the pending transfer request.",
-    "PROPOSE_JOIN": "Propose forming a coalition with another active agent.",
+    "QUERY": "Ask another agent for their private GOAL or current HOLDINGS. The answer is sent privately to you.",
+    "INFORM": "Truthfully tell another agent your GOAL or current HOLDINGS. The information is sent privately.",
+    "REQUEST_TRANSFER": "Ask another agent to give you one or more items they control. A response-phase GIVE transfers them.",
+    "GIVE": "Transfer items you control to another agent. The transfer changes who holds those items.",
+    "REJECT_TRANSFER": "Refuse the pending transfer request; the requested items remain with you.",
+    "PROPOSE_JOIN": "Propose forming a coalition with another active agent so members can coordinate committed items.",
     "ACCEPT_JOIN": "Accept the pending coalition proposal.",
     "REJECT_JOIN": "Reject the pending coalition proposal.",
-    "COMMIT": "Publicly and permanently commit the specified items.",
-    "PASS": "Take no proactive action this round.",
+    "COMMIT": "Publicly and permanently commit the specified items toward your objective. COMMIT is announced globally and ends your decisions.",
+    "PASS": "Intentionally take no proactive action in this decision phase. Use this only when you choose not to initiate an interaction or commit.",
     "INACTIVE": "Environment-only response for an inactive recipient.",
 }
 
@@ -366,6 +366,7 @@ class SynchronousItemGame:
     STATE_ACTION_TEMPLATES = (
         '{"action":"GIVE","recipient":"<agent_id>","items":["<item_1>"]}',
         '{"action":"COMMIT","items":["<item_1>","<item_2>"]}',
+        '{"action":"PASS"}',
     )
 
     SUPPORTED_SUBTYPES = (
@@ -547,6 +548,7 @@ class SynchronousItemGame:
                 definition("REQUEST_TRANSFER", {"recipient": recipient, "items": item_array}, ("recipient", "items")),
                 definition("GIVE", {"recipient": recipient, "items": item_array}, ("recipient", "items")),
                 definition("COMMIT", {"items": item_array}, ("items",)),
+                definition("PASS", {}, ()),
             ]
             if self.subtype == "collaboration":
                 definitions.insert(4, definition("PROPOSE_JOIN", {"recipient": recipient}, ("recipient",)))
@@ -698,48 +700,28 @@ class SynchronousItemGame:
             raise ValueError(f"unknown player {agent!r}")
         snap = snapshot or self._snapshot()
         lines = [
-            "You are an agent in a synchronous Item Coalition Game.",
-            f"Your identity: {agent}",
-            f"Your goal: {_format_set(set(snap['goals'][agent]))}",
-            f"Your holdings: {_format_set(set(snap['holdings'][agent]))}",
-            f"Round: {snap['round']}/{self.config.max_rounds}",
+            "## Your Private State",
+            f"Goal: {_format_set(set(snap['goals'][agent]))}",
+            f"Holdings: {_format_set(set(snap['holdings'][agent]))}",
+            "",
+            "## Current Round",
+            f"Round: {snap['round']} of {self.config.max_rounds}",
             f"Active players: {', '.join(snap['active'])}",
-            "All active players choose independently from this same round snapshot.",
+            "",
+            "## New Observations",
+            "Direct messages:",
         ]
-        known = snap["known"][agent]
-        known_text = {
-            other: {field: _format_set(set(values)) for field, values in fields.items()}
-            for other, fields in known.items()
-        }
-        lines.append("Known private information: " + (str(known_text) if known_text else "none"))
-        lines.append("Direct messages:")
         lines.extend(self._format_inbox(agent) or ["- none"])
-        lines.append("Public commit events:")
+        lines.append("Public events:")
         lines.extend((f"- {dict(event)}" for event in snap["public_events"]) or ["- none"])
         lines.extend([
+            "",
             "DECISION PHASE.",
-            "All mandatory responses from the previous round have already been completed.",
-            "Briefly reason in assistant content about the relevant private state, interaction history, and next interaction.",
-            "Keep that private reason concise. If a proactive action is needed, make exactly one available ItemGame tool call; otherwise make no tool call (PASS).",
-            "The environment consumes only the tool call; never encode an action in prose.",
-            "Do not use XML, a JSON reason/action envelope, MESSAGE/ACTIONS labels, or placeholder values.",
-            "Use an exact player id from Active players and exact item names from the state or your known information.",
-            "QUERY field must be exactly GOAL or HOLDINGS.",
-            "INFORM must include your own truthful GOAL or current HOLDINGS in value as an array of item names.",
-            "REQUEST_TRANSFER asks the named recipient to give items to you; you do not need to hold the requested items.",
-            "A transfer request never needs the requester to hold the requested item.",
-            "The requested owner responds with GIVE or REJECT; GIVE transfers immediately.",
-            "GIVE is also allowed as a proactive transfer of your own unfrozen items.",
-            "Send at most one proactive communication per round.",
-            "Do not output response-only ACCEPT, REJECT, or INFORM in this phase.",
-            "COMMIT is a one-shot public action and is exclusive: if you COMMIT, do not include any other action.",
-            "If no proactive action is needed in DECISION PHASE, make no tool call; this is PASS.",
+            "Choose one available action and use exactly one available tool call to perform it.",
         ])
         if include_action_templates:
-            lines.append("Action shapes:")
-            lines.extend(f"- {action}" for action in self.MESSAGE_TEMPLATES)
-            lines.append("State-action shapes:")
-            lines.extend(f"- {action}" for action in self.STATE_ACTION_TEMPLATES)
+            lines.append("Available action shapes:")
+            lines.extend(f"- {action}" for action in self.MESSAGE_TEMPLATES + self.STATE_ACTION_TEMPLATES)
         return "\n".join(lines)
 
     def get_response_observation(
@@ -755,35 +737,23 @@ class SynchronousItemGame:
             raise SynchronousActionError("all batched response messages must have one recipient")
         snap = snapshot or self._snapshot()
         lines = [
-            "You are an agent in a synchronous Item Coalition Game.",
-            f"Your identity: {agent}",
-            f"Your goal: {_format_set(set(snap['goals'][agent]))}",
-            f"Your holdings: {_format_set(set(snap['holdings'][agent]))}",
-            f"Round: {snap['round']}/{self.config.max_rounds}",
-            "RESPONSE PHASE.",
-            "You are responding to messages from the previous round.",
-            "Do not take any new decision-phase action in this phase.",
-            "Respond to every listed message exactly once. Responses are free and do not use the proactive message slot.",
-            "QUERY requires a truthful INFORM response.",
-            "REQUEST TRANSFER requires either GIVE of the requested items or REJECT.",
-            "JOIN requires ACCEPT or REJECT while the recipient is active; an inactive recipient returns INACTIVE.",
+            "## Your Private State",
+            f"Goal: {_format_set(set(snap['goals'][agent]))}",
+            f"Holdings: {_format_set(set(snap['holdings'][agent]))}",
+            "",
+            "## Interaction to Respond To",
         ]
         for message in requests:
             lines.extend((
                 "",
                 f"Message #{message['id']} from {message['sender']}:",
                 self._response_message_text(message),
-                "Choose one JSON response object for this message.",
+                "Choose one available response action for this message.",
             ))
         lines.extend((
             "",
-            "Briefly reason in assistant content about the relevant private state and interaction history.",
-            "Keep that private reason concise, then make exactly one available ItemGame tool call.",
-            "The tool arguments must contain the exact message_id shown above.",
-            "For QUERY use INFORM with recipient, field, and truthful value.",
-            "For a transfer request use GIVE with recipient and the exact requested items, or REJECT_TRANSFER.",
-            "For JOIN use ACCEPT_JOIN or REJECT_JOIN with proposer.",
-            "Use the exact message_id shown above. Do not invent or omit value/items.",
+            "RESPONSE PHASE.",
+            "Choose the available response action for every listed message and use one tool call per response.",
         ))
         return "\n".join(lines)
 
@@ -1649,8 +1619,6 @@ class SynchronousSelfPlayRunner:
                         _validate_tool_call_schema(call, available_actions)
                         tool_schema_valid = True
                         environment_arguments = dict(call.arguments)
-                        if call.tool_name == "PASS" and environment_arguments.get("confirm") is True:
-                            environment_arguments.pop("confirm")
                         content = json.dumps(
                             {"action": call.tool_name, **environment_arguments},
                             separators=(",", ":"),
@@ -1792,6 +1760,11 @@ class SynchronousSelfPlayRunner:
             # Keep direct ``ItemGameConfig(output_mode=...)`` construction
             # consistent with the CLI path.
             self.policy.output_mode = output_mode
+        decision_tool_choice = (
+            getattr(self.policy, "native_tool_choice", "required")
+            if output_mode == "native_tools"
+            else None
+        )
         include_action_templates = not isinstance(self.policy, VLLMSelfPlayPolicy)
         rounds: list[dict[str, Any]] = []
 
@@ -1997,30 +1970,37 @@ class SynchronousSelfPlayRunner:
                         phase="decision",
                         action_schema=action_schema,
                         available_actions=available_actions,
-                        tool_choice="auto",
+                        tool_choice=decision_tool_choice,
                     )
                     record["retry_index"] = retry_index
-                    record["tool_choice"] = "auto"
+                    record["tool_choice"] = decision_tool_choice
 
-                    # In a normal decision phase, no tool is a valid no-op.
-                    # Do not manufacture a PASS tool call; convert the empty
-                    # native-tool result directly into the legacy no-message
-                    # representation consumed by the environment.
+                    # Native decision turns require an explicit tool call.
+                    # PASS is an intentional strategic action, not the
+                    # implicit interpretation of a missing tool call.
                     if record.get("tool_call_present") is False:
+                        if not record["_schema_recorded"]:
+                            self._record_schema_result(game, record, phase="decision", valid=False)
                         record.update({
                             "no_tool_call": True,
-                            "protocol_outcome": "auto_no_tool_pass",
-                            "schema_valid": None,
-                            "tool_schema_valid": None,
-                            "semantic_valid": True,
-                            "valid": True,
+                            "protocol_outcome": "required_tool_missing",
+                            "semantic_valid": False,
+                            "valid": False,
+                            "error_type": "tool_call",
+                            "error": "required decision must contain exactly one tool call; use PASS for an intentional no-op",
+                            "retryable": retry_index < self.config.max_invalid_retries_per_decision,
                         })
-                        record["_schema_recorded"] = True
-                        game.metrics["tool_call_missing"] += 1
-                        game.metrics["auto_no_tool_passes"] += 1
-                        decisions[agent] = {"message": "NO MESSAGE", "actions": ()}
                         round_record["decisions"].append(record)
-                        decision_succeeded = True
+                        if retry_index < self.config.max_invalid_retries_per_decision:
+                            game.metrics["invalid_action_retries"] += 1
+                            observation = self._retry_observation(
+                                observation,
+                                phase="decision",
+                                error=record["error"],
+                                attempt=retry_index,
+                                limit=self.config.max_invalid_retries_per_decision,
+                            )
+                            continue
                         break
 
                     try:
@@ -2125,7 +2105,7 @@ class VLLMSelfPlayPolicy:
         timeout: float = 300.0,
         enable_thinking: bool = False,
         output_mode: str = "native_tools",
-        native_tool_choice: str = "auto",
+        native_tool_choice: str = "required",
         parallel_tool_calls: bool = False,
     ):
         if output_mode not in {"native_tools", "reason_action", "action_only"}:
@@ -2163,11 +2143,8 @@ class VLLMSelfPlayPolicy:
             raise ValueError("tool_choice must be 'auto' or 'required'")
         if self.output_mode == "native_tools":
             output_instructions = (
-                "Briefly reason about the relevant private state, interaction history, and next interaction "
-                "in normal assistant content. Keep it concise. In DECISION PHASE, make exactly one available "
-                "ItemGame tool call only when a proactive action is needed; if no action is needed, make no "
-                "tool call. In RESPONSE PHASE, make exactly one available response tool call. The content is "
-                "private and must not contain or serialize the action."
+                "Briefly reason about the relevant private state and interaction history in normal assistant "
+                "content. Keep it concise. The content is private and must not contain or serialize the action."
             )
         elif self.output_mode == "reason_action":
             output_instructions = (
@@ -2182,9 +2159,31 @@ class VLLMSelfPlayPolicy:
                 "Return only the executable JSON action value required by the schema. Do not include a reason field."
             )
         system = (
-            f"You are {agent}. All players have equal status in a synchronous multi-agent game. "
-            f"Follow the action semantics in the user message. {output_instructions} "
-            "Do not invent players or items. Every INFORM value must be your own truthful current state."
+            f"You are Player {agent} in Item Game, a multi-agent resource coordination game. "
+            "Each player has a private GOAL, the set of items they ultimately need, and private "
+            "HOLDINGS, the items they currently control. Your objective is to successfully complete "
+            "your own goal. You may not initially hold everything you need. Other players may hold "
+            "useful items, have compatible goals, or have different interests. Their goals and "
+            "holdings are private unless they communicate them to you. "
+            "QUERY asks another player for private goal or holdings information. INFORM privately "
+            "shares your own goal or holdings. REQUEST_TRANSFER asks another player to give you "
+            "items. GIVE transfers items you control and changes who holds them. PROPOSE_JOIN asks "
+            "another active player to form a coalition so members can coordinate committed items; "
+            "a proposal is not accepted until the other player accepts it. COMMIT publicly and "
+            "permanently finalizes your contribution and ends your new decisions. When you hold "
+            "the items needed to fulfill your goal, COMMIT is the action that makes that contribution "
+            "count; if coalition coordination is still required, complete that agreement before "
+            "committing. Holding goal items alone does not complete the objective; the required "
+            "public COMMIT must still occur. "
+            "COMMIT events are public, while ordinary communication is private to its participants. "
+            "A coalition succeeds only when it is accepted, its members commit, and their committed "
+            "items cover the shared objective. After committing, you may still receive response "
+            "requests when the current phase permits them. The environment adjudicates legality and "
+            "state transitions. {output_instructions} "
+            "In DECISION PHASE, choose exactly one available decision tool. If you intentionally "
+            "take no proactive action, explicitly call PASS; never omit the tool call. In RESPONSE "
+            "PHASE, choose the available response tool for every listed message. Do not invent players "
+            "or items. Every INFORM value must be your own truthful current state."
         )
         messages: list[dict[str, str]] = [{"role": "system", "content": system}]
         messages.extend(dict(message) for message in context)
@@ -2390,8 +2389,8 @@ def main() -> None:  # pragma: no cover
     parser.add_argument(
         "--tool-choice",
         choices=("auto", "required"),
-        default="auto",
-        help="legacy default; native self-play uses auto, then required only for response fallback",
+        default="required",
+        help="native decision tool choice; required makes PASS explicit and treats missing calls as protocol failures",
     )
     parser.add_argument(
         "--parallel-tool-calls",
