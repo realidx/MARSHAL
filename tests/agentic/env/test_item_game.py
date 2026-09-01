@@ -1474,6 +1474,8 @@ def test_vllm_policy_sends_native_tools_and_keeps_reasoning_separate(monkeypatch
     assert "guided_decoding_backend" not in body
     assert body["chat_template_kwargs"] == {"enable_thinking": False}
     assert "exactly one" in body["messages"][0]["content"]
+    assert "<reason>...</reason>" in body["messages"][0]["content"]
+    assert "Do not put reasoning inside tool arguments" in body["messages"][0]["content"]
     assert "Typed action shapes:" not in body["messages"][-1]["content"]
 
 
@@ -1517,11 +1519,11 @@ def test_native_tool_policy_output_is_logged_and_only_tool_call_is_executed():
 
         def generate(self, **kwargs):
             return sync_module.SelfPlayPolicyOutput(
-                reason="I need P1's goal before proposing a coalition.",
+                reason="<reason>I need P1's goal before proposing a coalition.</reason>",
                 tool_calls=(sync_module.ItemGameToolCall(
                     "QUERY", {"recipient": "P1", "field": "GOAL"}, "call_1"
                 ),),
-                raw_message={"content": "I need P1's goal before proposing a coalition."},
+                raw_message={"content": "<reason>I need P1's goal before proposing a coalition.</reason>"},
                 output_mode="native_tools",
             )
 
@@ -1539,13 +1541,17 @@ def test_native_tool_policy_output_is_logged_and_only_tool_call_is_executed():
     )
     assert json.loads(content) == {"action": "QUERY", "recipient": "P1", "field": "GOAL"}
     assert record["reason"] == "I need P1's goal before proposing a coalition."
+    assert record["parsed_reason"] == record["reason"]
+    assert record["message_content"] == "<reason>I need P1's goal before proposing a coalition.</reason>"
+    assert record["tool_call_name"] == "QUERY"
+    assert record["tool_call_arguments"] == {"recipient": "P1", "field": "GOAL"}
     assert record["action"] == {
         "tool_name": "QUERY", "arguments": {"recipient": "P1", "field": "GOAL"},
     }
     assert record["tool_call_present"] is True
     assert record["exactly_one_tool_call"] is True
     assert record["tool_schema_valid"] is True
-    assert runner.contexts["P0"][-1]["content"] == record["reason"]
+    assert runner.contexts["P0"][-1]["content"] == record["message_content"]
 
 
 @pytest.mark.parametrize("calls", [(), (

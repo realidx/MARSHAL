@@ -1599,9 +1599,11 @@ class SynchronousSelfPlayRunner:
         if tool_choice is not None and "tool_choice" in inspect.signature(self.policy.generate).parameters:
             kwargs["tool_choice"] = tool_choice
         backend_output = self.policy.generate(**kwargs)
+        message_content = ""
         if isinstance(backend_output, SelfPlayPolicyOutput):
             if backend_output.output_mode == "native_tools":
-                reasoning = backend_output.reason
+                message_content = backend_output.reason
+                reasoning = _parse_reason(message_content)
                 calls = backend_output.tool_calls
                 tool_call_present = bool(calls)
                 exactly_one_tool_call = len(calls) == 1
@@ -1634,10 +1636,11 @@ class SynchronousSelfPlayRunner:
                         }} for call in calls
                     ],
                 })
-                context_response = reasoning
+                context_response = message_content
             else:
                 reasoning = ""
                 raw_content = backend_output.content
+                message_content = raw_content
                 content = raw_content
                 try:
                     parsed_content = _load_json_answer(content)
@@ -1664,6 +1667,7 @@ class SynchronousSelfPlayRunner:
         else:
             raw = str(backend_output)
             reasoning = _parse_reason(raw)
+            message_content = raw
             content = _answer_text(raw)
             raw_response = raw
             context_response = raw
@@ -1683,11 +1687,14 @@ class SynchronousSelfPlayRunner:
             # be audited without reconstructing the game state.
             "available_actions": [dict(definition) for definition in available_actions],
             "reason": reasoning,
+            "parsed_reason": reasoning,
             "action": policy_action,
             "reason_is_english": (
                 _reason_is_english(reasoning) if reasoning else None
             ),
             "raw_response": raw_response,
+            "raw_assistant_message": raw_response,
+            "message_content": message_content,
             "answer": content,
             "content": content,
             "output_format": (
@@ -1697,6 +1704,8 @@ class SynchronousSelfPlayRunner:
             ),
             "tool_call_present": tool_call_present,
             "tool_call_count": len(backend_output.tool_calls) if isinstance(backend_output, SelfPlayPolicyOutput) and backend_output.output_mode == "native_tools" else None,
+            "tool_call_name": policy_action["tool_name"] if policy_action else None,
+            "tool_call_arguments": policy_action["arguments"] if policy_action else None,
             "exactly_one_tool_call": exactly_one_tool_call,
             "tool_schema_valid": tool_schema_valid,
             "tool_error": tool_error,
@@ -1704,6 +1713,7 @@ class SynchronousSelfPlayRunner:
             "_schema_recorded": False,
             "semantic_valid": None,
             "valid": True,
+            "retry_required": False,
         }
         self.contexts[agent].extend((
             {"role": "user", "content": observation},
@@ -1831,6 +1841,7 @@ class SynchronousSelfPlayRunner:
                     )
                     record["retry_index"] = retry_index
                     record["tool_choice"] = response_tool_choice
+                    record["retry_required"] = retry_index > 0
 
                     # In response phase auto is intentionally permissive on
                     # the first call. If the model emits only a reason and no
@@ -1855,6 +1866,7 @@ class SynchronousSelfPlayRunner:
                         game.metrics["auto_response_no_tool_retries"] += 1
                         round_record["responses"].append(record)
                         auto_response_fallback_used = True
+                        record["retry_required"] = True
                         retry_index += 1
                         continue
 
@@ -1974,6 +1986,7 @@ class SynchronousSelfPlayRunner:
                     )
                     record["retry_index"] = retry_index
                     record["tool_choice"] = decision_tool_choice
+                    record["retry_required"] = retry_index > 0
 
                     # Native decision turns require an explicit tool call.
                     # PASS is an intentional strategic action, not the
@@ -1992,6 +2005,7 @@ class SynchronousSelfPlayRunner:
                         })
                         round_record["decisions"].append(record)
                         if retry_index < self.config.max_invalid_retries_per_decision:
+                            record["retry_required"] = True
                             game.metrics["invalid_action_retries"] += 1
                             observation = self._retry_observation(
                                 observation,
@@ -2033,6 +2047,7 @@ class SynchronousSelfPlayRunner:
                         record["retryable"] = retryable
                         round_record["decisions"].append(record)
                         if retryable and retry_index < self.config.max_invalid_retries_per_decision:
+                            record["retry_required"] = True
                             game.metrics["invalid_action_retries"] += 1
                             observation = self._retry_observation(
                                 observation,
@@ -2143,8 +2158,9 @@ class VLLMSelfPlayPolicy:
             raise ValueError("tool_choice must be 'auto' or 'required'")
         if self.output_mode == "native_tools":
             output_instructions = (
-                "Briefly reason about the relevant private state and interaction history in normal assistant "
-                "content. Keep it concise. The content is private and must not contain or serialize the action."
+                "Reason privately about the current game state inside <reason>...</reason>. Then choose exactly "
+                "one available action by calling a tool. Do not put reasoning inside tool arguments. The "
+                "reasoning is private and the tool call is the only executable action."
             )
         elif self.output_mode == "reason_action":
             output_instructions = (
@@ -2179,7 +2195,7 @@ class VLLMSelfPlayPolicy:
             "A coalition succeeds only when it is accepted, its members commit, and their committed "
             "items cover the shared objective. After committing, you may still receive response "
             "requests when the current phase permits them. The environment adjudicates legality and "
-            "state transitions. {output_instructions} "
+            f"state transitions. {output_instructions} "
             "In DECISION PHASE, choose exactly one available decision tool. If you intentionally "
             "take no proactive action, explicitly call PASS; never omit the tool call. In RESPONSE "
             "PHASE, choose the available response tool for every listed message. Do not invent players "

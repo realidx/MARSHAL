@@ -196,11 +196,13 @@ export VLLM_MODEL=Qwen/Qwen3-4B-Instruct-2507
 bash examples/item_game/run_item_game_vllm_server.sh
 ```
 
-Native vLLM reasoning is intentionally disabled. The fallback server uses
-Qwen's Hermes-style tool parser. Each policy response places a concise private reason
-in ordinary assistant `content` and, when an action is selected, one executable
-action in `tool_calls[0]`. The environment never extracts actions from content. The
-default `native_tools` mode is the formal candidate protocol;
+Native vLLM internal reasoning is intentionally disabled. The fallback server uses
+Qwen's Hermes-style tool parser. Each decision response is asked to place concise
+private reasoning in `<reason>...</reason>` inside assistant `content` and exactly
+one executable action in `tool_calls[0]`. The environment never extracts actions
+from content, and reasoning is never executed or sent to another agent. A missing
+decision tool call is invalid; `PASS()` is the explicit no-op tool. The default
+`native_tools` mode is the formal candidate protocol;
 `reason_action` and `action_only` remain comparison baselines only.
 Override the context limit explicitly with `VLLM_MAX_MODEL_LEN=<length>` if
 the server has enough memory. Then run the pilot with
@@ -213,7 +215,22 @@ from a strategic no-op. Response turns retain the auto-then-required fallback
 for compatibility. It never sends a request-level guided-decoding backend on
 ordinary decision turns.
 The runner separately records tool presence/count, tool-schema validity, and
-game-semantic validity.
+game-semantic validity, raw assistant message, `message.content`, parsed reason,
+tool name/arguments, and whether a retry was required.
+
+To run the fixed small comparison probe (15 episodes per condition, five per
+subtype, using identical seeds), point it at the Qwen3 vLLM server:
+
+```bash
+python examples/item_game/probe_vllm_native_reason_tool_choice.py \
+  --model Qwen/Qwen3-4B-Instruct-2507 \
+  --base-url http://<server>:8000/v1
+```
+
+It compares native `tool_choice=auto` with `tool_choice=required`, writes
+`auto.jsonl`, `required.jsonl`, and `summary.json`, and reports reason coverage,
+pre-retry tool-call/no-tool rates, semantic validity, PASS frequency, reasoning
+length, and subtype success.
 
 Before starting any episodes, the pilot script runs the independent 100-case
 smoke test below and aborts unless exactly-one tool-call rate, tool-schema
