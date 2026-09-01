@@ -1695,6 +1695,7 @@ class SynchronousSelfPlayRunner:
             "raw_response": raw_response,
             "raw_assistant_message": raw_response,
             "message_content": message_content,
+            "usage": dict(backend_output.usage or {}) if isinstance(backend_output, SelfPlayPolicyOutput) else {},
             "answer": content,
             "content": content,
             "output_format": (

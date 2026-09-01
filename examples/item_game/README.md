@@ -227,10 +227,12 @@ python examples/item_game/probe_vllm_native_reason_tool_choice.py \
   --base-url http://<server>:8000/v1
 ```
 
-It compares native `tool_choice=auto` with `tool_choice=required`, writes
-`auto.jsonl`, `required.jsonl`, and `summary.json`, and reports reason coverage,
-pre-retry tool-call/no-tool rates, semantic validity, PASS frequency, reasoning
-length, and subtype success.
+It first generates one fixed `(subtype, seed)` instance schedule and injects
+those same instances into both conditions. It compares native
+`tool_choice=auto` with `tool_choice=required`, writes `auto.jsonl`,
+`required.jsonl`, `paired.jsonl`, and `summary.json`, and reports initial
+tool-call rate, final valid-action rate, episode success rate, average rounds,
+token usage, plus reason/PASS/retry diagnostics.
 
 Before starting any episodes, the pilot script runs the independent 100-case
 smoke test below and aborts unless exactly-one tool-call rate, tool-schema

@@ -19,6 +19,7 @@ from typing import Any, Iterable, Mapping
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from roll.agentic.env.item_game.config import ItemGameConfig
+from roll.agentic.env.item_game.generator import generate_instance
 from roll.agentic.env.item_game.synchronous_self_play import (
     SynchronousEpisodeResult,
     SynchronousItemGame,
@@ -76,6 +77,14 @@ def _mean(values: Iterable[float]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
+def _episode_records(row: Mapping[str, Any]) -> list[dict[str, Any]]:
+    return [
+        dict(record)
+        for round_data in row.get("rounds", ())
+        for record in (*round_data.get("responses", ()), *round_data.get("decisions", ()))
+    ]
+
+
 def _condition_summary(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
     successful_rows = [row for row in rows if "error" not in row]
     first = [record for row in successful_rows for record in _first_attempts(row)]
@@ -84,6 +93,14 @@ def _condition_summary(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
     reason_lengths = [len(str(record.get("reason") or "")) for record in first]
     reason_word_lengths = [
         len(str(record.get("reason") or "").split()) for record in first
+    ]
+    prompt_tokens = [
+        sum(int(record.get("usage", {}).get("prompt_tokens", 0)) for record in _episode_records(row))
+        for row in successful_rows
+    ]
+    completion_tokens = [
+        sum(int(record.get("usage", {}).get("completion_tokens", 0)) for record in _episode_records(row))
+        for row in successful_rows
     ]
 
     def rate(predicate: Any, records: list[Mapping[str, Any]]) -> float:
@@ -100,16 +117,35 @@ def _condition_summary(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
         "decision_turns_before_retry": len(first),
         "decision_attempts_total": len(all_attempts),
         "reason_nonempty_rate": rate(lambda r: bool(str(r.get("reason") or "").strip()), first),
-        "tool_call_rate_before_retry": rate(lambda r: r.get("tool_call_present") is True, first),
+        "initial_tool_call_rate": rate(lambda r: r.get("tool_call_present") is True, first),
         "exactly_one_tool_call_rate_before_retry": rate(lambda r: r.get("exactly_one_tool_call") is True, first),
         "invalid_or_no_tool_rate_before_retry": rate(lambda r: r.get("valid") is False, first),
         "no_tool_call_rate_before_retry": rate(lambda r: r.get("tool_call_present") is False, first),
         "semantic_action_accuracy_before_retry": rate(lambda r: r.get("semantic_valid") is True, first),
-        "semantic_action_accuracy_final": rate(lambda r: r.get("semantic_valid") is True, final),
+        "final_valid_action_rate": rate(
+            lambda r: r.get("valid") is True and r.get("semantic_valid") is True,
+            final,
+        ),
         "retry_rate": rate(lambda r: r.get("retry_required") is True, first),
         "pass_frequency_before_retry": rate(lambda r: r.get("tool_call_name") == "PASS", first),
         "average_reasoning_length_chars": _mean(reason_lengths),
         "average_reasoning_length_words": _mean(reason_word_lengths),
+        "episode_success_rate": _mean(
+            float(row.get("diagnostics", {}).get("task_success", 0.0))
+            for row in successful_rows
+        ),
+        "average_rounds": _mean(
+            float(row.get("diagnostics", {}).get("rounds_used", 0.0))
+            for row in successful_rows
+        ),
+        "average_token_usage": {
+            "prompt_tokens": _mean(prompt_tokens),
+            "completion_tokens": _mean(completion_tokens),
+            "total_tokens": _mean(
+                prompt + completion
+                for prompt, completion in zip(prompt_tokens, completion_tokens)
+            ),
+        },
         "subtype_success": {
             subtype: _mean(float(row.get("diagnostics", {}).get("task_success", 0.0)) for row in subtype_rows)
             for subtype, subtype_rows in sorted(by_subtype.items())
@@ -119,6 +155,57 @@ def _condition_summary(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
             for subtype, subtype_rows in sorted(by_subtype.items())
         },
     }
+
+
+def _paired_episode_rows(
+    auto_rows: list[Mapping[str, Any]],
+    required_rows: list[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    def key(row: Mapping[str, Any]) -> tuple[str, int]:
+        return str(row.get("subtype")), int(row.get("seed"))
+
+    auto_by_key = {key(row): row for row in auto_rows}
+    required_by_key = {key(row): row for row in required_rows}
+    if set(auto_by_key) != set(required_by_key):
+        raise RuntimeError("auto and required probe rows are not paired by identical subtype/seed keys")
+
+    paired: list[dict[str, Any]] = []
+    for pair_key in sorted(auto_by_key):
+        auto_row = auto_by_key[pair_key]
+        required_row = required_by_key[pair_key]
+        auto_success = float(auto_row.get("diagnostics", {}).get("task_success", 0.0))
+        required_success = float(required_row.get("diagnostics", {}).get("task_success", 0.0))
+        auto_metrics = _condition_summary([auto_row])
+        required_metrics = _condition_summary([required_row])
+        if auto_success and required_success:
+            outcome = "both_success"
+        elif auto_success:
+            outcome = "auto_only_success"
+        elif required_success:
+            outcome = "required_only_success"
+        else:
+            outcome = "neither_success"
+        paired.append({
+            "subtype": pair_key[0],
+            "seed": pair_key[1],
+            "ground_truth_match": auto_row.get("ground_truth") == required_row.get("ground_truth"),
+            "outcome": outcome,
+            "auto": {
+                "initial_tool_call_rate": auto_metrics["initial_tool_call_rate"],
+                "final_valid_action_rate": auto_metrics["final_valid_action_rate"],
+                "episode_success_rate": auto_metrics["episode_success_rate"],
+                "average_rounds": auto_metrics["average_rounds"],
+                "average_token_usage": auto_metrics["average_token_usage"],
+            },
+            "required": {
+                "initial_tool_call_rate": required_metrics["initial_tool_call_rate"],
+                "final_valid_action_rate": required_metrics["final_valid_action_rate"],
+                "episode_success_rate": required_metrics["episode_success_rate"],
+                "average_rounds": required_metrics["average_rounds"],
+                "average_token_usage": required_metrics["average_token_usage"],
+            },
+        })
+    return paired
 
 
 def _run_condition(
@@ -132,6 +219,7 @@ def _run_condition(
     max_retries: int,
     max_new_tokens: int,
     parallel_tool_calls: bool,
+    instances: Mapping[tuple[str, int], Any],
 ) -> list[dict[str, Any]]:
     policy = VLLMSelfPlayPolicy(
         base_url,
@@ -145,7 +233,12 @@ def _run_condition(
     rows: list[dict[str, Any]] = []
     for subtype, seed in seeds:
         config = _config_for(subtype, max_rounds=max_rounds, max_retries=max_retries)
-        runner = SynchronousSelfPlayRunner(policy, config)
+        instance = instances[(subtype, seed)]
+        runner = SynchronousSelfPlayRunner(
+            policy,
+            config,
+            instance_factory=lambda _seed, _config, fixed_instance=instance: fixed_instance,
+        )
         try:
             result: SynchronousEpisodeResult = runner.run_episode(seed)
             rows.append(result.to_dict())
@@ -176,8 +269,16 @@ def main() -> int:
         for subtype_index, subtype in enumerate(subtypes)
         for episode in range(args.episodes_per_subtype)
     ]
+    instances = {
+        (subtype, seed): generate_instance(
+            seed,
+            config=_config_for(subtype, max_rounds=args.max_rounds, max_retries=args.max_invalid_retries),
+        )
+        for subtype, seed in seeds
+    }
     args.output_dir.mkdir(parents=True, exist_ok=True)
     conditions: dict[str, dict[str, Any]] = {}
+    condition_rows: dict[str, list[dict[str, Any]]] = {}
     for tool_choice in ("auto", "required"):
         rows = _run_condition(
             model=args.model,
@@ -189,15 +290,23 @@ def main() -> int:
             max_retries=args.max_invalid_retries,
             max_new_tokens=args.max_new_tokens,
             parallel_tool_calls=args.parallel_tool_calls,
+            instances=instances,
         )
         trajectory_path = args.output_dir / f"{tool_choice}.jsonl"
         with trajectory_path.open("w", encoding="utf-8") as handle:
             for row in rows:
                 handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+        condition_rows[tool_choice] = rows
         conditions[tool_choice] = {
             "trajectory_file": str(trajectory_path),
             **_condition_summary(rows),
         }
+
+    paired_rows = _paired_episode_rows(condition_rows["auto"], condition_rows["required"])
+    paired_path = args.output_dir / "paired.jsonl"
+    with paired_path.open("w", encoding="utf-8") as handle:
+        for row in paired_rows:
+            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     auto_summary = conditions["auto"]
     required_summary = conditions["required"]
@@ -221,6 +330,11 @@ def main() -> int:
         "total_episodes_per_condition": len(seeds),
         "fixed_seed_schedule": {subtype: [seed for current_subtype, seed in seeds if current_subtype == subtype] for subtype in subtypes},
         "conditions": conditions,
+        "paired_episodes_file": str(paired_path),
+        "paired_outcomes": {
+            outcome: sum(row["outcome"] == outcome for row in paired_rows)
+            for outcome in ("both_success", "auto_only_success", "required_only_success", "neither_success")
+        },
         "delta_auto_minus_required": numeric_delta,
     }
     summary_path = args.output_dir / "summary.json"
