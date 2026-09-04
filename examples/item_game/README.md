@@ -209,11 +209,13 @@ the server has enough memory. Then run the pilot with
 `ITEM_GAME_BACKEND=vllm`, `VLLM_MODEL=<server model id>`, and
 `VLLM_BASE_URL=http://<server>:8000/v1`. The vLLM policy sends the dynamic
 phase-specific function definitions through `tools` with
-`tool_choice=required` for native decision turns, so intentional PASS is
-represented by an explicit tool call and a missing call is distinguishable
-from a strategic no-op. Response turns retain the auto-then-required fallback
-for compatibility. It never sends a request-level guided-decoding backend on
-ordinary decision turns.
+`tool_choice=auto` for native decision turns. The model is prompted to emit
+private `<reason>...</reason>` content followed by one native tool call;
+missing decision calls are treated as invalid and retried, while explicit
+`PASS()` remains the strategic no-op. `tool_choice=required` is retained as
+the paired ablation baseline. Response turns retain the auto-then-required
+fallback for compatibility. It never sends a request-level guided-decoding
+backend on ordinary decision turns.
 The runner separately records tool presence/count, tool-schema validity, and
 game-semantic validity, raw assistant message, `message.content`, parsed reason,
 tool name/arguments, and whether a retry was required.

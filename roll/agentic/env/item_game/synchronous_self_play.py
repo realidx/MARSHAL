@@ -2121,7 +2121,7 @@ class VLLMSelfPlayPolicy:
         timeout: float = 300.0,
         enable_thinking: bool = False,
         output_mode: str = "native_tools",
-        native_tool_choice: str = "required",
+        native_tool_choice: str = "auto",
         parallel_tool_calls: bool = False,
     ):
         if output_mode not in {"native_tools", "reason_action", "action_only"}:
@@ -2406,8 +2406,8 @@ def main() -> None:  # pragma: no cover
     parser.add_argument(
         "--tool-choice",
         choices=("auto", "required"),
-        default="required",
-        help="native decision tool choice; required makes PASS explicit and treats missing calls as protocol failures",
+        default="auto",
+        help="native decision tool choice; auto is the formal interface and retries missing decision calls",
     )
     parser.add_argument(
         "--parallel-tool-calls",
