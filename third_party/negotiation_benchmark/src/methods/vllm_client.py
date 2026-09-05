@@ -1,16 +1,20 @@
-"""Adapters for using the repository's vLLM engines with the benchmark.
+"""Adapters for using vLLM engines and servers with the benchmark.
 
 The benchmark only needs a small text-generation interface.  This module
-keeps the benchmark independent of the vLLM import at module-load time while
-supporting both the synchronous and asynchronous engines exposed by
-``roll.third_party.vllm``.
+keeps the benchmark independent of the vLLM import at module-load time.  It
+supports the synchronous and asynchronous engines exposed by
+``roll.third_party.vllm`` as well as the OpenAI-compatible HTTP API exposed by
+newer vLLM servers.
 """
 
 from __future__ import annotations
 
 import asyncio
 import inspect
-from typing import Any, Iterable, Mapping, Sequence
+import json
+import urllib.error
+import urllib.request
+from typing import Any, Mapping, Sequence
 from uuid import uuid4
 
 
@@ -195,6 +199,129 @@ class VLLMNegotiationClient:
         if text is None:
             raise RuntimeError("vLLM completion did not contain text.")
         return str(text)
+
+
+class OpenAICompatibleNegotiationClient:
+    """Client for a vLLM OpenAI-compatible ``/v1`` server.
+
+    This path is intentionally independent of ``roll.third_party.vllm``.  It
+    works with vLLM releases that expose the standard chat-completions API,
+    including vLLM 0.28, while keeping the same ``complete`` protocol used by
+    :class:`benac_p.vllm_policy.VLLMPlayerPolicy`.
+
+    ``base_url`` may be either ``http://host:port`` or ``http://host:port/v1``;
+    the client normalises it to the latter and appends
+    ``/chat/completions`` for each request.
+    """
+
+    def __init__(
+        self,
+        base_url: str,
+        model: str,
+        *,
+        api_key: str = "EMPTY",
+        timeout: float = 300.0,
+        temperature: float = 0.0,
+        max_tokens: int = 512,
+        enable_thinking: bool = False,
+    ) -> None:
+        if not base_url or not str(base_url).strip():
+            raise ValueError("base_url must be non-empty.")
+        if not model or not str(model).strip():
+            raise ValueError("model must be non-empty.")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive.")
+        if max_tokens < 1:
+            raise ValueError("max_tokens must be positive.")
+
+        normalized_url = str(base_url).rstrip("/")
+        if not normalized_url.endswith("/v1"):
+            normalized_url += "/v1"
+        self.base_url = normalized_url
+        self.model = str(model)
+        self.api_key = str(api_key)
+        self.timeout = float(timeout)
+        self.temperature = float(temperature)
+        self.max_tokens = int(max_tokens)
+        self.enable_thinking = bool(enable_thinking)
+
+    def complete(
+        self,
+        messages: Sequence[Mapping[str, str]],
+        *,
+        response_format: Mapping[str, Any] | None = None,
+        model: str | None = None,
+    ) -> str:
+        """Generate one chat completion and return its text content."""
+
+        body: dict[str, Any] = {
+            "model": model or self.model,
+            "messages": [
+                {"role": str(message["role"]), "content": str(message["content"])}
+                for message in messages
+            ],
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+            "n": 1,
+            "stream": False,
+            # vLLM 0.28 uses this chat-template option for Qwen-style models.
+            # Keeping reasoning disabled preserves BENAC's executable JSON
+            # protocol; callers can opt in when they explicitly want it.
+            "chat_template_kwargs": {"enable_thinking": self.enable_thinking},
+        }
+        if response_format is not None:
+            body["response_format"] = dict(response_format)
+
+        request = urllib.request.Request(
+            f"{self.base_url}/chat/completions",
+            data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            try:
+                error_body = exc.read().decode("utf-8", errors="replace")
+            except OSError:
+                error_body = ""
+            detail = f": {error_body}" if error_body else ""
+            raise RuntimeError(
+                f"OpenAI-compatible vLLM request failed with HTTP {exc.code}{detail}"
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise RuntimeError(
+                f"Could not reach OpenAI-compatible vLLM server at {self.base_url}: {exc}"
+            ) from exc
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            raise RuntimeError("OpenAI-compatible vLLM returned invalid JSON.") from exc
+
+        try:
+            choices = payload["choices"]
+            message = choices[0]["message"]
+            content = message.get("content")
+        except (KeyError, IndexError, TypeError) as exc:
+            raise RuntimeError(
+                "OpenAI-compatible vLLM response did not contain choices[0].message."
+            ) from exc
+
+        if isinstance(content, list):
+            # Some OpenAI-compatible servers return content parts rather than a
+            # single string.  BENAC only needs the textual parts.
+            content = "".join(
+                str(part.get("text", ""))
+                for part in content
+                if isinstance(part, Mapping)
+            )
+        if not isinstance(content, str) or not content.strip():
+            raise RuntimeError(
+                "OpenAI-compatible vLLM response did not contain text content."
+            )
+        return content
 
 
 def _run_coroutine(coroutine):

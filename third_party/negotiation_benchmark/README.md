@@ -64,15 +64,34 @@ PYTHONPATH=src python scripts/generate_benac_p_samples.py \
 ```
 
 The same runner accepts arbitrary `PlayerPolicy` implementations. For vLLM
-self-play, initialize the repository's ROLL `LLM` or `AsyncLLM` through the
-CLI and set `--self-play vllm`; `--vllm-model` and `--device-mapping` control
-the model and GPUs. Actual vLLM execution requires the optional Ray/vLLM
-runtime and a compatible GPU environment.
+self-play, the default backend talks to an OpenAI-compatible vLLM server, so
+it also works with newer vLLM releases such as 0.28 without importing ROLL's
+version-specific in-process wrappers:
+
+```bash
+# Start vLLM separately, for example with vLLM 0.28:
+vllm serve Qwen/Qwen3-4B-Instruct-2507 \
+  --served-model-name Qwen/Qwen3-4B-Instruct-2507 \
+  --host 0.0.0.0 --port 8000
+
+PYTHONPATH=src python -m benac_p.cli \
+  --seed 0 --self-play vllm \
+  --vllm-backend http \
+  --vllm-base-url http://localhost:8000/v1 \
+  --vllm-model Qwen/Qwen3-4B-Instruct-2507 \
+  --json
+```
+
+The legacy ROLL in-process path remains available with
+`--vllm-backend roll`; it requires a vLLM version supported by
+`roll.third_party.vllm`. The HTTP client uses the same OpenAI-style messages
+and JSON action protocol as `VLLMPlayerPolicy`; the environment still owns
+all legality checks.
 
 ## Using the existing vLLM interface
 
-After initializing the existing ROLL `LLM`/`AsyncLLM` (or an initialized
-`VllmStrategy`), wrap it with the benchmark adapter:
+For an already initialized ROLL `LLM`/`AsyncLLM` (or an initialized
+`VllmStrategy`), wrap it with the in-process benchmark adapter:
 
 ```python
 from methods.vllm_client import VLLMNegotiationClient
@@ -102,8 +121,10 @@ result, _ = run_single_game(
 ```
 
 The adapter converts the benchmark's OpenAI-style messages into a vLLM
-prompt and parses the generated JSON. The benchmark remains responsible for
-legal-partner, binding-action, forbidden-action, and action-budget validation.
+prompt and parses the generated JSON. For a vLLM server, use
+`OpenAICompatibleNegotiationClient` from `methods.vllm_client` instead. The
+benchmark remains responsible for legal-partner, binding-action,
+forbidden-action, and action-budget validation.
 
 ## Basic verification
 

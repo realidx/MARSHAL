@@ -23,7 +23,10 @@ from benac_p import (
 )
 from benac_p.generator import GeneratorConfig
 from benac_p.state import InvalidActionError
-from methods.vllm_client import VLLMNegotiationClient
+from methods.vllm_client import (
+    OpenAICompatibleNegotiationClient,
+    VLLMNegotiationClient,
+)
 
 
 def make_spec(round_robin=(0, 1, 2, 0)):
@@ -286,6 +289,87 @@ def test_vllm_client_supports_fake_sync_and_async_engines():
         async_mode=True,
     )
     assert async_client.complete([{"role": "user", "content": "hello"}]) == "async"
+
+
+def test_openai_compatible_vllm_client_posts_to_chat_completions(monkeypatch):
+    captured = {}
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            del exc_type, exc_value, traceback
+            return False
+
+        def read(self):
+            return json.dumps(
+                {
+                    "choices": [
+                        {"message": {"role": "assistant", "content": '{"action":"PASS"}'}}
+                    ]
+                }
+            ).encode("utf-8")
+
+    def fake_urlopen(request, timeout):
+        captured["url"] = request.full_url
+        captured["timeout"] = timeout
+        captured["headers"] = dict(request.headers)
+        captured["body"] = json.loads(request.data.decode("utf-8"))
+        return FakeResponse()
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    client = OpenAICompatibleNegotiationClient(
+        "http://localhost:8000",
+        "test-model",
+        api_key="test-key",
+        timeout=17,
+        temperature=0.2,
+        max_tokens=64,
+    )
+    result = client.complete(
+        [{"role": "user", "content": "hello"}],
+        response_format={"type": "json_object"},
+    )
+
+    assert result == '{"action":"PASS"}'
+    assert captured["url"] == "http://localhost:8000/v1/chat/completions"
+    assert captured["timeout"] == 17.0
+    assert captured["headers"]["Authorization"] == "Bearer test-key"
+    assert captured["body"]["model"] == "test-model"
+    assert captured["body"]["response_format"] == {"type": "json_object"}
+    assert captured["body"]["stream"] is False
+    assert captured["body"]["chat_template_kwargs"] == {"enable_thinking": False}
+
+
+def test_openai_compatible_vllm_client_accepts_content_parts(monkeypatch):
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            del exc_type, exc_value, traceback
+            return False
+
+        def read(self):
+            return json.dumps(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": [
+                                    {"type": "text", "text": '{"action":'},
+                                    {"type": "text", "text": '"PASS"}'},
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ).encode("utf-8")
+
+    monkeypatch.setattr("urllib.request.urlopen", lambda request, timeout: FakeResponse())
+    client = OpenAICompatibleNegotiationClient("http://localhost:8000/v1", "test-model")
+    assert client.complete([{"role": "user", "content": "hello"}]) == '{"action":"PASS"}'
 
 
 def test_malformed_vllm_output_is_marked_by_non_strict_runner():

@@ -23,7 +23,7 @@ def _parse_device_mapping(value: str) -> list[int]:
     return devices
 
 
-def _build_vllm_policies(args: argparse.Namespace, n_players: int):
+def _build_roll_vllm_policies(args: argparse.Namespace, n_players: int):
     try:
         import ray
         from vllm import SamplingParams
@@ -33,6 +33,11 @@ def _build_vllm_policies(args: argparse.Namespace, n_players: int):
         raise RuntimeError(
             "The vLLM self-play command requires Ray, vLLM, and the repository's "
             "ROLL runtime. Use --self-play random for a dependency-free smoke test."
+        ) from exc
+    except NotImplementedError as exc:  # pragma: no cover - depends on installed vLLM
+        raise RuntimeError(
+            "The installed vLLM version is not supported by ROLL's in-process adapter. "
+            "Use --vllm-backend http with an OpenAI-compatible vLLM server instead."
         ) from exc
 
     from benac_p.vllm_policy import VLLMPlayerPolicy
@@ -54,6 +59,10 @@ def _build_vllm_policies(args: argparse.Namespace, n_players: int):
         n=1,
     )
     model_cls = AsyncLLM if args.async_mode else LLM
+    if model_cls is None:
+        raise RuntimeError(
+            "ROLL did not provide the requested vLLM engine class for this version."
+        )
     model = model_cls(
         resource_placement_groups=placement_groups[0],
         model=args.vllm_model,
@@ -77,6 +86,31 @@ def _build_vllm_policies(args: argparse.Namespace, n_players: int):
     }
 
 
+def _build_http_vllm_policies(args: argparse.Namespace, n_players: int):
+    from benac_p.vllm_policy import VLLMPlayerPolicy
+    from methods.vllm_client import OpenAICompatibleNegotiationClient
+
+    client = OpenAICompatibleNegotiationClient(
+        args.vllm_base_url,
+        args.vllm_model,
+        api_key=args.vllm_api_key,
+        timeout=args.vllm_timeout,
+        temperature=args.vllm_temperature,
+        max_tokens=args.max_tokens,
+        enable_thinking=args.vllm_enable_thinking,
+    )
+    return {
+        player_id: VLLMPlayerPolicy(client, model=args.vllm_model)
+        for player_id in range(n_players)
+    }
+
+
+def _build_vllm_policies(args: argparse.Namespace, n_players: int):
+    if args.vllm_backend == "http":
+        return _build_http_vllm_policies(args, n_players)
+    return _build_roll_vllm_policies(args, n_players)
+
+
 def _build_oracle_policies(args: argparse.Namespace, spec):
     solver = PerfectInfoSolver(spec, max_states=args.max_solver_states)
     return {
@@ -95,6 +129,32 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--vllm-model",
         default=os.environ.get("BENAC_P_VLLM_MODEL", "Qwen/Qwen2.5-7B-Instruct"),
+    )
+    parser.add_argument(
+        "--vllm-backend",
+        choices=("http", "roll"),
+        default=os.environ.get("BENAC_P_VLLM_BACKEND", "http"),
+        help=(
+            "vLLM transport: http uses the OpenAI-compatible server API and "
+            "works with newer vLLM releases; roll uses ROLL's version-specific "
+            "in-process adapter."
+        ),
+    )
+    parser.add_argument(
+        "--vllm-base-url",
+        default=os.environ.get("BENAC_P_VLLM_BASE_URL", "http://localhost:8000/v1"),
+        help="Base URL of an OpenAI-compatible vLLM server (the /v1 suffix is optional).",
+    )
+    parser.add_argument(
+        "--vllm-api-key",
+        default=os.environ.get("BENAC_P_VLLM_API_KEY", "EMPTY"),
+    )
+    parser.add_argument("--vllm-timeout", type=float, default=300.0)
+    parser.add_argument("--vllm-temperature", type=float, default=0.0)
+    parser.add_argument(
+        "--vllm-enable-thinking",
+        action="store_true",
+        help="Enable model-native reasoning when supported by the vLLM chat template.",
     )
     parser.add_argument("--async-mode", action="store_true")
     parser.add_argument("--device-mapping", type=_parse_device_mapping, default=[0])
@@ -116,10 +176,20 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.n_rounds < 1:
         raise SystemExit("--n-rounds must be positive")
-    if args.tensor_parallel_size is None:
-        args.tensor_parallel_size = len(args.device_mapping)
-    if args.tensor_parallel_size != len(args.device_mapping):
-        raise SystemExit("--tensor-parallel-size must equal the number of --device-mapping GPUs")
+    if args.self_play == "vllm":
+        if args.vllm_timeout <= 0:
+            raise SystemExit("--vllm-timeout must be positive")
+        if not 0.0 <= args.vllm_temperature:
+            raise SystemExit("--vllm-temperature must be non-negative")
+        if args.vllm_backend == "http" and args.async_mode:
+            raise SystemExit("--async-mode is only available with --vllm-backend roll")
+        if args.vllm_backend == "roll":
+            if args.tensor_parallel_size is None:
+                args.tensor_parallel_size = len(args.device_mapping)
+            if args.tensor_parallel_size != len(args.device_mapping):
+                raise SystemExit(
+                    "--tensor-parallel-size must equal the number of --device-mapping GPUs"
+                )
 
     spec = generate_game(
         seed=args.seed,
