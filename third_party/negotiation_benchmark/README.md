@@ -72,7 +72,9 @@ version-specific in-process wrappers:
 # Start vLLM separately, for example with vLLM 0.28:
 vllm serve Qwen/Qwen3-4B-Instruct-2507 \
   --served-model-name Qwen/Qwen3-4B-Instruct-2507 \
-  --host 0.0.0.0 --port 8000
+  --host 0.0.0.0 --port 8000 \
+  --enable-auto-tool-choice \
+  --tool-call-parser hermes
 
 PYTHONPATH=src python -m benac_p.cli \
   --seed 0 --self-play vllm \
@@ -84,9 +86,14 @@ PYTHONPATH=src python -m benac_p.cli \
 
 The legacy ROLL in-process path remains available with
 `--vllm-backend roll`; it requires a vLLM version supported by
-`roll.third_party.vllm`. The HTTP client uses the same OpenAI-style messages
-and JSON action protocol as `VLLMPlayerPolicy`; the environment still owns
-all legality checks.
+`roll.third_party.vllm`. The canonical HTTP path sends native OpenAI tools
+with `tool_choice="auto"` and `parallel_tool_calls=false`. Proposer turns
+offer only `PASS`/`OFFER`; response turns offer only `ACCEPT`/`REJECT`.
+`VLLMPlayerPolicy` allows ordinary text before exactly one tool call, retries
+one missing/malformed/illegal call once, and records a final failure as
+invalid rather than treating it as an intentional `PASS`.
+With `--json`, the CLI also emits per-player `policy_metrics`, including raw
+first-attempt validity and validity after the single retry.
 
 ## Using the existing vLLM interface
 
@@ -120,11 +127,12 @@ result, _ = run_single_game(
 )
 ```
 
-The adapter converts the benchmark's OpenAI-style messages into a vLLM
-prompt and parses the generated JSON. For a vLLM server, use
-`OpenAICompatibleNegotiationClient` from `methods.vllm_client` instead. The
-benchmark remains responsible for legal-partner, binding-action,
-forbidden-action, and action-budget validation.
+The in-process adapter converts the benchmark's OpenAI-style messages into a
+prompt and parses the legacy JSON envelope. For a vLLM server, use
+`OpenAICompatibleNegotiationClient` from `methods.vllm_client`; native tool
+calls are handled by `VLLMPlayerPolicy`. The benchmark remains responsible
+for legal-partner, binding-action, forbidden-action, and action-budget
+validation.
 
 ## Basic verification
 

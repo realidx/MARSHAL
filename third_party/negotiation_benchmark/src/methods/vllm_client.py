@@ -14,8 +14,29 @@ import inspect
 import json
 import urllib.error
 import urllib.request
+from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 from uuid import uuid4
+
+
+@dataclass(frozen=True)
+class VLLMToolCall:
+    """One parsed OpenAI-compatible function/tool call."""
+
+    name: str
+    arguments: Mapping[str, Any] | None
+    tool_call_id: str = ""
+    raw_arguments: Any = None
+
+
+@dataclass(frozen=True)
+class VLLMChatCompletion:
+    """The part of a chat completion needed by BENAC's native tool protocol."""
+
+    content: str
+    tool_calls: tuple[VLLMToolCall, ...]
+    raw_message: Mapping[str, Any]
+    usage: Mapping[str, Any]
 
 
 class VLLMNegotiationClient:
@@ -206,8 +227,10 @@ class OpenAICompatibleNegotiationClient:
 
     This path is intentionally independent of ``roll.third_party.vllm``.  It
     works with vLLM releases that expose the standard chat-completions API,
-    including vLLM 0.28, while keeping the same ``complete`` protocol used by
-    :class:`benac_p.vllm_policy.VLLMPlayerPolicy`.
+    including vLLM 0.28.  ``complete_with_tools`` is the native BENAC
+    interface: it sends OpenAI ``tools`` with ``tool_choice=auto`` and
+    returns parsed tool calls without translating a missing call into an
+    action.
 
     ``base_url`` may be either ``http://host:port`` or ``http://host:port/v1``;
     the client normalises it to the latter and appends
@@ -223,7 +246,6 @@ class OpenAICompatibleNegotiationClient:
         timeout: float = 300.0,
         temperature: float = 0.0,
         max_tokens: int = 512,
-        enable_thinking: bool = False,
     ) -> None:
         if not base_url or not str(base_url).strip():
             raise ValueError("base_url must be non-empty.")
@@ -243,7 +265,6 @@ class OpenAICompatibleNegotiationClient:
         self.timeout = float(timeout)
         self.temperature = float(temperature)
         self.max_tokens = int(max_tokens)
-        self.enable_thinking = bool(enable_thinking)
 
     def complete(
         self,
@@ -252,8 +273,56 @@ class OpenAICompatibleNegotiationClient:
         response_format: Mapping[str, Any] | None = None,
         model: str | None = None,
     ) -> str:
-        """Generate one chat completion and return its text content."""
+        """Generate a legacy text completion and return its content.
 
+        This method remains for the older text-client protocol.  BENAC's
+        native tool policy uses :meth:`complete_with_tools` instead.
+        """
+
+        completion = self._request(
+            messages,
+            response_format=response_format,
+            model=model,
+        )
+        return completion.content
+
+    def complete_with_tools(
+        self,
+        messages: Sequence[Mapping[str, str]],
+        *,
+        tools: Sequence[Mapping[str, Any]],
+        tool_choice: str | Mapping[str, Any] = "auto",
+        parallel_tool_calls: bool = False,
+        model: str | None = None,
+    ) -> VLLMChatCompletion:
+        """Generate a native tool-calling completion.
+
+        The server receives ``tools``, ``tool_choice=auto`` and
+        ``parallel_tool_calls=false``.  A response with no tool calls is
+        returned as an empty ``tool_calls`` tuple for the policy layer to
+        classify and retry; it is never silently converted into ``PASS``.
+        """
+
+        if not tools:
+            raise ValueError("At least one tool is required for native tool calling.")
+        return self._request(
+            messages,
+            model=model,
+            tools=tools,
+            tool_choice=tool_choice,
+            parallel_tool_calls=parallel_tool_calls,
+        )
+
+    def _request(
+        self,
+        messages: Sequence[Mapping[str, str]],
+        *,
+        response_format: Mapping[str, Any] | None = None,
+        model: str | None = None,
+        tools: Sequence[Mapping[str, Any]] | None = None,
+        tool_choice: str | Mapping[str, Any] | None = None,
+        parallel_tool_calls: bool | None = None,
+    ) -> VLLMChatCompletion:
         body: dict[str, Any] = {
             "model": model or self.model,
             "messages": [
@@ -264,13 +333,15 @@ class OpenAICompatibleNegotiationClient:
             "max_tokens": self.max_tokens,
             "n": 1,
             "stream": False,
-            # vLLM 0.28 uses this chat-template option for Qwen-style models.
-            # Keeping reasoning disabled preserves BENAC's executable JSON
-            # protocol; callers can opt in when they explicitly want it.
-            "chat_template_kwargs": {"enable_thinking": self.enable_thinking},
         }
         if response_format is not None:
             body["response_format"] = dict(response_format)
+        if tools is not None:
+            body["tools"] = [dict(tool) for tool in tools]
+            body["tool_choice"] = tool_choice or "auto"
+            body["parallel_tool_calls"] = (
+                False if parallel_tool_calls is None else bool(parallel_tool_calls)
+            )
 
         request = urllib.request.Request(
             f"{self.base_url}/chat/completions",
@@ -303,25 +374,72 @@ class OpenAICompatibleNegotiationClient:
         try:
             choices = payload["choices"]
             message = choices[0]["message"]
-            content = message.get("content")
+            if not isinstance(message, Mapping):
+                raise TypeError("message must be an object")
+            content = self._extract_content(message.get("content"))
+            raw_tool_calls = message.get("tool_calls") or ()
+            if not isinstance(raw_tool_calls, (list, tuple)):
+                raise TypeError("tool_calls must be a list")
         except (KeyError, IndexError, TypeError) as exc:
             raise RuntimeError(
                 "OpenAI-compatible vLLM response did not contain choices[0].message."
             ) from exc
 
+        tool_calls = tuple(self._parse_tool_call(raw_call) for raw_call in raw_tool_calls)
+        usage = payload.get("usage")
+        return VLLMChatCompletion(
+            content=content,
+            tool_calls=tool_calls,
+            raw_message=dict(message),
+            usage=dict(usage) if isinstance(usage, Mapping) else {},
+        )
+
+    @staticmethod
+    def _extract_content(content: Any) -> str:
+        """Normalise OpenAI string or content-part responses to text."""
+
+        if content is None:
+            return ""
         if isinstance(content, list):
-            # Some OpenAI-compatible servers return content parts rather than a
-            # single string.  BENAC only needs the textual parts.
-            content = "".join(
+            return "".join(
                 str(part.get("text", ""))
                 for part in content
                 if isinstance(part, Mapping)
             )
-        if not isinstance(content, str) or not content.strip():
-            raise RuntimeError(
-                "OpenAI-compatible vLLM response did not contain text content."
+        return str(content)
+
+    @staticmethod
+    def _parse_tool_call(raw_call: Any) -> VLLMToolCall:
+        """Parse a server tool call while preserving malformed arguments."""
+
+        if not isinstance(raw_call, Mapping):
+            return VLLMToolCall(name="", arguments=None, raw_arguments=raw_call)
+        function = raw_call.get("function")
+        if not isinstance(function, Mapping):
+            return VLLMToolCall(
+                name="",
+                arguments=None,
+                tool_call_id=str(raw_call.get("id", "")),
+                raw_arguments=None,
             )
-        return content
+
+        raw_arguments = function.get("arguments")
+        arguments: Mapping[str, Any] | None = None
+        if isinstance(raw_arguments, Mapping):
+            arguments = dict(raw_arguments)
+        elif isinstance(raw_arguments, str):
+            try:
+                decoded = json.loads(raw_arguments)
+            except json.JSONDecodeError:
+                decoded = None
+            if isinstance(decoded, Mapping):
+                arguments = dict(decoded)
+        return VLLMToolCall(
+            name=str(function.get("name", "")),
+            arguments=arguments,
+            tool_call_id=str(raw_call.get("id", "")),
+            raw_arguments=raw_arguments,
+        )
 
 
 def _run_coroutine(coroutine):

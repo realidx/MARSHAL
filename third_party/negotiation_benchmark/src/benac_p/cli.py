@@ -97,7 +97,6 @@ def _build_http_vllm_policies(args: argparse.Namespace, n_players: int):
         timeout=args.vllm_timeout,
         temperature=args.vllm_temperature,
         max_tokens=args.max_tokens,
-        enable_thinking=args.vllm_enable_thinking,
     )
     return {
         player_id: VLLMPlayerPolicy(client, model=args.vllm_model)
@@ -119,6 +118,15 @@ def _build_oracle_policies(args: argparse.Namespace, spec):
     }
 
 
+def _policy_metrics(policies):
+    metrics = {}
+    for player_id, policy in policies.items():
+        reporter = getattr(policy, "metrics", None)
+        if callable(reporter):
+            metrics[str(player_id)] = reporter()
+    return metrics
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run one BENAC-P v0 self-play episode.")
     parser.add_argument("--seed", type=int, default=0)
@@ -128,7 +136,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--non-strict", action="store_true")
     parser.add_argument(
         "--vllm-model",
-        default=os.environ.get("BENAC_P_VLLM_MODEL", "Qwen/Qwen2.5-7B-Instruct"),
+        default=os.environ.get("BENAC_P_VLLM_MODEL", "Qwen/Qwen3-4B-Instruct-2507"),
     )
     parser.add_argument(
         "--vllm-backend",
@@ -151,11 +159,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--vllm-timeout", type=float, default=300.0)
     parser.add_argument("--vllm-temperature", type=float, default=0.0)
-    parser.add_argument(
-        "--vllm-enable-thinking",
-        action="store_true",
-        help="Enable model-native reasoning when supported by the vLLM chat template.",
-    )
     parser.add_argument("--async-mode", action="store_true")
     parser.add_argument("--device-mapping", type=_parse_device_mapping, default=[0])
     parser.add_argument("--tensor-parallel-size", type=int, default=None)
@@ -211,15 +214,22 @@ def main(argv: list[str] | None = None) -> int:
         observation_mode=args.observation_mode,
         strict=not args.non_strict,
     ).run()
+    policy_metrics = _policy_metrics(policies)
     if args.json:
-        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+        output = result.to_dict()
+        if policy_metrics:
+            output["policy_metrics"] = policy_metrics
+        print(json.dumps(output, ensure_ascii=False, indent=2))
     else:
-        print(
+        summary = (
             f"seed={result.seed} turns={len(result.transcript)} "
             f"goals={sum(result.goal_satisfaction)}/{len(result.goal_satisfaction)} "
             f"rewards={list(result.terminal_rewards)} "
             f"invalid_actions={result.invalid_action_count}"
         )
+        if policy_metrics:
+            summary += f" policy_metrics={json.dumps(policy_metrics, sort_keys=True)}"
+        print(summary)
     return 0
 
 

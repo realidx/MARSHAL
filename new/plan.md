@@ -1,6 +1,6 @@
 # BENAC-P v0：可执行的游戏实现计划
 
-**状态：** 当前阶段已实现并跑通 game engine、policy-agnostic self-play harness，以及用于 debug/controlled diagnostics 的 rational oracle 和 perfect-information reference solver；第一版直接用 self-play 验证交互。Bayesian inference、diagnostics 和 reproduction 仍是后续工作。
+**状态：** 当前阶段已实现并跑通 game engine、policy-agnostic self-play harness、native OpenAI-compatible tool-calling vLLM adapter（含一次 retry），以及用于 debug/controlled diagnostics 的 rational oracle 和 perfect-information reference solver；第一版直接用 self-play 验证交互。Bayesian inference、diagnostics 和 reproduction 仍是后续工作。
 
 这份文件是当前的 canonical plan。它根据之前的讨论重新整理；如果和早期聊天记录有冲突，以本文件后面的定义为准。
 
@@ -260,28 +260,36 @@ hidden evaluation metadata
 
 ### 5.1 Proposer 的 action 不是人为拆成两层
 
-proposer 每个 turn 做一个 atomic decision，输出以下二者之一：
+proposer 每个 turn 做一个 atomic decision。canonical vLLM wire protocol
+通过 OpenAI-compatible native tools 发送：
 
-```json
-{"action": "PASS"}
+```text
+tools = [PASS(), OFFER(...)]
+tool_choice = "auto"
+parallel_tool_calls = false
 ```
 
-或：
+可用 tool 只包含当前 proposer phase 的 action types；如果当前没有任何
+合法 offer，则只发送 `PASS()`。`PASS()` 是明确的战略 no-op，不是缺少
+tool call 的 fallback。
+
+`OFFER` 的参数使用可读的 commitment names：
 
 ```json
 {
-  "action": "OFFER",
-  "partner_id": 1,
-  "proposer_action": [1, 0, 0],
-  "partner_action": [0, 1, 0]
+  "partner": "P1",
+  "self_commitments": ["A0"],
+  "partner_commitments": ["A1"]
 }
 ```
 
-所以 proposer 是一次性输出 `partner + offer` 或 `PASS`，不使用额外的 partner-selection stage → offer-selection stage hierarchy。
+因此 proposer 仍然一次性选择 `partner + offer`，不使用额外的
+partner-selection stage → offer-selection stage hierarchy。
 
 ### 5.2 Offer 的表示
 
-为了沿用原 BENAC 的设计，offer 对外暴露为两个 **最终 binary action vectors**，而不是单独的 delta：
+为了沿用原 BENAC 的 environment 设计，内部 offer 仍然执行两个 **最终
+binary action vectors** 的 transition，而不是改变 game mechanism：
 
 \[
 o_t=(a_p,a_q).
@@ -293,7 +301,10 @@ o_t=(a_p,a_q).
 \Delta C=a\land \lnot C
 \]
 
-来验证新 commitment 数量，但 policy 使用原 BENAC 风格的完整 action vector。
+来验证新 commitment 数量。native tool policy 的 wire-level
+`self_commitments` 和 `partner_commitments` 表示希望新增的 action names；
+adapter 会结合当前 commitment state 将它们转换成 environment 所需的完整
+final vectors，然后交给同一个 legality validator。
 
 一个 offer 合法，当且仅当：
 
@@ -334,7 +345,18 @@ o_t=(a_p,a_q).
 
 机制层面，非法 action 不是合法 game action。默认 runner 使用 strict mode，遇到非法 output 直接抛出带上下文的 `InvalidActionError`。
 
-为了真实 LLM rollout，可以提供非 strict mode，把非法 proposer output 转成 `PASS`，把非法 responder output 转成 `REJECT`，但必须记录 `invalid_action` 标记；这不是 silent acceptance。
+canonical native vLLM policy 对 missing tool、malformed tool、multiple tool
+或 illegal tool 做一次 retry。retry 只追加格式反馈：
+
+```text
+Your previous response did not contain one valid game action.
+Choose exactly one of the available actions.
+```
+
+它不告诉 agent 应该采取哪一种战略。两次都失败后才抛出
+`InvalidActionError`。strict mode 直接终止；non-strict mode 可以把 proposer
+转换成带 `invalid_action=true` 的 fallback event、把 responder 转换成带
+标记的 `REJECT`，但不会把缺少 tool call 当成有意的 `PASS()`。
 
 ## 6. Policy interface
 
@@ -383,7 +405,24 @@ policies: Mapping[int, PlayerPolicy]
 
 ## 7. vLLM 接口
 
-当前仓库已有 `VLLMNegotiationClient`，它负责把现有 ROLL vLLM `LLM` / `AsyncLLM` 转成文本 completion。BENAC-P 只需要在它上面实现 `VLLMPlayerPolicy`。
+canonical training/evaluation interface 使用 OpenAI-compatible native tools，
+不要求模型在普通 content 中打印裸 JSON。HTTP client 发送 `messages`、
+当前 phase 的 `tools`、`tool_choice="auto"` 和
+`parallel_tool_calls=false`，然后消费服务端返回的标准
+`message.tool_calls`。
+
+对于 `Qwen3-4B-Instruct-2507`，使用 non-thinking model behavior；普通文本
+reasoning 可以出现在 tool call 前，但不依赖 `<think>...</think>`。Qwen 的
+tool-call template 使用 Hermes-style 格式；vLLM server 使用：
+
+```bash
+vllm serve Qwen/Qwen3-4B-Instruct-2507 \
+  --enable-auto-tool-choice \
+  --tool-call-parser hermes
+```
+
+旧的 ROLL in-process `LLM`/`AsyncLLM` adapter 保留为 legacy backend，不能
+代表 canonical vLLM 0.28 deployment path。
 
 ### 7.1 Proposer prompt/output
 
@@ -395,42 +434,35 @@ proposer prompt 只能包含：
 - public transcript；
 - 合法 partner 和 offer constraints。
 
-输出只能是：
+HTTP request 只发送 proposer 当前可用的 `PASS` 和 `OFFER` tools。model 可以
+先输出普通文本 reasoning，但必须随后调用且只调用一个 tool：
 
-```json
-{"action": "PASS"}
+```text
+PASS()
 ```
 
 或：
 
-```json
-{
-  "action": "OFFER",
-  "partner_id": 1,
-  "proposer_action": [1, 0, 0],
-  "partner_action": [0, 1, 0]
-}
+```text
+OFFER(partner="P1", self_commitments=["A0"], partner_commitments=["A1"])
 ```
 
 ### 7.2 Responder prompt/output
 
-responder prompt 在 public/private observation 之外，加入当前 offer：
+responder prompt 在 public/private observation 之外，加入当前 offer。HTTP
+request 只发送两个 response tools：
 
-```json
-{
-  "response": "ACCEPT"
-}
+```text
+ACCEPT()
+REJECT()
 ```
 
-或：
+model 必须调用其中一个；普通 text content 可以作为 private reasoning，
+但不能替代 tool call。
 
-```json
-{
-  "response": "REJECT"
-}
-```
-
-vLLM 只负责生成 policy output；partner acceptance、commitment update 和 reward 仍由 game engine 执行。
+vLLM 只负责生成 policy output；partner acceptance、commitment update 和
+reward 仍由 game engine 执行。tool parser 的格式合法性、game engine 的
+offer legality 和最终 reward 是分开的检查层。
 
 ### 7.3 Self-play 默认形态
 
@@ -513,7 +545,11 @@ third_party/negotiation_benchmark/
 
 ### Step 4：vLLM self-play
 
-基于现有 vLLM text client 实现 `VLLMPlayerPolicy`，让三个 player 都能使用同一 vLLM backend，但每次调用只看到自己的 private view。
+使用 OpenAI-compatible HTTP vLLM client 实现 `VLLMPlayerPolicy`，让三个
+player 都能使用同一 vLLM backend，但每次调用只看到自己的 private view。
+训练和 evaluation 使用同一种 native tool wire format；每次缺少、malformed
+或 illegal action 最多 retry 一次，并分别记录第一次 valid、retry 后 valid
+和最终 invalid。
 
 ### Step 5：生成初始样本
 
@@ -564,7 +600,9 @@ third_party/negotiation_benchmark/
 - Random、Scripted、fake LLM 都能驱动同一个 `GameRunner`；
 - 三个 player 可以使用不同 policy；
 - 三个 player 可以使用同一 policy class；
-- fake vLLM 能输出 proposer `PASS/OFFER` 和 responder `ACCEPT/REJECT`；
+- fake vLLM 能通过 native tools 输出 proposer `PASS/OFFER` 和 responder `ACCEPT/REJECT`；
+- missing/malformed/illegal native tool 最多只 retry 一次；
+- native tool request 使用 `tool_choice="auto"`，不会发送裸 JSON `response_format`；
 - 不需要真实 GPU 或网络即可完成 engine 和 adapter tests。
 
 ## 11. 明确不做的事情
@@ -594,9 +632,15 @@ PYTHONPATH=src python -m benac_p.cli --seed 0 --self-play random
 并且可以替换成：
 
 ```bash
-PYTHONPATH=src python -m benac_p.cli --seed 0 --self-play vllm
+PYTHONPATH=src python -m benac_p.cli \
+  --seed 0 --self-play vllm \
+  --vllm-backend http \
+  --vllm-base-url http://localhost:8000/v1
 ```
 
-第一条命令不需要模型或网络；第二条命令使用现有 vLLM backend。两者都必须使用同一套 game state、transition、observation 和 policy interface。
+第一条命令不需要模型或网络；第二条命令使用 OpenAI-compatible native
+tool backend。server 需要开启 `--enable-auto-tool-choice` 和
+`--tool-call-parser hermes`。两者都必须使用同一套 game state、transition、
+observation 和 policy interface。
 
 完成后，下一阶段进入 diagnostics：在 physical game state 相同的情况下改变 public interaction history，测试 player 的隐式 partner inference 是否导致 partner selection、offer、ACCEPT/REJECT 和 PASS 行为变化。

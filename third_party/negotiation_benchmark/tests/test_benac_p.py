@@ -25,7 +25,9 @@ from benac_p.generator import GeneratorConfig
 from benac_p.state import InvalidActionError
 from methods.vllm_client import (
     OpenAICompatibleNegotiationClient,
+    VLLMChatCompletion,
     VLLMNegotiationClient,
+    VLLMToolCall,
 )
 
 
@@ -216,7 +218,7 @@ def test_rational_oracle_policy_runs_through_the_same_runner():
     assert result.terminal_rewards == (1, 1)
 
 
-def test_vllm_player_policy_uses_json_protocol_and_private_observation():
+def test_vllm_player_policy_legacy_roll_fallback_uses_json_protocol():
     class FakeClient:
         def __init__(self):
             self.calls = []
@@ -255,6 +257,151 @@ def test_vllm_player_policy_uses_json_protocol_and_private_observation():
     prompt_text = "\n".join(message["content"] for message in client.calls[0][0])
     assert '"own_preferences"' in prompt_text
     assert '"all_preferences"' not in prompt_text
+
+
+def test_vllm_player_policy_uses_native_phase_tools():
+    class FakeNativeClient:
+        def __init__(self):
+            self.calls = []
+            self.outputs = [
+                VLLMChatCompletion(
+                    content="I will make a cooperative offer.",
+                    tool_calls=(
+                        VLLMToolCall(
+                            name="OFFER",
+                            arguments={
+                                "partner": "P1",
+                                "self_commitments": ["A0"],
+                                "partner_commitments": ["A0"],
+                            },
+                        ),
+                    ),
+                    raw_message={},
+                    usage={},
+                ),
+                VLLMChatCompletion(
+                    content="The offer is acceptable.",
+                    tool_calls=(VLLMToolCall(name="ACCEPT", arguments={}),),
+                    raw_message={},
+                    usage={},
+                ),
+            ]
+
+        def complete(self, messages, **kwargs):
+            raise AssertionError("native policy must not use legacy complete()")
+
+        def complete_with_tools(self, messages, **kwargs):
+            self.calls.append((messages, kwargs))
+            return self.outputs.pop(0)
+
+    state = GameState(make_spec(round_robin=(0,)))
+    client = FakeNativeClient()
+    policy = VLLMPlayerPolicy(client, model="test-model")
+    proposal = policy.propose(build_player_observation(state, 0))
+    assert isinstance(proposal, OfferProposal)
+    response = policy.respond(
+        build_player_observation(
+            state,
+            1,
+            pending_proposer_id=0,
+            pending_offer=proposal.offer,
+        ),
+        proposal.offer,
+    )
+    assert response == ResponseAction("ACCEPT")
+
+    proposer_kwargs = client.calls[0][1]
+    responder_kwargs = client.calls[1][1]
+    assert [
+        tool["function"]["name"] for tool in proposer_kwargs["tools"]
+    ] == ["PASS", "OFFER"]
+    assert all(tool["function"]["strict"] is True for tool in proposer_kwargs["tools"])
+    assert [
+        tool["function"]["name"] for tool in responder_kwargs["tools"]
+    ] == ["ACCEPT", "REJECT"]
+    assert proposer_kwargs["tool_choice"] == "auto"
+    assert proposer_kwargs["parallel_tool_calls"] is False
+    assert "response_format" not in proposer_kwargs
+    prompt_text = "\n".join(message["content"] for message in client.calls[0][0])
+    assert "standalone JSON action" in prompt_text
+    assert '"own_preferences"' in prompt_text
+    assert '"all_preferences"' not in prompt_text
+
+
+def test_native_missing_tool_retries_once_then_accepts_explicit_pass():
+    class RetryClient:
+        def __init__(self):
+            self.calls = []
+            self.outputs = [
+                VLLMChatCompletion("I should wait.", (), {}, {}),
+                VLLMChatCompletion(
+                    "",
+                    (VLLMToolCall(name="PASS", arguments={}),),
+                    {},
+                    {},
+                ),
+            ]
+
+        def complete(self, messages, **kwargs):
+            raise AssertionError("native policy must not use legacy complete()")
+
+        def complete_with_tools(self, messages, **kwargs):
+            self.calls.append((messages, kwargs))
+            return self.outputs.pop(0)
+
+    client = RetryClient()
+    policy = VLLMPlayerPolicy(client)
+    proposal = policy.propose(build_player_observation(GameState(make_spec(round_robin=(0,))), 0))
+    assert isinstance(proposal, PassProposal)
+    assert len(client.calls) == 2
+    assert client.calls[1][0][-1]["content"] == (
+        "Your previous response did not contain one valid game action. "
+        "Choose exactly one of the available actions."
+    )
+    metrics = policy.metrics()
+    assert metrics["raw_valid_action_rate"] == 0.0
+    assert metrics["after_retry_valid_action_rate"] == 1.0
+    assert metrics["retry_count"] == 1
+
+
+def test_native_illegal_offer_retries_and_final_missing_tool_is_invalid():
+    class InvalidThenMissingClient:
+        def __init__(self):
+            self.outputs = [
+                VLLMChatCompletion(
+                    "",
+                    (
+                        VLLMToolCall(
+                            name="OFFER",
+                            arguments={
+                                "partner": "P1",
+                                "self_commitments": [],
+                                "partner_commitments": [],
+                            },
+                        ),
+                    ),
+                    {},
+                    {},
+                ),
+                VLLMChatCompletion("still no action", (), {}, {}),
+            ]
+
+        def complete(self, messages, **kwargs):
+            raise AssertionError("native policy must not use legacy complete()")
+
+        def complete_with_tools(self, messages, **kwargs):
+            return self.outputs.pop(0)
+
+    policy = VLLMPlayerPolicy(InvalidThenMissingClient())
+    result = GameRunner(
+        make_spec(round_robin=(0,)),
+        [policy, RandomPolicy(seed=1), RandomPolicy(seed=2)],
+        strict=False,
+    ).run()
+    assert result.invalid_action_count == 1
+    assert result.transcript[0].action == "PASS"
+    assert result.transcript[0].invalid_action is True
+    assert policy.metrics()["final_invalid_count"] == 1
 
 
 def test_vllm_client_supports_fake_sync_and_async_engines():
@@ -306,7 +453,22 @@ def test_openai_compatible_vllm_client_posts_to_chat_completions(monkeypatch):
             return json.dumps(
                 {
                     "choices": [
-                        {"message": {"role": "assistant", "content": '{"action":"PASS"}'}}
+                        {
+                            "message": {
+                                "role": "assistant",
+                                "content": "I will wait.",
+                                "tool_calls": [
+                                    {
+                                        "id": "call_1",
+                                        "type": "function",
+                                        "function": {
+                                            "name": "PASS",
+                                            "arguments": "{}",
+                                        },
+                                    }
+                                ],
+                            }
+                        }
                     ]
                 }
             ).encode("utf-8")
@@ -327,19 +489,33 @@ def test_openai_compatible_vllm_client_posts_to_chat_completions(monkeypatch):
         temperature=0.2,
         max_tokens=64,
     )
-    result = client.complete(
+    result = client.complete_with_tools(
         [{"role": "user", "content": "hello"}],
-        response_format={"type": "json_object"},
+        tools=(
+            {
+                "type": "function",
+                "function": {
+                    "name": "PASS",
+                    "description": "wait",
+                    "parameters": {"type": "object"},
+                },
+            },
+        ),
     )
 
-    assert result == '{"action":"PASS"}'
+    assert result.content == "I will wait."
+    assert result.tool_calls[0].name == "PASS"
+    assert result.tool_calls[0].arguments == {}
+    assert result.tool_calls[0].tool_call_id == "call_1"
     assert captured["url"] == "http://localhost:8000/v1/chat/completions"
     assert captured["timeout"] == 17.0
     assert captured["headers"]["Authorization"] == "Bearer test-key"
     assert captured["body"]["model"] == "test-model"
-    assert captured["body"]["response_format"] == {"type": "json_object"}
+    assert captured["body"]["tools"][0]["function"]["name"] == "PASS"
+    assert captured["body"]["tool_choice"] == "auto"
+    assert captured["body"]["parallel_tool_calls"] is False
+    assert "response_format" not in captured["body"]
     assert captured["body"]["stream"] is False
-    assert captured["body"]["chat_template_kwargs"] == {"enable_thinking": False}
 
 
 def test_openai_compatible_vllm_client_accepts_content_parts(monkeypatch):
