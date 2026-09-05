@@ -390,10 +390,14 @@ class VLLMPlayerPolicy:
             "5. In an OFFER, self_commitments and partner_commitments contain named additions, "
             "not full vectors.\n"
             "6. The environment validates all remaining legality constraints.\n\n"
-            "--- OUTPUT PROTOCOL ---\n"
-            "You must finish by calling exactly one available tool. Any preceding text is not "
-            "executed by the environment. Call PASS() or OFFER(...). Do not return a standalone "
-            "JSON action."
+            "--- DECISION PROTOCOL ---\n"
+            "Before calling a tool, first write a brief reasoning statement explaining what you "
+            "plan to do and why.\n\n"
+            "Then immediately call exactly ONE available tool:\n"
+            "- PASS()\n"
+            "- OFFER(...)\n\n"
+            "Always provide reasoning before the tool call.\n"
+            "Do not write anything after the tool call."
         )
 
     @staticmethod
@@ -419,10 +423,14 @@ class VLLMPlayerPolicy:
             "--- RESPONSE SEMANTICS ---\n"
             "ACCEPT makes the proposed commitments binding. REJECT leaves the current "
             "commitments unchanged and advances the game.\n\n"
-            "--- OUTPUT PROTOCOL ---\n"
-            "You must finish by calling exactly one available response tool. Any preceding text "
-            "is not executed by the environment. Call ACCEPT() or REJECT(). Do not return a "
-            "standalone JSON action."
+            "--- DECISION PROTOCOL ---\n"
+            "Before calling a tool, first write a brief reasoning statement explaining what you "
+            "plan to do and why.\n\n"
+            "Then immediately call exactly ONE available tool:\n"
+            "- ACCEPT()\n"
+            "- REJECT()\n\n"
+            "Always provide reasoning before the tool call.\n"
+            "Do not write anything after the tool call."
         )
 
     def _propose_native(self, observation: PlayerObservation) -> PassProposal | OfferProposal:

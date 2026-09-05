@@ -458,9 +458,9 @@ prompt 不直接告诉 model 需要如何诊断 partner acceptance、如何比�
 continuation，或如何展开 lookahead。`legal_offers` 不发送给 model；模型根据当前
 commitments、goals、constraints 和 OFFER schema 构造 action。
 
-HTTP request 只发送 proposer 当前可用的 `PASS` 和 `OFFER` tools。model 可以
-先输出普通文本 reasoning，但必须在结束前调用且只调用一个 tool；普通文本不会被
-environment 执行：
+HTTP request 只发送 proposer 当前可用的 `PASS` 和 `OFFER` tools。model 必须
+先写一段简短 reasoning，说明计划做什么以及原因，然后立即调用且只调用一个
+tool。tool call 之后不能继续输出文本：
 
 ```text
 PASS()
@@ -484,8 +484,8 @@ REJECT()
 
 prompt 只说明 terminal utility 和 action semantics：`ACCEPT` 使 proposed
 commitments binding，`REJECT` 保持当前 commitments 不变并推进 game。它不直接
-给出“比较 accept/reject continuation”的 long-horizon 答案。model 必须调用其中
-一个；普通 text content 不能替代 tool call。
+给出“比较 accept/reject continuation”的 long-horizon 答案。model 必须先写一段
+简短 reasoning，然后立即调用其中一个；tool call 之后不能继续输出文本。
 
 vLLM 只负责生成 policy output；partner acceptance、commitment update 和
 reward 仍由 game engine 执行。tool parser 的格式合法性、game engine 的

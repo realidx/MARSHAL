@@ -368,7 +368,7 @@ def test_vllm_player_policy_uses_native_phase_tools():
     assert proposer_kwargs["parallel_tool_calls"] is False
     assert "response_format" not in proposer_kwargs
     prompt_text = "\n".join(message["content"] for message in client.calls[0][0])
-    assert "standalone JSON action" in prompt_text
+    assert "standalone JSON action" not in prompt_text
     assert '"own_preferences"' in prompt_text
     assert '"all_preferences"' not in prompt_text
     assert '"legal_offers"' not in prompt_text
@@ -376,6 +376,9 @@ def test_vllm_player_policy_uses_native_phase_tools():
     assert "expected terminal reward" not in prompt_text
     assert "at most two" not in prompt_text
     assert "do not enumerate" not in prompt_text
+    assert "Before calling a tool" in prompt_text
+    assert "Always provide reasoning before the tool call." in prompt_text
+    assert "Do not write anything after the tool call." in prompt_text
     assert "current_commitments" in prompt_text
     assert "terminal utility according to your private goal preferences" in prompt_text
 
