@@ -1,7 +1,7 @@
 """
 baselines.py
 
-LLM-based negotiation baseline using the OpenAI API.
+LLM-based negotiation baseline using an OpenAI-compatible text client.
 
 Provides a decision-making agent that uses an LLM (via OpenAI's chat
 completions API) to select a negotiation partner and propose a joint action
@@ -15,10 +15,7 @@ indices).
 """
 
 import json
-import os
-
 import numpy as np
-from openai import OpenAI
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -26,10 +23,17 @@ from tenacity import (
     wait_random_exponential,
 )
 
-OPENAI_API_KEY = "fill in your openai api key here"
-os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+client = None
 
-client = OpenAI()
+
+def _get_openai_client():
+    """Create the OpenAI client only when the OpenAI backend is requested."""
+    global client
+    if client is None:
+        from openai import OpenAI
+
+        client = OpenAI()
+    return client
 
 
 @retry(
@@ -55,12 +59,19 @@ def _call_openai_with_retry(model, messages, response_format):
     Returns:
         openai.types.chat.ChatCompletion: The raw API response object.
     """
-    return client.chat.completions.create(
+    return _get_openai_client().chat.completions.create(
         model=model, messages=messages, response_format=response_format
     )
 
 
-def get_llm_decision(state):
+def get_llm_decision(
+    state,
+    *,
+    llm_client=None,
+    model="gpt-5-mini",
+    max_changes=3,
+    strict=None,
+):
     """
     Use an LLM to select a negotiation partner and propose a joint action.
 
@@ -90,8 +101,13 @@ def get_llm_decision(state):
             - joint_action (tuple[int]): Concatenated binary action vector
               for the proposer followed by the partner.
     """
+    if strict is None:
+        strict = llm_client is not None
+
     proposer = state.proposer()
-    max_changes = 3  # Hardcoded budget matching the prompt
+    legal_partners = list(state.legal_negotiation_partners())
+    if not legal_partners:
+        raise ValueError("The current state has no legal negotiation partners.")
 
     # --- 1. System Prompt ---
     system_prompt = (
@@ -108,12 +124,14 @@ def get_llm_decision(state):
         "2. 'P' (Agreement Matrix): List of Lists [Players][Actions]. P[p][a] = 1 if Player p committed to Action a (binding).\n"
         "3. 'sat_masks' (Satisfaction Masks): Dictionary {goal_index: Matrix}. If sat_masks[g][p][a] == 1, Action 'a' by Player 'p' is required for Goal 'g'.\n"
         "4. 'action_counts': Map of {Player ID: Total Available Actions}.\n\n"
+        "5. 'binary_goals': Goal IDs whose satisfaction is all-or-nothing.\n\n"
         "--- HARD CONSTRAINTS ---\n"
         "1. Binding Actions: Bits in P can ONLY flip from 0 -> 1. Existing 1s must remain 1.\n"
         "2. Budget Limit: You can flip at most "
         + str(max_changes)
         + " NEW bits per player this turn.\n"
-        "3. Vector Lengths: The output vectors must match the exact length of available actions for the specific players involved.\n\n"
+        "3. Vector Lengths: The output vectors must match the exact length of available actions for the specific players involved.\n"
+        "4. Partner Constraint: selected_partner_id must not equal proposer_id.\n\n"
         "--- OUTPUT FORMAT ---\n"
         "Return ONLY a JSON object with this exact structure:\n"
         '{"selected_partner_id": int, "proposer_action_vector": [int list], "partner_action_vector": [int list]}'
@@ -130,80 +148,58 @@ def get_llm_decision(state):
 
     # --- 3. Call the API ---
     try:
-        response = _call_openai_with_retry(
-            model="gpt-5-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                # The cache prefix includes System + User 1.
-                # Since both are static, you pay ~10% cost for this massive block on subsequent calls.
-                {
-                    "role": "user",
-                    "content": "--- STATIC GAME CONTEXT ---\n" + static_context_str,
-                },
-                {
-                    "role": "user",
-                    "content": "--- CURRENT TURN STATE ---\n" + dynamic_state_str,
-                },
-            ],
-            response_format={"type": "json_object"},
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {
+                "role": "user",
+                "content": "--- STATIC GAME CONTEXT ---\n" + static_context_str,
+            },
+            {
+                "role": "user",
+                "content": "--- CURRENT TURN STATE ---\n" + dynamic_state_str,
+            },
+        ]
+
+        if llm_client is None:
+            response = _call_openai_with_retry(
+                model=model,
+                messages=messages,
+                response_format={"type": "json_object"},
+            )
+            content = response.choices[0].message.content
+        else:
+            content = llm_client.complete(
+                messages=messages,
+                response_format={"type": "json_object"},
+                model=model,
+            )
+
+        decision = _parse_json_object(content)
+        partner_idx = _coerce_partner(state, decision.get("selected_partner_id"))
+        p_action = _coerce_action(
+            state,
+            proposer,
+            decision.get("proposer_action_vector"),
+            max_changes=max_changes,
+        )
+        q_action = _coerce_action(
+            state,
+            partner_idx,
+            decision.get("partner_action_vector"),
+            max_changes=max_changes,
         )
 
-        content = response.choices[0].message.content
-        decision = json.loads(content)
-
-        partner_idx = int(decision["selected_partner_id"])
-
-        if partner_idx not in np.arange(state.n_players):
-            # Change to random partner if invalid
-            partner_idx = np.random.choice([i for i in range(state.n_players)])
-
-        p_action = decision["proposer_action_vector"]
-        q_action = decision["partner_action_vector"]
-
-        if (type(p_action) not in [list, np.ndarray]) and (
-            type(q_action) not in [list, np.ndarray]
-        ):
-            p_action = [0] * state.country_idx2num_actions[proposer]
-            q_action = [0] * state.country_idx2num_actions[partner_idx]
-
-        # --- Validation: Shapes ---
-        m_p = state.country_idx2num_actions[proposer]
-        m_q = state.country_idx2num_actions[partner_idx]
-
-        if len(p_action) != m_p:
-            # Set p_action and q_action to 0 vectors if invalid
-            p_action = [0] * state.country_idx2num_actions[proposer]
-
-        if len(q_action) != m_q:
-            # Set p_action and q_action to 0 vectors if invalid
-            q_action = [0] * state.country_idx2num_actions[partner_idx]
-
-        # --- Validation: Max Changes (Budget) ---
-        curr_p = state.P[proposer, :m_p]
-        curr_q = state.P[partner_idx, :m_q]
-
-        # Count 0->1 flips (proposed=1 AND current=0)
-        p_flips = np.sum((np.array(p_action) == 1) & (curr_p == 0))
-        q_flips = np.sum((np.array(q_action) == 1) & (curr_q == 0))
-
-        if p_flips > max_changes:
-            # Set joint action to 0 vector if invalid
-            p_action = [0] * state.country_idx2num_actions[proposer]
-
-        if q_flips > max_changes:
-            # Set joint action to 0 vector if invalid
-            q_action = [0] * state.country_idx2num_actions[partner_idx]
-
-        # Create joint action tuple
         joint_action = tuple(p_action + q_action)
 
         return partner_idx, joint_action
 
     except Exception:
+        if strict:
+            raise
         # Set joint action to 0 vector and random partner on failure
-        partner_idx = np.random.choice([i for i in range(state.n_players)])
-        p_action = [0] * state.country_idx2num_actions[proposer]
-        q_action = [0] * state.country_idx2num_actions[partner_idx]
+        partner_idx = int(np.random.choice(legal_partners))
+        p_action = _current_action(state, proposer)
+        q_action = _current_action(state, partner_idx)
 
         joint_action = tuple(p_action + q_action)
         return partner_idx, joint_action
@@ -238,14 +234,86 @@ def _build_static_context(state):
             "num_players": state.n_players,
             "round_robin_order": state.round_robin,
             "action_counts": state.country_idx2num_actions,
+            "legal_partners": state.legal_negotiation_partners(),
         },
         "matrices": {
             "G": state.G,
             # Using sort_keys=True in dumps ensures the string is identical every time (crucial for cache hits)
             "sat_masks": {str(k): v for k, v in state.sat_masks.items()},
+            "binary_goals": sorted(state.binary_goals),
+            "allowed_actions": getattr(state, "allowed_actions", None),
+            "forbidden_actions": state.forbidden_actions,
         },
     }
     return json.dumps(data, default=numpy_serializer, sort_keys=True)
+
+
+def _parse_json_object(content):
+    """Parse strict JSON or a JSON object wrapped in a markdown fence."""
+    if not isinstance(content, str):
+        raise TypeError("LLM response content must be a string.")
+    cleaned = content.strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.strip("`").strip()
+        if cleaned.startswith("json"):
+            cleaned = cleaned[4:].lstrip()
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        start, end = cleaned.find("{"), cleaned.rfind("}")
+        if start < 0 or end <= start:
+            raise
+        return json.loads(cleaned[start : end + 1])
+
+
+def _coerce_partner(state, raw_partner):
+    """Return a legal partner, falling back to a legal random partner."""
+    legal_partners = list(state.legal_negotiation_partners())
+    try:
+        partner = int(raw_partner)
+    except (TypeError, ValueError):
+        partner = None
+    if partner in legal_partners:
+        return partner
+    return int(np.random.choice(legal_partners))
+
+
+def _current_action(state, player_idx):
+    """Return the current binding action vector for one player."""
+    n_actions = state.country_idx2num_actions[player_idx]
+    return state.P[player_idx, :n_actions].astype(int).tolist()
+
+
+def _coerce_action(state, player_idx, raw_action, *, max_changes):
+    """Turn an LLM action into a binding, budget-feasible action vector."""
+    n_actions = state.country_idx2num_actions[player_idx]
+    current = state.P[player_idx, :n_actions].astype(int)
+
+    if not isinstance(raw_action, (list, tuple, np.ndarray)):
+        return current.tolist()
+
+    try:
+        action = np.asarray(raw_action, dtype=float)
+    except (TypeError, ValueError):
+        return current.tolist()
+
+    if action.shape != (n_actions,) or not np.all(np.isfinite(action)):
+        return current.tolist()
+    if not np.all(np.isin(action, [0.0, 1.0])):
+        return current.tolist()
+
+    action = np.maximum(current, action.astype(np.uint8))
+    allowed = getattr(state, "allowed_actions", None)
+    forbidden = getattr(state, "forbidden_actions", None)
+    new_bits = current == 0
+    if allowed is not None:
+        action[new_bits & (np.asarray(allowed[player_idx, :n_actions]) != 1)] = 0
+    if forbidden is not None:
+        action[new_bits & (np.asarray(forbidden[player_idx, :n_actions]) == 1)] = 0
+
+    if int(np.count_nonzero((action == 1) & new_bits)) > max_changes:
+        return current.tolist()
+    return action.astype(int).tolist()
 
 
 def _build_dynamic_state(state, proposer, max_changes):

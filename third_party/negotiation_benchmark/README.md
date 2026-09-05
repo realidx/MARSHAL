@@ -1,206 +1,125 @@
-# Negotiation Benchmark
+# Negotiation benchmark (vendored)
 
-Code for the paper:
+This directory contains the negotiation benchmark used by the paper and the
+mechanism-related additions from its anonymous artifact.
 
-> **TODO: Add paper title, authors, venue, and link here**
-> `TODO: arxiv / proceedings link`
+- Paper: <https://arxiv.org/abs/2603.14066>
+- Public source: <https://github.com/dtak/negotiation_benchmark_public>
+- Anonymous artifact: <https://anonymous.4open.science/r/negotiation_MARL-46B8/>
 
----
+## Contents
 
-## Overview
+`src/core/` contains the binding-commitment simulator, payoff calculation,
+goal satisfaction, and exact/heuristic utilities. `src/methods/` contains
+partner/offer selection methods, including the optional GNN estimator.
 
-This repository implements a multi-player bilateral negotiation benchmark for evaluating AI negotiation agents. Players take turns proposing joint actions to partners in a round-robin schedule. Each proposal is either accepted (if it weakly improves the partner's payoff) or rejected. The benchmark supports exact solvers, heuristic methods, MCTS, dynamic programming lookahead, and LLM-based agents, and includes a procedural game generator for sweeping across diverse negotiation scenarios.
+`src/rl/` contains the staged RL interface added from the anonymous artifact:
 
----
+- stage 0: partner selection;
+- stage 1: offer selection with an explicit no-deal action;
+- padded observations and legality masks;
+- PPO and reward-free exploration (RFE) training/evaluation helpers;
+- held-out game generation and environment transition verification.
 
-## Repository Structure
-```
-.
-├── config/
-│   └── game_configs.py          # Game generation and satisfaction mask utilities
-├── core/
-│   ├── equilibrium.py           # Nash equilibrium checking and regret computation
-│   ├── game_logic.py            # Payoffs, goal satisfaction, offer generation
-│   ├── game_state.py            # NegotiationState class (turn order, policy matrix)
-│   └── one_shot_optim.py        # Baseline and MIP-based one-shot optimisation
-├── methods/
-│   ├── baselines.py             # LLM-based negotiation agent (OpenAI API)
-│   ├── mcts.py                  # MCTS and DP-based partner selection
-│   └── negotiation.py           # Offer search, value estimators, exact solvers
-├── experiments/
-│   └── runner.py                # Single-game runner and multi-method experiment loop
-├── main.py                      # Local parallel sweep runner 
-└── README.md
-```
-
----
+`games/` contains the document-grounded game JSON files and the fixed
+balanced/adversarial 5-player bundle from the artifact. Model checkpoints and
+notebooks are intentionally not vendored here because this project currently
+uses the benchmark mechanism rather than reproducing the paper's experiments.
 
 ## Installation
+
 ```bash
-pip install numpy cvxpy scipy joblib tqdm pandas openai tenacity
+pip install -r requirements.txt
 ```
 
-> MOSEK is required for the MIP-based methods (`optimize_P_via_masks_with_NE` and `best_offer_linear_mip`). A free academic licence is available at [mosek.com](https://www.mosek.com/products/academic-licenses/).
+The GNN estimator additionally requires `torch-geometric`; it is optional for
+the simulator and staged RL environment.
 
-For the LLM baseline, set your OpenAI API key:
+## BENAC-P v0 game engine
+
+`src/benac_p/` is the policy-agnostic game implementation described in
+`new/plan.md`. It keeps the original benchmark simulator intact while using
+the v0 semantics needed by this project: private per-player preferences,
+public transcript, binding commitments, atomic `PASS`/`OFFER`, and explicit
+`ACCEPT`/`REJECT` responses.
+
+Run a deterministic random-policy self-play smoke test from this directory:
+
 ```bash
-export OPENAI_API_KEY="your-key-here"
+PYTHONPATH=src python -m benac_p.cli --seed 0 --self-play random
+PYTHONPATH=src python -m benac_p.cli --seed 0 --self-play oracle
+PYTHONPATH=src pytest -q tests/test_benac_p.py
 ```
 
----
+The oracle command uses exact perfect-information backward induction and is
+intended for mechanism checks and controlled diagnostics. Its state budget is
+configurable with `--max-solver-states`.
 
-## Core Concepts
+Generate the initial 100-game random self-play bundle and aggregate the
+mechanism diagnostics:
 
-### Game representation
-
-Each game is defined by:
-
-- **G** — a `(N_GOALS, N_PLAYERS)` matrix where `G[g, p]` is player `p`'s valuation of goal `g`.
-- **Policy matrix P** — a binary `(N_PLAYERS, N_ACTIONS)` matrix where `P[p, a] = 1` means player `p` has committed to action `a`. Actions are **binding**: bits can only flip from 0 → 1, never 1 → 0.
-- **Satisfaction masks** — one binary matrix per goal indicating which `(player, action)` pairs are required to satisfy it.
-- **Goal types** — goals are either *linear* (satisfaction scales with the fraction of required actions taken) or *binary* (satisfied only when all required actions are taken).
-
-### Turn structure
-
-Players negotiate in a shuffled round-robin order. On each turn, the current **proposer** selects a partner and proposes a joint action. The partner accepts if the offer weakly improves their estimated terminal payoff; otherwise the turn is rejected. The game ends after all scheduled turns.
-
----
-
-## Negotiation Methods
-
-| Method | Description |
-|---|---|
-| `reward` | Greedy offer maximising proposer payoff; random partner selection |
-| `upper` | Greedy offer using an optimistic upper-bound value estimator |
-| `lower_tighter` | Greedy offer using a tighter pessimistic lower-bound estimator |
-| `LLM_full` | LLM agent (GPT-4o-mini) selecting partner and offer from raw game state |
-
-Methods are passed as configuration dicts to the runner. The `how_fallback` key selects the value estimator; MCTS is used for partner selection when `n_sims > 0`.
-
----
-
-## Reproducing Figure 1 and Table 1
-
-> **TODO: Add precise description of what Figure 1 and Table 1 show once the paper link is confirmed.**
-
-The results are generated by running the full parameter sweep in `run_cloud.py` (or `run_local.py` for local execution). The sweep covers:
-
-| Parameter | Values |
-|---|---|
-| Structure type | `adversarial`, `cooperative` |
-| Binary fraction | `0.0`, `0.15`, `0.30`, `0.50` |
-| Latent factors (k) | `5`, `15` |
-| Zipf complexity | `1.6`, `3.0` |
-| Payoff shift | `negative`, `positive`, `balanced` |
-| Game size | `small` (exact solver), `large` (baseline) |
-| Seeds | `0–49` |
-
-This produces **9,600 tasks** in total.
-
-### Running locally
 ```bash
-python run_local.py
+PYTHONPATH=src python scripts/generate_benac_p_samples.py \
+  --n-games 100 --output artifacts/benac_p_random_samples.json
 ```
 
-Results are saved to `./results/<size>_<shift>_games/<uuid>.pkl.gz`. Uses all available CPU cores via `joblib`.
+The same runner accepts arbitrary `PlayerPolicy` implementations. For vLLM
+self-play, initialize the repository's ROLL `LLM` or `AsyncLLM` through the
+CLI and set `--self-play vllm`; `--vllm-model` and `--device-mapping` control
+the model and GPUs. Actual vLLM execution requires the optional Ray/vLLM
+runtime and a compatible GPU environment.
 
+## Using the existing vLLM interface
 
-Results are saved to the `negotiation-results-vol` Modal Volume. To download:
-```bash
-modal volume get negotiation-results-vol /root/cloud_data/<folder> ./local_results
-```
+After initializing the existing ROLL `LLM`/`AsyncLLM` (or an initialized
+`VllmStrategy`), wrap it with the benchmark adapter:
 
-### Loading results
-
-Each `.pkl.gz` file contains a dict with a single `"results"` key:
 ```python
-import gzip, pickle
+from methods.vllm_client import VLLMNegotiationClient
+from experiments.runner import run_single_game
 
-with gzip.open("path/to/file.pkl.gz", "rb") as f:
-    data = pickle.load(f)
-
-# data["results"] is a dict keyed by (method_name, game_name)
-# Each value contains "payoff_vector", "sum_payoff", "is_equilibrium", etc.
-```
-
----
-
-## Generating Custom Games
-```python
-from config.game_configs import ScenarioProfile, generate_game_config, create_sat_masks
-
-profile = ScenarioProfile(
-    structure_type="adversarial",   # or "cooperative"
-    binary_fraction=0.2,            # fraction of goals that are binary
-    complexity_zipf_a=2.0,          # Zipf shape for goal complexity (must be > 1)
+llm_client = VLLMNegotiationClient(
+    vllm_model,
+    tokenizer=tokenizer,             # optional for sync LLM
+    sampling_params=sampling_params,
+    async_mode=False,                # True for AsyncLLM
 )
 
-game_config = generate_game_config(
-    n_players=5,
-    country_idx2num_actions={i: 4 for i in range(5)},
-    n_goals=10,
-    k_factors=3,
-    seed=42,
-    profile=profile,
-    shift="negative",   # "negative", "positive", or None
-    inject_pp=False,    # set True to inject a poison-pill scenario
-)
-
-sat_masks = create_sat_masks(game_config)
-```
-
----
-
-## Running a Single Experiment
-```python
-from experiments.runner import run_experiment
-
-method_configs = [
-    {
-        "name": "reward",
-        "how_fallback": "reward",
+result, _ = run_single_game(
+    game_config=game_config,
+    sat_masks=sat_masks,
+    seed=0,
+    method_config={
+        "name": "vllm_llm_full",
+        "how_fallback": "LLM_full",
+        "llm_client": llm_client,
         "n_sims": 0,
         "c_ucb": 1.0,
         "use_prior": False,
         "max_changes": 2,
-        "dp_k": 0,
-        "k": 1,
     },
-    {
-        "name": "upper",
-        "how_fallback": "upper",
-        "n_sims": 0,
-        "c_ucb": 1.0,
-        "use_prior": False,
-        "max_changes": 2,
-        "dp_k": 0,
-        "k": 1,
-    },
-]
-
-results = run_experiment(
-    game_names=["my_game"],
-    method_configs=method_configs,
-    n_trials=10,
-    models={},
-    allowed_actions_dict={},
-    forbidden_actions_dict={},
-    given_configs={"my_game": game_config},   # pass your own config here
 )
-
-from experiments.runner import print_comparison_table
-print_comparison_table(results)
 ```
 
----
+The adapter converts the benchmark's OpenAI-style messages into a vLLM
+prompt and parses the generated JSON. The benchmark remains responsible for
+legal-partner, binding-action, forbidden-action, and action-budget validation.
 
-## Citation
-```bibtex
-TODO: Add BibTeX entry here once the paper link is confirmed.
+## Basic verification
+
+From this directory:
+
+```bash
+PYTHONPATH=src python src/rl/verify_env.py
 ```
 
----
+The verification script checks that the staged environment's partner choice,
+no-deal transition, and accepted-offer transition agree with direct simulator
+transitions.
 
-## License
+## Scope note
 
-TODO: Add licence information.
+The simulator keeps the paper's terminal payoff definition. In particular,
+the anonymous artifact's additional per-committed-bit action cost is not
+enabled here because its offer-delta calculations do not consistently account
+for that cost.

@@ -35,6 +35,9 @@ class NegotiationState:
         seed,
         binary_goals=None,
         forbidden_actions=None,
+        allowed_actions=None,
+        model=None,
+        round_robin=None,
     ):
         """
         Initialise a negotiation game state.
@@ -64,19 +67,69 @@ class NegotiationState:
 
         self.binary_goals = set(binary_goals) if binary_goals else set()
         self.forbidden_actions = forbidden_actions
+        self.allowed_actions = allowed_actions
+        self.model = model
 
         # Initialize policy matrix (all zeros)
         self.P = np.zeros((n_players, n_actions), dtype=np.uint8)
         self.seed = seed
 
+        self._validate_dimensions()
+
         # Create round robin order
-        self.round_robin = [i for i in range(n_players)]
-        random.seed(seed)
-        random.shuffle(self.round_robin)
+        if round_robin is not None:
+            self.round_robin = list(round_robin)
+        else:
+            self.round_robin = [i for i in range(n_players)]
+            random.seed(seed)
+            random.shuffle(self.round_robin)
         self.round_robin = self.round_robin * (n_turns)
+        if any(player < 0 or player >= self.n_players for player in self.round_robin):
+            raise ValueError("round_robin contains an out-of-range player id.")
 
         # Game state tracking
         self.idx = 0
+
+    def _validate_dimensions(self):
+        """Validate that the supplied game tensors agree on core dimensions."""
+        expected_shape = (self.n_players, self.n_actions)
+
+        if self.G.ndim != 2 or self.G.shape[1] != self.n_players:
+            actual_players = self.G.shape[1] if self.G.ndim == 2 else None
+            raise ValueError(
+                "Goal valuation matrix G has incompatible shape: "
+                f"expected (*, {self.n_players}), got {self.G.shape}; "
+                f"player dimension was {actual_players}."
+            )
+
+        for player_id, num_actions in self.country_idx2num_actions.items():
+            if player_id < 0 or player_id >= self.n_players:
+                raise ValueError(
+                    "country_idx2num_actions contains an out-of-range player id: "
+                    f"{player_id} for n_players={self.n_players}."
+                )
+            if num_actions < 0 or num_actions > self.n_actions:
+                raise ValueError(
+                    "country_idx2num_actions contains an invalid action count: "
+                    f"player {player_id} has {num_actions}, n_actions={self.n_actions}."
+                )
+
+        for goal_id, mask in self.sat_masks.items():
+            if mask.shape != expected_shape:
+                raise ValueError(
+                    "Satisfaction mask shape does not match the negotiation state. "
+                    f"Goal {goal_id} has mask shape {mask.shape}, expected {expected_shape}. "
+                    "This usually means `config` and `sat_masks` came from different game generations."
+                )
+
+        for name, action_mask in (
+            ("allowed_actions", self.allowed_actions),
+            ("forbidden_actions", self.forbidden_actions),
+        ):
+            if action_mask is not None and action_mask.shape != expected_shape:
+                raise ValueError(
+                    f"{name} has shape {action_mask.shape}, expected {expected_shape}."
+                )
 
     def clone(self):
         """Create a deep copy of this state."""
@@ -102,7 +155,7 @@ class NegotiationState:
     def legal_negotiation_partners(self):
         """Get list of valid negotiation partners ."""
 
-        return [partner for partner in range(self.n_players)]
+        return [partner for partner in range(self.n_players) if partner != self.proposer()]
 
     def play_deal(self, offer, partner):
         """
@@ -129,3 +182,99 @@ class NegotiationState:
             np.ndarray: Payoff vector (n_players,)
         """
         return get_payoff_per_country(self.P, self.G, self.sat_masks, self.binary_goals)
+
+    def get_turn_proximity(self):
+        """Return how soon each player acts again in the remaining schedule."""
+        remaining_schedule = self.round_robin[self.idx :]
+        proximity = []
+
+        for player_id in range(self.n_players):
+            if player_id in remaining_schedule:
+                wait = remaining_schedule.index(player_id)
+                proximity.append(1.0 / (1.0 + wait))
+            else:
+                proximity.append(0.0)
+
+        return np.asarray(proximity, dtype=float).reshape(self.n_players, 1)
+
+    def get_gnn_features(self):
+        """Build stage-aware per-player features for value models.
+
+        The feature layout is ``9 * n_goals + 2`` columns: preferences,
+        progress, influence, binary-goal flags, satisfaction, solo-finish
+        indicators, three preference interaction blocks, turn proximity, and
+        normalized remaining rounds.
+        """
+        n_players = self.n_players
+        n_goals = len(self.sat_masks)
+
+        preferences = self.G.astype(float)
+        max_abs = float(np.abs(preferences).max()) if preferences.size else 0.0
+        if max_abs > 0:
+            preferences = preferences / max_abs
+        preferences = preferences.T
+
+        progress_vec = np.zeros(n_goals, dtype=float)
+        satisfaction_vec = np.zeros(n_goals, dtype=float)
+        binary_vec = np.zeros(n_goals, dtype=float)
+        influence = np.zeros((n_players, n_goals), dtype=float)
+        can_finish_alone = np.zeros((n_players, n_goals), dtype=float)
+
+        for goal_id, sat_mask in self.sat_masks.items():
+            required = np.argwhere(sat_mask == 1)
+            goal_size = len(required)
+            if goal_size == 0:
+                continue
+
+            met = sum(int(self.P[player_id, action_id]) for player_id, action_id in required)
+            progress = met / goal_size
+            progress_vec[goal_id] = progress
+            is_binary = goal_id in self.binary_goals
+            binary_vec[goal_id] = float(is_binary)
+            satisfaction_vec[goal_id] = 1.0 if is_binary and met == goal_size else (
+                0.0 if is_binary else progress
+            )
+
+            unmet_players = []
+            for player_id, action_id in required:
+                if self.P[player_id, action_id] == 0:
+                    influence[player_id, goal_id] += 1.0 / goal_size
+                    unmet_players.append(int(player_id))
+
+            if unmet_players and len(set(unmet_players)) == 1:
+                can_finish_alone[unmet_players[0], goal_id] = 1.0
+
+        progress_levels = np.tile(progress_vec, (n_players, 1))
+        satisfaction_levels = np.tile(satisfaction_vec, (n_players, 1))
+        binary_levels = np.tile(binary_vec, (n_players, 1))
+
+        rounds_left = len(self.round_robin[self.idx :])
+        total_rounds = len(self.round_robin)
+        remaining_rounds = np.full(
+            (n_players, 1),
+            rounds_left / total_rounds if total_rounds else 0.0,
+            dtype=float,
+        )
+
+        return np.hstack(
+            (
+                preferences,
+                progress_levels,
+                influence,
+                binary_levels,
+                satisfaction_levels,
+                can_finish_alone,
+                preferences * progress_levels,
+                preferences * satisfaction_levels,
+                preferences * binary_levels * (1.0 - progress_levels),
+                self.get_turn_proximity(),
+                remaining_rounds,
+            )
+        )
+
+    def estimate_gnn_payoff_vector(self, model=None):
+        """Estimate player payoffs with an optional GNN value model."""
+        from methods.gnn import estimate_state_payoffs_with_gnn
+
+        active_model = model if model is not None else self.model
+        return estimate_state_payoffs_with_gnn(self, active_model)

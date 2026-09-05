@@ -1,0 +1,226 @@
+"""Adapters for using the repository's vLLM engines with the benchmark.
+
+The benchmark only needs a small text-generation interface.  This module
+keeps the benchmark independent of the vLLM import at module-load time while
+supporting both the synchronous and asynchronous engines exposed by
+``roll.third_party.vllm``.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import inspect
+from typing import Any, Iterable, Mapping, Sequence
+from uuid import uuid4
+
+
+class VLLMNegotiationClient:
+    """Text-generation adapter for a vLLM ``LLM`` or ``AsyncLLM`` instance.
+
+    Args:
+        model: A synchronous vLLM model, an asynchronous vLLM model, or an
+            initialized ROLL ``VllmStrategy``.  For a strategy, its underlying
+            ``model`` and ``tokenizer`` are used.
+        tokenizer: Optional tokenizer.  Supplying it is recommended for an
+            ``AsyncLLM`` instance because that engine exposes an async
+            tokenizer accessor.
+        sampling_params: A vLLM ``SamplingParams`` object.  When omitted, a
+            deterministic JSON-friendly configuration is created.
+        async_mode: Set to ``True`` for ROLL's ``AsyncLLM``.  If omitted, the
+            adapter uses the synchronous ``generate(prompts=[...])`` API.
+        max_tokens: Used only when ``sampling_params`` is omitted.
+    """
+
+    def __init__(
+        self,
+        model: Any,
+        *,
+        tokenizer: Any | None = None,
+        sampling_params: Any | None = None,
+        async_mode: bool = False,
+        max_tokens: int = 512,
+    ) -> None:
+        strategy = getattr(model, "model", None)
+        if strategy is not None and not hasattr(model, "llm_engine"):
+            # This supports an initialized ROLL VllmStrategy without importing
+            # the strategy class (which would pull in Ray and torch).
+            if tokenizer is None:
+                tokenizer = getattr(model, "tokenizer", None)
+            model = strategy
+
+        if model is None or not hasattr(model, "generate"):
+            raise TypeError(
+                "model must be an initialized vLLM LLM/AsyncLLM instance "
+                "or an initialized ROLL VllmStrategy."
+            )
+
+        self.model = model
+        self.async_mode = async_mode
+        self.tokenizer = tokenizer or self._get_tokenizer(model)
+        self.sampling_params = sampling_params or self._default_sampling_params(
+            max_tokens=max_tokens
+        )
+
+    @staticmethod
+    def _get_tokenizer(model: Any) -> Any | None:
+        """Resolve a tokenizer from a sync or async vLLM engine."""
+        get_tokenizer = getattr(model, "get_tokenizer", None)
+        if get_tokenizer is None:
+            return None
+
+        tokenizer = get_tokenizer()
+        if inspect.isawaitable(tokenizer):
+            return _run_coroutine(tokenizer)
+        return tokenizer
+
+    @staticmethod
+    def _default_sampling_params(*, max_tokens: int) -> Any:
+        """Create deterministic sampling parameters without a hard import."""
+        try:
+            from vllm import SamplingParams
+        except ImportError as exc:  # pragma: no cover - exercised with vLLM installed
+            raise ImportError(
+                "vLLM is required when sampling_params is not supplied. "
+                "Pass an existing vLLM SamplingParams object or install vLLM."
+            ) from exc
+
+        return SamplingParams(
+            temperature=0.0,
+            top_p=1.0,
+            top_k=-1,
+            max_tokens=max_tokens,
+            n=1,
+        )
+
+    def complete(
+        self,
+        messages: Sequence[Mapping[str, str]],
+        *,
+        response_format: Mapping[str, Any] | None = None,
+        model: str | None = None,
+    ) -> str:
+        """Generate one assistant response from OpenAI-style messages.
+
+        ``response_format`` and ``model`` are accepted for compatibility with
+        the benchmark's OpenAI client protocol.  vLLM receives the JSON
+        requirement through the prompt itself.
+        """
+        del response_format, model
+        prompt = self.render_messages(messages)
+
+        if self.async_mode:
+            return _run_coroutine(self._complete_async(prompt))
+
+        outputs = self.model.generate(
+            prompts=[prompt],
+            sampling_params=self.sampling_params,
+            use_tqdm=False,
+        )
+        return self._extract_text(outputs)
+
+    def render_messages(self, messages: Sequence[Mapping[str, str]]) -> str:
+        """Render chat messages using the model tokenizer when available."""
+        normalized = [
+            {"role": str(message["role"]), "content": str(message["content"])}
+            for message in messages
+        ]
+
+        apply_chat_template = getattr(self.tokenizer, "apply_chat_template", None)
+        if apply_chat_template is not None:
+            return apply_chat_template(
+                normalized,
+                tokenize=False,
+                add_generation_prompt=True,
+            )
+
+        chunks = []
+        for message in normalized:
+            chunks.append(
+                f"<|im_start|>{message['role']}\n"
+                f"{message['content']}<|im_end|>\n"
+            )
+        chunks.append("<|im_start|>assistant\n")
+        return "".join(chunks)
+
+    async def _complete_async(self, prompt: str) -> str:
+        """Drain ROLL's AsyncLLM request stream and return final text."""
+        try:
+            from vllm.utils import random_uuid
+
+            request_id = random_uuid()
+        except ImportError:  # pragma: no cover - vLLM is present in production
+            request_id = str(uuid4())
+
+        result = self.model.generate(
+            prompt=prompt,
+            sampling_params=self.sampling_params,
+            request_id=request_id,
+        )
+
+        if inspect.isawaitable(result) and not hasattr(result, "__aiter__"):
+            result = await result
+
+        latest = None
+        async for request_output in result:
+            latest = request_output
+
+        if latest is None:
+            raise RuntimeError("Async vLLM returned no request output.")
+        return self._extract_text(latest)
+
+    @staticmethod
+    def _extract_text(outputs: Any) -> str:
+        """Extract the first completion text from vLLM output objects."""
+        if isinstance(outputs, (list, tuple)):
+            if not outputs:
+                raise RuntimeError("vLLM returned an empty output list.")
+            outputs = outputs[0]
+
+        if isinstance(outputs, str):
+            return outputs
+
+        completions = getattr(outputs, "outputs", None)
+        if completions is None and isinstance(outputs, Mapping):
+            completions = outputs.get("outputs")
+        if not completions:
+            raise RuntimeError("vLLM output did not contain any completions.")
+
+        completion = completions[0]
+        if isinstance(completion, str):
+            return completion
+        if isinstance(completion, Mapping):
+            text = completion.get("text")
+        else:
+            text = getattr(completion, "text", None)
+        if text is None:
+            raise RuntimeError("vLLM completion did not contain text.")
+        return str(text)
+
+
+def _run_coroutine(coroutine):
+    """Run a coroutine from the benchmark's synchronous runner."""
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coroutine)
+
+    # The benchmark runner is synchronous, but this fallback keeps the adapter
+    # usable when called from a host application that already owns an event
+    # loop.  A short-lived helper thread avoids nested asyncio.run calls.
+    import threading
+
+    result = []
+    error = []
+
+    def run():
+        try:
+            result.append(asyncio.run(coroutine))
+        except BaseException as exc:  # pragma: no cover - host-loop fallback
+            error.append(exc)
+
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
+    thread.join()
+    if error:
+        raise error[0]
+    return result[0]

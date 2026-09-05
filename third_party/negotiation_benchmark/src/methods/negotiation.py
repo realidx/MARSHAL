@@ -46,7 +46,7 @@ def state_key(state):
     return (state.idx, state.P.tobytes())
 
 
-def create_solver(root_state):
+def create_solver(root_state, max_changes: int = MAX_CHANGES):
     """
     Create a memoised full-horizon exact solver for a given game instance.
 
@@ -110,6 +110,8 @@ def create_solver(root_state):
             country_idx2num_actions=country_idx2num_actions,
             seed=seed,
             binary_goals=binary_goals,
+            forbidden_actions=forbidden_actions,
+            round_robin=root_state.round_robin[:n_players],
         )
         # state.round_robin = [0, 1, 2]
 
@@ -146,7 +148,7 @@ def create_solver(root_state):
                 p1=p,
                 p2=q,
                 country_idx2num_actions=country_idx2num_actions,
-                max_changes=MAX_CHANGES,
+                max_changes=max_changes,
                 allowed_actions=None,
                 forbidden_actions=forbidden_actions,
             )
@@ -194,7 +196,9 @@ def estimate_upper_bound(state, player_idx: int) -> float:
         float: Upper bound on the player's terminal payoff.
     """
     current_payoff = state.get_payoff_vector()[player_idx]
-    s = get_goal_satisfaction(state.P.copy(), state.sat_masks)
+    s = get_goal_satisfaction(
+        state.P.copy(), state.sat_masks, binary_goals=state.binary_goals
+    )
     u = 1.0 - s
     remaining = 0
 
@@ -224,7 +228,9 @@ def estimate_lower_bound(state, player_idx: int) -> float:
         float: Lower bound on the player's terminal payoff.
     """
     current_payoff = state.get_payoff_vector()[player_idx]
-    s = get_goal_satisfaction(state.P.copy(), state.sat_masks)
+    s = get_goal_satisfaction(
+        state.P.copy(), state.sat_masks, binary_goals=state.binary_goals
+    )
     u = 1.0 - s
     remaining = 0
 
@@ -269,7 +275,9 @@ def estimate_tighter_lower_bound(state, player_idx):
     remaining_loss = 0
 
     G = state.G
-    s = get_goal_satisfaction(state.P, state.sat_masks)
+    s = get_goal_satisfaction(
+        state.P, state.sat_masks, binary_goals=state.binary_goals
+    )
 
     for g_idx in range(len(G)):
         val = G[g_idx, player_idx]
@@ -319,7 +327,9 @@ def estimate_tighter_upper_bound(state, player_idx):
     remaining_gain = 0
 
     G = state.G
-    s = get_goal_satisfaction(state.P, state.sat_masks)
+    s = get_goal_satisfaction(
+        state.P, state.sat_masks, binary_goals=state.binary_goals
+    )
 
     for g_idx in range(len(G)):
         val = G[g_idx, player_idx]
@@ -359,6 +369,7 @@ def estimate_terminal_value(
     max_changes: int,
     model,
     k: int,
+    exact_solver=None,
 ) -> float:
     """
     Estimate the terminal payoff for a player given a potential offer.
@@ -466,9 +477,22 @@ def estimate_terminal_value(
         if tmp_state.is_terminal():
             return tmp_state.get_payoff_vector()[player_idx]
 
-        solver = create_solver(tmp_state)
+        solver = (
+            exact_solver
+            if exact_solver is not None
+            else create_solver(tmp_state, max_changes=max_changes)
+        )
         V = solver(state_key(tmp_state))[0]
         return V[player_idx]
+
+    elif how == "gnn":
+        if tmp_state.is_terminal():
+            return tmp_state.get_payoff_vector()[player_idx]
+
+        from methods.gnn import estimate_state_payoffs_with_gnn
+
+        predicted_payoffs = estimate_state_payoffs_with_gnn(tmp_state, model)
+        return float(predicted_payoffs[player_idx])
 
     else:
         raise ValueError(f"Unknown estimation method: {how}")
@@ -479,8 +503,27 @@ def estimate_terminal_value(
 # ============================================================================
 
 
+def _pick_candidate(candidates, rng=None):
+    """Pick the first candidate, or a reproducible random candidate if given."""
+    if not candidates:
+        return None
+    if rng is None:
+        return candidates[0]
+    return candidates[int(rng.integers(len(candidates)))]
+
+
 def get_best_offer(
-    state, p2, max_changes, how, model, allowed_actions, forbidden_actions, k
+    state,
+    p2,
+    max_changes,
+    how,
+    model,
+    allowed_actions,
+    forbidden_actions,
+    k,
+    exact_solver=None,
+    rng=None,
+    tie_tolerance: float = 1e-10,
 ):
     """
     Find the best offer for the current proposer to make to partner ``p2``.
@@ -518,7 +561,7 @@ def get_best_offer(
               the best offer (equals rejection value if no offer is found).
     """
 
-    epsilon = 1e-10
+    epsilon = tie_tolerance
     p1 = state.proposer()
 
     how_p1, how_p2 = how, how
@@ -539,6 +582,7 @@ def get_best_offer(
         max_changes=max_changes,
         model=model,
         k=k,
+        exact_solver=exact_solver,
     )
 
     p1_reject = estimate_terminal_value(
@@ -550,6 +594,7 @@ def get_best_offer(
         max_changes=max_changes,
         model=model,
         k=k,
+        exact_solver=exact_solver,
     )
 
     best_offer = None
@@ -561,8 +606,8 @@ def get_best_offer(
             partner=p2,
             max_changes=max_changes,
             how="reward",
-            allowed_actions=None,
-            forbidden_actions=None,
+            allowed_actions=allowed_actions,
+            forbidden_actions=forbidden_actions,
             eps=1e-12,
         )
 
@@ -576,6 +621,7 @@ def get_best_offer(
             allowed_actions=allowed_actions,
             forbidden_actions=forbidden_actions,
         )
+        best_offers = []
         for offer in offers:
             # 1) Check p1 improvement first; if not better, skip p2 computation
 
@@ -588,6 +634,7 @@ def get_best_offer(
                 max_changes=max_changes,
                 model=model,
                 k=k,
+                exact_solver=exact_solver,
             )
             if p1_val + epsilon < best_p1:
                 continue
@@ -603,17 +650,30 @@ def get_best_offer(
                 max_changes=max_changes,
                 model=model,
                 k=k,
+                exact_solver=exact_solver,
             )
             if p2_val >= p2_reject:
-                best_offer = offer
-                best_p1 = p1_val
-                best_p2 = p2_val
+                if p1_val > best_p1 + epsilon:
+                    best_p1 = p1_val
+                    best_offers = [offer]
+                elif abs(p1_val - best_p1) <= epsilon:
+                    best_offers.append(offer)
+
+        best_offer = _pick_candidate(best_offers, rng)
 
     return best_offer, best_p1
 
 
 def create_negotiation_functions(
-    how: str, max_changes: int, model, allowed_actions, forbidden_actions, k: int
+    how: str,
+    max_changes: int,
+    model,
+    allowed_actions,
+    forbidden_actions,
+    k: int,
+    exact_solver=None,
+    rng=None,
+    tie_tolerance: float = 1e-10,
 ):
     """
     Create a ``get_best_offer`` callable with pre-bound parameters.
@@ -644,6 +704,9 @@ def create_negotiation_functions(
             allowed_actions,
             forbidden_actions,
             k,
+            exact_solver=exact_solver,
+            rng=rng,
+            tie_tolerance=tie_tolerance,
         )
 
     return get_best_offer_fn

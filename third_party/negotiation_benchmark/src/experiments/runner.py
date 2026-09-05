@@ -12,7 +12,6 @@ table for quick comparison.
 import numpy as np
 from core.equilibrium import check_equilibrium
 from core.game_state import NegotiationState
-from methods.baselines import get_llm_decision
 from methods.mcts import mcts_multi_ply
 
 # --- in experiments/runner.py ---
@@ -103,6 +102,7 @@ def run_single_game(
     model = game_config.get("model", None)
     allowed_actions = game_config.get("allowed_actions", None)
     forbidden_actions = game_config.get("forbidden_actions", None)
+    round_robin = game_config.get("round_robin", None)
 
     method_config_for_factory = method_config.copy()
 
@@ -131,6 +131,10 @@ def run_single_game(
         country_idx2num_actions=country_idx2num_actions,
         seed=seed,
         binary_goals=game_config.get("binary_goals", []),
+        allowed_actions=allowed_actions,
+        forbidden_actions=forbidden_actions,
+        model=model,
+        round_robin=round_robin,
     )
 
     num_rejects = 0
@@ -143,14 +147,31 @@ def run_single_game(
     # Main game loop
     while not game.is_terminal():
         if how == "LLM_full":
+            from methods.baselines import get_llm_decision
+
             (
                 best_partner_id,
                 offer,
-            ) = get_llm_decision(state=game)
+            ) = get_llm_decision(
+                state=game,
+                llm_client=method_config.get(
+                    "llm_client", game_config.get("llm_client")
+                ),
+                model=method_config.get(
+                    "llm_model", game_config.get("llm_model", "gpt-5-mini")
+                ),
+                max_changes=max_changes,
+                strict=method_config.get("llm_strict"),
+            )
 
         elif is_random_variant:
             # 1. Random Partner Selection [0, N-1]
-            best_partner_id = np.random.randint(0, n_players)
+            legal_partners = game.legal_negotiation_partners()
+            if not legal_partners:
+                game.reject_deal()
+                num_rejects += 1
+                continue
+            best_partner_id = int(np.random.choice(legal_partners))
 
             # 2. Use the standard heuristic (reward/lower/upper) for the Offer
             offer, _ = get_best_offer_fn(game, best_partner_id)

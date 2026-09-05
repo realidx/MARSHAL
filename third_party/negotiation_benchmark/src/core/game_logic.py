@@ -44,6 +44,12 @@ def get_goal_satisfaction(P, sat_masks, binary_goals=None):
 
     for j in range(n_goals):
         mask = sat_masks[j]
+        if mask.shape != P.shape:
+            raise ValueError(
+                "Policy matrix and satisfaction mask shape mismatch: "
+                f"P has shape {P.shape}, but goal {j} mask has shape {mask.shape}. "
+                "This usually means the state and sat_masks were built from different game configs."
+            )
         denom = int(mask.sum())
         num = int(np.count_nonzero(P & mask))  # count cells where both are 1
 
