@@ -39,9 +39,8 @@ def _commitment_map(
 
 def _goal_to_agent_dict(goal: Goal) -> dict[str, Any]:
     return {
-        "goal": f"G{goal.goal_id}",
-        "binary": goal.binary,
-        "required_commitments": [
+        "type": "ALL_OF",
+        "requires": [
             f"{_player_name(action.player_id)}:{_action_name(action.action_id)}"
             for action in goal.required_actions
         ],
@@ -73,13 +72,13 @@ def _event_to_agent_dict(
     if event.action == "OFFER" and event.offer is not None:
         partner_id = event.offer.partner_id
         result["partner"] = _player_name(partner_id)
-        result["offer"] = {
-            "proposer_adds": _offer_adds(
+        result["additions"] = {
+            _player_name(event.proposer_id): _offer_adds(
                 commitments_before[event.proposer_id],
                 event.offer.proposer_action,
                 n_actions_per_player[event.proposer_id],
             ),
-            "partner_adds": _offer_adds(
+            _player_name(partner_id): _offer_adds(
                 commitments_before[partner_id],
                 event.offer.partner_action,
                 n_actions_per_player[partner_id],
@@ -205,7 +204,17 @@ class PlayerObservation:
             },
             "max_changes": self.max_changes,
             "forbidden_commitments": forbidden_commitments,
-            "goals": [_goal_to_agent_dict(goal) for goal in self.goals],
+            "goals": {
+                f"G{goal.goal_id}": {
+                    **_goal_to_agent_dict(goal),
+                    "your_preference": (
+                        None
+                        if self.own_preferences is None
+                        else self.own_preferences[goal.goal_id].value
+                    ),
+                }
+                for goal in self.goals
+            },
             "current_proposer": (
                 None
                 if self.current_proposer is None
@@ -213,19 +222,11 @@ class PlayerObservation:
             ),
             "round_robin": [_player_name(player_id) for player_id in self.round_robin],
             "turn_index": self.turn_index,
-            "current_commitments": _commitment_map(
+            "binding_commitments": _commitment_map(
                 self.commitments,
                 self.n_actions_per_player,
             ),
             "transcript": transcript,
-            "own_preferences": (
-                None
-                if self.own_preferences is None
-                else {
-                    f"G{goal_id}": preference.value
-                    for goal_id, preference in enumerate(self.own_preferences)
-                }
-            ),
             "legal_partners": [
                 _player_name(player_id) for player_id in self.legal_partners
             ],
@@ -241,16 +242,18 @@ class PlayerObservation:
             result["pending_offer"] = {
                 "proposer": _player_name(proposer_id),
                 "partner": _player_name(partner_id),
-                "proposer_adds": _offer_adds(
-                    self.commitments[proposer_id],
-                    self.pending_offer.proposer_action,
-                    self.n_actions_per_player[proposer_id],
-                ),
-                "you_add": _offer_adds(
-                    self.commitments[partner_id],
-                    self.pending_offer.partner_action,
-                    self.n_actions_per_player[partner_id],
-                ),
+                "additions": {
+                    _player_name(proposer_id): _offer_adds(
+                        self.commitments[proposer_id],
+                        self.pending_offer.proposer_action,
+                        self.n_actions_per_player[proposer_id],
+                    ),
+                    _player_name(partner_id): _offer_adds(
+                        self.commitments[partner_id],
+                        self.pending_offer.partner_action,
+                        self.n_actions_per_player[partner_id],
+                    ),
+                },
             }
         if self.all_preferences is not None:
             result["all_preferences"] = {

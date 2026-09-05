@@ -118,6 +118,34 @@ def test_offer_validation_binding_pass_and_response_transitions():
         )
 
 
+def test_goal_and_utility_grounding_require_complete_goals():
+    state = GameState(make_spec(round_robin=(0, 1, 2, 0)))
+
+    # One side of G0 is committed, but a partial ALL_OF goal contributes 0.
+    state.resolve_offer(
+        Offer(partner_id=1, proposer_action=(1, 0), partner_action=(0, 0)),
+        ResponseAction.ACCEPT,
+    )
+    assert tuple(state.goal_satisfaction()) == (0, 0, 0)
+    assert state.reward(0) == 0
+
+    # The second side completes G0, so P0 receives its WANT utility.
+    state.resolve_offer(
+        Offer(partner_id=0, proposer_action=(1, 0), partner_action=(1, 0)),
+        ResponseAction.ACCEPT,
+    )
+    assert tuple(state.goal_satisfaction()) == (1, 0, 0)
+    assert state.reward(0) == 1
+
+    # Completing P0's AVOID goal subtracts utility only once the whole goal is met.
+    state.resolve_offer(
+        Offer(partner_id=1, proposer_action=(1, 0), partner_action=(1, 1)),
+        ResponseAction.ACCEPT,
+    )
+    assert tuple(state.goal_satisfaction()) == (1, 1, 0)
+    assert state.reward(0) == 0
+
+
 def test_runner_accepts_arbitrary_scripted_and_random_policies():
     accepted = Offer(partner_id=1, proposer_action=(1, 0), partner_action=(1, 0))
     follow_up = Offer(partner_id=0, proposer_action=(0, 1), partner_action=(1, 1))
@@ -157,8 +185,12 @@ def test_private_observation_hides_other_preferences_by_default():
 
     agent_view = private.to_agent_dict()
     assert "legal_offers" not in agent_view
-    assert agent_view["current_commitments"] == {"P0": [], "P1": [], "P2": []}
-    assert agent_view["goals"][0]["required_commitments"] == ["P0:A0", "P1:A0"]
+    assert agent_view["binding_commitments"] == {"P0": [], "P1": [], "P2": []}
+    assert agent_view["goals"]["G0"] == {
+        "type": "ALL_OF",
+        "requires": ["P0:A0", "P1:A0"],
+        "your_preference": "WANT",
+    }
     assert agent_view["legal_partners"] == ["P1", "P2"]
 
 
@@ -169,7 +201,7 @@ def test_agent_observation_uses_named_offer_deltas_and_event_only_transcript():
     state.resolve_offer(offer, ResponseAction.ACCEPT)
 
     proposer_view = build_player_observation(state, 0).to_agent_dict()
-    assert proposer_view["current_commitments"] == {
+    assert proposer_view["binding_commitments"] == {
         "P0": ["A0"],
         "P1": ["A0"],
         "P2": [],
@@ -180,7 +212,7 @@ def test_agent_observation_uses_named_offer_deltas_and_event_only_transcript():
             "proposer": "P0",
             "action": "OFFER",
             "partner": "P1",
-            "offer": {"proposer_adds": ["A0"], "partner_adds": ["A0"]},
+            "additions": {"P0": ["A0"], "P1": ["A0"]},
             "response": "ACCEPT",
         }
     ]
@@ -196,8 +228,7 @@ def test_agent_observation_uses_named_offer_deltas_and_event_only_transcript():
     assert pending_view["pending_offer"] == {
         "proposer": "P0",
         "partner": "P1",
-        "proposer_adds": ["A0"],
-        "you_add": ["A0"],
+        "additions": {"P0": ["A0"], "P1": ["A0"]},
     }
 
 
@@ -369,7 +400,7 @@ def test_vllm_player_policy_uses_native_phase_tools():
     assert "response_format" not in proposer_kwargs
     prompt_text = "\n".join(message["content"] for message in client.calls[0][0])
     assert "standalone JSON action" not in prompt_text
-    assert '"own_preferences"' in prompt_text
+    assert '"your_preference"' in prompt_text
     assert '"all_preferences"' not in prompt_text
     assert '"legal_offers"' not in prompt_text
     assert "Ensure Partner Acceptance" not in prompt_text
@@ -379,8 +410,22 @@ def test_vllm_player_policy_uses_native_phase_tools():
     assert "Before calling a tool" in prompt_text
     assert "Always provide reasoning before the tool call." in prompt_text
     assert "Do not write anything after the tool call." in prompt_text
-    assert "current_commitments" in prompt_text
+    assert "binding_commitments" in prompt_text
+    assert "Every goal is ALL_OF" in prompt_text
+    assert "partial match does not count" in prompt_text
+    assert "exactly and only" in prompt_text
+    assert "number of fully satisfied WANT goals minus the number of fully satisfied AVOID goals" in prompt_text
     assert "terminal utility according to your private goal preferences" in prompt_text
+    responder_prompt_text = "\n".join(
+        message["content"] for message in client.calls[1][0]
+    )
+    assert "binding_commitments" in responder_prompt_text
+    assert "pending_offer.additions" in responder_prompt_text
+    assert "No unlisted commitment is inferred" in responder_prompt_text
+    assert "REJECT leaves binding_commitments unchanged and advances the game." in responder_prompt_text
+    assert "Every goal is ALL_OF" in responder_prompt_text
+    assert "number of fully satisfied WANT goals minus the number of fully satisfied AVOID goals" in responder_prompt_text
+    assert "- ACCEPT()\n- REJECT()" in responder_prompt_text
 
 
 def test_native_missing_tool_retries_once_then_accepts_explicit_pass():

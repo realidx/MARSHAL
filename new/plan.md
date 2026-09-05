@@ -79,14 +79,14 @@ commitments 是 binding 的，只允许：
 \mathcal C_g\subseteq\{(i,a):i\text{ 是 player},a\text{ 是该 player 的 action}\}.
 \]
 
-v0 中所有 goals 都是 binary/all-or-nothing：
+v0 中所有 goals 都是 `ALL_OF` binary/all-or-nothing goals：
 
 \[
 S_g(C)=
-\mathbb 1[(i,a)\in\mathcal C_g\Rightarrow C_{ia}=1].
+\mathbb 1[\forall(i,a)\in\mathcal C_g,\ C_{ia}=1].
 \]
 
-也就是说，一个 goal 的所有 required commitments 都完成时，它的 satisfaction 才是 1，否则是 0。v0 暂时不使用 linear goals。
+也就是说，一个 goal 的所有 required commitments 都完成时，它的 satisfaction 才是 1；只完成其中一部分时仍然是 0。v0 暂时不使用 linear goals。
 
 同一个 commitment 可以出现在多个 goals 中。这是制造 long-horizon consequences 的关键机制。
 
@@ -111,6 +111,9 @@ player (i) 的 terminal utility 为：
 \[
 U_i(C^T)=\sum_g V_{i,g}S_g(C^T).
 \]
+
+等价地，utility 是完整满足的 `WANT` goals 数量减去完整满足的 `AVOID`
+goals 数量；`NEUTRAL` goals 和 partial goals 都贡献 0。
 
 数字 `-1/0/+1` 只存在于 environment 和 evaluation 中；默认 agent observation 只显示 `WANT/NEUTRAL/AVOID`，不显示其他 player 的 preference。
 
@@ -237,9 +240,9 @@ player 只额外观察自己的 private preference，不观察其他 players 的
 
 ```text
 player identity
-own WANT / NEUTRAL / AVOID preferences
+own WANT / NEUTRAL / AVOID preferences attached to each goal
 public goals and named requirement sets
-current commitments as named actions, e.g. P0: [A0]
+current binding commitments as named actions, e.g. P0: [A0]
 round-robin position
 public event transcript without repeated commitment snapshots
 legal partner names
@@ -250,15 +253,26 @@ agent-facing observation 使用 named representation，例如：
 
 ```json
 {
-  "current_commitments": {"P0": ["A0"], "P1": [], "P2": ["A1"]},
+  "goals": {
+    "G2": {
+      "type": "ALL_OF",
+      "requires": ["P0:A1", "P1:A2", "P2:A1"],
+      "your_preference": "AVOID"
+    }
+  },
+  "binding_commitments": {"P0": ["A0"], "P1": [], "P2": ["A1"]},
   "pending_offer": {
     "proposer": "P1",
     "partner": "P2",
-    "proposer_adds": ["A2"],
-    "you_add": ["A0"]
+    "additions": {"P1": ["A2"], "P2": ["A0"]}
   }
 }
 ```
+
+`goals[G].type` 在 v0 始终是 `ALL_OF`。只有当 `requires` 中的每一个
+`P#:A#` 都出现在 `binding_commitments` 中时，goal 才算 satisfied；缺少任何
+一个 requirement 都不产生 utility。`pending_offer` 是 hypothetical next
+state，不会自动修改当前的 `binding_commitments`。
 
 内部 `PlayerObservation` 仍可以保留 matrix、完整 target vector 和
 `legal_offers`，供 environment validator、tool mask、oracle 和 solver 使用；这些
@@ -447,7 +461,7 @@ vllm serve Qwen/Qwen3-4B-Instruct-2507 \
 proposer prompt 只能包含：
 
 - 自己的 `WANT/NEUTRAL/AVOID`；
-- public goals、requirements、binary semantics；
+- public goals、requirements、`ALL_OF` semantics 和 terminal utility rule；
 - named current commitments；
 - public event transcript；
 - 合法 partner 和 offer constraints；
@@ -460,7 +474,19 @@ commitments、goals、constraints 和 OFFER schema 构造 action。
 
 HTTP request 只发送 proposer 当前可用的 `PASS` 和 `OFFER` tools。model 必须
 先写一段简短 reasoning，说明计划做什么以及原因，然后立即调用且只调用一个
-tool。tool call 之后不能继续输出文本：
+tool。tool call 之后不能继续输出文本。具体 decision protocol 是：
+
+```text
+Before calling a tool, first write a brief reasoning statement explaining
+what you plan to do and why.
+
+Then immediately call exactly ONE available tool:
+- PASS()
+- OFFER(...)
+
+Always provide reasoning before the tool call.
+Do not write anything after the tool call.
+```
 
 ```text
 PASS()
@@ -482,10 +508,24 @@ ACCEPT()
 REJECT()
 ```
 
-prompt 只说明 terminal utility 和 action semantics：`ACCEPT` 使 proposed
-commitments binding，`REJECT` 保持当前 commitments 不变并推进 game。它不直接
-给出“比较 accept/reject continuation”的 long-horizon 答案。model 必须先写一段
-简短 reasoning，然后立即调用其中一个；tool call 之后不能继续输出文本。
+prompt 只说明 `ALL_OF` goal satisfaction、terminal utility 和 action semantics：
+`ACCEPT` 使 pending offer 中明确列出的 additions 成为 binding commitments，
+不会推断任何未列出的 commitment；`REJECT` 保持当前 commitments 不变并推进
+game。它不直接给出“比较 accept/reject continuation”的 long-horizon 答案。
+model 必须先写一段简短 reasoning，然后立即调用其中一个；tool call 之后不能
+继续输出文本：
+
+```text
+Before calling a tool, first write a brief reasoning statement explaining
+what you plan to do and why.
+
+Then immediately call exactly ONE available tool:
+- ACCEPT()
+- REJECT()
+
+Always provide reasoning before the tool call.
+Do not write anything after the tool call.
+```
 
 vLLM 只负责生成 policy output；partner acceptance、commitment update 和
 reward 仍由 game engine 执行。tool parser 的格式合法性、game engine 的
