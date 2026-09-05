@@ -117,6 +117,12 @@ class VLLMPlayerPolicy:
 
     @staticmethod
     def _observation_payload(observation: PlayerObservation) -> str:
+        return json.dumps(observation.to_agent_dict(), ensure_ascii=False, sort_keys=True)
+
+    @staticmethod
+    def _legacy_observation_payload(observation: PlayerObservation) -> str:
+        """Serialize the old ROLL-only observation without changing its contract."""
+
         return json.dumps(observation.to_dict(), ensure_ascii=False, sort_keys=True)
 
     @staticmethod
@@ -124,7 +130,7 @@ class VLLMPlayerPolicy:
         tools: list[dict[str, Any]] = [
             _tool(
                 "PASS",
-                "Intentionally make no offer this turn.",
+                "Intentionally make no offer this turn. Use PASS when no legal offer adds a commitment.",
                 _empty_parameters(),
             )
         ]
@@ -150,7 +156,10 @@ class VLLMPlayerPolicy:
                         "type": "string",
                         "enum": _action_names(observation.n_actions_per_player[observation.player_id]),
                     },
-                    "description": "New commitments by you, such as A0.",
+                    "description": (
+                        "New commitments by you, such as A0. Include only actions that "
+                        "are currently 0; never repeat an action that is already 1."
+                    ),
                 },
                 "partner_commitments": {
                     "type": "array",
@@ -158,7 +167,10 @@ class VLLMPlayerPolicy:
                         "type": "string",
                         "enum": _action_names(max_partner_actions),
                     },
-                    "description": "New commitments by the partner, such as A1.",
+                    "description": (
+                        "New commitments by the partner, such as A1. Include only actions "
+                        "that are currently 0; never repeat an action that is already 1."
+                    ),
                 },
             },
             "required": ["partner", "self_commitments", "partner_commitments"],
@@ -167,7 +179,11 @@ class VLLMPlayerPolicy:
         tools.append(
             _tool(
                 "OFFER",
-                "Offer one bilateral commitment package to one legal partner.",
+                (
+                    "Offer one bilateral commitment package to one legal partner. The offer "
+                    "must add at least one new commitment across the two lists; a no-op offer "
+                    "is illegal."
+                ),
                 offer_parameters,
             )
         )
@@ -341,24 +357,84 @@ class VLLMPlayerPolicy:
             raise InvalidActionError(f"{name} must have an empty argument object.")
         return ResponseAction(name)
 
+    @staticmethod
+    def _proposer_system_prompt(observation: PlayerObservation) -> str:
+        """Describe the game without supplying the strategic diagnosis."""
+
+        return (
+            f"You are player {_player_name(observation.player_id)}, an expert strategic "
+            "negotiator in a multi-issue bargaining game. You will receive your BENAC-P "
+            "observation as JSON. It contains the public game state and your own private "
+            "preferences.\n\n"
+            "--- OBJECTIVE ---\n"
+            "Maximize your terminal utility according to your private goal preferences. "
+            "Other players have their own private preferences and choose actions to maximize "
+            "their own terminal utility.\n\n"
+            "--- DATA SCHEMA ---\n"
+            "1. goals: each goal lists named player/action commitments required to satisfy it. "
+            "A binary goal is satisfied only when all listed requirements are committed.\n"
+            "2. current_commitments: the current binding commitments, such as P0:[A0].\n"
+            "3. own_preferences: your private WANT, NEUTRAL, or AVOID label for each goal.\n"
+            "4. actions_per_player: the named actions available to each player.\n"
+            "5. round_robin, current_proposer, and turn_index: the public turn schedule.\n"
+            "6. max_changes and forbidden_commitments: the per-player commitment constraints.\n"
+            "7. legal_partners: the partners currently available to the proposer.\n"
+            "8. transcript: previous public PASS/OFFER events. It does not repeat the current "
+            "commitment state.\n\n"
+            "--- HARD CONSTRAINTS ---\n"
+            "1. Commitments are binding and can only be added; existing commitments remain.\n"
+            f"2. Add at most {observation.max_changes} new commitments for each player in this "
+            "turn.\n"
+            "3. Choose a legal partner different from yourself.\n"
+            "4. An OFFER must add at least one commitment. A no-op offer is invalid.\n"
+            "5. In an OFFER, self_commitments and partner_commitments contain named additions, "
+            "not full vectors.\n"
+            "6. The environment validates all remaining legality constraints.\n\n"
+            "--- OUTPUT PROTOCOL ---\n"
+            "You must finish by calling exactly one available tool. Any preceding text is not "
+            "executed by the environment. Call PASS() or OFFER(...). Do not return a standalone "
+            "JSON action."
+        )
+
+    @staticmethod
+    def _responder_system_prompt(observation: PlayerObservation) -> str:
+        """Describe response semantics without supplying a long-horizon rule."""
+
+        return (
+            f"You are player {_player_name(observation.player_id)}, an expert strategic "
+            "negotiator responding to a bilateral offer in a multi-issue bargaining game. "
+            "You will receive your BENAC-P observation as JSON. It contains the public game "
+            "state, the pending offer, and your own private preferences.\n\n"
+            "--- OBJECTIVE ---\n"
+            "Your goal is to maximize your terminal utility according to your private goal "
+            "preferences. Other players have their own private preferences and choose actions "
+            "to maximize their own terminal utility.\n\n"
+            "--- DATA SCHEMA ---\n"
+            "1. goals lists named player/action commitments required by each binary goal.\n"
+            "2. current_commitments lists the commitments that are already binding.\n"
+            "3. own_preferences gives your private WANT, NEUTRAL, or AVOID label for each goal.\n"
+            "4. pending_offer lists the named commitments proposed by the proposer and the "
+            "named commitments that you would add if you accept.\n"
+            "5. transcript, round_robin, and turn_index describe the public history and schedule.\n\n"
+            "--- RESPONSE SEMANTICS ---\n"
+            "ACCEPT makes the proposed commitments binding. REJECT leaves the current "
+            "commitments unchanged and advances the game.\n\n"
+            "--- OUTPUT PROTOCOL ---\n"
+            "You must finish by calling exactly one available response tool. Any preceding text "
+            "is not executed by the environment. Call ACCEPT() or REJECT(). Do not return a "
+            "standalone JSON action."
+        )
+
     def _propose_native(self, observation: PlayerObservation) -> PassProposal | OfferProposal:
         messages = [
             {
                 "role": "system",
-                "content": (
-                    "You are a BENAC-P negotiation player. You may optionally write concise "
-                    "ordinary-text reasoning, then you must call exactly one of the available "
-                    "tools. The tool call is the executable action. Do not return a standalone "
-                    "JSON action. PASS means an intentional strategic decision not to make an "
-                    "offer. For OFFER, list only new commitments using names such as A0; the "
-                    "environment checks binding commitments, budgets, forbidden actions, and "
-                    "all other legality constraints. A response without exactly one tool call is "
-                    "invalid."
-                ),
+                "content": self._proposer_system_prompt(observation),
             },
             {
                 "role": "user",
                 "content": (
+                    "--- CURRENT TURN STATE ---\n"
                     "Here is your private observation as JSON. Other players' preferences are "
                     "not included.\n" + self._observation_payload(observation)
                 ),
@@ -377,18 +453,12 @@ class VLLMPlayerPolicy:
         messages = [
             {
                 "role": "system",
-                "content": (
-                    "You are a BENAC-P negotiation player responding to an offer. You may "
-                    "optionally write concise ordinary-text reasoning, then you must call "
-                    "exactly one available response tool: ACCEPT or REJECT. The tool call is "
-                    "the executable action. Do not return a standalone JSON action. A response "
-                    "without exactly one tool call is invalid. Decide using only your own "
-                    "private preferences and the public observation."
-                ),
+                "content": self._responder_system_prompt(observation),
             },
             {
                 "role": "user",
                 "content": (
+                    "--- CURRENT TURN STATE ---\n"
                     "The pending offer is included in pending_offer. Here is your observation "
                     "as JSON:\n" + self._observation_payload(observation)
                 ),
@@ -421,7 +491,7 @@ class VLLMPlayerPolicy:
                 "role": "user",
                 "content": (
                     "Here is your private observation as JSON. Other players' preferences are "
-                    "not included.\n" + self._observation_payload(observation)
+                    "not included.\n" + self._legacy_observation_payload(observation)
                 ),
             },
         ]
@@ -468,7 +538,7 @@ class VLLMPlayerPolicy:
                 "role": "user",
                 "content": (
                     "The pending offer is included in pending_offer. Here is your observation as "
-                    "JSON:\n" + self._observation_payload(observation)
+                    "JSON:\n" + self._legacy_observation_payload(observation)
                 ),
             },
         ]

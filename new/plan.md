@@ -236,15 +236,33 @@ player 只额外观察自己的 private preference，不观察其他 players 的
 默认的 `PlayerObservation(player_id)` 包含：
 
 ```text
-player_id
+player identity
 own WANT / NEUTRAL / AVOID preferences
-public goals and binary requirement sets
-current public commitment state C
+public goals and named requirement sets
+current commitments as named actions, e.g. P0: [A0]
 round-robin position
-public transcript
-legal partner ids
-pending offer, if this player is responder
+public event transcript without repeated commitment snapshots
+legal partner names
+pending offer as named deltas, if this player is responder
 ```
+
+agent-facing observation 使用 named representation，例如：
+
+```json
+{
+  "current_commitments": {"P0": ["A0"], "P1": [], "P2": ["A1"]},
+  "pending_offer": {
+    "proposer": "P1",
+    "partner": "P2",
+    "proposer_adds": ["A2"],
+    "you_add": ["A0"]
+  }
+}
+```
+
+内部 `PlayerObservation` 仍可以保留 matrix、完整 target vector 和
+`legal_offers`，供 environment validator、tool mask、oracle 和 solver 使用；这些
+字段不进入 LLM 的 agent-facing payload。
 
 它不包含：
 
@@ -430,12 +448,19 @@ proposer prompt 只能包含：
 
 - 自己的 `WANT/NEUTRAL/AVOID`；
 - public goals、requirements、binary semantics；
-- 当前 `C`；
-- public transcript；
-- 合法 partner 和 offer constraints。
+- named current commitments；
+- public event transcript；
+- 合法 partner 和 offer constraints；
+- “其他 players 有自己的 private preferences，并最大化自己的 terminal utility”这一
+  environment fact。
+
+prompt 不直接告诉 model 需要如何诊断 partner acceptance、如何比较 future
+continuation，或如何展开 lookahead。`legal_offers` 不发送给 model；模型根据当前
+commitments、goals、constraints 和 OFFER schema 构造 action。
 
 HTTP request 只发送 proposer 当前可用的 `PASS` 和 `OFFER` tools。model 可以
-先输出普通文本 reasoning，但必须随后调用且只调用一个 tool：
+先输出普通文本 reasoning，但必须在结束前调用且只调用一个 tool；普通文本不会被
+environment 执行：
 
 ```text
 PASS()
@@ -457,8 +482,10 @@ ACCEPT()
 REJECT()
 ```
 
-model 必须调用其中一个；普通 text content 可以作为 private reasoning，
-但不能替代 tool call。
+prompt 只说明 terminal utility 和 action semantics：`ACCEPT` 使 proposed
+commitments binding，`REJECT` 保持当前 commitments 不变并推进 game。它不直接
+给出“比较 accept/reject continuation”的 long-horizon 答案。model 必须调用其中
+一个；普通 text content 不能替代 tool call。
 
 vLLM 只负责生成 policy output；partner acceptance、commitment update 和
 reward 仍由 game engine 执行。tool parser 的格式合法性、game engine 的

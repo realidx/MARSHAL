@@ -155,6 +155,51 @@ def test_private_observation_hides_other_preferences_by_default():
     public = build_player_observation(state, 0, mode="public")
     assert public.own_preferences is None
 
+    agent_view = private.to_agent_dict()
+    assert "legal_offers" not in agent_view
+    assert agent_view["current_commitments"] == {"P0": [], "P1": [], "P2": []}
+    assert agent_view["goals"][0]["required_commitments"] == ["P0:A0", "P1:A0"]
+    assert agent_view["legal_partners"] == ["P1", "P2"]
+
+
+def test_agent_observation_uses_named_offer_deltas_and_event_only_transcript():
+    spec = make_spec(round_robin=(0, 1))
+    state = GameState(spec)
+    offer = Offer(partner_id=1, proposer_action=(1, 0), partner_action=(1, 0))
+    state.resolve_offer(offer, ResponseAction.ACCEPT)
+
+    proposer_view = build_player_observation(state, 0).to_agent_dict()
+    assert proposer_view["current_commitments"] == {
+        "P0": ["A0"],
+        "P1": ["A0"],
+        "P2": [],
+    }
+    assert proposer_view["transcript"] == [
+        {
+            "turn": 0,
+            "proposer": "P0",
+            "action": "OFFER",
+            "partner": "P1",
+            "offer": {"proposer_adds": ["A0"], "partner_adds": ["A0"]},
+            "response": "ACCEPT",
+        }
+    ]
+    assert "commitments_after" not in proposer_view["transcript"][0]
+
+    pending_state = GameState(make_spec(round_robin=(0,)))
+    pending_view = build_player_observation(
+        pending_state,
+        1,
+        pending_proposer_id=0,
+        pending_offer=offer,
+    ).to_agent_dict()
+    assert pending_view["pending_offer"] == {
+        "proposer": "P0",
+        "partner": "P1",
+        "proposer_adds": ["A0"],
+        "you_add": ["A0"],
+    }
+
 
 def test_non_strict_invalid_proposal_becomes_public_invalid_pass():
     class InvalidPolicy:
@@ -326,6 +371,13 @@ def test_vllm_player_policy_uses_native_phase_tools():
     assert "standalone JSON action" in prompt_text
     assert '"own_preferences"' in prompt_text
     assert '"all_preferences"' not in prompt_text
+    assert '"legal_offers"' not in prompt_text
+    assert "Ensure Partner Acceptance" not in prompt_text
+    assert "expected terminal reward" not in prompt_text
+    assert "at most two" not in prompt_text
+    assert "do not enumerate" not in prompt_text
+    assert "current_commitments" in prompt_text
+    assert "terminal utility according to your private goal preferences" in prompt_text
 
 
 def test_native_missing_tool_retries_once_then_accepts_explicit_pass():
