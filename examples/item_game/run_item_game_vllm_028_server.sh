@@ -9,13 +9,14 @@ HOST="${VLLM_HOST:-0.0.0.0}"
 PORT="${VLLM_PORT:-8000}"
 MAX_MODEL_LEN="${VLLM_MAX_MODEL_LEN:-8192}"
 TOOL_CALL_PARSER="${VLLM_TOOL_CALL_PARSER:-qwen3}"
+PYTHON_BIN="${PYTHON_BIN:-python}"
 
 echo "starting vLLM 0.28 profile model=${MODEL} served_model=${SERVED_MODEL_NAME}"
 echo "host=${HOST} port=${PORT} max_model_len=${MAX_MODEL_LEN}"
 echo "tool_call_parser=${TOOL_CALL_PARSER} auto_tool_choice=enabled"
 echo "native_reasoning=disabled (ItemGame stores application-level reason content)"
 
-exec vllm serve "${MODEL}" \
+exec "${PYTHON_BIN}" -m vllm.entrypoints.cli.main serve "${MODEL}" \
   --served-model-name "${SERVED_MODEL_NAME}" \
   --host "${HOST}" \
   --port "${PORT}" \
