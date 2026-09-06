@@ -95,6 +95,32 @@ class Offer:
 
 
 @dataclass(frozen=True)
+class MenuOffer:
+    """Two distinct legal offers to the same partner; exactly one may bind."""
+
+    offers: tuple[Offer, Offer]
+
+    def __post_init__(self):
+        object.__setattr__(self, "offers", tuple(self.offers))
+        if len(self.offers) != 2 or any(not isinstance(o, Offer) for o in self.offers):
+            raise ValueError("A menu requires exactly two ordinary offers.")
+        if self.offers[0] == self.offers[1] or self.offers[0].partner_id != self.offers[1].partner_id:
+            raise ValueError("Menu options must be distinct and addressed to the same partner.")
+
+    @property
+    def partner_id(self):
+        return self.offers[0].partner_id
+
+    def to_dict(self):
+        return {"partner_id": self.partner_id, "offers": [o.to_dict() for o in self.offers]}
+
+
+def response_actions(offer):
+    values = ("REJECT", "CHOOSE_1", "CHOOSE_2") if isinstance(offer, MenuOffer) else ("REJECT", "ACCEPT")
+    return tuple(ResponseAction(v) for v in values)
+
+
+@dataclass(frozen=True)
 class PassProposal:
     """The proposer declines to make an offer for the current turn."""
 
@@ -108,8 +134,12 @@ class PassProposal:
 class OfferProposal:
     """The proposer selects a partner and submits one bilateral offer."""
 
-    offer: Offer
+    offer: Offer | MenuOffer
     action: str = field(default="OFFER", init=False)
+
+    def __post_init__(self):
+        if isinstance(self.offer, MenuOffer):
+            object.__setattr__(self, "action", "MENU")
 
     def to_dict(self) -> dict[str, Any]:
         return {"action": self.action, **self.offer.to_dict()}
@@ -126,8 +156,8 @@ class ResponseAction:
 
     def __post_init__(self) -> None:
         normalized = str(self.value).upper()
-        if normalized not in {self.ACCEPT, self.REJECT}:
-            raise ValueError("ResponseAction must be ACCEPT or REJECT.")
+        if normalized not in {self.ACCEPT, self.REJECT, "CHOOSE_1", "CHOOSE_2"}:
+            raise ValueError("ResponseAction must be ACCEPT, REJECT, CHOOSE_1 or CHOOSE_2.")
         object.__setattr__(self, "value", normalized)
 
     @property
@@ -146,21 +176,21 @@ class PublicEvent:
     proposer_id: int
     action: str
     partner_id: int | None
-    offer: Offer | None
+    offer: Offer | MenuOffer | None
     response: str | None
     commitments_after: tuple[tuple[int, ...], ...]
     invalid_action: bool = False
 
     def __post_init__(self) -> None:
-        if self.action not in {"PASS", "OFFER"}:
+        if self.action not in {"PASS", "OFFER", "MENU"}:
             raise ValueError("PublicEvent action must be PASS or OFFER.")
         if self.action == "PASS" and (self.partner_id is not None or self.offer is not None):
             raise ValueError("PASS events cannot contain a partner or offer.")
-        if self.action == "OFFER" and (self.partner_id is None or self.offer is None):
+        if self.action in {"OFFER", "MENU"} and (self.partner_id is None or self.offer is None):
             raise ValueError("OFFER events require a partner and offer.")
         if self.response is not None and self.response not in {
             ResponseAction.ACCEPT,
-            ResponseAction.REJECT,
+            ResponseAction.REJECT, "CHOOSE_1", "CHOOSE_2",
         }:
             raise ValueError("PublicEvent response must be ACCEPT or REJECT.")
 
@@ -190,6 +220,7 @@ class GameSpec:
     seed: int
     forbidden_actions: np.ndarray | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    menu_enabled: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "n_actions_per_player", tuple(int(value) for value in self.n_actions_per_player))
@@ -219,6 +250,8 @@ class GameSpec:
         preferences.setflags(write=False)
         object.__setattr__(self, "private_preferences", preferences)
 
+        if type(self.menu_enabled) is not bool:
+            raise ValueError("menu_enabled must be a boolean.")
         expected_turns = len(self.round_robin)
         if expected_turns == 0:
             raise ValueError("round_robin cannot be empty.")
@@ -289,6 +322,8 @@ class GameSpec:
                 else self.forbidden_actions.astype(int).tolist()
             ),
         }
+        if self.menu_enabled:
+            result["menu_enabled"] = True
         if include_private:
             result["private_preferences"] = self.private_preferences.astype(int).tolist()
             result["metadata"] = dict(self.metadata)

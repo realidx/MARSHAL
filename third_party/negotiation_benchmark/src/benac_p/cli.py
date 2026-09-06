@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 import argparse
 import json
 import os
 
 from benac_p.generator import GeneratorConfig, generate_game
+from benac_p.controlled import SoftProgressPolicy
 from benac_p.oracle import OraclePolicy
 from benac_p.policies import RandomPolicy
 from benac_p.runner import GameRunner
@@ -129,8 +131,9 @@ def _policy_metrics(policies):
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run one BENAC-P v0 self-play episode.")
+    parser.add_argument("--menu", action="store_true", help="Enable two-option binding menus alongside single offers.")
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--self-play", choices=("random", "vllm", "oracle"), default="random")
+    parser.add_argument("--self-play", choices=("random", "vllm", "oracle", "controlled"), default="random")
     parser.add_argument("--observation-mode", choices=("private", "public", "full"), default="private")
     parser.add_argument("--n-rounds", type=int, default=4)
     parser.add_argument("--non-strict", action="store_true")
@@ -198,6 +201,10 @@ def main(argv: list[str] | None = None) -> int:
         seed=args.seed,
         config=GeneratorConfig(n_rounds=args.n_rounds),
     )
+    if args.menu:
+        if args.self_play == "oracle" or (args.self_play == "vllm" and args.vllm_backend != "http"):
+            raise SystemExit("--menu supports random, controlled, and native HTTP vLLM policies.")
+        spec = replace(spec, menu_enabled=True)
     if args.self_play == "random":
         policies = {
             player_id: RandomPolicy(seed=args.seed + player_id)
@@ -205,6 +212,11 @@ def main(argv: list[str] | None = None) -> int:
         }
     elif args.self_play == "vllm":
         policies = _build_vllm_policies(args, spec.n_players)
+    elif args.self_play == "controlled":
+        policies = {
+            player_id: SoftProgressPolicy(seed=args.seed + player_id)
+            for player_id in range(spec.n_players)
+        }
     else:
         policies = _build_oracle_policies(args, spec)
 
@@ -217,6 +229,9 @@ def main(argv: list[str] | None = None) -> int:
     policy_metrics = _policy_metrics(policies)
     if args.json:
         output = result.to_dict()
+        if args.self_play == "controlled":
+            output["controlled_policy"] = policies[0].specification()
+            output["policy_seeds"] = {str(i): args.seed + i for i in policies}
         if policy_metrics:
             output["policy_metrics"] = policy_metrics
         print(json.dumps(output, ensure_ascii=False, indent=2))

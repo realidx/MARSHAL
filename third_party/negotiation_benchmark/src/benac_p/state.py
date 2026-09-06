@@ -8,7 +8,7 @@ from typing import Iterable
 
 import numpy as np
 
-from benac_p.schema import GameSpec, Offer, PublicEvent, ResponseAction
+from benac_p.schema import GameSpec, Offer, MenuOffer, OfferProposal, PassProposal, PublicEvent, ResponseAction, response_actions
 
 
 class InvalidActionError(ValueError):
@@ -131,8 +131,8 @@ class GameState:
             raise InvalidActionError(f"{field_name} must contain only integer 0/1 values.")
         return tuple(int(value) for value in values)
 
-    def validate_offer(self, offer: Offer, proposer_id: int | None = None) -> tuple[int, int]:
-        """Validate an offer and return its proposer/partner delta sizes."""
+    def validate_offer(self, offer: Offer | MenuOffer, proposer_id: int | None = None) -> tuple[int, int] | None:
+        """Return ordinary-offer delta sizes; menus validate each option and return None."""
 
         current_proposer = self._require_active_turn()
         if proposer_id is None:
@@ -141,6 +141,12 @@ class GameState:
             raise InvalidActionError(
                 f"It is player {current_proposer}'s turn, not player {proposer_id}'s turn."
             )
+        if isinstance(offer, MenuOffer):
+            if not self.spec.menu_enabled:
+                raise InvalidActionError("Menus are disabled in this game.")
+            for option in offer.offers:
+                self.validate_offer(option, proposer_id)
+            return None  # a menu has no delta until an option is selected
         if not isinstance(offer, Offer):
             raise InvalidActionError("An OFFER must contain an Offer object.")
         self._validate_player(offer.partner_id)
@@ -240,6 +246,21 @@ class GameState:
                 )
         return tuple(offers)
 
+    def legal_proposals(self):
+        if self.is_terminal:
+            return ()
+        proposals = [PassProposal()]
+        for partner in self.legal_partners():
+            offers = self.legal_offers(partner)
+            proposals.extend(OfferProposal(o) for o in offers)
+            if self.spec.menu_enabled:
+                proposals.extend(OfferProposal(MenuOffer(pair)) for pair in combinations(offers, 2))
+        return tuple(proposals)
+
+    def validate_response(self, offer, response):
+        if response not in response_actions(offer):
+            raise InvalidActionError("Response is not valid for this offer/menu.")
+
     def apply_pass(self, invalid_action: bool = False) -> PublicEvent:
         """Consume the current proposer turn without changing commitments."""
 
@@ -269,6 +290,21 @@ class GameState:
         proposer_id = self._require_active_turn()
         self.validate_offer(offer, proposer_id=proposer_id)
         normalized_response = response if isinstance(response, ResponseAction) else ResponseAction(str(response))
+        self.validate_response(offer, normalized_response)
+        if isinstance(offer, MenuOffer):
+            if normalized_response.value != "REJECT":
+                chosen = offer.offers[int(normalized_response.value[-1]) - 1]
+                child = self.clone()
+                child.resolve_offer(chosen, "ACCEPT")
+                self.commitments = child.commitments
+            event = PublicEvent(
+                turn_index=self.turn_index, proposer_id=proposer_id, action="MENU",
+                partner_id=offer.partner_id, offer=offer, response=normalized_response.value,
+                commitments_after=self.snapshot_commitments(), invalid_action=invalid_action,
+            )
+            self.transcript.append(event)
+            self.turn_index += 1
+            return event
         if normalized_response.accepted:
             proposer_vector = self._validate_vector(offer.proposer_action, proposer_id, "proposer_action")
             partner_vector = self._validate_vector(

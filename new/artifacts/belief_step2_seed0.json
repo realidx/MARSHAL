@@ -1,0 +1,1086 @@
+{
+  "experiment": "conditional-prior-and-filter-smoke-v1",
+  "seed": 0,
+  "n_goals": 3,
+  "n_rounds": 2,
+  "filter": {
+    "filter_version": "exact-bayes-v1",
+    "ego_id": 0,
+    "prior": {
+      "version": "benac-p-v0-conditional-prior-v1",
+      "probability_order": [
+        "WANT",
+        "NEUTRAL",
+        "AVOID"
+      ],
+      "preference_probs": [
+        0.4,
+        0.2,
+        0.4
+      ],
+      "constraints": [
+        "each player has a WANT",
+        "each goal has a non-NEUTRAL player"
+      ],
+      "conditioning": "ego preferences; independent public goals and schedule",
+      "max_candidates": 100000
+    },
+    "partner_policies": {
+      "1": {
+        "version": "soft-progress-v1",
+        "temperature": 0.5,
+        "progress_weight": 0.5,
+        "uniform_mix": 0.02,
+        "potential": "sum V_g * (S_g + w * (1-S_g) * completed_fraction_g)",
+        "last_turn_progress_weight": 0.0,
+        "scores": "PASS/REJECT: 0; OFFER/ACCEPT: Phi(C_if_accepted)-Phi(C)",
+        "probabilities": "(1-uniform_mix)*softmax(scores/temperature)+uniform_mix/num_actions"
+      },
+      "2": {
+        "version": "soft-progress-v1",
+        "temperature": 0.5,
+        "progress_weight": 0.5,
+        "uniform_mix": 0.02,
+        "potential": "sum V_g * (S_g + w * (1-S_g) * completed_fraction_g)",
+        "last_turn_progress_weight": 0.0,
+        "scores": "PASS/REJECT: 0; OFFER/ACCEPT: Phi(C_if_accepted)-Phi(C)",
+        "probabilities": "(1-uniform_mix)*softmax(scores/temperature)+uniform_mix/num_actions"
+      }
+    },
+    "own_actions": "interventions, not likelihood evidence"
+  },
+  "snapshots": [
+    {
+      "stage": "prior",
+      "belief": {
+        "representation": "joint-preferences-v1",
+        "partner_ids": [
+          1,
+          2
+        ],
+        "support_size": 361,
+        "entropy_nats": 5.690053193713666,
+        "marginals": {
+          "P1": {
+            "G0": {
+              "WANT": 0.5102040816326537,
+              "NEUTRAL": 0.16326530612244905,
+              "AVOID": 0.32653061224489816
+            },
+            "G1": {
+              "WANT": 0.5102040816326537,
+              "NEUTRAL": 0.16326530612244905,
+              "AVOID": 0.32653061224489816
+            },
+            "G2": {
+              "WANT": 0.5102040816326537,
+              "NEUTRAL": 0.16326530612244905,
+              "AVOID": 0.32653061224489816
+            }
+          },
+          "P2": {
+            "G0": {
+              "WANT": 0.5102040816326537,
+              "NEUTRAL": 0.16326530612244908,
+              "AVOID": 0.32653061224489816
+            },
+            "G1": {
+              "WANT": 0.5102040816326537,
+              "NEUTRAL": 0.16326530612244908,
+              "AVOID": 0.32653061224489816
+            },
+            "G2": {
+              "WANT": 0.5102040816326537,
+              "NEUTRAL": 0.16326530612244908,
+              "AVOID": 0.32653061224489816
+            }
+          }
+        }
+      }
+    },
+    {
+      "stage": "pending_offer",
+      "turn": 0,
+      "belief": {
+        "representation": "joint-preferences-v1",
+        "partner_ids": [
+          1,
+          2
+        ],
+        "support_size": 361,
+        "entropy_nats": 5.690053193713666,
+        "marginals": {
+          "P1": {
+            "G0": {
+              "WANT": 0.5102040816326537,
+              "NEUTRAL": 0.16326530612244905,
+              "AVOID": 0.32653061224489816
+            },
+            "G1": {
+              "WANT": 0.5102040816326537,
+              "NEUTRAL": 0.16326530612244905,
+              "AVOID": 0.32653061224489816
+            },
+            "G2": {
+              "WANT": 0.5102040816326537,
+              "NEUTRAL": 0.16326530612244905,
+              "AVOID": 0.32653061224489816
+            }
+          },
+          "P2": {
+            "G0": {
+              "WANT": 0.5102040816326537,
+              "NEUTRAL": 0.16326530612244908,
+              "AVOID": 0.32653061224489816
+            },
+            "G1": {
+              "WANT": 0.5102040816326537,
+              "NEUTRAL": 0.16326530612244908,
+              "AVOID": 0.32653061224489816
+            },
+            "G2": {
+              "WANT": 0.5102040816326537,
+              "NEUTRAL": 0.16326530612244908,
+              "AVOID": 0.32653061224489816
+            }
+          }
+        }
+      }
+    },
+    {
+      "stage": "completed_turn",
+      "turn": 0,
+      "belief": {
+        "representation": "joint-preferences-v1",
+        "partner_ids": [
+          1,
+          2
+        ],
+        "support_size": 361,
+        "entropy_nats": 5.6639340556821995,
+        "marginals": {
+          "P1": {
+            "G0": {
+              "WANT": 0.510204081632653,
+              "NEUTRAL": 0.1632653061224489,
+              "AVOID": 0.32653061224489777
+            },
+            "G1": {
+              "WANT": 0.510204081632653,
+              "NEUTRAL": 0.1632653061224489,
+              "AVOID": 0.32653061224489777
+            },
+            "G2": {
+              "WANT": 0.510204081632653,
+              "NEUTRAL": 0.1632653061224489,
+              "AVOID": 0.32653061224489777
+            }
+          },
+          "P2": {
+            "G0": {
+              "WANT": 0.5418470717782173,
+              "NEUTRAL": 0.15271764274059407,
+              "AVOID": 0.30543528548118815
+            },
+            "G1": {
+              "WANT": 0.45601821707442936,
+              "NEUTRAL": 0.16286811510599594,
+              "AVOID": 0.38111366781957395
+            },
+            "G2": {
+              "WANT": 0.45601821707442936,
+              "NEUTRAL": 0.16286811510599594,
+              "AVOID": 0.38111366781957395
+            }
+          }
+        }
+      }
+    },
+    {
+      "stage": "pending_offer",
+      "turn": 1,
+      "belief": {
+        "representation": "joint-preferences-v1",
+        "partner_ids": [
+          1,
+          2
+        ],
+        "support_size": 361,
+        "entropy_nats": 5.576153538574792,
+        "marginals": {
+          "P1": {
+            "G0": {
+              "WANT": 0.37741218765511547,
+              "NEUTRAL": 0.1822563910212439,
+              "AVOID": 0.4403314213236389
+            },
+            "G1": {
+              "WANT": 0.6787908762014043,
+              "NEUTRAL": 0.13962988195211073,
+              "AVOID": 0.1815792418464835
+            },
+            "G2": {
+              "WANT": 0.5199047538719231,
+              "NEUTRAL": 0.1707307498476688,
+              "AVOID": 0.30936449628040613
+            }
+          },
+          "P2": {
+            "G0": {
+              "WANT": 0.5418470717782167,
+              "NEUTRAL": 0.15271764274059388,
+              "AVOID": 0.30543528548118776
+            },
+            "G1": {
+              "WANT": 0.45601821707442897,
+              "NEUTRAL": 0.16286811510599572,
+              "AVOID": 0.38111366781957384
+            },
+            "G2": {
+              "WANT": 0.45601821707442897,
+              "NEUTRAL": 0.16286811510599572,
+              "AVOID": 0.38111366781957384
+            }
+          }
+        }
+      }
+    },
+    {
+      "stage": "completed_turn",
+      "turn": 1,
+      "belief": {
+        "representation": "joint-preferences-v1",
+        "partner_ids": [
+          1,
+          2
+        ],
+        "support_size": 361,
+        "entropy_nats": 5.576153538574792,
+        "marginals": {
+          "P1": {
+            "G0": {
+              "WANT": 0.37741218765511547,
+              "NEUTRAL": 0.1822563910212439,
+              "AVOID": 0.4403314213236389
+            },
+            "G1": {
+              "WANT": 0.6787908762014043,
+              "NEUTRAL": 0.13962988195211073,
+              "AVOID": 0.1815792418464835
+            },
+            "G2": {
+              "WANT": 0.5199047538719231,
+              "NEUTRAL": 0.1707307498476688,
+              "AVOID": 0.30936449628040613
+            }
+          },
+          "P2": {
+            "G0": {
+              "WANT": 0.5418470717782167,
+              "NEUTRAL": 0.15271764274059388,
+              "AVOID": 0.30543528548118776
+            },
+            "G1": {
+              "WANT": 0.45601821707442897,
+              "NEUTRAL": 0.16286811510599572,
+              "AVOID": 0.38111366781957384
+            },
+            "G2": {
+              "WANT": 0.45601821707442897,
+              "NEUTRAL": 0.16286811510599572,
+              "AVOID": 0.38111366781957384
+            }
+          }
+        }
+      }
+    },
+    {
+      "stage": "pending_offer",
+      "turn": 2,
+      "belief": {
+        "representation": "joint-preferences-v1",
+        "partner_ids": [
+          1,
+          2
+        ],
+        "support_size": 361,
+        "entropy_nats": 5.521076469457656,
+        "marginals": {
+          "P1": {
+            "G0": {
+              "WANT": 0.3774121876551157,
+              "NEUTRAL": 0.1822563910212441,
+              "AVOID": 0.44033142132363945
+            },
+            "G1": {
+              "WANT": 0.6787908762014048,
+              "NEUTRAL": 0.13962988195211087,
+              "AVOID": 0.1815792418464837
+            },
+            "G2": {
+              "WANT": 0.5199047538719241,
+              "NEUTRAL": 0.17073074984766898,
+              "AVOID": 0.30936449628040635
+            }
+          },
+          "P2": {
+            "G0": {
+              "WANT": 0.5900094322372866,
+              "NEUTRAL": 0.1490081172492111,
+              "AVOID": 0.2609824505135019
+            },
+            "G1": {
+              "WANT": 0.5120867939238191,
+              "NEUTRAL": 0.16054901582470124,
+              "AVOID": 0.32736419025147906
+            },
+            "G2": {
+              "WANT": 0.3429413648489619,
+              "NEUTRAL": 0.16832921636455803,
+              "AVOID": 0.48872941878647924
+            }
+          }
+        }
+      }
+    },
+    {
+      "stage": "completed_turn",
+      "turn": 2,
+      "belief": {
+        "representation": "joint-preferences-v1",
+        "partner_ids": [
+          1,
+          2
+        ],
+        "support_size": 361,
+        "entropy_nats": 5.521076469457656,
+        "marginals": {
+          "P1": {
+            "G0": {
+              "WANT": 0.3774121876551157,
+              "NEUTRAL": 0.1822563910212441,
+              "AVOID": 0.44033142132363945
+            },
+            "G1": {
+              "WANT": 0.6787908762014048,
+              "NEUTRAL": 0.13962988195211087,
+              "AVOID": 0.1815792418464837
+            },
+            "G2": {
+              "WANT": 0.5199047538719241,
+              "NEUTRAL": 0.17073074984766898,
+              "AVOID": 0.30936449628040635
+            }
+          },
+          "P2": {
+            "G0": {
+              "WANT": 0.5900094322372866,
+              "NEUTRAL": 0.1490081172492111,
+              "AVOID": 0.2609824505135019
+            },
+            "G1": {
+              "WANT": 0.5120867939238191,
+              "NEUTRAL": 0.16054901582470124,
+              "AVOID": 0.32736419025147906
+            },
+            "G2": {
+              "WANT": 0.3429413648489619,
+              "NEUTRAL": 0.16832921636455803,
+              "AVOID": 0.48872941878647924
+            }
+          }
+        }
+      }
+    },
+    {
+      "stage": "pending_offer",
+      "turn": 3,
+      "belief": {
+        "representation": "joint-preferences-v1",
+        "partner_ids": [
+          1,
+          2
+        ],
+        "support_size": 361,
+        "entropy_nats": 5.542778848965107,
+        "marginals": {
+          "P1": {
+            "G0": {
+              "WANT": 0.3774121876551163,
+              "NEUTRAL": 0.18225639102124438,
+              "AVOID": 0.44033142132364045
+            },
+            "G1": {
+              "WANT": 0.6787908762014054,
+              "NEUTRAL": 0.13962988195211098,
+              "AVOID": 0.18157924184648394
+            },
+            "G2": {
+              "WANT": 0.5199047538719247,
+              "NEUTRAL": 0.17073074984766926,
+              "AVOID": 0.30936449628040685
+            }
+          },
+          "P2": {
+            "G0": {
+              "WANT": 0.6072247164374945,
+              "NEUTRAL": 0.15511429082234662,
+              "AVOID": 0.23766099274015934
+            },
+            "G1": {
+              "WANT": 0.5360914428425293,
+              "NEUTRAL": 0.16596771522026818,
+              "AVOID": 0.2979408419372031
+            },
+            "G2": {
+              "WANT": 0.36336181616773683,
+              "NEUTRAL": 0.17666953301149363,
+              "AVOID": 0.45996865082077043
+            }
+          }
+        }
+      }
+    },
+    {
+      "stage": "completed_turn",
+      "turn": 3,
+      "belief": {
+        "representation": "joint-preferences-v1",
+        "partner_ids": [
+          1,
+          2
+        ],
+        "support_size": 361,
+        "entropy_nats": 5.528990905524453,
+        "marginals": {
+          "P1": {
+            "G0": {
+              "WANT": 0.41816274703089307,
+              "NEUTRAL": 0.189193419475659,
+              "AVOID": 0.3926438334934487
+            },
+            "G1": {
+              "WANT": 0.7024237189156627,
+              "NEUTRAL": 0.1409141723872342,
+              "AVOID": 0.1566621086971041
+            },
+            "G2": {
+              "WANT": 0.5556217199476909,
+              "NEUTRAL": 0.17403757263863867,
+              "AVOID": 0.27034070741367117
+            }
+          },
+          "P2": {
+            "G0": {
+              "WANT": 0.607224716437495,
+              "NEUTRAL": 0.15511429082234662,
+              "AVOID": 0.23766099274015928
+            },
+            "G1": {
+              "WANT": 0.5360914428425293,
+              "NEUTRAL": 0.1659677152202682,
+              "AVOID": 0.29794084193720327
+            },
+            "G2": {
+              "WANT": 0.36336181616773666,
+              "NEUTRAL": 0.1766695330114937,
+              "AVOID": 0.4599686508207703
+            }
+          }
+        }
+      }
+    },
+    {
+      "stage": "pending_offer",
+      "turn": 4,
+      "belief": {
+        "representation": "joint-preferences-v1",
+        "partner_ids": [
+          1,
+          2
+        ],
+        "support_size": 361,
+        "entropy_nats": 5.537185029436022,
+        "marginals": {
+          "P1": {
+            "G0": {
+              "WANT": 0.37893331935610014,
+              "NEUTRAL": 0.20815968187638076,
+              "AVOID": 0.4129069987675193
+            },
+            "G1": {
+              "WANT": 0.6425296829825828,
+              "NEUTRAL": 0.15777885286394847,
+              "AVOID": 0.19969146415346847
+            },
+            "G2": {
+              "WANT": 0.6370014746477374,
+              "NEUTRAL": 0.15760371204014187,
+              "AVOID": 0.20539481331212076
+            }
+          },
+          "P2": {
+            "G0": {
+              "WANT": 0.6072247164374941,
+              "NEUTRAL": 0.15511429082234657,
+              "AVOID": 0.23766099274015923
+            },
+            "G1": {
+              "WANT": 0.5360914428425289,
+              "NEUTRAL": 0.16596771522026807,
+              "AVOID": 0.29794084193720305
+            },
+            "G2": {
+              "WANT": 0.36336181616773644,
+              "NEUTRAL": 0.17666953301149357,
+              "AVOID": 0.45996865082077004
+            }
+          }
+        }
+      }
+    },
+    {
+      "stage": "completed_turn",
+      "turn": 4,
+      "belief": {
+        "representation": "joint-preferences-v1",
+        "partner_ids": [
+          1,
+          2
+        ],
+        "support_size": 361,
+        "entropy_nats": 5.537185029436022,
+        "marginals": {
+          "P1": {
+            "G0": {
+              "WANT": 0.37893331935610014,
+              "NEUTRAL": 0.20815968187638076,
+              "AVOID": 0.4129069987675193
+            },
+            "G1": {
+              "WANT": 0.6425296829825828,
+              "NEUTRAL": 0.15777885286394847,
+              "AVOID": 0.19969146415346847
+            },
+            "G2": {
+              "WANT": 0.6370014746477374,
+              "NEUTRAL": 0.15760371204014187,
+              "AVOID": 0.20539481331212076
+            }
+          },
+          "P2": {
+            "G0": {
+              "WANT": 0.6072247164374941,
+              "NEUTRAL": 0.15511429082234657,
+              "AVOID": 0.23766099274015923
+            },
+            "G1": {
+              "WANT": 0.5360914428425289,
+              "NEUTRAL": 0.16596771522026807,
+              "AVOID": 0.29794084193720305
+            },
+            "G2": {
+              "WANT": 0.36336181616773644,
+              "NEUTRAL": 0.17666953301149357,
+              "AVOID": 0.45996865082077004
+            }
+          }
+        }
+      }
+    },
+    {
+      "stage": "pending_offer",
+      "turn": 5,
+      "belief": {
+        "representation": "joint-preferences-v1",
+        "partner_ids": [
+          1,
+          2
+        ],
+        "support_size": 361,
+        "entropy_nats": 5.537185029436022,
+        "marginals": {
+          "P1": {
+            "G0": {
+              "WANT": 0.37893331935610014,
+              "NEUTRAL": 0.20815968187638076,
+              "AVOID": 0.4129069987675193
+            },
+            "G1": {
+              "WANT": 0.6425296829825828,
+              "NEUTRAL": 0.15777885286394847,
+              "AVOID": 0.19969146415346847
+            },
+            "G2": {
+              "WANT": 0.6370014746477374,
+              "NEUTRAL": 0.15760371204014187,
+              "AVOID": 0.20539481331212076
+            }
+          },
+          "P2": {
+            "G0": {
+              "WANT": 0.6072247164374941,
+              "NEUTRAL": 0.15511429082234657,
+              "AVOID": 0.23766099274015923
+            },
+            "G1": {
+              "WANT": 0.5360914428425289,
+              "NEUTRAL": 0.16596771522026807,
+              "AVOID": 0.29794084193720305
+            },
+            "G2": {
+              "WANT": 0.36336181616773644,
+              "NEUTRAL": 0.17666953301149357,
+              "AVOID": 0.45996865082077004
+            }
+          }
+        }
+      }
+    },
+    {
+      "stage": "completed_turn",
+      "turn": 5,
+      "belief": {
+        "representation": "joint-preferences-v1",
+        "partner_ids": [
+          1,
+          2
+        ],
+        "support_size": 361,
+        "entropy_nats": 5.26489056908254,
+        "marginals": {
+          "P1": {
+            "G0": {
+              "WANT": 0.37893331935609975,
+              "NEUTRAL": 0.2081596818763805,
+              "AVOID": 0.41290699876751885
+            },
+            "G1": {
+              "WANT": 0.6425296829825825,
+              "NEUTRAL": 0.15777885286394833,
+              "AVOID": 0.1996914641534683
+            },
+            "G2": {
+              "WANT": 0.637001474647737,
+              "NEUTRAL": 0.15760371204014167,
+              "AVOID": 0.2053948133121205
+            }
+          },
+          "P2": {
+            "G0": {
+              "WANT": 0.6944770635245886,
+              "NEUTRAL": 0.1182004405783189,
+              "AVOID": 0.18732249589709166
+            },
+            "G1": {
+              "WANT": 0.16536632021820882,
+              "NEUTRAL": 0.2018449787108743,
+              "AVOID": 0.6327887010709159
+            },
+            "G2": {
+              "WANT": 0.4541061031218039,
+              "NEUTRAL": 0.1585816500799391,
+              "AVOID": 0.38731224679825627
+            }
+          }
+        }
+      }
+    }
+  ],
+  "updates": [
+    {
+      "turn_index": 0,
+      "phase": "proposal",
+      "actor_id": 0,
+      "action": {
+        "action": "OFFER",
+        "partner_id": 2,
+        "proposer_action": [
+          0,
+          0
+        ],
+        "partner_action": [
+          0,
+          1
+        ]
+      },
+      "is_evidence": false,
+      "log_predictive_probability": null,
+      "entropy_nats": 5.690053193713666
+    },
+    {
+      "turn_index": 0,
+      "phase": "response",
+      "actor_id": 2,
+      "action": {
+        "response": "REJECT"
+      },
+      "is_evidence": true,
+      "log_predictive_probability": -0.7533201810558149,
+      "entropy_nats": 5.6639340556821995
+    },
+    {
+      "turn_index": 1,
+      "phase": "proposal",
+      "actor_id": 1,
+      "action": {
+        "action": "OFFER",
+        "partner_id": 0,
+        "proposer_action": [
+          0,
+          1
+        ],
+        "partner_action": [
+          0,
+          1
+        ]
+      },
+      "is_evidence": true,
+      "log_predictive_probability": -2.7393616276080897,
+      "entropy_nats": 5.576153538574792
+    },
+    {
+      "turn_index": 1,
+      "phase": "response",
+      "actor_id": 0,
+      "action": {
+        "response": "REJECT"
+      },
+      "is_evidence": false,
+      "log_predictive_probability": null,
+      "entropy_nats": 5.576153538574792
+    },
+    {
+      "turn_index": 2,
+      "phase": "proposal",
+      "actor_id": 2,
+      "action": {
+        "action": "OFFER",
+        "partner_id": 0,
+        "proposer_action": [
+          1,
+          0
+        ],
+        "partner_action": [
+          0,
+          1
+        ]
+      },
+      "is_evidence": true,
+      "log_predictive_probability": -2.8449859633267076,
+      "entropy_nats": 5.521076469457656
+    },
+    {
+      "turn_index": 2,
+      "phase": "response",
+      "actor_id": 0,
+      "action": {
+        "response": "REJECT"
+      },
+      "is_evidence": false,
+      "log_predictive_probability": null,
+      "entropy_nats": 5.521076469457656
+    },
+    {
+      "turn_index": 3,
+      "phase": "proposal",
+      "actor_id": 2,
+      "action": {
+        "action": "OFFER",
+        "partner_id": 1,
+        "proposer_action": [
+          1,
+          0
+        ],
+        "partner_action": [
+          0,
+          1
+        ]
+      },
+      "is_evidence": true,
+      "log_predictive_probability": -2.849179789618715,
+      "entropy_nats": 5.542778848965107
+    },
+    {
+      "turn_index": 3,
+      "phase": "response",
+      "actor_id": 1,
+      "action": {
+        "response": "ACCEPT"
+      },
+      "is_evidence": true,
+      "log_predictive_probability": -0.5976779147534462,
+      "entropy_nats": 5.528990905524453
+    },
+    {
+      "turn_index": 4,
+      "phase": "proposal",
+      "actor_id": 1,
+      "action": {
+        "action": "OFFER",
+        "partner_id": 0,
+        "proposer_action": [
+          0,
+          1
+        ],
+        "partner_action": [
+          1,
+          0
+        ]
+      },
+      "is_evidence": true,
+      "log_predictive_probability": -2.319833840697149,
+      "entropy_nats": 5.537185029436022
+    },
+    {
+      "turn_index": 4,
+      "phase": "response",
+      "actor_id": 0,
+      "action": {
+        "response": "REJECT"
+      },
+      "is_evidence": false,
+      "log_predictive_probability": null,
+      "entropy_nats": 5.537185029436022
+    },
+    {
+      "turn_index": 5,
+      "phase": "proposal",
+      "actor_id": 0,
+      "action": {
+        "action": "OFFER",
+        "partner_id": 2,
+        "proposer_action": [
+          0,
+          1
+        ],
+        "partner_action": [
+          1,
+          1
+        ]
+      },
+      "is_evidence": false,
+      "log_predictive_probability": null,
+      "entropy_nats": 5.537185029436022
+    },
+    {
+      "turn_index": 5,
+      "phase": "response",
+      "actor_id": 2,
+      "action": {
+        "response": "REJECT"
+      },
+      "is_evidence": true,
+      "log_predictive_probability": -0.8888538683933094,
+      "entropy_nats": 5.26489056908254
+    }
+  ],
+  "transcript": [
+    {
+      "turn_index": 0,
+      "proposer_id": 0,
+      "action": "OFFER",
+      "partner_id": 2,
+      "offer": {
+        "partner_id": 2,
+        "proposer_action": [
+          0,
+          0
+        ],
+        "partner_action": [
+          0,
+          1
+        ]
+      },
+      "response": "REJECT",
+      "commitments_after": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "invalid_action": false
+    },
+    {
+      "turn_index": 1,
+      "proposer_id": 1,
+      "action": "OFFER",
+      "partner_id": 0,
+      "offer": {
+        "partner_id": 0,
+        "proposer_action": [
+          0,
+          1
+        ],
+        "partner_action": [
+          0,
+          1
+        ]
+      },
+      "response": "REJECT",
+      "commitments_after": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "invalid_action": false
+    },
+    {
+      "turn_index": 2,
+      "proposer_id": 2,
+      "action": "OFFER",
+      "partner_id": 0,
+      "offer": {
+        "partner_id": 0,
+        "proposer_action": [
+          1,
+          0
+        ],
+        "partner_action": [
+          0,
+          1
+        ]
+      },
+      "response": "REJECT",
+      "commitments_after": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "invalid_action": false
+    },
+    {
+      "turn_index": 3,
+      "proposer_id": 2,
+      "action": "OFFER",
+      "partner_id": 1,
+      "offer": {
+        "partner_id": 1,
+        "proposer_action": [
+          1,
+          0
+        ],
+        "partner_action": [
+          0,
+          1
+        ]
+      },
+      "response": "ACCEPT",
+      "commitments_after": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "invalid_action": false
+    },
+    {
+      "turn_index": 4,
+      "proposer_id": 1,
+      "action": "OFFER",
+      "partner_id": 0,
+      "offer": {
+        "partner_id": 0,
+        "proposer_action": [
+          0,
+          1
+        ],
+        "partner_action": [
+          1,
+          0
+        ]
+      },
+      "response": "REJECT",
+      "commitments_after": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "invalid_action": false
+    },
+    {
+      "turn_index": 5,
+      "proposer_id": 0,
+      "action": "OFFER",
+      "partner_id": 2,
+      "offer": {
+        "partner_id": 2,
+        "proposer_action": [
+          0,
+          1
+        ],
+        "partner_action": [
+          1,
+          1
+        ]
+      },
+      "response": "REJECT",
+      "commitments_after": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "invalid_action": false
+    }
+  ],
+  "terminal_rewards": [
+    0,
+    0,
+    0
+  ],
+  "log_evidence": -12.993213185453229,
+  "stream_replay_max_probability_error": 0.0,
+  "elapsed_seconds": 0.08053124998696148
+}

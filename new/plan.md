@@ -1,8 +1,69 @@
 # BENAC-P v0：可执行的游戏实现计划
 
-**状态：** 当前阶段已实现并跑通 game engine、policy-agnostic self-play harness、native OpenAI-compatible tool-calling vLLM adapter（含一次 retry），以及用于 debug/controlled diagnostics 的 rational oracle 和 perfect-information reference solver；第一版直接用 self-play 验证交互。Bayesian inference、diagnostics 和 reproduction 仍是后续工作。
+**状态：** 已实现并跑通 game engine、policy-agnostic self-play harness、native OpenAI-compatible tool-calling vLLM adapter（含一次 retry），以及用于 debug 的 rational oracle 和 perfect-information reference solver。后续已补齐 grounding、受控 partner、条件先验、小规模 Bayesian filter 和短 horizon Bayesian planner，见第 13 节。完整 LLM diagnostics、post-training 与 reproduction 仍是后续工作。
 
 这份文件是当前的 canonical plan。它根据之前的讨论重新整理；如果和早期聊天记录有冲突，以本文件后面的定义为准。
+
+## 0. 当前实现暴露的四个开放问题
+
+下面四项来自当前 implementation 和 `max_tokens=4096` 的 self-play trace。它们是
+需要单独诊断的设计/评估问题，不是这次恢复操作中要直接修复的代码 bug。后续必须
+把 mechanism 是否正确、模型是否理解 state、模型是否做出高价值 action，以及
+模型写出的 reasoning 是否可信分开报告。
+
+### 0.1 Grounding 仍然可能成为主要瓶颈
+
+2026-09-06 更新：以下为先前 trace 暴露的问题。现已提供 `state-facts-v1`
+机械计算字段，见第 4.3 节；尚未运行 LLM 对照，不能声称模型 grounding 已改善。
+
+当前 LLM view 已经把 binary vectors 转成 named commitments，并明确写出
+`ALL_OF`、当前 commitments、pending offer 的 additions 和
+`WANT/NEUTRAL/AVOID`。但 restored implementation 还没有额外提供机械计算好的：
+
+- 每个 goal 当前是否完整满足；
+- ACCEPT 后的 exact next commitment state；
+- 每个 goal 对 terminal utility 的实际贡献；
+- 一个 offer 是否只是重复当前 state、以及它究竟新增了哪些 commitment。
+
+因此模型仍需从这些原始事实自行做集合 bookkeeping。trace 中出现过把 partial
+goal 当成 satisfied、混淆 current state 与 hypothetical accepted state、读错
+offer additions，以及错误计算 utility 的情况。目标不是替模型提供战略答案，而
+是先把环境能够无歧义提供的 state facts 补全；在此之前，不能把所有 grounding
+错误都归因于模型。
+
+### 0.2 Reasoning length 过长，而且当前没有真正的长度约束
+
+当前 protocol 只在 prompt 中要求 “brief reasoning”。恢复后的实现没有
+`max_reasoning_words` 之类的硬约束，也不单独解析或截断 reasoning；`max_tokens`
+约束的是整段 completion，并且可以由 CLI/client 覆盖。`max_tokens=4096` 的
+self-play trace 中曾有 proposer 用满 4096 tokens 后仍未生成 tool call，说明
+reasoning 会挤占 action 的生成空间。后续需要在不替模型做战略推理的前提下，
+把 reasoning budget 降到可用于训练和评测的范围，并单独监控截断率。
+
+### 0.3 最终 terminal reward 不能证明每一步都做了最优选择
+
+当前 game 的 commitments 单调增加、horizon 有限，且 offer 可能被 reject 或
+只是沿着之后仍可到达同一终局的路径推进。因此一个没有选择当前最优 partner、
+offer 或 response 的 trajectory，仍可能在后续 turns 收敛到与
+perfect-information solver 相同的最优 terminal reward。反过来，不同质量的
+action sequence 也可能得到相同的最终 payoff。
+
+所以 terminal reward 只能作为 episode-level outcome，不能作为逐步 strategic
+optimality 的证明。后续需要记录每个 decision 的 solver continuation value、
+chosen action 的 value gap/regret，以及多 seed 的结果；不能只比较最终 reward。
+
+### 0.4 当前 reasoning 和 action 没有可靠的一致性关系
+
+native protocol 中，environment 实际执行的是 `tool_calls`；tool call 之前的
+普通文本只被保存在 completion content 中，当前实现不验证它是否正确解释了
+state，也不验证它是否真正导致了后面的 action。因此可能出现 reasoning 中
+grounding/utility 说错，但 tool action 恰好合法甚至是高价值 action 的情况。
+
+这可能来自 post-hoc rationale、模型用未写出的 latent heuristic 选 action、
+action tie/convergent dynamics 掩盖了 reasoning 错误，或 protocol 本身没有把
+两者绑定；目前不能直接断言是哪一种。后续应把 reasoning 当作 diagnostic
+channel 而不是 action correctness 的证据，并分别做 action value、grounding
+accuracy，以及 reason+action 与 action-only 的对照测试。
 
 ## 1. 第一阶段的目标
 
@@ -26,6 +87,11 @@
 - 以后接入的任意 learned policy。
 
 第一版优先测试 **self-play**：三个 player 使用同一种 policy class，但每个 player 获得自己的 private preference 和同一份 public transcript。oracle 不再是第一优先级。
+
+第一阶段的“跑通”只证明同一套 game mechanism 可以被不同 policy 驱动，并不证明
+LLM 已经理解了所有 state，也不证明 self-play 的每个选择都达到 solver-optimal。
+terminal reward、逐步 action quality、tool validity 和 reasoning diagnostics
+必须分开记录。
 
 ## 2. v0 的正式游戏定义
 
@@ -227,8 +293,12 @@ BENAC-P v0 使用 public transcript。所有 players 都观察：
 - selected partner；
 - 完整 offer；
 - `ACCEPT` 或 `REJECT`；
-- 每次 transition 后的 commitment state；
 - 历史 turn index 和 round-robin schedule。
+
+内部的 `PublicEvent` 仍保存每次 transition 后的 `commitments_after`，用于环境
+校验、solver 和重建 state；但发给 LLM 的 agent-facing transcript 不在每个 event
+里重复完整 commitment snapshot，而是单独提供当前的 `binding_commitments`。
+这个字段是模型判断当前 state 的权威来源。
 
 player 只额外观察自己的 private preference，不观察其他 players 的 preference。
 
@@ -273,6 +343,19 @@ agent-facing observation 使用 named representation，例如：
 `P#:A#` 都出现在 `binding_commitments` 中时，goal 才算 satisfied；缺少任何
 一个 requirement 都不产生 utility。`pending_offer` 是 hypothetical next
 state，不会自动修改当前的 `binding_commitments`。
+
+2026-09-06 起，native agent-facing payload 另外提供 `grounding_version="state-facts-v1"`：
+
+- `current_state_facts.goals`：每个 goal 的 `satisfied`、`missing_commitments` 和
+  `your_utility_contribution`；
+- `current_state_facts.your_utility_if_terminal`：若在当前 state 终局的自身效用；
+- `if_accepted`：pending offer 被接受后的 commitments、相同 goal/utility facts，
+  以及 `new_commitment_count`。无 pending offer 时为 null。
+
+这些值只由合法 observation 机械计算，不预测未来、不评估最优 action。
+public view 的自身 utility 字段为 null；private view 不增加其他玩家的 preference。
+legacy ROLL 的 `to_dict()` wire payload 保持原有格式。新 native view 与旧 raw
+view 的模型结果应按 observation 版本区分；目前仅完成 engine 一致性验证。
 
 内部 `PlayerObservation` 仍可以保留 matrix、完整 target vector 和
 `legal_offers`，供 environment validator、tool mask、oracle 和 solver 使用；这些
@@ -498,6 +581,11 @@ PASS()
 OFFER(partner="P1", self_commitments=["A0"], partner_commitments=["A1"])
 ```
 
+这里的“简短”是 prompt-level convention，不是恢复后 implementation 的硬性
+validator。adapter 只根据 native `tool_calls` 解码和执行 action；它不会检查
+reasoning 是否存在、是否简短、是否正确，`max_tokens` 也控制整段 response 而不
+只是 reasoning。若没有合法 tool call，当前实现只按格式错误 retry 一次。
+
 ### 7.2 Responder prompt/output
 
 responder prompt 在 public/private observation 之外，加入当前 offer。HTTP
@@ -526,6 +614,9 @@ Then immediately call exactly ONE available tool:
 Always provide reasoning before the tool call.
 Do not write anything after the tool call.
 ```
+
+Responder 也同样只对 tool call 做机制层面的校验，不把 reasoning 当作
+`ACCEPT/REJECT` 的证明；reasoning/action 是否一致属于第 0.4 节的诊断问题。
 
 vLLM 只负责生成 policy output；partner acceptance、commitment update 和
 reward 仍由 game engine 执行。tool parser 的格式合法性、game engine 的
@@ -616,7 +707,9 @@ third_party/negotiation_benchmark/
 player 都能使用同一 vLLM backend，但每次调用只看到自己的 private view。
 训练和 evaluation 使用同一种 native tool wire format；每次缺少、malformed
 或 illegal action 最多 retry 一次，并分别记录第一次 valid、retry 后 valid
-和最终 invalid。
+和最终 invalid。当前步骤不额外强制 reasoning 长度，也不把 reasoning 的内容
+用于 action validation；reasoning budget 和 grounding/action alignment 留给
+后续 diagnostics。
 
 ### Step 5：生成初始样本
 
@@ -711,3 +804,35 @@ tool backend。server 需要开启 `--enable-auto-tool-choice` 和
 observation 和 policy interface。
 
 完成后，下一阶段进入 diagnostics：在 physical game state 相同的情况下改变 public interaction history，测试 player 的隐式 partner inference 是否导致 partner selection、offer、ACCEPT/REJECT 和 PASS 行为变化。
+
+## 13. 后续诊断路线（2026-09-06）
+
+研究主线为 `Diagnose → Post-train → Solve → Transfer`。诊断参考 TERMS-Bench
+的受控 counterpart 和 oracle intervention 方法，围绕 partner belief/updating
+与 partner-conditioned planning 两项计算瓶颈展开。BENAC-P 保留为主训练候选
+环境，重点验证多方、跨玩家依赖与不可逆承诺的长期后果。
+
+具体范围、信息条件、实验矩阵与进入训练的标准见 [diagnose_plan.md](diagnose_plan.md)。
+该文档区分后续计划与已完成的基础实现；前述第一阶段游戏机制保持有效。
+
+实施进展：已完成 grounding facts、`SoftProgressPolicy`、v0 条件先验、小规模
+`ExactBayesFilter` 与 `BayesPlanner`。已完成本地机制/概率/规划验证，并保存
+belief 改变最优 partner 与第三方长期依赖的人工实例。完整 LLM 诊断尚未运行。
+具体状态以 diagnose_plan.md 的“当前进展”为准。
+
+### 13.4 Menu 与主动信息获取诊断
+
+已增加 opt-in binding menu：`--menu` / `GameSpec.menu_enabled`，允许 proposer
+给同一 partner 两个合法 offer，由 CHOOSE_1 / CHOOSE_2 / REJECT 选择，仅选中
+commitment 生效。原有单 offer 保留用于对照。状态、公开 observation、受控
+likelihood、exact filter、Bayes planner、native LLM tools 与 runner 均已接入。
+
+这用于检验 planning → interaction evidence → belief 的依赖，与原有
+belief → planning 形成闭环，不增加第三个 primitive。一个公开两类型、三人两轮
+最小实例已验证：后续使用新 belief 时最优首步从单 offer 改为 menu，同 menu 下
+更新收益为 0.166812。该构造和数值不等于已经观察到 LLM weakness。
+
+首轮模型为 Qwen3-4B-Instruct-2507，由用户在 remote server 执行：
+`bash examples/benac_p/run_menu_diagnose.sh`。脚本复用现有 HTTP client 与服务
+配置，导出并执行 11 个 fixed-decision probes，自动评分 belief 与 planning。
+详见 `examples/benac_p/README.md` 和 `new/diagnose_plan.md` §10。

@@ -9,6 +9,7 @@ import numpy as np
 
 from benac_p.observations import PlayerObservation
 from benac_p.schema import (
+    MenuOffer,
     Offer,
     OfferProposal,
     PassProposal,
@@ -48,11 +49,16 @@ class RandomPolicy:
     def propose(self, observation: PlayerObservation) -> Proposal:
         if not observation.legal_offers or self._rng.random() < self.pass_probability:
             return PassProposal()
+        if observation.menu_enabled:
+            proposals = observation.legal_proposals[1:]
+            return proposals[int(self._rng.integers(len(proposals)))]
         index = int(self._rng.integers(len(observation.legal_offers)))
         return OfferProposal(observation.legal_offers[index])
 
     def respond(self, observation: PlayerObservation, proposal: Offer) -> ResponseAction:
-        del observation, proposal
+        del observation
+        if isinstance(proposal, MenuOffer):
+            return ResponseAction(f"CHOOSE_{int(self._rng.integers(1, 3))}" if self._rng.random() < self.accept_probability else "REJECT")
         if self._rng.random() < self.accept_probability:
             return ResponseAction(ResponseAction.ACCEPT)
         return ResponseAction(ResponseAction.REJECT)

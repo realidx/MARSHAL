@@ -128,6 +128,8 @@ class PerfectInfoSolver:
             raise ValueError("max_states must be positive or None.")
         if tie_tolerance < 0:
             raise ValueError("tie_tolerance must be non-negative.")
+        if spec.menu_enabled:
+            raise ValueError("PerfectInfoSolver does not support menus; use BayesPlanner with known partner kernels.")
         self.spec = spec
         self.max_states = max_states
         self.tie_tolerance = float(tie_tolerance)

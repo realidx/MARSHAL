@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from itertools import combinations
 from typing import Any
 
-from benac_p.schema import GameSpec, Goal, Offer, Preference, PublicEvent
+from benac_p.schema import GameSpec, Goal, Offer, MenuOffer, OfferProposal, PassProposal, Preference, PublicEvent, PREFERENCE_TO_VALUE
 from benac_p.state import GameState
 
 
@@ -69,6 +70,13 @@ def _event_to_agent_dict(
         "proposer": _player_name(event.proposer_id),
         "action": event.action,
     }
+    if event.action == "MENU":
+        result["partner"] = _player_name(event.partner_id)
+        result["options"] = [
+            _event_to_agent_dict(replace(event, action="OFFER", offer=o), commitments_before, n_actions_per_player)["additions"]
+            for o in event.offer.offers
+        ]
+        result["response"] = event.response
     if event.action == "OFFER" and event.offer is not None:
         partner_id = event.offer.partner_id
         result["partner"] = _player_name(partner_id)
@@ -109,8 +117,21 @@ class PlayerObservation:
     legal_partners: tuple[int, ...]
     legal_offers: tuple[Offer, ...]
     pending_proposer_id: int | None = None
-    pending_offer: Offer | None = None
+    pending_offer: Offer | MenuOffer | None = None
     all_preferences: tuple[tuple[Preference, ...], ...] | None = None
+    menu_enabled: bool = False
+
+    @property
+    def legal_proposals(self):
+        if not self.is_proposer or self.pending_offer is not None:
+            return ()
+        actions = [PassProposal()]
+        for partner in self.legal_partners:
+            offers = tuple(o for o in self.legal_offers if o.partner_id == partner)
+            actions.extend(OfferProposal(o) for o in offers)
+            if self.menu_enabled:
+                actions.extend(OfferProposal(MenuOffer(pair)) for pair in combinations(offers, 2))
+        return tuple(actions)
 
     @property
     def is_proposer(self) -> bool:
@@ -148,6 +169,8 @@ class PlayerObservation:
             "pending_proposer_id": self.pending_proposer_id,
             "pending_offer": None if self.pending_offer is None else self.pending_offer.to_dict(),
         }
+        if self.menu_enabled:
+            result["menu_enabled"] = True
         if self.all_preferences is not None:
             result["all_preferences"] = [
                 [preference.value for preference in preferences]
@@ -231,8 +254,22 @@ class PlayerObservation:
                 _player_name(player_id) for player_id in self.legal_partners
             ],
             "pending_offer": None,
+            "grounding_version": "state-facts-v1",
+            "current_state_facts": self.state_facts(self.commitments),
+            "if_accepted": None,
         }
-        if self.pending_offer is not None:
+        if self.menu_enabled:
+            result["menu_enabled"] = True
+        if isinstance(self.pending_offer, MenuOffer):
+            branches = [replace(self, pending_offer=o).to_agent_dict() for o in self.pending_offer.offers]
+            result["pending_offer"] = {
+                "proposer": _player_name(self.current_proposer),
+                "partner": _player_name(self.pending_offer.partner_id),
+                "options": [b["pending_offer"]["additions"] for b in branches],
+                "responses": ["CHOOSE_1", "CHOOSE_2", "REJECT"],
+            }
+            result["if_chosen"] = [b["if_accepted"] for b in branches]
+        elif self.pending_offer is not None:
             proposer_id = self.pending_proposer_id
             if proposer_id is None:
                 proposer_id = self.current_proposer
@@ -255,6 +292,15 @@ class PlayerObservation:
                     ),
                 },
             }
+            accepted = self.commitments_if_accepted(self.pending_offer)
+            result["if_accepted"] = {
+                "binding_commitments": _commitment_map(accepted, self.n_actions_per_player),
+                **self.state_facts(accepted),
+                "new_commitment_count": sum(
+                    sum(after) - sum(before)
+                    for before, after in zip(self.commitments, accepted)
+                ),
+            }
         if self.all_preferences is not None:
             result["all_preferences"] = {
                 _player_name(player_id): {
@@ -264,6 +310,44 @@ class PlayerObservation:
                 for player_id, preferences in enumerate(self.all_preferences)
             }
         return result
+
+    def commitments_if_accepted(self, offer: Offer) -> tuple[tuple[int, ...], ...]:
+        """Project an already validated offer without changing current state."""
+
+        proposer_id = self.current_proposer
+        if proposer_id is None:
+            raise ValueError("Cannot project an offer after the game ends.")
+        rows = [list(row) for row in self.commitments]
+        for player_id, target in (
+            (proposer_id, offer.proposer_action), (offer.partner_id, offer.partner_action)
+        ):
+            for action_id, value in enumerate(target):
+                rows[player_id][action_id] |= int(value)
+        return tuple(tuple(row) for row in rows)
+
+    def state_facts(self, commitments: tuple[tuple[int, ...], ...]) -> dict[str, Any]:
+        """Mechanical ALL_OF facts; utility is a snapshot, not a continuation value."""
+
+        goals = {}
+        utility = None if self.own_preferences is None else 0
+        for goal in self.goals:
+            missing = [
+                f"P{action.player_id}:A{action.action_id}"
+                for action in goal.required_actions
+                if commitments[action.player_id][action.action_id] == 0
+            ]
+            contribution = (
+                None if self.own_preferences is None
+                else int(not missing) * PREFERENCE_TO_VALUE[self.own_preferences[goal.goal_id]]
+            )
+            goals[f"G{goal.goal_id}"] = {
+                "satisfied": not missing,
+                "missing_commitments": missing,
+                "your_utility_contribution": contribution,
+            }
+            if utility is not None:
+                utility += contribution
+        return {"goals": goals, "your_utility_if_terminal": utility}
 
 
 def _validate_player(spec: GameSpec, player_id: int) -> None:
@@ -277,7 +361,7 @@ def build_player_observation(
     *,
     mode: str = "private",
     pending_proposer_id: int | None = None,
-    pending_offer: Offer | None = None,
+    pending_offer: Offer | MenuOffer | None = None,
 ) -> PlayerObservation:
     """Build a private, public, or explicit full/debug observation.
 
@@ -334,4 +418,5 @@ def build_player_observation(
         pending_proposer_id=pending_proposer_id,
         pending_offer=pending_offer,
         all_preferences=all_preferences,
+        menu_enabled=state.spec.menu_enabled,
     )

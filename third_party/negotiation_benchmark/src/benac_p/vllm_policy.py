@@ -6,7 +6,7 @@ import json
 from typing import Any, Callable, Mapping, Sequence
 
 from benac_p.observations import PlayerObservation
-from benac_p.schema import Offer, OfferProposal, PassProposal, ResponseAction
+from benac_p.schema import MenuOffer, response_actions, Offer, OfferProposal, PassProposal, ResponseAction
 from benac_p.state import InvalidActionError
 
 
@@ -187,10 +187,18 @@ class VLLMPlayerPolicy:
                 offer_parameters,
             )
         )
+        if observation.menu_enabled:
+            tools.append(_tool("MENU", "Offer two distinct packages to the SAME partner. Only the chosen package binds immediately.", {
+                "type": "object", "properties": {"options": {
+                    "type": "array", "minItems": 2, "maxItems": 2, "items": offer_parameters,
+                }}, "required": ["options"], "additionalProperties": False,
+            }))
         return tuple(tools)
 
     @staticmethod
-    def _responder_tools() -> tuple[dict[str, Any], ...]:
+    def _responder_tools(pending=None) -> tuple[dict[str, Any], ...]:
+        if isinstance(pending, MenuOffer):
+            return tuple(_tool(a.value, "Reject all options." if a.value == "REJECT" else "Choose this option; it binds immediately.", _empty_parameters()) for a in response_actions(pending))
         return (
             _tool("ACCEPT", "Accept the pending offer.", _empty_parameters()),
             _tool("REJECT", "Reject the pending offer.", _empty_parameters()),
@@ -316,6 +324,17 @@ class VLLMPlayerPolicy:
             if arguments is None or arguments:
                 raise InvalidActionError("PASS must have an empty argument object.")
             return PassProposal()
+        if name == "MENU":
+            if not observation.menu_enabled or not isinstance(arguments, Mapping):
+                raise InvalidActionError("MENU is unavailable or malformed.")
+            options = arguments.get("options")
+            if not isinstance(options, list) or len(options) != 2:
+                raise InvalidActionError("MENU requires exactly two options.")
+            offers = tuple(self._decode_proposer_call({"name": "OFFER", "arguments": o}, observation).offer for o in options)
+            try:
+                return OfferProposal(MenuOffer(offers))
+            except ValueError as exc:
+                raise InvalidActionError(str(exc)) from exc
         if name != "OFFER":
             raise InvalidActionError(f"Unknown proposer tool: {name!r}.")
         if arguments is None:
@@ -348,10 +367,10 @@ class VLLMPlayerPolicy:
             raise InvalidActionError("OFFER is not legal in the current game state.")
         return OfferProposal(offer)
 
-    def _decode_responder_call(self, call: Any) -> ResponseAction:
+    def _decode_responder_call(self, call: Any, pending=None) -> ResponseAction:
         name = self._call_name(call).upper()
         arguments = self._call_arguments(call)
-        if name not in {ResponseAction.ACCEPT, ResponseAction.REJECT}:
+        if name not in {a.value for a in response_actions(pending)}:
             raise InvalidActionError(f"Unknown responder tool: {name!r}.")
         if arguments is None or arguments:
             raise InvalidActionError(f"{name} must have an empty argument object.")
@@ -380,7 +399,10 @@ class VLLMPlayerPolicy:
             "5. round_robin, current_proposer, and turn_index: the public turn schedule.\n"
             "6. max_changes and forbidden_commitments: the per-player commitment constraints.\n"
             "7. legal_partners: the partners currently available to the proposer.\n"
-            "8. transcript: previous public PASS/OFFER events.\n\n"
+            "8. transcript: previous public PASS/OFFER events.\n"
+            "9. current_state_facts gives computed goal satisfaction, missing commitments, "
+            "and your utility if the game ended in this state. These are state facts, "
+            "not predictions of future utility.\n\n"
             "--- STATE AND UTILITY RULES ---\n"
             "1. Every goal is ALL_OF: it is satisfied only when every commitment in its "
             "requires list is present in binding_commitments. If any requirement is missing, "
@@ -431,7 +453,11 @@ class VLLMPlayerPolicy:
             "2. binding_commitments lists the commitments that are already binding.\n"
             "3. pending_offer contains the proposer, partner, and an additions map of the "
             "named commitments each player would receive if ACCEPT is chosen.\n"
-            "4. transcript, round_robin, and turn_index describe the public history and schedule.\n\n"
+            "4. transcript, round_robin, and turn_index describe the public history and schedule.\n"
+            "5. current_state_facts gives computed goal satisfaction, missing commitments, "
+            "and your utility if the game ended now. if_accepted gives these facts and "
+            "binding_commitments for the hypothetical accepted state, plus the number of "
+            "new commitments. These facts do not predict future utility.\n\n"
             "--- STATE AND UTILITY RULES ---\n"
             "1. Every goal is ALL_OF: it is satisfied only when every commitment in its "
             "requires list is present in binding_commitments. If any requirement is missing, "
@@ -460,7 +486,7 @@ class VLLMPlayerPolicy:
         messages = [
             {
                 "role": "system",
-                "content": self._proposer_system_prompt(observation),
+                "content": self._proposer_system_prompt(observation) + ("\nMENU({options:[offer1,offer2]}) is also available. Options must be distinct legal offers to the same partner. Partner chooses CHOOSE_1/CHOOSE_2 or REJECT; only the chosen offer binds, consuming one turn." if observation.menu_enabled else ""),
             },
             {
                 "role": "user",
@@ -484,7 +510,7 @@ class VLLMPlayerPolicy:
         messages = [
             {
                 "role": "system",
-                "content": self._responder_system_prompt(observation),
+                "content": ("You are a BENAC-P negotiator maximizing your own terminal utility. The pending menu contains two legal binding offers to you. Use CHOOSE_1(), CHOOSE_2(), or REJECT(). Only the chosen offer binds immediately; rejection binds neither. Your private observation includes projected state facts for both options. Give reasoning, then exactly one tool call." if isinstance(observation.pending_offer, MenuOffer) else self._responder_system_prompt(observation)),
             },
             {
                 "role": "user",
@@ -497,13 +523,16 @@ class VLLMPlayerPolicy:
         ]
         return self._native_decision(
             messages,
-            self._responder_tools(),
-            self._decode_responder_call,
+            self._responder_tools(observation.pending_offer),
+            lambda call: self._decode_responder_call(call, observation.pending_offer),
         )
 
     def propose(self, observation: PlayerObservation) -> PassProposal | OfferProposal:
         if self.native_tools:
             return self._propose_native(observation)
+
+        if observation.menu_enabled:
+            raise ValueError("Menu games require the native-tools adapter.")
 
         # Legacy compatibility for the ROLL in-process adapter.  This path is
         # deliberately not used by the canonical HTTP/vLLM 0.28 interface.

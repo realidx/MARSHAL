@@ -1,6 +1,9 @@
 """BENAC-P v0: private-preference, public-transcript negotiation games."""
 
 from benac_p.generator import GeneratorConfig, generate_game
+from benac_p.controlled import SoftProgressPolicy
+from benac_p.belief import BeliefLimitError, BeliefState, ConditionalPreferencePrior, ExactBayesFilter, FinitePreferencePrior
+from benac_p.bayes_planner import BayesPlanner, BayesPlannerResult, BayesPlannerLimitError
 from benac_p.observations import PlayerObservation, build_player_observation
 from benac_p.oracle import OraclePartnerPolicy, OraclePolicy, RationalOraclePolicy
 from benac_p.policies import PlayerPolicy, Proposal, RandomPolicy, ScriptedPolicy
@@ -10,6 +13,7 @@ from benac_p.schema import (
     ActionRef,
     GameSpec,
     Goal,
+    MenuOffer,
     Offer,
     OfferProposal,
     PassProposal,
@@ -31,6 +35,14 @@ from benac_p.vllm_policy import VLLMPlayerPolicy
 
 __all__ = [
     "ActionRef",
+    "BayesPlanner",
+    "BayesPlannerResult",
+    "BayesPlannerLimitError",
+    "BeliefLimitError",
+    "BeliefState",
+    "ConditionalPreferencePrior",
+    "ExactBayesFilter",
+    "FinitePreferencePrior",
     "EpisodeResult",
     "GameRunner",
     "GameSpec",
@@ -40,6 +52,7 @@ __all__ = [
     "InvalidActionError",
     "OraclePartnerPolicy",
     "OraclePolicy",
+    "MenuOffer",
     "Offer",
     "OfferProposal",
     "PassProposal",
@@ -55,6 +68,7 @@ __all__ = [
     "ResponseAction",
     "ResponseEvaluation",
     "ScriptedPolicy",
+    "SoftProgressPolicy",
     "SolverLimitError",
     "SolverResult",
     "SolverRollout",

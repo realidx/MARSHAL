@@ -7,7 +7,7 @@ from typing import Any, Mapping, Sequence
 
 from benac_p.observations import PlayerObservation, build_player_observation
 from benac_p.policies import PlayerPolicy, Proposal
-from benac_p.schema import GameSpec, Offer, OfferProposal, PassProposal, ResponseAction, PublicEvent
+from benac_p.schema import GameSpec, Offer, MenuOffer, OfferProposal, PassProposal, ResponseAction, PublicEvent
 from benac_p.state import GameState, InvalidActionError
 
 
@@ -19,6 +19,11 @@ def _normalise_proposal(raw: Any) -> Proposal:
     action = str(raw.get("action", "")).upper()
     if action == "PASS":
         return PassProposal()
+    if action == "MENU":
+        try:
+            return OfferProposal(MenuOffer(tuple(Offer(**o) for o in raw["offers"])))
+        except (KeyError, TypeError, ValueError) as exc:
+            raise InvalidActionError("Malformed MENU.") from exc
     if action != "OFFER":
         raise InvalidActionError("Proposal action must be PASS or OFFER.")
     source = raw.get("offer", raw)
@@ -100,7 +105,7 @@ class GameRunner:
         player_id: int,
         *,
         pending_proposer_id: int | None = None,
-        pending_offer: Offer | None = None,
+        pending_offer: Offer | MenuOffer | None = None,
     ) -> PlayerObservation:
         return build_player_observation(
             state,
@@ -165,6 +170,7 @@ class GameRunner:
                 response = _normalise_response(
                     self.policies[partner_id].respond(responder_observation, proposal.offer)
                 )
+                state.validate_response(proposal.offer, response)
                 invalid_response = False
             except (InvalidActionError, TypeError, ValueError, KeyError) as exc:
                 if self.strict:

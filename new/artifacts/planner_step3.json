@@ -1,0 +1,1529 @@
+{
+  "experiment": "belief-conditioned-planner-smoke-v1",
+  "scope": "Constructed diagnostic fixtures; not LLM results or population estimates.",
+  "planner": {
+    "version": "bayes-expectimax-v1",
+    "max_remaining_turns": 4,
+    "max_nodes": 50000,
+    "max_hypotheses": 4096,
+    "tie_tolerance": 1e-10,
+    "tie_rule": "first within tolerance: PASS/REJECT before offers/ACCEPT",
+    "objective": "own terminal ALL_OF utility; full remaining schedule; no discount",
+    "future_beliefs": "Bayesian updates after non-ego actions only",
+    "partner_policies": {
+      "all_partners": {
+        "version": "soft-progress-v1",
+        "temperature": 0.5,
+        "progress_weight": 0.5,
+        "uniform_mix": 0.02,
+        "potential": "sum V_g * (S_g + w * (1-S_g) * completed_fraction_g)",
+        "last_turn_progress_weight": 0.0,
+        "scores": "PASS/REJECT: 0; OFFER/ACCEPT: Phi(C_if_accepted)-Phi(C)",
+        "probabilities": "(1-uniform_mix)*softmax(scores/temperature)+uniform_mix/num_actions"
+      }
+    }
+  },
+  "belief_choice_cases": [
+    {
+      "name": "P1_offers_to_complete_G0",
+      "observation": {
+        "player": "P0",
+        "is_proposer": true,
+        "n_players": 3,
+        "actions_per_player": {
+          "P0": [
+            "A0",
+            "A1"
+          ],
+          "P1": [
+            "A0"
+          ],
+          "P2": [
+            "A0"
+          ]
+        },
+        "max_changes": 1,
+        "forbidden_commitments": null,
+        "goals": {
+          "G0": {
+            "type": "ALL_OF",
+            "requires": [
+              "P0:A0",
+              "P1:A0"
+            ],
+            "your_preference": "WANT"
+          },
+          "G1": {
+            "type": "ALL_OF",
+            "requires": [
+              "P0:A1",
+              "P2:A0"
+            ],
+            "your_preference": "WANT"
+          }
+        },
+        "current_proposer": "P0",
+        "round_robin": [
+          "P1",
+          "P0"
+        ],
+        "turn_index": 1,
+        "binding_commitments": {
+          "P0": [],
+          "P1": [],
+          "P2": []
+        },
+        "transcript": [
+          {
+            "turn": 0,
+            "proposer": "P1",
+            "action": "OFFER",
+            "partner": "P0",
+            "additions": {
+              "P1": [
+                "A0"
+              ],
+              "P0": [
+                "A0"
+              ]
+            },
+            "response": "REJECT"
+          }
+        ],
+        "legal_partners": [
+          "P1",
+          "P2"
+        ],
+        "pending_offer": null,
+        "grounding_version": "state-facts-v1",
+        "current_state_facts": {
+          "goals": {
+            "G0": {
+              "satisfied": false,
+              "missing_commitments": [
+                "P0:A0",
+                "P1:A0"
+              ],
+              "your_utility_contribution": 0
+            },
+            "G1": {
+              "satisfied": false,
+              "missing_commitments": [
+                "P0:A1",
+                "P2:A0"
+              ],
+              "your_utility_contribution": 0
+            }
+          },
+          "your_utility_if_terminal": 0
+        },
+        "if_accepted": null
+      },
+      "belief": {
+        "representation": "joint-preferences-v1",
+        "partner_ids": [
+          1,
+          2
+        ],
+        "support_size": 25,
+        "entropy_nats": 2.8086677354075005,
+        "marginals": {
+          "P1": {
+            "G0": {
+              "WANT": 0.9399701881378271,
+              "NEUTRAL": 0.04222109404578302,
+              "AVOID": 0.017808717816390124
+            },
+            "G1": {
+              "WANT": 0.38160915938182904,
+              "NEUTRAL": 0.19024583954131807,
+              "AVOID": 0.4281450010768532
+            }
+          },
+          "P2": {
+            "G0": {
+              "WANT": 0.6250000000000003,
+              "NEUTRAL": 0.12500000000000003,
+              "AVOID": 0.2500000000000001
+            },
+            "G1": {
+              "WANT": 0.6250000000000003,
+              "NEUTRAL": 0.12500000000000003,
+              "AVOID": 0.2500000000000001
+            }
+          }
+        },
+        "joint": [
+          {
+            "preferences": [
+              [
+                "WANT",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "WANT"
+              ]
+            ],
+            "log_probability": -2.5208053227707925
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "NEUTRAL"
+              ]
+            ],
+            "log_probability": -3.213952503330738
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "AVOID"
+              ]
+            ],
+            "log_probability": -2.5208053227707925
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "WANT"
+              ],
+              [
+                "NEUTRAL",
+                "WANT"
+              ]
+            ],
+            "log_probability": -3.213952503330738
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "WANT"
+              ],
+              [
+                "AVOID",
+                "WANT"
+              ]
+            ],
+            "log_probability": -2.5208053227707925
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "NEUTRAL"
+              ],
+              [
+                "WANT",
+                "WANT"
+              ]
+            ],
+            "log_probability": -3.0457325119761265
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "NEUTRAL"
+              ],
+              [
+                "WANT",
+                "NEUTRAL"
+              ]
+            ],
+            "log_probability": -3.738879692536072
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "NEUTRAL"
+              ],
+              [
+                "WANT",
+                "AVOID"
+              ]
+            ],
+            "log_probability": -3.0457325119761265
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "NEUTRAL"
+              ],
+              [
+                "NEUTRAL",
+                "WANT"
+              ]
+            ],
+            "log_probability": -3.738879692536072
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "NEUTRAL"
+              ],
+              [
+                "AVOID",
+                "WANT"
+              ]
+            ],
+            "log_probability": -3.0457325119761265
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "AVOID"
+              ],
+              [
+                "WANT",
+                "WANT"
+              ]
+            ],
+            "log_probability": -2.2345877143330375
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "AVOID"
+              ],
+              [
+                "WANT",
+                "NEUTRAL"
+              ]
+            ],
+            "log_probability": -2.927734894892983
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "AVOID"
+              ],
+              [
+                "WANT",
+                "AVOID"
+              ]
+            ],
+            "log_probability": -2.2345877143330375
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "AVOID"
+              ],
+              [
+                "NEUTRAL",
+                "WANT"
+              ]
+            ],
+            "log_probability": -2.927734894892983
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "AVOID"
+              ],
+              [
+                "AVOID",
+                "WANT"
+              ]
+            ],
+            "log_probability": -2.2345877143330375
+          },
+          {
+            "preferences": [
+              [
+                "NEUTRAL",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "WANT"
+              ]
+            ],
+            "log_probability": -4.551129685043097
+          },
+          {
+            "preferences": [
+              [
+                "NEUTRAL",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "NEUTRAL"
+              ]
+            ],
+            "log_probability": -5.244276865603043
+          },
+          {
+            "preferences": [
+              [
+                "NEUTRAL",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "AVOID"
+              ]
+            ],
+            "log_probability": -4.551129685043097
+          },
+          {
+            "preferences": [
+              [
+                "NEUTRAL",
+                "WANT"
+              ],
+              [
+                "NEUTRAL",
+                "WANT"
+              ]
+            ],
+            "log_probability": -5.244276865603043
+          },
+          {
+            "preferences": [
+              [
+                "NEUTRAL",
+                "WANT"
+              ],
+              [
+                "AVOID",
+                "WANT"
+              ]
+            ],
+            "log_probability": -4.551129685043097
+          },
+          {
+            "preferences": [
+              [
+                "AVOID",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "WANT"
+              ]
+            ],
+            "log_probability": -5.414361537733966
+          },
+          {
+            "preferences": [
+              [
+                "AVOID",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "NEUTRAL"
+              ]
+            ],
+            "log_probability": -6.107508718293912
+          },
+          {
+            "preferences": [
+              [
+                "AVOID",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "AVOID"
+              ]
+            ],
+            "log_probability": -5.414361537733966
+          },
+          {
+            "preferences": [
+              [
+                "AVOID",
+                "WANT"
+              ],
+              [
+                "NEUTRAL",
+                "WANT"
+              ]
+            ],
+            "log_probability": -6.107508718293912
+          },
+          {
+            "preferences": [
+              [
+                "AVOID",
+                "WANT"
+              ],
+              [
+                "AVOID",
+                "WANT"
+              ]
+            ],
+            "log_probability": -5.414361537733966
+          }
+        ]
+      },
+      "planning": {
+        "value": 0.8441332654557472,
+        "action": {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1
+          ]
+        },
+        "optimal_actions": [
+          {
+            "action": "OFFER",
+            "partner_id": 1,
+            "proposer_action": [
+              1,
+              0
+            ],
+            "partner_action": [
+              1
+            ]
+          }
+        ],
+        "action_values": [
+          {
+            "action": {
+              "action": "PASS"
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 1,
+              "proposer_action": [
+                0,
+                0
+              ],
+              "partner_action": [
+                1
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 1,
+              "proposer_action": [
+                1,
+                0
+              ],
+              "partner_action": [
+                0
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 1,
+              "proposer_action": [
+                1,
+                0
+              ],
+              "partner_action": [
+                1
+              ]
+            },
+            "value": 0.8441332654557472
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 1,
+              "proposer_action": [
+                0,
+                1
+              ],
+              "partner_action": [
+                0
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 1,
+              "proposer_action": [
+                0,
+                1
+              ],
+              "partner_action": [
+                1
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 2,
+              "proposer_action": [
+                0,
+                0
+              ],
+              "partner_action": [
+                1
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 2,
+              "proposer_action": [
+                1,
+                0
+              ],
+              "partner_action": [
+                0
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 2,
+              "proposer_action": [
+                1,
+                0
+              ],
+              "partner_action": [
+                1
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 2,
+              "proposer_action": [
+                0,
+                1
+              ],
+              "partner_action": [
+                0
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 2,
+              "proposer_action": [
+                0,
+                1
+              ],
+              "partner_action": [
+                1
+              ]
+            },
+            "value": 0.639942926156872
+          }
+        ],
+        "nodes_expanded": 23,
+        "kernel_nodes": 10,
+        "remaining_turns": 1,
+        "support_size": 25
+      },
+      "regret_of_other_history_action": 0.2041903392988752
+    },
+    {
+      "name": "P1_offers_partial_G1",
+      "observation": {
+        "player": "P0",
+        "is_proposer": true,
+        "n_players": 3,
+        "actions_per_player": {
+          "P0": [
+            "A0",
+            "A1"
+          ],
+          "P1": [
+            "A0"
+          ],
+          "P2": [
+            "A0"
+          ]
+        },
+        "max_changes": 1,
+        "forbidden_commitments": null,
+        "goals": {
+          "G0": {
+            "type": "ALL_OF",
+            "requires": [
+              "P0:A0",
+              "P1:A0"
+            ],
+            "your_preference": "WANT"
+          },
+          "G1": {
+            "type": "ALL_OF",
+            "requires": [
+              "P0:A1",
+              "P2:A0"
+            ],
+            "your_preference": "WANT"
+          }
+        },
+        "current_proposer": "P0",
+        "round_robin": [
+          "P1",
+          "P0"
+        ],
+        "turn_index": 1,
+        "binding_commitments": {
+          "P0": [],
+          "P1": [],
+          "P2": []
+        },
+        "transcript": [
+          {
+            "turn": 0,
+            "proposer": "P1",
+            "action": "OFFER",
+            "partner": "P0",
+            "additions": {
+              "P1": [],
+              "P0": [
+                "A1"
+              ]
+            },
+            "response": "REJECT"
+          }
+        ],
+        "legal_partners": [
+          "P1",
+          "P2"
+        ],
+        "pending_offer": null,
+        "grounding_version": "state-facts-v1",
+        "current_state_facts": {
+          "goals": {
+            "G0": {
+              "satisfied": false,
+              "missing_commitments": [
+                "P0:A0",
+                "P1:A0"
+              ],
+              "your_utility_contribution": 0
+            },
+            "G1": {
+              "satisfied": false,
+              "missing_commitments": [
+                "P0:A1",
+                "P2:A0"
+              ],
+              "your_utility_contribution": 0
+            }
+          },
+          "your_utility_if_terminal": 0
+        },
+        "if_accepted": null
+      },
+      "belief": {
+        "representation": "joint-preferences-v1",
+        "partner_ids": [
+          1,
+          2
+        ],
+        "support_size": 25,
+        "entropy_nats": 2.9277888221909163,
+        "marginals": {
+          "P1": {
+            "G0": {
+              "WANT": 0.34404654562683185,
+              "NEUTRAL": 0.1727394059155661,
+              "AVOID": 0.48321404845760235
+            },
+            "G1": {
+              "WANT": 0.8400373149529348,
+              "NEUTRAL": 0.066886262475421,
+              "AVOID": 0.09307642257164449
+            }
+          },
+          "P2": {
+            "G0": {
+              "WANT": 0.6250000000000001,
+              "NEUTRAL": 0.12500000000000006,
+              "AVOID": 0.25000000000000006
+            },
+            "G1": {
+              "WANT": 0.6250000000000001,
+              "NEUTRAL": 0.12500000000000006,
+              "AVOID": 0.25000000000000006
+            }
+          }
+        },
+        "joint": [
+          {
+            "preferences": [
+              [
+                "WANT",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "WANT"
+              ]
+            ],
+            "log_probability": -3.078658222301448
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "NEUTRAL"
+              ]
+            ],
+            "log_probability": -3.7718054028613923
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "AVOID"
+              ]
+            ],
+            "log_probability": -3.078658222301448
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "WANT"
+              ],
+              [
+                "NEUTRAL",
+                "WANT"
+              ]
+            ],
+            "log_probability": -3.7718054028613923
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "WANT"
+              ],
+              [
+                "AVOID",
+                "WANT"
+              ]
+            ],
+            "log_probability": -3.078658222301448
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "NEUTRAL"
+              ],
+              [
+                "WANT",
+                "WANT"
+              ]
+            ],
+            "log_probability": -4.091056038217955
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "NEUTRAL"
+              ],
+              [
+                "WANT",
+                "NEUTRAL"
+              ]
+            ],
+            "log_probability": -4.7842032187779004
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "NEUTRAL"
+              ],
+              [
+                "WANT",
+                "AVOID"
+              ]
+            ],
+            "log_probability": -4.091056038217955
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "NEUTRAL"
+              ],
+              [
+                "NEUTRAL",
+                "WANT"
+              ]
+            ],
+            "log_probability": -4.7842032187779004
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "NEUTRAL"
+              ],
+              [
+                "AVOID",
+                "WANT"
+              ]
+            ],
+            "log_probability": -4.091056038217955
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "AVOID"
+              ],
+              [
+                "WANT",
+                "WANT"
+              ]
+            ],
+            "log_probability": -3.7606287363166753
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "AVOID"
+              ],
+              [
+                "WANT",
+                "NEUTRAL"
+              ]
+            ],
+            "log_probability": -4.453775916876619
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "AVOID"
+              ],
+              [
+                "WANT",
+                "AVOID"
+              ]
+            ],
+            "log_probability": -3.7606287363166753
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "AVOID"
+              ],
+              [
+                "NEUTRAL",
+                "WANT"
+              ]
+            ],
+            "log_probability": -4.453775916876619
+          },
+          {
+            "preferences": [
+              [
+                "WANT",
+                "AVOID"
+              ],
+              [
+                "AVOID",
+                "WANT"
+              ]
+            ],
+            "log_probability": -3.7606287363166753
+          },
+          {
+            "preferences": [
+              [
+                "NEUTRAL",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "WANT"
+              ]
+            ],
+            "log_probability": -3.142265505438585
+          },
+          {
+            "preferences": [
+              [
+                "NEUTRAL",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "NEUTRAL"
+              ]
+            ],
+            "log_probability": -3.8354126859985302
+          },
+          {
+            "preferences": [
+              [
+                "NEUTRAL",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "AVOID"
+              ]
+            ],
+            "log_probability": -3.142265505438585
+          },
+          {
+            "preferences": [
+              [
+                "NEUTRAL",
+                "WANT"
+              ],
+              [
+                "NEUTRAL",
+                "WANT"
+              ]
+            ],
+            "log_probability": -3.8354126859985302
+          },
+          {
+            "preferences": [
+              [
+                "NEUTRAL",
+                "WANT"
+              ],
+              [
+                "AVOID",
+                "WANT"
+              ]
+            ],
+            "log_probability": -3.142265505438585
+          },
+          {
+            "preferences": [
+              [
+                "AVOID",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "WANT"
+              ]
+            ],
+            "log_probability": -2.11358992010935
+          },
+          {
+            "preferences": [
+              [
+                "AVOID",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "NEUTRAL"
+              ]
+            ],
+            "log_probability": -2.8067371006692956
+          },
+          {
+            "preferences": [
+              [
+                "AVOID",
+                "WANT"
+              ],
+              [
+                "WANT",
+                "AVOID"
+              ]
+            ],
+            "log_probability": -2.11358992010935
+          },
+          {
+            "preferences": [
+              [
+                "AVOID",
+                "WANT"
+              ],
+              [
+                "NEUTRAL",
+                "WANT"
+              ]
+            ],
+            "log_probability": -2.8067371006692956
+          },
+          {
+            "preferences": [
+              [
+                "AVOID",
+                "WANT"
+              ],
+              [
+                "AVOID",
+                "WANT"
+              ]
+            ],
+            "log_probability": -2.11358992010935
+          }
+        ]
+      },
+      "planning": {
+        "value": 0.639942926156872,
+        "action": {
+          "action": "OFFER",
+          "partner_id": 2,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1
+          ]
+        },
+        "optimal_actions": [
+          {
+            "action": "OFFER",
+            "partner_id": 2,
+            "proposer_action": [
+              0,
+              1
+            ],
+            "partner_action": [
+              1
+            ]
+          }
+        ],
+        "action_values": [
+          {
+            "action": {
+              "action": "PASS"
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 1,
+              "proposer_action": [
+                0,
+                0
+              ],
+              "partner_action": [
+                1
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 1,
+              "proposer_action": [
+                1,
+                0
+              ],
+              "partner_action": [
+                0
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 1,
+              "proposer_action": [
+                1,
+                0
+              ],
+              "partner_action": [
+                1
+              ]
+            },
+            "value": 0.44806531314111286
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 1,
+              "proposer_action": [
+                0,
+                1
+              ],
+              "partner_action": [
+                0
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 1,
+              "proposer_action": [
+                0,
+                1
+              ],
+              "partner_action": [
+                1
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 2,
+              "proposer_action": [
+                0,
+                0
+              ],
+              "partner_action": [
+                1
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 2,
+              "proposer_action": [
+                1,
+                0
+              ],
+              "partner_action": [
+                0
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 2,
+              "proposer_action": [
+                1,
+                0
+              ],
+              "partner_action": [
+                1
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 2,
+              "proposer_action": [
+                0,
+                1
+              ],
+              "partner_action": [
+                0
+              ]
+            },
+            "value": 0.0
+          },
+          {
+            "action": {
+              "action": "OFFER",
+              "partner_id": 2,
+              "proposer_action": [
+                0,
+                1
+              ],
+              "partner_action": [
+                1
+              ]
+            },
+            "value": 0.639942926156872
+          }
+        ],
+        "nodes_expanded": 23,
+        "kernel_nodes": 10,
+        "remaining_turns": 1,
+        "support_size": 25
+      },
+      "regret_of_other_history_action": 0.19187761301575912
+    }
+  ],
+  "third_party_continuation": {
+    "observation": {
+      "player": "P0",
+      "is_proposer": true,
+      "n_players": 3,
+      "actions_per_player": {
+        "P0": [
+          "A0"
+        ],
+        "P1": [
+          "A0"
+        ],
+        "P2": [
+          "A0"
+        ]
+      },
+      "max_changes": 1,
+      "forbidden_commitments": null,
+      "goals": {
+        "G0": {
+          "type": "ALL_OF",
+          "requires": [
+            "P0:A0",
+            "P1:A0",
+            "P2:A0"
+          ],
+          "your_preference": "WANT"
+        }
+      },
+      "current_proposer": "P0",
+      "round_robin": [
+        "P0",
+        "P2"
+      ],
+      "turn_index": 0,
+      "binding_commitments": {
+        "P0": [],
+        "P1": [],
+        "P2": []
+      },
+      "transcript": [],
+      "legal_partners": [
+        "P1",
+        "P2"
+      ],
+      "pending_offer": null,
+      "grounding_version": "state-facts-v1",
+      "current_state_facts": {
+        "goals": {
+          "G0": {
+            "satisfied": false,
+            "missing_commitments": [
+              "P0:A0",
+              "P1:A0",
+              "P2:A0"
+            ],
+            "your_utility_contribution": 0
+          }
+        },
+        "your_utility_if_terminal": 0
+      },
+      "if_accepted": null
+    },
+    "belief": {
+      "representation": "joint-preferences-v1",
+      "partner_ids": [
+        1,
+        2
+      ],
+      "support_size": 1,
+      "entropy_nats": -0.0,
+      "marginals": {
+        "P1": {
+          "G0": {
+            "WANT": 1.0,
+            "NEUTRAL": 0.0,
+            "AVOID": 0.0
+          }
+        },
+        "P2": {
+          "G0": {
+            "WANT": 1.0,
+            "NEUTRAL": 0.0,
+            "AVOID": 0.0
+          }
+        }
+      },
+      "joint": [
+        {
+          "preferences": [
+            [
+              "WANT"
+            ],
+            [
+              "WANT"
+            ]
+          ],
+          "log_probability": 0.0
+        }
+      ]
+    },
+    "planning": {
+      "value": 0.5734901889389274,
+      "action": {
+        "action": "OFFER",
+        "partner_id": 1,
+        "proposer_action": [
+          1
+        ],
+        "partner_action": [
+          1
+        ]
+      },
+      "optimal_actions": [
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1
+          ],
+          "partner_action": [
+            1
+          ]
+        }
+      ],
+      "action_values": [
+        {
+          "action": {
+            "action": "PASS"
+          },
+          "value": 0.0
+        },
+        {
+          "action": {
+            "action": "OFFER",
+            "partner_id": 1,
+            "proposer_action": [
+              0
+            ],
+            "partner_action": [
+              1
+            ]
+          },
+          "value": 0.37167761906868013
+        },
+        {
+          "action": {
+            "action": "OFFER",
+            "partner_id": 1,
+            "proposer_action": [
+              1
+            ],
+            "partner_action": [
+              0
+            ]
+          },
+          "value": 0.32454188579964727
+        },
+        {
+          "action": {
+            "action": "OFFER",
+            "partner_id": 1,
+            "proposer_action": [
+              1
+            ],
+            "partner_action": [
+              1
+            ]
+          },
+          "value": 0.5734901889389274
+        },
+        {
+          "action": {
+            "action": "OFFER",
+            "partner_id": 2,
+            "proposer_action": [
+              0
+            ],
+            "partner_action": [
+              1
+            ]
+          },
+          "value": 0.0
+        },
+        {
+          "action": {
+            "action": "OFFER",
+            "partner_id": 2,
+            "proposer_action": [
+              1
+            ],
+            "partner_action": [
+              0
+            ]
+          },
+          "value": 0.32454188579964727
+        },
+        {
+          "action": {
+            "action": "OFFER",
+            "partner_id": 2,
+            "proposer_action": [
+              1
+            ],
+            "partner_action": [
+              1
+            ]
+          },
+          "value": 0.501339227079623
+        }
+      ],
+      "nodes_expanded": 40,
+      "kernel_nodes": 22,
+      "remaining_turns": 2,
+      "support_size": 1
+    },
+    "all_one_offer_snapshot_utilities": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "regret_of_pass": 0.5734901889389274
+  },
+  "elapsed_seconds": 0.018048625002847984
+}
