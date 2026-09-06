@@ -1,0 +1,38 @@
+{
+  "kind": "oracle_preflight_not_model_results",
+  "manifest": {
+    "version": "factorial-diagnose-v1",
+    "n_games": 24,
+    "seed": 10000,
+    "tasks": 1945,
+    "games": 29,
+    "task_hash": "0714864e09571f2016cc1f86dabd8ab82868bd698749b5e93254beb7ffb48985",
+    "calibration_excluded_from_confirmation": true,
+    "model_calls_static": 1945,
+    "model_calls_additional_per_game_upper_bound": 18,
+    "causal_scope": "Explicit belief interface and do(negotiation action); not internal neural mediation.",
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "base_url": "http://localhost:8000/v1",
+    "max_tokens": 2048,
+    "temperature": 0.0,
+    "workers": 4,
+    "model_calls_total_upper_bound": 2431,
+    "population": "alternating unfiltered games and oracle-screened dependency family; separate estimates"
+  },
+  "static_tasks": 1945,
+  "maximum_dynamic_tasks": 486,
+  "family_split_counts": {
+    "calibration/selected_positive_anchor": 1,
+    "control/no_information": 1,
+    "control/known_type": 1,
+    "discovery/generated": 6,
+    "discovery/dependency_screened": 6,
+    "confirmation/generated": 6,
+    "confirmation/dependency_screened": 6
+  },
+  "screened_candidate_attempts": 44,
+  "screened_accepted": 12,
+  "minimum_screened_root_action_regret": 0.06692186915621279,
+  "minimum_screened_update_gain": 0.131360150431042,
+  "scope": "CPU-only export and reference certification. Actual LLM measurements are produced on the remote server."
+}

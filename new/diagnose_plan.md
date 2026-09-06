@@ -271,3 +271,26 @@ action regret、oracle-planner-with-model-belief regret、配对 posterior injec
 到结构不同的 held-out instances、无信息/信息无决策价值对照与更强的第三方依赖。
 
 本步验证：BENAC-P 相关回归共 66 tests passed；完整 controlled menu episode 3 turns、0 invalid；远端脚本 export-only 与 saved-answer 评分通路均通过，oracle answers 为 11/11 valid、误差与 regret 为零。后者仅为评分器自检，未写作模型实验结果。
+
+## 11. 完整诊断入口（2026-09-07）
+
+`examples/benac_p/run_full_diagnose.sh` 现在组织完整实验，取代将 menu smoke pilot
+当作主诊断的做法。完整协议见 `new/full_diagnose_protocol.md`：
+
+- B-only 与 likelihood-table 算术对照；正确完整 belief 下的 P-only。
+- 相同 state、action order、prompt 模板下的 B×P 四格；prior 注入与 grounding 对照。
+- do(high/low menu)、单 offer、reference action 与模型实际选择 action，枚举所有
+  response；chooser×updater 四格及 expected proper belief score。
+- 终止 future objective 干预保留原 partner response kernel；known-type、uniform
+  no-information、已知类型 long/short horizon 对照。
+- 默认 24 个主实例分 discovery/confirmation，各含未筛选与预认证 dependency 层。
+  预检发现纯随机 high-information menus 缺乏 decision-value headroom，故明确加入
+  模型运行前的 oracle 筛选层；不把条件层失败率报告为未筛选总体失败率。
+- 默认 1,945 静态任务 + 至多 486 动态任务，4 路 HTTP 并发，自动保存、续跑和报告。
+- 置信区间以 game 为 cluster，缺失 response 不重新归一化；各种干预收益允许为负。
+
+主结论仍待用户 remote server 的 Qwen3-4B-Instruct-2507 实测。本地 preflight 摘要
+在 `new/artifacts/full_diagnose_preflight.json`。完整实验不保证发现 weakness，也不
+将显式接口因果效应等同于内部神经模块分解。
+
+完整诊断验证：75 个相关测试通过；包含显式接口无标签泄露、oracle 四格归零、可加性 belief 因果效应、独立 screening 与正式 planner 一致、mock HTTP 全流程与零追加请求续跑。默认 24-game export 已完整通过；12 个筛选实例来自 44 次 candidate 检查，最小 root-action regret 0.06692、最小 update gain 0.13136。无真实 LLM 结果被预填。

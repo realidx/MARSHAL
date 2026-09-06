@@ -836,3 +836,13 @@ belief → planning 形成闭环，不增加第三个 primitive。一个公开�
 `bash examples/benac_p/run_menu_diagnose.sh`。脚本复用现有 HTTP client 与服务
 配置，导出并执行 11 个 fixed-decision probes，自动评分 belief 与 planning。
 详见 `examples/benac_p/README.md` 和 `new/diagnose_plan.md` §10。
+
+### 13.5 完整诊断实验
+
+主入口改为 `bash examples/benac_p/run_full_diagnose.sh`；`run_menu_diagnose.sh`
+只用于 smoke test。完整设计与运行说明在 `new/full_diagnose_protocol.md`。
+包含独立 B/P 测量、B×P fixed-state factorial、chooser×updater active-evidence
+factorial、无信息/已知类型/单 offer/horizon/grounding 对照，以及 discovery 与
+confirmation。默认 24 个主 game，分未筛选层与预认证 task-relevant 层，分层报告。
+支持并发、断点续跑、自动评分与报告。阶段退出依据是真实模型的能力缺口与干预
+效应，不以继续建设通用 benchmark 作为第一轮训练的前置条件。

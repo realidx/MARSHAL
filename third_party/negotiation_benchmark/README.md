@@ -287,3 +287,10 @@ on the remote inference server, or add `--export-only` for CPU validation.
 See [the remote pilot instructions](../../examples/benac_p/README.md) for
 server setup, outputs, exact controls and interpretation limits. This provides
 11 fixed-decision probes and automated posterior/action-regret scoring.
+
+The complete experiment is now `bash examples/benac_p/run_full_diagnose.sh`
+(from repository root). It includes independent belief/planning probes,
+belief × planner and chooser × updater interventions, controls, generated
+and oracle-screened strata, and discovery/confirmation reporting. See
+[the full protocol](../../new/full_diagnose_protocol.md). The menu command
+above remains a smoke pilot, not the complete diagnostic experiment.

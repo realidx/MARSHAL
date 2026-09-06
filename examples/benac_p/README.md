@@ -69,3 +69,36 @@ then oracle-belief planning regret and model-belief/oracle-planner regret.
 Before making a broad weakness claim, replicate on structurally distinct,
 held-out instances and include useful/no-useful-information controls. No
 LLM results have been pre-populated or inferred from the oracle certificate.
+
+## Complete experiment (preferred)
+
+The 11-task menu command above is a smoke pilot. To run independent belief
+and planning probes, both factorial interventions, matched menu/single-offer
+controls, generated discovery/confirmation games, and a report, use:
+
+```bash
+bash examples/benac_p/run_full_diagnose.sh
+```
+
+Defaults: 24 games (half unfiltered, half oracle-certified decision-relevant) plus calibration/negative/horizon
+controls, Qwen3-4B-Instruct-2507, 4 concurrent requests, temperature 0. This is
+roughly 2,000 static requests plus up to about 500 dependent probes. It needs
+an existing HTTP inference server; server startup is the same as above.
+
+Overrides: `BENAC_DIAGNOSE_GAMES`, `BENAC_DIAGNOSE_SEED`,
+`BENAC_DIAGNOSE_WORKERS`, plus the model/base URL/output/token variables above.
+`--export-only` builds the entire fixed experiment without inference.
+`--resume` resumes a run in the same `BENAC_DIAGNOSE_OUTPUT_DIR` with matching
+configuration and input hash. Dynamic probes of the model's selected action
+are built after its root decision and are also resumable.
+
+Read `report.md`, `summary.json` (game-cluster intervals), and `scores.json`
+(all factorial cells and interventions). Unfiltered and pre-screened families are
+reported separately: screened failures do not estimate population prevalence.
+Missing response branches are not
+renormalized into a fake complete expectation. Model labels are never sent as
+inputs. The experiment may fail to find a deficit: zero effects, inadequate
+headroom, and invalid output rates are reported rather than hidden.
+
+The full design, estimands, controls and limits of causal claims are in
+[the experiment protocol](../../new/full_diagnose_protocol.md).
