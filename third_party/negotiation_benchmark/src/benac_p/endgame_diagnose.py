@@ -350,6 +350,16 @@ def measure(suite,records):
                 entry.update(chooser_repair=j['OL']-j['LL'],updater_repair_model_action=j['LO']-j['LL'],updater_repair_oracle_action=j['OO']-j['OL'])
             for name,arm in [('oracle',o),('model',m)]:
                 if 'belief_exact' in arm:entry[name+'_action_belief_exact']=arm['belief_exact']
+        if suite.certificates[fid].get('functional') and all(k in entry['arms'] for k in ('low_information','high_information')):
+            low,high=(entry['arms'][k] for k in ('low_information','high_information'))
+            entry['forced_information_gap']=low['oracle_entropy']-high['oracle_entropy']
+            for name,arm in [('low',low),('high',high)]:
+                entry['forced_'+name+'_posterior_entropy']=arm['oracle_entropy']
+                if 'belief_exact' in arm:entry['forced_'+name+'_belief_exact']=arm['belief_exact']
+            for key in ('belief_exact','unsupported_possibilities','false_exclusions',
+                        'reference_utility','reference_planner_with_model_judgment','model_second_decision_then_reference'):
+                if key in low and key in high:
+                    entry['forced_'+key+'_delta']=high[key]-low[key]
         active.append(entry)
     return dict(cases=list(cases.values()),active=active)
 
@@ -422,7 +432,10 @@ def preflight(suite,client,out,args):
     return all(checks)
 
 
-def selection_readiness(suite,min_games=1,dependency_only=False):
+def selection_readiness(suite,min_games=1,dependency_only=False,functional_dependency=False):
+    if functional_dependency:
+        from benac_p.functional_dependency import readiness
+        return readiness(suite,min_games)
     if dependency_only:
         missing=[];counts={}
         for split in ('discovery','confirmation'):
@@ -512,6 +525,7 @@ def main(argv=None):
     p.add_argument('--fixtures',type=Path)
     p.add_argument('--max-query-sets',type=int,default=None,help='Optional deterministic query-set subsample per source game in dependency mining.')
     p.add_argument('--dependency-only',action='store_true',help='Separate supplement: admit only strict oracle-certified value from judgment updating.')
+    p.add_argument('--functional-dependency',action='store_true',help='Separate B->P action-sensitivity and P->B forced-evidence cohorts; no strict update-value gate.')
     p.add_argument('--generate',action='store_true',help='Mine certified native positions; default when no fixture file is supplied.')
     p.add_argument('--seed',type=int,default=30000);p.add_argument('--candidate-seeds',type=int,default=64)
     p.add_argument('--actions-per-player',type=int,default=2);p.add_argument('--n-goals',type=int,default=8);p.add_argument('--rounds',type=int,default=2);p.add_argument('--unknown-goals',type=int,choices=(1,2),default=1)
@@ -526,6 +540,7 @@ def main(argv=None):
     p.add_argument('--score-max-nodes',type=int,help='Separate exact counterfactual-scoring budget; default 4x max-nodes. May be increased with score-only.')
     p.add_argument('--belief-preflight',action=argparse.BooleanOptionalAction,default=True)
     args=p.parse_args(argv)
+    if args.functional_dependency and args.dependency_only:p.error('Choose functional or archived strict dependency mode, not both.')
     if args.max_query_sets is not None and args.max_query_sets<1:p.error('max-query-sets must be positive.')
     if not 1<=args.max_remaining_turns<=6:p.error('max-remaining-turns must be in 1..6.')
     if args.score_max_nodes is not None and args.score_max_nodes<1:p.error('score-max-nodes must be positive.')
@@ -536,14 +551,22 @@ def main(argv=None):
     out=args.output_dir;out.mkdir(parents=True,exist_ok=True)
     if args.fixtures:
         raw=json.loads(args.fixtures.read_text())
+    elif args.functional_dependency:
+        from benac_p.functional_dependency import mine
+        raw=mine(args,out)
     else:
         raw=mine_selected(args,out)
-    suite=Suite([Fixture(f,args.max_nodes) for f in raw['fixtures']]).build()
+    fixtures=[Fixture(f,args.max_nodes) for f in raw['fixtures']]
+    if args.functional_dependency:
+        from benac_p.functional_dependency import build
+        suite=build(fixtures)
+    else:
+        suite=Suite(fixtures).build()
     if args.dependency_only:
         from benac_p.dependency_certificate import attach
         attach(suite)
     if not suite.fixtures:
-        dump(out/'readiness.json',selection_readiness(suite,args.min_games_per_condition,args.dependency_only))
+        dump(out/'readiness.json',selection_readiness(suite,args.min_games_per_condition,args.dependency_only,args.functional_dependency))
         p.error('No qualifying positions in this fixture file or candidate budget. Inspect selection.json; no model requests were made.')
     out=args.output_dir;out.mkdir(parents=True,exist_ok=True)
     manifest=dict(version=VERSION,fixtures_hash=digest(raw),system_hash=digest(system_prompt(SYSTEM,'reasoning_tools','balanced')),
@@ -553,6 +576,7 @@ def main(argv=None):
         model=args.model,base_url=args.base_url,max_tokens=args.max_tokens,finalization_tokens=args.finalization_tokens,
         max_nodes=args.max_nodes,min_games_per_condition=args.min_games_per_condition,oracle_check=args.oracle_check)
     if args.dependency_only:manifest['dependency_certificate']='strict-update-value-v2'
+    if args.functional_dependency:manifest['dependency_certificate']='functional-dependency-v1'
     if (out/'manifest.json').exists():
         if json.loads((out/'manifest.json').read_text())!=manifest:p.error('Manifest changed; use a fresh output directory.')
         if (out/'answers.json').exists() and not (args.resume or args.score_only):p.error('Existing answers require --resume or --score-only.')
@@ -560,12 +584,12 @@ def main(argv=None):
     if args.score_only and not (out/'answers.json').exists():p.error('No answers.json to score.')
     dump(out/'manifest.json',manifest);dump(out/'fixtures.json',raw)
     dump(out/'certificates.json',suite.certificates);dump(out/'tasks.json',suite.tasks);dump(out/'oracle_labels.json',suite.labels)
-    dump(out/'readiness.json',selection_readiness(suite,args.min_games_per_condition,args.dependency_only))
+    dump(out/'readiness.json',selection_readiness(suite,args.min_games_per_condition,args.dependency_only,args.functional_dependency))
     dump(out/'prompt_protocol.json',dict(version=VERSION,system=system_prompt(SYSTEM,'reasoning_tools','balanced')))
     if args.belief_preflight:dump(out/'belief_preflight_tasks.json',preflight_tasks(suite))
     if args.export_only:return
     if not args.oracle_check:
-        readiness=selection_readiness(suite,args.min_games_per_condition,args.dependency_only)
+        readiness=selection_readiness(suite,args.min_games_per_condition,args.dependency_only,args.functional_dependency)
         dump(out/'readiness.json',readiness)
         if not readiness['passed']:p.error('Fixture selection is incomplete: '+ '; '.join(readiness['missing'])+'. No model calls were made.')
     records=json.loads((out/'answers.json').read_text()) if (out/'answers.json').exists() else {}
@@ -585,18 +609,26 @@ def main(argv=None):
     dump(out/'scoring_config.json',dict(max_nodes=scoring_budget))
     scored=measure(suite,records);dump(out/'scores.json',scored);dump(out/'protocol_summary.json',protocol_summary(records))
     summary=dict(mode='synthetic oracle check' if args.oracle_check else 'LLM',conditions={})
-    for split,condition in product(('discovery','confirmation','exploratory'),('dependency',) if args.dependency_only else ('known','unknown_relevant','unknown_irrelevant')):
-        ids={c['primary_case'] for c in suite.certificates.values() if c['condition']==condition and c['split']==split}
+    conditions=('b_to_p','p_to_b') if args.functional_dependency else (('dependency',) if args.dependency_only else ('known','unknown_relevant','unknown_irrelevant'))
+    for split,condition in product(('discovery','confirmation','exploratory'),conditions):
+        def belongs(c):return c['split']==split and (condition in c.get('groups',[]) if args.functional_dependency else c['condition']==condition)
+        ids={c['primary_case'] for c in suite.certificates.values() if belongs(c)}
         rows=[r for r in scored['cases'] if r['case'] in ids]
-        active=[r for r in scored['active'] if suite.certificates[r['fixture']]['condition']==condition and r['split']==split]
+        active=[r for r in scored['active'] if belongs(suite.certificates[r['fixture']])]
         if not rows and not active:continue
         summary['conditions'][split+'/'+condition]=dict(
-            root_planning_regret=cluster_summary([r for r in scored['cases'] if r['case'].endswith('/root') and suite.certificates[r['fixture']]['condition']==condition and r['split']==split],'OL'),
+            root_planning_regret=cluster_summary([r for r in scored['cases'] if r['case'].endswith('/root') and belongs(suite.certificates[r['fixture']])],'OL'),
             primary={key:cluster_summary(rows,key) for key in ('belief_exact','false_exclusions','unsupported_possibilities','OL','belief_repair')},
             R={key:cluster_summary(rows,key) for key in ('OO','OL','LO','LL')},
             channel_information_repair=cluster_summary(active,'channel_information_repair'),
             active_repairs={key:cluster_summary(active,key) for key in ('chooser_repair','updater_repair_model_action','updater_repair_oracle_action','oracle_action_belief_exact','model_action_belief_exact')},
             J={key:cluster_summary([dict(game=r['game'],**r.get('J',{})) for r in active],key) for key in ('OO','OL','LO','LL')})
+        if args.functional_dependency and condition=='p_to_b':
+            summary['conditions'][split+'/'+condition]['forced_contrast']={key:cluster_summary(active,key) for key in (
+                'forced_information_gap','forced_belief_exact_delta','forced_unsupported_possibilities_delta',
+                'forced_low_posterior_entropy','forced_high_posterior_entropy','forced_low_belief_exact','forced_high_belief_exact',
+                'forced_false_exclusions_delta','forced_reference_utility_delta',
+                'forced_reference_planner_with_model_judgment_delta','forced_model_second_decision_then_reference_delta')}
     summary['coverage']=dict(requested=len(suite.tasks),valid=sum(records.get(t['id'],{}).get('status')=='ok' for t in suite.tasks),
                              unavailable_reference_costs=sum('LO_unavailable' in r for r in scored['cases']),
                              expected_model_action_arms=len(suite.fixtures),observed_model_action_arms=sum('model' in a for a in suite.arms.values()),
@@ -607,15 +639,22 @@ def main(argv=None):
     summary['scope']='Selected native positions; at most two measured ego decisions, without skipping native ego responses, and with reference continuation after the second measured action. Not an end-to-end LLM game outcome. Information-channel changes do not alone establish an information-mediated utility effect.'
     if args.dependency_only:
         summary['scope']+=' Separate dependency supplement, selected for strictly positive continuation value of an updated judgment, even granting the frozen-judgment planner its most favorable optimal tie. The reference first action prefers a certifiable menu among terminal-utility maximizers; all other terminal-optimal actions still receive zero regret. Root action values may tie. Do not pool this selected cohort with the original B/P prevalence estimates.'
+    if args.functional_dependency:
+        summary['scope']+=' Separate B->P sensitivity and P->B forced-action cohorts. Forced high/low-information actions are legal interventions, not necessarily utility-optimal. Their evidence contrast establishes action-to-evidence opportunity; utility differences also include commitment effects. Positive model repair is not an admission condition. Cohorts can share source games and must not be pooled as independent replications. Existing seeds are development diagnostics, not untouched confirmatory evidence.'
     dump(out/'summary.json',summary)
     lines=['# Native BENAC-P diagnosis','',summary['mode'],'',summary['scope'],'',summary['planning_interpretation'],'',summary['belief_repair_interpretation'],'',summary['counterfactual_reference_limit'],'',
            'Measurement coverage: '+str(summary['coverage']),'',
-           'Selection readiness: '+str(selection_readiness(suite,args.min_games_per_condition,args.dependency_only)),'',
+           'Selection readiness: '+str(selection_readiness(suite,args.min_games_per_condition,args.dependency_only,args.functional_dependency)),'',
            'Partner optimality is a best response to the exported fixed reference continuation, not an equilibrium. Confidence intervals cluster positions by original generated game seed. No model-performance filtering is applied.','']
     for condition,metrics in summary['conditions'].items():
         lines += ['## '+condition,'','| Metric | Mean | 95% interval | Games |','|---|---:|---|---:|']
         for name,x in dict(metrics['primary'],root_planning_regret=metrics['root_planning_regret'],channel_information_repair=metrics['channel_information_repair'],**metrics['active_repairs']).items():
             lines.append(f"| {name} | {x['mean']} | {x['ci95']} | {x['n_games']} |")
+        if 'forced_contrast' in metrics:
+            lines += ['', 'Forced action contrast: information gap = low-information posterior entropy minus high-information posterior entropy; other deltas = high-information arm minus low-information arm. Utility deltas include physical-state effects.', '',
+                      '| Metric | Mean | 95% interval | Games |','|---|---:|---|---:|']
+            for name,x in metrics['forced_contrast'].items():
+                lines.append(f"| {name} | {x['mean']} | {x['ci95']} | {x['n_games']} |")
         for table in ('R','J'):
             cells=metrics[table]
             first,second,quantity=('belief','planner','regret; lower is better') if table=='R' else ('action chooser','belief updater','utility; higher is better; reference continuation planner')

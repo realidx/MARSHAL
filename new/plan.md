@@ -981,3 +981,20 @@ See [dependency_supplement.md](dependency_supplement.md). Preserve history in al
 P contexts and report this selected supplement separately. Reasoning length and
 examples are audited in the original run's REASONING_AUDIT.md; no matched
 action-only ablation has established a causal benefit of reasoning.
+
+### 13.16 Replace the strict gate with separate functional cohorts
+
+The strict-update-value-v2 search was too costly and restrictive for the intended
+diagnosis. Default supplement execution now reads the frozen ten-position
+functional_dependency.json, with three independent games per direction per
+source-seed split. B→P requires a consequential supported-type action-sensitivity
+witness; common optimal actions remain valid. P→B uses two legal forced actions
+with different evidence, with a next ego decision on every branch. The utility
+oracle remains distinct and terminal-optimal. Compare evidence quality and model
+update correctness separately; do not interpret a commitment-changing utility
+contrast as pure information mediation. No model-performance selection is used.
+The split names retain prior source partitions and are not untouched confirmation.
+The new builder skips exhaustive frozen-judgment searches. Optional fresh mining
+uses at most two query sets and three remaining proposal turns. The strict
+positive example is retained as an illustration, not a readiness requirement.
+See dependency_supplement.md; real-model supplement results remain pending.

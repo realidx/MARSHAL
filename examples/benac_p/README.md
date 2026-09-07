@@ -21,10 +21,12 @@ oracle-certified supplement is now available:
 bash examples/benac_p/run_dependency_diagnose.sh
 ```
 
-See [supplement methodology and validation status](../../new/dependency_supplement.md).
-One genuine positive fixture has been validated locally; the complete supplement
-and its real-model results remain pending. Do not pool it with the original B/P
-measurement.
+This reads a frozen ten-position set directly, with separate B→P sensitivity and
+P→B forced-evidence cohorts (three source games per direction per split). It does
+not rerun random selection or the archived strict-update certificate. See
+[supplement methodology and running instructions](../../new/dependency_supplement.md).
+Real-model results remain pending. Do not pool this selected development
+supplement with the original B/P measurement.
 
 
 To rerun the already selected 36 positions with the role-context prompt:
