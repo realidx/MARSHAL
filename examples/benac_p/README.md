@@ -1,10 +1,34 @@
+# Native BENAC-P endgame diagnosis
+
+The current entry point preserves native actions, rotating proposal turns and
+independent player preferences, with active history-aware oracle partners.
+Every P task includes public history; B→P pairs replace only the explicit partner
+judgment in otherwise identical fresh contexts. Use a fresh output directory.
+
+```bash
+bash examples/benac_p/run_full_diagnose.sh
+```
+
+This selects legal short positions and runs B, P, B→P and P→B with the existing
+remote vLLM/Hermes configuration. See [methodology and running instructions](../../new/native_endgame_diagnose.md)
+for selection gates, oracle assumptions, outputs and a CPU validation command.
+The default candidate budget may need expansion; incomplete selection stops
+before model calls. No new native real-model results have been established yet.
+
+---
+
+# Archived semantic protocol (modified game)
+
+The instructions below reproduce the previous restricted semantic experiment;
+its results are not native-game results.
+
 # BENAC-P complete semantic diagnosis
 
 Use the existing remote vLLM 0.28 + hermes service. The client needs the
 repository Python environment and numpy, without ROLL/Ray or a local GPU.
 
 ```bash
-bash examples/benac_p/run_full_diagnose.sh
+bash examples/benac_p/run_legacy_semantic_diagnose.sh
 ```
 
 This now runs **semantic B, P given a judgment, B→P, P→B, and complete model
@@ -27,7 +51,7 @@ seed 20000. Use the same service/model environment variables as before:
 ```bash
 BENAC_P_VLLM_BASE_URL=http://your-server:8000/v1 \
 VLLM_SERVED_MODEL_NAME=your-served-model-id \
-bash examples/benac_p/run_full_diagnose.sh
+bash examples/benac_p/run_legacy_semantic_diagnose.sh
 ```
 
 `BENAC_P_VLLM_API_KEY` supplies authentication and is not saved in artifacts.
@@ -43,16 +67,16 @@ reused across interventions. Exact counts and fingerprints are exported.
 
 ```bash
 # CPU certification and task export; no model requests.
-bash examples/benac_p/run_full_diagnose.sh --export-only
+bash examples/benac_p/run_legacy_semantic_diagnose.sh --export-only
 
 # Complete synthetic oracle test. Not a real-model result.
-bash examples/benac_p/run_full_diagnose.sh --oracle-check
+bash examples/benac_p/run_legacy_semantic_diagnose.sh --oracle-check
 
 # Continue an interrupted run; keep all original parameters unchanged.
-BENAC_DIAGNOSE_OUTPUT_DIR=/path/to/run bash examples/benac_p/run_full_diagnose.sh --resume
+BENAC_DIAGNOSE_OUTPUT_DIR=/path/to/run bash examples/benac_p/run_legacy_semantic_diagnose.sh --resume
 
 # Rescore saved model outputs without contacting the service.
-BENAC_DIAGNOSE_OUTPUT_DIR=/path/to/run bash examples/benac_p/run_full_diagnose.sh --score-only
+BENAC_DIAGNOSE_OUTPUT_DIR=/path/to/run bash examples/benac_p/run_legacy_semantic_diagnose.sh --score-only
 ```
 
 A normal invocation creates a fresh timestamped directory under
@@ -120,7 +144,7 @@ set `BENAC_CALIBRATION_OUTPUT_DIR` and pass `--resume` to continue that same run
 After choosing the profile, freeze it for the full experiment in a fresh directory:
 
 ```bash
-bash examples/benac_p/run_full_diagnose.sh --reasoning-profile balanced --seed 21000
+bash examples/benac_p/run_legacy_semantic_diagnose.sh --reasoning-profile balanced --seed 21000
 ```
 
 `--reasoning-profile open` preserves the previous brevity instruction;
@@ -142,7 +166,7 @@ set `BENAC_FINALIZATION_OUTPUT_DIR` to that directory and pass `--resume`.
 After verifying recovery on the actual server, run the complete diagnosis with:
 
 ```bash
-bash examples/benac_p/run_full_diagnose.sh --reasoning-profile balanced --finalization-tokens 128
+bash examples/benac_p/run_legacy_semantic_diagnose.sh --reasoning-profile balanced --finalization-tokens 128
 ```
 
 The main-suite default remains no recovery. See
@@ -166,7 +190,7 @@ See [`new/belief_interface_investigation.md`](../../new/belief_interface_investi
 ### Current full-run default: clarified episode prior
 
 ```bash
-bash examples/benac_p/run_full_diagnose.sh
+bash examples/benac_p/run_legacy_semantic_diagnose.sh
 ```
 
 This now runs clear-auto B wording with explicit population/episode-prior semantics,

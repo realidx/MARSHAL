@@ -1,265 +1,308 @@
 \subsection{Multi-Agent Coordination as Belief-Conditioned Sequential Decision Making}
 
 In sequential multi-agent decision making, the consequence of an ego action
-depends not only on the physical state but also on how other agents will respond
-to that action. This dependence is especially explicit when their goals,
-incentives, or other behaviorally relevant information are not directly
-observable. We therefore adopt the interactive POMDP (I-POMDP) perspective,
-which extends sequential decision making with models of other agents and maps
-beliefs over interactive states to actions~\citep{gmytrasiewicz2005ipomdp}.
-This is a well-established modeling structure: model the partner, predict its behavior, choose
-an action under that prediction, and update the model from subsequent
-interaction~\citep{carmel1996opponent}. Recent work also provides an instance of the
-same overall coupling by combining inferred partner goals with
-goal-conditioned policies and planning~\citep{huang2024hop}.
+depends not only on the physical state but also on how other agents respond.
+This dependence is particularly important when a partner's goals, incentives,
+or other behaviorally relevant information are not directly observable. We
+therefore adopt the interactive POMDP (I-POMDP) perspective, which incorporates
+models of other agents into sequential decision making and maps beliefs over
+interactive states to actions~\citep{gmytrasiewicz2005ipomdp}.
 
-Let $s_t$ denote the public interaction state at decision time $t$, including the
-physical state, public history, turn phase, and any pending interaction. Agent
-$i$ receives observation $o_t^i$ and has a private latent state $\theta_i$;
-for a partner $j$, $\theta_j$ denotes the task-relevant component of its
-latent model, such as a hidden goal, incentive, or other information affecting
-future behavior. We then use this perspective to separate two research objects. 
-First, a \emph{belief} is the player's information
-state about the feasible or plausible latent states of other players. 
-Given public evidence $e_t^i$, the belief evolves through the standard model-update interface
+Following the canonical definition of Gmytrasiewicz and Doshi, an I-POMDP for
+ego agent $i$ is
 
 \begin{equation}
- b_{t+1}^i=\mathsf{Update}\!\left(b_t^i,e_t^i;s_t,a_t^i\right),
- \label{eq:generic-belief-update}
-\end{equation}
-
-where $e_t^i$ may include an observed partner action and its public state
-consequence.
-
-Second, \emph{conditioned planning} evaluates candidate ego actions
-using the partner model induced by the current belief. For a legal action
-$a\in\mathcal A_i(s_t)$, let
-$\widehat\pi_{j}^{\,i}(y\mid s_t,a,b_t^i)$ denote the resulting predictive
-model for partner action or response $y$. The player then selects an action by
-optimizing its expected continuation utility:
-
-\begin{equation}
- a_t^i\in\arg\max_{a\in\mathcal A_i(s_t)}
- Q_i(s_t,b_t^i,a),\qquad
- Q_i(s_t,b_t^i,a)
- =\mathbb E\!\left[U_i(s_T;\theta_i)\mid s_t,o_t^i,b_t^i,a\right].
- \label{eq:belief-conditioned-planning}
-\end{equation}
-
-The expectation includes the predicted partner responses and subsequent
-interaction dynamics. The two objects are therefore distinct but coupled:
-$b_t^i$ determines the partner model used by planning, while the realized
-interaction outcome supplies evidence for the next belief.
-
-\subsection{BENAC-Based Environment and Oracle Partners}
-
-\paragraph{Base BENAC.}
-We build on BENAC, a negotiation setting in which players make sequential,
-action-level commitments toward multiple goals~\citep{benac2026benchmark}.
-The original implementation stores binding binary commitments in a policy
-matrix, represents goals by satisfaction masks, applies an accepted bilateral
-deal by a bitwise OR, and advances the schedule without changing commitments
-when a deal is rejected. The extension used here preserves this commitment
-semantics while making private incentives, explicit responses, menu offers, and
-multi-player scheduling part of the game specification.
-
-\paragraph{Hidden incentives.}
-An instance is
-$\mathcal M=(N,\mathbf K,\mathcal G,V,\rho,M,F)$, where $N\ge 2$ is the number
-of players, $\mathbf K=(K_1,\ldots,K_N)$ gives the number of binary actions per
-player, $\mathcal G=\{0,\ldots,G-1\}$ is the set of public goals, $\rho$ is
-the public proposer schedule, $M$ is the per-side commitment-change budget,
-and $F$ is an optional set of forbidden actions. The environment stores the
-complete preference matrix
-
-\begin{equation}
- V=(v_{i,g})\in\{-1,0,+1\}^{N\times G},
+ \mathrm{I\mbox{-}POMDP}_i
+ =\left\langle IS_i,A,T_i,\Omega_i,O_i,R_i\right\rangle,
  \qquad
- +1=\mathrm{WANT},\quad 0=\mathrm{NEUTRAL},\quad -1=\mathrm{AVOID}.
- \label{eq:preference-matrix}
+ IS_i=S\times\prod_{j\ne i}M_j,
+ \qquad
+ A=\prod_{j=1}^{N}A_j,
+ \label{eq:ipomdp-definition}
 \end{equation}
 
-Player $i$ privately observes only its own row $v_{i,:}$ in the normal private
-view. For each player $i$, let
-$c_{t,i}\in\{0,1\}^{K_i}$ be its binding commitments and let
-$C_t=(c_{t,1},\ldots,c_{t,N})$. A public state is
-$s_t=(C_t,t,\tau_t)$ together with the public game specification, where
-$\tau_t$ is the transcript. Commitments are monotone: every transition
-preserves existing $1$ entries and can only add $0\mathord\to1$ entries. Each
-goal $g$ has a nonempty public requirement set
-$\Gamma_g\subseteq\{(i,k):1\le i\le N,1\le k\le K_i\}$ and is satisfied iff
+where $S$ is the physical state space, $M_j$ is the set of possible models of
+partner $j$, and $A$ is the joint action space. In the original two-agent
+presentation, $IS_i=S\times M_j$ and $A=A_i\times A_j$; the product form above
+is its direct multi-agent generalization. Each model $m_j\in M_j$ is described
+by $m_j=\langle h_j,f_j,O_j\rangle$, where $h_j$ is a possible observation
+history, $f_j:H_j\rightarrow\Delta(A_j)$ maps that history to a distribution
+over $j$'s actions, and $O_j$ specifies the input supplied to $j$ by the
+environment. Models may be subintentional, $M_j^{\mathrm{S}}$, or intentional,
+$M_j^{\mathrm{I}}$, so that $M_j=M_j^{\mathrm{I}}\cup M_j^{\mathrm{S}}$. An
+intentional model is a type $\theta_j=\langle b_j,\widehat\theta_j\rangle$,
+where $b_j$ is $j$'s belief over the physical state and other-agent models and
+$\widehat\theta_j$ is its frame, including its action, observation, transition,
+reward, and optimality specifications. Thus, the recursive belief structure is
+part of the standard model space rather than an additional assumption introduced
+here~\citep{gmytrasiewicz2005ipomdp}.
+
+The remaining components are the transition, observation, and reward models,
 
 \begin{equation}
- z_g(C_t)=\mathbf 1\!\left[\,c_{t,i,k}=1\text{ for all }(i,k)\in\Gamma_g\,\right].
+ T_i:S\times A\times S\rightarrow[0,1],
+ \qquad
+ O_i:S\times A\times\Omega_i\rightarrow[0,1],
+ \qquad
+ R_i:IS_i\times A\rightarrow\mathbb R.
+ \label{eq:ipomdp-components}
+\end{equation}
+
+The original formulation imposes model non-manipulability (MNM): an agent's
+actions do not directly modify another agent's model, and model
+non-observability (MNO): an agent cannot directly observe another agent's model.
+Consequently, an agent maintains a belief $b_t^i\in\Delta(IS_i)$ over
+interactive states and updates it from its own action and observation. Using the
+belief-state estimation operator from the original formulation, this update is
+
+\begin{equation}
+ b_{t+1}^i
+ =\mathrm{SE}_{\theta_i}\!\left(b_t^i,a_t^i,o_{t+1}^i\right)
+ \;\equiv\;
+ \tau_i\!\left(b_t^i,a_t^i,o_{t+1}^i\right).
+ \label{eq:ipomdp-belief-update}
+\end{equation}
+
+At this level, $\mathrm{SE}_{\theta_i}$ is not a filter over a static partner
+label: for an intentional model, the original update marginalizes over partner
+actions and observations, the physical transition, and the partner's own belief
+update. This recursive dependence is precisely what distinguishes an
+interactive belief from a flat POMDP state belief.
+
+For an intentional partner model, the expected immediate reward in the value
+recursion is averaged over the partner actions predicted by its model. In the
+two-agent definition, this quantity is
+
+\begin{equation}
+ \operatorname{ER}_i(x,a_i)
+ =\sum_{a_j\in A_j}R_i\!\left(x,(a_i,a_j)\right)
+ \Pr(a_j\mid m_j),
+ \label{eq:ipomdp-expected-reward}
+\end{equation}
+
+and is replaced by an expectation over the joint action $a_{-i}$ for multiple
+partners. The canonical I-POMDP solution maps the agent's type to an action through
+
+\begin{equation}
+ \begin{split}
+ U_i(\theta_i)=\max_{a_i\in A_i}\Big[&
+ \sum_{x\in IS_i}b_i(x)\,\operatorname{ER}_i(x,a_i) \\
+ &+\gamma\sum_{o_i\in\Omega_i}
+ \Pr(o_i\mid a_i,b_i)\,
+ U_i\!\left(\left\langle
+ \mathrm{SE}_{\theta_i}(b_i,a_i,o_i),\widehat\theta_i
+ \right\rangle\right)\Big].
+ \end{split}
+ \label{eq:ipomdp-value-recursion}
+\end{equation}
+
+Here $\Pr(o_i\mid a_i,b_i)$ is induced by $T_i$, $O_i$, and the models of the
+other agents. The belief update and value recursion above are the standard
+I-POMDP mechanisms: the former updates a distribution over interactive states,
+while the latter selects an ego action after integrating over the predicted
+behavior of other agents. For the finite-horizon environment used here, we
+instantiate the same dependency with undiscounted terminal utility and no
+separately shaped intermediate reward.
+
+The two terms below are therefore not additional state variables or a new
+coordination formalism. They are functional views of the standard interactive
+belief and solution mapping. For the sequential notation used below, $s_t$
+denotes the public interaction state, $a_t^i$ an ego action,
+$r_{t+1}^j$ a response emitted by partner $j$ when an interaction elicits one,
+$o_t^i$ the observation available to ego $i$, and $e_{t+1}^i$ the evidence
+extracted from the next observed interaction.
+
+A \emph{partner belief} is the ego's current belief about the partner
+components of the interactive state: equivalently, the uncertainty over the
+partners' models or types that is relevant to predicting their future behavior.
+In the original I-POMDP, this object is represented within $b_t^i$ and can
+include partners' private preferences, capabilities, observations, and beliefs.
+In an implementation, its representation may be a finite support, a structured
+state, or an implicit internal representation; it need not be exposed as an
+explicit probability vector or required as a model output. This use of a
+behavioral model revised from observed input--output behavior is also standard
+in opponent modeling~\citep{carmel1996opponent}.
+
+\emph{Partner-conditioned planning} is the complementary use of that belief in
+the action-selection part of the I-POMDP solution. Given $b_t^i$, the ego uses
+the models in the support of its belief to predict partner responses, e.g.,
+$r_{t+1}^j\sim\widehat\pi_j^{\,i}(\cdot\mid s_t,a_t^i,b_t^i)$, evaluates
+the resulting downstream utility, and selects its own action. The candidate
+action may determine which partner to engage and what interaction to propose;
+when the ego is responding, the response itself is its action. This functional
+view is consistent with prior work that couples inferred partner goals with
+goal-conditioned behavior models and planning~\citep{huang2024hop}.
+
+The two objects are distinct but coupled. The current belief determines the
+partner model used in value evaluation, while the selected action affects which
+partner behaviors and outcomes are likely to be observed. The action therefore
+changes the distribution of future evidence, not the belief-update rule itself:
+the next belief is still obtained by applying $\tau_i$ to the evidence that
+becomes available. Functionally, the loop is
+
+\begin{equation}
+ b_t^i
+ \;\longrightarrow\;
+ \underbrace{\mathsf P_t^i=\mathsf{Model}(b_t^i)}_{\text{partner model}}
+ \;\longrightarrow\;
+ a_t^i
+ \;\longrightarrow\;
+ e_{t+1}^i
+ \;\longrightarrow\;
+ b_{t+1}^i
+ \;\longrightarrow\;
+ \mathsf P_{t+1}^i .
+ \label{eq:belief-planning-loop}
+\end{equation}
+
+This is a functional decomposition for analysis, not an architectural
+requirement: the two objects need not be implemented as independent modules,
+and the equations alone do not assert a capability deficit in any particular
+agent.
+
+\subsection{BENAC-P: Negotiation with Private Preferences and Binding Commitments}
+\label{sec:benac-p}
+
+We introduce BENAC-P, a multi-player negotiation game in which agents negotiate
+binding commitments toward shared public goals while holding private preferences
+over those goals. Building on BENAC's commitment-based negotiation
+structure~\citep{benac2026benchmark}, we make partner incentives hidden and allow
+agents to propose menus of alternative agreements. A partner's response both
+changes the feasible continuation and provides evidence about its preferences.
+This gives a concrete setting for the belief--planning loop above.
+
+\paragraph{Game specification.}
+A game is specified by
+\begin{equation}
+ \mathcal M=
+ \left\langle\mathcal N,\mathbf K,\mathcal G,\Gamma,
+ \rho,C_0,\mathcal L,\mu_0\right\rangle.
+ \label{eq:benac-game}
+\end{equation}
+Here $\mathcal N=\{0,\ldots,N-1\}$ is the player set, with $N\geq3$ in our
+experiments, and $\mathbf K=(K_i)_{i\in\mathcal N}$ gives each player's number
+of binary commitments. The set $\mathcal G=\{0,\ldots,G-1\}$ indexes public
+goals; $\Gamma=(\Gamma_g)_{g\in\mathcal G}$ specifies the commitments required
+by each goal. The schedule $\rho=(\rho_0,\ldots,\rho_{T-1})$ identifies the
+proposer at each turn, $C_0$ is the initial commitment state, and
+$\mathcal L$ specifies the legal proposals at each state. Finally, $\mu_0$
+is the publicly specified distribution over private preference configurations.
+All components of $\mathcal M$ are public; the realized preferences are not.
+
+\paragraph{Commitments, preferences, and utility.}
+At turn $t$, player $i$ has commitments $c_{t,i}\in\{0,1\}^{K_i}$, and
+$C_t=(c_{t,i})_{i\in\mathcal N}$ is the joint commitment state. An entry
+$c_{t,i,k}=1$ records an irreversible commitment. Each requirement set
+$\Gamma_g\subseteq\{(i,k):i\in\mathcal N,\ 1\leq k\leq K_i\}$ involves at
+least two players. A goal is satisfied exactly when all its requirements hold:
+\begin{equation}
+ S_g(C_t)=\mathbf 1\!\left[
+ c_{t,i,k}=1\ \text{for every }(i,k)\in\Gamma_g\right].
  \label{eq:goal-satisfaction}
 \end{equation}
-
-The implementation restricts every goal to involve at least two distinct
-players. Hence, in the current partial-information setting, the hidden partner
-state is the preference/incentive row rather than the goal graph: goal
-requirements remain public. Player $i$'s terminal utility is the additive preference-weighted
-utility
-
+At initialization, the environment selects a preference matrix
+$V=(v_{i,g})\sim\mu_0$, where
+$v_{i,g}\in\{-1,0,+1\}$ represents \textsc{Avoid}, \textsc{Neutral}, and
+\textsc{Want}, respectively. Player $i$ observes its own row $v_i$; other rows
+remain private, although the public configuration distribution can correlate
+them. The episode ends after the scheduled interactions, and player $i$ receives
 \begin{equation}
- U_i(C_T)=\sum_{g=0}^{G-1}v_{i,g}z_g(C_T).
+ U_i(C_T;v_i)=\sum_{g\in\mathcal G}v_{i,g}S_g(C_T).
  \label{eq:terminal-utility}
 \end{equation}
+There is no separately shaped intermediate reward. Agents therefore share the
+goal structure without necessarily sharing objectives: completing the same goal
+can benefit one player and harm another.
 
-The episode terminates exactly when the schedule is exhausted, $t=T=|\rho|$;
-goal completion does not terminate the episode early. The runner reports the
-utility at this terminal state and does not emit a separate shaped transition
-reward.
+\paragraph{Offers, responses, and transitions.}
+At turn $t$, proposer $p=\rho_t$ chooses a proposal from $\mathcal L(s_t)$,
+where $s_t=(C_t,t,h_t)$ contains the commitments, turn index, and public
+transcript. An ordinary offer to partner $q\ne p$ is
+$o=(q,\bar c_p,\bar c_q)$, specifying the two players' target commitment
+vectors. Targets must preserve all existing commitments, add at most $M$ new
+commitments per side, add no action in a public forbidden set $F$, and add at
+least one commitment in total. These constraints, together with any public
+stage-specific proposal restrictions, define $\mathcal L$.
 
-\paragraph{Menu offers.}
-At turn $t$, the proposer is $p=\rho_t$. An ordinary offer addressed to
-$q\ne p$ is
-
+The responder chooses \textsc{Accept} or \textsc{Reject}. Acceptance makes the
+proposed commitments immediately binding:
 \begin{equation}
- o=(q,\bar c_p,\bar c_q),
- \qquad \bar c_p\in\{0,1\}^{K_p},\quad
- \bar c_q\in\{0,1\}^{K_q},
- \end{equation}
-
-where the vectors are final target vectors rather than deltas. If
-$D_k=\{a:c_{t,k,a}=0,\ \bar c_{k,a}=1\}$, legality requires preservation of
-existing commitments, $|D_p|\le M$, $|D_q|\le M$, no newly added forbidden
-action, and $|D_p|+|D_q|>0$. The ordinary action space contains PASS and all
-legal offers to every $q\ne p$. PASS leaves $C_t$ unchanged and consumes the
-turn. For an ordinary offer, the partner response is
-$r\in\{\textsc{ACCEPT},\textsc{REJECT}\}$. ACCEPT updates
-
-\begin{equation}
- c_{t+1,k}=c_{t,k}\lor\bar c_k\quad(k\in\{p,q\}),
- \end{equation}
-
-leaving all other rows unchanged; REJECT leaves $C_t$ unchanged. Both outcomes
-advance the schedule cursor by exactly one and are recorded in the public
-transcript.
-
-When menus are enabled, a menu is a pair of distinct legal ordinary offers to
-the same partner, $m=(o^{(1)},o^{(2)})$. Its response set is
-$\{\textsc{REJECT},\textsc{CHOOSE\_1},\textsc{CHOOSE\_2}\}$; only the chosen
-option binds, rejection binds neither, and the menu also consumes one
-proposer turn.
-
-\paragraph{Multi-party interaction and observation.}
-The episode is multi-party even though each individual offer is bilateral:
-$N$ may exceed two, a goal may require commitments from multiple players, and
-commitments accumulated in different bilateral interactions jointly determine
-the terminal utilities. The generator defaults to
-$(N,K_i,G,R,M)=(3,3,8,4,1)$, samples a player permutation for each of $R$
-rounds, and uses the concatenated schedule $\rho$; all of these dimensions and
-the schedule are configurable. The schema permits $N=2$ for small games, while
-the generator directly supports $N\ge3$. Each resolved proposal consumes one
-scheduled turn, with a response only when the proposal is an offer.
-
-The normal private observation of player $i$ contains the public goals and
-requirements, binding commitments, schedule and cursor, public transcript,
-and, at the relevant phase, legal partners/offers or a pending offer, together
-with $v_{i,:}$. A pending offer is hypothetical until its response is chosen.
-The public observation omits private preferences; an explicit full view exposes
-all rows only for debugging. The current implementation has no free-form
-message channel or explicit reveal action, so its public evidence consists of
-structured proposals, responses, and the resulting commitment snapshot.
-
-\paragraph{Belief solver.}
-For ego $i$, the finite latent type space for partner $j$ is the preference-row
-space $\Theta_j=\{\mathrm{WANT},\mathrm{NEUTRAL},\mathrm{AVOID}\}^{G}$. The
-solver maintains joint hypotheses
-
-\begin{equation}
- \mathcal H_t^i\subseteq\prod_{j\ne i}\Theta_j,
- \qquad
- \mathcal B_t^i=\left(\mathcal H_t^i,w_t^i\right),
- \qquad
- \mathcal H_{j,t}^i=\{h_j:\exists h\in\mathcal H_t^i\},
- \label{eq:joint-belief-support}
+ c_{t+1,i}=
+ \begin{cases}
+ c_{t,i}\lor\bar c_i, & i\in\{p,q\},\\
+ c_{t,i}, & \text{otherwise}.
+ \end{cases}
+ \label{eq:offer-transition}
 \end{equation}
+Rejection leaves $C_t$ unchanged. A menu $m=(o^{(1)},o^{(2)})$ contains two
+distinct legal offers to the same responder, who chooses
+\textsc{Choose\_1}, \textsc{Choose\_2}, or \textsc{Reject}. Only the selected
+offer binds; rejection binds neither. Where allowed, \textsc{Pass} skips the
+proposal and leaves commitments unchanged. Each resolved interaction advances
+the schedule by one turn, and the proposal, response, and resulting state are
+publicly observed. A pending offer is hypothetical until accepted.
 
-where $\mathcal H_{j,t}^i$ is the currently feasible set for partner $j$ and
-the joint representation preserves cross-partner correlations. The concrete
-\texttt{BeliefState} stores normalized log weights. The default
-\texttt{ConditionalPreferencePrior} starts from label probabilities
-$(0.4,0.2,0.4)$ in WANT/NEUTRAL/AVOID order and conditions on the ego's row
-and the generator's validity constraints; controlled fixtures may instead
-provide a finite support explicitly.
+Although each agreement is bilateral, its commitments can enable or constrain
+later agreements with other players. A menu also lets ego choose which
+preference comparisons a partner faces. Information is consequently obtained
+through ordinary negotiation actions that have real task consequences, rather
+than through a separate preference-query action.
 
-Upon a valid partner-generated proposal or response, the exact filter scores
-each hypothesis with the known partner kernel and applies
-
+\paragraph{Deterministic rational partners.}
+To diagnose ego behavior under a known response model, we use deterministic
+partners in the controlled subgames of Section~\ref{sec:diagnose}. For a
+proposal $a$ addressed to $j$, let $\mathcal R(a)$ be its legal response set
+and let $\mathsf T(s,a,r)$ be the public transition defined above. The partner
+compares responses using only public commitments and its own preferences:
 \begin{equation}
- w_{t+1}^i(h)=
- \frac{w_t^i(h)\,\ell_j(e_t\mid s_t,\theta_j(h))}
- {\sum_{h'\in\mathcal H_t^i}w_t^i(h')\,\ell_j(e_t\mid s_t,\theta_j(h'))},
- \qquad h\in\mathcal H_t^i,
+ f_j(s,a;v_j)\in\arg\max_{r\in\mathcal R(a)}
+ \sum_{g\in\mathcal G}v_{j,g}
+ S_g\!\left(C\bigl(\mathsf T(s,a,r)\bigr)\right),
+ \label{eq:oracle-partner}
+\end{equation}
+where $C(s)$ extracts the commitment state. Rejection wins ties with an
+agreement; among equally valuable accepted menu options, the earlier option
+wins. We certify each subgame by enumerating allowed continuations and verifying
+that this commitment-state ranking also maximizes the responder's terminal
+utility. Thus, the snapshot comparison is terminal-rational in the certified
+family; it is not assumed to be sufficient in arbitrary negotiation games.
+The acting partner never reads another player's private preference row.
+Uncertainty comes from hidden preferences, not randomized partner behavior.
+
+\paragraph{Exact belief update and reference planning.}
+For ego $i$, a hypothesis $h=(v_j)_{j\ne i}$ is a joint configuration of partner
+preferences. The solver initializes a distribution $b_0^i$ by conditioning
+$\mu_0$ on ego's own row and any supplied initial information. Its support
+$\mathcal H_t^i$ retains cross-partner correlations. After ego proposes $a$ and
+observes response $r$ from $j$, the exact update is
+\begin{equation}
+ b_{t+1}^i(h)=
+ \frac{b_t^i(h)\,\mathbf 1[f_j(s_t,a;v_j(h))=r]}
+ {\sum_{h'\in\mathcal H_t^i}
+ b_t^i(h')\,\mathbf 1[f_j(s_t,a;v_j(h'))=r]}.
  \label{eq:bayes-filter}
 \end{equation}
+Inconsistent configurations are eliminated; ego's proposal itself is an
+intervention, not evidence about hidden preferences. Our diagnostic population
+is uniform over its compatible configurations, so this update reduces to exact
+support filtering. The model-facing belief can therefore be expressed as a
+semantic set without requiring numerical probabilities.
 
-with zero-likelihood hypotheses assigned zero posterior mass. The concrete
-implementation retains such hypotheses in the enumerated support with
-$-\infty$ log weight. Ego
-actions are interventions and do not update the likelihood. The filter replays
-only unseen, valid, in-order public events and pending offers; invalid or
-fallback events are marked as such and are not evidence. In the repository,
-the kernel is the known stochastic \texttt{SoftProgressPolicy}, which uses the
-acting player's own preference row and public state, scores actions by accepted
-state potential gain (with partial-progress weight $0.5$, zero on the last
-turn), and applies a temperature-$0.5$ softmax with a $0.02$ uniform mixture.
-It is a predictive partner kernel, not a rational oracle and not a model of a
-partner's belief about other players. The deterministic commitment snapshot is
-used to validate the public transition; the likelihood is attached to the
-observed proposal or response. The associated \texttt{BayesPlanner}
-consumes $\mathcal B_t^i$, branches on the same partner kernel, updates the
-belief at non-ego nodes, and maximizes ego terminal utility over the remaining
-schedule without discount; it is therefore a belief-conditioned reference
-planner rather than an equilibrium solver.
-
-\paragraph{Oracle partners.}
-An observation-limited rational partner would have the form
-
+The reference planner enumerates the remaining interaction tree. In our
+diagnostic subgames, ego makes the scheduled proposals and partners supply the
+responses, including the final approval. Define
+$p_b(r\mid s,a)=\sum_h b(h)\mathbf 1[f_j(s,a;v_j(h))=r]$ and let
+$\tau(b,s,a,r)$ denote the update above. The solver computes
 \begin{equation}
- a_j^t=\pi_{\mathrm{oracle}}\!\left(o_j^t,\mathcal B_{-j}^t\right),
- \label{eq:limited-oracle}
+ W_i(s,b)=\max_{a\in\mathcal L(s)}
+ \sum_{r\in\mathcal R(a)}p_b(r\mid s,a)\,
+ W_i\!\left(\mathsf T(s,a,r),\tau(b,s,a,r)\right),
+ \qquad W_i(s_T,b)=U_i(C_T;v_i),
+ \label{eq:benac-reference-planner}
 \end{equation}
-
-where $o_j^t$ contains the public state and $j$'s own private incentive, and
-$\mathcal B_{-j}^t$ is maintained from information available to $j$ when
-inferring other players. Under this semantics, ground-truth access is limited
-to $j$'s own private state; all inference about other agents must use the same
-observation and belief-update interface as an ordinary player.
-
-The current reference implementation should be distinguished from this
-observation-limited definition. \texttt{RationalOraclePolicy} is bound by
-\texttt{GameRunner} to the live state and player identity, then delegates to
-\texttt{PerfectInfoSolver}. The solver reads the complete \texttt{GameSpec},
-including every row of the ground-truth $V$, and performs finite-horizon
-backward induction. For a pending ordinary offer $o$ to responder $q$, let
-$W_q^{\mathrm{acc}}(s,o)$ and $W_q^{\mathrm{rej}}(s,o)$ denote the continuation
-utilities obtained by accepting and rejecting. Its response is
-
-\begin{equation}
- r_q^{\mathrm{PI}}(s,o)=
- \begin{cases}
- \textsc{ACCEPT}, & W_q^{\mathrm{acc}}(s,o)\ge W_q^{\mathrm{rej}}(s,o),\\
- \textsc{REJECT}, & \text{otherwise}.
- \end{cases}
- \label{eq:perfect-info-response}
-\end{equation}
-
-At proposer nodes it chooses an accepted offer maximizing the proposer's
-continuation utility; PASS is the baseline and wins ties, with remaining ties
-resolved by legal enumeration order. This solver is menu-disabled. It does not
-maintain a belief about the ego, and the observation passed to the policy is
-used only for identity and turn-consistency checks; legality is checked against
-the bound live state rather than used to restrict the solver's access to $V$.
-
-For clarity, the implementation exposes four distinct objects: (i) the
-\emph{environment ground truth}, comprising the full $V$, public specification,
-and current physical state; (ii) the \emph{agent-observable information},
-comprising the public state plus the agent's own private row in private mode;
-(iii) the \emph{solver-maintained belief}, comprising the current feasible
-partner hypotheses and weights; and (iv) the \emph{policy}, which maps the
-relevant information to an action. The exact filter and \texttt{BayesPlanner}
-use the belief object, whereas the current \texttt{RationalOraclePolicy} is a
-full-information reference and must not be interpreted as an
-observation-limited oracle.
+with zero-probability branches omitted. A pass has one null response and leaves
+belief unchanged; an automatic protocol step has a singleton action set.
+This solver selects actions by terminal utility after observation, updating,
+and replanning. It provides exact judgments and reference actions for diagnosis
+under the specified partner policies, without giving ego access to the realized
+hidden configuration or requiring an equilibrium solution.

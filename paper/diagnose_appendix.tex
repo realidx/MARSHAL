@@ -1,0 +1,108 @@
+\section{Diagnostic protocol and decomposition}
+\label{app:diagnose}
+
+\paragraph{Execution and aggregation.}
+The run uses seeds 20000--20011; 20000--20005 are the designated discovery
+bundles and 20006--20011 the designated confirmation bundles. Each bundle
+contains unknown/relevant, known, and unknown/irrelevant games, with shared
+underlying instance parameters. Action ordering and route names vary with
+seed. Responses are exhaustively enumerated under the publicly specified
+finite population, so partner-behavior sampling is not a source of variance.
+The uncertainty intervals quantify variation among six bundles within this
+selected family; neither response branches nor model requests are treated as
+independent games. Reuse of this split during prompt/interface development
+precludes interpreting the intervals as an untouched confirmatory test.
+
+The model is instructed to briefly reason, with soft targets of 120 words for
+judgment questions and 240 for action questions. The initial request exposes
+one native submission tool with automatic tool choice. A length-stopped
+response receives exactly one additional request containing the original
+question and its generated text, followed by an instruction to submit through
+the named function without further analysis. No reference answer or corrective
+feedback is supplied. Initial truncation remains recorded even after successful
+submission. There are 517 actual requests for 486 diagnostic tasks, consuming
+146,553 completion tokens; the four preliminary checks consume another 579
+completion tokens in four requests and are excluded from the diagnostic
+statistics. Those checks use empty histories with singleton WANT, NEUTRAL,
+AVOID, and the unresolved three-label support. They test interface semantics,
+not interaction competence. Invalid outputs would not be converted to actions;
+no such outputs remained in this run.
+
+\paragraph{Regret decomposition.}
+Let $O$ denote the reference component and $L$ the evaluated model. For a
+post-response state, $R_{XY}$ uses judgment provider $X$ and planner $Y$;
+regret is evaluated under the evidence-supported reference judgment, even
+when the planner receives model judgment. The reference planner optimizes
+under the judgment actually supplied to it. Thus $R_{OO}=0$,
+$R_{OL}$ measures planning deficit with correct judgment, $R_{LO}$ measures
+judgment error's task cost under reference planning, and
+$R_{LL}-R_{OL}$ is the model-planner benefit of judgment repair.
+We average over all responses to the reference first action.
+
+For the reverse intervention, $J_{XY}$ uses initial action chooser $X$ and
+subsequent judgment updater $Y$, followed by reference planning, and reports
+expected terminal utility. The initial judgment is correct in both action
+arms. $J_{OL}-J_{LL}$ is the effect of action repair with the model updater;
+$J_{OO}-J_{OL}$ and $J_{LO}-J_{LL}$ are updater-repair effects on the reference
+and model actions, respectively. With latent configuration $Z$ and response
+$Y_a$, channel information is $H(Z)-\mathbb E[H(Z\mid Y_a,a)]$ in bits.
+This is a backend measurement, not an action-selection reward.
+
+\begin{table}[h]
+\caption{Two component decompositions in confirmation unknown/relevant games.
+The left table reports regret (lower is better); the right reports terminal
+utility (higher is better). Means over six bundles.}
+\label{tab:diagnose-factorial}
+\centering
+\small
+\begin{tabular}{lrr}
+\hline
+$R$: judgment / planner & Reference & Model \\
+\hline
+Reference & 0.000 & 0.667 \\
+Model & 2.889 & 2.833 \\
+\hline
+\end{tabular}
+\quad
+\begin{tabular}{lrr}
+\hline
+$J$: chooser / updater & Reference & Model \\
+\hline
+Reference & 4.833 & 1.944 \\
+Model & 2.278 & 1.500 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\caption{Matched confirmation controls. B exact and downstream regret use
+reference-action response branches. Initial regret uses correct initial B.
+Downstream indifference in the irrelevant condition is a designed control.}
+\label{tab:diagnose-controls}
+\centering
+\small
+\begin{tabular}{lrrr}
+\hline
+Condition & Post-response B exact & Initial P regret & Downstream P regret \\
+\hline
+Unknown/relevant & 22.2\% & 2.556 & 0.667 \\
+Known & 50.0\% & 2.333 & 0.833 \\
+Unknown/irrelevant & 33.3\% & 0.389 & 0.000 \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Certification and interpretation.}
+The allowed-action catalogue is public and stage-specific; the reference
+optimizer does not search unrestricted BENAC offers. Certification checks
+that every prescribed partner response maximizes its own terminal utility
+for every allowed continuation, that the informative menu is optimal in the
+unknown/relevant condition, and that preparation strictly dominates that menu
+in both controls. A further same-menu comparison verifies positive task value
+from updating the reference judgment rather than freezing the initial one.
+This establishes an information-use opportunity without treating all
+between-action utility differences as information effects. Equal-utility
+reference actions use a fixed enumeration tie-break; all ties remain correct
+for model action scoring. The modular end-to-end regret is 3.611
+[1.611, 5.611] in unknown/relevant confirmation games; it is a task-level
+outcome rather than a separate capability diagnostic.

@@ -1,0 +1,1671 @@
+{
+  "purpose": "History-aware engineering validation; one independent source game per condition per split, not a research-sized sample.",
+  "selection_config": {
+    "seed": 31000,
+    "candidate_seeds": 4,
+    "actions_per_player": 2,
+    "n_goals": 8,
+    "rounds": 2,
+    "unknown_goals": 1,
+    "max_nodes": 20000,
+    "min_games_per_condition": 1,
+    "max_remaining_turns": 3,
+    "candidate_version": "native-candidates-v3",
+    "partner_version": "terminal-best-response-to-immediate-reference-v2",
+    "suite_version": "native-endgame-diagnose-v4-history"
+  },
+  "fixtures": [
+    {
+      "id": "native-31000-g2-d1",
+      "ego": 1,
+      "game": {
+        "n_players": 3,
+        "n_actions_per_player": [
+          2,
+          2,
+          2
+        ],
+        "goals": [
+          {
+            "goal_id": 0,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 1,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 2,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 0
+              }
+            ]
+          },
+          {
+            "goal_id": 3,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 4,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 5,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 1,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 6,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 1,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 0
+              }
+            ]
+          },
+          {
+            "goal_id": 7,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 0
+              }
+            ]
+          }
+        ],
+        "round_robin": [
+          1,
+          2,
+          0,
+          1,
+          2,
+          0
+        ],
+        "max_changes": 1,
+        "seed": 31000,
+        "forbidden_actions": null,
+        "menu_enabled": true
+      },
+      "type_catalogues": {
+        "0": [
+          [
+            1,
+            0,
+            1,
+            -1,
+            -1,
+            -1,
+            1,
+            1
+          ]
+        ],
+        "1": [
+          [
+            -1,
+            -1,
+            0,
+            1,
+            1,
+            1,
+            1,
+            -1
+          ]
+        ],
+        "2": [
+          [
+            -1,
+            1,
+            1,
+            0,
+            1,
+            1,
+            -1,
+            1
+          ],
+          [
+            -1,
+            1,
+            0,
+            0,
+            1,
+            1,
+            -1,
+            1
+          ],
+          [
+            -1,
+            1,
+            -1,
+            0,
+            1,
+            1,
+            -1,
+            1
+          ]
+        ]
+      },
+      "own_preferences": [
+        -1,
+        -1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        -1
+      ],
+      "query": {
+        "player": 2,
+        "goals": [
+          2
+        ]
+      },
+      "history": [
+        {
+          "action": "MENU",
+          "partner_id": 2,
+          "offers": [
+            {
+              "partner_id": 2,
+              "proposer_action": [
+                1,
+                0
+              ],
+              "partner_action": [
+                0,
+                1
+              ]
+            },
+            {
+              "partner_id": 2,
+              "proposer_action": [
+                0,
+                1
+              ],
+              "partner_action": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "response": "CHOOSE_2"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "response": "ACCEPT"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 2,
+          "proposer_action": [
+            1,
+            1
+          ],
+          "partner_action": [
+            1,
+            1
+          ]
+        },
+        {
+          "response": "REJECT"
+        }
+      ],
+      "source": {
+        "generator": "benac_p.generator.generate_game",
+        "seed": 31000,
+        "scope": "Conditional position with all nonqueried preference entries supplied. No additional action/turn restrictions."
+      }
+    },
+    {
+      "id": "native-31000-g6-d1",
+      "ego": 1,
+      "game": {
+        "n_players": 3,
+        "n_actions_per_player": [
+          2,
+          2,
+          2
+        ],
+        "goals": [
+          {
+            "goal_id": 0,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 1,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 2,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 0
+              }
+            ]
+          },
+          {
+            "goal_id": 3,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 4,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 5,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 1,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 6,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 1,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 0
+              }
+            ]
+          },
+          {
+            "goal_id": 7,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 0
+              }
+            ]
+          }
+        ],
+        "round_robin": [
+          1,
+          2,
+          0,
+          1,
+          2,
+          0
+        ],
+        "max_changes": 1,
+        "seed": 31000,
+        "forbidden_actions": null,
+        "menu_enabled": true
+      },
+      "type_catalogues": {
+        "0": [
+          [
+            1,
+            0,
+            1,
+            -1,
+            -1,
+            -1,
+            1,
+            1
+          ]
+        ],
+        "1": [
+          [
+            -1,
+            -1,
+            0,
+            1,
+            1,
+            1,
+            1,
+            -1
+          ]
+        ],
+        "2": [
+          [
+            -1,
+            1,
+            -1,
+            0,
+            1,
+            1,
+            1,
+            1
+          ],
+          [
+            -1,
+            1,
+            -1,
+            0,
+            1,
+            1,
+            0,
+            1
+          ],
+          [
+            -1,
+            1,
+            -1,
+            0,
+            1,
+            1,
+            -1,
+            1
+          ]
+        ]
+      },
+      "own_preferences": [
+        -1,
+        -1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        -1
+      ],
+      "query": {
+        "player": 2,
+        "goals": [
+          6
+        ]
+      },
+      "history": [
+        {
+          "action": "OFFER",
+          "partner_id": 2,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "response": "ACCEPT"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "response": "REJECT"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 2,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1,
+            1
+          ]
+        },
+        {
+          "response": "REJECT"
+        }
+      ],
+      "source": {
+        "generator": "benac_p.generator.generate_game",
+        "seed": 31000,
+        "scope": "Conditional position with all nonqueried preference entries supplied. No additional action/turn restrictions."
+      }
+    },
+    {
+      "id": "native-31001-g5-d2",
+      "ego": 2,
+      "game": {
+        "n_players": 3,
+        "n_actions_per_player": [
+          2,
+          2,
+          2
+        ],
+        "goals": [
+          {
+            "goal_id": 0,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 1,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 1,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 2,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 3,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 4,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 5,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 0
+              }
+            ]
+          },
+          {
+            "goal_id": 6,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 7,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 0
+              }
+            ]
+          }
+        ],
+        "round_robin": [
+          2,
+          1,
+          0,
+          2,
+          0,
+          1
+        ],
+        "max_changes": 1,
+        "seed": 31001,
+        "forbidden_actions": null,
+        "menu_enabled": true
+      },
+      "type_catalogues": {
+        "0": [
+          [
+            1,
+            -1,
+            -1,
+            0,
+            0,
+            1,
+            1,
+            1
+          ]
+        ],
+        "1": [
+          [
+            -1,
+            -1,
+            0,
+            -1,
+            -1,
+            1,
+            1,
+            1
+          ],
+          [
+            -1,
+            -1,
+            0,
+            -1,
+            -1,
+            0,
+            1,
+            1
+          ],
+          [
+            -1,
+            -1,
+            0,
+            -1,
+            -1,
+            -1,
+            1,
+            1
+          ]
+        ],
+        "2": [
+          [
+            0,
+            0,
+            1,
+            -1,
+            -1,
+            1,
+            1,
+            1
+          ]
+        ]
+      },
+      "own_preferences": [
+        0,
+        0,
+        1,
+        -1,
+        -1,
+        1,
+        1,
+        1
+      ],
+      "query": {
+        "player": 1,
+        "goals": [
+          5
+        ]
+      },
+      "history": [
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "response": "REJECT"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "response": "ACCEPT"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 2,
+          "proposer_action": [
+            1,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "response": "REJECT"
+        }
+      ],
+      "source": {
+        "generator": "benac_p.generator.generate_game",
+        "seed": 31001,
+        "scope": "Conditional position with all nonqueried preference entries supplied. No additional action/turn restrictions."
+      }
+    },
+    {
+      "id": "native-31002-g2-d2",
+      "ego": 0,
+      "game": {
+        "n_players": 3,
+        "n_actions_per_player": [
+          2,
+          2,
+          2
+        ],
+        "goals": [
+          {
+            "goal_id": 0,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 1,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 2,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 0
+              }
+            ]
+          },
+          {
+            "goal_id": 3,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 4,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 5,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 6,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 1,
+                "action_id": 0
+              }
+            ]
+          },
+          {
+            "goal_id": 7,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 0
+              }
+            ]
+          }
+        ],
+        "round_robin": [
+          2,
+          0,
+          1,
+          0,
+          1,
+          2
+        ],
+        "max_changes": 1,
+        "seed": 31002,
+        "forbidden_actions": null,
+        "menu_enabled": true
+      },
+      "type_catalogues": {
+        "0": [
+          [
+            0,
+            1,
+            -1,
+            1,
+            1,
+            1,
+            -1,
+            1
+          ]
+        ],
+        "1": [
+          [
+            1,
+            0,
+            1,
+            1,
+            -1,
+            -1,
+            -1,
+            1
+          ],
+          [
+            1,
+            0,
+            0,
+            1,
+            -1,
+            -1,
+            -1,
+            1
+          ],
+          [
+            1,
+            0,
+            -1,
+            1,
+            -1,
+            -1,
+            -1,
+            1
+          ]
+        ],
+        "2": [
+          [
+            -1,
+            -1,
+            1,
+            -1,
+            -1,
+            -1,
+            0,
+            -1
+          ]
+        ]
+      },
+      "own_preferences": [
+        0,
+        1,
+        -1,
+        1,
+        1,
+        1,
+        -1,
+        1
+      ],
+      "query": {
+        "player": 1,
+        "goals": [
+          2
+        ]
+      },
+      "history": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "MENU",
+          "partner_id": 2,
+          "offers": [
+            {
+              "partner_id": 2,
+              "proposer_action": [
+                0,
+                0
+              ],
+              "partner_action": [
+                1,
+                0
+              ]
+            },
+            {
+              "partner_id": 2,
+              "proposer_action": [
+                0,
+                1
+              ],
+              "partner_action": [
+                0,
+                1
+              ]
+            }
+          ]
+        },
+        {
+          "response": "REJECT"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "response": "REJECT"
+        }
+      ],
+      "source": {
+        "generator": "benac_p.generator.generate_game",
+        "seed": 31002,
+        "scope": "Conditional position with all nonqueried preference entries supplied. No additional action/turn restrictions."
+      }
+    },
+    {
+      "id": "native-31003-g7-d1",
+      "ego": 1,
+      "game": {
+        "n_players": 3,
+        "n_actions_per_player": [
+          2,
+          2,
+          2
+        ],
+        "goals": [
+          {
+            "goal_id": 0,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 1,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 2,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 0
+              }
+            ]
+          },
+          {
+            "goal_id": 3,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 0
+              }
+            ]
+          },
+          {
+            "goal_id": 4,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 5,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 6,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 0
+              }
+            ]
+          },
+          {
+            "goal_id": 7,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              }
+            ]
+          }
+        ],
+        "round_robin": [
+          0,
+          2,
+          1,
+          1,
+          2,
+          0
+        ],
+        "max_changes": 1,
+        "seed": 31003,
+        "forbidden_actions": null,
+        "menu_enabled": true
+      },
+      "type_catalogues": {
+        "0": [
+          [
+            1,
+            -1,
+            1,
+            -1,
+            1,
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            -1,
+            1,
+            -1,
+            1,
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            -1,
+            1,
+            -1,
+            1,
+            1,
+            1,
+            -1
+          ]
+        ],
+        "1": [
+          [
+            -1,
+            0,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            1
+          ]
+        ],
+        "2": [
+          [
+            0,
+            1,
+            1,
+            -1,
+            1,
+            1,
+            -1,
+            1
+          ]
+        ]
+      },
+      "own_preferences": [
+        -1,
+        0,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        1
+      ],
+      "query": {
+        "player": 0,
+        "goals": [
+          7
+        ]
+      },
+      "history": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "MENU",
+          "partner_id": 0,
+          "offers": [
+            {
+              "partner_id": 0,
+              "proposer_action": [
+                0,
+                0
+              ],
+              "partner_action": [
+                0,
+                1
+              ]
+            },
+            {
+              "partner_id": 0,
+              "proposer_action": [
+                0,
+                1
+              ],
+              "partner_action": [
+                0,
+                1
+              ]
+            }
+          ]
+        },
+        {
+          "response": "REJECT"
+        }
+      ],
+      "source": {
+        "generator": "benac_p.generator.generate_game",
+        "seed": 31003,
+        "scope": "Conditional position with all nonqueried preference entries supplied. No additional action/turn restrictions."
+      }
+    },
+    {
+      "id": "native-31003-g2-d1",
+      "ego": 1,
+      "game": {
+        "n_players": 3,
+        "n_actions_per_player": [
+          2,
+          2,
+          2
+        ],
+        "goals": [
+          {
+            "goal_id": 0,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 1,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 2,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 0
+              }
+            ]
+          },
+          {
+            "goal_id": 3,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 0
+              }
+            ]
+          },
+          {
+            "goal_id": 4,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 5,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 0
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 6,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 0
+              }
+            ]
+          },
+          {
+            "goal_id": 7,
+            "binary": true,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              }
+            ]
+          }
+        ],
+        "round_robin": [
+          0,
+          2,
+          1,
+          1,
+          2,
+          0
+        ],
+        "max_changes": 1,
+        "seed": 31003,
+        "forbidden_actions": null,
+        "menu_enabled": true
+      },
+      "type_catalogues": {
+        "0": [
+          [
+            1,
+            -1,
+            1,
+            -1,
+            1,
+            1,
+            1,
+            -1
+          ],
+          [
+            1,
+            -1,
+            0,
+            -1,
+            1,
+            1,
+            1,
+            -1
+          ],
+          [
+            1,
+            -1,
+            -1,
+            -1,
+            1,
+            1,
+            1,
+            -1
+          ]
+        ],
+        "1": [
+          [
+            -1,
+            0,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            1
+          ]
+        ],
+        "2": [
+          [
+            0,
+            1,
+            1,
+            -1,
+            1,
+            1,
+            -1,
+            1
+          ]
+        ]
+      },
+      "own_preferences": [
+        -1,
+        0,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        1
+      ],
+      "query": {
+        "player": 0,
+        "goals": [
+          2
+        ]
+      },
+      "history": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 2,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "response": "ACCEPT"
+        }
+      ],
+      "source": {
+        "generator": "benac_p.generator.generate_game",
+        "seed": 31003,
+        "scope": "Conditional position with all nonqueried preference entries supplied. No additional action/turn restrictions."
+      }
+    }
+  ]
+}

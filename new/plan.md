@@ -925,3 +925,32 @@ retrying wrong answers. No new game family, score, or P interface is introduced.
 Semantic protocol v2 and manifest changes prevent mixing old/new runs. Historical
 calibration replay uses its archived B question. Real-model verification of this
 wording remains the next remote run; local tests are not model results.
+
+
+### 13.12 Native endgame diagnosis supersedes the restricted semantic game
+
+Preserve original legal actions and round schedules; replay legal fixed histories,
+use active deterministic oracle partners, and measure at most two ego decisions.
+P remains history-free by selecting positions with certified posterior-independent
+partner best responses to the declared reference continuation. Do not tie player
+types or add preparation/assessment actions. Four blocks remain B, P, B→P, P→B.
+See [native_endgame_diagnose.md](native_endgame_diagnose.md) for the exact oracle,
+response controls, selection gates and scoring scope. The main run script now
+selects and runs this suite; the previous implementation has a legacy script.
+Old semantic model results cannot establish claims about this native suite.
+CPU synthetic validation verifies implementation, not LLM capability findings.
+
+
+### 13.13 Public-history planning supersedes the history-free interface
+
+All root and post-interaction P tasks now include the corresponding complete
+public history. B→P replaces only the explicit semantic judgment in fresh paired
+contexts. Interpret P as oracle-judgment-assisted planning and B repair as the
+effect of explicit judgment assistance; history can support re-inference.
+Use the history-aware RationalPartner, retaining its declared terminal best
+response to fixed reference continuation; remove the universal history-free
+certificate gate. Reselect fixtures under this policy, with at most three original
+proposal turns remaining by default for tractable exact search. Preserve native
+turns/actions and all four diagnostic blocks. Counterfactual reference scores
+undefined under contradictory type/history combinations are marked unavailable;
+direct paired model scores remain valid. See native_endgame_diagnose.md.

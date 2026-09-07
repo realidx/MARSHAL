@@ -1,0 +1,164 @@
+\label{sec:diagnose}
+
+We use a compact controlled diagnosis to identify targets for post-training:
+\emph{partner belief} ($B$), the formation and updating of task-relevant partner
+judgments, and \emph{partner-conditioned planning} ($P$), the selection of
+interaction actions using those judgments. We separately test each capability
+and intervene on their interfaces to examine the loop
+$B_t\rightarrow P_t\rightarrow e_{t+1}\rightarrow B_{t+1}$.
+The evidence-generating consequence of an action is part of planning, rather
+than a third capability.
+
+\subsection{Controlled interaction and diagnostic interventions}
+
+\paragraph{Task construction.}
+We instantiate a restricted three-stage BENAC-P protocol with three players:
+ego $P_0$, an assessment-and-permit partner $P_1$, and an approval partner
+$P_2$. Ego first chooses a preliminary interaction with $P_1$, including
+preparation, an assessment offer, a two-offer menu, or skipping. It then
+negotiates a binding route and permit with $P_1$; finally, the bound route is
+automatically submitted to $P_2$ for approval. Project goals require all three
+players' commitments. Assessments incur an ego cost, preparation yields a
+benefit, and some preliminary menus already lock a route. Thus, information
+can affect a later decision, but acquiring it can also consume resources or
+irreversibly restrict that decision.
+
+The public specification gives three joint preference configurations. $P_1$'s
+preference for the first assessment is respectively \textsc{Want},
+\textsc{Neutral}, or \textsc{Avoid}, with opposite preferences for the second
+assessment in the two non-neutral configurations. In the main condition,
+these configurations also determine which route $P_2$ will approve.
+A menu offering the two assessments can therefore distinguish the configurations
+through its chosen option or rejection. Partners respond deterministically,
+maximize their own terminal utility, and access only public state and their own
+preferences. We certify response optimality over all allowed continuations.
+Hidden configurations remain unknown to ego; there is no random partner error.
+
+Each instance has three matched conditions: \emph{unknown/relevant}, where
+partner information affects the best route; \emph{known}, where the initial
+configuration is supplied; and \emph{unknown/irrelevant}, where $P_2$ approves
+every route. Enumeration certifies that the informative assessment menu is
+optimal in the first condition, whereas preparation strictly dominates it in
+the two controls. The reference planner maximizes expected \emph{terminal task
+utility}, including subsequent observation and replanning, rather than
+information gain alone. These are selected instances for conditional diagnosis,
+not a sample estimating failure prevalence in unrestricted BENAC games.
+
+\paragraph{Semantic interface and four tests.}
+The model submits either a nonempty subset of
+$\{\textsc{Want},\textsc{Neutral},\textsc{Avoid}\}$ for $P_1$'s first assessment,
+or the index of a listed legal action. The subset identifies compatible joint
+configurations through the public table; the backend uses their stated equal
+frequencies. Models do not output probabilities, utilities, $Q$ values, or plan
+variables. The prompt distinguishes the population configuration table from
+the episode-specific initial support.
+
+\textbf{B alone:} We provide the initial support and a legal history and ask
+for the still-possible preference set. The reference set contains exactly the
+configurations compatible with the deterministic responses. We measure exact
+set agreement and the fraction of ruled-out labels incorrectly retained.
+Initial judgments and post-response judgments are reported separately.
+
+\textbf{P given correct B:} We supply the reference judgment and ask for an
+action, both at the initial interaction and after a partner response. Regret
+is the difference from the reference-optimal expected terminal utility, using
+reference continuation after the chosen action; all optimal ties receive zero
+regret. This isolates action selection conditional on a correct supplied
+judgment from the model's own belief-estimation errors.
+
+\textbf{B$\rightarrow$P:} At the same decision state, we replace the model's
+judgment with the reference judgment while holding the planner, legal actions,
+and physical state fixed. Both planning queries use fresh contexts with the
+same judgment format, without the original history or belief-generation
+scratchpad. The state description retains decision-relevant commitments but
+omits historical details that would independently reveal the response.
+Repair supplies only what the evidence supports, not the hidden configuration.
+The paired reduction in regret measures whether better partner understanding
+improves this model's action selection.
+
+\textbf{P$\rightarrow$B:} From the same initial state and correct initial
+judgment, we force either the model-selected or reference-selected first action.
+We enumerate every possible response, obtain the same model's updated judgment,
+and evaluate downstream utility with a reference planner. We separately
+measure the action's evidence channel through expected reference-posterior
+entropy and the model's use of that evidence through judgment and updater-repair
+scores. Response branches are weighted by compatible configurations, not
+selected for successful outcomes. Because actions also alter commitments,
+a utility difference alone does not identify an information-mediated effect.
+
+\subsection{Results and implications for training}
+
+We evaluate Qwen3-4B-Instruct-2507 at temperature zero on 12 instance bundles,
+each containing the three conditions. We report the six bundles designated
+\emph{confirmation}; the remaining six are designated discovery. These are
+within-family diagnostic results, not an untouched generalization test:
+the instance split was reused during interface development.
+Intervals are 95\% percentile bootstrap intervals over the six bundles
+(2,000 resamples), after weighting response branches within each game.
+All 486 diagnostic tasks produced valid submissions; 31 initially reached the
+1,024-token limit and were completed through one additional submission request
+capped at 128 tokens. All initial responses contained reasoning, with a mean
+of 301.5 total completion tokens per task including recovery. Four separate
+empty-history interface checks passed before the diagnostic run.
+Appendix~\ref{app:diagnose} provides protocol details and the factorial tables.
+
+\begin{table}[t]
+\caption{Diagnostic results in the unknown/relevant condition, six confirmation
+bundles. Utility quantities use additive goal-utility units. B accuracy and
+belief repair concern response branches of the reference first action;
+initial interaction regret is reported separately.}
+\label{tab:diagnose-main}
+\centering
+\small
+\begin{tabular}{lrr}
+\hline
+Measure & Estimate & 95\% interval \\
+\hline
+Post-response B exact ($\uparrow$) & 22.2\% & [11.1, 33.3]\% \\
+Ruled-out labels retained ($\downarrow$) & 77.8\% & [66.7, 88.9]\% \\
+Initial P regret given correct B ($\downarrow$) & 2.556 & [1.333, 3.778] \\
+Post-response P regret given correct B ($\downarrow$) & 0.667 & [0.000, 1.444] \\
+B repair: reduction in model-planner regret & 2.167 & [1.219, 3.111] \\
+Action repair: additional channel information (bits) & 1.057 & [0.528, 1.585] \\
+Updater repair after reference action: utility gain & 2.889 & [2.167, 3.722] \\
+Action repair with model updater: utility gain & 0.444 & [$-$1.333, 2.500] \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Distinct weaknesses with task consequences.}
+Initial B judgments are exact in all three confirmation conditions, resolving
+the basic concern that the model cannot preserve the supplied initial support.
+However, after the informative reference action, exact agreement falls to
+22.2\% (Table~\ref{tab:diagnose-main}). The model retains 77.8\% of labels that
+responses rule out, without excluding any truly supported label in this
+condition. This is predominantly insufficient elimination of alternatives.
+For example, after the first assessment is chosen from a menu, one response
+acknowledges the choice but treats all three configurations as still possible,
+failing to apply the public preference and tie-breaking rules.
+Planning also fails with correct B: initial interaction regret is 2.556.
+The smaller post-response regret has an interval including zero; the stronger
+planning evidence concerns choosing the interaction itself. Replacing model B
+with reference B reduces model-planner regret by 2.167, establishing a
+beneficial B$\rightarrow$P intervention in these instances.
+
+\paragraph{Better evidence is not automatically used.}
+Replacing the first action increases available information by 1.057 bits.
+Nevertheless, reference-action and model-action branches both have mean model
+B exact agreement of 22.2\%, despite different reference uncertainty.
+After the reference action, replacing the model updater with the reference
+updater improves downstream reference-planner utility by 2.889. Action repair
+alone, retaining the model updater, has an uncertain utility benefit of 0.444.
+Thus, the intervention establishes control of the evidence channel, while the
+updater remains a bottleneck to realizing its value; it does not establish a
+reliable end-to-end benefit from action repair alone.
+
+The controls clarify the scope. In the known condition, post-response B exact
+is 50.0\% despite perfect initial judgments, revealing failures to preserve
+known information across an otherwise uninformative interaction. In the
+unknown/irrelevant condition, post-response planning regret and B-repair value
+are both zero: downstream route value is independent of partner configuration
+by construction. Together, these measurements motivate targeted training of
+both partner understanding and conditioned planning, followed by evaluating
+their composition and transfer. They do not establish a universal deficit
+across models or environments.

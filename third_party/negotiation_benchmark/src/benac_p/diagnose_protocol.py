@@ -46,8 +46,9 @@ def submission_tool(task):
         value = {'type': 'integer', 'minimum': 0, 'maximum': len(task['input']['legal_actions'])-1}
     elif kind == 'semantic_belief':
         name, key = 'SUBMIT_JUDGMENT', 'possible_preferences'
-        value = {'type': 'array', 'minItems': 1, 'maxItems': 3, 'uniqueItems': True,
-                 'items': {'type': 'string', 'enum': ['want', 'neutral', 'avoid']}}
+        options = task.get('belief_options', ['want', 'neutral', 'avoid'])
+        value = {'type': 'array', 'minItems': 1, 'maxItems': len(options), 'uniqueItems': True,
+                 'items': {'type': 'string', 'enum': options}}
     else:
         if kind == 'belief':
             name, key = 'SUBMIT_BELIEF', 'probabilities'
