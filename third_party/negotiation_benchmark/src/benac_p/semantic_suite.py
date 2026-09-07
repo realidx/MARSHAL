@@ -109,7 +109,7 @@ class Suite:
         return dict(action_index=ctx['moves'].index(chosen))
 
 
-def infer_tasks(suite,records,client,out,workers,protocol,oracle_check=False,reasoning_profile='balanced'):
+def infer_tasks(suite,records,client,out,workers,protocol,oracle_check=False,reasoning_profile='balanced',finalization_tokens=0):
     for task in suite.tasks:
         record=records.get(task['id'],{})
         if record.get('status')=='ok' and not oracle_check:
@@ -119,7 +119,7 @@ def infer_tasks(suite,records,client,out,workers,protocol,oracle_check=False,rea
     def request(task,payload):
         start=time.monotonic()
         try:
-            result=generate(client,task,payload,SYSTEM,protocol,reasoning_profile)
+            result=generate(client,task,payload,SYSTEM,protocol,reasoning_profile,finalization_tokens)
         except Exception as exc:
             return dict(status='transport_error',error=type(exc).__name__,seconds=time.monotonic()-start)
         if result['status']=='ok':
@@ -288,12 +288,14 @@ def main(argv=None):
     parser.add_argument('--base-url',default='http://localhost:8000/v1');parser.add_argument('--model',default='Qwen/Qwen3-4B-Instruct-2507')
     parser.add_argument('--workers',type=int,default=4);parser.add_argument('--max-tokens',type=int,default=1024);parser.add_argument('--temperature',type=float,default=0.)
     parser.add_argument('--response-protocol',choices=('reasoning_tools','json_action'),default='reasoning_tools')
+    parser.add_argument('--finalization-tokens',type=int,default=0,help='Optional one-shot tool submission budget after truncation; 0 disables.')
     parser.add_argument('--reasoning-profile',choices=REASONING_PROFILES,default='balanced')
     parser.add_argument('--export-only',action='store_true');parser.add_argument('--oracle-check',action='store_true');parser.add_argument('--resume',action='store_true');parser.add_argument('--score-only',action='store_true')
     args=parser.parse_args(argv)
     if args.n_games<2 or args.n_games%2:parser.error('n-games must be even and at least 2.')
     if args.workers<1 or args.max_tokens<1:parser.error('workers and max-tokens must be positive.')
     if args.export_only and (args.oracle_check or args.score_only):parser.error('export-only cannot be combined with oracle-check/score-only.')
+    if args.finalization_tokens < 0 or (args.finalization_tokens and args.response_protocol != 'reasoning_tools'):parser.error('Finalization requires a nonnegative budget and reasoning_tools.')
     out=args.output_dir;out.mkdir(parents=True,exist_ok=True)
     suite=Suite(args.n_games,args.seed).build();static_count=len(suite.tasks)
     manifest=dict(version=VERSION,game_version=GAME_VERSION,protocol_version=PROTOCOL_VERSION,response_protocol=args.response_protocol,
@@ -302,6 +304,8 @@ def main(argv=None):
                   reasoning_profile=args.reasoning_profile,reasoning_profile_version=REASONING_PROFILE_VERSION,
                   tool_hash=digest([submission_tool(t) for t in suite.tasks]),max_tokens=args.max_tokens,temperature=args.temperature,
                   model=args.model,base_url=args.base_url,oracle_check=args.oracle_check)
+    if args.finalization_tokens:
+        manifest.update(finalization_tokens=args.finalization_tokens,finalization_version='bounded-submission-v1')
     if (out/'manifest.json').exists():
         old=json.loads((out/'manifest.json').read_text())
         if old!=manifest:parser.error('Manifest differs; use a fresh output directory. Never mix old or changed protocols.')
@@ -317,11 +321,11 @@ def main(argv=None):
     if not (args.oracle_check or args.score_only):
         from methods.vllm_client import OpenAICompatibleNegotiationClient
         client=OpenAICompatibleNegotiationClient(args.base_url,args.model,api_key=os.environ.get('BENAC_P_VLLM_API_KEY','EMPTY'),max_tokens=args.max_tokens,temperature=args.temperature)
-    if not args.score_only:infer_tasks(suite,records,client,out,args.workers,args.response_protocol,args.oracle_check,args.reasoning_profile)
+    if not args.score_only:infer_tasks(suite,records,client,out,args.workers,args.response_protocol,args.oracle_check,args.reasoning_profile,args.finalization_tokens)
     suite.add_model_arms(records)
     dump(out/'dynamic_tasks.json',suite.tasks[static_count:]);dump(out/'dynamic_tools.json',{t['id']:submission_tool(t) for t in suite.tasks[static_count:]})
     dump(out/'oracle_labels.json',suite.labels);dump(out/'interventions.json',suite.arms)
-    if not args.score_only:infer_tasks(suite,records,client,out,args.workers,args.response_protocol,args.oracle_check,args.reasoning_profile)
+    if not args.score_only:infer_tasks(suite,records,client,out,args.workers,args.response_protocol,args.oracle_check,args.reasoning_profile,args.finalization_tokens)
     scored=score(suite,records);summary=summarize(suite,scored)
     dump(out/'scores.json',scored);dump(out/'summary.json',summary);dump(out/'rollouts.json',scored['rollouts'])
     dump(out/'protocol_summary.json',protocol_summary(records))

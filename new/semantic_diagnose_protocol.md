@@ -109,3 +109,58 @@ BENAC_DIAGNOSE_OUTPUT_DIR=/path/to/run bash examples/benac_p/run_full_diagnose.s
 P-model 的输入 judgment 固定为原记录，不把新 profile 的 B 输出注入 P；评分标签按该实际输入 judgment 重算。三组因此比较同一问题。失败或截断在“valid-and-correct”成功率中不算成功，不通过只看完成样本来隐藏失败；真实 regret 仍只对合法完成回答报告。输出各 profile 的 mean/P95 completion tokens、B/P 成功率、截断率，以及按 bundle bootstrap 的配对差异。
 
 建议规则仅为开发阶段 heuristic：格式完成率至少 98%，B/P 的 valid-and-correct 成功率分别距观察到的最好值不超过 5 个百分点，再选择平均 tokens 最低者。样本小，不是正式 noninferiority 证明。如果没有 profile 达标，不给出推荐。模型权重和 serving 设置需与缓存 baseline 一致；保存原始历史运行，不覆盖它。
+
+## Bounded final submission after calibration 826995
+
+The 72-task discovery calibration favors balanced as the candidate: 94.4% valid,
+33.3% B valid+exact, 50.0% P valid+optimal, mean 231 completion tokens. It does not
+meet the 98% coverage criterion yet. All four balanced truncations are downstream
+planning questions in unknown_relevant. The traces repeat route/menu comparisons;
+one explicitly selects action 4 and keeps writing, while other traces also ignore
+supplied judgment constraints or conflate P1 and P2 preferences. Truncation is not
+sufficient evidence that the underlying reasoning was correct.
+
+The optional `--finalization-tokens 128` keeps the same balanced prompt and 1024-token
+initial cap. Only a length-stopped native-tool response receives one extra request:
+original question + original ordinary-text reasoning + a short submit-now instruction,
+with the submission function explicitly selected through `tool_choice`. Incomplete
+tool-call fragments are not replayed. No labels, corrective hints, or new evidence
+enter that request. All nontruncated answers remain unchanged; no strategic-error
+retry is allowed. A failed finalization is retained and not automatically retried,
+including on resume. The option defaults to disabled until serving compatibility
+and completion recovery are checked on the discovery sample.
+
+Run the small check on the server using the uploaded calibration directory:
+
+```bash
+bash examples/benac_p/run_finalization_calibration.sh \
+  --source-run runs/benac_reasoning_calibration/826995
+```
+
+This reuses all 72 balanced first passes and sends only four new requests. Each adds
+at most 128 completion tokens (at most 512 additional across this sample, or 7.1 per
+original task). The original question and reasoning incur extra prompt-token cost;
+that cost is also recorded. Maximum completion budget per recovered task is 1152,
+not 1024. The named-function request has local mocked-HTTP coverage but still needs
+verification on the actual vLLM/Hermes server.
+
+`comparison.json` and `report.md` compare original balanced and balanced+finalization
+using all 72 questions; `answers.json` preserves both raw attempts. Metrics distinguish
+first-pass truncation, finalization attempts, protocol-valid finalizations, semantic
+validity/correctness, and total tokens per task. Request means and per-task total means
+are separate. Missing usage after transport errors is counted; observed token totals
+cannot include unreported server cost. Completion recovery alone is not a demonstrated
+improvement in B/P computation.
+
+After validating that protocol, run the complete B / P / B→P / P→B suite in a fresh
+directory, freezing the same setting for every condition:
+
+```bash
+bash examples/benac_p/run_full_diagnose.sh \
+  --reasoning-profile balanced --finalization-tokens 128
+```
+
+The finalization policy and budget enter the manifest, preventing resuming/mixing a
+run with a different policy. Finalization supports both semantic judgment and action
+submissions. Main-suite strategic scoring still validates the submitted schema and
+scores the actual selected action; no missing answer becomes PASS.

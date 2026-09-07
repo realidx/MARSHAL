@@ -126,3 +126,25 @@ bash examples/benac_p/run_full_diagnose.sh --reasoning-profile balanced --seed 2
 `--reasoning-profile open` preserves the previous brevity instruction;
 `--reasoning-profile compact` uses the 80-word target. Profile and prompt hashes
 are recorded in the manifest; new profiles must not resume into old outputs.
+
+For calibration 826995, test bounded final submission on the four balanced
+truncations without rerunning its 68 completed answers:
+
+```bash
+bash examples/benac_p/run_finalization_calibration.sh \
+  --source-run runs/benac_reasoning_calibration/826995
+```
+
+This makes at most four extra calls, each capped at 128 completion tokens, retains
+both attempts and reports first-pass truncation separately from recovered accuracy.
+Use `--export-only` to inspect the selected tasks without calls. To resume the output,
+set `BENAC_FINALIZATION_OUTPUT_DIR` to that directory and pass `--resume`.
+After verifying recovery on the actual server, run the complete diagnosis with:
+
+```bash
+bash examples/benac_p/run_full_diagnose.sh --reasoning-profile balanced --finalization-tokens 128
+```
+
+The main-suite default remains no recovery. See
+[`new/semantic_diagnose_protocol.md`](../../new/semantic_diagnose_protocol.md) for
+cost accounting and interpretation.

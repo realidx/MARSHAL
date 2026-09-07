@@ -64,7 +64,9 @@ def submission_tool(task):
                                      'required': [key], 'additionalProperties': False}}}
 
 
-def generate(client, task, payload, base_system, protocol='reasoning_tools', reasoning_profile='open'):
+def generate(client, task, payload, base_system, protocol='reasoning_tools', reasoning_profile='open', finalization_tokens=0):
+    if finalization_tokens < 0 or (finalization_tokens and protocol != 'reasoning_tools'):
+        raise ValueError('Finalization requires a nonnegative budget and reasoning_tools.')
     messages = [{'role': 'system', 'content': system_prompt(base_system, protocol, reasoning_profile)},
                 {'role': 'user', 'content': json.dumps(payload)}]
     tool = submission_tool(task)
@@ -74,6 +76,13 @@ def generate(client, task, payload, base_system, protocol='reasoning_tools', rea
         completion = client.complete_response(messages, response_format={'type': 'json_object'})
     else:
         raise ValueError('Unknown response protocol.')
+    record = parse_completion(completion, tool, protocol, reasoning_profile)
+    if finalization_tokens and protocol == 'reasoning_tools' and record['status'] == 'truncated':
+        return finalize(client, task, payload, base_system, record, finalization_tokens)
+    return record
+
+
+def parse_completion(completion, tool, protocol, reasoning_profile):
     content = completion.content
     calls = [{'name': c.name, 'arguments': c.arguments, 'raw_arguments': c.raw_arguments} for c in completion.tool_calls]
     record = dict(raw=content, raw_message=dict(completion.raw_message), tool_calls=calls,
@@ -104,22 +113,80 @@ def generate(client, task, payload, base_system, protocol='reasoning_tools', rea
         return dict(record, status='invalid', error=str(exc))
 
 
+FINALIZATION_VERSION = 'bounded-submission-v1'
+FINALIZATION_INSTRUCTION = (
+    'The previous analysis reached its output limit. Submit your best final answer now '
+    'using exactly the supplied tool. Do not continue the analysis or add explanatory text.'
+)
+
+
+def finalize(client, task, payload, base_system, first, max_tokens=128):
+    """One bounded submission attempt. Never sees labels or repairs reasoning."""
+    if max_tokens < 1:
+        raise ValueError('Finalization budget must be positive.')
+    if first.get('status') != 'truncated' or first.get('response_protocol') != 'reasoning_tools' or 'attempts' in first:
+        raise ValueError('Only an unrecovered native-tool truncation can be finalized.')
+    profile = first.get('reasoning_profile', 'open')
+    tool = submission_tool(task)
+    messages = [
+        {'role': 'system', 'content': system_prompt(base_system, 'reasoning_tools', profile)},
+        {'role': 'user', 'content': json.dumps(payload)},
+    ]
+    # Carry text only: an incomplete tool call is not a valid conversation turn.
+    if first.get('reasoning'):
+        messages.append({'role': 'assistant', 'content': first['reasoning']})
+    messages.append({'role': 'user', 'content': FINALIZATION_INSTRUCTION})
+    try:
+        completion = client.complete_with_tools(messages, tools=[tool],
+            tool_choice={'type': 'function', 'function': {'name': tool['function']['name']}},
+            parallel_tool_calls=False, max_tokens=max_tokens)
+        last = parse_completion(completion, tool, 'reasoning_tools', profile)
+    except Exception as exc:
+        last = dict(status='transport_error', error=type(exc).__name__, usage={})
+    usage = {key: sum(r.get('usage', {}).get(key, 0) for r in (first, last))
+             for key in ('prompt_tokens', 'completion_tokens', 'total_tokens')
+             if any(key in r.get('usage', {}) for r in (first, last))}
+    result = dict(last, attempts=[first, last], usage=usage,
+        finalization_version=FINALIZATION_VERSION, finalization_tokens=max_tokens,
+        finalization_attempted=True, first_pass_status=first['status'],
+        first_finish_reason=first['finish_reason'],
+        reasoning=first.get('reasoning', ''), reasoning_present=first.get('reasoning_present', False),
+        reasoning_word_count=first.get('reasoning_word_count', 0), reasoning_profile=profile,
+        response_protocol='reasoning_tools')
+    # Persist failed submission attempts without rerunning the original question.
+    if last['status'] == 'transport_error':
+        result.update(status='finalization_error', error=last['error'])
+    return result
+
+
 def protocol_summary(records):
     """Descriptive measurement quality, separate from strategic scores."""
     rows = list(records.values())
-    attempted = [r for r in rows if 'finish_reason' in r]
+    attempts = [a for r in rows for a in r.get('attempts', [r])
+                if 'finish_reason' in a or a.get('status') == 'transport_error']
+    attempted = [r for r in attempts if 'finish_reason' in r]
+    task_tokens = [r['usage']['completion_tokens'] for r in rows if 'completion_tokens' in r.get('usage', {})]
     tokens = [r['usage']['completion_tokens'] for r in attempted
               if isinstance(r.get('usage', {}).get('completion_tokens'), (int, float))]
-    reasoning_rows = [r for r in attempted if r.get('response_protocol') == 'reasoning_tools']
-    return dict(status_counts=dict(Counter(r['status'] for r in rows)),
+    first_passes = [r.get('attempts', [r])[0] for r in rows]
+    reasoning_rows = [r for r in first_passes if 'finish_reason' in r and r.get('response_protocol') == 'reasoning_tools']
+    return dict(total_request_attempts=len(attempts),
+                first_pass_truncated_tasks=sum(r.get('first_pass_status', r['status']) == 'truncated' for r in rows),
+                finalization_attempted_tasks=sum(r.get('finalization_attempted', False) for r in rows),
+                finalization_protocol_successes=sum(r.get('finalization_attempted', False) and r['status'] == 'ok' for r in rows),
+                mean_total_completion_tokens_per_task=float(np.mean(task_tokens)) if task_tokens else None,
+                total_prompt_tokens=sum(r.get('usage', {}).get('prompt_tokens', 0) for r in rows),
+                total_completion_tokens=sum(task_tokens),
+                status_counts=dict(Counter(r['status'] for r in rows)),
                 finish_reason_counts=dict(Counter(str(r['finish_reason']) for r in attempted)),
                 completed_requests=len(attempted), token_usage_observations=len(tokens),
+                request_attempts_without_usage=sum(not a.get('usage') for a in attempts),
                 mean_completion_tokens=float(np.mean(tokens)) if tokens else None,
                 p95_completion_tokens=float(np.percentile(tokens, 95)) if tokens else None,
-                truncated_requests=sum(r['status'] == 'truncated' for r in rows),
+                truncated_requests=sum(r['status'] == 'truncated' for r in attempted),
                 reasoning_requests=len(reasoning_rows),
                 reasoning_present_requests=sum(r.get('reasoning_present', False) for r in reasoning_rows),
                 mean_reasoning_words=float(np.mean([r.get('reasoning_word_count', 0) for r in reasoning_rows])) if reasoning_rows else None,
                 p95_reasoning_words=float(np.percentile([r.get('reasoning_word_count', 0) for r in reasoning_rows],95)) if reasoning_rows else None,
                 reasoning_profiles=dict(Counter(r.get('reasoning_profile','open') for r in reasoning_rows)),
-                note='Word counts are whitespace-based, not token counts. Profile word targets are soft, not validity gates; max_tokens caps reasoning plus tool output. No-reasoning valid calls remain scored.')
+                note='Request token means include each completed attempt separately; per-task totals include both attempts. Reasoning statistics describe first passes. Finalization protocol successes still require task-level validation. Word counts are whitespace-based, not token counts. Profile word targets are soft, not validity gates; max_tokens caps reasoning plus tool output. No-reasoning valid calls remain scored.')

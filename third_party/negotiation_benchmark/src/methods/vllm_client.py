@@ -302,6 +302,7 @@ class OpenAICompatibleNegotiationClient:
         tool_choice: str | Mapping[str, Any] = "auto",
         parallel_tool_calls: bool = False,
         model: str | None = None,
+        max_tokens: int | None = None,
     ) -> VLLMChatCompletion:
         """Generate a native tool-calling completion.
 
@@ -316,6 +317,7 @@ class OpenAICompatibleNegotiationClient:
         return self._request(
             messages,
             model=model,
+            max_tokens=max_tokens,
             tools=tools,
             tool_choice=tool_choice,
             parallel_tool_calls=parallel_tool_calls,
@@ -327,10 +329,13 @@ class OpenAICompatibleNegotiationClient:
         *,
         response_format: Mapping[str, Any] | None = None,
         model: str | None = None,
+        max_tokens: int | None = None,
         tools: Sequence[Mapping[str, Any]] | None = None,
         tool_choice: str | Mapping[str, Any] | None = None,
         parallel_tool_calls: bool | None = None,
     ) -> VLLMChatCompletion:
+        if max_tokens is not None and max_tokens < 1:
+            raise ValueError("max_tokens must be positive.")
         body: dict[str, Any] = {
             "model": model or self.model,
             "messages": [
@@ -338,7 +343,7 @@ class OpenAICompatibleNegotiationClient:
                 for message in messages
             ],
             "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
+            "max_tokens": self.max_tokens if max_tokens is None else max_tokens,
             "n": 1,
             "stream": False,
         }

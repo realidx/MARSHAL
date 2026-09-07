@@ -892,3 +892,22 @@ submission tool call，所有条件默认总输出预算 1024 tokens。工具参
 已提供 discovery-only matched calibration 脚本，在固定输入和固定 model judgment 下
 比较 compact / balanced 与缓存 open baseline。性能改善需要远端实际比较，不能由
 本地测试或旧结果的长度相关性直接推出。具体命令见 semantic_diagnose_protocol.md。
+
+### 13.10 Calibration 826995: bounded submission candidate
+
+The matched discovery calibration produced open/compact/balanced valid rates
+83.3/98.6/94.4%, B valid+exact 25.0/16.7/33.3%, P valid+optimal
+37.5/43.8/50.0%, and mean completion tokens 463/140/231. Balanced is the candidate,
+not yet a validated >=98%-coverage configuration. Its four truncations are all
+unknown_relevant downstream planning; raw traces show repetition plus substantive
+partner/conditioning mistakes, not merely correct answers missing syntax.
+
+Implemented an opt-in single bounded submission (`--finalization-tokens 128`):
+keep initial balanced reasoning, submit through a named native function after a
+length stop, preserve both attempts and all input/output token costs. No labels or
+corrective reasoning are supplied; completed wrong answers never trigger a retry.
+The new `run_finalization_calibration.sh` reuses the frozen 72-task calibration,
+submitting only the four truncations, then reports completion and action quality
+separately. Remote serving verification remains pending; this change does not claim
+new model results. Once verified, use the same flag on `run_full_diagnose.sh` for
+all four diagnostic blocks in a fresh output directory.

@@ -1,0 +1,43 @@
+{
+  "source_run": "runs/benac_reasoning_calibration/826995",
+  "profile": "balanced",
+  "tasks": 72,
+  "first_pass_truncations": [
+    {
+      "task_id": "b20003/unknown_relevant/after_assess_a/REJECT/plan_oracle",
+      "kind": "planning",
+      "stratum": "unknown_relevant/downstream/plan_oracle",
+      "completion_tokens": 1024,
+      "tool_call_count": 0,
+      "reasoning_tail": "'s first assessment is neutral or avoid, so it may not prefer a want route.\n\nTherefore, offering a menu where the first option is a route that P2 wants in a configuration, and P1 will pick it due to preference, is best.\n\nBut I don't know which configuration is active.\n\nSince all configurations are equally likely, and P1 will pick the earlier option"
+    },
+    {
+      "task_id": "b20000/unknown_relevant/after_assess_a/REJECT/plan_model",
+      "kind": "planning",
+      "stratum": "unknown_relevant/downstream/plan_model",
+      "completion_tokens": 1024,
+      "tool_call_count": 0,
+      "reasoning_tail": "So offering a menu may not work.\n\nBinding a route directly ensures the permit and preparation, and P2 will be asked to approve.\n\nSince P2 wants approval of one of the routes in the configurations, and we don't know which, I should pick a route that is in a configuration where P2 wants approval.\n\nAll routes are in such configurations.\n\nI should pick"
+    },
+    {
+      "task_id": "b20002/unknown_relevant/after_assess_a/ACCEPT/plan_oracle",
+      "kind": "planning",
+      "stratum": "unknown_relevant/downstream/plan_oracle",
+      "completion_tokens": 1024,
+      "tool_call_count": 0,
+      "reasoning_tail": "ment.\n\nP1's first assessment is \"want\", which is consistent with all configurations. Since P1 will accept preparation and the permit, and the permit is required, I need to ensure P2's approval.\n\nThe best action is to offer a menu that includes a route P2 wants in at least one configuration. All do.\n\nSince all are equally likely, I can pick any. But"
+    },
+    {
+      "task_id": "b20003/unknown_relevant/after_assess_menu/CHOOSE_2/plan_model",
+      "kind": "planning",
+      "stratum": "unknown_relevant/downstream/plan_model",
+      "completion_tokens": 1024,
+      "tool_call_count": 0,
+      "reasoning_tail": "e three routes, offering a menu that includes a route P2 wants ensures that in that configuration, P2 will approve.\n\nAll menu options include at least one route P2 wants. However, action 4 offers Birch first, which is wanted in one configuration, and P1 will choose it.\n\nI select action 4 to ensure that in the configuration where P2 wants Birch, the"
+    }
+  ],
+  "interpretation": "All four are downstream unknown_relevant planning. Traces repeat comparisons; some disregard supplied support or confuse P1 and P2 incentives. Submission recovery is not guaranteed to repair those mistakes.",
+  "proposed_extra_completion_budget_per_truncated_task": 128,
+  "max_new_requests": 4,
+  "remote_recovery_verified": false
+}
