@@ -911,3 +911,17 @@ submitting only the four truncations, then reports completion and action quality
 separately. Remote serving verification remains pending; this change does not claim
 new model results. Once verified, use the same flag on `run_full_diagnose.sh` for
 all four diagnostic blocks in a fresh output directory.
+
+### 13.11 Freeze B episode-prior wording and rerun
+
+The clear-auto known-copy error first recognized the singleton prior, then
+reintroduced population configurations. B now explicitly states the population
+versus episode-prior distinction and the meaning of empty history. It still
+outputs only a semantic subset, without answer clipping or new oracle information.
+The full-run shell defaults to balanced + final128 and four empty-history checks
+(singleton WANT/NEUTRAL/AVOID and unresolved all-three). Passing all four continues
+the full diagnosis automatically; failure is saved and stops the run, without
+retrying wrong answers. No new game family, score, or P interface is introduced.
+Semantic protocol v2 and manifest changes prevent mixing old/new runs. Historical
+calibration replay uses its archived B question. Real-model verification of this
+wording remains the next remote run; local tests are not model results.

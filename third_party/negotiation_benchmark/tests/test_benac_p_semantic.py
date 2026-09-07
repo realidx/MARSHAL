@@ -175,3 +175,23 @@ def test_mock_native_end_to_end_dynamic_calls_and_resume(tmp_path,monkeypatch):
     first=next(k for k,v in records.items() if 'payload_hash' in v)
     records[first]['payload_hash']='tampered';(tmp_path/'answers.json').write_text(json.dumps(records))
     with pytest.raises(ValueError):main(args+['--resume'])
+
+
+def test_belief_preflight_checks_all_four_and_preserves_wrong_answers(suite,tmp_path,monkeypatch):
+    from copy import deepcopy
+    from benac_p.semantic_suite import belief_preflight, BELIEF_QUESTION
+    original=deepcopy(suite.tasks)
+    calls=[]
+    def fake_generate(client,task,payload,*args):
+        calls.append(deepcopy(payload))
+        assert payload['history']==[] and payload['question']==BELIEF_QUESTION
+        answer=payload['initially_possible_preferences']
+        if answer==['avoid']:answer=['want','neutral','avoid']
+        return dict(status='ok',answer={'possible_preferences':answer})
+    monkeypatch.setattr('benac_p.semantic_suite.generate',fake_generate)
+    assert not belief_preflight(suite,object(),tmp_path,'reasoning_tools','balanced',128)
+    assert len(calls)==4
+    assert [p['initially_possible_preferences'] for p in calls]==[['want'],['neutral'],['avoid'],['want','neutral','avoid']]
+    assert not belief_preflight(suite,object(),tmp_path,'reasoning_tools','balanced',128)
+    assert len(calls)==4 and suite.tasks==original
+    assert belief_preflight(suite,None,tmp_path/'synthetic','reasoning_tools','balanced',128,True)

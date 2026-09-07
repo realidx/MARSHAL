@@ -13,6 +13,8 @@ mkdir -p "$OUTPUT_DIR"
 "$PYTHON_BIN" -m benac_p.semantic_suite \
   --output-dir "$OUTPUT_DIR" \
   --base-url "$BASE_URL" --model "$MODEL" \
+  --belief-preflight --reasoning-profile balanced \
+  --finalization-tokens "${BENAC_DIAGNOSE_FINALIZATION_TOKENS:-128}" \
   --n-games "${BENAC_DIAGNOSE_GAMES:-12}" \
   --seed "${BENAC_DIAGNOSE_SEED:-20000}" \
   --workers "${BENAC_DIAGNOSE_WORKERS:-4}" \

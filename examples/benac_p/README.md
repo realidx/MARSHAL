@@ -162,3 +162,17 @@ Defaults to 10 fixed questions, with cached original-auto answers and normally
 evidence-update questions. `--export-only` makes no requests; set
 `BENAC_BELIEF_AUDIT_OUTPUT_DIR` and use `--resume` to continue the same output.
 See [`new/belief_interface_investigation.md`](../../new/belief_interface_investigation.md).
+
+### Current full-run default: clarified episode prior
+
+```bash
+bash examples/benac_p/run_full_diagnose.sh
+```
+
+This now runs clear-auto B wording with explicit population/episode-prior semantics,
+balanced reasoning, a 1024-token initial budget and 128-token finalization. Four
+empty-history B checks run first; if all four are exact, the complete diagnosis
+starts automatically. Otherwise the script stops and saves
+`belief_preflight_answers.json` and `belief_preflight_summary.json`. Wrong checks
+are not retried. Use a fresh output directory; the earlier no-recovery shell default
+above is historical. The game, oracle, scoring and P prompt have not changed.

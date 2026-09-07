@@ -164,3 +164,32 @@ The finalization policy and budget enter the manifest, preventing resuming/mixin
 run with a different policy. Finalization supports both semantic judgment and action
 submissions. Main-suite strategic scoring still validates the submitted schema and
 scores the actual selected action; no missing answer becomes PASS.
+
+## Frozen episode-prior clarification (semantic-interaction-loop-v2)
+
+B now uses clear-auto wording: the full configuration table describes the population;
+`initially_possible_preferences` restricts the current episode, configurations outside
+it are already ruled out, and an empty history adds no evidence. The output remains
+the supported preference subset. There is no answer clipping or posterior supplied
+by this clarification. P inputs, game generation, oracle and scoring are unchanged.
+
+The standard `run_full_diagnose.sh` now selects balanced reasoning, a 1024-token initial
+cap, and one 128-token finalization if truncated. It first runs four empty-history B
+checks using the same game description/schema/question: WANT only, NEUTRAL only,
+AVOID only, and all three possibilities. All four must be semantically exact for the
+script to continue automatically into the complete diagnosis. Failed checks are saved
+and not retried on resume; they do not trigger prompt selection or answer repair.
+Preflight tasks are separate from diagnostic statistics and have separate token usage
+in `belief_preflight_summary.json`. Their total extra cost is four initial requests,
+plus at most four bounded finalizations. The protocol budget settings and prompt version
+are frozen in the manifest; use a fresh output directory. Direct Python CLI defaults
+remain configurable; the shell wrapper supplies the new standard settings.
+
+```bash
+bash examples/benac_p/run_full_diagnose.sh
+```
+
+Inspect `belief_preflight_answers.json` if the script exits with a failed check. A
+synthetic oracle check validates plumbing, not actual model performance. Historical
+calibration/audit helpers reconstruct their archived question wording for matched
+replays rather than silently replacing it with the new prompt.

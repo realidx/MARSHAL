@@ -13,15 +13,26 @@ from benac_p.semantic_game import SemanticGame, PREFERENCES, VERSION as GAME_VER
 from benac_p.diagnose_protocol import generate, system_prompt, submission_tool, protocol_summary, PROTOCOL_VERSION, REASONING_PROFILE_VERSION, REASONING_PROFILES
 from benac_p.diagnose_suite import dump, digest, cluster_summary
 
-VERSION='semantic-interaction-loop-v1'
+VERSION='semantic-interaction-loop-v2'
+BELIEF_PROMPT_VERSION='episode-prior-v2'
+BELIEF_QUESTION=(
+    "Which preferences remain possible for P1's first assessment in this episode, given "
+    "initially_possible_preferences and history? The configuration table describes the "
+    "population of possible games. initially_possible_preferences restricts which configurations "
+    "are possible in this episode; configurations outside that set are already ruled out. "
+    "An empty history supplies no additional evidence. Submit exactly the supported subset "
+    "in possible_preferences. Preserve uncertainty only when the supplied information does "
+    "not distinguish alternatives."
+)
 SYSTEM='''You control P0 in a three-player BENAC negotiation. Follow the public stage protocol and the stated deterministic rational partner rules. Commitments are binding. Partners have their own persistent preferences. Infer only what the evidence supports: retain every still-possible preference and exclude those ruled out. A remaining uncertainty can be a correct answer. Use the stated joint configurations to understand the implications for P2. For a supplied-judgment planning task, treat that judgment as your current information; do not invent additional evidence. Choose the action with the best terminal outcome under the publicly stated equal-frequency configurations. You are not asked to output probabilities, utility numbers, Q values, rankings or a plan variable. Return only the requested JSON object.'''
 CONDITIONS=('unknown_relevant','known','unknown_irrelevant')
 
 
 class Suite:
-    def __init__(self,n_games=12,seed=20000):
+    def __init__(self,n_games=12,seed=20000,belief_question=BELIEF_QUESTION):
         if n_games<2 or n_games%2:raise ValueError('n-games is an even number of matched bundles, at least 2.')
         self.n_games,self.seed=n_games,seed
+        self.belief_question=belief_question
         self.games={};self.tasks=[];self.labels={};self.cases={};self.arms={};self.certificates={}
 
     def _add_task(self,tid,kind,payload,label,parent=None):
@@ -35,7 +46,7 @@ class Suite:
         label=dict(game=gid,bundle=entry['bundle'],split=entry['split'],condition=game.condition,case=cid,weight=weight,
                    possible_preferences=list(support),q=[v for m,v in q],optimal_indices=[i for i,(m,v) in enumerate(q) if max(x[1] for x in q)-v<1e-9])
         belief=dict(game=game.description(),initially_possible_preferences=list(game.support),history=history,
-                    question='What can currently be concluded about P1\'s preference for the first assessment? Return all and only the still-possible values: want, neutral, avoid. Do not collapse an unresolved set into a guess.')
+                    question=self.belief_question)
         self._add_task(cid+'/belief','semantic_belief',belief,dict(label))
         state_text=('No preliminary commitment has been made. Choose the stage-1 interaction.' if state.turn_index==0 else
                     'Stage 1 is complete. No route is bound yet. Earlier commitments are irreversible, but contribute the same fixed past outcome to every remaining route. They neither enable nor disable any listed route. Choose the stage-2 binding route proposal. After P1 responds, the bound route will automatically be submitted to P2; you cannot switch routes then.')
@@ -280,6 +291,43 @@ def write_report(summary,mode,path):
     Path(path).write_text('\n'.join(lines)+'\n')
 
 
+def belief_preflight(suite,client,out,protocol,profile,finalization_tokens,oracle_check=False):
+    """Four empty-history interface checks, excluded from diagnostic scores."""
+    out.mkdir(parents=True,exist_ok=True)
+    base=next(t for t in suite.tasks if t['kind']=='semantic_belief' and t['id'].endswith('/unknown_relevant/root/belief'))
+    tasks=[]
+    for name,support in [('want',['want']),('neutral',['neutral']),('avoid',['avoid']),('unresolved',list(PREFERENCES))]:
+        task=deepcopy(base);task['id']='preflight/'+name
+        task['input']['initially_possible_preferences']=support
+        tasks.append(task)
+    dump(out/'belief_preflight_tasks.json',tasks)
+    path=out/'belief_preflight_answers.json'
+    records=json.loads(path.read_text()) if path.exists() else {}
+    exact=[]
+    for task in tasks:
+        tid=task['id'];payload=task['input'];fingerprint=digest(payload)
+        if tid in records and records[tid].get('payload_hash')!=fingerprint:
+            raise ValueError('Cached preflight input differs.')
+        if tid not in records or records[tid].get('status')=='transport_error':
+            if oracle_check:
+                record=dict(status='ok',answer={'possible_preferences':payload['initially_possible_preferences']},source='synthetic_oracle_check')
+            else:
+                try:record=generate(client,task,payload,SYSTEM,protocol,profile,finalization_tokens)
+                except Exception as exc:record=dict(status='transport_error',error=type(exc).__name__)
+            if record['status']=='ok':
+                try:record['answer']=suite.validate(task,record['answer'])
+                except (KeyError,TypeError,ValueError) as exc:record.update(status='invalid',error=str(exc))
+            records[tid]=dict(record,payload_hash=fingerprint)
+            dump(path,records)
+        r=records[tid]
+        exact.append(r['status']=='ok' and set(r['answer']['possible_preferences'])==set(payload['initially_possible_preferences']))
+    summary=dict(passed=all(exact),correct=sum(exact),total=4,oracle_check=oracle_check,
+                 results={t['id']:ok for t,ok in zip(tasks,exact)},protocol=protocol_summary(records))
+    dump(out/'belief_preflight_summary.json',summary)
+    print(f"Belief interface preflight: {sum(exact)}/4 exact.",flush=True)
+    return all(exact)
+
+
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output-dir',type=Path,required=True)
@@ -289,6 +337,7 @@ def main(argv=None):
     parser.add_argument('--workers',type=int,default=4);parser.add_argument('--max-tokens',type=int,default=1024);parser.add_argument('--temperature',type=float,default=0.)
     parser.add_argument('--response-protocol',choices=('reasoning_tools','json_action'),default='reasoning_tools')
     parser.add_argument('--finalization-tokens',type=int,default=0,help='Optional one-shot tool submission budget after truncation; 0 disables.')
+    parser.add_argument('--belief-preflight',action='store_true',help='Run four empty-history B checks; proceed only if all are exact.')
     parser.add_argument('--reasoning-profile',choices=REASONING_PROFILES,default='balanced')
     parser.add_argument('--export-only',action='store_true');parser.add_argument('--oracle-check',action='store_true');parser.add_argument('--resume',action='store_true');parser.add_argument('--score-only',action='store_true')
     args=parser.parse_args(argv)
@@ -298,7 +347,7 @@ def main(argv=None):
     if args.finalization_tokens < 0 or (args.finalization_tokens and args.response_protocol != 'reasoning_tools'):parser.error('Finalization requires a nonnegative budget and reasoning_tools.')
     out=args.output_dir;out.mkdir(parents=True,exist_ok=True)
     suite=Suite(args.n_games,args.seed).build();static_count=len(suite.tasks)
-    manifest=dict(version=VERSION,game_version=GAME_VERSION,protocol_version=PROTOCOL_VERSION,response_protocol=args.response_protocol,
+    manifest=dict(version=VERSION,belief_prompt_version=BELIEF_PROMPT_VERSION,belief_preflight=args.belief_preflight,game_version=GAME_VERSION,protocol_version=PROTOCOL_VERSION,response_protocol=args.response_protocol,
                   bundles=args.n_games,games=len(suite.games),seed=args.seed,static_tasks=static_count,
                   max_additional_tasks=6*sum(len(e['game'].support) for e in suite.games.values()),task_hash=digest(suite.tasks),system_hash=digest(system_prompt(SYSTEM,args.response_protocol,args.reasoning_profile)),
                   reasoning_profile=args.reasoning_profile,reasoning_profile_version=REASONING_PROFILE_VERSION,
@@ -321,6 +370,9 @@ def main(argv=None):
     if not (args.oracle_check or args.score_only):
         from methods.vllm_client import OpenAICompatibleNegotiationClient
         client=OpenAICompatibleNegotiationClient(args.base_url,args.model,api_key=os.environ.get('BENAC_P_VLLM_API_KEY','EMPTY'),max_tokens=args.max_tokens,temperature=args.temperature)
+    if args.belief_preflight and not args.score_only:
+        if not belief_preflight(suite,client,out,args.response_protocol,args.reasoning_profile,args.finalization_tokens,args.oracle_check):
+            parser.exit(2,'Belief preflight did not pass; full diagnosis was not started. Inspect belief_preflight_answers.json. Wrong answers are retained, not retried.\n')
     if not args.score_only:infer_tasks(suite,records,client,out,args.workers,args.response_protocol,args.oracle_check,args.reasoning_profile,args.finalization_tokens)
     suite.add_model_arms(records)
     dump(out/'dynamic_tasks.json',suite.tasks[static_count:]);dump(out/'dynamic_tools.json',{t['id']:submission_tool(t) for t in suite.tasks[static_count:]})

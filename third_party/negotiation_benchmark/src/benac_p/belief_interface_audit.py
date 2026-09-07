@@ -30,7 +30,7 @@ def prepare(source, bundles=2):
         raise ValueError('Use a real balanced semantic run.')
     if archive['system'] != system_prompt(SYSTEM, 'reasoning_tools', 'balanced'):
         raise ValueError('Source system prompt differs from current baseline.')
-    suite = Suite(manifest['bundles'], manifest['seed']).build()
+    suite = Suite(manifest['bundles'], manifest['seed'], belief_question=next(t['input']['question'] for t in archive['tasks'] if t['kind']=='semantic_belief')).build()
     if digest(suite.tasks) != manifest['task_hash']:
         raise ValueError('Source tasks differ from current generator.')
     if not 1 <= bundles <= manifest['bundles']//2:

@@ -23,7 +23,7 @@ def prepare(source,per_stratum=4,seed=0):
         raise ValueError('Calibration requires a real-model native-tool baseline.')
     if archive['system']!=system_prompt(SYSTEM,'reasoning_tools','open'):
         raise ValueError('Source is not the unchanged open-profile baseline; do not mix prompt changes.')
-    suite=Suite(manifest['bundles'],manifest['seed']).build()
+    suite=Suite(manifest['bundles'],manifest['seed'],belief_question=next(t['input']['question'] for t in archive['tasks'] if t['kind']=='semantic_belief')).build()
     if digest(suite.tasks)!=manifest['task_hash']:raise ValueError('Source tasks differ from current game; cannot do a matched comparison.')
     suite.add_model_arms(answers)
     strata={}
