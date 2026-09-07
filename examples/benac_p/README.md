@@ -148,3 +148,17 @@ bash examples/benac_p/run_full_diagnose.sh --reasoning-profile balanced --finali
 The main-suite default remains no recovery. See
 [`new/semantic_diagnose_protocol.md`](../../new/semantic_diagnose_protocol.md) for
 cost accounting and interpretation.
+
+Investigate the B-interface issue in full run 827142 with a small discovery-only
+wording × tool-availability comparison:
+
+```bash
+bash examples/benac_p/run_belief_interface_audit.sh \
+  --source-run runs/benac_semantic_diagnose/full-balanced-final128-827142
+```
+
+Defaults to 10 fixed questions, with cached original-auto answers and normally
+50 new requests (at most 60). Results separate known-copy, unresolved-prior and
+evidence-update questions. `--export-only` makes no requests; set
+`BENAC_BELIEF_AUDIT_OUTPUT_DIR` and use `--resume` to continue the same output.
+See [`new/belief_interface_investigation.md`](../../new/belief_interface_investigation.md).
