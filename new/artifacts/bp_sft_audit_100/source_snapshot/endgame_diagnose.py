@@ -449,7 +449,7 @@ def mine_selected(args,out):
     from benac_p.endgame import SearchLimit
     from types import SimpleNamespace
     config={k:getattr(args,k) for k in ('seed','candidate_seeds','actions_per_player','n_goals','rounds','unknown_goals','max_nodes','min_games_per_condition','max_remaining_turns')}
-    if args.dependency_only:config.update(dependency_certificate='strict-update-value-v2',max_query_sets=args.max_query_sets)
+    if args.dependency_only:config['dependency_certificate']='strict-update-value-v1'
     config.update(candidate_version='native-candidates-v3',partner_version=RationalPartner.VERSION,suite_version=VERSION)
     cache=out/'selection.json';selected={};attempts=[];start=args.seed
     if cache.exists():
@@ -460,7 +460,7 @@ def mine_selected(args,out):
         attempts=saved.get('attempts',[]);start=saved.get('next_seed',start)
     for seed in range(start,args.seed+args.candidate_seeds):
         for raw in candidates(seed,args.max_nodes,args.actions_per_player,args.n_goals,args.rounds,args.unknown_goals,
-                              lambda r:attempts.append(dict(r,selected=False)),args.max_remaining_turns,args.max_query_sets if args.dependency_only else None):
+                              lambda r:attempts.append(dict(r,selected=False)),args.max_remaining_turns):
             try:
                 f=Fixture(raw,args.max_nodes)
                 if f.root.pending is not None:
@@ -480,7 +480,7 @@ def mine_selected(args,out):
                 condition='dependency' if args.dependency_only else cert['condition']
                 key=(f.bundle,condition);slot=(f.split,condition)
                 qualifies=cert['action_value_span']>1e-9 and cert['root_is_ego_proposal'] and cert['menu_actions']>0 and 1<=cert['remaining_ego_proposal_turns']<=2
-                if args.dependency_only:qualifies = bool(dependency and dependency['passed']) and cert['root_is_ego_proposal'] and cert['menu_actions']>0
+                if args.dependency_only:qualifies &= bool(dependency and dependency['passed'])
                 elif cert['condition']=='unknown_relevant':qualifies &= cert['continuing_evidence_opportunity'] and cert['active_partner_proposal'] and cert['evidence_channel_span']>1e-9
                 quality=(int(cert['belief_update_opportunity'] and cert['belief_error_task_cost']>1e-9),cert['belief_error_task_cost'],cert['evidence_channel_span'])
                 kept=False
@@ -510,7 +510,6 @@ def mine_selected(args,out):
 def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--fixtures',type=Path)
-    p.add_argument('--max-query-sets',type=int,default=None,help='Optional deterministic query-set subsample per source game in dependency mining.')
     p.add_argument('--dependency-only',action='store_true',help='Separate supplement: admit only strict oracle-certified value from judgment updating.')
     p.add_argument('--generate',action='store_true',help='Mine certified native positions; default when no fixture file is supplied.')
     p.add_argument('--seed',type=int,default=30000);p.add_argument('--candidate-seeds',type=int,default=64)
@@ -526,7 +525,6 @@ def main(argv=None):
     p.add_argument('--score-max-nodes',type=int,help='Separate exact counterfactual-scoring budget; default 4x max-nodes. May be increased with score-only.')
     p.add_argument('--belief-preflight',action=argparse.BooleanOptionalAction,default=True)
     args=p.parse_args(argv)
-    if args.max_query_sets is not None and args.max_query_sets<1:p.error('max-query-sets must be positive.')
     if not 1<=args.max_remaining_turns<=6:p.error('max-remaining-turns must be in 1..6.')
     if args.score_max_nodes is not None and args.score_max_nodes<1:p.error('score-max-nodes must be positive.')
     if args.export_only and (args.oracle_check or args.score_only):p.error('Export cannot be combined with oracle-check/score-only.')
@@ -552,7 +550,7 @@ def main(argv=None):
         belief_preflight=args.belief_preflight,finalization_version='bounded-submission-v1',tool_hash=digest([submission_tool(t) for t in suite.tasks]),
         model=args.model,base_url=args.base_url,max_tokens=args.max_tokens,finalization_tokens=args.finalization_tokens,
         max_nodes=args.max_nodes,min_games_per_condition=args.min_games_per_condition,oracle_check=args.oracle_check)
-    if args.dependency_only:manifest['dependency_certificate']='strict-update-value-v2'
+    if args.dependency_only:manifest['dependency_certificate']='strict-update-value-v1'
     if (out/'manifest.json').exists():
         if json.loads((out/'manifest.json').read_text())!=manifest:p.error('Manifest changed; use a fresh output directory.')
         if (out/'answers.json').exists() and not (args.resume or args.score_only):p.error('Existing answers require --resume or --score-only.')
@@ -585,7 +583,7 @@ def main(argv=None):
     dump(out/'scoring_config.json',dict(max_nodes=scoring_budget))
     scored=measure(suite,records);dump(out/'scores.json',scored);dump(out/'protocol_summary.json',protocol_summary(records))
     summary=dict(mode='synthetic oracle check' if args.oracle_check else 'LLM',conditions={})
-    for split,condition in product(('discovery','confirmation','exploratory'),('dependency',) if args.dependency_only else ('known','unknown_relevant','unknown_irrelevant')):
+    for split,condition in product(('discovery','confirmation','exploratory'),('known','unknown_relevant','unknown_irrelevant')):
         ids={c['primary_case'] for c in suite.certificates.values() if c['condition']==condition and c['split']==split}
         rows=[r for r in scored['cases'] if r['case'] in ids]
         active=[r for r in scored['active'] if suite.certificates[r['fixture']]['condition']==condition and r['split']==split]
@@ -605,8 +603,6 @@ def main(argv=None):
     summary['counterfactual_reference_limit']='A supplied wrong judgment can assign probability to types incompatible with public history. If this makes the history-aware reference undefined, LO and corresponding J entries are unavailable, never zero-filled. Direct paired LLM action regret, belief accuracy and channel scores remain defined.'
     summary['planning_interpretation']='Oracle-judgment-assisted planning with public history, not a pure planning deficit isolated from belief computation.'
     summary['scope']='Selected native positions; at most two measured ego decisions, without skipping native ego responses, and with reference continuation after the second measured action. Not an end-to-end LLM game outcome. Information-channel changes do not alone establish an information-mediated utility effect.'
-    if args.dependency_only:
-        summary['scope']+=' Separate dependency supplement, selected for strictly positive continuation value of an updated judgment, even granting the frozen-judgment planner its most favorable optimal tie. The reference first action prefers a certifiable menu among terminal-utility maximizers; all other terminal-optimal actions still receive zero regret. Root action values may tie. Do not pool this selected cohort with the original B/P prevalence estimates.'
     dump(out/'summary.json',summary)
     lines=['# Native BENAC-P diagnosis','',summary['mode'],'',summary['scope'],'',summary['planning_interpretation'],'',summary['belief_repair_interpretation'],'',summary['counterfactual_reference_limit'],'',
            'Measurement coverage: '+str(summary['coverage']),'',

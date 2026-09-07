@@ -18,14 +18,18 @@ from benac_p.diagnose_suite import dump
 from dataclasses import replace
 
 
-def candidates(seed, max_nodes=2000, actions_per_player=1, n_goals=4, n_rounds=2, unknown_goals=1, on_rejection=None, max_remaining_turns=3):
+def candidates(seed, max_nodes=2000, actions_per_player=1, n_goals=4, n_rounds=2, unknown_goals=1, on_rejection=None, max_remaining_turns=3, max_query_sets=None):
     spec=replace(generate_game(seed,GeneratorConfig(n_players=3,actions_per_player=actions_per_player,n_goals=n_goals,n_rounds=n_rounds)),menu_enabled=True)
     ego=seed % spec.n_players
     target=[p for p in range(spec.n_players) if p!=ego][(seed//spec.n_players)%2]
     # Keep every type valid under the original generator's preference validity
     # constraints; no correlation between different players is introduced.
     eligible=[g.goal_id for g in spec.goals if any(a.player_id==target for a in g.required_actions)]
-    for goals in combinations(eligible,unknown_goals):
+    query_sets=list(combinations(eligible,unknown_goals))
+    if max_query_sets is not None:
+        np.random.default_rng(seed+913).shuffle(query_sets)
+        query_sets=query_sets[:max_query_sets]
+    for goals in query_sets:
         goal=goals[0]
         rows=[tuple(map(int,row)) for row in spec.private_preferences]
         if not any(v==1 for j,v in enumerate(rows[target]) if j not in goals):continue

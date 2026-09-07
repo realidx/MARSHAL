@@ -1,0 +1,24 @@
+{
+  "version": "bp-sft-development-audit-v1",
+  "purpose": "development_audit_only",
+  "seed": 50000,
+  "games": 100,
+  "max_nodes": 20000,
+  "max_remaining": 3,
+  "branch_roots": 1,
+  "partner_version": "terminal-best-response-to-immediate-reference-v2",
+  "source_hashes": {
+    "sft_data_audit.py": "dcbd30000637116ace3bbcfd606616247fdc8b19a3024d6995ae06a085a2e93c",
+    "generator.py": "7f3af18c817567a7105264eed1394097cdd289aa62ccb59731012550861f268c",
+    "endgame.py": "6d8856c6f8278eeb0eeecfafd5875916b51b3111cc98a3631b2935e38fe2eedd",
+    "endgame_partner.py": "6103aecd80ce045df7688246713f64c2ec043b926291f959e9be70e4cfff14dc",
+    "endgame_diagnose.py": "6ce16b0420ff674290dd1d4d5dc093faf8d9e109295646c3e2c9db6c6e47e1c6",
+    "diagnose_protocol.py": "3870b8230fd502f046b324dc414bf6c814502cef7bc5bc53a97e0bfce14e82da",
+    "state.py": "0461ecafb9177cf3e6b36199801f18336220c400c68c26d987bb19e02e742bec",
+    "schema.py": "557dca5d5e647c28106306db1b858c05247f39dde9bd83c62a92988871c88495"
+  },
+  "initial_world_sampling": "uniform catalogue; separate deterministic RNG streams",
+  "system": "You control the stated ego player in a BENAC-P endgame. Use only the public rules, your preferences and supplied information. Each player's preferences belong to that named player. A goal formula specifies when a goal is achieved; it does not specify who wants it. For partner judgment, start from initially_possible_preferences for the named partner and update using the public history. With empty history, retain that initial set unchanged. Population catalogue rows list candidate types, not additional observations. Offers and accepted menu options bind the proposed commitments immediately and irreversibly. Every player retains its original proposal turns and may actively propose. You may reason briefly or submit directly. Submit exactly one requested tool call, with no text after it. Do not output probabilities, utility numbers, Q values or a plan variable. All remaining legal actions are listed. The reference partner specification describes its information and optimization objective; do not assume it sees others' hidden preferences.",
+  "model_calls": false,
+  "training": false
+}

@@ -966,3 +966,18 @@ separates goal achievement from player preference. Preflight shares the formal
 B prompt and exports exact inputs. Reuse the 36 fixtures in a fresh run; keep
 oracle policy, labels, paired histories, scoring and reasoning budgets unchanged.
 Local prompt tests do not establish that the model now passes preflight.
+
+### 13.15 Preserve B/P results; certify consequential dependency opportunities
+
+The full-history-role-context run is retained. Add a separate native supplement
+admitted only when an updated judgment strictly improves reference continuation
+utility over even the most favorable frozen-judgment-optimal tie. Prefer a
+certifiable menu only within the terminal-utility-optimal first-action set; other
+optimal first actions remain correct. Root ties do not disqualify continuation
+dependence. The default target is three independent games per split, with a
+pre-inference readiness gate. One real positive position and its 15-task synthetic
+oracle check are validated; the complete cohort and LLM results remain pending.
+See [dependency_supplement.md](dependency_supplement.md). Preserve history in all
+P contexts and report this selected supplement separately. Reasoning length and
+examples are audited in the original run's REASONING_AUDIT.md; no matched
+action-only ablation has established a causal benefit of reasoning.

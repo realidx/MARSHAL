@@ -13,7 +13,18 @@ This selects legal short positions and runs B, P, B→P and P→B with the exist
 remote vLLM/Hermes configuration. See [methodology and running instructions](../../new/native_endgame_diagnose.md)
 for selection gates, oracle assumptions, outputs and a CPU validation command.
 The default candidate budget may need expansion; incomplete selection stops
-before model calls. No new native real-model results have been established yet.
+before model calls. The `full-history-role-context` results are available; their
+dependency tests lacked consequential updater opportunities. A separate
+oracle-certified supplement is now available:
+
+```bash
+bash examples/benac_p/run_dependency_diagnose.sh
+```
+
+See [supplement methodology and validation status](../../new/dependency_supplement.md).
+One genuine positive fixture has been validated locally; the complete supplement
+and its real-model results remain pending. Do not pool it with the original B/P
+measurement.
 
 
 To rerun the already selected 36 positions with the role-context prompt:
