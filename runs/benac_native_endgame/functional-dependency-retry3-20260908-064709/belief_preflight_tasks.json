@@ -1,0 +1,612 @@
+[
+  {
+    "id": "preflight/known_0",
+    "kind": "semantic_belief",
+    "input": {
+      "role_context": {
+        "you_control": "P0",
+        "partner_under_assessment": "P2",
+        "assessed_goals": [
+          "G6"
+        ]
+      },
+      "query": {
+        "player": "P2",
+        "goals": [
+          "G6"
+        ]
+      },
+      "initially_possible_preferences": [
+        "want"
+      ],
+      "history": [],
+      "game": {
+        "n_players": 3,
+        "goals": {
+          "G0": "P0.A0 AND P1.A0 AND P2.A1",
+          "G1": "P0.A1 AND P2.A1",
+          "G2": "P1.A1 AND P2.A0",
+          "G3": "P0.A0 AND P1.A0",
+          "G4": "P0.A1 AND P1.A0",
+          "G5": "P1.A0 AND P2.A1",
+          "G6": "P0.A1 AND P1.A1 AND P2.A1",
+          "G7": "P0.A1 AND P1.A1 AND P2.A0"
+        },
+        "n_actions_per_player": [
+          2,
+          2,
+          2
+        ],
+        "max_changes": 1,
+        "forbidden_actions": null,
+        "round_robin": [
+          2,
+          0,
+          1,
+          1,
+          0,
+          2
+        ],
+        "ego": "P0",
+        "ego_preferences": {
+          "player": "P0",
+          "by_goal": {
+            "G0": "want",
+            "G1": "want",
+            "G2": "want",
+            "G3": "want",
+            "G4": "want",
+            "G5": "want",
+            "G6": "neutral",
+            "G7": "want"
+          }
+        },
+        "preference_labels": {
+          "1": "want",
+          "0": "neutral",
+          "-1": "avoid"
+        },
+        "semantic_profile_options": [
+          "want",
+          "neutral",
+          "avoid"
+        ],
+        "type_catalogues": {
+          "P0": [
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "want",
+              "G3": "want",
+              "G4": "want",
+              "G5": "want",
+              "G6": "neutral",
+              "G7": "want"
+            }
+          ],
+          "P1": [
+            {
+              "G0": "neutral",
+              "G1": "neutral",
+              "G2": "avoid",
+              "G3": "avoid",
+              "G4": "avoid",
+              "G5": "avoid",
+              "G6": "want",
+              "G7": "want"
+            }
+          ],
+          "P2": [
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "avoid",
+              "G3": "neutral",
+              "G4": "neutral",
+              "G5": "avoid",
+              "G6": "want",
+              "G7": "avoid"
+            },
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "avoid",
+              "G3": "neutral",
+              "G4": "neutral",
+              "G5": "avoid",
+              "G6": "neutral",
+              "G7": "avoid"
+            },
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "avoid",
+              "G3": "neutral",
+              "G4": "neutral",
+              "G5": "avoid",
+              "G6": "avoid",
+              "G7": "avoid"
+            }
+          ]
+        },
+        "catalogue_scope": "Each Pk entry belongs only to player Pk. Rows are population candidates before applying the supplied initial possibilities and public history.",
+        "partner": {
+          "version": "terminal-best-response-to-immediate-reference-v2",
+          "action_randomness": false,
+          "optimality": "Exact expected terminal-utility best response to the stated fixed continuation policy, not an equilibrium or omniscient optimum.",
+          "future_reference": "Other players respond to maximize currently satisfied own-goal utility, rejecting ties. They propose the ordinary offer with greatest own immediate utility assuming acceptance; pass wins ties. Native enumeration breaks remaining ties.",
+          "history": "Infer from actual oracle-player proposals and responses. Learner actions are interventions and do not eliminate preference types.",
+          "prior": "Independent, equally represented public per-player preference catalogues; condition on own row and public evidence.",
+          "actual_actions": "Oracle players search all legal offers, menus, pass, and responses, through the true terminal turn.",
+          "tie_rule": "If the immediate reference action is terminal-optimal, use it; otherwise use the first terminal-optimal action in native enumeration."
+        },
+        "rules": "Goals are satisfied exactly when all their listed commitments are bound. Terminal utility adds own want goals and subtracts own avoid goals. Pass consumes a proposal turn. An offer changes only proposer/recipient commitments on acceptance; a menu binds exactly its selected option. Rejection binds nothing. No stage-specific action restrictions exist."
+      },
+      "question": "Report the named partner's possible preferences for the assessed goals. initially_possible_preferences is the complete set before this history; with empty history return that set unchanged. Otherwise update it using the public actions. A player's preference for an achieved goal can be want, neutral or avoid. The ego preference table belongs only to the ego player. Include every supported possibility and no unsupported possibility."
+    },
+    "parent": null,
+    "belief_options": [
+      "want",
+      "neutral",
+      "avoid"
+    ]
+  },
+  {
+    "id": "preflight/known_1",
+    "kind": "semantic_belief",
+    "input": {
+      "role_context": {
+        "you_control": "P0",
+        "partner_under_assessment": "P2",
+        "assessed_goals": [
+          "G6"
+        ]
+      },
+      "query": {
+        "player": "P2",
+        "goals": [
+          "G6"
+        ]
+      },
+      "initially_possible_preferences": [
+        "neutral"
+      ],
+      "history": [],
+      "game": {
+        "n_players": 3,
+        "goals": {
+          "G0": "P0.A0 AND P1.A0 AND P2.A1",
+          "G1": "P0.A1 AND P2.A1",
+          "G2": "P1.A1 AND P2.A0",
+          "G3": "P0.A0 AND P1.A0",
+          "G4": "P0.A1 AND P1.A0",
+          "G5": "P1.A0 AND P2.A1",
+          "G6": "P0.A1 AND P1.A1 AND P2.A1",
+          "G7": "P0.A1 AND P1.A1 AND P2.A0"
+        },
+        "n_actions_per_player": [
+          2,
+          2,
+          2
+        ],
+        "max_changes": 1,
+        "forbidden_actions": null,
+        "round_robin": [
+          2,
+          0,
+          1,
+          1,
+          0,
+          2
+        ],
+        "ego": "P0",
+        "ego_preferences": {
+          "player": "P0",
+          "by_goal": {
+            "G0": "want",
+            "G1": "want",
+            "G2": "want",
+            "G3": "want",
+            "G4": "want",
+            "G5": "want",
+            "G6": "neutral",
+            "G7": "want"
+          }
+        },
+        "preference_labels": {
+          "1": "want",
+          "0": "neutral",
+          "-1": "avoid"
+        },
+        "semantic_profile_options": [
+          "want",
+          "neutral",
+          "avoid"
+        ],
+        "type_catalogues": {
+          "P0": [
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "want",
+              "G3": "want",
+              "G4": "want",
+              "G5": "want",
+              "G6": "neutral",
+              "G7": "want"
+            }
+          ],
+          "P1": [
+            {
+              "G0": "neutral",
+              "G1": "neutral",
+              "G2": "avoid",
+              "G3": "avoid",
+              "G4": "avoid",
+              "G5": "avoid",
+              "G6": "want",
+              "G7": "want"
+            }
+          ],
+          "P2": [
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "avoid",
+              "G3": "neutral",
+              "G4": "neutral",
+              "G5": "avoid",
+              "G6": "want",
+              "G7": "avoid"
+            },
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "avoid",
+              "G3": "neutral",
+              "G4": "neutral",
+              "G5": "avoid",
+              "G6": "neutral",
+              "G7": "avoid"
+            },
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "avoid",
+              "G3": "neutral",
+              "G4": "neutral",
+              "G5": "avoid",
+              "G6": "avoid",
+              "G7": "avoid"
+            }
+          ]
+        },
+        "catalogue_scope": "Each Pk entry belongs only to player Pk. Rows are population candidates before applying the supplied initial possibilities and public history.",
+        "partner": {
+          "version": "terminal-best-response-to-immediate-reference-v2",
+          "action_randomness": false,
+          "optimality": "Exact expected terminal-utility best response to the stated fixed continuation policy, not an equilibrium or omniscient optimum.",
+          "future_reference": "Other players respond to maximize currently satisfied own-goal utility, rejecting ties. They propose the ordinary offer with greatest own immediate utility assuming acceptance; pass wins ties. Native enumeration breaks remaining ties.",
+          "history": "Infer from actual oracle-player proposals and responses. Learner actions are interventions and do not eliminate preference types.",
+          "prior": "Independent, equally represented public per-player preference catalogues; condition on own row and public evidence.",
+          "actual_actions": "Oracle players search all legal offers, menus, pass, and responses, through the true terminal turn.",
+          "tie_rule": "If the immediate reference action is terminal-optimal, use it; otherwise use the first terminal-optimal action in native enumeration."
+        },
+        "rules": "Goals are satisfied exactly when all their listed commitments are bound. Terminal utility adds own want goals and subtracts own avoid goals. Pass consumes a proposal turn. An offer changes only proposer/recipient commitments on acceptance; a menu binds exactly its selected option. Rejection binds nothing. No stage-specific action restrictions exist."
+      },
+      "question": "Report the named partner's possible preferences for the assessed goals. initially_possible_preferences is the complete set before this history; with empty history return that set unchanged. Otherwise update it using the public actions. A player's preference for an achieved goal can be want, neutral or avoid. The ego preference table belongs only to the ego player. Include every supported possibility and no unsupported possibility."
+    },
+    "parent": null,
+    "belief_options": [
+      "want",
+      "neutral",
+      "avoid"
+    ]
+  },
+  {
+    "id": "preflight/known_2",
+    "kind": "semantic_belief",
+    "input": {
+      "role_context": {
+        "you_control": "P0",
+        "partner_under_assessment": "P2",
+        "assessed_goals": [
+          "G6"
+        ]
+      },
+      "query": {
+        "player": "P2",
+        "goals": [
+          "G6"
+        ]
+      },
+      "initially_possible_preferences": [
+        "avoid"
+      ],
+      "history": [],
+      "game": {
+        "n_players": 3,
+        "goals": {
+          "G0": "P0.A0 AND P1.A0 AND P2.A1",
+          "G1": "P0.A1 AND P2.A1",
+          "G2": "P1.A1 AND P2.A0",
+          "G3": "P0.A0 AND P1.A0",
+          "G4": "P0.A1 AND P1.A0",
+          "G5": "P1.A0 AND P2.A1",
+          "G6": "P0.A1 AND P1.A1 AND P2.A1",
+          "G7": "P0.A1 AND P1.A1 AND P2.A0"
+        },
+        "n_actions_per_player": [
+          2,
+          2,
+          2
+        ],
+        "max_changes": 1,
+        "forbidden_actions": null,
+        "round_robin": [
+          2,
+          0,
+          1,
+          1,
+          0,
+          2
+        ],
+        "ego": "P0",
+        "ego_preferences": {
+          "player": "P0",
+          "by_goal": {
+            "G0": "want",
+            "G1": "want",
+            "G2": "want",
+            "G3": "want",
+            "G4": "want",
+            "G5": "want",
+            "G6": "neutral",
+            "G7": "want"
+          }
+        },
+        "preference_labels": {
+          "1": "want",
+          "0": "neutral",
+          "-1": "avoid"
+        },
+        "semantic_profile_options": [
+          "want",
+          "neutral",
+          "avoid"
+        ],
+        "type_catalogues": {
+          "P0": [
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "want",
+              "G3": "want",
+              "G4": "want",
+              "G5": "want",
+              "G6": "neutral",
+              "G7": "want"
+            }
+          ],
+          "P1": [
+            {
+              "G0": "neutral",
+              "G1": "neutral",
+              "G2": "avoid",
+              "G3": "avoid",
+              "G4": "avoid",
+              "G5": "avoid",
+              "G6": "want",
+              "G7": "want"
+            }
+          ],
+          "P2": [
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "avoid",
+              "G3": "neutral",
+              "G4": "neutral",
+              "G5": "avoid",
+              "G6": "want",
+              "G7": "avoid"
+            },
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "avoid",
+              "G3": "neutral",
+              "G4": "neutral",
+              "G5": "avoid",
+              "G6": "neutral",
+              "G7": "avoid"
+            },
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "avoid",
+              "G3": "neutral",
+              "G4": "neutral",
+              "G5": "avoid",
+              "G6": "avoid",
+              "G7": "avoid"
+            }
+          ]
+        },
+        "catalogue_scope": "Each Pk entry belongs only to player Pk. Rows are population candidates before applying the supplied initial possibilities and public history.",
+        "partner": {
+          "version": "terminal-best-response-to-immediate-reference-v2",
+          "action_randomness": false,
+          "optimality": "Exact expected terminal-utility best response to the stated fixed continuation policy, not an equilibrium or omniscient optimum.",
+          "future_reference": "Other players respond to maximize currently satisfied own-goal utility, rejecting ties. They propose the ordinary offer with greatest own immediate utility assuming acceptance; pass wins ties. Native enumeration breaks remaining ties.",
+          "history": "Infer from actual oracle-player proposals and responses. Learner actions are interventions and do not eliminate preference types.",
+          "prior": "Independent, equally represented public per-player preference catalogues; condition on own row and public evidence.",
+          "actual_actions": "Oracle players search all legal offers, menus, pass, and responses, through the true terminal turn.",
+          "tie_rule": "If the immediate reference action is terminal-optimal, use it; otherwise use the first terminal-optimal action in native enumeration."
+        },
+        "rules": "Goals are satisfied exactly when all their listed commitments are bound. Terminal utility adds own want goals and subtracts own avoid goals. Pass consumes a proposal turn. An offer changes only proposer/recipient commitments on acceptance; a menu binds exactly its selected option. Rejection binds nothing. No stage-specific action restrictions exist."
+      },
+      "question": "Report the named partner's possible preferences for the assessed goals. initially_possible_preferences is the complete set before this history; with empty history return that set unchanged. Otherwise update it using the public actions. A player's preference for an achieved goal can be want, neutral or avoid. The ego preference table belongs only to the ego player. Include every supported possibility and no unsupported possibility."
+    },
+    "parent": null,
+    "belief_options": [
+      "want",
+      "neutral",
+      "avoid"
+    ]
+  },
+  {
+    "id": "preflight/unresolved",
+    "kind": "semantic_belief",
+    "input": {
+      "role_context": {
+        "you_control": "P0",
+        "partner_under_assessment": "P2",
+        "assessed_goals": [
+          "G6"
+        ]
+      },
+      "query": {
+        "player": "P2",
+        "goals": [
+          "G6"
+        ]
+      },
+      "initially_possible_preferences": [
+        "want",
+        "neutral",
+        "avoid"
+      ],
+      "history": [],
+      "game": {
+        "n_players": 3,
+        "goals": {
+          "G0": "P0.A0 AND P1.A0 AND P2.A1",
+          "G1": "P0.A1 AND P2.A1",
+          "G2": "P1.A1 AND P2.A0",
+          "G3": "P0.A0 AND P1.A0",
+          "G4": "P0.A1 AND P1.A0",
+          "G5": "P1.A0 AND P2.A1",
+          "G6": "P0.A1 AND P1.A1 AND P2.A1",
+          "G7": "P0.A1 AND P1.A1 AND P2.A0"
+        },
+        "n_actions_per_player": [
+          2,
+          2,
+          2
+        ],
+        "max_changes": 1,
+        "forbidden_actions": null,
+        "round_robin": [
+          2,
+          0,
+          1,
+          1,
+          0,
+          2
+        ],
+        "ego": "P0",
+        "ego_preferences": {
+          "player": "P0",
+          "by_goal": {
+            "G0": "want",
+            "G1": "want",
+            "G2": "want",
+            "G3": "want",
+            "G4": "want",
+            "G5": "want",
+            "G6": "neutral",
+            "G7": "want"
+          }
+        },
+        "preference_labels": {
+          "1": "want",
+          "0": "neutral",
+          "-1": "avoid"
+        },
+        "semantic_profile_options": [
+          "want",
+          "neutral",
+          "avoid"
+        ],
+        "type_catalogues": {
+          "P0": [
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "want",
+              "G3": "want",
+              "G4": "want",
+              "G5": "want",
+              "G6": "neutral",
+              "G7": "want"
+            }
+          ],
+          "P1": [
+            {
+              "G0": "neutral",
+              "G1": "neutral",
+              "G2": "avoid",
+              "G3": "avoid",
+              "G4": "avoid",
+              "G5": "avoid",
+              "G6": "want",
+              "G7": "want"
+            }
+          ],
+          "P2": [
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "avoid",
+              "G3": "neutral",
+              "G4": "neutral",
+              "G5": "avoid",
+              "G6": "want",
+              "G7": "avoid"
+            },
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "avoid",
+              "G3": "neutral",
+              "G4": "neutral",
+              "G5": "avoid",
+              "G6": "neutral",
+              "G7": "avoid"
+            },
+            {
+              "G0": "want",
+              "G1": "want",
+              "G2": "avoid",
+              "G3": "neutral",
+              "G4": "neutral",
+              "G5": "avoid",
+              "G6": "avoid",
+              "G7": "avoid"
+            }
+          ]
+        },
+        "catalogue_scope": "Each Pk entry belongs only to player Pk. Rows are population candidates before applying the supplied initial possibilities and public history.",
+        "partner": {
+          "version": "terminal-best-response-to-immediate-reference-v2",
+          "action_randomness": false,
+          "optimality": "Exact expected terminal-utility best response to the stated fixed continuation policy, not an equilibrium or omniscient optimum.",
+          "future_reference": "Other players respond to maximize currently satisfied own-goal utility, rejecting ties. They propose the ordinary offer with greatest own immediate utility assuming acceptance; pass wins ties. Native enumeration breaks remaining ties.",
+          "history": "Infer from actual oracle-player proposals and responses. Learner actions are interventions and do not eliminate preference types.",
+          "prior": "Independent, equally represented public per-player preference catalogues; condition on own row and public evidence.",
+          "actual_actions": "Oracle players search all legal offers, menus, pass, and responses, through the true terminal turn.",
+          "tie_rule": "If the immediate reference action is terminal-optimal, use it; otherwise use the first terminal-optimal action in native enumeration."
+        },
+        "rules": "Goals are satisfied exactly when all their listed commitments are bound. Terminal utility adds own want goals and subtracts own avoid goals. Pass consumes a proposal turn. An offer changes only proposer/recipient commitments on acceptance; a menu binds exactly its selected option. Rejection binds nothing. No stage-specific action restrictions exist."
+      },
+      "question": "Report the named partner's possible preferences for the assessed goals. initially_possible_preferences is the complete set before this history; with empty history return that set unchanged. Otherwise update it using the public actions. A player's preference for an achieved goal can be want, neutral or avoid. The ego preference table belongs only to the ego player. Include every supported possibility and no unsupported possibility."
+    },
+    "parent": null,
+    "belief_options": [
+      "want",
+      "neutral",
+      "avoid"
+    ]
+  }
+]
