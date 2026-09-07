@@ -998,3 +998,13 @@ The new builder skips exhaustive frozen-judgment searches. Optional fresh mining
 uses at most two query sets and three remaining proposal turns. The strict
 positive example is retained as an illustration, not a readiness requirement.
 See dependency_supplement.md; real-model supplement results remain pending.
+
+### 13.17 Treat semantic preflight as a measured control
+
+The functional supplement reported 3/4 preflight correctness: known WANT was
+expanded to all three labels. Keep the unchanged prompts and retain the error.
+The wrapper now gates on valid submissions/transport, not semantic correctness;
+report semantic control failures alongside formal results and limit strategic
+attribution accordingly. No retry-until-correct is permitted. Resume the stopped
+run using cached controls, with an audited strict-to-protocol manifest migration
+only before any formal answers exist. The strict policy remains available.

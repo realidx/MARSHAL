@@ -428,8 +428,24 @@ def preflight(suite,client,out,args):
                 except (ValueError,KeyError,TypeError) as exc:r.update(status='invalid',error=str(exc))
             records[task['id']]=dict(r,payload_hash=h);dump(path,records)
         checks.append(r['status']=='ok' and set(r['answer']['possible_preferences'])==set(support))
-    dump(out/'belief_preflight_summary.json',dict(passed=all(checks),correct=sum(checks),total=4,protocol=protocol_summary(records)))
-    return all(checks)
+    policy=getattr(args,'preflight_policy','strict')
+    protocol_passed=all(records[t['id']]['status']=='ok' for t in tasks)
+    gate_passed=all(checks) if policy=='strict' else protocol_passed
+    dump(out/'belief_preflight_summary.json',dict(passed=all(checks),semantic_passed=all(checks),
+        protocol_passed=protocol_passed,gate_passed=gate_passed,policy=policy,
+        correct=sum(checks),total=len(tasks),protocol=protocol_summary(records)))
+    if gate_passed and not all(checks):
+        print(f'Preflight semantic control: {sum(checks)}/{len(tasks)} correct; protocol valid. Continuing with wrong answers retained; no semantic retry.',flush=True)
+    return gate_passed
+
+
+def preflight_policy_resume_allowed(previous,current,out,resume):
+    """Allow only an audited gate change before any formal answers exist."""
+    old=dict(previous);new=dict(current)
+    before=old.pop('preflight_policy','strict');after=new.pop('preflight_policy','strict')
+    return (resume and before=='strict' and after=='protocol' and old==new
+            and not (out/'answers.json').exists()
+            and (out/'belief_preflight_answers.json').exists())
 
 
 def selection_readiness(suite,min_games=1,dependency_only=False,functional_dependency=False):
@@ -539,6 +555,8 @@ def main(argv=None):
     p.add_argument('--workers',type=int,default=4)
     p.add_argument('--score-max-nodes',type=int,help='Separate exact counterfactual-scoring budget; default 4x max-nodes. May be increased with score-only.')
     p.add_argument('--belief-preflight',action=argparse.BooleanOptionalAction,default=True)
+    p.add_argument('--preflight-policy',choices=('strict','protocol'),default='strict',
+                   help='strict requires semantic correctness; protocol retains semantic controls but gates only on valid submissions.')
     args=p.parse_args(argv)
     if args.functional_dependency and args.dependency_only:p.error('Choose functional or archived strict dependency mode, not both.')
     if args.max_query_sets is not None and args.max_query_sets<1:p.error('max-query-sets must be positive.')
@@ -577,8 +595,14 @@ def main(argv=None):
         max_nodes=args.max_nodes,min_games_per_condition=args.min_games_per_condition,oracle_check=args.oracle_check)
     if args.dependency_only:manifest['dependency_certificate']='strict-update-value-v2'
     if args.functional_dependency:manifest['dependency_certificate']='functional-dependency-v1'
+    if args.preflight_policy!='strict':manifest['preflight_policy']=args.preflight_policy
     if (out/'manifest.json').exists():
-        if json.loads((out/'manifest.json').read_text())!=manifest:p.error('Manifest changed; use a fresh output directory.')
+        previous=json.loads((out/'manifest.json').read_text())
+        if previous!=manifest:
+            if preflight_policy_resume_allowed(previous,manifest,out,args.resume):
+                dump(out/'preflight_policy_change.json',dict(previous_manifest=previous,new_manifest=manifest,
+                    reason='Strict-to-protocol gate change before any formal answers. Reuse all cached preflight answers, including semantic errors.'))
+            else:p.error('Manifest changed; use a fresh output directory.')
         if (out/'answers.json').exists() and not (args.resume or args.score_only):p.error('Existing answers require --resume or --score-only.')
     elif args.resume or args.score_only:p.error('No manifest to resume/score.')
     if args.score_only and not (out/'answers.json').exists():p.error('No answers.json to score.')
@@ -597,7 +621,7 @@ def main(argv=None):
     if not (args.oracle_check or args.score_only):
         from methods.vllm_client import OpenAICompatibleNegotiationClient
         client=OpenAICompatibleNegotiationClient(args.base_url,args.model,api_key=os.environ.get('BENAC_P_VLLM_API_KEY','EMPTY'),max_tokens=args.max_tokens,temperature=0.)
-    if args.belief_preflight and not args.score_only and not preflight(suite,client,out,args):p.exit(2,'Belief preflight failed; no full model measurement was started. Wrong answers are retained.\n')
+    if args.belief_preflight and not args.score_only and not preflight(suite,client,out,args):p.exit(2,'Preflight gate failed; inspect belief_preflight_summary.json. No full model measurement was started; answers are retained.\n')
     if not args.score_only:run_tasks(suite,records,out,args,client)
     suite.model_arms(records)
     dump(out/'tasks.json',suite.tasks);dump(out/'oracle_labels.json',suite.labels);dump(out/'interventions.json',suite.arms)
@@ -641,11 +665,18 @@ def main(argv=None):
         summary['scope']+=' Separate dependency supplement, selected for strictly positive continuation value of an updated judgment, even granting the frozen-judgment planner its most favorable optimal tie. The reference first action prefers a certifiable menu among terminal-utility maximizers; all other terminal-optimal actions still receive zero regret. Root action values may tie. Do not pool this selected cohort with the original B/P prevalence estimates.'
     if args.functional_dependency:
         summary['scope']+=' Separate B->P sensitivity and P->B forced-action cohorts. Forced high/low-information actions are legal interventions, not necessarily utility-optimal. Their evidence contrast establishes action-to-evidence opportunity; utility differences also include commitment effects. Positive model repair is not an admission condition. Cohorts can share source games and must not be pooled as independent replications. Existing seeds are development diagnostics, not untouched confirmatory evidence.'
+    if args.belief_preflight and (out/'belief_preflight_summary.json').exists():
+        summary['preflight']=json.loads((out/'belief_preflight_summary.json').read_text())
+        if not summary['preflight']['passed']:
+            summary['scope']+=' Semantic preflight controls were not all correct. Formal belief errors may include basic instruction/role/prior-grounding errors; do not attribute them exclusively to strategic belief updating.'
     dump(out/'summary.json',summary)
     lines=['# Native BENAC-P diagnosis','',summary['mode'],'',summary['scope'],'',summary['planning_interpretation'],'',summary['belief_repair_interpretation'],'',summary['counterfactual_reference_limit'],'',
            'Measurement coverage: '+str(summary['coverage']),'',
            'Selection readiness: '+str(selection_readiness(suite,args.min_games_per_condition,args.dependency_only,args.functional_dependency)),'',
            'Partner optimality is a best response to the exported fixed reference continuation, not an equilibrium. Confidence intervals cluster positions by original generated game seed. No model-performance filtering is applied.','']
+    if 'preflight' in summary:
+        control=summary['preflight']
+        lines += [f"Preflight semantic control: {control['correct']}/{control['total']} correct; policy: {control.get('policy','strict')}. Full control details and retained answers are exported separately.",'']
     for condition,metrics in summary['conditions'].items():
         lines += ['## '+condition,'','| Metric | Mean | 95% interval | Games |','|---|---:|---|---:|']
         for name,x in dict(metrics['primary'],root_planning_regret=metrics['root_planning_regret'],channel_information_repair=metrics['channel_information_repair'],**metrics['active_repairs']).items():

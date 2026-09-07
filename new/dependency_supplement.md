@@ -20,6 +20,25 @@ checks and model requests. The vLLM/Hermes configuration and balanced 1024-token
 completion plus 128-token truncation-only finalization are unchanged. Use a fresh
 output directory; the script supplies one by default.
 
+The wrapper uses `--preflight-policy protocol`: four semantic controls are still
+asked and scored, but only transport/submission failures block the run. A valid
+wrong answer is retained, is not retried, and is prominently reported in the
+final summary. Failed known-copy controls limit attribution: formal B errors may
+include basic instruction/prior/role grounding failures, not exclusively
+strategic inference. The old strict semantic gate remains available through
+`--preflight-policy strict`.
+
+To continue a run stopped by the old semantic gate, with no formal answers yet:
+
+```bash
+BENAC_DIAGNOSE_OUTPUT_DIR=PATH_TO_STOPPED_RUN \
+  bash examples/benac_p/run_dependency_diagnose.sh --resume
+```
+
+This reuses all four preflight answers, including errors. A narrowly scoped
+manifest migration records the strict-to-protocol gate change; it cannot change
+prompts, tasks, inference budgets, or runs with formal answers already present.
+
 Nine positions reuse the prior legal fixture pool; one additional query/history
 comes from source seed 30040. Selection inspected oracle mechanics only, never
 whether a model answer was wrong or repair was positive. These are development
