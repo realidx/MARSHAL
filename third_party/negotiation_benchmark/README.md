@@ -294,3 +294,9 @@ belief × planner and chooser × updater interventions, controls, generated
 and oracle-screened strata, and discovery/confirmation reporting. See
 [the full protocol](../../new/full_diagnose_protocol.md). The menu command
 above remains a smoke pilot, not the complete diagnostic experiment.
+
+The default is now the frozen `core` profile: B alone, P given oracle B,
+B→P and P→B, with the two factorial tables. At the default size it exports
+333 static tasks and adds at most 81 updater tasks. MI is a channel
+measurement, never the oracle action objective. Use `--extended` for the
+secondary probes described above; use a fresh directory for v2 runs.

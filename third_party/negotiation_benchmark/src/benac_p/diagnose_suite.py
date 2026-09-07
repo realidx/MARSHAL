@@ -19,8 +19,9 @@ from benac_p.observations import build_player_observation
 from benac_p.schema import ActionRef, GameSpec, Goal, MenuOffer, OfferProposal, PassProposal, VALUE_TO_PREFERENCE, response_actions
 from benac_p.state import GameState
 from benac_p.diagnose_instances import dependency_candidate, screen
+from benac_p.diagnose_protocol import PROTOCOL_VERSION, system_prompt, submission_tool, generate, protocol_summary
 
-VERSION = 'factorial-diagnose-v1'
+VERSION = 'interaction-loop-v2'
 SYSTEM = RULES + ' joint_type_support[k][j] is the preference row for partner_ids[j] in hidden joint type k, in G0, G1, ... order. Use initial_probabilities for a history task and current_probabilities for a supplied-belief task. Never assume partners know other players preferences. Return only the requested JSON.'
 
 
@@ -161,7 +162,8 @@ def matched_menus(pack, actions):
 
 
 class Suite:
-    def __init__(self, n_games=24, seed=10000):
+    def __init__(self, n_games=24, seed=10000, *, extended=False):
+        self.extended = extended
         self.tasks = []
         self.labels = {}
         self.contexts = {}
@@ -182,7 +184,7 @@ class Suite:
         return dict(observation=obs.to_agent_dict(), partner_ids=list(pack.prior.partner_ids), joint_type_support=[h['preferences'] for h in pack.prior.to_dict()['joint']],
                     partner_policy={str(i): p.specification() for i, p in pack.policies.items()})
 
-    def add_case(self, pack, cid, state, belief, *, likelihood=None, weight=1., arm='root'):
+    def add_case(self, pack, cid, state, belief, *, likelihood=None, weight=1., arm='root', belief_only=False):
         planner = BayesPlanner(partner_policies=pack.policies)
         obs = build_player_observation(state, 0)
         oracle = planner.solve(obs, belief)
@@ -198,7 +200,9 @@ class Suite:
         public = self.public(pack, state)
         public['initial_probabilities'] = list(pack.prior.probabilities)
         self.task(cid+'/belief', 'belief', public, dict(label))
-        if likelihood is not None:
+        if belief_only:
+            return context
+        if self.extended and likelihood is not None:
             table = dict(initial_probabilities=list(pack.prior.probabilities),
                          observed_event_likelihood_by_type=likelihood.tolist(),
                          instruction='Update the prior on this one observed event. Return probabilities in the same type order.')
@@ -206,10 +210,11 @@ class Suite:
         bare = self.public(pack, state, history=False)
         bare['legal_actions'] = [a.to_dict() for a in actions]
         bare['instruction'] = 'Treat supplied current_probabilities as your complete current belief. Choose the action maximizing expected terminal own utility, including future partner actions.'
-        for name, prob in [('oracle', belief.probabilities), ('prior', pack.prior.probabilities)]:
+        for name, prob in ([('oracle', belief.probabilities), ('prior', pack.prior.probabilities)] if self.extended else [('oracle', belief.probabilities)]):
             self.task(cid+'/plan_'+name, 'planning', dict(bare, current_probabilities=list(prob)), dict(label))
         self.task(cid+'/plan_model', 'planning', dict(bare), dict(label), parent=cid+'/belief')
-        self.task(cid+'/plan_history', 'planning', dict(public, legal_actions=[a.to_dict() for a in actions]), dict(label))
+        if self.extended:
+            self.task(cid+'/plan_history', 'planning', dict(public, legal_actions=[a.to_dict() for a in actions]), dict(label))
         return context
 
     def build(self):
@@ -222,7 +227,9 @@ class Suite:
             actions = root['actions']
             high, low, info_gap = matched_menus(pack, actions)
             single = OfferProposal(high.offer.offers[0])
-            arms = {'high': high, 'low': low, 'single': single, 'optimal': root['oracle'].action}
+            arms = {'optimal': root['oracle'].action}
+            if self.extended:
+                arms.update(high=high, low=low, single=single)
             info = {}
             for arm, action in arms.items():
                 info[arm] = dict(action=action.to_dict(),information_gain=action_info(pack, action), branches=[])
@@ -231,12 +238,13 @@ class Suite:
                     cid = f'{pack.id}/{arm}/{suffix}'
                     self.add_case(pack, cid, child, posterior, likelihood=likelihood, weight=probability, arm=arm)
                     info[arm]['branches'].append(dict(case=cid, probability=probability))
-            # Stop reward after first response but KEEP original partner kernel.
-            immediate_q = [sum(p*child.reward(0) for _,p,_,child,_ in action_branches(pack,a)) for a in actions]
-            root_payload = next(t['input'] for t in self.tasks if t['id']==pack.id+'/root/plan_oracle')
-            stop_payload = dict(root_payload, instruction='In this evaluation the game terminates immediately after this proposal and partner response. The supplied partner policy still scores actions using the ORIGINAL schedule. Maximize own utility in that resulting state; there are no subsequent decisions.')
-            stop_label = dict(self.labels[pack.id+'/root/plan_oracle'], q=immediate_q, optimum=max(immediate_q), decision_range=max(immediate_q)-min(immediate_q))
-            self.task(pack.id+'/stop_after_response', 'planning', stop_payload, stop_label)
+            if self.extended:
+                # Stop reward after first response but KEEP original partner kernel.
+                immediate_q = [sum(p*child.reward(0) for _,p,_,child,_ in action_branches(pack,a)) for a in actions]
+                root_payload = next(t['input'] for t in self.tasks if t['id']==pack.id+'/root/plan_oracle')
+                stop_payload = dict(root_payload, instruction='In this evaluation the game terminates immediately after this proposal and partner response. The supplied partner policy still scores actions using the ORIGINAL schedule. Maximize own utility in that resulting state; there are no subsequent decisions.')
+                stop_label = dict(self.labels[pack.id+'/root/plan_oracle'], q=immediate_q, optimum=max(immediate_q), decision_range=max(immediate_q)-min(immediate_q))
+                self.task(pack.id+'/stop_after_response', 'planning', stop_payload, stop_label)
             menus = high.offer.offers
             obs = build_player_observation(state, 0)
             facts = [obs.state_facts(obs.commitments_if_accepted(o))['your_utility_if_terminal'] for o in menus]
@@ -245,23 +253,26 @@ class Suite:
             grounding['instruction'] = 'For each option if accepted, compute your current utility if the game ended in that state. Return utilities, in option order.'
             self.task(pack.id+'/grounding', 'grounding', grounding, dict(game=pack.id, split=pack.split, family=pack.family, utilities=facts))
             prior_gaps = []
-            for entry in info['high']['branches']:
+            for entry in info['optimal']['branches']:
                 ctx=self.contexts[entry['case']]
                 action=BayesPlanner(partner_policies=pack.policies).act(build_player_observation(ctx['state'],0), pack.prior)
                 prior_gaps.append(ctx['oracle'].regret(action))
             self.certificates.append(dict(game=pack.id, split=pack.split, family=pack.family,
                 spec=pack.spec.to_dict(include_private=False), prior=pack.prior.to_dict(),
                 policy={str(i):p.specification() for i,p in pack.policies.items()}, matched_information_gap=info_gap, arms=info,
+                evidence_opportunity={'action_1':high.to_dict(),'action_2':low.to_dict(),
+                                      'MI_1':action_info(pack,high),'MI_2':action_info(pack,low),
+                                      'purpose':'channel-existence certificate only, not an action objective'},
                 belief_changes_decision=any(g>1e-8 for g in prior_gaps), screening=pack.screening,
                 oracle_long_vs_stop_action_gap=max(root['oracle'].value-next(v.value for v in root['oracle'].action_values if v.action==actions[i])
-                    for i,q in enumerate(immediate_q) if max(immediate_q)-q<1e-10)))
+                    for i,q in enumerate(immediate_q) if max(immediate_q)-q<1e-10) if self.extended else None))
             print(f'Prepared {pack.id}: {len(self.tasks)} tasks', flush=True)
         # Pure planning control: all partner types known, reward requires P2's
         # future turn. A matched short schedule cannot complete the same goal.
         goals=(Goal(0,tuple(ActionRef(i,0) for i in range(3))),)
         prefs=np.ones((3,1),dtype=int)
         known=BeliefState((1,2), (((VALUE_TO_PREFERENCE[1],),(VALUE_TO_PREFERENCE[1],)),), (0.,))
-        for name,schedule in [('long',(0,2)),('short',(0,))]:
+        for name,schedule in ([('long',(0,2)),('short',(0,))] if self.extended else []):
             spec=GameSpec(3,(1,1,1),goals,prefs,schedule,1,0,menu_enabled=True)
             pack=Pack('horizon_'+name,'control',spec,known,{i:SoftProgressPolicy() for i in (1,2)},'known_horizon')
             self.pack_map[pack.id]=pack
@@ -285,15 +296,15 @@ class Suite:
             for response, probability, posterior, child, likelihood in action_branches(pack,action):
                 suffix = 'PASS' if response is None else response.value
                 cid = f'{pack.id}/model/{suffix}'
-                self.add_case(pack,cid,child,posterior,likelihood=likelihood,weight=probability,arm='model')
+                self.add_case(pack,cid,child,posterior,likelihood=likelihood,weight=probability,arm='model',belief_only=not self.extended)
                 info['branches'].append(dict(case=cid,probability=probability))
             cert['arms']['model'] = info
 
     def manifest(self):
-        return dict(version=VERSION, n_games=self.n_games, seed=self.seed, tasks=len(self.tasks), games=len(self.pack_map),
+        return dict(version=VERSION, profile='extended' if self.extended else 'core', n_games=self.n_games, seed=self.seed, tasks=len(self.tasks), games=len(self.pack_map),
                     task_hash=digest(self.tasks), calibration_excluded_from_confirmation=True,
-                    model_calls_static=len(self.tasks), model_calls_additional_per_game_upper_bound=18,
-                    model_calls_total_upper_bound=len(self.tasks)+18*len(self.certificates),
+                    model_calls_static=len(self.tasks), model_calls_additional_per_game_upper_bound=18 if self.extended else 3,
+                    model_calls_total_upper_bound=len(self.tasks)+(18 if self.extended else 3)*len(self.certificates),
                     population='alternating unfiltered games and oracle-screened dependency family; separate estimates',
                     causal_scope='Explicit belief interface and do(negotiation action); not internal neural mediation.')
 
@@ -351,14 +362,16 @@ def score(suite, records):
         results.append(row)
     index={r['id']:r for r in results};factorial=[]
     for cid,ctx in suite.contexts.items():
-        rows=[index[cid+'/'+suffix] for suffix in ('belief','plan_model','plan_oracle','plan_prior')]
+        if cid+'/plan_model' not in index:
+            continue
+        rows=[index[cid+'/'+suffix] for suffix in ('belief','plan_model','plan_oracle')]
         if not all(r['status']=='ok' for r in rows):
             factorial.append(dict(case=cid,game=ctx['pack'].id,split=ctx['pack'].split,family=ctx['pack'].family,weight=rows[0]['weight'],status='incomplete'))
             continue
-        b,ll,ol,placebo=rows;lo=b['oracle_planner_regret'];llr=ll['regret'];olr=ol['regret']
+        b,ll,ol=rows;lo=b['oracle_planner_regret'];llr=ll['regret'];olr=ol['regret']
         factorial.append(dict(case=cid,game=ctx['pack'].id,split=ctx['pack'].split,family=ctx['pack'].family,weight=b['weight'],
                               LL=llr,OL=olr,LO=lo,OO=0.,belief_repair_effect=llr-olr,planner_repair_effect=llr-lo,
-                              interaction=llr-olr-lo,prior_repair_effect=placebo['regret']-olr))
+                              interaction=llr-olr-lo))
     active=[]
     for cert in suite.certificates:
         arm_scores={}
@@ -371,28 +384,34 @@ def score(suite, records):
                 weighted_loss+=branch['probability']*r['oracle_planner_regret']
                 posterior=suite.contexts[branch['case']]['belief'].probabilities
                 expected_proper+=branch['probability']*(r['excess_brier']+1-sum(p*p for p in posterior))
-                continuation=index[branch['case']+'/plan_model']
-                if continuation['status']=='ok':model_planning_loss+=branch['probability']*continuation['regret']
+                continuation=index.get(branch['case']+'/plan_model')
+                if continuation is not None and continuation['status']=='ok':model_planning_loss+=branch['probability']*continuation['regret']
                 else:model_planning_valid=False
-            if valid:arm_scores[arm]=dict(expected_belief_error=weighted_error,expected_continuation_regret=weighted_loss,
+            arm_scores[arm]=dict(model_updater_complete=valid,information_gain=info['information_gain'],
+                                 oracle_posterior_entropy=suite.pack_map[cert['game']].prior.entropy-info['information_gain'])
+            if valid:arm_scores[arm].update(expected_belief_error=weighted_error,expected_continuation_regret=weighted_loss,
                                          expected_proper_brier=expected_proper,
                                          full_continuation_regret=model_planning_loss if model_planning_valid else None,
-                                         information_gain=info['information_gain'])
+                                         information_gain=info['information_gain'],
+                                         oracle_posterior_entropy=suite.pack_map[cert['game']].prior.entropy-info['information_gain'])
         root=suite.contexts[cert['game']+'/root']
         chooser_matrix={}
         for arm,chooser in [('optimal','O'),('model','L')]:
-            if arm not in arm_scores:continue
+            if arm not in cert['arms']:continue
             action_dict=cert['arms'][arm]['action']
             root_value=next(v.value for v in root['oracle'].action_values if v.action.to_dict()==action_dict)
             chooser_matrix[chooser+'O']=root_value
-            chooser_matrix[chooser+'L']=root_value-arm_scores[arm]['expected_continuation_regret']
+            if 'expected_continuation_regret' in arm_scores.get(arm,{}):
+                chooser_matrix[chooser+'L']=root_value-arm_scores[arm]['expected_continuation_regret']
         entry=dict(game=cert['game'],split=cert['split'],family=cert['family'],arms=arm_scores,
                    chooser_updater_utility=chooser_matrix,matched_information_gap=cert['matched_information_gap'])
+        if 'LO' in chooser_matrix:
+            entry['root_action_regret']=chooser_matrix['OO']-chooser_matrix['LO']
         if all(k in chooser_matrix for k in ('LL','OL','LO','OO')):
             entry['chooser_repair_effect']=chooser_matrix['OL']-chooser_matrix['LL']
             entry['updater_repair_effect']=chooser_matrix['LO']-chooser_matrix['LL']
             entry['chooser_updater_interaction']=chooser_matrix['OO']-chooser_matrix['OL']-chooser_matrix['LO']+chooser_matrix['LL']
-        if 'high' in arm_scores and 'low' in arm_scores:
+        if all('expected_proper_brier' in arm_scores.get(a,{}) for a in ('high','low')):
             entry['forced_menu_brier_reduction']=arm_scores['low']['expected_proper_brier']-arm_scores['high']['expected_proper_brier']
         stop=records.get(cert['game']+'/stop_after_response')
         long=records.get(cert['game']+'/root/plan_oracle')
@@ -401,6 +420,16 @@ def score(suite, records):
             entry['objective_intervention_action_changed']=a!=b
             entry['objective_intervention_information_change']=action_info(root['pack'],a)-action_info(root['pack'],b)
         active.append(entry)
+    if not suite.extended:
+        for row in results:
+            row.pop('kl_clipped',None)
+        for row in factorial:
+            row.pop('interaction',None)
+        for row in active:
+            row.pop('chooser_updater_interaction',None)
+            for arm in row['arms'].values():
+                arm.pop('expected_proper_brier',None)
+                arm.pop('full_continuation_regret',None)
     return dict(results=results,factorial=factorial,active=active)
 
 
@@ -421,7 +450,7 @@ def summarize(suite, scored):
     summaries={}
     for split in ('calibration','control','discovery','confirmation'):
         rows=[r for r in scored['results'] if r['split']==split]
-        main=[r for r in rows if '/high/' in r['id']]
+        main=[r for r in rows if '/optimal/' in r['id']]
         relevant=[r for r in rows if '/optimal/' in r['id']]
         factor=[r for r in scored['factorial'] if r['split']==split and '/optimal/' in r['case']]
         reverse=[r for r in scored['active'] if r['split']==split]
@@ -434,6 +463,8 @@ def summarize(suite, scored):
                 belief_repair=cluster_summary([r for r in factor if r['family']==family],'belief_repair_effect'),
                 chooser_repair=cluster_summary([r for r in reverse if r['family']==family],'chooser_repair_effect'))
         summaries[split]=dict(by_family=family_summaries,
+            BP_table={cell:cluster_summary(factor,cell) for cell in ('OO','OL','LO','LL')},
+            PB_table={cell:cluster_summary([dict(game=r['game'],**({cell:r['chooser_updater_utility'][cell]} if cell in r['chooser_updater_utility'] else {})) for r in reverse],cell) for cell in ('OO','OL','LO','LL')},
             forced_menu_brier_reduction=cluster_summary(reverse,'forced_menu_brier_reduction'),
             chooser_repair=cluster_summary(reverse,'chooser_repair_effect'),
             updater_repair=cluster_summary(reverse,'updater_repair_effect'),
@@ -450,49 +481,54 @@ def summarize(suite, scored):
             belief_repair=cluster_summary(factor,'belief_repair_effect'),planner_repair=cluster_summary(factor,'planner_repair_effect'),
             interaction=cluster_summary(factor,'interaction'),
             active_planning_regret=cluster_summary([r for r in rows if r['id'].endswith('/root/plan_oracle')],'regret'))
+        if not suite.extended:
+            for key in ('forced_menu_brier_reduction','chooser_updater_interaction','objective_information_effect',
+                        'belief_arithmetic','interaction'):
+                summaries[split].pop(key,None)
     return summaries
 
 
 def report(suite, scored, summaries, path):
-    lines=['# BENAC-P full diagnosis report','',
-           'Hypothesis tests, not guaranteed positive findings. Confirmation games are disjoint from discovery; selected anchor excluded.','',
-           '| Split | Valid / requested | Belief excess Brier | Oracle-belief planning regret | Belief repair effect |',
-           '|---|---:|---:|---:|---:|']
+    lines=['# BENAC-P interaction-loop diagnosis','',
+           'Frozen structure: B alone; P given oracle B; B→P; P→evidence→B. Only two primitives.',
+           'Action choice is evaluated by terminal utility after observe-update-replan. MI describes a channel, not the objective.', '']
     def fmt(x):return 'NA' if x is None else f'{x:.6f}'
     for split,s in summaries.items():
-        lines.append(f"| {split} | {s['valid']} / {s['requested']} | {fmt(s['belief']['mean'])} | {fmt(s['independent_planning']['mean'])} | {fmt(s['belief_repair']['mean'])} |")
-    lines += ['', '| Split | Forced-menu Brier reduction | Chooser repair | Updater repair |',
-              '|---|---:|---:|---:|']
-    for split,s in summaries.items():
-        lines.append(f"| {split} | {fmt(s['forced_menu_brier_reduction']['mean'])} | {fmt(s['chooser_repair']['mean'])} | {fmt(s['updater_repair']['mean'])} |")
-    lines += ['', '## Family-specific readings', '']
-    for split,s in summaries.items():
+        lines += [f'## {split}', '', f"Valid requests: {s['valid']} / {s['requested']}.",
+                  f"B excess Brier: {fmt(s['belief']['mean'])}; P given oracle B regret: {fmt(s['independent_planning']['mean'])}.",
+                  '', 'B→P: R is regret (lower is better); first letter belief, second planner.', '',
+                  '| Belief | Reference planner | Model planner |','|---|---:|---:|',
+                  f"| Oracle | {fmt(s['BP_table']['OO']['mean'])} | {fmt(s['BP_table']['OL']['mean'])} |",
+                  f"| Model | {fmt(s['BP_table']['LO']['mean'])} | {fmt(s['BP_table']['LL']['mean'])} |",
+                  '', 'P→B: J is terminal utility (higher is better); first letter current chooser, second updater. Downstream planner is reference.', '',
+                  '| Current chooser | Reference updater | Model updater |','|---|---:|---:|',
+                  f"| Reference | {fmt(s['PB_table']['OO']['mean'])} | {fmt(s['PB_table']['OL']['mean'])} |",
+                  f"| Model | {fmt(s['PB_table']['LO']['mean'])} | {fmt(s['PB_table']['LL']['mean'])} |", '']
         for family,metrics in s['by_family'].items():
-            lines.append(f"- {split} / {family}: belief error {fmt(metrics['belief']['mean'])}; planning regret {fmt(metrics['planning']['mean'])}; belief repair {fmt(metrics['belief_repair']['mean'])}; chooser repair {fmt(metrics['chooser_repair']['mean'])}.")
-    lines+=['','Read summary.json for game-cluster confidence intervals; scores.json contains cells and controls.',
-            'Belief-only error measures posterior reporting. Oracle-belief planning regret tests planning given correct belief. Paired belief repair identifies an effect through the supplied belief interface, not an internal neural mechanism.',
-            'Factorial interaction can be positive, negative or zero. Zero interaction does not imply absence of temporal dependency.',
-            'Menu interventions identify action-dependent evidence. Physical states differ, so reward differences are not pure information causal effects.',
-            'Insufficient valid coverage or insufficient decision gaps makes a conclusion inconclusive. One model does not establish a universal MAS deficit.',
-            f"Unfiltered games with high-menu belief-dependent decisions: {sum(c['belief_changes_decision'] for c in suite.certificates if c['family']=='generated')}.",
-            f"Pre-screened task-relevant games: {sum(c['family']=='dependency_screened' for c in suite.certificates)}. Interpret this stratum conditional on the declared screening rule."]
+            lines.append(f"- {family}: B error {fmt(metrics['belief']['mean'])}; P regret {fmt(metrics['planning']['mean'])}; B repair {fmt(metrics['belief_repair']['mean'])}.")
+    lines += ['', 'Per-action MI, oracle posterior entropy, model posterior error and downstream utility are in scores.json. Game-cluster intervals and paired effects are in summary.json.',
+              'Cells may have different valid coverage. Use paired effects, not subtraction of independently aggregated cells, for inference.',
+              'Low MI alone is not a planning deficit. A utility loss is not entirely attributable to information: commitments also change physical state.',
+              'Unfiltered and oracle-screened families are reported separately. The selected anchor is excluded from confirmation. These are functional interventions, not identification of internal neural modules.']
     Path(path).write_text('\n'.join(lines)+'\n')
 
 
-def run_tasks(suite,tasks,records,client,out,workers=4):
+def run_tasks(suite,tasks,records,client,out,workers=4,response_protocol="reasoning_tools"):
     pending=[t for t in tasks if t['id'] not in records or records[t['id']]['status']=='transport_error']
     np.random.default_rng(suite.seed+1).shuffle(pending)
     def infer(task,payload):
         start=time.monotonic()
         try:
-            raw=client.complete([{'role':'system','content':SYSTEM},{'role':'user','content':json.dumps(payload)}],response_format={'type':'json_object'})
+            record=generate(client,task,payload,SYSTEM,response_protocol)
         except Exception as exc:
-            return dict(status='transport_error',error=type(exc).__name__)
-        try:
-            answer=validate_answer(task,json.loads(raw),suite.labels[task['id']])
-            return dict(status='ok',answer=answer,raw=raw,seconds=time.monotonic()-start)
-        except (KeyError,ValueError,TypeError) as exc:
-            return dict(status='invalid',raw=raw,error=str(exc),seconds=time.monotonic()-start)
+            return dict(status='transport_error',error=type(exc).__name__,seconds=time.monotonic()-start)
+        record['seconds']=time.monotonic()-start
+        if record['status']=='ok':
+            try:
+                record['answer']=validate_answer(task,record['answer'],suite.labels[task['id']])
+            except (KeyError,ValueError,TypeError) as exc:
+                record.update(status='invalid',error=str(exc))
+        return record
     with ThreadPoolExecutor(max_workers=workers) as pool:
         while pending:
             ready=[t for t in pending if not t['parent'] or t['parent'] in records][:workers]
@@ -520,19 +556,22 @@ def main(argv=None):
     parser.add_argument('--n-games',type=int,default=24);parser.add_argument('--seed',type=int,default=10000)
     parser.add_argument('--base-url');parser.add_argument('--model')
     parser.add_argument('--export-only',action='store_true');parser.add_argument('--resume',action='store_true')
+    parser.add_argument('--extended',action='store_true',help='Include secondary probes; core four-block loop is the default.')
     parser.add_argument('--workers',type=int,default=4)
-    parser.add_argument('--max-tokens',type=int,default=2048);parser.add_argument('--temperature',type=float,default=0.)
+    parser.add_argument('--response-protocol',choices=('reasoning_tools','json_action'),default='reasoning_tools')
+    parser.add_argument('--max-tokens',type=int,default=1024);parser.add_argument('--temperature',type=float,default=0.)
     args=parser.parse_args(argv)
+    if args.max_tokens<1:parser.error('--max-tokens must be positive')
     if args.workers<1:parser.error('--workers must be positive')
     if args.n_games<0:parser.error('--n-games must be nonnegative')
     out=args.output_dir;out.mkdir(parents=True,exist_ok=True)
-    suite=Suite(args.n_games,args.seed).build();manifest=suite.manifest()
-    manifest.update(model=args.model,base_url=args.base_url,max_tokens=args.max_tokens,temperature=args.temperature,workers=args.workers)
+    suite=Suite(args.n_games,args.seed,extended=args.extended).build();manifest=suite.manifest()
+    manifest.update(response_protocol=args.response_protocol,protocol_version=PROTOCOL_VERSION,system_hash=digest(system_prompt(SYSTEM,args.response_protocol)),tool_schema_hash=digest([submission_tool(t) for t in suite.tasks]),model=args.model,base_url=args.base_url,max_tokens=args.max_tokens,temperature=args.temperature,workers=args.workers)
     if (out/'manifest.json').exists():
         old=json.loads((out/'manifest.json').read_text())
         if not args.resume:parser.error('Output exists; use a new directory or --resume.')
         if old!=manifest:parser.error('Resume manifest mismatch; model, inputs and settings must match.')
-    dump(out/'manifest.json',manifest);dump(out/'tasks.json',dict(system=SYSTEM,tasks=suite.tasks))
+    dump(out/'manifest.json',manifest);dump(out/'tasks.json',dict(system=system_prompt(SYSTEM,args.response_protocol),response_protocol=args.response_protocol,tasks=suite.tasks,tools_by_task={t['id']:submission_tool(t) for t in suite.tasks} if args.response_protocol=='reasoning_tools' else {}))
     dump(out/'oracle_labels.json',suite.labels);dump(out/'certificates.json',suite.certificates)
     if args.export_only:print(json.dumps(manifest));return
     if not(args.base_url and args.model):parser.error('Supply --base-url and --model, or --export-only')
@@ -540,15 +579,21 @@ def main(argv=None):
     client=OpenAICompatibleNegotiationClient(args.base_url,args.model,api_key=os.environ.get('BENAC_P_VLLM_API_KEY','EMPTY'),max_tokens=args.max_tokens,temperature=args.temperature)
     records={}
     if (out/'answers.json').exists():records=json.loads((out/'answers.json').read_text())
-    run_tasks(suite,list(suite.tasks),records,client,out,args.workers)
+    run_tasks(suite,list(suite.tasks),records,client,out,args.workers,args.response_protocol)
     fixed_count=len(suite.tasks)
     suite.add_model_branches(records)
     dump(out/'dynamic_tasks.json',suite.tasks[fixed_count:])
+    dump(out/'dynamic_tools.json',{t['id']:submission_tool(t) for t in suite.tasks[fixed_count:]} if args.response_protocol=='reasoning_tools' else {})
     dump(out/'oracle_labels.json',suite.labels)
     dump(out/'certificates.json',suite.certificates)
-    run_tasks(suite,suite.tasks[fixed_count:],records,client,out,args.workers)
+    run_tasks(suite,suite.tasks[fixed_count:],records,client,out,args.workers,args.response_protocol)
+    telemetry=protocol_summary(records)
+    dump(out/'protocol_summary.json',telemetry)
     scored=score(suite,records);summaries=summarize(suite,scored)
     dump(out/'scores.json',scored);dump(out/'summary.json',summaries);report(suite,scored,summaries,out/'report.md')
+    with (out/'report.md').open('a') as handle:
+        handle.write(f"\nResponse protocol: {args.response_protocol}; total output cap: {args.max_tokens} tokens.\n")
+        handle.write(f"Truncated requests: {telemetry['truncated_requests']}; mean/p95 completion tokens: {telemetry['mean_completion_tokens']} / {telemetry['p95_completion_tokens']}. See protocol_summary.json for validity and reasoning coverage.\n")
     print(f'Completed diagnosis: {out}/report.md')
 
 

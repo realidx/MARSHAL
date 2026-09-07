@@ -16,6 +16,6 @@ mkdir -p "$OUTPUT_DIR"
   --n-games "${BENAC_DIAGNOSE_GAMES:-24}" \
   --seed "${BENAC_DIAGNOSE_SEED:-10000}" \
   --workers "${BENAC_DIAGNOSE_WORKERS:-4}" \
-  --max-tokens "${BENAC_DIAGNOSE_MAX_TOKENS:-2048}" \
+  --max-tokens "${BENAC_DIAGNOSE_MAX_TOKENS:-1024}" \
   "$@" | tee -a "$OUTPUT_DIR/run.log"
 printf 'Full diagnostic outputs: %s\n' "$OUTPUT_DIR"

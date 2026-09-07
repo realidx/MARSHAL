@@ -3,6 +3,7 @@ from dataclasses import replace
 import json
 import numpy as np
 import pytest
+from methods.vllm_client import VLLMChatCompletion, VLLMToolCall
 from benac_p.diagnose_suite import (
     Suite, generated_pack, action_branches, action_info, request_payload,
     score, summarize, validate_answer, run_tasks, cluster_summary, digest,
@@ -11,7 +12,7 @@ from benac_p.diagnose_suite import (
 
 @pytest.fixture(scope='module')
 def suite():
-    return Suite(n_games=2,seed=12300).build()
+    return Suite(n_games=2,seed=12300,extended=True).build()
 
 
 def oracle_records(suite):
@@ -93,12 +94,15 @@ def test_dependency_runner_and_resume_without_http(suite,tmp_path):
     chosen=[t for t in suite.tasks if t['id'] in ('anchor/root/belief','anchor/root/plan_model')]
     class Client:
         calls=0
-        def complete(self,messages,**kwargs):
+        def complete_with_tools(self,messages,**kwargs):
             self.calls+=1
             payload=json.loads(messages[1]['content'])
-            if 'probabilities' in payload['output_schema']:return '{"probabilities":[0.5,0.5]}'
-            assert payload['problem']['current_probabilities']==[.5,.5]
-            return '{"action_index":0}'
+            if 'probabilities' in payload['output_schema']:answer={'probabilities':[.5,.5]}
+            else:
+                assert payload['problem']['current_probabilities']==[.5,.5]
+                answer={'action_index':0}
+            assert kwargs['tool_choice']=='auto' and kwargs['parallel_tool_calls'] is False
+            return VLLMChatCompletion('A brief justification.',(VLLMToolCall(kwargs['tools'][0]['function']['name'],answer),),{}, {'completion_tokens':32},'tool_calls')
     client=Client();records={}
     run_tasks(suite,chosen,records,client,tmp_path,workers=2)
     assert client.calls==2 and all(r['status']=='ok' for r in records.values())
@@ -147,22 +151,59 @@ def test_complete_cli_and_resume_with_mock_service(tmp_path,monkeypatch):
     class Client:
         calls=0
         def __init__(self,*args,**kwargs):pass
-        def complete(self,messages,**kwargs):
+        def complete_with_tools(self,messages,**kwargs):
             Client.calls+=1
             request=json.loads(messages[1]['content']);p=request['problem'];schema=request['output_schema']
             if 'probabilities' in schema:
                 n=len(p.get('initial_probabilities',[1.]))
-                return json.dumps({'probabilities':[1/n]*n})
-            if 'utilities' in schema:return json.dumps({'utilities':[0]*len(p['options'])})
-            return '{"action_index":0}'
+                answer={'probabilities':[1/n]*n}
+            elif 'utilities' in schema:answer={'utilities':[0]*len(p['options'])}
+            else:answer={'action_index':0}
+            return VLLMChatCompletion('A brief justification.',(VLLMToolCall(kwargs['tools'][0]['function']['name'],answer),),{}, {'completion_tokens':40},'tool_calls')
     monkeypatch.setattr(methods.vllm_client,'OpenAICompatibleNegotiationClient',Client)
     args=['--output-dir',str(tmp_path),'--n-games','0','--model','mock-only','--base-url','http://unused.invalid','--workers','2']
     main(args)
     count=Client.calls
-    assert count>200
+    assert count>20
     assert (tmp_path/'report.md').exists()
+    telemetry=json.loads((tmp_path/'protocol_summary.json').read_text())
+    assert telemetry['mean_completion_tokens']==40 and telemetry['truncated_requests']==0
+    manifest=json.loads((tmp_path/'manifest.json').read_text())
+    assert manifest['max_tokens']==1024 and manifest['response_protocol']=='reasoning_tools'
     scores=json.loads((tmp_path/'scores.json').read_text())
     assert all(r['status']=='ok' for r in scores['results'])
     assert len(json.loads((tmp_path/'dynamic_tasks.json').read_text()))>0
     main(args+['--resume'])
     assert Client.calls==count
+    with pytest.raises(SystemExit):main(args+['--resume','--response-protocol','json_action'])
+
+
+def test_core_freezes_four_blocks_and_reports_both_tables(tmp_path):
+    from benac_p.diagnose_suite import report
+    core=Suite(n_games=0).build()
+    ids={t['id'] for t in core.tasks}
+    assert not any(any(x in tid for x in ('/high/','/low/','/single/','/plan_prior','/plan_history','/bayes_arithmetic','stop_after_response')) for tid in ids)
+    assert all(set(c['arms'])=={'optimal'} for c in core.certificates)
+    for cert in core.certificates:
+        pair=cert['evidence_opportunity']
+        assert pair['MI_1']>=pair['MI_2']-1e-10
+    records=oracle_records(core)
+    count=len(core.tasks);core.add_model_branches(records)
+    assert all(t['kind']=='belief' for t in core.tasks[count:])
+    records=oracle_records(core)
+    scored=score(core,records);summary=summarize(core,scored)
+    assert 'forced_menu_brier_reduction' not in summary['calibration']
+    for r in scored['active']:
+        assert r['root_action_regret']==pytest.approx(0)
+        assert r['arms']['model']['oracle_posterior_entropy']==pytest.approx(r['arms']['optimal']['oracle_posterior_entropy'])
+        assert r['chooser_updater_utility']['OO']==pytest.approx(r['chooser_updater_utility']['LO'])
+    report(core,scored,summary,tmp_path/'report.md')
+    text=(tmp_path/'report.md').read_text()
+    assert '| Belief | Reference planner | Model planner |' in text
+    assert '| Current chooser | Reference updater | Model updater |' in text
+    # A missing model updater must not erase oracle channel/utility measurements.
+    dynamic=core.tasks[count]['id'];records[dynamic]={'status':'invalid'}
+    active=score(core,records)['active'][0]
+    assert 'LO' in active['chooser_updater_utility']
+    assert 'LL' not in active['chooser_updater_utility']
+    assert 'oracle_posterior_entropy' in active['arms']['model']

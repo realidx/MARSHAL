@@ -37,6 +37,7 @@ class VLLMChatCompletion:
     tool_calls: tuple[VLLMToolCall, ...]
     raw_message: Mapping[str, Any]
     usage: Mapping[str, Any]
+    finish_reason: str | None = None
 
 
 class VLLMNegotiationClient:
@@ -286,6 +287,13 @@ class OpenAICompatibleNegotiationClient:
         )
         return completion.content
 
+    def complete_response(
+        self, messages: Sequence[Mapping[str, str]], *,
+        response_format: Mapping[str, Any] | None = None, model: str | None = None,
+    ) -> VLLMChatCompletion:
+        """Text completion retaining usage and stop reason for evaluations."""
+        return self._request(messages, response_format=response_format, model=model)
+
     def complete_with_tools(
         self,
         messages: Sequence[Mapping[str, str]],
@@ -392,6 +400,7 @@ class OpenAICompatibleNegotiationClient:
             tool_calls=tool_calls,
             raw_message=dict(message),
             usage=dict(usage) if isinstance(usage, Mapping) else {},
+            finish_reason=choices[0].get("finish_reason"),
         )
 
     @staticmethod

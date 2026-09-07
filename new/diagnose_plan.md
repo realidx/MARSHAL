@@ -294,3 +294,35 @@ action regret、oracle-planner-with-model-belief regret、配对 posterior injec
 将显式接口因果效应等同于内部神经模块分解。
 
 完整诊断验证：75 个相关测试通过；包含显式接口无标签泄露、oracle 四格归零、可加性 belief 因果效应、独立 screening 与正式 planner 一致、mock HTTP 全流程与零追加请求续跑。默认 24-game export 已完整通过；12 个筛选实例来自 44 次 candidate 检查，最小 root-action regret 0.06692、最小 update gain 0.13136。无真实 LLM 结果被预填。
+
+## 12. 冻结结构与 core 收缩（替代 §11 的默认任务范围）
+
+理论结构冻结为 B_t→P_t→interaction/evidence→B_(t+1)；两个 primitive，四块
+实验：B alone、P given B*、B→P、P→B。默认 `interaction-loop-v2 / core` 保留两张
+四格表。第一张 R：belief × planner regret；第二张 J：current chooser × updater
+terminal utility，downstream planner 固定为 reference。
+
+P→B 收缩为三步：两个 action 的证据通道 CPU 证书；按最终 utility 评价模型首步；
+do(model action)/do(reference action) 后枚举响应，读 posterior uncertainty、model
+posterior error 与下游 utility。MI 不是 action objective，低 MI 不直接等于缺陷；
+utility loss 也不能全部归因于信息。主张停留在 functional dependency。
+
+默认 24 个主 game + 3 个校准/负对照，333 静态调用 + 最多 81 动态调用。
+prior/history/arithmetic、LLM high/low/single menu、future-stop、额外 horizon 和
+辅助交互量等移至 `--extended`。模型行动的动态分支在 core 只调用 updater。
+运行命令不变：`bash examples/benac_p/run_full_diagnose.sh`。
+完整当前协议以 `new/full_diagnose_protocol.md` 为准，v1 的任务数是历史记录。
+
+## 13. 默认输出协议：简短推理 + native auto tool
+
+完整诊断默认 `reasoning_tools / brief-reasoning-tools-v1`：普通文本先给最多三句
+短推理（目标小于 100 words），然后一次 SUBMIT_BELIEF / SUBMIT_ACTION /
+SUBMIT_UTILITIES tool call。总 max_tokens=1024，包含文本与工具输出。长度提示是软
+约束，不通过换行 stop 截断。四块实验同协议、同预算，工具参数保持原 belief/action
+格式；模型推理文本不注入下一阶段 planner。
+
+保存 reasoning、raw tool/message、usage、finish_reason；protocol_summary 汇总
+长度 mean/P95、推理覆盖与截断。length stop 单列 truncated，不作为策略失败评分。
+无工具/错误工具为 invalid；合法无推理调用正常评分并单独记录。无自动额外重试预算。
+纯 JSON 对照通过 `--response-protocol json_action`；manifest 禁止混合协议/预算续跑。
+全量 export 已验证：333 静态任务与原 task hash 保持一致，最多 81 动态任务。

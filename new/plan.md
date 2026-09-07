@@ -846,3 +846,18 @@ factorial、无信息/已知类型/单 offer/horizon/grounding 对照，以及 d
 confirmation。默认 24 个主 game，分未筛选层与预认证 task-relevant 层，分层报告。
 支持并发、断点续跑、自动评分与报告。阶段退出依据是真实模型的能力缺口与干预
 效应，不以继续建设通用 benchmark 作为第一轮训练的前置条件。
+
+### 13.6 冻结 interaction loop 与默认 core
+
+默认诊断收缩为 B alone / P given B* / B→P / P→B，两张四格表保留。P→B 只验证
+functional dependency；reference 始终优化 observe-update-replan 后的 terminal
+utility，MI 仅描述证据通道。默认 333 个静态任务，最多追加 81 个 updater 任务；
+辅助探针移至 `--extended`。命令仍为 `bash examples/benac_p/run_full_diagnose.sh`。
+本节替代 §13.5 的默认任务范围，协议见 `new/full_diagnose_protocol.md`。
+
+### 13.7 简短推理与 auto tool 输出
+
+完整诊断改为普通文本短推理（最多三句、目标 100 words 以下）后一次 native auto
+submission tool call，所有条件默认总输出预算 1024 tokens。工具参数与诊断任务不变。
+记录 usage、finish_reason、reasoning coverage；截断/协议失败不当作能力 regret。
+`--response-protocol json_action` 为独立目录中的纯 action 对照。详见诊断协议 §9。
