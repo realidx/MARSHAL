@@ -1,0 +1,143 @@
+{
+  "profiles": {
+    "open": {
+      "complete": true,
+      "requests": 72,
+      "valid_rate": 0.8333333333333334,
+      "truncation_rate": 0.16666666666666666,
+      "belief_valid_and_exact_rate": 0.25,
+      "planning_valid_and_optimal_rate": 0.375,
+      "planning_regret_on_valid": 1.9083333333333332,
+      "protocol": {
+        "status_counts": {
+          "ok": 60,
+          "truncated": 12
+        },
+        "finish_reason_counts": {
+          "tool_calls": 60,
+          "length": 12
+        },
+        "completed_requests": 72,
+        "token_usage_observations": 72,
+        "mean_completion_tokens": 463.0,
+        "p95_completion_tokens": 1024.0,
+        "truncated_requests": 12,
+        "reasoning_requests": 72,
+        "reasoning_present_requests": 72,
+        "mean_reasoning_words": 339.4166666666667,
+        "p95_reasoning_words": 794.0500000000001,
+        "reasoning_profiles": {
+          "open": 72
+        },
+        "note": "Word counts are whitespace-based, not token counts. Profile word targets are soft, not validity gates; max_tokens caps reasoning plus tool output. No-reasoning valid calls remain scored."
+      }
+    },
+    "compact": {
+      "complete": true,
+      "requests": 72,
+      "valid_rate": 0.9861111111111112,
+      "truncation_rate": 0.013888888888888888,
+      "belief_valid_and_exact_rate": 0.16666666666666666,
+      "planning_valid_and_optimal_rate": 0.4375,
+      "planning_regret_on_valid": 1.2127659574468086,
+      "protocol": {
+        "status_counts": {
+          "ok": 71,
+          "truncated": 1
+        },
+        "finish_reason_counts": {
+          "tool_calls": 71,
+          "length": 1
+        },
+        "completed_requests": 72,
+        "token_usage_observations": 72,
+        "mean_completion_tokens": 139.95833333333334,
+        "p95_completion_tokens": 180.70000000000002,
+        "truncated_requests": 1,
+        "reasoning_requests": 72,
+        "reasoning_present_requests": 72,
+        "mean_reasoning_words": 87.375,
+        "p95_reasoning_words": 118.45,
+        "reasoning_profiles": {
+          "compact": 72
+        },
+        "note": "Word counts are whitespace-based, not token counts. Profile word targets are soft, not validity gates; max_tokens caps reasoning plus tool output. No-reasoning valid calls remain scored."
+      },
+      "paired_vs_open": {
+        "success_delta": {
+          "n_games": 6,
+          "mean": -0.004662004662004661,
+          "ci95": [
+            -0.10227272727272728,
+            0.08814102564102565
+          ],
+          "excluded_incomplete_games": 0
+        },
+        "token_delta": {
+          "n_games": 6,
+          "mean": -325.03280400155404,
+          "ci95": [
+            -374.83199786324786,
+            -275.09280303030306
+          ],
+          "excluded_incomplete_games": 0
+        }
+      }
+    },
+    "balanced": {
+      "complete": true,
+      "requests": 72,
+      "valid_rate": 0.9444444444444444,
+      "truncation_rate": 0.05555555555555555,
+      "belief_valid_and_exact_rate": 0.3333333333333333,
+      "planning_valid_and_optimal_rate": 0.5,
+      "planning_regret_on_valid": 1.0303030303030303,
+      "protocol": {
+        "status_counts": {
+          "ok": 68,
+          "truncated": 4
+        },
+        "finish_reason_counts": {
+          "tool_calls": 68,
+          "length": 4
+        },
+        "completed_requests": 72,
+        "token_usage_observations": 72,
+        "mean_completion_tokens": 231.01388888888889,
+        "p95_completion_tokens": 878.8000000000008,
+        "truncated_requests": 4,
+        "reasoning_requests": 72,
+        "reasoning_present_requests": 50,
+        "mean_reasoning_words": 158.25,
+        "p95_reasoning_words": 649.5500000000006,
+        "reasoning_profiles": {
+          "balanced": 72
+        },
+        "note": "Word counts are whitespace-based, not token counts. Profile word targets are soft, not validity gates; max_tokens caps reasoning plus tool output. No-reasoning valid calls remain scored."
+      },
+      "paired_vs_open": {
+        "success_delta": {
+          "n_games": 6,
+          "mean": 0.1032925407925408,
+          "ci95": [
+            0.03598484848484849,
+            0.17613636363636365
+          ],
+          "excluded_incomplete_games": 0
+        },
+        "token_delta": {
+          "n_games": 6,
+          "mean": -235.97193084693086,
+          "ci95": [
+            -282.5241416569542,
+            -194.60416666666666
+          ],
+          "excluded_incomplete_games": 0
+        }
+      }
+    }
+  },
+  "recommended_profile": null,
+  "selection_rule": "Development heuristic: >=98% valid and within 5 percentage points of best observed B and P valid-and-correct rates; among eligible profiles choose lowest mean completion tokens. Not a noninferiority proof.",
+  "interpretation": "Invalid/truncated answers count as uncompleted successes, never as fabricated strategic actions. Regret on valid answers has different coverage across profiles. Planning is scored under its frozen supplied judgment. Only discovery inputs are used."
+}
