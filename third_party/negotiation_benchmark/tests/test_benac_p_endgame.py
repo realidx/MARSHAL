@@ -191,3 +191,33 @@ def test_next_ego_response_is_measured_not_automatically_folded():
         assert f.history_text(b.node)[-1]['action'].startswith('OFFER')
     suite=Suite([f]).build()
     assert any(t['kind']=='planning' and t['input']['pending_offer'] for t in suite.tasks)
+
+
+def test_role_ownership_and_preflight_share_formal_b_prompt():
+    from copy import deepcopy
+    from benac_p.endgame_diagnose import Fixture, Suite, preflight_tasks
+    # Regression for the observed P1-ego / P0-target mix-up: ego wants G0,
+    # while the three checks explicitly settle the partner's G0 differently.
+    raw=dict(id='role-context',ego=1,game=replace(spec(),round_robin=(1,0,2)).to_dict(include_private=False),
+             own_preferences=[1,0],query=dict(player=0,goal=0),history=[],
+             type_catalogues={'0':[[1,0],[0,0],[-1,0]],'1':[[1,0]],'2':[[0,0]]})
+    f=Fixture(raw);suite=Suite([f]).build()
+    formal=next(t for t in suite.tasks if t['kind']=='semantic_belief')
+    tasks=preflight_tasks(suite)
+    assert [t['input']['initially_possible_preferences'] for t in tasks]==[
+        ['want'],['neutral'],['avoid'],['want','neutral','avoid']]
+    for task in tasks:
+        p=task['input']
+        assert p['role_context']==dict(you_control='P1',partner_under_assessment='P0',assessed_goals=['G0'])
+        assert p['query']==dict(player='P0',goals=['G0'])
+        assert p['game']['ego_preferences']==dict(player='P1',by_goal={'G0':'want','G1':'neutral'})
+        assert 'own_preferences' not in p['game']
+        assert [r['G0'] for r in p['game']['type_catalogues']['P0']]==['want','neutral','avoid']
+        assert p['history']==[]
+        a,b=deepcopy(p),deepcopy(formal['input'])
+        for key in ('history','initially_possible_preferences'):a.pop(key);b.pop(key)
+        assert a==b
+    for t in suite.tasks:
+        if t['kind']=='planning':
+            assert t['input']['partner_judgment']['player']=='P0'
+            assert t['input']['role_context']==formal['input']['role_context']

@@ -15,6 +15,18 @@ for selection gates, oracle assumptions, outputs and a CPU validation command.
 The default candidate budget may need expansion; incomplete selection stops
 before model calls. No new native real-model results have been established yet.
 
+
+To rerun the already selected 36 positions with the role-context prompt:
+
+```bash
+BENAC_DIAGNOSE_OUTPUT_DIR=runs/benac_native_endgame/full-history-role-context \
+  bash examples/benac_p/run_full_diagnose.sh \
+  --fixtures runs/benac_native_endgame/full-history/fixtures.json
+```
+
+This reuses the saved games and histories, with fresh model requests and no
+candidate mining. The four semantic preflight checks remain enabled.
+
 ---
 
 # Archived semantic protocol (modified game)

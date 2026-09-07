@@ -138,7 +138,7 @@ well defined. This is recorded in the report and measurement coverage.
 
 ## Version and validation
 
-The suite version is `native-endgame-diagnose-v4-history`. Use a fresh output
+The suite version is `native-endgame-diagnose-v5-role-context`. Use a fresh output
 directory and newly selected fixtures: old partner-policy histories and answers
 must not be resumed under the new policy. The validation fixture is an engineering
 check, not a research-sized sample or a real-model result.
@@ -147,3 +147,28 @@ The reselected six-position history-aware validation pack passes the one-game
 per-condition/per-split gate. Its 49/49 synthetic tasks are valid, all R regrets
 are zero, and all six J tables agree across synthetic oracle/model substitutes.
 This does not establish model performance or fill the default six-game quota.
+
+## Role-context prompt correction
+
+The model sees an explicit `role_context` identifying the ego, assessed partner
+and assessed goals. `ego_preferences` names its owner; player and goal references
+use P/G labels consistently. Goal formulas describe achievement conditions,
+whereas preference labels describe a particular player's utility. B starts from
+the named partner's initial possibility set; empty history preserves that set.
+Preflight and formal B use the same wording. Exported `belief_preflight_tasks.json`
+and `prompt_protocol.json` preserve the actual inputs and system instructions.
+Semantic errors still stop preflight and are retained without retries.
+
+The existing 36 selected positions can be reused: the prompt correction changes
+neither the oracle policy nor labels. Use a fresh output directory:
+
+```bash
+BENAC_DIAGNOSE_OUTPUT_DIR=runs/benac_native_endgame/full-history-role-context \
+  bash examples/benac_p/run_full_diagnose.sh \
+  --fixtures runs/benac_native_endgame/full-history/fixtures.json
+```
+
+This bypasses candidate mining, then rechecks the saved positions, runs the four
+preflight requests and, if they pass, starts the full diagnosis. Do not use
+`--resume` with the old prompt's output directory. Prompt clarity has local
+regression coverage; real-model improvement still requires the remote run.

@@ -23,9 +23,9 @@ from benac_p.runner import _normalise_proposal
 from benac_p.diagnose_suite import dump, digest, cluster_summary
 from benac_p.diagnose_protocol import generate, protocol_summary, submission_tool, system_prompt, PROTOCOL_VERSION, REASONING_PROFILE_VERSION
 
-VERSION = 'native-endgame-diagnose-v4-history'
+VERSION = 'native-endgame-diagnose-v5-role-context'
 PREFERENCES = ('want','neutral','avoid')
-SYSTEM = '''You control the stated ego player in a BENAC-P endgame. Use only the public rules, your preferences and supplied information. Offers and accepted menu options bind the proposed commitments immediately and irreversibly. Every player retains its original proposal turns and may actively propose. Briefly reason about the requested partner judgment or native action, then submit the requested tool call. Do not output probabilities, utility numbers, Q values or a plan variable. All remaining legal actions are listed. The reference partner specification describes its information and optimization objective; do not assume it sees others' hidden preferences.'''
+SYSTEM = '''You control the stated ego player in a BENAC-P endgame. Use only the public rules, your preferences and supplied information. Each player's preferences belong to that named player. A goal formula specifies when a goal is achieved; it does not specify who wants it. For partner judgment, start from initially_possible_preferences for the named partner and update using the public history. With empty history, retain that initial set unchanged. Population catalogue rows list candidate types, not additional observations. Offers and accepted menu options bind the proposed commitments immediately and irreversibly. Every player retains its original proposal turns and may actively propose. Briefly reason about the requested partner judgment or native action, then submit the requested tool call. Do not output probabilities, utility numbers, Q values or a plan variable. All remaining legal actions are listed. The reference partner specification describes its information and optimization objective; do not assume it sees others' hidden preferences.'''
 
 
 def decode_action(raw):
@@ -127,13 +127,19 @@ class Fixture:
             current=self.search._apply(current,action)
         return text
 
+    def role_context(self):
+        return dict(you_control=f'P{self.ego}',partner_under_assessment=f'P{self.target_player}',
+                    assessed_goals=[f'G{g}' for g in self.target_goals])
+
     def public(self):
         return dict(n_players=self.spec.n_players,goals={f'G{g.goal_id}':' AND '.join(f'P{a.player_id}.A{a.action_id}' for a in g.required_actions) for g in self.spec.goals},
             n_actions_per_player=list(self.spec.n_actions_per_player),max_changes=self.spec.max_changes,
             forbidden_actions=None if self.spec.forbidden_actions is None else self.spec.forbidden_actions.tolist(),
-            round_robin=list(self.spec.round_robin),ego=self.ego,own_preferences={f'G{i}':{1:'want',0:'neutral',-1:'avoid'}[v] for i,v in enumerate(self.own)},
+            round_robin=list(self.spec.round_robin),ego=f'P{self.ego}',
+            ego_preferences=dict(player=f'P{self.ego}',by_goal={f'G{i}':{1:'want',0:'neutral',-1:'avoid'}[v] for i,v in enumerate(self.own)}),
             preference_labels={'1':'want','0':'neutral','-1':'avoid'},semantic_profile_options=self.belief_options,
             type_catalogues={f'P{p}':[{f'G{i}':{1:'want',0:'neutral',-1:'avoid'}[v] for i,v in enumerate(r)} for r in rows] for p,rows in self.types.items()},
+            catalogue_scope='Each Pk entry belongs only to player Pk. Rows are population candidates before applying the supplied initial possibilities and public history.',
             partner=self.partner.specification(),
             rules='Goals are satisfied exactly when all their listed commitments are bound. Terminal utility adds own want goals and subtracts own avoid goals. Pass consumes a proposal turn. An offer changes only proposer/recipient commitments on acceptance; a menu binds exactly its selected option. Rejection binds nothing. No stage-specific action restrictions exist.')
 
@@ -150,10 +156,11 @@ class Suite:
         label=dict(fixture=f.id,bundle=f.bundle,split=f.split,case=cid,support=f.support(node),q=[v for _,v in q],
                    optimal_indices=[] if not q else [i for i,(_,v) in enumerate(q) if max(x[1] for x in q)-v<1e-9])
         self.cases[cid]=dict(f=f,node=node,q=q)
-        belief=dict(game=f.public(),initially_possible_preferences=f.initial_support,
-            history=f.history_text(node),
-            query=dict(player=f.target_player,goals=list(f.target_goals)),
-            question='Which listed semantic preference profiles remain possible for the queried partner and goal(s)? Use the supplied initial possibilities and public evidence. The population catalogue does not restore already excluded types. Include every supported possibility and no unsupported possibility.')
+        belief=dict(role_context=f.role_context(),
+            query=dict(player=f'P{f.target_player}',goals=[f'G{g}' for g in f.target_goals]),
+            initially_possible_preferences=list(f.initial_support),history=f.history_text(node),
+            game=f.public(),
+            question="Report the named partner's possible preferences for the assessed goals. initially_possible_preferences is the complete set before this history; with empty history return that set unchanged. Otherwise update it using the public actions. A player's preference for an achieved goal can be want, neutral or avoid. The ego preference table belongs only to the ego player. Include every supported possibility and no unsupported possibility.")
         # Root B uses the already conditioned episode information. Post B adds
         # every observed partner proposal/response, not only a selected response.
         self.tasks.append(dict(id=cid+'/belief',kind='semantic_belief',input=belief,parent=None,belief_options=f.belief_options))
@@ -162,10 +169,10 @@ class Suite:
             public_state=dict(turn=node.state.turn_index,current_proposer=node.state.current_proposer(),
                               commitments={f'P{p}':[f'A{i}' for i,v in enumerate(row) if v] for p,row in enumerate(node.state.snapshot_commitments())},
                               remaining_proposers=list(f.spec.round_robin[node.state.turn_index:]))
-            planning=dict(game=f.public(),state=public_state,
+            planning=dict(role_context=f.role_context(),game=f.public(),state=public_state,
                 history=f.history_text(node),initially_possible_preferences=f.initial_support,
                 pending_offer=None if node.pending is None else render_action(node,OfferProposal(node.pending)),
-                partner_judgment=dict(player=f.target_player,goals=list(f.target_goals),possible_preferences=f.support(node)),
+                partner_judgment=dict(player=f'P{f.target_player}',goals=[f'G{g}' for g in f.target_goals],possible_preferences=f.support(node)),
                 legal_actions=[dict(action_index=i,action=render_action(node,a)) for i,(a,_) in enumerate(q)],
                 instruction='Select the action with best expected terminal outcome using the public history, current state and supplied partner judgment. Consider partner responses, future proposal turns and evidence. The supplied judgment is an assessment of the partner; the public history remains available for your planning.')
             for suffix,parent in [('plan_oracle',None),('plan_model',cid+'/belief')]:
@@ -381,14 +388,24 @@ def run_tasks(suite,records,out,args,client):
             if failure:raise RuntimeError('Transport failure saved. Resume after fixing service.')
 
 
-def preflight(suite,client,out,args):
+def preflight_tasks(suite):
+    """Use the formal B interface; change only the initial set and empty history."""
     base=deepcopy(next(t for t in suite.tasks if t['kind']=='semantic_belief'))
-    path=out/'belief_preflight_answers.json'
-    records=json.loads(path.read_text()) if path.exists() else {};checks=[]
-    options=base['belief_options']
+    options=base['belief_options'];tasks=[]
     for name,support in [(f'known_{i}',[v]) for i,v in enumerate(options[:3])]+[('unresolved',options)]:
         task=deepcopy(base);task['id']='preflight/'+name
-        task['input'].update(initially_possible_preferences=support,history=[])
+        task['input'].update(initially_possible_preferences=list(support),history=[])
+        tasks.append(task)
+    return tasks
+
+
+def preflight(suite,client,out,args):
+    tasks=preflight_tasks(suite)
+    dump(out/'belief_preflight_tasks.json',tasks)
+    path=out/'belief_preflight_answers.json'
+    records=json.loads(path.read_text()) if path.exists() else {};checks=[]
+    for task in tasks:
+        support=task['input']['initially_possible_preferences']
         h=digest(task['input']);r=records.get(task['id'])
         if r and r.get('payload_hash')!=h:raise ValueError('Preflight input changed.')
         if not r or r['status']=='transport_error':
@@ -517,6 +534,8 @@ def main(argv=None):
     dump(out/'manifest.json',manifest);dump(out/'fixtures.json',raw)
     dump(out/'certificates.json',suite.certificates);dump(out/'tasks.json',suite.tasks);dump(out/'oracle_labels.json',suite.labels)
     dump(out/'readiness.json',selection_readiness(suite,args.min_games_per_condition))
+    dump(out/'prompt_protocol.json',dict(version=VERSION,system=system_prompt(SYSTEM,'reasoning_tools','balanced')))
+    if args.belief_preflight:dump(out/'belief_preflight_tasks.json',preflight_tasks(suite))
     if args.export_only:return
     if not args.oracle_check:
         readiness=selection_readiness(suite,args.min_games_per_condition)

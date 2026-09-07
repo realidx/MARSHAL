@@ -954,3 +954,15 @@ proposal turns remaining by default for tractable exact search. Preserve native
 turns/actions and all four diagnostic blocks. Counterfactual reference scores
 undefined under contradictory type/history combinations are marked unavailable;
 direct paired model scores remain valid. See native_endgame_diagnose.md.
+
+
+### 13.14 Clarify role ownership after the first history-aware preflight
+
+The 36-position dataset passed readiness, but the four real-model preflight
+requests scored 2/4 with valid reasoning/tool calls and no truncation. Wrong
+answers attributed P1's ego preference to the queried P0. Prompt v5 explicitly
+names the ego, assessed partner, preference owner and goal references, and
+separates goal achievement from player preference. Preflight shares the formal
+B prompt and exports exact inputs. Reuse the 36 fixtures in a fresh run; keep
+oracle policy, labels, paired histories, scoring and reasoning budgets unchanged.
+Local prompt tests do not establish that the model now passes preflight.
