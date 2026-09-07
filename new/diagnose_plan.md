@@ -1,5 +1,7 @@
 # Diagnose 阶段：参考 TERMS-Bench，服务于能力后训练与迁移
 
+**当前执行版本：** [语义诊断协议](semantic_diagnose_protocol.md) 已实现。`run_full_diagnose.sh` 使用确定性的、信息受限的 rational partner，模型只输出语义判断与行动。下文的 SoftProgress / posterior 实验保留为历史记录，入口为 `run_stochastic_diagnose.sh`。
+
 更新：2026-09-06。状态：grounding、controlled partner、条件先验、小规模 exact
 Bayesian filter 与短 horizon belief-conditioned planner 已实现并完成本地测试；
 已验证人工构造的 belief-sensitive 和第三方依赖实例，尚未运行 LLM 诊断。
@@ -311,12 +313,12 @@ utility loss 也不能全部归因于信息。主张停留在 functional depende
 prior/history/arithmetic、LLM high/low/single menu、future-stop、额外 horizon 和
 辅助交互量等移至 `--extended`。模型行动的动态分支在 core 只调用 updater。
 运行命令不变：`bash examples/benac_p/run_full_diagnose.sh`。
-完整当前协议以 `new/full_diagnose_protocol.md` 为准，v1 的任务数是历史记录。
+旧版协议以 `new/full_diagnose_protocol.md` 为准，v1 的任务数是历史记录。
 
 ## 13. 默认输出协议：简短推理 + native auto tool
 
-完整诊断默认 `reasoning_tools / brief-reasoning-tools-v1`：普通文本先给最多三句
-短推理（目标小于 100 words），然后一次 SUBMIT_BELIEF / SUBMIT_ACTION /
+完整诊断默认 `reasoning_tools / brief-reasoning-tools-v2`：普通文本以 `Briefly reason about the task before submitting your answer.`
+引导简短推理，不规定句数或词数，然后一次 SUBMIT_BELIEF / SUBMIT_ACTION /
 SUBMIT_UTILITIES tool call。总 max_tokens=1024，包含文本与工具输出。长度提示是软
 约束，不通过换行 stop 截断。四块实验同协议、同预算，工具参数保持原 belief/action
 格式；模型推理文本不注入下一阶段 planner。

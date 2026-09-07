@@ -1,0 +1,102 @@
+{
+  "system": "You control P0 in a three-player BENAC negotiation. Follow the public stage protocol and the stated deterministic rational partner rules. Commitments are binding. Partners have their own persistent preferences. Infer only what the evidence supports: retain every still-possible preference and exclude those ruled out. A remaining uncertainty can be a correct answer. Use the stated joint configurations to understand the implications for P2. For a supplied-judgment planning task, treat that judgment as your current information; do not invent additional evidence. Choose the action with the best terminal outcome under the publicly stated equal-frequency configurations. You are not asked to output probabilities, utility numbers, Q values, rankings or a plan variable.\nBriefly reason about the task before submitting your answer. Do not restate the problem. Then submit your answer with exactly one of the supplied tool calls. Do not write anything after the tool call. Keep the reasoning in ordinary text, not in tool arguments.",
+  "input": {
+    "game": {
+      "players": [
+        "P0 (you)",
+        "P1 (assessment and permit partner)",
+        "P2 (approval partner)"
+      ],
+      "protocol": [
+        "Stage 1: choose one listed preliminary proposal to P1, or skip. Accepted assessment creates 2 AVOID administrative burdens for you. Accepted preparation completes 2 extra WANT goals. Rejection binds nothing.",
+        "Stage 2: offer P1 exactly one listed route proposal or route menu. A route already bound by a preliminary menu cannot be changed: only its permit proposal remains available. Otherwise the accepted choice irreversibly binds a route and the common permit. If P1 rejects the permit, the project ends without milestones.",
+        "Stage 3: automatically request P2 approval of the already bound route. Routing cannot be amended at this stage. P2 accepts or rejects, then the game ends."
+      ],
+      "outcome": "Approval with the route permit completes 6 equally weighted WANT project milestones for you, each requiring commitments from all three players. Preparation adds 2 WANT goals. Each accepted assessment adds 2 AVOID burdens. Other goals are NEUTRAL to you. WANT contributes positively, AVOID negatively, with equal per-goal magnitude.",
+      "partner_rules": "Partners maximize their own terminal utility, not yours. P1 always wants preparation and the common route permit; P1 is neutral to project milestones and P2 approvals. P2 is neutral to all goals except its route approvals. Rejection is preferred to an equally valuable agreement; among equally valuable accepted menu options, the earlier option is selected. Partners never act randomly.",
+      "preference_configurations": [
+        {
+          "first_assessment": "want",
+          "second_assessment": "avoid",
+          "P2": "wants approval of Quartz and avoids approval of either other route"
+        },
+        {
+          "first_assessment": "neutral",
+          "second_assessment": "neutral",
+          "P2": "wants approval of Meadow and avoids approval of either other route"
+        },
+        {
+          "first_assessment": "avoid",
+          "second_assessment": "want",
+          "P2": "wants approval of Willow and avoids approval of either other route"
+        }
+      ],
+      "population": "The three configurations occur equally often before evidence. After observing deterministic responses, each configuration still consistent with the evidence remains equally represented. Your own proposals are not evidence.",
+      "offered_actions": "Only the listed proposals at each stage are available in this controlled protocol. All are ordinary legal BENAC proposals; each chosen menu option immediately binds its commitments."
+    },
+    "stage": 1,
+    "state": "No preliminary commitment has been made. Choose the stage-1 interaction.",
+    "legal_actions": [
+      {
+        "action_index": 0,
+        "proposal": "Offer joint preparation: complete the extra preparation goal."
+      },
+      {
+        "action_index": 1,
+        "proposal": "Offer the second assessment alone."
+      },
+      {
+        "action_index": 2,
+        "proposal": "Offer a menu: preparation OR preparation with an inconsequential note."
+      },
+      {
+        "action_index": 3,
+        "proposal": "Offer the first assessment alone."
+      },
+      {
+        "action_index": 4,
+        "proposal": "Offer a binding menu: first assessment AND lock Willow route; OR second assessment AND lock Quartz route. The selected route cannot later be changed."
+      },
+      {
+        "action_index": 5,
+        "proposal": "Offer a menu: first assessment OR second assessment."
+      },
+      {
+        "action_index": 6,
+        "proposal": "Skip the preliminary interaction."
+      }
+    ],
+    "partner_judgment": {
+      "partner": "P1",
+      "goal": "first assessment",
+      "possible_preferences": [
+        "want",
+        "neutral",
+        "avoid"
+      ]
+    },
+    "instruction": "Use the supplied partner judgment to select the best listed interaction action, considering partner responses, future evidence when relevant, and the final outcome."
+  },
+  "tool": {
+    "type": "function",
+    "function": {
+      "name": "SUBMIT_ACTION",
+      "description": "Submit the final answer to this diagnostic question.",
+      "strict": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action_index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6
+          }
+        },
+        "required": [
+          "action_index"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

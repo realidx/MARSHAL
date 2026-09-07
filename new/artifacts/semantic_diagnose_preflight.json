@@ -1,0 +1,35 @@
+{
+  "status": "passed",
+  "mode": "synthetic oracle self-check; NOT real LLM results",
+  "manifest": {
+    "version": "semantic-interaction-loop-v1",
+    "game_version": "semantic-rational-game-v1",
+    "protocol_version": "brief-reasoning-tools-v2",
+    "response_protocol": "reasoning_tools",
+    "bundles": 12,
+    "games": 36,
+    "seed": 20000,
+    "static_tasks": 288,
+    "max_additional_tasks": 504,
+    "task_hash": "c3af4bbc6b6f438f8b3d9bd223ef600612d6180153b7c75b1ba5491619731e9c",
+    "system_hash": "623b8f48e9f81408a736469c25ae2fe7e42e94fc8ddf9545ad363ca025452fc0",
+    "tool_hash": "cd7a44c07dc99070180ce8f86944d9a4c25220c2bba6c1e038b1b3acf326d0ee",
+    "max_tokens": 1024,
+    "temperature": 0.0,
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "base_url": "http://localhost:8000/v1",
+    "oracle_check": true
+  },
+  "answered_tasks": 288,
+  "complete_hidden_configuration_rollouts": 84,
+  "all_semantic_judgments_exact": true,
+  "all_reference_action_regrets_zero": true,
+  "all_response_rationality_certificates_passed": true,
+  "native_tools": [
+    "SUBMIT_ACTION",
+    "SUBMIT_JUDGMENT"
+  ],
+  "semantic_and_protocol_tests": "21 passed; includes dynamic native mock, exact rationality, irreversible menu, causal repair, incomplete coverage, and resume",
+  "prior_full_regression": "96 passed before the additional irreversible-menu case; final semantic/protocol subset rerun passed",
+  "model_execution": "Run examples/benac_p/run_full_diagnose.sh on the remote vLLM service"
+}

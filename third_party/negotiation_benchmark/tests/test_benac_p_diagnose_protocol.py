@@ -17,7 +17,8 @@ class Client:
         assert kwargs['tool_choice']=='auto' and kwargs['parallel_tool_calls'] is False
         assert 'response_format' not in kwargs
         assert 'Return only the requested JSON' not in messages[0]['content']
-        assert 'three short sentences' in messages[0]['content'] and '100 words' in messages[0]['content']
+        assert 'Briefly reason about the task' in messages[0]['content']
+        assert 'three short sentences' not in messages[0]['content'] and '100 words' not in messages[0]['content']
         return self.completion
     def complete_response(self,messages,**kwargs):
         assert kwargs['response_format']=={'type':'json_object'}
@@ -59,7 +60,9 @@ def test_reasoning_soft_length_and_coverage():
     long=generate(Client(completion(content='word '*110)),task(),{},SYSTEM)
     assert empty['status']==long['status']=='ok' and not empty['reasoning_present']
     summary=protocol_summary({'a':empty,'b':long})
-    assert summary['reasoning_present_requests']==1 and summary['reasoning_over_100_words']==1
+    assert summary['reasoning_present_requests']==1
+    assert summary['mean_reasoning_words']==55
+    assert summary['p95_reasoning_words']==pytest.approx(104.5)
     assert summary['mean_completion_tokens']==summary['p95_completion_tokens']==45
 
 

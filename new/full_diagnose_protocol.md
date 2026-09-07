@@ -1,6 +1,8 @@
 # BENAC-P 冻结诊断协议：两个 primitive、四块实验、两张四格表
 
-版本：interaction-loop-v2；输出协议 brief-reasoning-tools-v1。默认执行 core；辅助探针通过 `--extended` 开启。
+**范围说明：** 本文为旧 stochastic / probability-output pilot 的历史协议。当前完整实验已切换到 [语义诊断协议](semantic_diagnose_protocol.md)，使用 `run_full_diagnose.sh`。以下旧版命令已统一改为 `run_stochastic_diagnose.sh`，不得混合两版输出。
+
+版本：interaction-loop-v2；输出协议 brief-reasoning-tools-v2。默认执行 core；辅助探针通过 `--extended` 开启。
 主线保持 Diagnose → Post-train → Solve → Transfer。
 
 ## 1. 理论结构与主张边界
@@ -183,21 +185,21 @@ future-stop 保留原来的 partner response kernel，以免修改末轮 progres
 
 ```bash
 # 服务已启动则直接运行主实验。
-bash examples/benac_p/run_full_diagnose.sh
+bash examples/benac_p/run_stochastic_diagnose.sh
 
 # CPU-only 生成、认证和导出，不请求模型。
-bash examples/benac_p/run_full_diagnose.sh --export-only
+bash examples/benac_p/run_stochastic_diagnose.sh --export-only
 
 # 只在需要定位原因时增加辅助探针。
-bash examples/benac_p/run_full_diagnose.sh --extended
+bash examples/benac_p/run_stochastic_diagnose.sh --extended
 
 # 更大样本，仍是同一冻结结构。
 BENAC_DIAGNOSE_GAMES=48 BENAC_DIAGNOSE_WORKERS=8 \
-bash examples/benac_p/run_full_diagnose.sh
+bash examples/benac_p/run_stochastic_diagnose.sh
 
 # 同一输出目录、同一配置恢复。
 BENAC_DIAGNOSE_OUTPUT_DIR=runs/benac_full_diagnose/具体目录 \
-bash examples/benac_p/run_full_diagnose.sh --resume
+bash examples/benac_p/run_stochastic_diagnose.sh --resume
 ```
 
 环境变量保留：`BENAC_P_VLLM_BASE_URL`、`VLLM_SERVED_MODEL_NAME`、
@@ -215,7 +217,7 @@ summary、report 和运行日志。原子保存与断点续跑保留；格式错
 四块实验统一使用 `reasoning_tools`：普通 content 中先给简短自由推理，随后恰好
 一个 native tool call。默认提示为：
 
-> Give brief free-form reasoning in at most three short sentences, aiming for under 100 words.
+> Briefly reason about the task before submitting your answer.
 > Do not restate the problem. Then submit your answer with exactly one of the supplied tool calls.
 
 不规定必须经过哪些战略推理步骤，不把诊断答案写进 reasoning scaffold。
@@ -225,31 +227,31 @@ grounding 使用 `SUBMIT_UTILITIES(utilities=...)`。现有行动集合与评分
 
 HTTP 使用 `tool_choice="auto"`、`parallel_tool_calls=false`，不设置整段输出的
 JSON response_format。使用现有 repo vLLM native-tool server 的 parser 配置。
-默认 **max_tokens=1024，包含 reasoning 和 tool call 的总输出**；三句/100 词是软
-约束，不是独立 reasoning token 配额。不会用换行 stop sequence 切断工具调用。
+默认 **max_tokens=1024，包含 reasoning 和 tool call 的总输出**；仅以 briefly 作简短推理引导，
+不规定句数、词数或最低推理长度，也不设独立 reasoning token 配额。不会用换行 stop sequence 切断工具调用。
 
 每条回答保存 content/reasoning、tool calls、raw message、usage、finish_reason、
 推理出现标记、按空白切分的词数和耗时。`protocol_summary.json` 汇总总 completion
-长度 mean/P95、推理覆盖、超出软词数提示的次数、合法性与截断情况。词数不是 token
+长度 mean/P95、推理覆盖、推理词数 mean/P95、合法性与截断情况。词数不是 token
 数；不声称精确区分 content 和工具参数各自消耗的 tokens。
 
 `finish_reason="length"` 标为 `truncated`，即使已解析出工具调用，也不算正常完成
 的能力读数。缺失/错误/多个 tool calls 标为 `invalid`，绝不当作 PASS 或 planning
 regret。依赖无效 belief 的 planner 标为 blocked_parent。若调用合法但没有 reasoning，
-仍正常评分，单独计入 reasoning coverage；超过软词数但正常完成也不强行判无效。
+仍正常评分，单独计入 reasoning coverage；推理词数只是描述性统计，不作为通过门槛。
 
 先在 discovery 检查长度与截断，必要时统一调整预算，再冻结 confirmation 配置。
 保留纯 JSON action 作为可选对照：
 
 ```bash
 # 默认短 reasoning + auto tools，总输出上限 1024。
-bash examples/benac_p/run_full_diagnose.sh
+bash examples/benac_p/run_stochastic_diagnose.sh
 
 # 不同输出目录运行纯 action 对照，默认同样 1024 总 tokens。
-bash examples/benac_p/run_full_diagnose.sh --response-protocol json_action
+bash examples/benac_p/run_stochastic_diagnose.sh --response-protocol json_action
 
 # 需要时统一提高所有实验条件预算。
-BENAC_DIAGNOSE_MAX_TOKENS=1536 bash examples/benac_p/run_full_diagnose.sh
+BENAC_DIAGNOSE_MAX_TOKENS=1536 bash examples/benac_p/run_stochastic_diagnose.sh
 ```
 
 manifest 记录协议版本、system prompt hash、工具 schema hash 和 token 上限；不能

@@ -1,6 +1,6 @@
 # BENAC-P v0：可执行的游戏实现计划
 
-**状态：** 已实现并跑通 game engine、policy-agnostic self-play harness、native OpenAI-compatible tool-calling vLLM adapter（含一次 retry），以及用于 debug 的 rational oracle 和 perfect-information reference solver。后续已补齐 grounding、受控 partner、条件先验、小规模 Bayesian filter 和短 horizon Bayesian planner，见第 13 节。完整 LLM diagnostics、post-training 与 reproduction 仍是后续工作。
+**状态：** 已实现并跑通 game engine、policy-agnostic self-play harness、native OpenAI-compatible tool-calling vLLM adapter（含一次 retry），以及用于 debug 的 rational oracle 和 perfect-information reference solver。后续已补齐 grounding、受控 partner、条件先验、小规模 Bayesian filter 和短 horizon Bayesian planner，见第 13 节。完整语义 diagnose 已实现并完成本地 oracle/mock 验证，见 §13.8；真实模型新版结果及 post-training 仍待执行。
 
 这份文件是当前的 canonical plan。它根据之前的讨论重新整理；如果和早期聊天记录有冲突，以本文件后面的定义为准。
 
@@ -857,7 +857,28 @@ utility，MI 仅描述证据通道。默认 333 个静态任务，最多追加 8
 
 ### 13.7 简短推理与 auto tool 输出
 
-完整诊断改为普通文本短推理（最多三句、目标 100 words 以下）后一次 native auto
+完整诊断以 `Briefly reason about the task before submitting your answer.` 引导简短
+自由推理，不规定句数或词数，随后一次 native auto
 submission tool call，所有条件默认总输出预算 1024 tokens。工具参数与诊断任务不变。
 记录 usage、finish_reason、reasoning coverage；截断/协议失败不当作能力 regret。
 `--response-protocol json_action` 为独立目录中的纯 action 对照。详见诊断协议 §9。
+
+
+### 13.8 语义诊断已实现（当前执行版本）
+
+本节取代旧版以 SoftProgressPolicy、显式 posterior 数字和 utility 输出为主的设计。
+新版实现位于 `semantic_game.py` / `semantic_suite.py`，`run_full_diagnose.sh` 已切换到新版。
+旧版保留为 `run_stochastic_diagnose.sh`；不得混合结果。完整当前定义见 [semantic_diagnose_protocol.md](semantic_diagnose_protocol.md)。
+默认 12 matched bundles / 36 games，三条件匹配，288 静态调用，最多追加 504 调用。
+范围为明确阶段行动集合的三方三回合条件子游戏，不声称 unrestricted BENAC 或 transfer。
+
+- 保留 3+ players、WANT / NEUTRAL / AVOID、menu 和不可逆 commitment。
+- 模型只输出语义伙伴判断（包含剩余联合可能）与合法行动，不输出概率、Q 或 plan variable。
+- Partner 在自身信息集下理性选择，行为确定，并列最优使用固定公开规则；隐藏偏好仍是 ego 要推断的信息。移除行为噪声。
+- Partner 的长期最优性必须由明确的公开 continuation 假设或对后续行为稳健的证书支持；不能把即时收益贪心称作长期最优。
+- 现有 OraclePartnerPolicy 是全知 debug solver 的别名，不可直接冒充信息受限 partner。
+- B 标签通过候选偏好与确定响应的一致性生成；不足以确定时保留可能，分别记录错误断言和遗漏可推断结论。
+- P 题目必须通过语义信息充分性认证。不能用未公开的概率权重判定唯一正确行动；无法区分的可接受行动需保留。
+- B→P 在新上下文中同格式修复判断，不泄露真实隐藏偏好；P→B 分别检查可获得证据、模型利用情况和终局结果，不把全部 utility 差异归因于信息。
+- 保留未知且相关、已知、未知但无关三类条件；reference 按终局任务收益选行动。
+- 输出协议 brief-reasoning-tools-v2 使用 Briefly reason about 引导；总上限仍为 1024 tokens，不要求三句话、100 words 或最少长度。

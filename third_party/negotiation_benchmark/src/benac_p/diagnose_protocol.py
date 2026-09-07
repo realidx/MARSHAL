@@ -4,9 +4,9 @@ from collections import Counter
 from collections.abc import Mapping
 import numpy as np
 
-PROTOCOL_VERSION = 'brief-reasoning-tools-v1'
+PROTOCOL_VERSION = 'brief-reasoning-tools-v2'
 BRIEF_REASONING = (
-    'Give brief free-form reasoning in at most three short sentences, aiming for under 100 words. '
+    'Briefly reason about the task before submitting your answer. '
     'Do not restate the problem. Then submit your answer with exactly one of the supplied tool calls. '
     'Do not write anything after the tool call. Keep the reasoning in ordinary text, not in tool arguments.'
 )
@@ -24,6 +24,10 @@ def submission_tool(task):
     if kind == 'planning':
         name, key = 'SUBMIT_ACTION', 'action_index'
         value = {'type': 'integer', 'minimum': 0, 'maximum': len(task['input']['legal_actions'])-1}
+    elif kind == 'semantic_belief':
+        name, key = 'SUBMIT_JUDGMENT', 'possible_preferences'
+        value = {'type': 'array', 'minItems': 1, 'maxItems': 3, 'uniqueItems': True,
+                 'items': {'type': 'string', 'enum': ['want', 'neutral', 'avoid']}}
     else:
         if kind == 'belief':
             name, key = 'SUBMIT_BELIEF', 'probabilities'
@@ -94,5 +98,6 @@ def protocol_summary(records):
                 truncated_requests=sum(r['status'] == 'truncated' for r in rows),
                 reasoning_requests=len(reasoning_rows),
                 reasoning_present_requests=sum(r.get('reasoning_present', False) for r in reasoning_rows),
-                reasoning_over_100_words=sum(r.get('reasoning_word_count', 0) > 100 for r in reasoning_rows),
-                note='Word counts are whitespace-based, not token counts. Reasoning length is a soft constraint; max_tokens caps reasoning plus tool output. No-reasoning valid calls remain scored.')
+                mean_reasoning_words=float(np.mean([r.get('reasoning_word_count', 0) for r in reasoning_rows])) if reasoning_rows else None,
+                p95_reasoning_words=float(np.percentile([r.get('reasoning_word_count', 0) for r in reasoning_rows],95)) if reasoning_rows else None,
+                note='Word counts are whitespace-based, not token counts. Briefness is requested without a sentence or word quota; max_tokens caps reasoning plus tool output. No-reasoning valid calls remain scored.')
