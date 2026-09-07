@@ -882,3 +882,13 @@ submission tool call，所有条件默认总输出预算 1024 tokens。工具参
 - B→P 在新上下文中同格式修复判断，不泄露真实隐藏偏好；P→B 分别检查可获得证据、模型利用情况和终局结果，不把全部 utility 差异归因于信息。
 - 保留未知且相关、已知、未知但无关三类条件；reference 按终局任务收益选行动。
 - 输出协议 brief-reasoning-tools-v2 使用 Briefly reason about 引导；总上限仍为 1024 tokens，不要求三句话、100 words 或最少长度。
+
+
+### 13.9 根据真实截断结果调整推理预算
+
+原 semantic open-profile 实测 584 次请求中 105 次截断，其中 downstream P 为 83/313。
+当前默认 balanced profile 保留 Briefly reason about，B 约 120 words、P 约 240 words，
+总 cap 仍为 1024 tokens；不设句数限制，不要求凑够字数，不把软目标当作评分门槛。
+已提供 discovery-only matched calibration 脚本，在固定输入和固定 model judgment 下
+比较 compact / balanced 与缓存 open baseline。性能改善需要远端实际比较，不能由
+本地测试或旧结果的长度相关性直接推出。具体命令见 semantic_diagnose_protocol.md。

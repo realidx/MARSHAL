@@ -14,8 +14,11 @@ outputs only `SUBMIT_JUDGMENT(possible_preferences=[...])` or
 
 > Briefly reason about the task before submitting your answer.
 
-No probability, utility, Q, ranking or plan output is requested. There is no
-sentence or word quota. The total completion cap remains **1024 tokens**,
+No probability, utility, Q, ranking or plan output is requested. The default
+`balanced` profile targets about **120 words for judgment and 240 for planning**,
+without a sentence limit or mandatory minimum. It asks the model to stop after
+a conclusion and to submit when actions tie. These targets are soft, not grading
+criteria. The total completion cap remains **1024 tokens**,
 including reasoning and tool arguments; auto tool calling is retained.
 
 Defaults: `Qwen/Qwen3-4B-Instruct-2507`, `http://localhost:8000/v1`, four workers,
@@ -88,3 +91,38 @@ The native unrestricted game runner remains available with
 `python -m benac_p.cli --menu --self-play vllm --json`. It is separate from this
 controlled diagnostic protocol and does not automatically use these certified
 partner rules.
+
+
+## Compare reasoning budgets before the next full run
+
+The uploaded open-profile run had 105/584 truncated requests; downstream
+planning accounted for 83/313. To compare accuracy and length on the same
+inputs, use:
+
+```bash
+bash examples/benac_p/run_reasoning_calibration.sh \
+  --source-run runs/benac_semantic_diagnose/retry-826767
+```
+
+This selects 72 discovery-only tasks balanced by condition, stage and role,
+reuses their archived baseline, and makes **144 new requests**: compact
+(80-word target) and balanced (120/240-word targets), both at the original
+1024-token cap. Model judgments in planning inputs are frozen across profiles;
+P is scored under the supplied judgment. No confirmation tasks are selected.
+Use the same model weights and serving configuration as the baseline.
+
+Read `report.md` / `comparison.json` under `runs/benac_reasoning_calibration/`.
+The report compares completed-and-correct B/P rates, truncation and total
+completion tokens. Its profile recommendation is provisional, not a guarantee
+of noninferiority. `--export-only` performs local selection without inference;
+set `BENAC_CALIBRATION_OUTPUT_DIR` and pass `--resume` to continue that same run.
+
+After choosing the profile, freeze it for the full experiment in a fresh directory:
+
+```bash
+bash examples/benac_p/run_full_diagnose.sh --reasoning-profile balanced --seed 21000
+```
+
+`--reasoning-profile open` preserves the previous brevity instruction;
+`--reasoning-profile compact` uses the 80-word target. Profile and prompt hashes
+are recorded in the manifest; new profiles must not resume into old outputs.

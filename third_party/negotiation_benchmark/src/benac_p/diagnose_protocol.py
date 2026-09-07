@@ -10,13 +10,33 @@ BRIEF_REASONING = (
     'Do not restate the problem. Then submit your answer with exactly one of the supplied tool calls. '
     'Do not write anything after the tool call. Keep the reasoning in ordinary text, not in tool arguments.'
 )
+REASONING_PROFILE_VERSION = 'reasoning-budgets-v1'
+REASONING_PROFILES = ('open', 'compact', 'balanced')
 
 
-def system_prompt(base, protocol):
+def reasoning_instruction(profile):
+    if profile not in REASONING_PROFILES:
+        raise ValueError('Unknown reasoning profile.')
+    if profile == 'open':
+        return BRIEF_REASONING  # Exact historical v2 baseline, for matched comparisons.
+    target = (
+        'Aim for about 80 words or fewer before the tool call. '
+        if profile == 'compact' else
+        'For a partner-judgment question, aim for about 120 words or fewer; '
+        'for an action-selection question, aim for about 240 words or fewer. '
+    )
+    return (BRIEF_REASONING + target +
+            'These are brevity targets, not a required length: finish sooner when possible. '
+            'Do not repeat a comparison or restart an analysis after reaching a conclusion. '
+            'If several actions are equally best, choose one and submit; do not keep searching for a unique winner. '
+            'For a judgment, retain every supported possibility rather than forcing a unique answer.')
+
+
+def system_prompt(base, protocol, reasoning_profile='open'):
     # Remove the old whole-response JSON instruction in both imported rules and
     # suite suffix; it conflicts with an ordinary-text reasoning prefix.
     base = base.replace('Return only the requested JSON object.', '').replace('Return only the requested JSON.', '')
-    return base.strip() + '\n' + (BRIEF_REASONING if protocol == 'reasoning_tools' else 'Return only the requested JSON object.')
+    return base.strip() + '\n' + (reasoning_instruction(reasoning_profile) if protocol == 'reasoning_tools' else 'Return only the requested JSON object.')
 
 
 def submission_tool(task):
@@ -44,8 +64,8 @@ def submission_tool(task):
                                      'required': [key], 'additionalProperties': False}}}
 
 
-def generate(client, task, payload, base_system, protocol='reasoning_tools'):
-    messages = [{'role': 'system', 'content': system_prompt(base_system, protocol)},
+def generate(client, task, payload, base_system, protocol='reasoning_tools', reasoning_profile='open'):
+    messages = [{'role': 'system', 'content': system_prompt(base_system, protocol, reasoning_profile)},
                 {'role': 'user', 'content': json.dumps(payload)}]
     tool = submission_tool(task)
     if protocol == 'reasoning_tools':
@@ -59,6 +79,7 @@ def generate(client, task, payload, base_system, protocol='reasoning_tools'):
     record = dict(raw=content, raw_message=dict(completion.raw_message), tool_calls=calls,
                   usage=dict(completion.usage), finish_reason=completion.finish_reason,
                   response_protocol=protocol, reasoning=content if protocol == 'reasoning_tools' else '',
+                  reasoning_profile=reasoning_profile,
                   reasoning_present=bool(content.strip()) if protocol == 'reasoning_tools' else False,
                   reasoning_word_count=len(content.split()) if protocol == 'reasoning_tools' else 0)
     # Even if a call happens to parse, a length-stopped completion is not a
@@ -100,4 +121,5 @@ def protocol_summary(records):
                 reasoning_present_requests=sum(r.get('reasoning_present', False) for r in reasoning_rows),
                 mean_reasoning_words=float(np.mean([r.get('reasoning_word_count', 0) for r in reasoning_rows])) if reasoning_rows else None,
                 p95_reasoning_words=float(np.percentile([r.get('reasoning_word_count', 0) for r in reasoning_rows],95)) if reasoning_rows else None,
-                note='Word counts are whitespace-based, not token counts. Briefness is requested without a sentence or word quota; max_tokens caps reasoning plus tool output. No-reasoning valid calls remain scored.')
+                reasoning_profiles=dict(Counter(r.get('reasoning_profile','open') for r in reasoning_rows)),
+                note='Word counts are whitespace-based, not token counts. Profile word targets are soft, not validity gates; max_tokens caps reasoning plus tool output. No-reasoning valid calls remain scored.')

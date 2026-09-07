@@ -39,7 +39,7 @@ B 使用 `SUBMIT_JUDGMENT(possible_preferences=["want", "neutral", "avoid"])`，
 
 P 使用 `SUBMIT_ACTION(action_index=...)`，索引只对应题面列出的自然语言合法提议。多个最优动作全部接受。根节点 reference 完整考虑响应、更新、重规划后的终局 utility；不优化 MI。
 
-统一提示：`Briefly reason about the task before submitting your answer.` 不指定句数、词数或推理步骤；默认总输出 1024 tokens，包含文本和工具调用。每次只允许一次 native auto tool call。保存 reasoning、tool calls、usage、finish_reason；截断与格式错误单列，不当作策略 PASS。
+统一提示保留 `Briefly reason about the task before submitting your answer.`。默认 `balanced` profile 对判断题提示约 120 words、规划题约 240 words；这是软目标，不是句数限制、最低长度或评分门槛。不要求固定推理步骤，并提示结论已确定或动作并列最优时及时提交。默认总输出仍为 1024 tokens，包含文本和工具调用。每次只允许一次 native auto tool call。保存 reasoning、tool calls、usage、finish_reason；截断与格式错误单列，不当作策略 PASS。
 
 ## 四块实验与完整轨迹
 
@@ -99,3 +99,13 @@ BENAC_DIAGNOSE_OUTPUT_DIR=/path/to/run bash examples/benac_p/run_full_diagnose.s
 - `protocol_summary.json`：调用合法性、总 completion tokens mean/P95、reasoning 词数和截断。
 
 旧版仅通过 `run_stochastic_diagnose.sh` 或 `python -m benac_p.diagnose_suite` 使用。旧概率诊断与新版语义诊断不直接合并比较。
+
+
+## Reasoning budget calibration
+
+`run_reasoning_calibration.sh --source-run runs/benac_semantic_diagnose/retry-826767`
+使用同一批 discovery 输入比较 open（原运行缓存）、compact（80 words）、balanced（B 120 / P 240 words）。默认选择 72 题，新增 144 次请求，hard cap 三组保持一致。按条件、root/downstream、B/P-oracle/P-model 分层抽样；不按旧回答是否失败来挑题，不使用 confirmation。
+
+P-model 的输入 judgment 固定为原记录，不把新 profile 的 B 输出注入 P；评分标签按该实际输入 judgment 重算。三组因此比较同一问题。失败或截断在“valid-and-correct”成功率中不算成功，不通过只看完成样本来隐藏失败；真实 regret 仍只对合法完成回答报告。输出各 profile 的 mean/P95 completion tokens、B/P 成功率、截断率，以及按 bundle bootstrap 的配对差异。
+
+建议规则仅为开发阶段 heuristic：格式完成率至少 98%，B/P 的 valid-and-correct 成功率分别距观察到的最好值不超过 5 个百分点，再选择平均 tokens 最低者。样本小，不是正式 noninferiority 证明。如果没有 profile 达标，不给出推荐。模型权重和 serving 设置需与缓存 baseline 一致；保存原始历史运行，不覆盖它。

@@ -10,7 +10,7 @@ from pathlib import Path
 import time
 import numpy as np
 from benac_p.semantic_game import SemanticGame, PREFERENCES, VERSION as GAME_VERSION
-from benac_p.diagnose_protocol import generate, system_prompt, submission_tool, protocol_summary, PROTOCOL_VERSION
+from benac_p.diagnose_protocol import generate, system_prompt, submission_tool, protocol_summary, PROTOCOL_VERSION, REASONING_PROFILE_VERSION, REASONING_PROFILES
 from benac_p.diagnose_suite import dump, digest, cluster_summary
 
 VERSION='semantic-interaction-loop-v1'
@@ -109,7 +109,7 @@ class Suite:
         return dict(action_index=ctx['moves'].index(chosen))
 
 
-def infer_tasks(suite,records,client,out,workers,protocol,oracle_check=False):
+def infer_tasks(suite,records,client,out,workers,protocol,oracle_check=False,reasoning_profile='balanced'):
     for task in suite.tasks:
         record=records.get(task['id'],{})
         if record.get('status')=='ok' and not oracle_check:
@@ -119,7 +119,7 @@ def infer_tasks(suite,records,client,out,workers,protocol,oracle_check=False):
     def request(task,payload):
         start=time.monotonic()
         try:
-            result=generate(client,task,payload,SYSTEM,protocol)
+            result=generate(client,task,payload,SYSTEM,protocol,reasoning_profile)
         except Exception as exc:
             return dict(status='transport_error',error=type(exc).__name__,seconds=time.monotonic()-start)
         if result['status']=='ok':
@@ -288,6 +288,7 @@ def main(argv=None):
     parser.add_argument('--base-url',default='http://localhost:8000/v1');parser.add_argument('--model',default='Qwen/Qwen3-4B-Instruct-2507')
     parser.add_argument('--workers',type=int,default=4);parser.add_argument('--max-tokens',type=int,default=1024);parser.add_argument('--temperature',type=float,default=0.)
     parser.add_argument('--response-protocol',choices=('reasoning_tools','json_action'),default='reasoning_tools')
+    parser.add_argument('--reasoning-profile',choices=REASONING_PROFILES,default='balanced')
     parser.add_argument('--export-only',action='store_true');parser.add_argument('--oracle-check',action='store_true');parser.add_argument('--resume',action='store_true');parser.add_argument('--score-only',action='store_true')
     args=parser.parse_args(argv)
     if args.n_games<2 or args.n_games%2:parser.error('n-games must be even and at least 2.')
@@ -297,7 +298,8 @@ def main(argv=None):
     suite=Suite(args.n_games,args.seed).build();static_count=len(suite.tasks)
     manifest=dict(version=VERSION,game_version=GAME_VERSION,protocol_version=PROTOCOL_VERSION,response_protocol=args.response_protocol,
                   bundles=args.n_games,games=len(suite.games),seed=args.seed,static_tasks=static_count,
-                  max_additional_tasks=6*sum(len(e['game'].support) for e in suite.games.values()),task_hash=digest(suite.tasks),system_hash=digest(system_prompt(SYSTEM,args.response_protocol)),
+                  max_additional_tasks=6*sum(len(e['game'].support) for e in suite.games.values()),task_hash=digest(suite.tasks),system_hash=digest(system_prompt(SYSTEM,args.response_protocol,args.reasoning_profile)),
+                  reasoning_profile=args.reasoning_profile,reasoning_profile_version=REASONING_PROFILE_VERSION,
                   tool_hash=digest([submission_tool(t) for t in suite.tasks]),max_tokens=args.max_tokens,temperature=args.temperature,
                   model=args.model,base_url=args.base_url,oracle_check=args.oracle_check)
     if (out/'manifest.json').exists():
@@ -306,7 +308,7 @@ def main(argv=None):
         if (out/'answers.json').exists() and not (args.resume or args.score_only):parser.error('Existing answers require --resume or --score-only.')
     elif args.resume or args.score_only:parser.error('No existing manifest to resume/score.')
     dump(out/'manifest.json',manifest)
-    dump(out/'tasks.json',dict(system=system_prompt(SYSTEM,args.response_protocol),tasks=suite.tasks,tools_by_task={t['id']:submission_tool(t) for t in suite.tasks}))
+    dump(out/'tasks.json',dict(system=system_prompt(SYSTEM,args.response_protocol,args.reasoning_profile),tasks=suite.tasks,tools_by_task={t['id']:submission_tool(t) for t in suite.tasks}))
     dump(out/'oracle_labels.json',suite.labels);dump(out/'certificates.json',suite.certificates)
     if args.export_only:return
     if args.score_only and not (out/'answers.json').exists():parser.error('Missing answers.json')
@@ -315,11 +317,11 @@ def main(argv=None):
     if not (args.oracle_check or args.score_only):
         from methods.vllm_client import OpenAICompatibleNegotiationClient
         client=OpenAICompatibleNegotiationClient(args.base_url,args.model,api_key=os.environ.get('BENAC_P_VLLM_API_KEY','EMPTY'),max_tokens=args.max_tokens,temperature=args.temperature)
-    if not args.score_only:infer_tasks(suite,records,client,out,args.workers,args.response_protocol,args.oracle_check)
+    if not args.score_only:infer_tasks(suite,records,client,out,args.workers,args.response_protocol,args.oracle_check,args.reasoning_profile)
     suite.add_model_arms(records)
     dump(out/'dynamic_tasks.json',suite.tasks[static_count:]);dump(out/'dynamic_tools.json',{t['id']:submission_tool(t) for t in suite.tasks[static_count:]})
     dump(out/'oracle_labels.json',suite.labels);dump(out/'interventions.json',suite.arms)
-    if not args.score_only:infer_tasks(suite,records,client,out,args.workers,args.response_protocol,args.oracle_check)
+    if not args.score_only:infer_tasks(suite,records,client,out,args.workers,args.response_protocol,args.oracle_check,args.reasoning_profile)
     scored=score(suite,records);summary=summarize(suite,scored)
     dump(out/'scores.json',scored);dump(out/'summary.json',summary);dump(out/'rollouts.json',scored['rollouts'])
     dump(out/'protocol_summary.json',protocol_summary(records))
