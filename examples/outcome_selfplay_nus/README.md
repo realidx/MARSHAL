@@ -48,25 +48,57 @@ Slurm stdout is `slurm-outcome-rollout-smoke-<jobid>.out`. The launcher prints
 
 A completed shell command alone does not establish success: inspect the summary
 for terminal games, request failures, invalid calls, retries, and replay checks.
-Incomplete games have no terminal outcome reward. The frozen v2 runtime allows
+Incomplete games have no terminal outcome reward. The runtime allows
 one retry for invalid tool output or truncation, charging -0.1 per such failure;
 transport timeouts are recorded separately without that penalty. Player terminal
 outcome and format penalty remain separately recorded. HTTP rollouts are for
 integration testing, not token/logprob-ready training batches.
 
-## Frozen dependency reuse
+## Readable v3 prompt
 
-`runtime_v2.tar.gz` is an unchanged copy of the existing
-`runs/outcome_selfplay_screen/outcome_rollout_runtime_v2.tar.gz`, built by
-`runs/outcome_selfplay_screen/package_rollout.py`. The original lives under
-Git-ignored `runs/`; this tracked snapshot makes a remote Git checkout sufficient
-and avoids missing local `training.b_sft` imports. Its dependency closure includes
-teacher modules for shared environment definitions, but rollout does not invoke
-teacher solving or B/P gold supervision. It contains source and curriculum, not
-model weights or experimental result directories.
+The active NUS launcher uses `runtime_v3.tar.gz`. `selfplay_prompt.py` follows the
+current B/P readable interface: named players, goals and commitments; natural
+language public history; separate binding commitments and proposed additions;
+private investigation answers with explicit ownership; remaining proposal order.
+The model calls OFFER / INVESTIGATE / PASS / ACCEPT / REJECT directly. OFFER
+arguments contain only new named commitments. The adapter checks the exact legal
+combination and converts it back to the unchanged native target vectors.
 
-`unpack_runtime.py` verifies both the archive checksum and the internal per-file
-manifest before launching inference. Each run unpacks into a fresh directory,
-isolating it from concurrent teacher changes in the checkout. Updating this
-snapshot later must be an explicit versioned change, not an automatic rebuild
-from a potentially changing working tree.
+Self-play retains binary AND linear goal completion, the actual two-value or
+three-value preference prior, and only the player's own outcome objective. It
+supplies no B/P gold, belief answer, teacher policy or altruistic tie-break.
+Invalid-call retries and penalties are unchanged. Old v1/v2 records remain
+replayable; v3 records identify the readable prompt and preserve actual tool schemas.
+
+`bp_display.py` freezes only the pure Names, action-tools and visible-fact/history
+helpers from `training/b_sft/social_named_probe.py` and `social_prompt.py`.
+Per-source SHA256 hashes are recorded in that file. This reuses the reviewed B/P
+presentation without importing the mutable teacher or modifying B/P files.
+`rollout.py` is the isolated v3 collector based on the frozen v2 implementation.
+
+## Frozen dependency reuse and local checks
+
+The unchanged `runtime_v2.tar.gz` came from the existing
+`runs/outcome_selfplay_screen/outcome_rollout_runtime_v2.tar.gz`. That directory
+is Git-ignored. The snapshot provides all shared environment imports needed by a
+remote checkout; rollout does not call teacher solving or use B/P gold.
+
+`build_runtime.py` builds v3 deterministically from that frozen base and only the
+three reviewed files `rollout.py`, `selfplay_prompt.py`, `bp_display.py`. It never
+reads the concurrent B/P working tree. After editing these sources, run with a
+Python >= 3.10 environment containing numpy:
+
+```bash
+python examples/outcome_selfplay_nus/build_runtime.py
+python examples/outcome_selfplay_nus/test_readable_runtime.py
+bash -n examples/outcome_selfplay_nus/run_smoke.sh examples/outcome_selfplay_nus/sbatch_smoke.sh
+```
+
+The CPU checks use fake tool completions over all 24 reset configurations, replay
+native terminal rewards, verify named-action conversion and privacy boundaries,
+and exercise an invalid-output retry and penalty. They never contact a model.
+They do not establish real-model comprehension or vLLM tool-parser compatibility.
+
+`unpack_runtime.py` verifies the archive and each manifested source. Each run
+unpacks into a fresh directory. Keep the old v2 archive for reproducibility; the
+new launcher explicitly selects v3. Outputs and GPU settings are unchanged.

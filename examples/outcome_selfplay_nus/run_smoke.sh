@@ -33,7 +33,7 @@ export OUTCOME_PORT="${OUTCOME_PORT:-18080}"
 export OUTCOME_GPU_MEMORY="${OUTCOME_GPU_MEMORY:-0.40}"
 export OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}"
 export OPENBLAS_NUM_THREADS=1 TOKENIZERS_PARALLELISM=false PYTHONDONTWRITEBYTECODE=1
-"$python_bin" "$entry_dir/unpack_runtime.py" "$entry_dir/runtime_v2.tar.gz" "$entry_dir/runtime_v2.sha256" "$run_dir"
+"$python_bin" "$entry_dir/unpack_runtime.py" "$entry_dir/runtime_v3.tar.gz" "$entry_dir/runtime_v3.sha256" "$run_dir"
 "$python_bin" - "$model_dir" <<'PY'
 import importlib.metadata,json,os,socket,sys
 from pathlib import Path
@@ -80,7 +80,7 @@ while time.monotonic()<deadline:
     except (OSError,ValueError):time.sleep(2)
 else:raise SystemExit('Inference readiness timed out; inspect server.log')
 PY
-# The existing v2 rollout handles private views, retry penalties and native replay.
+# The v3 rollout handles private views, retry penalties and native replay.
 bash "$run_dir/outcome_rollout_runtime/run_rollout.sh" \
   --backend http --suite smoke \
   --base-url "http://127.0.0.1:$OUTCOME_PORT/v1" --model outcome-base \
