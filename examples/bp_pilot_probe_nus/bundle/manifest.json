@@ -1,0 +1,28 @@
+{
+  "version": "bp-pilot-baseline-v1",
+  "stages": [
+    {
+      "name": "train",
+      "requests": "train_requests.jsonl",
+      "conditions": 256,
+      "group_size": 8,
+      "formal_requests": 2048
+    },
+    {
+      "name": "validation",
+      "requests": "validation_requests.jsonl",
+      "conditions": 64,
+      "group_size": 4,
+      "formal_requests": 256
+    }
+  ],
+  "formal_requests": 2304,
+  "preflight_requests": 2,
+  "source_tasks_sha256": "4aed3a8894b56dbdbeb496b9f1646e287071e2e8b2a9b14593c2599afc6aa0b6",
+  "template_sha256": "64f85b198065d0fba2a81f37e10ed68161ce2c19a754c7100e67e0ca2ee9c326",
+  "files": {
+    "train_requests.jsonl": "77af57f8e9ce4f3d16ad327e7bd1f686f9560b37b52872f4840723edf86e47c0",
+    "validation_requests.jsonl": "f023d194fcff4b78956d16e49ea24d60d372fa0328a49047eb73578758f58245",
+    "remote_bp_probe.py": "a7b4f395a153509191b04bfa6595fc576b56feef5814de368b2010c9309a1ed7"
+  }
+}
