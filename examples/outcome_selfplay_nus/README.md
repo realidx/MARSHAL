@@ -102,3 +102,36 @@ They do not establish real-model comprehension or vLLM tool-parser compatibility
 `unpack_runtime.py` verifies the archive and each manifested source. Each run
 unpacks into a fresh directory. Keep the old v2 archive for reproducibility; the
 new launcher explicitly selects v3. Outputs and GPU settings are unchanged.
+
+## Diagnose missing explanations without replaying full games
+
+```bash
+sbatch --export=ALL,OUTCOME_REASONING_PROBE=1 examples/outcome_selfplay_nus/sbatch_smoke.sh
+```
+
+This opt-in mode reuses the same single-GPU server launcher but runs 44 fixed
+visible-state requests, no environment transitions, training, retries or rewards.
+It saves full HTTP response bodies in `reasoning_probe/samples.jsonl`, along with
+an aggregate `summary.json` under the printed run directory.
+
+Four self-play states (INVESTIGATE, OFFER, ACCEPT, PASS contexts from job 846757)
+are each tested at two paired seeds under five conditions: original v3 request;
+remove only the protocol-penalty sentence; replace only the system message with
+the B/P system message; append an explicit 1–3-sentence explanation request;
+change only temperature from 0.7 to 0.8. Four B/P control requests come from
+job 846561 (one B and one P state at two seeds). B/P controls retain their 1024
+token budget and temperature 0.8; they are not matched task-content comparisons.
+The inputs contain only already player-visible messages and tools, no teacher
+answers or hidden worlds. The request file freezes the exact inputs for review.
+
+Compare both explanation coverage and completed tool submissions: extra prose
+that hits the token limit is not a successful repair. The script's submission
+metric checks tool name/count and non-truncation, not full argument legality or
+reasoning correctness. Two samples per state/condition give a small diagnostic,
+not a statistically conclusive estimate. No arm changes the active v3 prompt.
+
+Offline input validation (no model calls):
+
+```bash
+python examples/outcome_selfplay_nus/reasoning_probe.py --check-only
+```

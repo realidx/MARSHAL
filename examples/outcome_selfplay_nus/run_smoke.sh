@@ -80,6 +80,14 @@ while time.monotonic()<deadline:
     except (OSError,ValueError):time.sleep(2)
 else:raise SystemExit('Inference readiness timed out; inspect server.log')
 PY
+# Optional fixed-state diagnosis; leaves the default full-game test unchanged.
+if [[ "${OUTCOME_REASONING_PROBE:-0}" == "1" ]]; then
+  "$python_bin" "$entry_dir/reasoning_probe.py" \
+    --base-url "http://127.0.0.1:$OUTCOME_PORT/v1" --model outcome-base \
+    --output-dir "$run_dir/reasoning_probe" 2>&1 | tee "$run_dir/client.log"
+  echo "Results: $run_dir/reasoning_probe/summary.json"
+  exit 0
+fi
 # The v3 rollout handles private views, retry penalties and native replay.
 bash "$run_dir/outcome_rollout_runtime/run_rollout.sh" \
   --backend http --suite smoke \
