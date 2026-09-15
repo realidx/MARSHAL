@@ -1,3 +1,5 @@
+当前首选 Git 部署，见 [GIT_TRAINING.md](GIT_TRAINING.md)。以下是历史冻结包说明；Git checkout 不需要重建上传包。
+
 # 训练冻结包 train-release-v4
 
 本包整合 e1430bb SoC vLLM 0.28 适配、data_distribution_v1、多GPU显存配置和批处理优化。不是git分支切换，不包括模型/Conda环境/论文文件。

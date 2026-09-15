@@ -16,7 +16,7 @@ export VLLM_USE_V1=0 VLLM_TOOL_CALL_PARSER=hermes TOKENIZERS_PARALLELISM=false
 export OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1
 export SOCIAL_GPU_PROFILE="$PROFILE" SOCIAL_ARM="$ARM" SOCIAL_SEED=42
 export SOCIAL_TOTAL_TOKENS=6553600 SOCIAL_TOKENS_PER_UPDATE=65536 SOCIAL_KEEP_CHECKPOINTS=2
-unset SOCIAL_RESUME
+unset SOCIAL_RESUME SOCIAL_SOURCE_COMMIT
 [[ -f "$SOCIAL_MODEL/config.json" ]] || { echo 'Missing local model' >&2; exit 2; }
 mkdir -p submission
 python -c 'from training.social_mixed.run import verify_bundle; from training.social_mixed.core import load_data; verify_bundle(); load_data()'

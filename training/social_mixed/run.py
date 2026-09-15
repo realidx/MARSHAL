@@ -16,16 +16,9 @@ ROOT=Path(__file__).resolve().parents[2]
 
 
 def verify_bundle():
-    manifest=ROOT/'examples/social_mixed/bundle_manifest.json'
-    if not manifest.exists():
-        raise FileNotFoundError('Prepare the source bundle before submitting the experiment')
-    data=json.loads(manifest.read_text())
-    for name,expected in data['files'].items():
-        path=ROOT/name
-        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=expected:
-            raise ValueError(f'Incomplete or changed upload: {name}; regenerate the bundle')
-    print(f'SOURCE_BUNDLE_VERIFIED files={len(data["files"])}',flush=True)
-    return hashlib.sha256(manifest.read_bytes()).hexdigest()
+    # Retain compatibility with archive launchers; prefer Git when available.
+    from training.social_mixed.source_version import verify_source
+    return verify_source(ROOT)
 
 
 def configuration(arm, seed=42, resume=None):
@@ -146,7 +139,7 @@ def main():
     print('ENVIRONMENT_CHECK_BEGIN',flush=True)
     environment(root)
     print('ENVIRONMENT_CHECK_PASSED',flush=True)
-    (root/'experiment.json').write_text(json.dumps(dict(options=options,model=model,source_bundle_sha256=source_hash,
+    (root/'experiment.json').write_text(json.dumps(dict(options=options,model=model,source_version=source_hash,source_commit=source_hash.get('commit'),source_bundle_sha256=source_hash.get('sha256'),
         data_manifest_sha256=hashlib.sha256((ROOT/'examples/social_mixed/data_distribution_v1/manifest.json').read_bytes()).hexdigest(),
         execution_profile=__import__('training.social_mixed.hardware',fromlist=['PROFILES']).PROFILES[options['gpu_profile']],
         reward='B/P binary; own terminal utility plus separately recorded protocol cost',

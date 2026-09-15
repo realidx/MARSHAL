@@ -26,6 +26,12 @@ if [[ -n "${3:-}" ]]; then
 else
   unset SOCIAL_RESUME
 fi
+# Freeze the submitted Git revision; checked again before model loading.
+if [[ -e .git ]]; then
+  export SOCIAL_SOURCE_COMMIT="$(git rev-parse HEAD)"
+else
+  unset SOCIAL_SOURCE_COMMIT
+fi
 # Single H200; dual H100.
 sbatch --job-name="social-${ARM}-${PROFILE}" --partition="$PARTITION" \
  --gres="gpu:${PROFILE}:${GPUS}" --time="$LIMIT" --export=ALL \
