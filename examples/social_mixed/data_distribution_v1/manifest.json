@@ -1,0 +1,115 @@
+{
+  "version": "public-prior-margin-v1",
+  "files": {
+    "bp_train.jsonl": {
+      "count": 442,
+      "sha256": "252a847f9ffdad04f2fb0b86db00b47e0990e6d9d6855bd6f3452fbf621eccda"
+    },
+    "selfplay_train.jsonl": {
+      "count": 144,
+      "sha256": "ac81703af59e8c0a55f7ca3535f0017816000f521a385e3265fb35af0b023dc4"
+    },
+    "bp_validation.jsonl": {
+      "count": 248,
+      "sha256": "f6d8029a59e81fcd042a24bbbe40963e1bd097ec6539bc55b5586e55643de1c7"
+    },
+    "selfplay_validation.jsonl": {
+      "count": 48,
+      "sha256": "038bbaedc738d36e3f41f1ba40666b26e385db58cac9acb5d23c8c99ae73b9bb"
+    },
+    "diagnostics.jsonl": {
+      "count": 4,
+      "sha256": "aa22247ffa79eaa0b0f52f3b08ade030f2eed0c09134932abf48ae9af298a8e5"
+    },
+    "build_errors.jsonl": {
+      "count": 6,
+      "sha256": "45faf8c770db97cc784eb67f19d1090af293d419b954e3451962fe4486c9516e"
+    },
+    "requests_train.jsonl": {
+      "count": 442,
+      "sha256": "13c891c9d7f7a5bc9887ee1923cff88f244a528b893d852e417f533837fb344a"
+    }
+  },
+  "prompt_sources": {
+    "training/b_sft/preference_contract.py": "0eef1a38f40c097ffb2d6e21c1f3b4556997c7b8f31a83f9c009ef26f729063f",
+    "training/b_sft/review_prompt.py": "8502c3ee09c95c3d5eda721820df492d8b9fc29c1c55ccc0b625f9c560d150e8",
+    "training/b_sft/social_prompt.py": "d31d14af6a04af833228455d7d3017a8f4cc8ccb45ceabdc8758c38fa5ad5c9a",
+    "training/b_sft/social_named_probe.py": "9c82c5bcb0ff7b42341b92651066a916dc6740c1955eeaf4699a6b759806b41d",
+    "training/b_sft/social_private_teacher.py": "7de7b48a6266be266891d58866114a02a045efa89490073f95f47a5014c2e6e9",
+    "training/b_sft/decision_policy.py": "8671683f9cde5f5fc30c3fe7d37a070ad97b4da4e00876f6bea9301f1a976b62",
+    "training/b_sft/social_p_qualitative.py": "dbc16d2c09047dcf02bac198d99d8376c474c20beebab713865806f81ce45843",
+    "training/social_mixed/policy_prompt.py": "c41a7a1fd4244a7eba0a508aa1b352503ce9736eefbc26afec365e09b419d3aa",
+    "training/social_mixed/weighted_rules.py": "10ae1221ba35b601365a6f5e9ba44b5194816dc319b057d9a619e57a1a23fb53",
+    "training/social_mixed/distribution_sampling.py": "1f00cabf88180d5d5991a360e2be79c0295833836305c7d5d8b9cc08ccc9b869",
+    "training/social_mixed/frozen/bp_display.py": "fde12fc51376b92fda8dc25d03c16d9ffff854713298fc50b268fa2798107e53",
+    "training/social_mixed/frozen/selfplay_prompt.py": "fb8b656934292920e1f5491cb7f7fddd0e0e27d877eea206371c5e17427247e4"
+  },
+  "counts": {
+    "train": {
+      "P1": 80,
+      "P2": 60,
+      "P3": 28,
+      "B3": 58,
+      "B2": 52,
+      "B1": 104,
+      "P4": 60
+    },
+    "validation": {
+      "P2": 24,
+      "P4": 24,
+      "B1": 60,
+      "B2": 52,
+      "B3": 20,
+      "P1": 48,
+      "A0": 8,
+      "P3": 12
+    }
+  },
+  "errors": 6,
+  "b_margin": 0.1,
+  "p_own_tolerance": 0.1,
+  "p_social_tolerance": 0.1,
+  "profiles": {
+    "balanced": {
+      "version": "public-prior-margin-v1",
+      "name": "balanced",
+      "weights": {
+        "want": 1,
+        "neutral": 1,
+        "avoid": 1
+      }
+    },
+    "want_heavy": {
+      "version": "public-prior-margin-v1",
+      "name": "want_heavy",
+      "weights": {
+        "want": 2,
+        "neutral": 1,
+        "avoid": 1
+      }
+    },
+    "neutral_heavy": {
+      "version": "public-prior-margin-v1",
+      "name": "neutral_heavy",
+      "weights": {
+        "want": 1,
+        "neutral": 2,
+        "avoid": 1
+      }
+    },
+    "avoid_heavy": {
+      "version": "public-prior-margin-v1",
+      "name": "avoid_heavy",
+      "weights": {
+        "want": 1,
+        "neutral": 1,
+        "avoid": 2
+      }
+    }
+  },
+  "original_source_sha256": "a32561a48fd737bb0bae5fbf640be15eb2c7d38aa89d1be7903b3b7574cbb168",
+  "model_calls": 0,
+  "formal_mixed_training_ready": true,
+  "coverage": "All B1-B3/P1-P4 training kernels; 4 backgrounds. Six impossible B3 history/profile combinations excluded with reasons; no model-score selection.",
+  "diagnostic_count": 4
+}

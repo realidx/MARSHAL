@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Iterable
 
 import numpy as np
@@ -24,6 +24,7 @@ class GeneratorConfig:
     # Probability order: WANT, NEUTRAL, AVOID.
     preference_probs: tuple[float, float, float] = (0.4, 0.2, 0.4)
     max_attempts: int = 1_000
+    linear_goal_fraction: float = 0.0
 
     def __post_init__(self) -> None:
         if self.n_players == 2 and self.goal_arities == (2, 3) and self.goal_arity_probs is None:
@@ -53,6 +54,8 @@ class GeneratorConfig:
         _validate_probabilities(self.preference_probs, "preference_probs")
         if self.max_attempts < 1:
             raise ValueError("max_attempts must be positive.")
+        if not 0 <= self.linear_goal_fraction <= 1:
+            raise ValueError("linear_goal_fraction must lie in [0, 1].")
 
 
 def _validate_probabilities(values: Iterable[float], name: str) -> None:
@@ -197,6 +200,13 @@ def generate_game(seed: int = 0, config: GeneratorConfig | None = None) -> GameS
             ],
             "config": _config_dict(config),
         }
+        # A separate stream leaves the old binary generator byte-stable and
+        # permits matched structures across goal semantics without altering private draws.
+        n_linear = round(config.n_goals * config.linear_goal_fraction)
+        if n_linear:
+            goal_rng = np.random.default_rng(np.random.SeedSequence([seed, 91731]))
+            linear_ids = set(map(int, goal_rng.choice(config.n_goals, n_linear, replace=False)))
+            goals = tuple(replace(goal, binary=goal.goal_id not in linear_ids) for goal in goals)
         return GameSpec(
             n_players=config.n_players,
             n_actions_per_player=(config.actions_per_player,) * config.n_players,

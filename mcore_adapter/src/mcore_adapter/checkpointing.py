@@ -264,7 +264,9 @@ def _load_base_checkpoint(
         else:
             logger.info(f" loading {dist_infix}checkpoint from {load_dir} at iteration {iteration}")
 
-    state_dict = torch.load(checkpoint_name, map_location="cpu")
+    # Native MCA checkpoints can include Transformer Engine extra state.
+    # This path restores trusted training checkpoints, including non-tensor state.
+    state_dict = torch.load(checkpoint_name, map_location="cpu", weights_only=False)
     return state_dict, checkpoint_name, release
 
 

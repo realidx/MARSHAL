@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from run_probe import ENTRY, verify_bundle
+from run_probe import ENTRY, verify_bundle, prompt_token_length
 
 
 class PortableProbeTests(unittest.TestCase):
@@ -65,6 +65,24 @@ class PortableProbeTests(unittest.TestCase):
     def test_modified_question_bundle_is_rejected(self):
         with (self.bundle / 'requests.jsonl').open('a') as f: f.write('\n')
         with self.assertRaises(ValueError): verify_bundle(self.bundle)
+
+    def test_context_check_counts_input_ids_not_encoding_fields(self):
+        class Tokenizer:
+            def apply_chat_template(self, messages, **kwargs):
+                self.kwargs = kwargs
+                return {'input_ids': list(range(4495)), 'attention_mask': [1]*4495}
+        tokenizer = Tokenizer()
+        request = {'messages': [{'role': 'user', 'content': 'Question'}], 'tools': [{'type': 'function'}]}
+        self.assertEqual(prompt_token_length(tokenizer, request), 4495)
+        self.assertTrue(tokenizer.kwargs['return_dict'])
+        self.assertFalse(tokenizer.kwargs['truncation'])
+        self.assertEqual(tokenizer.kwargs['tools'], request['tools'])
+
+    def test_context_check_rejects_batched_or_missing_token_ids(self):
+        class Tokenizer:
+            def apply_chat_template(self, *args, **kwargs): return {'input_ids': [[1, 2, 3]]}
+        with self.assertRaises(ValueError):
+            prompt_token_length(Tokenizer(), {'messages': [], 'tools': []})
 
 
 if __name__ == '__main__': unittest.main()

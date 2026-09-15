@@ -105,3 +105,16 @@ The scorer verifies request/sampler hashes and task IDs before applying the
 unchanged labels. Full returned responses are retained for reasoning analysis.
 The source bundle was selected locally by `training/b_sft/prepare_soc_probe.py`
 from `bp_readable_prompt_review_v2`; there is no remote regeneration step.
+
+## First SoC run and launcher correction
+
+Job 846561 completed all 64 formal requests. Local scoring: 21 correct,
+18 legal but wrong, 24 output truncations, 1 other format failure. Full local
+review: `new/local_data/social_runs/bp_soc_download/846561.952bhmc2/REVIEW.md`.
+
+That run's manifest incorrectly reported every prompt length as 2: the launcher
+counted tokenizer output fields rather than `input_ids` tokens. API usage records
+show actual inputs of 1225–4495 tokens. The launcher now explicitly requests a
+dictionary and counts its `input_ids`; regression tests cover this return shape.
+This correction does not alter the frozen question bundle, output budget, or
+sampler. The observed 24 truncations occurred at the **output** limit of 1024.

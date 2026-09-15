@@ -1,0 +1,163 @@
+defaults:
+- ../config/deepspeed_zero2@_here_
+- _self_
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+exp_name: social_bp_pilot_v1
+seed: 20260914
+output_dir: ${oc.env:BP_RUN_DIR}
+logging_dir: ${output_dir}/logs
+track_with: stdout
+checkpoint_config:
+  type: file_system
+  async_upload: false
+  raise_on_error: true
+  use_hardlinks: true
+  save_final: true
+  verify_deepspeed_checkpoint: true
+  output_dir: ${output_dir}/checkpoints
+num_gpus_per_node: 6
+max_steps: 100
+expected_actor_optimizer_steps_per_rollout: 1
+save_steps: 10
+eval_steps: 10
+logging_steps: 1
+resume_from_checkpoint: false
+evaluate_final_model: true
+social_b_curriculum: false
+rollout_batch_size: 16
+val_batch_size: 64
+prompt_length: 4096
+response_length: 1024
+num_return_sequences_in_group: 8
+generate_opt_level: 1
+is_num_return_sequences_expand: false
+max_running_requests: 4
+is_use_additional_prompts: false
+ppo_epochs: 1
+adv_estimator: grpo
+pg_clip: 0.2
+whiten_advantages: false
+reward_shift: false
+reward_norm: null
+reward_clip: 10.0
+max_len_mask: false
+difficulty_mask: false
+error_max_len_clip: false
+use_kl_loss: true
+kl_loss_coef: 0.01
+init_kl_coef: 0.0
+add_token_level_kl: false
+sft_loss_coef: 0.0
+entropy_loss_coef: 0.0
+loss_agg_mode: seq-mean-token-mean
+pretrain: ${oc.env:BP_MODEL}
+system_envs:
+  NCCL_CUMEM_ENABLE: '0'
+  NCCL_NVLS_ENABLE: '0'
+  ROLL_LOCAL_COMM_ADDR: 127.0.0.1
+  GLOO_SOCKET_IFNAME: lo
+  NCCL_SOCKET_IFNAME: lo
+  VLLM_USE_V1: '0'
+  VLLM_ATTENTION_BACKEND: XFORMERS
+  OMP_NUM_THREADS: '2'
+  OPENBLAS_NUM_THREADS: '2'
+  PYTHONPATH: ${oc.env:PYTHONPATH}
+actor_train:
+  keep_states_on_device: true
+  model_args:
+    attn_implementation: sdpa
+    disable_gradient_checkpointing: false
+    dtype: bf16
+  training_args:
+    optimizer_backend: torch_adamw
+    learning_rate: 1.0e-06
+    weight_decay: 0.0
+    per_device_train_batch_size: 1
+    gradient_accumulation_steps: 32
+    warmup_steps: 5
+    warmup_ratio: 0.0
+    lr_scheduler_type: constant_with_warmup
+  data_args:
+    template: native
+    file_name:
+    - ${oc.env:BP_EXPORT_DIR}/train.jsonl
+    domain_interleave_probs:
+      social_bp: 1.0
+    preprocessing_num_workers: 1
+  strategy_args:
+    strategy_name: deepspeed_train
+    strategy_config: ${deepspeed_zero2}
+  device_mapping: '[0,1,2,3]'
+  infer_batch_size: 1
+actor_infer:
+  model_args:
+    dtype: bf16
+  generating_args:
+    max_new_tokens: 1024
+    temperature: 0.8
+    top_p: 1.0
+    top_k: -1
+    repetition_penalty: 1.0
+    num_beams: 1
+    num_return_sequences: 8
+  data_args:
+    template: native
+  strategy_args:
+    strategy_name: vllm
+    strategy_config:
+      engine_mode: sync
+      tensor_parallel_size: 1
+      gpu_memory_utilization: 0.65
+      max_model_len: 5120
+      enforce_eager: true
+      enable_prefix_caching: false
+      enable_sleep_mode: false
+      distributed_executor_backend: ray
+  device_mapping: '[4]'
+  infer_batch_size: 1
+reference:
+  keep_states_on_device: true
+  model_args:
+    dtype: bf16
+    attn_implementation: sdpa
+    device_map: cuda:0
+  data_args:
+    template: native
+  strategy_args:
+    strategy_name: hf_infer
+  device_mapping: '[5]'
+  infer_batch_size: 1
+validation:
+  data_args:
+    template: native
+    file_name:
+    - ${oc.env:BP_EXPORT_DIR}/validation.jsonl
+    preprocessing_num_workers: 1
+  generating_args:
+    max_new_tokens: 1024
+    temperature: 0.8
+    top_p: 1.0
+    top_k: -1
+    repetition_penalty: 1.0
+    num_return_sequences: 4
+  eval_steps: 10
+rewards:
+  social_bp:
+    worker_cls: training.b_sft.social_bp_reward_worker.SocialBPRewardWorker
+    model_args:
+      model_name_or_path: ${pretrain}
+    tag_included:
+    - social_bp
+    world_size: 2
+    infer_batch_size: 1
+    query_filter_config:
+      type: no_filter
+    response_length_penalty_coef: 0.0
+deepspeed_zero2:
+  zero_optimization:
+    allgather_bucket_size: 50000000
+    reduce_bucket_size: 50000000
+social_bp_curriculum: true

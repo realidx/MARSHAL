@@ -1,0 +1,12 @@
+defaults:
+- grpo_two_a100
+- _self_
+exp_name: social_bp_megatron_two_a100_preflight
+max_steps: 2
+save_steps: 1
+bp_two_gpu_preflight: true
+val_batch_size: 4
+validation:
+  data_args:
+    file_name:
+    - ${oc.env:BP_EXPORT_DIR}/smoke_validation.jsonl

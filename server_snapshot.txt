@@ -1,0 +1,382 @@
+===== BASIC =====
+Tue 08 Sep 2026 03:37:07 AM EDT
+ubuntu
+Linux ubuntu 5.4.0-216-generic #236-Ubuntu SMP Fri Apr 11 19:53:21 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+
+===== CPU / RAM =====
+CPU(s):                             256
+On-line CPU(s) list:                0-255
+Thread(s) per core:                 2
+Core(s) per socket:                 64
+Socket(s):                          2
+NUMA node(s):                       8
+Model name:                         AMD EPYC 7742 64-Core Processor
+NUMA node0 CPU(s):                  0-15,128-143
+NUMA node1 CPU(s):                  16-31,144-159
+NUMA node2 CPU(s):                  32-47,160-175
+NUMA node3 CPU(s):                  48-63,176-191
+NUMA node4 CPU(s):                  64-79,192-207
+NUMA node5 CPU(s):                  80-95,208-223
+NUMA node6 CPU(s):                  96-111,224-239
+NUMA node7 CPU(s):                  112-127,240-255
+              total        used        free      shared  buff/cache   available
+Mem:          1.0Ti        69Gi        17Gi       4.7Gi       920Gi       928Gi
+Swap:            0B          0B          0B
+
+===== STORAGE =====
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/md0        1.8T  1.7T   15G 100% /
+/dev/md1         14T   12T  1.7T  88% /raid
+
+===== GPU SUMMARY =====
+Tue Sep  8 03:37:07 2026       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 470.256.02   Driver Version: 470.256.02   CUDA Version: 11.4     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  NVIDIA A100-SXM...  On   | 00000000:07:00.0 Off |                    0 |
+| N/A   51C    P0   322W / 400W |  25157MiB / 40536MiB |    100%      Default |
+|                               |                      |             Disabled |
++-------------------------------+----------------------+----------------------+
+|   1  NVIDIA A100-SXM...  On   | 00000000:0F:00.0 Off |                    0 |
+| N/A   48C    P0   247W / 400W |  23253MiB / 40536MiB |    100%      Default |
+|                               |                      |             Disabled |
++-------------------------------+----------------------+----------------------+
+|   2  NVIDIA A100-SXM...  On   | 00000000:47:00.0 Off |                    0 |
+| N/A   49C    P0   278W / 400W |  22995MiB / 40536MiB |    100%      Default |
+|                               |                      |             Disabled |
++-------------------------------+----------------------+----------------------+
+|   3  NVIDIA A100-SXM...  On   | 00000000:4E:00.0 Off |                    0 |
+| N/A   47C    P0    92W / 400W |  22999MiB / 40536MiB |    100%      Default |
+|                               |                      |             Disabled |
++-------------------------------+----------------------+----------------------+
+|   4  NVIDIA A100-SXM...  On   | 00000000:87:00.0 Off |                    0 |
+| N/A   67C    P0   333W / 400W |  22993MiB / 40536MiB |    100%      Default |
+|                               |                      |             Disabled |
++-------------------------------+----------------------+----------------------+
+|   5  NVIDIA A100-SXM...  On   | 00000000:90:00.0 Off |                    0 |
+| N/A   61C    P0   204W / 400W |  22999MiB / 40536MiB |    100%      Default |
+|                               |                      |             Disabled |
++-------------------------------+----------------------+----------------------+
+|   6  NVIDIA A100-SXM...  On   | 00000000:B7:00.0 Off |                    0 |
+| N/A   58C    P0    97W / 400W |  22997MiB / 40536MiB |    100%      Default |
+|                               |                      |             Disabled |
++-------------------------------+----------------------+----------------------+
+|   7  NVIDIA A100-SXM...  On   | 00000000:BD:00.0 Off |                    0 |
+| N/A   65C    P0   275W / 400W |  22853MiB / 40536MiB |    100%      Default |
+|                               |                      |             Disabled |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|    0   N/A  N/A   3824356      C   ...nvs/ip_ttt_djh/bin/python    25154MiB |
+|    1   N/A  N/A   3824358      C   ...nvs/ip_ttt_djh/bin/python    23250MiB |
+|    2   N/A  N/A   3824360      C   ...nvs/ip_ttt_djh/bin/python    22992MiB |
+|    3   N/A  N/A   3824363      C   ...nvs/ip_ttt_djh/bin/python    22996MiB |
+|    4   N/A  N/A   3824365      C   ...nvs/ip_ttt_djh/bin/python    22990MiB |
+|    5   N/A  N/A   3824366      C   ...nvs/ip_ttt_djh/bin/python    22996MiB |
+|    6   N/A  N/A   3824367      C   ...nvs/ip_ttt_djh/bin/python    22994MiB |
+|    7   N/A  N/A   3824368      C   ...nvs/ip_ttt_djh/bin/python    22850MiB |
++-----------------------------------------------------------------------------+
+
+===== GPU MACHINE-READABLE =====
+index, name, memory.total [MiB], memory.used [MiB], memory.free [MiB], utilization.gpu [%], utilization.memory [%], power.draw [W], power.limit [W]
+0, NVIDIA A100-SXM4-40GB, 40536 MiB, 25157 MiB, 15379 MiB, 100 %, 27 %, 227.29 W, 400.00 W
+1, NVIDIA A100-SXM4-40GB, 40536 MiB, 23253 MiB, 17283 MiB, 100 %, 19 %, 297.92 W, 400.00 W
+2, NVIDIA A100-SXM4-40GB, 40536 MiB, 22995 MiB, 17541 MiB, 100 %, 14 %, 322.18 W, 400.00 W
+3, NVIDIA A100-SXM4-40GB, 40536 MiB, 22999 MiB, 17537 MiB, 100 %, 19 %, 283.04 W, 400.00 W
+4, NVIDIA A100-SXM4-40GB, 40536 MiB, 22993 MiB, 17543 MiB, 100 %, 35 %, 252.34 W, 400.00 W
+5, NVIDIA A100-SXM4-40GB, 40536 MiB, 22999 MiB, 17537 MiB, 100 %, 40 %, 287.43 W, 400.00 W
+6, NVIDIA A100-SXM4-40GB, 40536 MiB, 22997 MiB, 17539 MiB, 100 %, 24 %, 232.59 W, 400.00 W
+7, NVIDIA A100-SXM4-40GB, 40536 MiB, 22853 MiB, 17683 MiB, 99 %, 34 %, 288.02 W, 400.00 W
+
+===== GPU PROCESSES =====
+gpu_uuid, pid, used_gpu_memory [MiB]
+GPU-8cc6b384-4ad0-20ec-557b-b2b3a4272ce0, 3824356, 25154 MiB
+GPU-80683d13-ba16-efce-98b9-3fb6ec829f09, 3824358, 23250 MiB
+GPU-7e320d69-d340-c6e8-d4c5-519fcade699e, 3824360, 22992 MiB
+GPU-dae44ed5-3dca-2e16-ef3e-84df065214f5, 3824363, 22996 MiB
+GPU-17b80e39-e0c5-be94-1398-bea5a89148c3, 3824365, 22990 MiB
+GPU-470876fd-4991-973a-5823-8959f9e02205, 3824366, 22996 MiB
+GPU-c15666a5-95f0-0f31-224d-e56575c99a45, 3824367, 22994 MiB
+GPU-29e8001c-f77b-01bc-e537-284840992ee4, 3824368, 22850 MiB
+
+===== GPU TOPOLOGY =====
+	[4mGPU0	GPU1	GPU2	GPU3	GPU4	GPU5	GPU6	GPU7	mlx5_0	mlx5_1	mlx5_2	mlx5_3	mlx5_4	mlx5_5	mlx5_6	mlx5_7	mlx5_8	mlx5_9	CPU Affinity	NUMA Affinity[0m
+GPU0	 X 	NV12	NV12	NV12	NV12	NV12	NV12	NV12	PXB	PXB	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	48-63,176-191	3
+GPU1	NV12	 X 	NV12	NV12	NV12	NV12	NV12	NV12	PXB	PXB	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	48-63,176-191	3
+GPU2	NV12	NV12	 X 	NV12	NV12	NV12	NV12	NV12	SYS	SYS	PXB	PXB	SYS	SYS	SYS	SYS	SYS	SYS	16-31,144-159	1
+GPU3	NV12	NV12	NV12	 X 	NV12	NV12	NV12	NV12	SYS	SYS	PXB	PXB	SYS	SYS	SYS	SYS	SYS	SYS	16-31,144-159	1
+GPU4	NV12	NV12	NV12	NV12	 X 	NV12	NV12	NV12	SYS	SYS	SYS	SYS	PXB	PXB	SYS	SYS	SYS	SYS	112-127,240-255	7
+GPU5	NV12	NV12	NV12	NV12	NV12	 X 	NV12	NV12	SYS	SYS	SYS	SYS	PXB	PXB	SYS	SYS	SYS	SYS	112-127,240-255	7
+GPU6	NV12	NV12	NV12	NV12	NV12	NV12	 X 	NV12	SYS	SYS	SYS	SYS	SYS	SYS	PXB	PXB	SYS	SYS	80-95,208-223	5
+GPU7	NV12	NV12	NV12	NV12	NV12	NV12	NV12	 X 	SYS	SYS	SYS	SYS	SYS	SYS	PXB	PXB	SYS	SYS	80-95,208-223	5
+mlx5_0	PXB	PXB	SYS	SYS	SYS	SYS	SYS	SYS	 X 	PXB	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS		
+mlx5_1	PXB	PXB	SYS	SYS	SYS	SYS	SYS	SYS	PXB	 X 	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS		
+mlx5_2	SYS	SYS	PXB	PXB	SYS	SYS	SYS	SYS	SYS	SYS	 X 	PXB	SYS	SYS	SYS	SYS	SYS	SYS		
+mlx5_3	SYS	SYS	PXB	PXB	SYS	SYS	SYS	SYS	SYS	SYS	PXB	 X 	SYS	SYS	SYS	SYS	SYS	SYS		
+mlx5_4	SYS	SYS	SYS	SYS	PXB	PXB	SYS	SYS	SYS	SYS	SYS	SYS	 X 	PXB	SYS	SYS	SYS	SYS		
+mlx5_5	SYS	SYS	SYS	SYS	PXB	PXB	SYS	SYS	SYS	SYS	SYS	SYS	PXB	 X 	SYS	SYS	SYS	SYS		
+mlx5_6	SYS	SYS	SYS	SYS	SYS	SYS	PXB	PXB	SYS	SYS	SYS	SYS	SYS	SYS	 X 	PXB	SYS	SYS		
+mlx5_7	SYS	SYS	SYS	SYS	SYS	SYS	PXB	PXB	SYS	SYS	SYS	SYS	SYS	SYS	PXB	 X 	SYS	SYS		
+mlx5_8	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	 X 	PIX		
+mlx5_9	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	SYS	PIX	 X 		
+
+Legend:
+
+  X    = Self
+  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)
+  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node
+  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)
+  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)
+  PIX  = Connection traversing at most a single PCIe bridge
+  NV#  = Connection traversing a bonded set of # NVLinks
+
+===== DRIVER =====
+NVRM version: NVIDIA UNIX x86_64 Kernel Module  470.256.02  Thu May  2 14:37:44 UTC 2024
+GCC version:  
+
+===== CUDA TOOLKIT =====
+/home/chenjiahao/cuda-11.8/bin/nvcc
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2022 NVIDIA Corporation
+Built on Wed_Sep_21_10:33:58_PDT_2022
+Cuda compilation tools, release 11.8, V11.8.89
+Build cuda_11.8.r11.8/compiler.31833905_0
+
+===== CONDA =====
+/raid/chenjiahao/miniconda3/condabin/conda
+conda 26.3.2
+
+===== ACTIVE PYTHON =====
+/raid/chenjiahao/conda_envs/mas/bin/python
+Python 3.11.16
+
+===== PYTORCH / CUDA =====
+torch: 2.5.1+cu118
+torch cuda: 11.8
+cuda available: True
+gpu count: 8
+0 NVIDIA A100-SXM4-40GB total_memory_GB= 39.59
+1 NVIDIA A100-SXM4-40GB total_memory_GB= 39.59
+2 NVIDIA A100-SXM4-40GB total_memory_GB= 39.59
+3 NVIDIA A100-SXM4-40GB total_memory_GB= 39.59
+4 NVIDIA A100-SXM4-40GB total_memory_GB= 39.59
+5 NVIDIA A100-SXM4-40GB total_memory_GB= 39.59
+6 NVIDIA A100-SXM4-40GB total_memory_GB= 39.59
+7 NVIDIA A100-SXM4-40GB total_memory_GB= 39.59
+
+===== ML LIBRARIES =====
+transformers 4.57.3
+accelerate NOT AVAILABLE ModuleNotFoundError
+deepspeed NOT AVAILABLE ModuleNotFoundError
+peft NOT AVAILABLE ModuleNotFoundError
+trl NOT AVAILABLE ModuleNotFoundError
+flash_attn NOT AVAILABLE ModuleNotFoundError
+vllm NOT AVAILABLE ModuleNotFoundError
+
+===== DISTRIBUTED SUPPORT =====
+distributed available: True
+NCCL available: True
+Gloo available: True
+
+===== SELECTED DISTRIBUTED ENV =====
+CUDA_VISIBLE_DEVICES=unset
+
+===== NETWORK / IB =====
+/usr/sbin/ibstat
+CA 'mlx5_0'
+	CA type: MT4123
+	Number of ports: 1
+	Firmware version: 20.31.1014
+	Hardware version: 0
+	Node GUID: 0xb8cef60300633c68
+	System image GUID: 0xb8cef60300633c68
+	Port 1:
+		State: Down
+		Physical state: Disabled
+		Rate: 10
+		Base lid: 65535
+		LMC: 0
+		SM lid: 0
+		Capability mask: 0x2651e848
+		Port GUID: 0xb8cef60300633c68
+		Link layer: InfiniBand
+CA 'mlx5_1'
+	CA type: MT4123
+	Number of ports: 1
+	Firmware version: 20.31.1014
+	Hardware version: 0
+	Node GUID: 0xb8cef60300633c78
+	System image GUID: 0xb8cef60300633c78
+	Port 1:
+		State: Down
+		Physical state: Disabled
+		Rate: 10
+		Base lid: 65535
+		LMC: 0
+		SM lid: 0
+		Capability mask: 0x2651e848
+		Port GUID: 0xb8cef60300633c78
+		Link layer: InfiniBand
+CA 'mlx5_2'
+	CA type: MT4123
+	Number of ports: 1
+	Firmware version: 20.31.1014
+	Hardware version: 0
+	Node GUID: 0xb8cef60300633c5c
+	System image GUID: 0xb8cef60300633c5c
+	Port 1:
+		State: Down
+		Physical state: Disabled
+		Rate: 10
+		Base lid: 65535
+		LMC: 0
+		SM lid: 0
+		Capability mask: 0x2651e848
+		Port GUID: 0xb8cef60300633c5c
+		Link layer: InfiniBand
+CA 'mlx5_3'
+	CA type: MT4123
+	Number of ports: 1
+	Firmware version: 20.31.1014
+	Hardware version: 0
+	Node GUID: 0xb8cef60300632fe8
+	System image GUID: 0xb8cef60300632fe8
+	Port 1:
+		State: Down
+		Physical state: Disabled
+		Rate: 10
+		Base lid: 65535
+		LMC: 0
+		SM lid: 0
+		Capability mask: 0x2651e848
+		Port GUID: 0xb8cef60300632fe8
+		Link layer: InfiniBand
+CA 'mlx5_4'
+	CA type: MT4123
+	Number of ports: 1
+	Firmware version: 20.31.1014
+	Hardware version: 0
+	Node GUID: 0xb8cef6030063359c
+	System image GUID: 0xb8cef6030063359c
+	Port 1:
+		State: Down
+		Physical state: Disabled
+		Rate: 10
+		Base lid: 65535
+		LMC: 0
+		SM lid: 0
+		Capability mask: 0x2651e848
+		Port GUID: 0xb8cef6030063359c
+		Link layer: InfiniBand
+CA 'mlx5_5'
+	CA type: MT4123
+	Number of ports: 1
+	Firmware version: 20.31.1014
+	Hardware version: 0
+	Node GUID: 0xb8cef603006330c4
+	System image GUID: 0xb8cef603006330c4
+	Port 1:
+		State: Down
+		Physical state: Disabled
+		Rate: 10
+		Base lid: 65535
+		LMC: 0
+		SM lid: 0
+		Capability mask: 0x2651e848
+		Port GUID: 0xb8cef603006330c4
+		Link layer: InfiniBand
+CA 'mlx5_6'
+	CA type: MT4123
+	Number of ports: 1
+	Firmware version: 20.31.1014
+	Hardware version: 0
+	Node GUID: 0xb8cef60300633c74
+	System image GUID: 0xb8cef60300633c74
+	Port 1:
+		State: Down
+		Physical state: Disabled
+		Rate: 10
+		Base lid: 65535
+		LMC: 0
+		SM lid: 0
+		Capability mask: 0x2651e848
+		Port GUID: 0xb8cef60300633c74
+		Link layer: InfiniBand
+CA 'mlx5_7'
+	CA type: MT4123
+	Number of ports: 1
+	Firmware version: 20.31.1014
+	Hardware version: 0
+	Node GUID: 0xb8cef603007d81ba
+	System image GUID: 0xb8cef603007d81ba
+	Port 1:
+		State: Down
+		Physical state: Disabled
+		Rate: 10
+		Base lid: 65535
+		LMC: 0
+		SM lid: 0
+		Capability mask: 0x2651e848
+		Port GUID: 0xb8cef603007d81ba
+		Link layer: InfiniBand
+CA 'mlx5_8'
+	CA type: MT4123
+	Number of ports: 1
+	Firmware version: 20.31.1014
+	Hardware version: 0
+	Node GUID: 0xb8cef603002d1566
+	System image GUID: 0xb8cef603002d1566
+	Port 1:
+		State: Down
+		Physical state: Disabled
+		Rate: 40
+		Base lid: 0
+		LMC: 0
+		SM lid: 0
+		Capability mask: 0x00010000
+		Port GUID: 0xbacef6fffe2d1566
+		Link layer: Ethernet
+CA 'mlx5_9'
+	CA type: MT4123
+	Number of ports: 1
+	Firmware version: 20.31.1014
+	Hardware version: 0
+	Node GUID: 0xb8cef603002d1567
+	System image GUID: 0xb8cef603002d1566
+	Port 1:
+		State: Down
+		Physical state: Disabled
+		Rate: 40
+		Base lid: 0
+		LMC: 0
+		SM lid: 0
+		Capability mask: 0x00010000
+		Port GUID: 0xbacef6fffe2d1567
+		Link layer: Ethernet
+
+===== LIMITS =====
+core file size          (blocks, -c) 0
+data seg size           (kbytes, -d) unlimited
+scheduling priority             (-e) 0
+file size               (blocks, -f) unlimited
+pending signals                 (-i) 4127032
+max locked memory       (kbytes, -l) unlimited
+max memory size         (kbytes, -m) unlimited
+open files                      (-n) 500000
+pipe size            (512 bytes, -p) 8
+POSIX message queues     (bytes, -q) 819200
+real-time priority              (-r) 0
+stack size              (kbytes, -s) 8192
+cpu time               (seconds, -t) unlimited
+max user processes              (-u) 4127032
+virtual memory          (kbytes, -v) unlimited
+file locks                      (-x) unlimited
+

@@ -1,0 +1,204 @@
+{
+  "version": "selfplay-audit-v2",
+  "banks": {
+    "old_train": {
+      "count": 60,
+      "geometries": 4,
+      "indexed_game_worlds": 60,
+      "counts": {
+        "players": {
+          "2": 40,
+          "3": 20
+        },
+        "rounds": {
+          "2": 24,
+          "3": 18,
+          "4": 12,
+          "5": 6
+        },
+        "completion": {
+          "linear": 20,
+          "mixed": 20,
+          "binary": 20
+        },
+        "prior_values": {
+          "[0, 1]": 20,
+          "[-1, 0, 1]": 40
+        },
+        "difficulty_hint": {
+          "D1": 16,
+          "D2": 22,
+          "D3": 22
+        },
+        "realized_payoff_pattern": {
+          "no_within_goal_opposition": 32,
+          "opposed_on_some_goals": 28
+        }
+      }
+    },
+    "validation": {
+      "count": 12,
+      "geometries": 2,
+      "indexed_game_worlds": 12,
+      "counts": {
+        "players": {
+          "2": 8,
+          "3": 4
+        },
+        "rounds": {
+          "2": 5,
+          "3": 4,
+          "4": 2,
+          "5": 1
+        },
+        "completion": {
+          "linear": 4,
+          "mixed": 4,
+          "binary": 4
+        },
+        "prior_values": {
+          "[0, 1]": 4,
+          "[-1, 0, 1]": 8
+        },
+        "difficulty_hint": {
+          "D1": 3,
+          "D2": 6,
+          "D3": 3
+        },
+        "realized_payoff_pattern": {
+          "no_within_goal_opposition": 7,
+          "opposed_on_some_goals": 5
+        }
+      }
+    },
+    "test": {
+      "count": 12,
+      "geometries": 2,
+      "indexed_game_worlds": 12,
+      "counts": {
+        "players": {
+          "2": 8,
+          "3": 4
+        },
+        "rounds": {
+          "2": 5,
+          "3": 4,
+          "4": 2,
+          "5": 1
+        },
+        "completion": {
+          "linear": 4,
+          "mixed": 4,
+          "binary": 4
+        },
+        "prior_values": {
+          "[0, 1]": 4,
+          "[-1, 0, 1]": 8
+        },
+        "difficulty_hint": {
+          "D2": 9,
+          "D3": 3
+        },
+        "realized_payoff_pattern": {
+          "no_within_goal_opposition": 8,
+          "opposed_on_some_goals": 4
+        }
+      }
+    },
+    "candidate_train": {
+      "count": 36,
+      "geometries": 15,
+      "indexed_game_worlds": 36,
+      "counts": {
+        "players": {
+          "2": 24,
+          "3": 12
+        },
+        "rounds": {
+          "2": 12,
+          "3": 6,
+          "4": 12,
+          "5": 6
+        },
+        "completion": {
+          "binary": 12,
+          "linear": 12,
+          "mixed": 12
+        },
+        "prior_values": {
+          "[0, 1]": 18,
+          "[-1, 0, 1]": 18
+        },
+        "difficulty_hint": {
+          "D1": 6,
+          "D2": 6,
+          "D3": 24
+        },
+        "realized_payoff_pattern": {
+          "no_within_goal_opposition": 20,
+          "opposed_on_some_goals": 16
+        }
+      }
+    }
+  },
+  "geometry_overlap": {
+    "old_train/validation": [],
+    "old_train/test": [],
+    "old_train/candidate_train": [
+      "c5c9c4142c100f7f"
+    ],
+    "validation/test": [],
+    "validation/candidate_train": [],
+    "test/candidate_train": []
+  },
+  "old_source": "curriculum.py SELECTION: six chosen named templates; foundation=linear/[0,1], adaptation=mixed/[-1,0,1], tradeoffs=binary/[-1,0,1]. Random hidden worlds and round permutations do not make these independently generated random geometries.",
+  "structural_key": "Permutation-invariant player/action/goal incidence, including action counts. Ignores scoring, preferences, rounds. Shared structure is dependence, not automatically leaked answers.",
+  "probe": {
+    "resets": 16,
+    "train": 12,
+    "validation": 4,
+    "replicas": 4,
+    "full_games": 64,
+    "concurrency_per_endpoint": 16,
+    "max_tokens": 1024
+  },
+  "seed": 20260916,
+  "files": {
+    "train_candidate.jsonl": {
+      "count": 36,
+      "sha256": "95bd42a069c61a5fce993fcd8b11fb1a85105c59738f430f6256fcedf8986df8"
+    },
+    "probe_resets.jsonl": {
+      "count": 16,
+      "sha256": "ed76f25e3904e48490225cb43455502b2318fcfcb58f64aea4cd6f87be385afc"
+    },
+    "old_classification.jsonl": {
+      "count": 84,
+      "sha256": "d064a16b965a9face5b8e2f956c2ed471e4d97f0ead5f654d41ffc87358a5f23"
+    },
+    "candidate_classification.jsonl": {
+      "count": 36,
+      "sha256": "c9c95bc318f6743d6b8fc269bfc8d994b22dfcfbc176eb25a31d2fd61b44b10f"
+    },
+    "probe_classification.jsonl": {
+      "count": 16,
+      "sha256": "07c4565a73c52dc30a3921737e5b8deb749a5f4640f3f5ec141b92c3e2deece6"
+    },
+    "generation_attempts.jsonl": {
+      "count": 36,
+      "sha256": "ff37b72898021274fcd1e285288eed6f8cbb03f86b1454710ae803ca75fe9866"
+    }
+  },
+  "training_ready": false,
+  "model_tested": false,
+  "merged": false,
+  "test_sampled": false,
+  "generation": "Native random game generator; legal zero state, no solver call. Only exclude existing heldout geometry from new train. Duplicate new train geometries retained and reported, not outcome-filtered.",
+  "source_hashes": {
+    "examples/social_mixed/data/selfplay_train.jsonl": "7d0305442b81889af0d8639147ac4d0fc8c15349792ceec0ab6c8ad18430fd50",
+    "examples/social_mixed/data/selfplay_validation.jsonl": "8399f97635a5032fad07a0340fd9fb1ce56dca2f54094a4cfbb75922553d6a47",
+    "runs/outcome_selfplay_screen/eval_splits.json": "0dad6c77237b707c530637d5d5c30d39a76624455dd5533d2582e79e5c612829",
+    "runs/outcome_selfplay_screen/curriculum.py": "c87bd43327637cd00a49684a7204521d282a8bc9cd0dd41919194282e545e797",
+    "training/social_mixed/frozen/benac_p/generator.py": "17726984e2ca9860397db46c8d3744861f9d10faeaafafefd0363fed2ebbba9d"
+  }
+}

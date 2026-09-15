@@ -1,0 +1,185 @@
+# Standalone B/P Megatron TP=2 configuration; no DeepSpeed config inheritance.
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+exp_name: social_bp_megatron_two_a100_v1
+seed: 20260915
+output_dir: ${oc.env:BP_RUN_DIR}
+logging_dir: ${output_dir}/logs
+track_with: stdout
+checkpoint_config:
+  type: file_system
+  async_upload: false
+  raise_on_error: true
+  use_hardlinks: true
+  save_final: true
+  verify_deepspeed_checkpoint: false
+  output_dir: ${output_dir}/checkpoints
+  verify_megatron_checkpoint: true
+num_gpus_per_node: 2
+max_steps: 30
+expected_actor_optimizer_steps_per_rollout: 1
+save_steps: 10
+eval_steps: 10
+logging_steps: 1
+resume_from_checkpoint: false
+evaluate_final_model: true
+social_b_curriculum: false
+rollout_batch_size: 16
+val_batch_size: 67
+prompt_length: 2048
+response_length: 1024
+num_return_sequences_in_group: 8
+generate_opt_level: 1
+is_num_return_sequences_expand: true
+max_running_requests: 16
+is_use_additional_prompts: false
+ppo_epochs: 1
+adv_estimator: grpo
+pg_clip: 0.2
+whiten_advantages: false
+reward_shift: false
+reward_norm: null
+reward_clip: 10.0
+max_len_mask: false
+difficulty_mask: false
+error_max_len_clip: false
+use_kl_loss: true
+kl_loss_coef: 0.01
+init_kl_coef: 0.0
+add_token_level_kl: false
+sft_loss_coef: 0.0
+entropy_loss_coef: 0.0
+loss_agg_mode: seq-mean-token-mean
+pretrain: ${oc.env:BP_MODEL}
+system_envs:
+  NCCL_CUMEM_ENABLE: '0'
+  NCCL_NVLS_ENABLE: '0'
+  ROLL_LOCAL_COMM_ADDR: 127.0.0.1
+  GLOO_SOCKET_IFNAME: lo
+  NCCL_SOCKET_IFNAME: lo
+  VLLM_USE_V1: '0'
+  VLLM_ATTENTION_BACKEND: XFORMERS
+  OMP_NUM_THREADS: '4'
+  OPENBLAS_NUM_THREADS: '2'
+  PYTHONPATH: ${oc.env:PYTHONPATH}
+  BP_STARTUP_DIAGNOSTICS: '1'
+  BP_DIAGNOSTICS_DIR: ${output_dir}
+  CUDA_DEVICE_MAX_CONNECTIONS: '1'
+  CUDA_HOME: /home/chenjiahao/cuda-11.8
+  LD_LIBRARY_PATH: ${oc.env:LD_LIBRARY_PATH}
+  LD_PRELOAD: ${oc.env:LD_PRELOAD}
+  NCCL_LIBRARY: ${oc.env:NCCL_LIBRARY}
+  TRITON_PTXAS_PATH: /home/chenjiahao/cuda-11.8/bin/ptxas
+  PYTORCH_CUDA_ALLOC_CONF: expandable_segments:False
+actor_train:
+  keep_states_on_device: false
+  model_args:
+    attn_implementation: sdpa
+    disable_gradient_checkpointing: false
+    dtype: bf16
+  training_args:
+    optimizer_backend: megatron
+    learning_rate: 1.0e-06
+    weight_decay: 0.0
+    per_device_train_batch_size: 1
+    gradient_accumulation_steps: 128
+    warmup_steps: 5
+    warmup_ratio: 0.0
+    lr_scheduler_type: constant_with_warmup
+    lr_scheduler_kwargs:
+      lr_decay_steps: 30
+  data_args:
+    template: native
+    file_name:
+    - ${oc.env:BP_EXPORT_DIR}/train.jsonl
+    domain_interleave_probs:
+      social_bp: 1.0
+    preprocessing_num_workers: 1
+  strategy_args:
+    strategy_name: megatron_train
+    strategy_config:
+      sequence_parallel: true
+      tensor_model_parallel_size: 2
+      pipeline_model_parallel_size: 1
+      expert_model_parallel_size: 1
+      use_distributed_optimizer: true
+      recompute_granularity: full
+      accumulate_allreduce_grads_in_fp32: true
+      check_for_nan_in_loss_and_grad: false
+      overlap_param_gather: false
+      overlap_grad_reduce: false
+  device_mapping: '[0,1]'
+  infer_batch_size: 1
+  system_envs: ${system_envs}
+actor_infer:
+  model_args:
+    dtype: bf16
+  generating_args:
+    max_new_tokens: 1024
+    temperature: 0.8
+    top_p: 1.0
+    top_k: -1
+    repetition_penalty: 1.0
+    num_beams: 1
+    num_return_sequences: 8
+  data_args:
+    template: native
+  strategy_args:
+    strategy_name: vllm
+    strategy_config:
+      engine_mode: sync
+      tensor_parallel_size: 1
+      gpu_memory_utilization: 0.65
+      max_model_len: 3072
+      enforce_eager: false
+      enable_prefix_caching: false
+      enable_sleep_mode: true
+      distributed_executor_backend: ray
+      sleep_level: 1
+      max_num_seqs: 16
+  device_mapping: '[0,1]'
+  infer_batch_size: 1
+  system_envs: ${system_envs}
+reference:
+  keep_states_on_device: false
+  model_args:
+    dtype: bf16
+    attn_implementation: sdpa
+    device_map: cuda:0
+  data_args:
+    template: native
+  strategy_args:
+    strategy_name: hf_infer
+  device_mapping: '[0,1]'
+  infer_batch_size: 1
+  system_envs: ${system_envs}
+validation:
+  data_args:
+    template: native
+    file_name:
+    - ${oc.env:BP_EXPORT_DIR}/validation.jsonl
+    preprocessing_num_workers: 1
+  generating_args:
+    max_new_tokens: 1024
+    temperature: 0.8
+    top_p: 1.0
+    top_k: -1
+    repetition_penalty: 1.0
+    num_return_sequences: 4
+  eval_steps: 10
+rewards:
+  social_bp:
+    worker_cls: training.b_sft.social_bp_reward_worker.SocialBPRewardWorker
+    model_args:
+      model_name_or_path: ${pretrain}
+    tag_included:
+    - social_bp
+    world_size: 2
+    infer_batch_size: 1
+    query_filter_config:
+      type: no_filter
+    response_length_penalty_coef: 0.0
+social_bp_curriculum: true
+bp_two_gpu_preflight: false

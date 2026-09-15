@@ -61,6 +61,12 @@ class ActorWorker(Worker):
     def initialize(self, pipeline_config):
         super().initialize(pipeline_config)
 
+        if (getattr(pipeline_config, 'social_bp_curriculum', False)
+                and pipeline_config.num_gpus_per_node == 2):
+            from training.b_sft.prepare_b_grpo_nccl import verify_loaded_library
+            loaded = verify_loaded_library(os.environ['NCCL_LIBRARY'])
+            self.logger.info(f'Using private NCCL from completed B training: {loaded}')
+
         if self.worker_config.device_mapping:
             device_count = torch.cuda.device_count()
             self.logger.info(
@@ -77,20 +83,37 @@ class ActorWorker(Worker):
 
         self.strategy = create_strategy(worker=self)
 
-        self.strategy.initialize(model_provider=default_actor_model_provider)
+        from training.b_sft.bp_startup import startup_phase
+        with startup_phase(pipeline_config, 'strategy_initialize'):
+            self.strategy.initialize(model_provider=default_actor_model_provider)
         self.tokenizer = self.strategy.tokenizer
         if self.pipeline_config.resume_from_checkpoint:
             load_dir = self.pipeline_config.resume_from_checkpoint
-            self.strategy.load_checkpoint(load_dir=load_dir, tag="checkpoint")
+            with startup_phase(pipeline_config, 'checkpoint_restore'):
+                self.strategy.load_checkpoint(load_dir=load_dir, tag="checkpoint")
         self.logger.info(f"{self.worker_name} initialized")
 
-        self.strategy.offload_states()
+        with startup_phase(pipeline_config, 'initial_state_offload'):
+            self.strategy.offload_states()
 
         # Cuda must have been initialized when calling torch.cuda.reset_max_memory_allocated
         # with arguments (inside state_offload_manager). We explicitly init cuda here because
         # current process is used as engine client when using vllm v1 engine, and
         # there is no chance to init cuda context.
         torch.cuda.init()
+
+    def bp_training_witness(self):
+        from training.b_sft.bp_training_probe import worker_witness
+        if self.worker_config.strategy_args.strategy_name == 'vllm':
+            self.strategy.load_states()
+            try:
+                results = self.strategy.model.collective_rpc(method='bp_training_witness')
+                if len(results) != 1:
+                    raise RuntimeError('Weight witness requires TP=1')
+                return results[0]
+            finally:
+                self.strategy.offload_states()
+        return worker_witness(self.strategy)
 
     @register(dispatch_mode=Dispatch.DP_MP_DISPATCH_FIRST)
     def train_step(self, data: DataProto):
@@ -123,6 +146,10 @@ class ActorWorker(Worker):
             )
 
             optimizer_steps = 0
+            bp_verify_updates = getattr(self.pipeline_config, 'social_bp_curriculum', False)
+            if bp_verify_updates:
+                from training.b_sft.bp_training_probe import optimizer_step_count
+                engine_steps_before = optimizer_step_count(self.strategy)
             for batch_idx, data in tqdm(
                 enumerate(dataloader),
                 desc=f"{self.worker_name} train global step {global_step}",
@@ -151,6 +178,11 @@ class ActorWorker(Worker):
 
             metrics["actor/lr"] = self.strategy.scheduler.get_last_lr()[0]
             metrics["actor/optimizer_steps_per_rollout"] = float(optimizer_steps)
+            if bp_verify_updates:
+                actual_updates = optimizer_step_count(self.strategy)-engine_steps_before
+                if actual_updates != expected_optimizer_steps:
+                    raise RuntimeError(f'Actual optimizer updates {actual_updates} differ from expected {expected_optimizer_steps}')
+                metrics['actor/actual_optimizer_updates'] = float(actual_updates)
             data.to("cpu")
 
         output = DataProto(meta_info={"metrics": metrics})
@@ -179,7 +211,7 @@ class ActorWorker(Worker):
 
         generation_config["eos_token_id"] = [
             self.tokenizer.eos_token_id
-        ] + self.tokenizer.additional_special_tokens_ids
+        ] + ([] if "tools" in data.non_tensor_batch else self.tokenizer.additional_special_tokens_ids)
         generation_config["pad_token_id"] = self.tokenizer.pad_token_id
 
         global_step = data.meta_info.get("global_step", 0)
@@ -339,12 +371,15 @@ class ActorWorker(Worker):
         clipped_high = (ratio > 1 + self.pipeline_config.pg_clip_high).float()
         clipped = (clipped_low + clipped_high).float()
 
-        entropy = self.strategy.op_compute_entropy(logits=output_tensor, attention_mask=data.batch["response_mask"])
-        entropy_loss = agg_loss(
-            loss_mat=entropy,
-            loss_mask=response_mask,
-            loss_agg_mode=self.pipeline_config.loss_agg_mode,
-        )
+        # Entropy is not reported below and contributes nothing when its coefficient is zero.
+        # Avoid constructing an unused full-vocabulary softmax/autograd graph.
+        if self.pipeline_config.entropy_loss_coef > 0:
+            entropy = self.strategy.op_compute_entropy(logits=output_tensor, attention_mask=data.batch["response_mask"])
+            entropy_loss = agg_loss(
+                loss_mat=entropy,
+                loss_mask=response_mask,
+                loss_agg_mode=self.pipeline_config.loss_agg_mode,
+            )
 
         if self.pipeline_config.use_kl_loss:
             total_loss = pg_loss + kl_loss * self.pipeline_config.kl_loss_coef
@@ -417,7 +452,7 @@ class ActorWorker(Worker):
                 generation_config = data.meta_info["generation_config"]
             generation_config["eos_token_id"] = [
                 self.tokenizer.eos_token_id
-            ] + self.tokenizer.additional_special_tokens_ids
+            ] + ([] if "tools" in data.non_tensor_batch else self.tokenizer.additional_special_tokens_ids)
             generation_config["pad_token_id"] = self.tokenizer.pad_token_id
             data.meta_info["generation_config"] = generation_config
             self.response_call_back_fns[data.meta_info["request_id"]] = data.meta_info.pop("response_callback_fn")

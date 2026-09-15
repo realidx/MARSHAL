@@ -117,6 +117,7 @@ class RationalPartner:
                 chosen=decision.legal_actions[0]
                 self.cache[key]=chosen
                 self.labels[key]=dict(best_terminal_value=next(iter(values)),actions=len(decision.legal_actions),
+                                      optimal_actions=[a.to_dict() for a in decision.legal_actions],
                                       certificate='own terminal payoff constant over every commitment completion')
                 return chosen
         search_key = (player, decision.own_preferences)
@@ -151,7 +152,8 @@ class RationalPartner:
         preferred = immediate_reference(decision)
         chosen = preferred if best-dict(q)[preferred] < 1e-10 else next(action for action, value in q if best-value < 1e-10)
         self.cache[key] = chosen
-        self.labels[key] = dict(best_terminal_value=best, actions=len(q), posterior_worlds=len(node.worlds))
+        self.labels[key] = dict(best_terminal_value=best, actions=len(q), posterior_worlds=len(node.worlds),
+                               optimal_actions=[a.to_dict() for a,v in q if best-v<1e-10])
         return chosen
 
 

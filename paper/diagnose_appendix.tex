@@ -1,108 +1,263 @@
-\section{Diagnostic protocol and decomposition}
+\section{Native diagnostic protocol and supplementary results}
 \label{app:diagnose}
 
-\paragraph{Execution and aggregation.}
-The run uses seeds 20000--20011; 20000--20005 are the designated discovery
-bundles and 20006--20011 the designated confirmation bundles. Each bundle
-contains unknown/relevant, known, and unknown/irrelevant games, with shared
-underlying instance parameters. Action ordering and route names vary with
-seed. Responses are exhaustively enumerated under the publicly specified
-finite population, so partner-behavior sampling is not a source of variance.
-The uncertainty intervals quantify variation among six bundles within this
-selected family; neither response branches nor model requests are treated as
-independent games. Reuse of this split during prompt/interface development
-precludes interpreting the intervals as an untouched confirmatory test.
+\paragraph{Positions and oracle selection.}
+Each frozen position contains its original game specification, independent
+per-player preference catalogues, ego's preference row, a queried partner--goal
+pair and a replayable legal history. The ten positions have three players,
+two binary commitments per player, eight public goals and two scheduled
+proposal turns per player. At most three original proposal turns remain at the
+root. No preparation, assessment or automatic approval action is introduced.
+The active partner policy uses public history and its own preferences; its
+terminal best response is to the declared fixed continuation, not to an
+omniscient or equilibrium opponent.
 
-The model is instructed to briefly reason, with soft targets of 120 words for
-judgment questions and 240 for action questions. The initial request exposes
-one native submission tool with automatic tool choice. A length-stopped
-response receives exactly one additional request containing the original
-question and its generated text, followed by an instruction to submit through
-the named function without further analysis. No reference answer or corrective
-feedback is supplied. Initial truncation remains recorded even after successful
-submission. There are 517 actual requests for 486 diagnostic tasks, consuming
-146,553 completion tokens; the four preliminary checks consume another 579
-completion tokens in four requests and are excluded from the diagnostic
-statistics. Those checks use empty histories with singleton WANT, NEUTRAL,
-AVOID, and the unresolved three-label support. They test interface semantics,
-not interaction competence. Invalid outputs would not be converted to actions;
-no such outputs remained in this run.
-
-\paragraph{Regret decomposition.}
-Let $O$ denote the reference component and $L$ the evaluated model. For a
-post-response state, $R_{XY}$ uses judgment provider $X$ and planner $Y$;
-regret is evaluated under the evidence-supported reference judgment, even
-when the planner receives model judgment. The reference planner optimizes
-under the judgment actually supplied to it. Thus $R_{OO}=0$,
-$R_{OL}$ measures planning deficit with correct judgment, $R_{LO}$ measures
-judgment error's task cost under reference planning, and
-$R_{LL}-R_{OL}$ is the model-planner benefit of judgment repair.
-We average over all responses to the reference first action.
-
-For the reverse intervention, $J_{XY}$ uses initial action chooser $X$ and
-subsequent judgment updater $Y$, followed by reference planning, and reports
-expected terminal utility. The initial judgment is correct in both action
-arms. $J_{OL}-J_{LL}$ is the effect of action repair with the model updater;
-$J_{OO}-J_{OL}$ and $J_{LO}-J_{LL}$ are updater-repair effects on the reference
-and model actions, respectively. With latent configuration $Z$ and response
-$Y_a$, channel information is $H(Z)-\mathbb E[H(Z\mid Y_a,a)]$ in bits.
-This is a backend measurement, not an action-selection reward.
+For the judgment-sensitive cohort, the oracle evaluates all legal actions
+under each still-supported partner type. Admission requires an action optimal
+under one type with positive regret under another. This witnesses a
+consequential dependence on partner understanding, while allowing actions that
+are optimal under multiple types. It neither requires the model's judgment to
+be wrong nor guarantees a change when that particular judgment is repaired.
+For the action--evidence cohort, native enumeration selects the first pair of
+legal actions with different expected posterior entropy and a nonterminal next
+ego decision on every branch. ``Higher'' and ``lower'' information refer only
+to this pair, not global information extrema. The utility-optimal reference
+action is selected independently. A positive downstream value from updating a
+frozen prior is not an admission condition.
 
 \begin{table}[h]
-\caption{Two component decompositions in confirmation unknown/relevant games.
-The left table reports regret (lower is better); the right reports terminal
-utility (higher is better). Means over six bundles.}
-\label{tab:diagnose-factorial}
+\caption{Frozen native positions. D and C retain the source-seed discovery and
+confirmation labels used during development; C is not an untouched test set.
+Each direction has three games in each partition.}
+\label{tab:diagnose-positions}
 \centering
 \small
-\begin{tabular}{lrr}
+\begin{tabular}{lccc}
 \hline
-$R$: judgment / planner & Reference & Model \\
+Position identifier & Partition & $B\rightarrow P$ & $P\rightarrow B$ \\
 \hline
-Reference & 0.000 & 0.667 \\
-Model & 2.889 & 2.833 \\
-\hline
-\end{tabular}
-\quad
-\begin{tabular}{lrr}
-\hline
-$J$: chooser / updater & Reference & Model \\
-\hline
-Reference & 4.833 & 1.944 \\
-Model & 2.278 & 1.500 \\
+\texttt{native-30003-g6-d2} & C & yes & \\
+\texttt{native-30005-g0-d1} & C & yes & \\
+\texttt{native-30009-g2-d2} & C & yes & \\
+\texttt{native-30013-g6-d3} & C & & yes \\
+\texttt{native-30016-g5-d1} & D & yes & yes \\
+\texttt{native-30018-g5-d2} & D & yes & yes \\
+\texttt{native-30019-g2-d1} & C & & yes \\
+\texttt{native-30020-g5-d1} & D & yes & \\
+\texttt{native-30041-g6-d1} & C & & yes \\
+\texttt{native-30040-g6-d2} & D & & yes \\
 \hline
 \end{tabular}
 \end{table}
 
+\subsection{Worked menu example}
+\label{app:diagnose-example}
+
+In \texttt{native-30040-g6-d2}, let $x_i$ denote the already-bound $P_i.A_0$
+and $y_i$ denote $P_i.A_1$. Initially all $x_i$ are true and all $y_i$ are
+false. Table~\ref{tab:diagnose-example-goals} gives the complete game; only
+$v$, $P_2$'s preference for $G_6$, varies across the three compatible types.
+The public prefix is $P_0$ pass; a $P_1$ menu choosing between binding
+$(P_1.A_0,P_2.A_0)$ and $(P_1.A_1,P_2.A_0)$, with $P_2$ choosing the former;
+$P_2$ offering to add $P_0.A_0$, accepted by $P_0$; and $P_2$ offering to add
+$P_1.A_1$, rejected by ego. The resulting state is the example's root.
+
 \begin{table}[h]
-\caption{Matched confirmation controls. B exact and downstream regret use
-reference-action response branches. Initial regret uses correct initial B.
-Downstream indifference in the irrelevant condition is a designed control.}
-\label{tab:diagnose-controls}
+\caption{Complete goal and preference specification of the worked example.
+Entries $+1$, $0$ and $-1$ mean \textsc{Want}, \textsc{Neutral} and
+\textsc{Avoid}. Here $v\in\{+1,0,-1\}$ is hidden from ego.}
+\label{tab:diagnose-example-goals}
 \centering
 \small
-\begin{tabular}{lrrr}
+\begin{tabular}{lcrrr}
 \hline
-Condition & Post-response B exact & Initial P regret & Downstream P regret \\
+Goal & Required commitments & $P_0$ & $P_1$ (ego) & $P_2$ \\
 \hline
-Unknown/relevant & 22.2\% & 2.556 & 0.667 \\
-Known & 50.0\% & 2.333 & 0.833 \\
-Unknown/irrelevant & 33.3\% & 0.389 & 0.000 \\
+$G_0$ & $x_0\land y_1$ & 0 & $+1$ & 0 \\
+$G_1$ & $x_0\land y_1\land x_2$ & $-1$ & $+1$ & $+1$ \\
+$G_2$ & $y_0\land x_1\land y_2$ & $+1$ & $-1$ & $-1$ \\
+$G_3$ & $y_0\land y_1\land y_2$ & 0 & $+1$ & $-1$ \\
+$G_4$ & $x_0\land x_1$ & $+1$ & $+1$ & 0 \\
+$G_5$ & $x_1\land y_2$ & 0 & $-1$ & $+1$ \\
+$G_6$ & $y_0\land y_2$ & $+1$ & $+1$ & $v$ \\
+$G_7$ & $y_1\land x_2$ & $-1$ & $-1$ & $+1$ \\
 \hline
 \end{tabular}
 \end{table}
 
-\paragraph{Certification and interpretation.}
-The allowed-action catalogue is public and stage-specific; the reference
-optimizer does not search unrestricted BENAC offers. Certification checks
-that every prescribed partner response maximizes its own terminal utility
-for every allowed continuation, that the informative menu is optimal in the
-unknown/relevant condition, and that preparation strictly dominates that menu
-in both controls. A further same-menu comparison verifies positive task value
-from updating the reference judgment rather than freezing the initial one.
-This establishes an information-use opportunity without treating all
-between-action utility differences as information effects. Equal-utility
-reference actions use a fixed enumeration tie-break; all ties remain correct
-for model action scoring. The modular end-to-end regret is 3.611
-[1.611, 5.611] in unknown/relevant confirmation games; it is a task-level
-outcome rather than a separate capability diagnostic.
+The menu offers $O_1$, adding only $y_2$, and $O_2$, adding $y_1$ and $y_2$.
+Exact terminal values for $P_2$, evaluated under its declared fixed reference
+continuation, are
+\[
+\begin{array}{c|rrr|c}
+v & \textsc{Reject} & \textsc{Choose\_1} & \textsc{Choose\_2}
+  & \text{oracle response} \\
+\hline
++1 & 1 & 1 & 2 & \textsc{Choose\_2} \\
+0  & 0 & 1 & 1 & \textsc{Choose\_2} \\
+-1 & 0 & 1 & 0 & \textsc{Choose\_1}
+\end{array}
+\]
+For the neutral type, the immediate-reference tie-break selects $O_2$: it
+immediately satisfies $P_2$'s wanted $G_1,G_5,G_7$, whereas $O_1$ satisfies only
+$G_5$. Thus \textsc{Choose\_1} identifies \textsc{Avoid}, and
+\textsc{Choose\_2} leaves \textsc{Want}/\textsc{Neutral}. Offering $O_1$ alone
+elicits acceptance from all three types. The comparison illustrates how the
+menu changes the evidence channel without changing the legal game protocol.
+
+After either menu choice, the actual active $P_0$ offers to add $y_0$ while
+asking ego for no additional commitment. After $O_1$, ego's terminal values
+for reject and accept are both 0. After $O_2$, they are 1 and 2 respectively.
+The difference follows from the bound commitments: adding $y_0$ after $O_1$
+activates an avoided $G_2$ and a wanted $G_6$, which cancel; after $O_2$ it also
+activates the wanted $G_3$. The observed model judgment after the $O_1$ menu
+branch is $\{\textsc{Want},\textsc{Neutral}\}$, excluding the only supported
+type. This example demonstrates the action--evidence contrast and an inference
+error; its between-action utility difference also reflects physical commitments.
+It is one of the six action--evidence cases, not an additional replication.
+
+\subsection{Measurement and execution details}
+
+\paragraph{Queries and interventions.}
+Let $\mathcal B^\star(s,H)$ denote the evidence-supported preference set and
+$\widehat{\mathcal B}(s,H)$ the model's reported set. Both paired planning
+queries receive the same state $s$, complete public history $H$, initial
+possibilities and legal actions. Only the explicit judgment differs. The
+belief-generation scratchpad is not passed to either fresh planning context.
+For a supplied judgment $\mathcal B$, write the model action as
+$\widehat a(\mathcal B)$ and let $Q^\star(a)$ be its exact expected terminal
+value under the evidence-supported reference judgment. We report
+\begin{equation}
+ \operatorname{Reg}(a)=\max_{a'}Q^\star(a')-Q^\star(a),
+ \qquad
+ \Delta_B=\operatorname{Reg}\bigl(\widehat a(\widehat{\mathcal B})\bigr)
+          -\operatorname{Reg}\bigl(\widehat a(\mathcal B^\star)\bigr).
+ \label{eq:diagnose-repair}
+\end{equation}
+Positive $\Delta_B$ means beneficial repair; either sign can accompany an action
+change. Exact-set B accuracy requires every supported preference and no
+unsupported preference. Reference beliefs are uniform over compatible types;
+all probabilities and action values are computed in the backend.
+
+For forced action $a$, let $E_a$ be the subsequent sequence of observed partner
+actions before the next ego decision, and let $Z$ be the uncertain partner
+type. The channel statistic is
+$\mathbb E[H(Z\mid H,a,E_a)]$ in bits, with every branch weighted by its
+compatible-type mass. The information gap subtracts this statistic for the
+higher-information arm from that for the lower-information arm. Model exactness
+is scored against the appropriate support on each branch, then averaged with
+the same weights. Terminal branches in other action arms require only a
+judgment; no fictitious continuation action is added. After the second measured
+ego action, the reference planner controls the remaining continuation.
+
+\paragraph{Execution and semantic controls.}
+We use Qwen3-4B-Instruct-2507 with temperature zero, served through vLLM 0.28
+and the Hermes tool-call parser. The prompt requests brief reasoning with soft
+targets of 120 words for judgments and 240 for actions. Each response exposes
+one submission tool with automatic tool choice and a 1,024-token completion
+cap. Only truncation permits one additional 128-token submission request,
+without corrective feedback. All 127 formal tasks were valid on their first
+request; no finalization was needed. All contained assistant text before the
+tool call, averaging 131.4 whitespace-delimited words and 230.8 completion
+tokens per task (29,308 completion tokens in total). These traces are observable
+explanations, not a validated measure of the model's internal computation.
+
+Four separate empty-history controls supply singleton \textsc{Want},
+\textsc{Neutral}, \textsc{Avoid}, or the unresolved three-label set. All four
+returned valid submissions, but the \textsc{Want} control incorrectly returned
+all three labels. Its explanation incorrectly described the supplied initial
+set as containing all three values. The run initially stopped under the
+semantic gate and then continued under a protocol-validity gate, reusing all
+four cached responses, including this error. Neither prompts nor inference
+budgets were changed, and incorrect semantic answers were not retried.
+The controls consumed 491 completion tokens in four requests, separately from
+formal-task counts. This failure limits attribution of B errors: some can
+reflect reading or prior-grounding failures rather than strategic inference
+alone.
+
+\paragraph{Aggregation and partition results.}
+Panel A of Table~\ref{tab:diagnose-main} counts the six certified positions in
+each cohort. These counts summarize admission criteria, not six successful
+model interventions. The judgment-sensitive certificate uses two compatible
+type-conditioned singleton judgments at the same public state and history;
+it does not claim that the actual history identifies either singleton. The
+model's oracle-judgment input instead contains the full evidence-supported set.
+Panel B reports model errors under the controlled inputs, separately from these
+task-level certificates.
+
+The main table combines the two development partitions \emph{within} each
+six-game cohort. It never pools the overlapping cohorts as twelve independent
+games. Branches are weighted within games before computing game means. The
+95\% intervals use 2,000 percentile-bootstrap resamples of source games with
+random seed zero. They describe variation in this selected small set, not
+failure prevalence across random games or an untouched confirmatory test.
+The 0.918-bit channel gap is identical in all six selected pairs; its absence
+of between-game variation is a property of these examples, not a precision
+claim about other environments.
+
+\begin{table}[h]
+\caption{Results by retained development partition, three games per cell.
+Regret and judgment repair use the cohort roots. Forced-arm B accuracy is
+branch-weighted. Judgment replacement changes one action in C and two in D.}
+\label{tab:diagnose-partitions}
+\centering
+\small
+\begin{tabular}{lrr}
+\hline
+Measure & D & C \\
+\hline
+\multicolumn{3}{l}{\emph{Judgment-sensitive cohort}} \\
+B exact & 0.0\% & 33.3\% \\
+P regret with reference judgment & 0.389 & 0.500 \\
+Judgment repair: reduction in regret & $-0.222$ & 0.000 \\
+\hline
+\multicolumn{3}{l}{\emph{Action--evidence cohort}} \\
+Root P regret with reference judgment & 0.667 & 1.333 \\
+B exact, lower-information action & 0.0\% & 33.3\% \\
+B exact, higher-information action & 11.1\% & 33.3\% \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Task consequences and secondary decompositions.}
+The following joint-response measurements supplement the oracle certificates
+and interface-specific error measurements; their sign is not an admission
+criterion or a test of whether the task dependency exists. Across the six
+judgment-sensitive cases, mean model-planner regret reduction is $-0.111$
+[$-0.333$, 0.000]. Across the six action--evidence cases, the paired difference
+in B exactness is 5.6 [$-38.9$, 44.4] percentage points. Neither quantity
+establishes a positive repair benefit.
+
+In the judgment-sensitive cohort, replacing the explicit judgment changes
+\texttt{native-30005-g0-d1} from a menu to an offer and
+\texttt{native-30016-g5-d1} from a menu to pass, with no change in expected
+utility. At \texttt{native-30018-g5-d2}, it changes pass to an offer and
+increases regret from zero to $2/3$. These are observed effects of the supplied
+judgment on the same planner, not evidence that erroneous judgments are
+generally preferable. The other three root actions are unchanged.
+
+For the forced action pairs, the higher-minus-lower reference utility contrast
+is 0.444 [$-0.222$, 1.111]; with the model choosing the second action, it is
+$-0.222$ [$-1.333$, 0.833]. These quantities include physical commitment changes
+and do not identify information-mediated utility effects. The auxiliary
+chooser/updater decomposition has ten complete tables, but replacing the
+updater changes reference-continuation utility by zero in both the
+utility-optimal and model-selected first-action arms in every game. We do not
+use these zeros as evidence that inference is irrelevant, or claim a positive
+updater-repair benefit. One root reference-planner score under a wrong model
+judgment is undefined because the assumed type contradicts the public history;
+that secondary score is marked unavailable, not filled with zero. Direct model
+action regret and the paired model-planner intervention remain defined.
+
+\paragraph{Relation to the preceding native diagnosis.}
+An earlier native run covered 36 positions from 26 source games, with known,
+unknown/relevant and unknown/irrelevant conditions. Its six designated
+confirmation unknown/relevant primary cases had B exact agreement 16.7\%
+[0.0, 50.0]\% and reference-judgment P regret 0.667 [0.250, 1.083]. Those
+primary cases mixed root and post-interaction decisions. That run produced
+301 valid submissions out of 302 tasks and passed all four semantic controls.
+We retain it as preceding B/P evidence, without pooling it with this
+supplement: nine positions are reused, and the additional position is another
+query/history from an already represented source game. The earlier restricted
+three-stage protocol, which changed action structure and coupled partner types,
+is not the source of any results reported here.

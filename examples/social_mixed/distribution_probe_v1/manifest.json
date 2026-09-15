@@ -1,0 +1,35 @@
+{
+  "version": "distribution-probe-v1",
+  "dataset_manifest_sha256": "c60aa5816ef06e7742e1836a71e33a099bf3f5dd85075969705d85c4f197ee40",
+  "files": {
+    "bp.jsonl": "0d767b9c75cdd7d7bcbec36ba934ebdada6fd3948af9b76c81401bb918857313",
+    "selfplay.jsonl": "ccc5ae474112b596e2261ce85490112bbf85084aae2e2826e34d4e5e895d093c",
+    "requests.jsonl": "88a1b65257e32caaca0fa43acb1f68f32a2983bfe1542b61d7f05612aa03c6e2"
+  },
+  "bp_tasks": 164,
+  "bp_samples": 1312,
+  "selfplay_resets": 48,
+  "selfplay_games": 192,
+  "bp_strata": {
+    "train:B1": 16,
+    "train:B2": 8,
+    "train:B3": 12,
+    "train:P1": 16,
+    "train:P2": 16,
+    "train:P3": 28,
+    "train:P4": 40,
+    "validation:B1": 4,
+    "validation:B2": 4,
+    "validation:B3": 4,
+    "validation:P1": 4,
+    "validation:P2": 4,
+    "validation:P3": 4,
+    "validation:P4": 4
+  },
+  "diagnostics": 4,
+  "selection": "Fixed semantic train contrast units with four prior siblings; one validation origin per kernel with four siblings; random-bank selfplay stratified by split/player count/scoring, no outcome selection.",
+  "max_tokens": 1024,
+  "repeats_bp": 8,
+  "repeats_sp": 4,
+  "concurrency_per_gpu": 16
+}

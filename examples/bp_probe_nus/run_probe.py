@@ -57,6 +57,17 @@ def save(path, value):
     path.write_text(json.dumps(value, indent=2) + '\n')
 
 
+def prompt_token_length(tokenizer, request):
+    # Transformers versions differ in apply_chat_template's default return
+    # shape. len(BatchEncoding) counts fields, not tokens (observed as 2).
+    encoded = tokenizer.apply_chat_template(request['messages'], tools=request['tools'],
+        tokenize=True, add_generation_prompt=True, return_dict=True, truncation=False)
+    ids = encoded['input_ids']
+    if not isinstance(ids, list) or not ids or any(not isinstance(i, int) for i in ids):
+        raise ValueError('Expected one nonempty flat input_ids sequence')
+    return len(ids)
+
+
 def stop_server(server):
     if server is None: return
     # Only the process group created by this launcher; never pkill or reset GPUs.
@@ -94,8 +105,7 @@ def run(check=False):
     with socket.socket() as sock: sock.bind(('127.0.0.1', port))
     # Check full tool-augmented context before allocating the vLLM cache.
     tokenizer = AutoTokenizer.from_pretrained(str(model), local_files_only=True)
-    lengths = [len(tokenizer.apply_chat_template(r['request']['messages'],
-        tools=r['request']['tools'], tokenize=True, add_generation_prompt=True)) for r in rows]
+    lengths = [prompt_token_length(tokenizer, r['request']) for r in rows]
     if max(lengths) + 1024 > context:
         raise ValueError(f'Need at least {max(lengths)+1024} context tokens; increase BP_CONTEXT. No input is truncated.')
     root = Path(os.environ.get('BP_RUN_ROOT', str(ENTRY.parents[1] / 'runs/bp_probe_nus')))

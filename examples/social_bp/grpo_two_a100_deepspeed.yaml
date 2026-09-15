@@ -1,0 +1,52 @@
+# Formal 30-update DeepSpeed run; preserve the frozen two-A100 B/P experiment.
+defaults:
+- grpo
+- _self_
+exp_name: social_bp_deepspeed_two_a100_30steps_v1
+seed: 20260915
+num_gpus_per_node: 2
+max_steps: 30
+prompt_length: 2048
+response_length: 1024
+val_batch_size: 67
+max_running_requests: 16
+is_num_return_sequences_expand: true
+bp_two_gpu_preflight: false
+deepspeed_zero2:
+  zero_optimization:
+    # Trade communication overlap for headroom on the shared 40G GPUs.
+    overlap_comm: false
+    reduce_bucket_size: 10000000
+    allgather_bucket_size: 10000000
+actor_train:
+  system_envs: ${system_envs}
+  keep_states_on_device: false
+  device_mapping: '[0,1]'
+  training_args:
+    optimizer_backend: torch_adamw_fused
+    gradient_accumulation_steps: 64
+actor_infer:
+  system_envs: ${system_envs}
+  device_mapping: '[0,1]'
+  strategy_args:
+    strategy_config:
+      enforce_eager: false
+      enable_sleep_mode: true
+      sleep_level: 1
+      max_model_len: 3072
+      max_num_seqs: 16
+      gpu_memory_utilization: 0.65
+reference:
+  system_envs: ${system_envs}
+  keep_states_on_device: false
+  device_mapping: '[0,1]'
+system_envs:
+  CUDA_HOME: /home/chenjiahao/cuda-11.8
+  LD_LIBRARY_PATH: ${oc.env:LD_LIBRARY_PATH}
+  LD_PRELOAD: ${oc.env:LD_PRELOAD}
+  NCCL_LIBRARY: ${oc.env:NCCL_LIBRARY}
+  TRITON_PTXAS_PATH: /home/chenjiahao/cuda-11.8/bin/ptxas
+  PYTORCH_CUDA_ALLOC_CONF: expandable_segments:False
+  OMP_NUM_THREADS: '4'
+  BP_STARTUP_DIAGNOSTICS: '1'
+  BP_DIAGNOSTICS_DIR: ${output_dir}

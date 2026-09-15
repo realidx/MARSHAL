@@ -1,0 +1,2464 @@
+{
+  "version": "social-lm-audit-v5",
+  "prompt_version": "social-english-native-action-v2",
+  "actual_LM": true,
+  "errors": [],
+  "fixed": {
+    "n": 104,
+    "B_submission_statuses": {
+      "ok": 53,
+      "malformed_arguments": 46,
+      "truncated": 5
+    },
+    "P_submission_statuses": {
+      "illegal_action": 7,
+      "ok": 81,
+      "expected_one_tool_call": 6,
+      "truncated": 4,
+      "wrong_tool": 6
+    },
+    "B_format_success_rate": 0.49038461538461536,
+    "B_teacher_available": 101,
+    "B_aux_scored": 101,
+    "B_eligible_targets": 199,
+    "B_selected_targets": 101,
+    "B_target_coverage": 0.507537688442211,
+    "B_selected_exact_rate": 0.3564356435643564,
+    "B_required_exact_rate": 0.18090452261306533,
+    "B_by_support": {
+      "avoid": {
+        "n": 9,
+        "exact_rate": 0.0
+      },
+      "neutral/avoid": {
+        "n": 17,
+        "exact_rate": 0.0
+      },
+      "want": {
+        "n": 14,
+        "exact_rate": 0.0
+      },
+      "want/neutral": {
+        "n": 17,
+        "exact_rate": 0.0
+      },
+      "want/neutral/avoid": {
+        "n": 142,
+        "exact_rate": 0.2535211267605634
+      }
+    },
+    "B_support_macro_exact_rate": 0.05070422535211268,
+    "B_complete_exact_rate": 0.13861386138613863,
+    "B_protocol_errors": {
+      "expected_judgment_list": 51,
+      "missing_target": 104,
+      "unexpected_target": 2
+    },
+    "B_mean_protocol_score": -0.5096153846153846,
+    "B_selected_set_exact_rate": 0.7227722772277227,
+    "B_selected_favored_exact_rate": 0.4158415841584158,
+    "B_mean_false_exclusions_valid": 0.039603960396039604,
+    "B_mean_extra_possibilities_valid": 0.37623762376237624,
+    "B_informative_targets": 57,
+    "B_selected_informative": 27,
+    "B_informative_coverage": 0.47368421052631576,
+    "B_selected_informative_exact_rate": 0.0,
+    "B_correct_informative_fraction_of_all": 0.0,
+    "B_all_possible_undetermined_baseline": 0.7135678391959799,
+    "B_empty_selection": 0,
+    "P_legal_rate": 0.7788461538461539,
+    "P_reference_available": 99,
+    "P_reference_discriminating": 58,
+    "P_optimal_rate_discriminating": 0.3103448275862069,
+    "P_optimal_rate_all_reference_available": 0.494949494949495,
+    "P_mean_reference_regret_legal": -0.31286549707602335,
+    "P_unavailable_reasons": {
+      "Fragile type support": 2,
+      "Reference wall budget exceeded; discard partial rankings": 1,
+      "A reference continuation was unavailable; discard partial rankings": 2
+    },
+    "B_reasoning_present_rate": 1.0,
+    "P_reasoning_present_rate": 1.0,
+    "B_explanation_statuses": {
+      "present": 104
+    },
+    "P_explanation_statuses": {
+      "present": 104
+    },
+    "mean_timing_seconds": {
+      "teacher_setup_seconds": 0.2048262613109098,
+      "B_call_seconds": 35.316589165944606,
+      "P_call_seconds": 19.87799020967661,
+      "B_scoring_seconds": 0.00023299863991829066,
+      "P_scoring_seconds": 0.6958785149483726,
+      "total_seconds": 56.10038826159703
+    },
+    "B_passthrough_all": true
+  },
+  "by_cohort": {
+    "belief": {
+      "n": 46,
+      "B_submission_statuses": {
+        "malformed_arguments": 21,
+        "ok": 22,
+        "truncated": 3
+      },
+      "P_submission_statuses": {
+        "ok": 35,
+        "expected_one_tool_call": 4,
+        "truncated": 4,
+        "wrong_tool": 3
+      },
+      "B_format_success_rate": 0.45652173913043476,
+      "B_teacher_available": 46,
+      "B_aux_scored": 46,
+      "B_eligible_targets": 91,
+      "B_selected_targets": 42,
+      "B_target_coverage": 0.46153846153846156,
+      "B_selected_exact_rate": 0.11904761904761904,
+      "B_required_exact_rate": 0.054945054945054944,
+      "B_by_support": {
+        "avoid": {
+          "n": 8,
+          "exact_rate": 0.0
+        },
+        "neutral/avoid": {
+          "n": 16,
+          "exact_rate": 0.0
+        },
+        "want": {
+          "n": 14,
+          "exact_rate": 0.0
+        },
+        "want/neutral": {
+          "n": 15,
+          "exact_rate": 0.0
+        },
+        "want/neutral/avoid": {
+          "n": 38,
+          "exact_rate": 0.13157894736842105
+        }
+      },
+      "B_support_macro_exact_rate": 0.02631578947368421,
+      "B_complete_exact_rate": 0.0,
+      "B_protocol_errors": {
+        "expected_judgment_list": 24,
+        "missing_target": 49,
+        "unexpected_target": 1
+      },
+      "B_mean_protocol_score": -0.5434782608695652,
+      "B_selected_set_exact_rate": 0.42857142857142855,
+      "B_selected_favored_exact_rate": 0.23809523809523808,
+      "B_mean_false_exclusions_valid": 0.047619047619047616,
+      "B_mean_extra_possibilities_valid": 0.8333333333333334,
+      "B_informative_targets": 53,
+      "B_selected_informative": 25,
+      "B_informative_coverage": 0.4716981132075472,
+      "B_selected_informative_exact_rate": 0.0,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.4175824175824176,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.7608695652173914,
+      "P_reference_available": 45,
+      "P_reference_discriminating": 27,
+      "P_optimal_rate_discriminating": 0.25925925925925924,
+      "P_optimal_rate_all_reference_available": 0.4444444444444444,
+      "P_mean_reference_regret_legal": -0.47058823529411764,
+      "P_unavailable_reasons": {
+        "A reference continuation was unavailable; discard partial rankings": 1
+      },
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 46
+      },
+      "P_explanation_statuses": {
+        "present": 46
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.035575894395942276,
+        "B_call_seconds": 37.162874871864915,
+        "P_call_seconds": 20.30745623220244,
+        "B_scoring_seconds": 0.0002241798717042674,
+        "P_scoring_seconds": 0.05901374052400175,
+        "total_seconds": 57.56905049304275
+      },
+      "B_passthrough_all": true
+    },
+    "planning": {
+      "n": 86,
+      "B_submission_statuses": {
+        "ok": 44,
+        "malformed_arguments": 40,
+        "truncated": 2
+      },
+      "P_submission_statuses": {
+        "illegal_action": 7,
+        "ok": 68,
+        "expected_one_tool_call": 5,
+        "truncated": 2,
+        "wrong_tool": 4
+      },
+      "B_format_success_rate": 0.4883720930232558,
+      "B_teacher_available": 83,
+      "B_aux_scored": 83,
+      "B_eligible_targets": 163,
+      "B_selected_targets": 83,
+      "B_target_coverage": 0.50920245398773,
+      "B_selected_exact_rate": 0.40963855421686746,
+      "B_required_exact_rate": 0.2085889570552147,
+      "B_by_support": {
+        "avoid": {
+          "n": 5,
+          "exact_rate": 0.0
+        },
+        "neutral/avoid": {
+          "n": 8,
+          "exact_rate": 0.0
+        },
+        "want": {
+          "n": 6,
+          "exact_rate": 0.0
+        },
+        "want/neutral": {
+          "n": 14,
+          "exact_rate": 0.0
+        },
+        "want/neutral/avoid": {
+          "n": 130,
+          "exact_rate": 0.26153846153846155
+        }
+      },
+      "B_support_macro_exact_rate": 0.05230769230769231,
+      "B_complete_exact_rate": 0.1686746987951807,
+      "B_protocol_errors": {
+        "expected_judgment_list": 42,
+        "missing_target": 86,
+        "unexpected_target": 2
+      },
+      "B_mean_protocol_score": -0.5116279069767442,
+      "B_selected_set_exact_rate": 0.8313253012048193,
+      "B_selected_favored_exact_rate": 0.4578313253012048,
+      "B_mean_false_exclusions_valid": 0.024096385542168676,
+      "B_mean_extra_possibilities_valid": 0.21686746987951808,
+      "B_informative_targets": 33,
+      "B_selected_informative": 14,
+      "B_informative_coverage": 0.42424242424242425,
+      "B_selected_informative_exact_rate": 0.0,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.7975460122699386,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.7906976744186046,
+      "P_reference_available": 81,
+      "P_reference_discriminating": 46,
+      "P_optimal_rate_discriminating": 0.32608695652173914,
+      "P_optimal_rate_all_reference_available": 0.5185185185185185,
+      "P_mean_reference_regret_legal": -0.2663139329805996,
+      "P_unavailable_reasons": {
+        "Fragile type support": 2,
+        "Reference wall budget exceeded; discard partial rankings": 1,
+        "A reference continuation was unavailable; discard partial rankings": 2
+      },
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 86
+      },
+      "P_explanation_statuses": {
+        "present": 86
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.2476963847875595,
+        "B_call_seconds": 34.23069528429661,
+        "P_call_seconds": 19.835499111086477,
+        "B_scoring_seconds": 0.0002349935212107592,
+        "P_scoring_seconds": 0.8412478579164937,
+        "total_seconds": 55.160453423467835
+      },
+      "B_passthrough_all": true
+    }
+  },
+  "by_source": {
+    "evidence-430203": {
+      "n": 8,
+      "B_submission_statuses": {
+        "ok": 3,
+        "malformed_arguments": 4,
+        "truncated": 1
+      },
+      "P_submission_statuses": {
+        "illegal_action": 2,
+        "ok": 5,
+        "expected_one_tool_call": 1
+      },
+      "B_format_success_rate": 0.375,
+      "B_teacher_available": 8,
+      "B_aux_scored": 8,
+      "B_eligible_targets": 16,
+      "B_selected_targets": 6,
+      "B_target_coverage": 0.375,
+      "B_selected_exact_rate": 0.0,
+      "B_required_exact_rate": 0.0,
+      "B_by_support": {
+        "avoid": {
+          "n": 1,
+          "exact_rate": 0.0
+        },
+        "neutral/avoid": {
+          "n": 4,
+          "exact_rate": 0.0
+        },
+        "want/neutral/avoid": {
+          "n": 11,
+          "exact_rate": 0.0
+        }
+      },
+      "B_support_macro_exact_rate": 0.0,
+      "B_complete_exact_rate": 0.0,
+      "B_protocol_errors": {
+        "expected_judgment_list": 5,
+        "missing_target": 10
+      },
+      "B_mean_protocol_score": -0.625,
+      "B_selected_set_exact_rate": 0.8333333333333334,
+      "B_selected_favored_exact_rate": 0.0,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.16666666666666666,
+      "B_informative_targets": 5,
+      "B_selected_informative": 1,
+      "B_informative_coverage": 0.2,
+      "B_selected_informative_exact_rate": 0.0,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.6875,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.625,
+      "P_reference_available": 8,
+      "P_reference_discriminating": 7,
+      "P_optimal_rate_discriminating": 0.2857142857142857,
+      "P_optimal_rate_all_reference_available": 0.25,
+      "P_mean_reference_regret_legal": -0.5333333333333334,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 8
+      },
+      "P_explanation_statuses": {
+        "present": 8
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.05344334803521633,
+        "B_call_seconds": 40.02509543998167,
+        "P_call_seconds": 16.487695809919387,
+        "B_scoring_seconds": 0.00022926880046725273,
+        "P_scoring_seconds": 0.08786669792607427,
+        "total_seconds": 56.6603140742518
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430203-menu-r3": {
+      "n": 5,
+      "B_submission_statuses": {
+        "ok": 3,
+        "malformed_arguments": 2
+      },
+      "P_submission_statuses": {
+        "ok": 5
+      },
+      "B_format_success_rate": 0.6,
+      "B_teacher_available": 5,
+      "B_aux_scored": 5,
+      "B_eligible_targets": 10,
+      "B_selected_targets": 6,
+      "B_target_coverage": 0.6,
+      "B_selected_exact_rate": 0.6666666666666666,
+      "B_required_exact_rate": 0.4,
+      "B_by_support": {
+        "avoid": {
+          "n": 1,
+          "exact_rate": 0.0
+        },
+        "neutral/avoid": {
+          "n": 3,
+          "exact_rate": 0.0
+        },
+        "want/neutral/avoid": {
+          "n": 6,
+          "exact_rate": 0.6666666666666666
+        }
+      },
+      "B_support_macro_exact_rate": 0.2222222222222222,
+      "B_complete_exact_rate": 0.2,
+      "B_protocol_errors": {
+        "expected_judgment_list": 2,
+        "missing_target": 4
+      },
+      "B_mean_protocol_score": -0.4,
+      "B_selected_set_exact_rate": 0.6666666666666666,
+      "B_selected_favored_exact_rate": 0.6666666666666666,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.5,
+      "B_informative_targets": 4,
+      "B_selected_informative": 2,
+      "B_informative_coverage": 0.5,
+      "B_selected_informative_exact_rate": 0.0,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.6,
+      "B_empty_selection": 0,
+      "P_legal_rate": 1.0,
+      "P_reference_available": 5,
+      "P_reference_discriminating": 5,
+      "P_optimal_rate_discriminating": 0.2,
+      "P_optimal_rate_all_reference_available": 0.2,
+      "P_mean_reference_regret_legal": -0.8,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 5
+      },
+      "P_explanation_statuses": {
+        "present": 5
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.3485049270093441,
+        "B_call_seconds": 37.00155909582973,
+        "P_call_seconds": 17.29527374431491,
+        "B_scoring_seconds": 0.00023243799805641174,
+        "P_scoring_seconds": 0.6031324803829193,
+        "total_seconds": 55.25370729789138
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430203-menu-r4": {
+      "n": 2,
+      "B_submission_statuses": {
+        "malformed_arguments": 1,
+        "ok": 1
+      },
+      "P_submission_statuses": {
+        "ok": 2
+      },
+      "B_format_success_rate": 0.5,
+      "B_teacher_available": 1,
+      "B_aux_scored": 1,
+      "B_eligible_targets": 2,
+      "B_selected_targets": 2,
+      "B_target_coverage": 1.0,
+      "B_selected_exact_rate": 1.0,
+      "B_required_exact_rate": 1.0,
+      "B_by_support": {
+        "want/neutral/avoid": {
+          "n": 2,
+          "exact_rate": 1.0
+        }
+      },
+      "B_support_macro_exact_rate": 1.0,
+      "B_complete_exact_rate": 1.0,
+      "B_protocol_errors": {
+        "expected_judgment_list": 1,
+        "missing_target": 2
+      },
+      "B_mean_protocol_score": -0.5,
+      "B_selected_set_exact_rate": 1.0,
+      "B_selected_favored_exact_rate": 1.0,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.0,
+      "B_informative_targets": 0,
+      "B_selected_informative": 0,
+      "B_informative_coverage": null,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": null,
+      "B_all_possible_undetermined_baseline": 1.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 1.0,
+      "P_reference_available": 0,
+      "P_reference_discriminating": 0,
+      "P_optimal_rate_discriminating": null,
+      "P_optimal_rate_all_reference_available": null,
+      "P_mean_reference_regret_legal": null,
+      "P_unavailable_reasons": {
+        "Fragile type support": 1,
+        "Reference wall budget exceeded; discard partial rankings": 1
+      },
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 2
+      },
+      "P_explanation_statuses": {
+        "present": 2
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.7862312383949757,
+        "B_call_seconds": 28.801779575645924,
+        "P_call_seconds": 23.16629265062511,
+        "B_scoring_seconds": 0.0002700313925743103,
+        "P_scoring_seconds": 10.043495945632458,
+        "total_seconds": 62.81019243039191
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430203-response-r1": {
+      "n": 1,
+      "B_submission_statuses": {
+        "ok": 1
+      },
+      "P_submission_statuses": {
+        "ok": 1
+      },
+      "B_format_success_rate": 1.0,
+      "B_teacher_available": 1,
+      "B_aux_scored": 1,
+      "B_eligible_targets": 2,
+      "B_selected_targets": 2,
+      "B_target_coverage": 1.0,
+      "B_selected_exact_rate": 0.5,
+      "B_required_exact_rate": 0.5,
+      "B_by_support": {
+        "want/neutral/avoid": {
+          "n": 2,
+          "exact_rate": 0.5
+        }
+      },
+      "B_support_macro_exact_rate": 0.5,
+      "B_complete_exact_rate": 0.0,
+      "B_protocol_errors": {},
+      "B_mean_protocol_score": 0.0,
+      "B_selected_set_exact_rate": 1.0,
+      "B_selected_favored_exact_rate": 0.5,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.0,
+      "B_informative_targets": 0,
+      "B_selected_informative": 0,
+      "B_informative_coverage": null,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": null,
+      "B_all_possible_undetermined_baseline": 1.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 1.0,
+      "P_reference_available": 1,
+      "P_reference_discriminating": 0,
+      "P_optimal_rate_discriminating": null,
+      "P_optimal_rate_all_reference_available": 1.0,
+      "P_mean_reference_regret_legal": 0.0,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 1
+      },
+      "P_explanation_statuses": {
+        "present": 1
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.002309214323759079,
+        "B_call_seconds": 46.55130299925804,
+        "P_call_seconds": 18.885696560144424,
+        "B_scoring_seconds": 0.00023526698350906372,
+        "P_scoring_seconds": 0.0010989457368850708,
+        "total_seconds": 65.44437684118748
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430203-response-r3": {
+      "n": 6,
+      "B_submission_statuses": {
+        "ok": 1,
+        "malformed_arguments": 5
+      },
+      "P_submission_statuses": {
+        "ok": 6
+      },
+      "B_format_success_rate": 0.16666666666666666,
+      "B_teacher_available": 6,
+      "B_aux_scored": 6,
+      "B_eligible_targets": 12,
+      "B_selected_targets": 2,
+      "B_target_coverage": 0.16666666666666666,
+      "B_selected_exact_rate": 0.0,
+      "B_required_exact_rate": 0.0,
+      "B_by_support": {
+        "want/neutral/avoid": {
+          "n": 12,
+          "exact_rate": 0.0
+        }
+      },
+      "B_support_macro_exact_rate": 0.0,
+      "B_complete_exact_rate": 0.0,
+      "B_protocol_errors": {
+        "expected_judgment_list": 5,
+        "missing_target": 10
+      },
+      "B_mean_protocol_score": -0.8333333333333334,
+      "B_selected_set_exact_rate": 1.0,
+      "B_selected_favored_exact_rate": 0.0,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.0,
+      "B_informative_targets": 0,
+      "B_selected_informative": 0,
+      "B_informative_coverage": null,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": null,
+      "B_all_possible_undetermined_baseline": 1.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 1.0,
+      "P_reference_available": 6,
+      "P_reference_discriminating": 4,
+      "P_optimal_rate_discriminating": 0.25,
+      "P_optimal_rate_all_reference_available": 0.5,
+      "P_mean_reference_regret_legal": -0.27777777777777773,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 6
+      },
+      "P_explanation_statuses": {
+        "present": 6
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.5646237134933472,
+        "B_call_seconds": 39.073859464377165,
+        "P_call_seconds": 14.531973221028844,
+        "B_scoring_seconds": 0.0002330814798672994,
+        "P_scoring_seconds": 1.0274870842695236,
+        "total_seconds": 55.21018940458695
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430206": {
+      "n": 7,
+      "B_submission_statuses": {
+        "ok": 7
+      },
+      "P_submission_statuses": {
+        "expected_one_tool_call": 1,
+        "ok": 6
+      },
+      "B_format_success_rate": 1.0,
+      "B_teacher_available": 7,
+      "B_aux_scored": 7,
+      "B_eligible_targets": 14,
+      "B_selected_targets": 14,
+      "B_target_coverage": 1.0,
+      "B_selected_exact_rate": 0.42857142857142855,
+      "B_required_exact_rate": 0.42857142857142855,
+      "B_by_support": {
+        "avoid": {
+          "n": 1,
+          "exact_rate": 0.0
+        },
+        "want/neutral": {
+          "n": 1,
+          "exact_rate": 0.0
+        },
+        "want/neutral/avoid": {
+          "n": 12,
+          "exact_rate": 0.5
+        }
+      },
+      "B_support_macro_exact_rate": 0.16666666666666666,
+      "B_complete_exact_rate": 0.42857142857142855,
+      "B_protocol_errors": {},
+      "B_mean_protocol_score": 0.0,
+      "B_selected_set_exact_rate": 0.8571428571428571,
+      "B_selected_favored_exact_rate": 0.42857142857142855,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.21428571428571427,
+      "B_informative_targets": 2,
+      "B_selected_informative": 2,
+      "B_informative_coverage": 1.0,
+      "B_selected_informative_exact_rate": 0.0,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.8571428571428571,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.8571428571428571,
+      "P_reference_available": 7,
+      "P_reference_discriminating": 1,
+      "P_optimal_rate_discriminating": 0.0,
+      "P_optimal_rate_all_reference_available": 0.8571428571428571,
+      "P_mean_reference_regret_legal": 0.0,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 7
+      },
+      "P_explanation_statuses": {
+        "present": 7
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.1940964199602604,
+        "B_call_seconds": 36.84142114701016,
+        "P_call_seconds": 23.89248693574752,
+        "B_scoring_seconds": 0.000200885214975902,
+        "P_scoring_seconds": 0.2382167029593672,
+        "total_seconds": 61.16999044854726
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430210": {
+      "n": 7,
+      "B_submission_statuses": {
+        "malformed_arguments": 4,
+        "ok": 3
+      },
+      "P_submission_statuses": {
+        "ok": 6,
+        "wrong_tool": 1
+      },
+      "B_format_success_rate": 0.42857142857142855,
+      "B_teacher_available": 7,
+      "B_aux_scored": 7,
+      "B_eligible_targets": 14,
+      "B_selected_targets": 6,
+      "B_target_coverage": 0.42857142857142855,
+      "B_selected_exact_rate": 0.3333333333333333,
+      "B_required_exact_rate": 0.14285714285714285,
+      "B_by_support": {
+        "neutral/avoid": {
+          "n": 1,
+          "exact_rate": 0.0
+        },
+        "want": {
+          "n": 1,
+          "exact_rate": 0.0
+        },
+        "want/neutral": {
+          "n": 2,
+          "exact_rate": 0.0
+        },
+        "want/neutral/avoid": {
+          "n": 10,
+          "exact_rate": 0.2
+        }
+      },
+      "B_support_macro_exact_rate": 0.05,
+      "B_complete_exact_rate": 0.14285714285714285,
+      "B_protocol_errors": {
+        "expected_judgment_list": 4,
+        "missing_target": 8
+      },
+      "B_mean_protocol_score": -0.5714285714285714,
+      "B_selected_set_exact_rate": 0.8333333333333334,
+      "B_selected_favored_exact_rate": 0.3333333333333333,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.3333333333333333,
+      "B_informative_targets": 4,
+      "B_selected_informative": 1,
+      "B_informative_coverage": 0.25,
+      "B_selected_informative_exact_rate": 0.0,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.7142857142857143,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.8571428571428571,
+      "P_reference_available": 7,
+      "P_reference_discriminating": 4,
+      "P_optimal_rate_discriminating": 0.75,
+      "P_optimal_rate_all_reference_available": 0.7142857142857143,
+      "P_mean_reference_regret_legal": -0.16666666666666666,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 7
+      },
+      "P_explanation_statuses": {
+        "present": 7
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.23297064272420748,
+        "B_call_seconds": 34.59697681186454,
+        "P_call_seconds": 17.961974680955922,
+        "B_scoring_seconds": 0.000192753438438688,
+        "P_scoring_seconds": 0.28875468564885004,
+        "total_seconds": 53.08471988673721
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430225": {
+      "n": 6,
+      "B_submission_statuses": {
+        "ok": 3,
+        "malformed_arguments": 3
+      },
+      "P_submission_statuses": {
+        "ok": 4,
+        "illegal_action": 1,
+        "wrong_tool": 1
+      },
+      "B_format_success_rate": 0.5,
+      "B_teacher_available": 5,
+      "B_aux_scored": 5,
+      "B_eligible_targets": 10,
+      "B_selected_targets": 6,
+      "B_target_coverage": 0.6,
+      "B_selected_exact_rate": 0.5,
+      "B_required_exact_rate": 0.3,
+      "B_by_support": {
+        "neutral/avoid": {
+          "n": 1,
+          "exact_rate": 0.0
+        },
+        "want/neutral": {
+          "n": 2,
+          "exact_rate": 0.0
+        },
+        "want/neutral/avoid": {
+          "n": 7,
+          "exact_rate": 0.42857142857142855
+        }
+      },
+      "B_support_macro_exact_rate": 0.14285714285714285,
+      "B_complete_exact_rate": 0.2,
+      "B_protocol_errors": {
+        "expected_judgment_list": 3,
+        "missing_target": 6
+      },
+      "B_mean_protocol_score": -0.5,
+      "B_selected_set_exact_rate": 1.0,
+      "B_selected_favored_exact_rate": 0.5,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.0,
+      "B_informative_targets": 3,
+      "B_selected_informative": 0,
+      "B_informative_coverage": 0.0,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.7,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.6666666666666666,
+      "P_reference_available": 6,
+      "P_reference_discriminating": 2,
+      "P_optimal_rate_discriminating": 0.5,
+      "P_optimal_rate_all_reference_available": 0.6666666666666666,
+      "P_mean_reference_regret_legal": 0.0,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 6
+      },
+      "P_explanation_statuses": {
+        "present": 6
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.055167303110162415,
+        "B_call_seconds": 51.9543488646547,
+        "P_call_seconds": 23.431770274415612,
+        "B_scoring_seconds": 0.00036258498827616376,
+        "P_scoring_seconds": 0.09662210196256638,
+        "total_seconds": 75.54238286366065
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430225-menu-r3": {
+      "n": 2,
+      "B_submission_statuses": {
+        "ok": 1,
+        "malformed_arguments": 1
+      },
+      "P_submission_statuses": {
+        "illegal_action": 1,
+        "ok": 1
+      },
+      "B_format_success_rate": 0.5,
+      "B_teacher_available": 2,
+      "B_aux_scored": 2,
+      "B_eligible_targets": 4,
+      "B_selected_targets": 2,
+      "B_target_coverage": 0.5,
+      "B_selected_exact_rate": 1.0,
+      "B_required_exact_rate": 0.5,
+      "B_by_support": {
+        "want/neutral/avoid": {
+          "n": 4,
+          "exact_rate": 0.5
+        }
+      },
+      "B_support_macro_exact_rate": 0.5,
+      "B_complete_exact_rate": 0.5,
+      "B_protocol_errors": {
+        "expected_judgment_list": 1,
+        "missing_target": 2
+      },
+      "B_mean_protocol_score": -0.5,
+      "B_selected_set_exact_rate": 1.0,
+      "B_selected_favored_exact_rate": 1.0,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.0,
+      "B_informative_targets": 0,
+      "B_selected_informative": 0,
+      "B_informative_coverage": null,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": null,
+      "B_all_possible_undetermined_baseline": 1.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.5,
+      "P_reference_available": 2,
+      "P_reference_discriminating": 1,
+      "P_optimal_rate_discriminating": 0.0,
+      "P_optimal_rate_all_reference_available": 0.5,
+      "P_mean_reference_regret_legal": 0.0,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 2
+      },
+      "P_explanation_statuses": {
+        "present": 2
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.5119598340243101,
+        "B_call_seconds": 17.339583868160844,
+        "P_call_seconds": 17.232151124626398,
+        "B_scoring_seconds": 0.0002141278237104416,
+        "P_scoring_seconds": 1.3526064399629831,
+        "total_seconds": 36.44074172154069
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430225-menu-r4": {
+      "n": 3,
+      "B_submission_statuses": {
+        "malformed_arguments": 3
+      },
+      "P_submission_statuses": {
+        "ok": 3
+      },
+      "B_format_success_rate": 0.0,
+      "B_teacher_available": 2,
+      "B_aux_scored": 2,
+      "B_eligible_targets": 4,
+      "B_selected_targets": 0,
+      "B_target_coverage": 0.0,
+      "B_selected_exact_rate": null,
+      "B_required_exact_rate": 0.0,
+      "B_by_support": {
+        "want/neutral": {
+          "n": 1,
+          "exact_rate": 0.0
+        },
+        "want/neutral/avoid": {
+          "n": 3,
+          "exact_rate": 0.0
+        }
+      },
+      "B_support_macro_exact_rate": 0.0,
+      "B_complete_exact_rate": 0.0,
+      "B_protocol_errors": {
+        "expected_judgment_list": 3,
+        "missing_target": 6
+      },
+      "B_mean_protocol_score": -1.0,
+      "B_selected_set_exact_rate": null,
+      "B_selected_favored_exact_rate": null,
+      "B_mean_false_exclusions_valid": null,
+      "B_mean_extra_possibilities_valid": null,
+      "B_informative_targets": 1,
+      "B_selected_informative": 0,
+      "B_informative_coverage": 0.0,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.75,
+      "B_empty_selection": 0,
+      "P_legal_rate": 1.0,
+      "P_reference_available": 2,
+      "P_reference_discriminating": 1,
+      "P_optimal_rate_discriminating": 0.0,
+      "P_optimal_rate_all_reference_available": 0.5,
+      "P_mean_reference_regret_legal": -0.1111111111111111,
+      "P_unavailable_reasons": {
+        "Fragile type support": 1
+      },
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 3
+      },
+      "P_explanation_statuses": {
+        "present": 3
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.3428808885316054,
+        "B_call_seconds": 32.914012330273785,
+        "P_call_seconds": 17.214353073388338,
+        "B_scoring_seconds": 0.00017290438214937845,
+        "P_scoring_seconds": 5.339716027180354,
+        "total_seconds": 55.81511890515685
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430225-response-r1": {
+      "n": 1,
+      "B_submission_statuses": {
+        "truncated": 1
+      },
+      "P_submission_statuses": {
+        "ok": 1
+      },
+      "B_format_success_rate": 0.0,
+      "B_teacher_available": 1,
+      "B_aux_scored": 1,
+      "B_eligible_targets": 2,
+      "B_selected_targets": 0,
+      "B_target_coverage": 0.0,
+      "B_selected_exact_rate": null,
+      "B_required_exact_rate": 0.0,
+      "B_by_support": {
+        "want/neutral/avoid": {
+          "n": 2,
+          "exact_rate": 0.0
+        }
+      },
+      "B_support_macro_exact_rate": 0.0,
+      "B_complete_exact_rate": 0.0,
+      "B_protocol_errors": {
+        "expected_judgment_list": 1,
+        "missing_target": 2
+      },
+      "B_mean_protocol_score": -1.0,
+      "B_selected_set_exact_rate": null,
+      "B_selected_favored_exact_rate": null,
+      "B_mean_false_exclusions_valid": null,
+      "B_mean_extra_possibilities_valid": null,
+      "B_informative_targets": 0,
+      "B_selected_informative": 0,
+      "B_informative_coverage": null,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": null,
+      "B_all_possible_undetermined_baseline": 1.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 1.0,
+      "P_reference_available": 1,
+      "P_reference_discriminating": 1,
+      "P_optimal_rate_discriminating": 1.0,
+      "P_optimal_rate_all_reference_available": 1.0,
+      "P_mean_reference_regret_legal": 0.0,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 1
+      },
+      "P_explanation_statuses": {
+        "present": 1
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.0014886893332004547,
+        "B_call_seconds": 53.60501088202,
+        "P_call_seconds": 14.213269002735615,
+        "B_scoring_seconds": 0.00017136335372924805,
+        "P_scoring_seconds": 0.0010518021881580353,
+        "total_seconds": 67.82450556755066
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430225-response-r3": {
+      "n": 6,
+      "B_submission_statuses": {
+        "ok": 2,
+        "malformed_arguments": 3,
+        "truncated": 1
+      },
+      "P_submission_statuses": {
+        "ok": 3,
+        "expected_one_tool_call": 1,
+        "wrong_tool": 1,
+        "illegal_action": 1
+      },
+      "B_format_success_rate": 0.3333333333333333,
+      "B_teacher_available": 6,
+      "B_aux_scored": 6,
+      "B_eligible_targets": 12,
+      "B_selected_targets": 4,
+      "B_target_coverage": 0.3333333333333333,
+      "B_selected_exact_rate": 0.75,
+      "B_required_exact_rate": 0.25,
+      "B_by_support": {
+        "want/neutral/avoid": {
+          "n": 12,
+          "exact_rate": 0.25
+        }
+      },
+      "B_support_macro_exact_rate": 0.25,
+      "B_complete_exact_rate": 0.16666666666666666,
+      "B_protocol_errors": {
+        "expected_judgment_list": 4,
+        "missing_target": 8
+      },
+      "B_mean_protocol_score": -0.6666666666666666,
+      "B_selected_set_exact_rate": 1.0,
+      "B_selected_favored_exact_rate": 0.75,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.0,
+      "B_informative_targets": 0,
+      "B_selected_informative": 0,
+      "B_informative_coverage": null,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": null,
+      "B_all_possible_undetermined_baseline": 1.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.5,
+      "P_reference_available": 6,
+      "P_reference_discriminating": 4,
+      "P_optimal_rate_discriminating": 0.25,
+      "P_optimal_rate_all_reference_available": 0.16666666666666666,
+      "P_mean_reference_regret_legal": -0.5555555555555555,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 6
+      },
+      "P_explanation_statuses": {
+        "present": 6
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.3823868508140246,
+        "B_call_seconds": 38.38641118568679,
+        "P_call_seconds": 17.119479687263567,
+        "B_scoring_seconds": 0.00019605209430058798,
+        "P_scoring_seconds": 0.8134706250081459,
+        "total_seconds": 56.70653351955116
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430229": {
+      "n": 6,
+      "B_submission_statuses": {
+        "malformed_arguments": 1,
+        "ok": 5
+      },
+      "P_submission_statuses": {
+        "ok": 6
+      },
+      "B_format_success_rate": 0.8333333333333334,
+      "B_teacher_available": 6,
+      "B_aux_scored": 6,
+      "B_eligible_targets": 12,
+      "B_selected_targets": 10,
+      "B_target_coverage": 0.8333333333333334,
+      "B_selected_exact_rate": 0.1,
+      "B_required_exact_rate": 0.08333333333333333,
+      "B_by_support": {
+        "want": {
+          "n": 3,
+          "exact_rate": 0.0
+        },
+        "want/neutral/avoid": {
+          "n": 9,
+          "exact_rate": 0.1111111111111111
+        }
+      },
+      "B_support_macro_exact_rate": 0.05555555555555555,
+      "B_complete_exact_rate": 0.0,
+      "B_protocol_errors": {
+        "expected_judgment_list": 1,
+        "missing_target": 2
+      },
+      "B_mean_protocol_score": -0.16666666666666666,
+      "B_selected_set_exact_rate": 0.4,
+      "B_selected_favored_exact_rate": 0.2,
+      "B_mean_false_exclusions_valid": 0.3,
+      "B_mean_extra_possibilities_valid": 0.5,
+      "B_informative_targets": 3,
+      "B_selected_informative": 3,
+      "B_informative_coverage": 1.0,
+      "B_selected_informative_exact_rate": 0.0,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.75,
+      "B_empty_selection": 0,
+      "P_legal_rate": 1.0,
+      "P_reference_available": 5,
+      "P_reference_discriminating": 4,
+      "P_optimal_rate_discriminating": 0.25,
+      "P_optimal_rate_all_reference_available": 0.4,
+      "P_mean_reference_regret_legal": -0.6444444444444445,
+      "P_unavailable_reasons": {
+        "A reference continuation was unavailable; discard partial rankings": 1
+      },
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 6
+      },
+      "P_explanation_statuses": {
+        "present": 6
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.06749276754756768,
+        "B_call_seconds": 37.41712612348298,
+        "P_call_seconds": 19.09144092227022,
+        "B_scoring_seconds": 0.00021917372941970825,
+        "P_scoring_seconds": 0.09936948182682197,
+        "total_seconds": 56.68001128422717
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430229-menu-r3": {
+      "n": 2,
+      "B_submission_statuses": {
+        "ok": 2
+      },
+      "P_submission_statuses": {
+        "ok": 1,
+        "expected_one_tool_call": 1
+      },
+      "B_format_success_rate": 1.0,
+      "B_teacher_available": 2,
+      "B_aux_scored": 2,
+      "B_eligible_targets": 4,
+      "B_selected_targets": 4,
+      "B_target_coverage": 1.0,
+      "B_selected_exact_rate": 0.0,
+      "B_required_exact_rate": 0.0,
+      "B_by_support": {
+        "want": {
+          "n": 1,
+          "exact_rate": 0.0
+        },
+        "want/neutral": {
+          "n": 3,
+          "exact_rate": 0.0
+        }
+      },
+      "B_support_macro_exact_rate": 0.0,
+      "B_complete_exact_rate": 0.0,
+      "B_protocol_errors": {},
+      "B_mean_protocol_score": 0.0,
+      "B_selected_set_exact_rate": 0.5,
+      "B_selected_favored_exact_rate": 0.25,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.75,
+      "B_informative_targets": 4,
+      "B_selected_informative": 4,
+      "B_informative_coverage": 1.0,
+      "B_selected_informative_exact_rate": 0.0,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.5,
+      "P_reference_available": 2,
+      "P_reference_discriminating": 2,
+      "P_optimal_rate_discriminating": 0.0,
+      "P_optimal_rate_all_reference_available": 0.0,
+      "P_mean_reference_regret_legal": -1.0,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 2
+      },
+      "P_explanation_statuses": {
+        "present": 2
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 2.689659595489502e-06,
+        "B_call_seconds": 37.87507017329335,
+        "P_call_seconds": 22.20903987251222,
+        "B_scoring_seconds": 0.00023649074137210846,
+        "P_scoring_seconds": 0.0009654760360717773,
+        "total_seconds": 60.089252991601825
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430229-menu-r4": {
+      "n": 3,
+      "B_submission_statuses": {
+        "malformed_arguments": 2,
+        "truncated": 1
+      },
+      "P_submission_statuses": {
+        "expected_one_tool_call": 1,
+        "ok": 1,
+        "wrong_tool": 1
+      },
+      "B_format_success_rate": 0.0,
+      "B_teacher_available": 3,
+      "B_aux_scored": 3,
+      "B_eligible_targets": 6,
+      "B_selected_targets": 0,
+      "B_target_coverage": 0.0,
+      "B_selected_exact_rate": null,
+      "B_required_exact_rate": 0.0,
+      "B_by_support": {
+        "avoid": {
+          "n": 1,
+          "exact_rate": 0.0
+        },
+        "want": {
+          "n": 3,
+          "exact_rate": 0.0
+        },
+        "want/neutral": {
+          "n": 2,
+          "exact_rate": 0.0
+        }
+      },
+      "B_support_macro_exact_rate": 0.0,
+      "B_complete_exact_rate": 0.0,
+      "B_protocol_errors": {
+        "expected_judgment_list": 3,
+        "missing_target": 6
+      },
+      "B_mean_protocol_score": -1.0,
+      "B_selected_set_exact_rate": null,
+      "B_selected_favored_exact_rate": null,
+      "B_mean_false_exclusions_valid": null,
+      "B_mean_extra_possibilities_valid": null,
+      "B_informative_targets": 6,
+      "B_selected_informative": 0,
+      "B_informative_coverage": 0.0,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.3333333333333333,
+      "P_reference_available": 3,
+      "P_reference_discriminating": 2,
+      "P_optimal_rate_discriminating": 0.0,
+      "P_optimal_rate_all_reference_available": 0.0,
+      "P_mean_reference_regret_legal": -2.0,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 3
+      },
+      "P_explanation_statuses": {
+        "present": 3
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 2.3953616619110107e-06,
+        "B_call_seconds": 38.1616742486755,
+        "P_call_seconds": 13.23612424482902,
+        "B_scoring_seconds": 0.00017488747835159302,
+        "P_scoring_seconds": 0.0047054775059223175,
+        "total_seconds": 51.406339099009834
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430229-response-r1": {
+      "n": 1,
+      "B_submission_statuses": {
+        "ok": 1
+      },
+      "P_submission_statuses": {
+        "ok": 1
+      },
+      "B_format_success_rate": 1.0,
+      "B_teacher_available": 1,
+      "B_aux_scored": 1,
+      "B_eligible_targets": 2,
+      "B_selected_targets": 2,
+      "B_target_coverage": 1.0,
+      "B_selected_exact_rate": 0.0,
+      "B_required_exact_rate": 0.0,
+      "B_by_support": {
+        "want/neutral/avoid": {
+          "n": 2,
+          "exact_rate": 0.0
+        }
+      },
+      "B_support_macro_exact_rate": 0.0,
+      "B_complete_exact_rate": 0.0,
+      "B_protocol_errors": {},
+      "B_mean_protocol_score": 0.0,
+      "B_selected_set_exact_rate": 1.0,
+      "B_selected_favored_exact_rate": 0.0,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.0,
+      "B_informative_targets": 0,
+      "B_selected_informative": 0,
+      "B_informative_coverage": null,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": null,
+      "B_all_possible_undetermined_baseline": 1.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 1.0,
+      "P_reference_available": 1,
+      "P_reference_discriminating": 0,
+      "P_optimal_rate_discriminating": null,
+      "P_optimal_rate_all_reference_available": 1.0,
+      "P_mean_reference_regret_legal": 0.0,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 1
+      },
+      "P_explanation_statuses": {
+        "present": 1
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.0012452006340026855,
+        "B_call_seconds": 43.37949833646417,
+        "P_call_seconds": 18.60988073423505,
+        "B_scoring_seconds": 0.00023682042956352234,
+        "P_scoring_seconds": 0.0010474584996700287,
+        "total_seconds": 61.99506636336446
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430229-response-r3": {
+      "n": 2,
+      "B_submission_statuses": {
+        "malformed_arguments": 1,
+        "ok": 1
+      },
+      "P_submission_statuses": {
+        "ok": 2
+      },
+      "B_format_success_rate": 0.5,
+      "B_teacher_available": 2,
+      "B_aux_scored": 2,
+      "B_eligible_targets": 4,
+      "B_selected_targets": 2,
+      "B_target_coverage": 0.5,
+      "B_selected_exact_rate": 1.0,
+      "B_required_exact_rate": 0.5,
+      "B_by_support": {
+        "want/neutral/avoid": {
+          "n": 4,
+          "exact_rate": 0.5
+        }
+      },
+      "B_support_macro_exact_rate": 0.5,
+      "B_complete_exact_rate": 0.5,
+      "B_protocol_errors": {
+        "expected_judgment_list": 1,
+        "missing_target": 2
+      },
+      "B_mean_protocol_score": -0.5,
+      "B_selected_set_exact_rate": 1.0,
+      "B_selected_favored_exact_rate": 1.0,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.0,
+      "B_informative_targets": 0,
+      "B_selected_informative": 0,
+      "B_informative_coverage": null,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": null,
+      "B_all_possible_undetermined_baseline": 1.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 1.0,
+      "P_reference_available": 2,
+      "P_reference_discriminating": 2,
+      "P_optimal_rate_discriminating": 0.5,
+      "P_optimal_rate_all_reference_available": 0.5,
+      "P_mean_reference_regret_legal": -0.1111111111111111,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 2
+      },
+      "P_explanation_statuses": {
+        "present": 2
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.0763965304940939,
+        "B_call_seconds": 24.297192266210914,
+        "P_call_seconds": 21.12428444623947,
+        "B_scoring_seconds": 0.0002322755753993988,
+        "P_scoring_seconds": 0.769763246178627,
+        "total_seconds": 46.272837944328785
+      },
+      "B_passthrough_all": true
+    },
+    "evidence-430230": {
+      "n": 13,
+      "B_submission_statuses": {
+        "malformed_arguments": 6,
+        "ok": 7
+      },
+      "P_submission_statuses": {
+        "ok": 9,
+        "truncated": 3,
+        "wrong_tool": 1
+      },
+      "B_format_success_rate": 0.5384615384615384,
+      "B_teacher_available": 13,
+      "B_aux_scored": 13,
+      "B_eligible_targets": 26,
+      "B_selected_targets": 14,
+      "B_target_coverage": 0.5384615384615384,
+      "B_selected_exact_rate": 0.0,
+      "B_required_exact_rate": 0.0,
+      "B_by_support": {
+        "avoid": {
+          "n": 4,
+          "exact_rate": 0.0
+        },
+        "neutral/avoid": {
+          "n": 5,
+          "exact_rate": 0.0
+        },
+        "want": {
+          "n": 5,
+          "exact_rate": 0.0
+        },
+        "want/neutral": {
+          "n": 6,
+          "exact_rate": 0.0
+        },
+        "want/neutral/avoid": {
+          "n": 6,
+          "exact_rate": 0.0
+        }
+      },
+      "B_support_macro_exact_rate": 0.0,
+      "B_complete_exact_rate": 0.0,
+      "B_protocol_errors": {
+        "expected_judgment_list": 6,
+        "missing_target": 12
+      },
+      "B_mean_protocol_score": -0.46153846153846156,
+      "B_selected_set_exact_rate": 0.14285714285714285,
+      "B_selected_favored_exact_rate": 0.21428571428571427,
+      "B_mean_false_exclusions_valid": 0.07142857142857142,
+      "B_mean_extra_possibilities_valid": 1.2857142857142858,
+      "B_informative_targets": 20,
+      "B_selected_informative": 12,
+      "B_informative_coverage": 0.6,
+      "B_selected_informative_exact_rate": 0.0,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.23076923076923078,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.6923076923076923,
+      "P_reference_available": 13,
+      "P_reference_discriminating": 5,
+      "P_optimal_rate_discriminating": 0.4,
+      "P_optimal_rate_all_reference_available": 0.5384615384615384,
+      "P_mean_reference_regret_legal": -0.19753086419753088,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 13
+      },
+      "P_explanation_statuses": {
+        "present": 13
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.08056949365597504,
+        "B_call_seconds": 38.33325775569448,
+        "P_call_seconds": 23.679851144838793,
+        "B_scoring_seconds": 0.00022137193725659297,
+        "P_scoring_seconds": 0.1566126481271707,
+        "total_seconds": 62.254283669762884
+      },
+      "B_passthrough_all": true
+    },
+    "heldout-four": {
+      "n": 3,
+      "B_submission_statuses": {
+        "malformed_arguments": 3
+      },
+      "P_submission_statuses": {
+        "ok": 2,
+        "illegal_action": 1
+      },
+      "B_format_success_rate": 0.0,
+      "B_teacher_available": 3,
+      "B_aux_scored": 3,
+      "B_eligible_targets": 6,
+      "B_selected_targets": 0,
+      "B_target_coverage": 0.0,
+      "B_selected_exact_rate": null,
+      "B_required_exact_rate": 0.0,
+      "B_by_support": {
+        "want/neutral/avoid": {
+          "n": 6,
+          "exact_rate": 0.0
+        }
+      },
+      "B_support_macro_exact_rate": 0.0,
+      "B_complete_exact_rate": 0.0,
+      "B_protocol_errors": {
+        "expected_judgment_list": 3,
+        "missing_target": 6
+      },
+      "B_mean_protocol_score": -1.0,
+      "B_selected_set_exact_rate": null,
+      "B_selected_favored_exact_rate": null,
+      "B_mean_false_exclusions_valid": null,
+      "B_mean_extra_possibilities_valid": null,
+      "B_informative_targets": 0,
+      "B_selected_informative": 0,
+      "B_informative_coverage": null,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": null,
+      "B_all_possible_undetermined_baseline": 1.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.6666666666666666,
+      "P_reference_available": 3,
+      "P_reference_discriminating": 2,
+      "P_optimal_rate_discriminating": 0.5,
+      "P_optimal_rate_all_reference_available": 0.3333333333333333,
+      "P_mean_reference_regret_legal": -0.3333333333333333,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 3
+      },
+      "P_explanation_statuses": {
+        "present": 3
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.7850663599868616,
+        "B_call_seconds": 35.827396069963775,
+        "P_call_seconds": 14.289450366050005,
+        "B_scoring_seconds": 0.00021338959534962973,
+        "P_scoring_seconds": 1.345799853404363,
+        "total_seconds": 52.25345025211573
+      },
+      "B_passthrough_all": true
+    },
+    "heldout-four-small": {
+      "n": 7,
+      "B_submission_statuses": {
+        "malformed_arguments": 3,
+        "ok": 3,
+        "truncated": 1
+      },
+      "P_submission_statuses": {
+        "ok": 6,
+        "wrong_tool": 1
+      },
+      "B_format_success_rate": 0.42857142857142855,
+      "B_teacher_available": 7,
+      "B_aux_scored": 7,
+      "B_eligible_targets": 14,
+      "B_selected_targets": 6,
+      "B_target_coverage": 0.42857142857142855,
+      "B_selected_exact_rate": 0.5,
+      "B_required_exact_rate": 0.21428571428571427,
+      "B_by_support": {
+        "avoid": {
+          "n": 1,
+          "exact_rate": 0.0
+        },
+        "neutral/avoid": {
+          "n": 2,
+          "exact_rate": 0.0
+        },
+        "want": {
+          "n": 1,
+          "exact_rate": 0.0
+        },
+        "want/neutral/avoid": {
+          "n": 10,
+          "exact_rate": 0.3
+        }
+      },
+      "B_support_macro_exact_rate": 0.075,
+      "B_complete_exact_rate": 0.14285714285714285,
+      "B_protocol_errors": {
+        "expected_judgment_list": 4,
+        "missing_target": 8
+      },
+      "B_mean_protocol_score": -0.5714285714285714,
+      "B_selected_set_exact_rate": 0.6666666666666666,
+      "B_selected_favored_exact_rate": 0.6666666666666666,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.5,
+      "B_informative_targets": 4,
+      "B_selected_informative": 2,
+      "B_informative_coverage": 0.5,
+      "B_selected_informative_exact_rate": 0.0,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.7142857142857143,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.8571428571428571,
+      "P_reference_available": 7,
+      "P_reference_discriminating": 5,
+      "P_optimal_rate_discriminating": 0.2,
+      "P_optimal_rate_all_reference_available": 0.42857142857142855,
+      "P_mean_reference_regret_legal": -0.4444444444444445,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 7
+      },
+      "P_explanation_statuses": {
+        "present": 7
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.05445083124297006,
+        "B_call_seconds": 27.12185502158744,
+        "P_call_seconds": 23.186584159731865,
+        "B_scoring_seconds": 0.00022514483758381436,
+        "P_scoring_seconds": 0.09608619713357516,
+        "total_seconds": 50.4631262964436
+      },
+      "B_passthrough_all": true
+    },
+    "heldout-four-small-menu-r3": {
+      "n": 4,
+      "B_submission_statuses": {
+        "malformed_arguments": 3,
+        "ok": 1
+      },
+      "P_submission_statuses": {
+        "ok": 3,
+        "expected_one_tool_call": 1
+      },
+      "B_format_success_rate": 0.25,
+      "B_teacher_available": 4,
+      "B_aux_scored": 4,
+      "B_eligible_targets": 8,
+      "B_selected_targets": 2,
+      "B_target_coverage": 0.25,
+      "B_selected_exact_rate": 1.0,
+      "B_required_exact_rate": 0.25,
+      "B_by_support": {
+        "neutral/avoid": {
+          "n": 1,
+          "exact_rate": 0.0
+        },
+        "want/neutral/avoid": {
+          "n": 7,
+          "exact_rate": 0.2857142857142857
+        }
+      },
+      "B_support_macro_exact_rate": 0.14285714285714285,
+      "B_complete_exact_rate": 0.25,
+      "B_protocol_errors": {
+        "expected_judgment_list": 3,
+        "missing_target": 6
+      },
+      "B_mean_protocol_score": -0.75,
+      "B_selected_set_exact_rate": 1.0,
+      "B_selected_favored_exact_rate": 1.0,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.0,
+      "B_informative_targets": 1,
+      "B_selected_informative": 0,
+      "B_informative_coverage": 0.0,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.875,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.75,
+      "P_reference_available": 3,
+      "P_reference_discriminating": 1,
+      "P_optimal_rate_discriminating": 0.0,
+      "P_optimal_rate_all_reference_available": 0.6666666666666666,
+      "P_mean_reference_regret_legal": 0.0,
+      "P_unavailable_reasons": {
+        "A reference continuation was unavailable; discard partial rankings": 1
+      },
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 4
+      },
+      "P_explanation_statuses": {
+        "present": 4
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.33947698026895523,
+        "B_call_seconds": 18.722047730349004,
+        "P_call_seconds": 20.54587867297232,
+        "B_scoring_seconds": 0.00043400656431913376,
+        "P_scoring_seconds": 0.35298771131783724,
+        "total_seconds": 39.965658605098724
+      },
+      "B_passthrough_all": true
+    },
+    "heldout-four-small-menu-r4": {
+      "n": 3,
+      "B_submission_statuses": {
+        "ok": 3
+      },
+      "P_submission_statuses": {
+        "ok": 3
+      },
+      "B_format_success_rate": 1.0,
+      "B_teacher_available": 3,
+      "B_aux_scored": 3,
+      "B_eligible_targets": 6,
+      "B_selected_targets": 6,
+      "B_target_coverage": 1.0,
+      "B_selected_exact_rate": 0.8333333333333334,
+      "B_required_exact_rate": 0.8333333333333334,
+      "B_by_support": {
+        "want/neutral/avoid": {
+          "n": 6,
+          "exact_rate": 0.8333333333333334
+        }
+      },
+      "B_support_macro_exact_rate": 0.8333333333333334,
+      "B_complete_exact_rate": 0.6666666666666666,
+      "B_protocol_errors": {},
+      "B_mean_protocol_score": 0.0,
+      "B_selected_set_exact_rate": 1.0,
+      "B_selected_favored_exact_rate": 0.8333333333333334,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.0,
+      "B_informative_targets": 0,
+      "B_selected_informative": 0,
+      "B_informative_coverage": null,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": null,
+      "B_all_possible_undetermined_baseline": 1.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 1.0,
+      "P_reference_available": 3,
+      "P_reference_discriminating": 1,
+      "P_optimal_rate_discriminating": 1.0,
+      "P_optimal_rate_all_reference_available": 1.0,
+      "P_mean_reference_regret_legal": 0.0,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 3
+      },
+      "P_explanation_statuses": {
+        "present": 3
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 2.124657233556112e-06,
+        "B_call_seconds": 26.926062047481537,
+        "P_call_seconds": 22.44138142466545,
+        "B_scoring_seconds": 0.00023976340889930725,
+        "P_scoring_seconds": 0.624365221709013,
+        "total_seconds": 49.995910001297794
+      },
+      "B_passthrough_all": true
+    },
+    "heldout-four-small-response-r1": {
+      "n": 1,
+      "B_submission_statuses": {
+        "malformed_arguments": 1
+      },
+      "P_submission_statuses": {
+        "ok": 1
+      },
+      "B_format_success_rate": 0.0,
+      "B_teacher_available": 1,
+      "B_aux_scored": 1,
+      "B_eligible_targets": 2,
+      "B_selected_targets": 0,
+      "B_target_coverage": 0.0,
+      "B_selected_exact_rate": null,
+      "B_required_exact_rate": 0.0,
+      "B_by_support": {
+        "want/neutral/avoid": {
+          "n": 2,
+          "exact_rate": 0.0
+        }
+      },
+      "B_support_macro_exact_rate": 0.0,
+      "B_complete_exact_rate": 0.0,
+      "B_protocol_errors": {
+        "expected_judgment_list": 1,
+        "missing_target": 2
+      },
+      "B_mean_protocol_score": -1.0,
+      "B_selected_set_exact_rate": null,
+      "B_selected_favored_exact_rate": null,
+      "B_mean_false_exclusions_valid": null,
+      "B_mean_extra_possibilities_valid": null,
+      "B_informative_targets": 0,
+      "B_selected_informative": 0,
+      "B_informative_coverage": null,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": null,
+      "B_all_possible_undetermined_baseline": 1.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 1.0,
+      "P_reference_available": 1,
+      "P_reference_discriminating": 0,
+      "P_optimal_rate_discriminating": null,
+      "P_optimal_rate_all_reference_available": 1.0,
+      "P_mean_reference_regret_legal": 0.0,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 1
+      },
+      "P_explanation_statuses": {
+        "present": 1
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.001738470047712326,
+        "B_call_seconds": 15.994068495929241,
+        "P_call_seconds": 13.369348213076591,
+        "B_scoring_seconds": 0.000202815979719162,
+        "P_scoring_seconds": 0.0019286759197711945,
+        "total_seconds": 29.37126576527953
+      },
+      "B_passthrough_all": true
+    },
+    "heldout-four-small-response-r3": {
+      "n": 2,
+      "B_submission_statuses": {
+        "ok": 2
+      },
+      "P_submission_statuses": {
+        "ok": 2
+      },
+      "B_format_success_rate": 1.0,
+      "B_teacher_available": 2,
+      "B_aux_scored": 2,
+      "B_eligible_targets": 4,
+      "B_selected_targets": 4,
+      "B_target_coverage": 1.0,
+      "B_selected_exact_rate": 0.0,
+      "B_required_exact_rate": 0.0,
+      "B_by_support": {
+        "want/neutral/avoid": {
+          "n": 4,
+          "exact_rate": 0.0
+        }
+      },
+      "B_support_macro_exact_rate": 0.0,
+      "B_complete_exact_rate": 0.0,
+      "B_protocol_errors": {},
+      "B_mean_protocol_score": 0.0,
+      "B_selected_set_exact_rate": 1.0,
+      "B_selected_favored_exact_rate": 0.0,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.0,
+      "B_informative_targets": 0,
+      "B_selected_informative": 0,
+      "B_informative_coverage": null,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": null,
+      "B_all_possible_undetermined_baseline": 1.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 1.0,
+      "P_reference_available": 2,
+      "P_reference_discriminating": 1,
+      "P_optimal_rate_discriminating": 1.0,
+      "P_optimal_rate_all_reference_available": 1.0,
+      "P_mean_reference_regret_legal": 0.0,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 2
+      },
+      "P_explanation_statuses": {
+        "present": 2
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.03677579015493393,
+        "B_call_seconds": 20.97417706437409,
+        "P_call_seconds": 15.702908225357533,
+        "B_scoring_seconds": 0.00026289187371730804,
+        "P_scoring_seconds": 0.7551536429673433,
+        "total_seconds": 37.47329477220774
+      },
+      "B_passthrough_all": true
+    },
+    "heldout-three": {
+      "n": 3,
+      "B_submission_statuses": {
+        "ok": 3
+      },
+      "P_submission_statuses": {
+        "truncated": 1,
+        "ok": 1,
+        "illegal_action": 1
+      },
+      "B_format_success_rate": 0.3333333333333333,
+      "B_teacher_available": 3,
+      "B_aux_scored": 3,
+      "B_eligible_targets": 3,
+      "B_selected_targets": 1,
+      "B_target_coverage": 0.3333333333333333,
+      "B_selected_exact_rate": 0.0,
+      "B_required_exact_rate": 0.0,
+      "B_by_support": {
+        "want/neutral/avoid": {
+          "n": 3,
+          "exact_rate": 0.0
+        }
+      },
+      "B_support_macro_exact_rate": 0.0,
+      "B_complete_exact_rate": 0.0,
+      "B_protocol_errors": {
+        "unexpected_target": 2,
+        "missing_target": 2
+      },
+      "B_mean_protocol_score": -0.6666666666666666,
+      "B_selected_set_exact_rate": 1.0,
+      "B_selected_favored_exact_rate": 0.0,
+      "B_mean_false_exclusions_valid": 0.0,
+      "B_mean_extra_possibilities_valid": 0.0,
+      "B_informative_targets": 0,
+      "B_selected_informative": 0,
+      "B_informative_coverage": null,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": null,
+      "B_all_possible_undetermined_baseline": 1.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.3333333333333333,
+      "P_reference_available": 3,
+      "P_reference_discriminating": 3,
+      "P_optimal_rate_discriminating": 0.0,
+      "P_optimal_rate_all_reference_available": 0.0,
+      "P_mean_reference_regret_legal": -1.0,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 3
+      },
+      "P_explanation_statuses": {
+        "present": 3
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.24151010190447172,
+        "B_call_seconds": 27.997002374380827,
+        "P_call_seconds": 31.02822916333874,
+        "B_scoring_seconds": 0.000181360791126887,
+        "P_scoring_seconds": 0.27629977216323215,
+        "total_seconds": 59.54704670359691
+      },
+      "B_passthrough_all": true
+    }
+  },
+  "by_phase": {
+    "proposal": {
+      "n": 42,
+      "B_submission_statuses": {
+        "ok": 24,
+        "malformed_arguments": 18
+      },
+      "P_submission_statuses": {
+        "illegal_action": 7,
+        "ok": 31,
+        "wrong_tool": 1,
+        "truncated": 1,
+        "expected_one_tool_call": 2
+      },
+      "B_format_success_rate": 0.5238095238095238,
+      "B_teacher_available": 42,
+      "B_aux_scored": 42,
+      "B_eligible_targets": 81,
+      "B_selected_targets": 43,
+      "B_target_coverage": 0.5308641975308642,
+      "B_selected_exact_rate": 0.5581395348837209,
+      "B_required_exact_rate": 0.2962962962962963,
+      "B_by_support": {
+        "want/neutral/avoid": {
+          "n": 81,
+          "exact_rate": 0.2962962962962963
+        }
+      },
+      "B_support_macro_exact_rate": 0.2962962962962963,
+      "B_complete_exact_rate": 0.2619047619047619,
+      "B_protocol_errors": {
+        "expected_judgment_list": 18,
+        "missing_target": 38,
+        "unexpected_target": 2
+      },
+      "B_mean_protocol_score": -0.47619047619047616,
+      "B_selected_set_exact_rate": 0.9534883720930233,
+      "B_selected_favored_exact_rate": 0.5581395348837209,
+      "B_mean_false_exclusions_valid": 0.046511627906976744,
+      "B_mean_extra_possibilities_valid": 0.0,
+      "B_informative_targets": 0,
+      "B_selected_informative": 0,
+      "B_informative_coverage": null,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": null,
+      "B_all_possible_undetermined_baseline": 1.0,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.7380952380952381,
+      "P_reference_available": 39,
+      "P_reference_discriminating": 28,
+      "P_optimal_rate_discriminating": 0.21428571428571427,
+      "P_optimal_rate_all_reference_available": 0.358974358974359,
+      "P_mean_reference_regret_legal": -0.31349206349206343,
+      "P_unavailable_reasons": {
+        "Reference wall budget exceeded; discard partial rankings": 1,
+        "A reference continuation was unavailable; discard partial rankings": 2
+      },
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 42
+      },
+      "P_explanation_statuses": {
+        "present": 42
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.5025443035577025,
+        "B_call_seconds": 33.25674460553343,
+        "P_call_seconds": 21.10323305197415,
+        "B_scoring_seconds": 0.0002669863225448699,
+        "P_scoring_seconds": 1.4563225672713347,
+        "total_seconds": 56.32519911504572
+      },
+      "B_passthrough_all": true
+    },
+    "response": {
+      "n": 62,
+      "B_submission_statuses": {
+        "ok": 29,
+        "malformed_arguments": 28,
+        "truncated": 5
+      },
+      "P_submission_statuses": {
+        "ok": 50,
+        "expected_one_tool_call": 4,
+        "truncated": 3,
+        "wrong_tool": 5
+      },
+      "B_format_success_rate": 0.46774193548387094,
+      "B_teacher_available": 59,
+      "B_aux_scored": 59,
+      "B_eligible_targets": 118,
+      "B_selected_targets": 58,
+      "B_target_coverage": 0.4915254237288136,
+      "B_selected_exact_rate": 0.20689655172413793,
+      "B_required_exact_rate": 0.1016949152542373,
+      "B_by_support": {
+        "avoid": {
+          "n": 9,
+          "exact_rate": 0.0
+        },
+        "neutral/avoid": {
+          "n": 17,
+          "exact_rate": 0.0
+        },
+        "want": {
+          "n": 14,
+          "exact_rate": 0.0
+        },
+        "want/neutral": {
+          "n": 17,
+          "exact_rate": 0.0
+        },
+        "want/neutral/avoid": {
+          "n": 61,
+          "exact_rate": 0.19672131147540983
+        }
+      },
+      "B_support_macro_exact_rate": 0.039344262295081964,
+      "B_complete_exact_rate": 0.05084745762711865,
+      "B_protocol_errors": {
+        "expected_judgment_list": 33,
+        "missing_target": 66
+      },
+      "B_mean_protocol_score": -0.532258064516129,
+      "B_selected_set_exact_rate": 0.5517241379310345,
+      "B_selected_favored_exact_rate": 0.3103448275862069,
+      "B_mean_false_exclusions_valid": 0.034482758620689655,
+      "B_mean_extra_possibilities_valid": 0.6551724137931034,
+      "B_informative_targets": 57,
+      "B_selected_informative": 27,
+      "B_informative_coverage": 0.47368421052631576,
+      "B_selected_informative_exact_rate": 0.0,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.5169491525423728,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.8064516129032258,
+      "P_reference_available": 60,
+      "P_reference_discriminating": 30,
+      "P_optimal_rate_discriminating": 0.4,
+      "P_optimal_rate_all_reference_available": 0.5833333333333334,
+      "P_mean_reference_regret_legal": -0.3125,
+      "P_unavailable_reasons": {
+        "Fragile type support": 2
+      },
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 62
+      },
+      "P_explanation_statuses": {
+        "present": 62
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.003146297208243801,
+        "B_call_seconds": 36.71196773912637,
+        "P_call_seconds": 19.047986993926667,
+        "B_scoring_seconds": 0.0002099747258809305,
+        "P_scoring_seconds": 0.18073899563281767,
+        "total_seconds": 55.94809703829308
+      },
+      "B_passthrough_all": true
+    }
+  },
+  "by_value_basis": {
+    "direct_terminal": {
+      "n": 46,
+      "B_submission_statuses": {
+        "malformed_arguments": 19,
+        "ok": 23,
+        "truncated": 4
+      },
+      "P_submission_statuses": {
+        "ok": 36,
+        "expected_one_tool_call": 3,
+        "truncated": 3,
+        "wrong_tool": 4
+      },
+      "B_format_success_rate": 0.5,
+      "B_teacher_available": 45,
+      "B_aux_scored": 45,
+      "B_eligible_targets": 90,
+      "B_selected_targets": 46,
+      "B_target_coverage": 0.5111111111111111,
+      "B_selected_exact_rate": 0.13043478260869565,
+      "B_required_exact_rate": 0.06666666666666667,
+      "B_by_support": {
+        "avoid": {
+          "n": 9,
+          "exact_rate": 0.0
+        },
+        "neutral/avoid": {
+          "n": 17,
+          "exact_rate": 0.0
+        },
+        "want": {
+          "n": 13,
+          "exact_rate": 0.0
+        },
+        "want/neutral": {
+          "n": 15,
+          "exact_rate": 0.0
+        },
+        "want/neutral/avoid": {
+          "n": 36,
+          "exact_rate": 0.16666666666666666
+        }
+      },
+      "B_support_macro_exact_rate": 0.03333333333333333,
+      "B_complete_exact_rate": 0.022222222222222223,
+      "B_protocol_errors": {
+        "expected_judgment_list": 23,
+        "missing_target": 46
+      },
+      "B_mean_protocol_score": -0.5,
+      "B_selected_set_exact_rate": 0.43478260869565216,
+      "B_selected_favored_exact_rate": 0.2608695652173913,
+      "B_mean_false_exclusions_valid": 0.043478260869565216,
+      "B_mean_extra_possibilities_valid": 0.8260869565217391,
+      "B_informative_targets": 54,
+      "B_selected_informative": 27,
+      "B_informative_coverage": 0.5,
+      "B_selected_informative_exact_rate": 0.0,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.4,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.782608695652174,
+      "P_reference_available": 46,
+      "P_reference_discriminating": 25,
+      "P_optimal_rate_discriminating": 0.32,
+      "P_optimal_rate_all_reference_available": 0.5217391304347826,
+      "P_mean_reference_regret_legal": -0.3888888888888889,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 46
+      },
+      "P_explanation_statuses": {
+        "present": 46
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.0001494457702273908,
+        "B_call_seconds": 39.036235968622826,
+        "P_call_seconds": 19.714081030339003,
+        "B_scoring_seconds": 0.0002125832049742989,
+        "P_scoring_seconds": 0.0012655866372844448,
+        "total_seconds": 58.75572050889225
+      },
+      "B_passthrough_all": true
+    },
+    "reference_continuation": {
+      "n": 53,
+      "B_submission_statuses": {
+        "ok": 27,
+        "malformed_arguments": 25,
+        "truncated": 1
+      },
+      "P_submission_statuses": {
+        "illegal_action": 7,
+        "ok": 40,
+        "wrong_tool": 2,
+        "truncated": 1,
+        "expected_one_tool_call": 3
+      },
+      "B_format_success_rate": 0.4716981132075472,
+      "B_teacher_available": 53,
+      "B_aux_scored": 53,
+      "B_eligible_targets": 103,
+      "B_selected_targets": 49,
+      "B_target_coverage": 0.47572815533980584,
+      "B_selected_exact_rate": 0.5102040816326531,
+      "B_required_exact_rate": 0.24271844660194175,
+      "B_by_support": {
+        "want": {
+          "n": 1,
+          "exact_rate": 0.0
+        },
+        "want/neutral": {
+          "n": 2,
+          "exact_rate": 0.0
+        },
+        "want/neutral/avoid": {
+          "n": 100,
+          "exact_rate": 0.25
+        }
+      },
+      "B_support_macro_exact_rate": 0.08333333333333333,
+      "B_complete_exact_rate": 0.20754716981132076,
+      "B_protocol_errors": {
+        "expected_judgment_list": 26,
+        "missing_target": 54,
+        "unexpected_target": 2
+      },
+      "B_mean_protocol_score": -0.5283018867924528,
+      "B_selected_set_exact_rate": 0.9591836734693877,
+      "B_selected_favored_exact_rate": 0.5102040816326531,
+      "B_mean_false_exclusions_valid": 0.04081632653061224,
+      "B_mean_extra_possibilities_valid": 0.0,
+      "B_informative_targets": 3,
+      "B_selected_informative": 0,
+      "B_informative_coverage": 0.0,
+      "B_selected_informative_exact_rate": null,
+      "B_correct_informative_fraction_of_all": 0.0,
+      "B_all_possible_undetermined_baseline": 0.970873786407767,
+      "B_empty_selection": 0,
+      "P_legal_rate": 0.7547169811320755,
+      "P_reference_available": 53,
+      "P_reference_discriminating": 33,
+      "P_optimal_rate_discriminating": 0.30303030303030304,
+      "P_optimal_rate_all_reference_available": 0.4716981132075472,
+      "P_mean_reference_regret_legal": -0.24444444444444446,
+      "P_unavailable_reasons": {},
+      "B_reasoning_present_rate": 1.0,
+      "P_reasoning_present_rate": 1.0,
+      "B_explanation_statuses": {
+        "present": 53
+      },
+      "P_explanation_statuses": {
+        "present": 53
+      },
+      "mean_timing_seconds": {
+        "teacher_setup_seconds": 0.34257471224047104,
+        "B_call_seconds": 32.79255181705614,
+        "P_call_seconds": 19.67763222922694,
+        "B_scoring_seconds": 0.00023373371025301376,
+        "P_scoring_seconds": 0.9534123724080482,
+        "total_seconds": 53.771920806183566
+      },
+      "B_passthrough_all": true
+    }
+  },
+  "planning_discriminating": {
+    "n": 33,
+    "B_submission_statuses": {
+      "ok": 17,
+      "malformed_arguments": 16
+    },
+    "P_submission_statuses": {
+      "illegal_action": 4,
+      "ok": 25,
+      "wrong_tool": 1,
+      "truncated": 1,
+      "expected_one_tool_call": 2
+    },
+    "B_format_success_rate": 0.45454545454545453,
+    "B_teacher_available": 33,
+    "B_aux_scored": 33,
+    "B_eligible_targets": 63,
+    "B_selected_targets": 29,
+    "B_target_coverage": 0.4603174603174603,
+    "B_selected_exact_rate": 0.41379310344827586,
+    "B_required_exact_rate": 0.19047619047619047,
+    "B_by_support": {
+      "want/neutral/avoid": {
+        "n": 63,
+        "exact_rate": 0.19047619047619047
+      }
+    },
+    "B_support_macro_exact_rate": 0.19047619047619047,
+    "B_complete_exact_rate": 0.15151515151515152,
+    "B_protocol_errors": {
+      "expected_judgment_list": 16,
+      "missing_target": 34,
+      "unexpected_target": 2
+    },
+    "B_mean_protocol_score": -0.5454545454545454,
+    "B_selected_set_exact_rate": 1.0,
+    "B_selected_favored_exact_rate": 0.41379310344827586,
+    "B_mean_false_exclusions_valid": 0.0,
+    "B_mean_extra_possibilities_valid": 0.0,
+    "B_informative_targets": 0,
+    "B_selected_informative": 0,
+    "B_informative_coverage": null,
+    "B_selected_informative_exact_rate": null,
+    "B_correct_informative_fraction_of_all": null,
+    "B_all_possible_undetermined_baseline": 1.0,
+    "B_empty_selection": 0,
+    "P_legal_rate": 0.7575757575757576,
+    "P_reference_available": 33,
+    "P_reference_discriminating": 33,
+    "P_optimal_rate_discriminating": 0.30303030303030304,
+    "P_optimal_rate_all_reference_available": 0.30303030303030304,
+    "P_mean_reference_regret_legal": -0.39111111111111113,
+    "P_unavailable_reasons": {},
+    "B_reasoning_present_rate": 1.0,
+    "P_reasoning_present_rate": 1.0,
+    "B_explanation_statuses": {
+      "present": 33
+    },
+    "P_explanation_statuses": {
+      "present": 33
+    },
+    "mean_timing_seconds": {
+      "teacher_setup_seconds": 0.47334401456244063,
+      "B_call_seconds": 33.24233417619359,
+      "P_call_seconds": 20.046170633737788,
+      "B_scoring_seconds": 0.00024282164645917487,
+      "P_scoring_seconds": 1.2904982333156196,
+      "total_seconds": 55.059006407066725
+    },
+    "B_passthrough_all": true
+  },
+  "pairs": {
+    "maintain": {
+      "n": 43,
+      "both_selected": 13,
+      "both_exact": 4
+    },
+    "update": {
+      "n": 25,
+      "both_selected": 5,
+      "both_exact": 0
+    }
+  },
+  "continuations": {
+    "n": 0,
+    "terminal": 0,
+    "usable": 0,
+    "statuses": {},
+    "outcomes": []
+  },
+  "limitations": [
+    "All fixed queries are required. Per-target semantic accuracy does not erase protocol failures.",
+    "Explanation presence checks visible text only, not reasoning correctness; answer validity is scored separately.",
+    "Reference regret is not LM advantage. Actual terminal payoff is recorded separately.",
+    "No causal B-to-P claim from passthrough or accuracy alone.",
+    "Favored uses the existing teacher margin convention; inspect disagreements separately from support errors.",
+    "Static point scores use declared teacher histories; online continuation uses actual model actions."
+  ],
+  "requested_points": 104,
+  "failed_points": 0
+}

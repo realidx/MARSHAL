@@ -26,6 +26,8 @@ class TrainingArguments:
         default=5e-5,
         metadata={"help": "The initial learning rate for AdamW."}
     )
+    optimizer_backend: str = field(default='deepspeed', metadata={"help": "deepspeed, torch_adamw, torch_adamw_fused, or megatron; the latter is selected by strategy_name."})
+    lr_scheduler_kwargs: Dict[str, Any] = field(default_factory=dict)
     lr_scheduler_type: str = field(
         default="linear",
         metadata={"help": "The scheduler type to use. Refer to HF"})

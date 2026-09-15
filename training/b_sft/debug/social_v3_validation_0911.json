@@ -1,0 +1,64 @@
+{
+  "actual_LM": false,
+  "regression_tests_passed": 58,
+  "topology_disjoint": true,
+  "packs": {
+    "social_cases_v3": {
+      "checksums_sha256": "a0fe3265b7795ff763613e0acf0019185348fd2b17534e691300372abcd248a5",
+      "native_verification": {
+        "terminal_trajectories_checked": 557,
+        "B_snapshots_checked": 48,
+        "sampled_reference_P_values_checked": 90,
+        "all_direct_terminal_P_values_checked": 14
+      },
+      "planning_points": 48,
+      "belief_points": 15
+    },
+    "social_generalization_v3": {
+      "checksums_sha256": "dfb4be20d390ad17a1a7ae11dbe46699156f1acf667dfcb76af8faa29d6aeff3",
+      "native_verification": {
+        "terminal_trajectories_checked": 1512,
+        "B_snapshots_checked": 104,
+        "sampled_reference_P_values_checked": 204,
+        "all_direct_terminal_P_values_checked": 92
+      },
+      "planning_points": 86,
+      "belief_points": 46
+    }
+  },
+  "full_dry_runs": [
+    {
+      "path": "training/b_sft/debug/social_v3_planning_dry_0911",
+      "cohort": "planning",
+      "points": 86,
+      "failed_points": 0,
+      "frozen_P_values_and_masks_match": true
+    },
+    {
+      "path": "training/b_sft/debug/social_v3_belief_dry_0911",
+      "cohort": "belief",
+      "points": 15,
+      "failed_points": 0,
+      "frozen_P_values_and_masks_match": true
+    },
+    {
+      "path": "training/b_sft/debug/social_v3_cases_planning_dry_0911",
+      "cohort": "planning",
+      "points": 48,
+      "failed_points": 0,
+      "frozen_P_values_and_masks_match": true
+    },
+    {
+      "path": "training/b_sft/debug/social_v3_generalization_belief_dry_0911",
+      "cohort": "belief",
+      "points": 46,
+      "failed_points": 0,
+      "frozen_P_values_and_masks_match": true
+    }
+  ],
+  "limitations": [
+    "Cohorts overlap; summed decision count is not an independent sample count.",
+    "Two large development source roots exceeded unchanged teacher budgets and are logged in screening.jsonl; labels were not fabricated.",
+    "No neural training, new LM evaluation, or causal B-to-P experiment was performed."
+  ]
+}

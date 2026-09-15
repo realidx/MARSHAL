@@ -85,23 +85,22 @@ class GameState:
         }
 
     def goal_satisfaction(self) -> np.ndarray:
-        """Return one binary completion value for every goal."""
+        """ALL_OF goals require completion; linear goals earn fractional progress."""
 
-        satisfied = np.zeros(self.spec.n_goals, dtype=np.int8)
+        satisfied = np.zeros(self.spec.n_goals, dtype=np.int8 if all(g.binary for g in self.spec.goals) else np.float64)
         for goal in self.spec.goals:
-            satisfied[goal.goal_id] = int(
-                all(self.commitments[action.player_id, action.action_id] == 1 for action in goal.required_actions)
-            )
+            met = sum(self.commitments[a.player_id, a.action_id] == 1 for a in goal.required_actions)
+            satisfied[goal.goal_id] = int(met == len(goal.required_actions)) if goal.binary else met / len(goal.required_actions)
         return satisfied
 
     def terminal_rewards(self) -> np.ndarray:
         """Return the additive preference-weighted goal rewards."""
 
-        return self.spec.private_preferences.astype(np.int64) @ self.goal_satisfaction().astype(np.int64)
+        return self.spec.private_preferences.astype(np.int64) @ self.goal_satisfaction()
 
-    def reward(self, player_id: int) -> int:
+    def reward(self, player_id: int) -> int | float:
         self._validate_player(player_id)
-        return int(self.terminal_rewards()[player_id])
+        return self.terminal_rewards()[player_id].item()
 
     def legal_partners(self, proposer_id: int | None = None) -> tuple[int, ...]:
         if proposer_id is None:

@@ -1,0 +1,71 @@
+{
+  "version": "plain-v1",
+  "formal_mixed_training_ready": false,
+  "role": "diagnostic_audit_only",
+  "files": {
+    "bp_train.jsonl": {
+      "sha256": "2593e707490254499dd3792d0e17791a4c56bd3231e2d6ed833ec5dcfb5524bc",
+      "count": 43
+    },
+    "bp_validation.jsonl": {
+      "sha256": "0e529ed043290a38a8edd5ffbc9ea979b3e13be24366b587bbc2737d396b5af3",
+      "count": 23
+    },
+    "audit.jsonl": {
+      "sha256": "3a7ed1678fa268a110f4f1359c7eef48aa281f95cc6363f76d9bba5eeda5f826",
+      "count": 181
+    },
+    "selfplay_train.jsonl": {
+      "sha256": "95bd42a069c61a5fce993fcd8b11fb1a85105c59738f430f6256fcedf8986df8",
+      "count": 36
+    },
+    "selfplay_validation.jsonl": {
+      "sha256": "8399f97635a5032fad07a0340fd9fb1ce56dca2f54094a4cfbb75922553d6a47",
+      "count": 12
+    },
+    "requests_train.jsonl": {
+      "sha256": "59c2065bf75e41b8dce96af7b0d533d7a78b5872205baf5f717d74c300bf3f2d",
+      "count": 43
+    }
+  },
+  "source_sha256": "a32561a48fd737bb0bae5fbf640be15eb2c7d38aa89d1be7903b3b7574cbb168",
+  "prompt_sources": {
+    "training/b_sft/review_prompt.py": "8544b927362df581904ac3758ffa6ff6457503f4a547361359da66e2a99b621a",
+    "training/b_sft/social_prompt.py": "d31d14af6a04af833228455d7d3017a8f4cc8ccb45ceabdc8758c38fa5ad5c9a",
+    "training/b_sft/social_named_probe.py": "63e164b182f5bada85c5401344034b1ec3477af71b6ba630e111a5000a90f948",
+    "training/b_sft/decision_policy.py": "8671683f9cde5f5fc30c3fe7d37a070ad97b4da4e00876f6bea9301f1a976b62",
+    "training/social_mixed/policy_prompt.py": "775f5c3377aaf089e9b5cffffadc2bce57a77c961295a040443dc4b7d0e04758",
+    "training/social_mixed/frozen/selfplay_prompt.py": "fb8b656934292920e1f5491cb7f7fddd0e0e27d877eea206371c5e17427247e4",
+    "training/social_mixed/frozen/bp_display.py": "fde12fc51376b92fda8dc25d03c16d9ffff854713298fc50b268fa2798107e53",
+    "training/social_mixed/contract_sampling.py": "cd3b16921246e88722a3bb728489863a73f64497ba3d23ad91b4e37f6a54785f"
+  },
+  "counts": {
+    "train": {
+      "B3": 4,
+      "P1": 19,
+      "B1": 7,
+      "P2": 13
+    },
+    "validation": {
+      "B1": 6,
+      "B3": 5,
+      "P1": 10,
+      "P2": 2
+    }
+  },
+  "deferred": {
+    "behavior_policy_without_random_tie_rule_not_certified": 28,
+    "previously_deferred": 7,
+    "third_player_information_set_not_certified": 9,
+    "favored_order_requires_unspecified_prior": 24,
+    "qualifier_numeric_envelope_not_in_plain_prompt": 9,
+    "optimal_action_depends_on_unspecified_prior": 5,
+    "continuation_policy_not_certified_without_prior": 11,
+    "multiple_hidden_preferences_not_certified": 12,
+    "not_final_response_certificate": 4,
+    "residual_continuation_ties_not_certified": 3,
+    "P4_contrast_unit_incomplete": 3
+  },
+  "selection": "No model scores used. Conservative sufficient certificates, not proof that every deferred label is wrong.",
+  "test_used": false
+}

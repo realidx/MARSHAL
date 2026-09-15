@@ -82,7 +82,7 @@ class Llm084(LLM):
         else:
             compilation_config_instance = None
 
-        kwargs["enable_sleep_mode"] = True
+        kwargs.setdefault("enable_sleep_mode", True)
         engine_args = EngineArgs(
             model=model,
             task=task,

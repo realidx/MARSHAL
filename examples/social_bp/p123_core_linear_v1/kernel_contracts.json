@@ -1,0 +1,42 @@
+{
+  "kernels": {
+    "P1": {
+      "chain": "Action -> terminal commitments -> total own payoff -> response-only social tie rule",
+      "core": [
+        "own_gain_vs_loss",
+        "helpful_vs_harmful_response_tie",
+        "net_compensation",
+        "known_type_proposal_alternatives"
+      ],
+      "retained_extensions": [
+        "net_loss_alternative",
+        "proposal_residual_ties",
+        "private_result_use",
+        "third_player_commitment"
+      ]
+    },
+    "P2": {
+      "chain": "Supplied joint probabilities -> conditional partner response -> expected own payoff",
+      "core": [
+        "same_support_weight_change",
+        "own_value_ties_without_proposal_altruism",
+        "same_marginals_different_joint_correlation"
+      ],
+      "retained_extensions": [
+        "two_unknown_slots",
+        "private_result_other_unknown"
+      ]
+    },
+    "P3": {
+      "chain": "Qualitative assessment envelope -> worst-case action regret over full feasible distributions",
+      "core": [
+        "confidence_changes_action",
+        "confidence_change_leaves_action_stable",
+        "no_stable_action_is_diagnostic_only"
+      ],
+      "retained_extensions": []
+    }
+  },
+  "sampling": "Assign kernel and contrast-group quotas before surface variants; no implicit row-count weighting.",
+  "limitations": "New proposal contrasts share one four-goal physical scenario; not independent games or a validated difficulty curriculum."
+}

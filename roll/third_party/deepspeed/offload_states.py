@@ -24,7 +24,9 @@ def offload_adam_states(optimizer, device, pin_memory: bool = False, non_blockin
         if state[key].device.type == device:
             return
         offload_buf_key = _make_offload_state_key(key)
-        if offload_buf_key not in state:
+        # Optimizer.load_state_dict may map cached CPU buffers onto the parameter's
+        # CUDA device. Recreate them on the offload device after checkpoint restore.
+        if offload_buf_key not in state or state[offload_buf_key].device != torch.device(device):
             state[offload_buf_key] = torch.empty_like(state[key], device=device)
             if pin_memory:
                 state[offload_buf_key] = get_accelerator().pin_memory(state[offload_buf_key])

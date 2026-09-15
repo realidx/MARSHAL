@@ -47,12 +47,15 @@ def preprocess_dataset(dataset, prompt_len, encode_function, num_proc):
         load_from_cache_file=False,
     )
     # 过滤cutoff
+    original_size = len(dataset)
     dataset = dataset.filter(
         lambda data_i: 5 < len(data_i["input_ids"]) <= prompt_len,
         num_proc=num_proc,
         desc="Filtering dataset",
     )
     print(f"Filtering prompt len: {dataset}")
+    if "tools" in dataset.column_names and len(dataset) != original_size:
+        raise ValueError("Native tool dataset exceeds prompt budget; refusing silent sample removal")
     print(f"Encoding: {dataset}")
     return dataset
 
@@ -63,14 +66,17 @@ def get_encode_function(template_name, tokenizer):
     def encode_function(data_i):
         text_list = []
         if "messages" in data_i:
-            for messages in data_i["messages"]:
+            for index, messages in enumerate(data_i["messages"]):
                 if isinstance(messages, str):
                     messages = json.loads(messages)
-                text_list.append(chat_template_func(messages))
+                tools = data_i.get("tools", [None] * len(data_i["messages"]))[index]
+                if isinstance(tools, str):
+                    tools = json.loads(tools)
+                text_list.append(chat_template_func(messages, tools=tools))
         elif "prompt" in data_i:
             for prompt in data_i["prompt"]:
                 text_list.append(prompt)
-        encodings = tokenizer(text_list)
+        encodings = tokenizer(text_list, add_special_tokens=False) if "tools" in data_i else tokenizer(text_list)
         return encodings
 
     return encode_function
@@ -184,41 +190,48 @@ class RLVRPipeline(BasePipeline):
         assert self.pipeline_config.max_steps > 0, "max_steps must be greater than 0"
         self.pipeline_config.set_max_steps(max_steps=self.pipeline_config.max_steps)
 
-        self.actor_train: Any = Cluster(
-            name=self.pipeline_config.actor_train.name,
-            worker_cls=self.pipeline_config.actor_train.worker_cls,
-            resource_manager=self.resource_manager,
-            worker_config=self.pipeline_config.actor_train,
-        )
-        self.actor_infer: Any = Cluster(
-            name=self.pipeline_config.actor_infer.name,
-            worker_cls=self.pipeline_config.actor_infer.worker_cls,
-            resource_manager=self.resource_manager,
-            worker_config=self.pipeline_config.actor_infer,
-        )
-        self.reference: Any = Cluster(
-            name=self.pipeline_config.reference.name,
-            worker_cls=self.pipeline_config.reference.worker_cls,
-            resource_manager=self.resource_manager,
-            worker_config=self.pipeline_config.reference,
-        )
-        if self.pipeline_config.adv_estimator == "gae":
-            self.critic: Any = Cluster(
-                name=self.pipeline_config.critic.name,
-                worker_cls=self.pipeline_config.critic.worker_cls,
+        from training.b_sft.bp_startup import enabled as bp_startup_enabled, prepare_roles, startup_phase
+        if bp_startup_enabled(self.pipeline_config):
+            roles = prepare_roles(self.pipeline_config, self.resource_manager, Cluster)
+            self.actor_train = roles['actor_train']
+            self.actor_infer = roles['actor_infer']
+            self.reference = roles['reference']
+            self.rewards = {key: roles['reward:'+key] for key in self.pipeline_config.rewards}
+        else:
+            self.actor_train: Any = Cluster(
+                name=self.pipeline_config.actor_train.name,
+                worker_cls=self.pipeline_config.actor_train.worker_cls,
                 resource_manager=self.resource_manager,
-                worker_config=self.pipeline_config.critic,
+                worker_config=self.pipeline_config.actor_train,
             )
-        self.rewards: Dict[str, Any] = {
-            key: Cluster(
-                name=f"reward-{key}",
-                worker_cls=worker_config.worker_cls,
+            self.actor_infer: Any = Cluster(
+                name=self.pipeline_config.actor_infer.name,
+                worker_cls=self.pipeline_config.actor_infer.worker_cls,
                 resource_manager=self.resource_manager,
-                worker_config=worker_config,
+                worker_config=self.pipeline_config.actor_infer,
             )
-            for key, worker_config in self.pipeline_config.rewards.items()
-        }
-
+            self.reference: Any = Cluster(
+                name=self.pipeline_config.reference.name,
+                worker_cls=self.pipeline_config.reference.worker_cls,
+                resource_manager=self.resource_manager,
+                worker_config=self.pipeline_config.reference,
+            )
+            if self.pipeline_config.adv_estimator == "gae":
+                self.critic: Any = Cluster(
+                    name=self.pipeline_config.critic.name,
+                    worker_cls=self.pipeline_config.critic.worker_cls,
+                    resource_manager=self.resource_manager,
+                    worker_config=self.pipeline_config.critic,
+                )
+            self.rewards: Dict[str, Any] = {
+                key: Cluster(
+                    name=f"reward-{key}",
+                    worker_cls=worker_config.worker_cls,
+                    resource_manager=self.resource_manager,
+                    worker_config=worker_config,
+                )
+                for key, worker_config in self.pipeline_config.rewards.items()
+            }
         domain_ratios = self.pipeline_config.actor_train.data_args.domain_interleave_probs
         self.generate_schedulers: Dict[str, DynamicSamplingScheduler] = {}
         self.domain_batch_size = {}
@@ -278,27 +291,42 @@ class RLVRPipeline(BasePipeline):
                 )
             )
 
-        refs = []
-        refs.extend(self.actor_infer.initialize(pipeline_config=self.pipeline_config, blocking=False))
-        ray.get(refs)
+        if bp_startup_enabled(self.pipeline_config):
+            # CPU reward setup can overlap GPU work. Shared-GPU model loads remain sequential.
+            reward_refs = []
+            for cluster in self.rewards.values():
+                reward_refs.extend(cluster.initialize(pipeline_config=self.pipeline_config, blocking=False))
+            # Match the successful SoC Megatron lifecycle; detect actor incompatibility first.
+            with startup_phase(self.pipeline_config, 'actor_initialize'):
+                ray.get(self.actor_train.initialize(pipeline_config=self.pipeline_config, blocking=False))
+            with startup_phase(self.pipeline_config, 'vllm_initialize'):
+                ray.get(self.actor_infer.initialize(pipeline_config=self.pipeline_config, blocking=False))
+            with startup_phase(self.pipeline_config, 'reference_initialize'):
+                ray.get(self.reference.initialize(pipeline_config=self.pipeline_config, blocking=False))
+            with startup_phase(self.pipeline_config, 'reward_ready'):
+                ray.get(reward_refs)
+        else:
+            refs = []
+            refs.extend(self.actor_infer.initialize(pipeline_config=self.pipeline_config, blocking=False))
+            ray.get(refs)
 
-        refs.extend(self.reference.initialize(pipeline_config=self.pipeline_config, blocking=True))
-        refs = []
-        for key, cluster in self.rewards.items():
-            refs.extend(cluster.initialize(pipeline_config=self.pipeline_config, blocking=False))
-        ray.get(refs)
+            refs.extend(self.reference.initialize(pipeline_config=self.pipeline_config, blocking=True))
+            refs = []
+            for key, cluster in self.rewards.items():
+                refs.extend(cluster.initialize(pipeline_config=self.pipeline_config, blocking=False))
+            ray.get(refs)
 
-        refs: List[ray.ObjectRef] = []
-        refs.extend(self.actor_train.initialize(pipeline_config=self.pipeline_config, blocking=False))
-        if self.pipeline_config.adv_estimator == "gae":
-            refs.extend(self.critic.initialize(pipeline_config=self.pipeline_config, blocking=False))
-        ray.get(refs)
-
-        self.set_model_update_pair(
-            src_cluster=self.actor_train,
-            tgt_cluster=self.actor_infer,
-            frequency=self.pipeline_config.actor_train.model_update_frequency,
-        )
+            refs: List[ray.ObjectRef] = []
+            refs.extend(self.actor_train.initialize(pipeline_config=self.pipeline_config, blocking=False))
+            if self.pipeline_config.adv_estimator == "gae":
+                refs.extend(self.critic.initialize(pipeline_config=self.pipeline_config, blocking=False))
+            ray.get(refs)
+        with startup_phase(self.pipeline_config, 'weight_communication_setup'):
+            self.set_model_update_pair(
+                src_cluster=self.actor_train,
+                tgt_cluster=self.actor_infer,
+                frequency=self.pipeline_config.actor_train.model_update_frequency,
+            )
 
         if self.pipeline_config.adv_estimator == "gae":
             self.set_checkpoint_clusters(self.actor_train, self.critic)
@@ -308,6 +336,8 @@ class RLVRPipeline(BasePipeline):
         self.running = {}
         for domain in self.rewards.keys():
             self.running[domain] = RunningMoments()
+        if self.pipeline_config.bp_two_gpu_preflight and self.pipeline_config.resume_from_checkpoint:
+            self.state.load_rng_state(os.path.join(self.pipeline_config.resume_from_checkpoint, 'pipeline'), 'pipeline')
 
     @torch.no_grad()
     def run(self):
@@ -339,10 +369,13 @@ class RLVRPipeline(BasePipeline):
                     model_update_metrics: Dict = self.model_update(global_step)
                     metrics_mgr.add_metrics(model_update_metrics)
                 metrics_mgr.add_metric("time/step_model_update", step_model_update_timer.last)
+                if self.pipeline_config.bp_two_gpu_preflight:
+                    from training.b_sft.bp_training_probe import capture
+                    capture(self, global_step, 'before_rollout')
 
                 if self.val_dataset and global_step % self.pipeline_config.eval_steps == 0:
                     with Timer(name="val_step", logger=None) as val_step_timer:
-                        val_metrics = self.val()
+                        val_metrics = self.val(evaluated_optimizer_steps=global_step)
                         metrics_mgr.add_metrics(val_metrics)
                     metrics_mgr.add_metric("time/val_step", val_step_timer.last)
 
@@ -379,6 +412,16 @@ class RLVRPipeline(BasePipeline):
                 metrics_mgr.add_metric("time/step_generate", step_generate_timer.last)
 
                 batch = generate_output
+                if self.pipeline_config.bp_two_gpu_preflight:
+                    from training.b_sft.bp_training_probe import save_rollout
+                    save_rollout(batch, self.tokenizer, self.pipeline_config.output_dir, global_step, 'train')
+                if getattr(self.pipeline_config, 'social_bp_curriculum', False):
+                    from training.b_sft.social_bp_training import batch_records, summarize
+                    bp_training = summarize(batch_records(batch))
+                    with open(os.path.join(self.pipeline_config.output_dir,'bp_training.jsonl'),'a') as output:
+                        output.write(json.dumps(dict(step=global_step,measurements=bp_training))+'\n')
+                    for key,row in bp_training.items():
+                        if 'accuracy' in row: metrics_mgr.add_metric('bp_train/'+key+'/accuracy',row['accuracy'])
 
                 with Timer(name="cal_ref_log_probs", logger=None) as cal_ref_log_probs_timer:
                     ref_log_probs = self.reference.compute_log_probs(batch, blocking=True)
@@ -504,6 +547,21 @@ class RLVRPipeline(BasePipeline):
 
                 self.do_checkpoint(global_step=global_step)
 
+                if self.pipeline_config.evaluate_final_model and global_step + 1 == self.pipeline_config.max_steps and self.val_dataset:
+                    # Generation weights normally lag the update in this loop by one step.
+                    self.actor_train.offload_states(blocking=True)
+                    self.model_update(global_step + 1)
+                    if self.pipeline_config.bp_two_gpu_preflight:
+                        from training.b_sft.bp_training_probe import capture
+                        capture(self, global_step + 1, 'final')
+                    with Timer(name="final_val", logger=None) as final_val_timer:
+                        final_metrics = self.val(evaluated_optimizer_steps=global_step + 1, phase="final")
+                    metrics.update({"final/" + k: v for k, v in final_metrics.items()})
+                    metrics["time/final_val"] = final_val_timer.last
+                    with open(os.path.join(self.pipeline_config.output_dir, "final_validation.json"), "w") as output:
+                        json.dump(dict(optimizer_steps=global_step + 1, metrics=final_metrics), output, indent=2)
+
+
                 self.tracker.log(values=metrics, step=global_step)
 
                 if global_step % self.pipeline_config.logging_steps == 0:
@@ -527,9 +585,10 @@ class RLVRPipeline(BasePipeline):
         logger.info("pipeline complete!")
 
     @torch.no_grad()
-    def val(self):
+    def val(self, evaluated_optimizer_steps=None, phase="periodic"):
         val_metrics_mgr = MetricsManager()
         batch = DataProto()
+        batch.meta_info.update(evaluation_phase=phase, evaluated_optimizer_steps=evaluated_optimizer_steps)
 
         with Timer(name="step_generate", logger=None) as step_generate_timer:
             batch.meta_info["is_offload_states"] = False
@@ -552,6 +611,27 @@ class RLVRPipeline(BasePipeline):
         val_correct_mean = (batch.batch["scores"] == 1).detach().float().mean().item()
         val_metrics_mgr.add_metric("val_correct/all/mean", val_correct_mean)
         logger.info(json.dumps({"val_correct/all/mean": val_correct_mean}, ensure_ascii=False))
+
+        if 'b_queries' in batch.batch:
+            from training.b_sft.social_b_training_data import diagnostic_metrics
+            b_metrics = diagnostic_metrics(batch.batch)
+            val_metrics_mgr.add_metrics(b_metrics)
+            logger.info(json.dumps(dict(evaluated_optimizer_steps=evaluated_optimizer_steps,
+                                       evaluation_phase=phase, **b_metrics), ensure_ascii=False))
+
+        if getattr(self.pipeline_config, 'social_bp_curriculum', False):
+            from training.b_sft.social_bp_training import save_feedback, batch_records
+            records = batch_records(batch)
+            if self.pipeline_config.bp_two_gpu_preflight:
+                from training.b_sft.social_bp_training import summarize
+                from training.b_sft.bp_training_probe import save_rollout
+                bp_metrics = summarize(records)
+                save_rollout(batch, self.tokenizer, self.pipeline_config.output_dir, evaluated_optimizer_steps, phase)
+            else:
+                bp_metrics = save_feedback(self.pipeline_config.output_dir, evaluated_optimizer_steps, records)
+            for key, row in bp_metrics.items():
+                if 'accuracy' in row: val_metrics_mgr.add_metric('bp/'+key+'/accuracy', row['accuracy'])
+            logger.info(json.dumps(dict(evaluated_optimizer_steps=evaluated_optimizer_steps, bp=bp_metrics)))
 
         epoch_batch = batch.pop(batch_keys=["scores"], non_tensor_batch_keys=["tag"])
 

@@ -1,0 +1,574 @@
+{
+  "source_files": {
+    "bp_train.jsonl": {
+      "sha256": "8f0e66a8652e84add90e6bbce9a44f9ec29bc8e54b08fdd52a386619012d8404",
+      "count": 280
+    },
+    "bp_validation.jsonl": {
+      "sha256": "dc9fb547d62a2c93def8c90853b6e49efb80983c220d9f01cda0c466fa7d4551",
+      "count": 65
+    },
+    "selfplay_train.jsonl": {
+      "sha256": "7d0305442b81889af0d8639147ac4d0fc8c15349792ceec0ab6c8ad18430fd50",
+      "count": 60
+    },
+    "selfplay_validation.jsonl": {
+      "sha256": "8399f97635a5032fad07a0340fd9fb1ce56dca2f54094a4cfbb75922553d6a47",
+      "count": 12
+    }
+  },
+  "method": "Exact indexed geometry ignores round order and preferences; not permutation invariant; shared geometry is not automatically leaked answers. Selection uses no model success scores.",
+  "banks": {
+    "bp_train": {
+      "count": 280,
+      "geometry_count": 76,
+      "pools": {
+        "complete": 32,
+        "formation": 63,
+        "information": 32,
+        "maintain": 37,
+        "result_use": 32,
+        "uncertain": 32,
+        "update": 52
+      },
+      "sources": {
+        "bridge": 30,
+        "l0": 3,
+        "original": 247
+      },
+      "families": 46,
+      "largest_families": [
+        [
+          "c5c9c4142c100f7f",
+          96
+        ],
+        [
+          "aca811491eefe768",
+          18
+        ],
+        [
+          "85cb50332b166e5d",
+          16
+        ],
+        [
+          "8fce48d5307fa4fd",
+          15
+        ],
+        [
+          "ad1c12e391db3fbf",
+          15
+        ]
+      ],
+      "B_gold": {
+        "{\"favored\":\"avoid\",\"possible_preferences\":[\"avoid\"]}": 34,
+        "{\"favored\":\"avoid\",\"possible_preferences\":[\"neutral\",\"avoid\"]}": 6,
+        "{\"favored\":\"avoid\",\"possible_preferences\":[\"want\",\"neutral\",\"avoid\"]}": 3,
+        "{\"favored\":\"undetermined\",\"possible_preferences\":[\"neutral\",\"avoid\"]}": 10,
+        "{\"favored\":\"undetermined\",\"possible_preferences\":[\"want\",\"avoid\"]}": 4,
+        "{\"favored\":\"undetermined\",\"possible_preferences\":[\"want\",\"neutral\",\"avoid\"]}": 38,
+        "{\"favored\":\"undetermined\",\"possible_preferences\":[\"want\",\"neutral\"]}": 23,
+        "{\"favored\":\"want\",\"possible_preferences\":[\"want\",\"neutral\",\"avoid\"]}": 3,
+        "{\"favored\":\"want\",\"possible_preferences\":[\"want\",\"neutral\"]}": 6,
+        "{\"favored\":\"want\",\"possible_preferences\":[\"want\"]}": 25
+      },
+      "B_fullset": 44,
+      "B_fullset_undetermined": 38,
+      "B_by_pool": {
+        "formation": {
+          "count": 63,
+          "fullset": 21,
+          "sources": {
+            "bridge": 15,
+            "original": 48
+          }
+        },
+        "update": {
+          "count": 52,
+          "fullset": 4,
+          "sources": {
+            "bridge": 11,
+            "l0": 2,
+            "original": 39
+          }
+        },
+        "maintain": {
+          "count": 37,
+          "fullset": 19,
+          "sources": {
+            "bridge": 4,
+            "l0": 1,
+            "original": 32
+          }
+        }
+      },
+      "P_actions": {
+        "[\"INVESTIGATE\",\"OFFER\",\"PASS\"]": 1,
+        "[\"INVESTIGATE\"]": 16,
+        "[\"OFFER\",\"PASS\"]": 2,
+        "[\"OFFER\"]": 109
+      },
+      "P_information": {
+        "False": 16,
+        "True": 16
+      },
+      "B_history_lengths": {
+        "1": 133,
+        "2": 19
+      },
+      "binary_goals": {
+        "True": 923
+      }
+    },
+    "bp_validation": {
+      "count": 65,
+      "geometry_count": 35,
+      "pools": {
+        "complete": 8,
+        "formation": 12,
+        "information": 8,
+        "maintain": 9,
+        "result_use": 8,
+        "uncertain": 8,
+        "update": 12
+      },
+      "sources": {
+        "l0": 3,
+        "original": 62
+      },
+      "families": 13,
+      "largest_families": [
+        [
+          "ddc4c9e5d7b59d0f",
+          24
+        ],
+        [
+          "333570fccf36c0df",
+          7
+        ],
+        [
+          "ff14ef2890da9e9c",
+          6
+        ],
+        [
+          "aae4d34167d78a13",
+          6
+        ],
+        [
+          "bc657a816afa6b68",
+          5
+        ]
+      ],
+      "B_gold": {
+        "{\"favored\":\"avoid\",\"possible_preferences\":[\"avoid\"]}": 3,
+        "{\"favored\":\"avoid\",\"possible_preferences\":[\"neutral\",\"avoid\"]}": 4,
+        "{\"favored\":\"avoid\",\"possible_preferences\":[\"want\",\"neutral\",\"avoid\"]}": 1,
+        "{\"favored\":\"undetermined\",\"possible_preferences\":[\"neutral\",\"avoid\"]}": 2,
+        "{\"favored\":\"undetermined\",\"possible_preferences\":[\"want\",\"avoid\"]}": 1,
+        "{\"favored\":\"undetermined\",\"possible_preferences\":[\"want\",\"neutral\",\"avoid\"]}": 6,
+        "{\"favored\":\"undetermined\",\"possible_preferences\":[\"want\",\"neutral\"]}": 3,
+        "{\"favored\":\"want\",\"possible_preferences\":[\"want\",\"avoid\"]}": 3,
+        "{\"favored\":\"want\",\"possible_preferences\":[\"want\",\"neutral\",\"avoid\"]}": 1,
+        "{\"favored\":\"want\",\"possible_preferences\":[\"want\",\"neutral\"]}": 4,
+        "{\"favored\":\"want\",\"possible_preferences\":[\"want\"]}": 5
+      },
+      "B_fullset": 8,
+      "B_fullset_undetermined": 6,
+      "B_by_pool": {
+        "formation": {
+          "count": 12,
+          "fullset": 3,
+          "sources": {
+            "original": 12
+          }
+        },
+        "update": {
+          "count": 12,
+          "fullset": 2,
+          "sources": {
+            "l0": 2,
+            "original": 10
+          }
+        },
+        "maintain": {
+          "count": 9,
+          "fullset": 3,
+          "sources": {
+            "l0": 1,
+            "original": 8
+          }
+        }
+      },
+      "P_actions": {
+        "[\"INVESTIGATE\"]": 4,
+        "[\"OFFER\"]": 28
+      },
+      "P_information": {
+        "False": 4,
+        "True": 4
+      },
+      "B_history_lengths": {
+        "1": 28,
+        "2": 5
+      },
+      "binary_goals": {
+        "True": 209
+      }
+    },
+    "selfplay_train": {
+      "count": 60,
+      "geometry_count": 6,
+      "players": {
+        "2": 40,
+        "3": 20
+      },
+      "rounds": {
+        "2": 24,
+        "3": 18,
+        "4": 12,
+        "5": 6
+      },
+      "prior_values": {
+        "[-1,0,1]": 40,
+        "[0,1]": 20
+      },
+      "completion": {
+        "binary": 20,
+        "linear": 20,
+        "mixed": 20
+      },
+      "nonempty_history": 0,
+      "negative_worlds": 34
+    },
+    "selfplay_validation": {
+      "count": 12,
+      "geometry_count": 6,
+      "players": {
+        "2": 8,
+        "3": 4
+      },
+      "rounds": {
+        "2": 5,
+        "3": 4,
+        "4": 2,
+        "5": 1
+      },
+      "prior_values": {
+        "[-1,0,1]": 8,
+        "[0,1]": 4
+      },
+      "completion": {
+        "binary": 4,
+        "linear": 4,
+        "mixed": 4
+      },
+      "nonempty_history": 0,
+      "negative_worlds": 6
+    }
+  },
+  "overlap": {
+    "bp": {
+      "id": [],
+      "geometry": [],
+      "exact_input": [],
+      "family": [],
+      "semantic_id": []
+    },
+    "selfplay": {
+      "id": [],
+      "geometry": [],
+      "exact_input": []
+    }
+  },
+  "B_sampler_expectations": {
+    "l0_fraction": 0.02598752598752599,
+    "bridge_fraction": 0.19232006732006732,
+    "fullset_undetermined_fraction": 0.20663383163383164
+  },
+  "selection": {
+    "bp": [
+      {
+        "id": "8e2e2914115cbf053a39",
+        "split": "train",
+        "task": "B",
+        "pool": "update",
+        "training_source": "l0",
+        "family": "2b224553bd8abc90"
+      },
+      {
+        "id": "54d0402933dcb71e4aa6",
+        "split": "train",
+        "task": "B",
+        "pool": "update",
+        "training_source": "l0",
+        "family": "2b224553bd8abc90"
+      },
+      {
+        "id": "d335ef92e22848f206fc",
+        "split": "train",
+        "task": "B",
+        "pool": "maintain",
+        "training_source": "l0",
+        "family": "2b224553bd8abc90"
+      },
+      {
+        "id": "f3fdd8a0b1760f298393",
+        "split": "train",
+        "task": "B",
+        "pool": "formation",
+        "training_source": "original",
+        "family": "29e84e0d48dcacd0"
+      },
+      {
+        "id": "e2eead1cbc9ceeb0ff03",
+        "split": "train",
+        "task": "B",
+        "pool": "maintain",
+        "training_source": "original",
+        "family": "63c2c0607dc8c8d2"
+      },
+      {
+        "id": "e0229e76ada9fe7c5a10",
+        "split": "train",
+        "task": "B",
+        "pool": "formation",
+        "training_source": "bridge",
+        "family": "7505d4426cb54a17"
+      },
+      {
+        "id": "9ad96be68be93fb9bab2",
+        "split": "train",
+        "task": "B",
+        "pool": "maintain",
+        "training_source": "original",
+        "family": "c5c9c4142c100f7f"
+      },
+      {
+        "id": "3e2bcf50da20a91a1c75",
+        "split": "train",
+        "task": "B",
+        "pool": "update",
+        "training_source": "original",
+        "family": "8fce48d5307fa4fd"
+      },
+      {
+        "id": "b35987dfac09dd8becda",
+        "split": "train",
+        "task": "P",
+        "pool": "complete",
+        "training_source": "original",
+        "family": "ada5a0322ae2803c"
+      },
+      {
+        "id": "4e6557e0294c9495d344",
+        "split": "train",
+        "task": "P",
+        "pool": "complete",
+        "training_source": "original",
+        "family": "57bb4ed36bdc4d39"
+      },
+      {
+        "id": "651ff452021986b0b3ee",
+        "split": "train",
+        "task": "P",
+        "pool": "uncertain",
+        "training_source": "original",
+        "family": "c5c9c4142c100f7f"
+      },
+      {
+        "id": "097562c5bff8e5605b75",
+        "split": "train",
+        "task": "P",
+        "pool": "uncertain",
+        "training_source": "original",
+        "family": "aca811491eefe768"
+      },
+      {
+        "id": "2cc2412789ca140c8f9d",
+        "split": "train",
+        "task": "P",
+        "pool": "result_use",
+        "training_source": "original",
+        "family": "ada5a0322ae2803c"
+      },
+      {
+        "id": "4622754faf052bbf46ca",
+        "split": "train",
+        "task": "P",
+        "pool": "result_use",
+        "training_source": "original",
+        "family": "57bb4ed36bdc4d39"
+      },
+      {
+        "id": "4657be4a9a9b3fbfa74f",
+        "split": "train",
+        "task": "P",
+        "pool": "information",
+        "training_source": "original",
+        "family": "ad1c12e391db3fbf"
+      },
+      {
+        "id": "fedf543dba69c2595137",
+        "split": "train",
+        "task": "P",
+        "pool": "information",
+        "training_source": "original",
+        "family": "c5c9c4142c100f7f"
+      },
+      {
+        "id": "d560da0bb27608eb960e",
+        "split": "validation",
+        "task": "B",
+        "pool": "update",
+        "training_source": "l0",
+        "family": "8146aa0fdf451658"
+      },
+      {
+        "id": "bd3a48a19e34f70e70d1",
+        "split": "validation",
+        "task": "B",
+        "pool": "formation",
+        "training_source": "original",
+        "family": "a1b10e8ee9e261a3"
+      },
+      {
+        "id": "11b37c4ae8c7dc9942fa",
+        "split": "validation",
+        "task": "B",
+        "pool": "maintain",
+        "training_source": "original",
+        "family": "ddc4c9e5d7b59d0f"
+      },
+      {
+        "id": "07249765ef9fe52d05b6",
+        "split": "validation",
+        "task": "B",
+        "pool": "update",
+        "training_source": "original",
+        "family": "333570fccf36c0df"
+      },
+      {
+        "id": "b1cedad39d1bddb46095",
+        "split": "validation",
+        "task": "P",
+        "pool": "complete",
+        "training_source": "original",
+        "family": "aae4d34167d78a13"
+      },
+      {
+        "id": "3663d3c665a8b6e05c5c",
+        "split": "validation",
+        "task": "P",
+        "pool": "uncertain",
+        "training_source": "original",
+        "family": "333570fccf36c0df"
+      },
+      {
+        "id": "8d26fe54250af906832b",
+        "split": "validation",
+        "task": "P",
+        "pool": "result_use",
+        "training_source": "original",
+        "family": "aae4d34167d78a13"
+      },
+      {
+        "id": "db6e17a60c3e337fd3af",
+        "split": "validation",
+        "task": "P",
+        "pool": "information",
+        "training_source": "original",
+        "family": "45ee4c5eac678a25"
+      }
+    ],
+    "selfplay": [
+      {
+        "id": "third_party_uncertainty-r2-s1",
+        "split": "train",
+        "players": 3,
+        "rounds": 2,
+        "level": "adaptation"
+      },
+      {
+        "id": "cooperate_a-r3-s2",
+        "split": "train",
+        "players": 2,
+        "rounds": 3,
+        "level": "foundation"
+      },
+      {
+        "id": "interacting_commitments_a-r4-s0",
+        "split": "train",
+        "players": 2,
+        "rounds": 4,
+        "level": "tradeoffs"
+      },
+      {
+        "id": "third_party_intro-r5-s0",
+        "split": "train",
+        "players": 3,
+        "rounds": 5,
+        "level": "foundation"
+      },
+      {
+        "id": "partner_type_choice-r3-s0",
+        "split": "train",
+        "players": 2,
+        "rounds": 3,
+        "level": "adaptation"
+      },
+      {
+        "id": "third_party_conflict-r3-s0",
+        "split": "train",
+        "players": 3,
+        "rounds": 3,
+        "level": "tradeoffs"
+      },
+      {
+        "id": "cooperate_a-r2-s3",
+        "split": "train",
+        "players": 2,
+        "rounds": 2,
+        "level": "foundation"
+      },
+      {
+        "id": "interacting_commitments_a-r3-s0",
+        "split": "train",
+        "players": 2,
+        "rounds": 3,
+        "level": "tradeoffs"
+      },
+      {
+        "id": "validation-3p-3",
+        "split": "validation",
+        "players": 3,
+        "rounds": 4,
+        "level": null
+      },
+      {
+        "id": "validation-2p-0",
+        "split": "validation",
+        "players": 2,
+        "rounds": 2,
+        "level": null
+      },
+      {
+        "id": "validation-3p-2",
+        "split": "validation",
+        "players": 3,
+        "rounds": 3,
+        "level": null
+      },
+      {
+        "id": "validation-2p-7",
+        "split": "validation",
+        "players": 2,
+        "rounds": 5,
+        "level": null
+      }
+    ],
+    "bp_repeats": 8,
+    "selfplay_repeats": 4,
+    "bp_calls": 192,
+    "full_games": 48,
+    "purpose": "Development diagnostic, not an unbiased accuracy estimate; validation never used to construct training replacements."
+  }
+}

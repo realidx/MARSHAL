@@ -1,0 +1,32 @@
+{
+  "version": "current-train-probe-v2",
+  "bp_prompt": "bp-plain-language-v5",
+  "selfplay_prompt": "outcome-plain-language-v7",
+  "bp_tasks": 69,
+  "training_core_tasks": 68,
+  "diagnostic_tasks": 1,
+  "bp_repeats": 8,
+  "bp_sha256": "6b958636e8879129408669b4556797416d2f4132627a1314f29cb1786b153d56",
+  "requests_sha256": "c9b6b0cc6ebddfb2b7fa5265a0b34ab5bf2f967cb4187d17fda1815962fddb96",
+  "source_sha256": {
+    "training/b_sft/decision_policy.py": "8671683f9cde5f5fc30c3fe7d37a070ad97b4da4e00876f6bea9301f1a976b62",
+    "training/social_mixed/frozen/bp_display.py": "fde12fc51376b92fda8dc25d03c16d9ffff854713298fc50b268fa2798107e53",
+    "training/b_sft/review_prompt.py": "8544b927362df581904ac3758ffa6ff6457503f4a547361359da66e2a99b621a",
+    "training/b_sft/social_prompt.py": "d31d14af6a04af833228455d7d3017a8f4cc8ccb45ceabdc8758c38fa5ad5c9a",
+    "training/b_sft/social_named_probe.py": "63e164b182f5bada85c5401344034b1ec3477af71b6ba630e111a5000a90f948",
+    "training/social_mixed/policy_prompt.py": "775f5c3377aaf089e9b5cffffadc2bce57a77c961295a040443dc4b7d0e04758",
+    "training/social_mixed/frozen/selfplay_prompt.py": "fb8b656934292920e1f5491cb7f7fddd0e0e27d877eea206371c5e17427247e4"
+  },
+  "selfplay_train_resets": 12,
+  "selfplay_repeats": 4,
+  "selection": "Keep previous non-P4 tasks; include all 15 P4 core tasks plus one separately marked all-legal diagnostic. No model-dependent selection.",
+  "label_contract_review_required": [
+    "B favored under simplified policy and unspecified prior",
+    "P initial-prior belief after removing draw probabilities"
+  ],
+  "p4_core": 15,
+  "p4_acquisition": 10,
+  "p4_result_use": 5,
+  "p4_diagnostic_result_use": 1,
+  "model_tested": false
+}

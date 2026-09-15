@@ -14,6 +14,10 @@ logger = get_logger()
 
 
 class WorkerHelper:
+    def bp_training_witness(self):
+        from training.b_sft.bp_training_probe import model_witness
+        return dict(weights=model_witness(self.model_runner.model))
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.weight_loaded : bool = True
@@ -37,6 +41,10 @@ class WorkerHelper:
             self.kv_cache_loaded = True
 
     def offload_states(self, level):
+        # Dedicated inference GPUs can keep the model/cache resident without
+        # the optional pluggable allocator used by sleep mode.
+        if not self.model_config.enable_sleep_mode:
+            return
         assert (self.weight_loaded and self.kv_cache_loaded) or (not self.weight_loaded and not self.kv_cache_loaded)
         if not self.weight_loaded:
             return

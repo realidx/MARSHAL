@@ -1,0 +1,208 @@
+{
+  "version": "reasoning-kernels-v1",
+  "source_sha256": "c563750f8fb02929fcb84b36f383dc4e255be0ce8b4e404fed69ea274ab4898f",
+  "task_kernels": {
+    "B1": {
+      "name": "从一次响应反推偏好",
+      "chain": "各候选偏好→接受/拒绝的终局收益→响应策略→用观察到的响应筛选并更新支持",
+      "contrast": "相同ACCEPT/REJECT在不同收益条件下需要给出不同belief；包括应该排除和应保留全集",
+      "invariant": "保留两种响应的收益排序、信息集、先验和响应似然关系"
+    },
+    "B2": {
+      "name": "从主动提案反推偏好",
+      "chain": "各候选偏好→可选提案/PASS/调查的后续自身收益→最优动作集合→观察提案的似然→belief",
+      "contrast": "同样提出某承诺，有时排除某偏好，有时不能排除；替代行动的收益决定信息量",
+      "invariant": "保留全部相关备选动作的自身收益排序及最优集合；提案并列不能用利他筛选"
+    },
+    "B3": {
+      "name": "连续行为证据更新",
+      "chain": "第一条行为形成posterior→在该posterior及各方信息下解释后一条行为→累计更新",
+      "contrast": "后一条证据改变集合/只改变favored/完全不变；不能重置到初始先验或重复计证据",
+      "invariant": "保留行动顺序、条件似然和私有信息归属"
+    },
+    "P1": {
+      "name": "已知偏好下选择行动",
+      "chain": "各合法动作及对方响应→终局完成情况→自身净收益→任选可接受最优动作",
+      "contrast": "有益提案/避免损失/PASS；单目标有利但总收益不利；多个同收益动作均可接受",
+      "invariant": "保留相关承诺组合、对方响应和收益排序；公开信息或私有结果来源不另算内核"
+    },
+    "P2": {
+      "name": "概率belief下选择行动",
+      "chain": "供给的当前belief→各情形的后续结果→期望自身收益→选择行动",
+      "contrast": "相同可行偏好集合但权重不同导致选择变化；存在未知不代表必须调查",
+      "invariant": "保留联合belief和条件行动价值；不能擅自假设边缘独立"
+    },
+    "P3": {
+      "name": "定性belief下的稳健行动",
+      "chain": "likely等供给判断→允许的不确定范围→比较跨范围稳健行动",
+      "contrast": "同一场景改变置信程度；有稳定行动与无稳定行动的区别",
+      "invariant": "保留定性词的显式审计包络和联合支持；不偷换为某个精确概率"
+    },
+    "P4": {
+      "name": "调查的信息价值与机会成本",
+      "chain": "直接行动收益 vs 花掉当前机会调查后的最优后续收益→是否调查及调查对象",
+      "contrast": "调查严格有益/无益或有害/收益并列；有后续使用机会与最后一次机会",
+      "invariant": "保留剩余顺序、结果私有性、答案能否影响后续行动及调查费用"
+    },
+    "A0": {
+      "name": "辅助：直接结果读取",
+      "chain": "读取本人合法获知的调查结果→提交该偏好",
+      "contrast": "结果属于自己/他人；want/neutral/avoid",
+      "invariant": "保留信息可见性；不算行为推理内核"
+    }
+  },
+  "shared_operations": {
+    "M1": {
+      "name": "承诺后果与总收益",
+      "operation": "对各目标做ALL_OF判断，再求所有完成目标的收益和",
+      "variants": [
+        "目标不完成",
+        "单目标完成",
+        "共享承诺完成多个目标",
+        "正负收益抵消"
+      ]
+    },
+    "M2": {
+      "name": "仅响应阶段的利他平局",
+      "operation": "自身收益并列时，仅ACCEPT/REJECT比较他人总收益；残余并列均匀随机",
+      "variants": [
+        "帮助他人→接受",
+        "损害他人→拒绝",
+        "双方都并列→随机",
+        "提案阶段不能套用此规则"
+      ]
+    },
+    "M3": {
+      "name": "候选兼容性与行动似然",
+      "operation": "prior×行动条件似然→posterior；possible是正支持集合，favored是唯一最高支持",
+      "variants": [
+        "严格排除",
+        "所有候选仍可能",
+        "集合不变但权重变化",
+        "最高支持并列"
+      ]
+    },
+    "M4": {
+      "name": "信息与证据归属",
+      "operation": "区别imposed与voluntary、本人私有结果与他人结果；只条件化可用证据",
+      "variants": [
+        "固定setup不提供行为证据",
+        "公开自主动作提供证据",
+        "私有结果不直接共享",
+        "上一轮posterior不能重置"
+      ]
+    }
+  },
+  "summary": {
+    "B1": {
+      "count": 135,
+      "splits": {
+        "train": 104,
+        "validation": 15,
+        "test": 16
+      },
+      "legacy_skills": {
+        "formation": 65,
+        "maintain": 23,
+        "update": 47
+      },
+      "deferred": 0,
+      "representative_train_id": "28c1abea78938deea4c6"
+    },
+    "B2": {
+      "count": 51,
+      "splits": {
+        "train": 29,
+        "validation": 13,
+        "test": 9
+      },
+      "legacy_skills": {
+        "formation": 22,
+        "maintain": 2,
+        "update": 27
+      },
+      "deferred": 0,
+      "representative_train_id": "06bf89153dc3461765dd"
+    },
+    "B3": {
+      "count": 29,
+      "splits": {
+        "train": 19,
+        "validation": 5,
+        "test": 5
+      },
+      "legacy_skills": {
+        "maintain": 29
+      },
+      "deferred": 0,
+      "representative_train_id": "832a75ceae09ca98f9b0"
+    },
+    "P1": {
+      "count": 89,
+      "splits": {
+        "train": 60,
+        "validation": 14,
+        "test": 15
+      },
+      "legacy_skills": {
+        "complete": 48,
+        "result_use": 41
+      },
+      "deferred": 4,
+      "representative_train_id": "ddd219727994dab1007f"
+    },
+    "P3": {
+      "count": 22,
+      "splits": {
+        "train": 16,
+        "validation": 3,
+        "test": 3
+      },
+      "legacy_skills": {
+        "uncertain": 22
+      },
+      "deferred": 1,
+      "representative_train_id": "6f5cc125dbd80e6209ad"
+    },
+    "P2": {
+      "count": 33,
+      "splits": {
+        "train": 20,
+        "validation": 7,
+        "test": 6
+      },
+      "legacy_skills": {
+        "uncertain": 26,
+        "result_use": 7
+      },
+      "deferred": 3,
+      "representative_train_id": "1f47cf83e63d9fa9d5d2"
+    },
+    "P4": {
+      "count": 40,
+      "splits": {
+        "train": 27,
+        "validation": 6,
+        "test": 7
+      },
+      "legacy_skills": {
+        "information": 40
+      },
+      "deferred": 0,
+      "representative_train_id": "9668fc848a1b2e55cbfd"
+    },
+    "A0": {
+      "count": 4,
+      "splits": {
+        "validation": 2,
+        "test": 2
+      },
+      "legacy_skills": {
+        "update": 4
+      },
+      "deferred": 0,
+      "representative_train_id": null
+    }
+  },
+  "coverage_status": "Contracts and structural assignment only. Existing controlled-pair completeness and causal minimality are not certified. No new samples or model calls."
+}

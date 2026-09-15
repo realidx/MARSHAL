@@ -96,6 +96,9 @@ class Worker:
 
     @staticmethod
     def get_node_ip():
+        # Explicit opt-in for single-host jobs; avoids reverse DNS on the LAN IP.
+        if os.environ.get("ROLL_LOCAL_COMM_ADDR") == "127.0.0.1":
+            return "127.0.0.1"
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
         return s.getsockname()[0]
