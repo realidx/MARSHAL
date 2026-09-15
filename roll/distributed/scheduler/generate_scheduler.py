@@ -472,6 +472,39 @@ class DynamicSamplingScheduler:
         2. 动态过滤
         """
         self.batch_size = batch_size
+        curriculum_indices = None
+        if getattr(self.pipeline_config, 'social_bp_curriculum', False) and not data.meta_info.get('evaluation_phase'):
+            if self.is_use_additional_prompts:
+                raise ValueError('B/P curriculum forbids response-based prompt replacement')
+            from training.b_sft.social_bp_training import select_batch as select_bp
+            from pathlib import Path
+            import json
+            if not hasattr(self, '_social_bp_rows'):
+                self._social_bp_rows = [dict(json.loads(v) if isinstance(v, str) else v, dataset_index=i)
+                                       for i, v in enumerate(self.dataset['ground_truth'])]
+            path = Path(self.pipeline_config.output_dir)/'bp_curriculum_state.json'
+            state = json.loads(path.read_text()) if path.exists() else None
+            selected = select_bp(self._social_bp_rows, data.meta_info['global_step'],
+                                 self.pipeline_config.max_steps, batch_size, self.pipeline_config.seed, state)
+            curriculum_indices = iter(t['dataset_index'] for t in selected)
+            with (Path(self.pipeline_config.output_dir)/'bp_sampling.jsonl').open('a') as log:
+                log.write(json.dumps(dict(step=data.meta_info['global_step'],
+                    prompts=[{k: t[k] for k in ('id', 'task', 'pool', 'stage', 'family', 'direct_answer')} for t in selected]))+'\n')
+        if getattr(self.pipeline_config, 'social_b_curriculum', False) and not data.meta_info.get('evaluation_phase'):
+            if self.is_use_additional_prompts:
+                raise ValueError('B curriculum does not permit response-based prompt filtering')
+            from training.b_sft.social_b_training_data import select_batch
+            import json
+            if not hasattr(self, '_social_b_rows'):
+                self._social_b_rows = []
+                for index, value in enumerate(self.dataset['ground_truth']):
+                    row = json.loads(value) if isinstance(value, str) else value
+                    if row.get('training_unit') != 'single_query' or len(row['input']['queries']) != 1:
+                        raise ValueError('B curriculum requires single-query exports')
+                    self._social_b_rows.append(dict(row, dataset_index=index))
+            selected = select_batch(self._social_b_rows, data.meta_info['global_step'],
+                self.pipeline_config.max_steps, batch_size, self.pipeline_config.seed)
+            curriculum_indices = iter(row['dataset_index'] for row in selected)
         self.reset_status()
         self.running = True
         prompt_id_counter = itertools.count()
@@ -492,7 +525,8 @@ class DynamicSamplingScheduler:
 
             # get a query from dataset
             prompt_id = next(prompt_id_counter)
-            dataset_item = self.get_next_dataset_item()
+            dataset_item = (self.dataset[next(curriculum_indices)] if curriculum_indices is not None
+                            else self.get_next_dataset_item())
             domain = dataset_item.get("domain", "default")
             collect_data = self.collect_fn([dataset_item])
             request_data: DataProto = DataProto.from_single_dict(collect_data, meta_info=data.meta_info)
@@ -686,6 +720,16 @@ class DynamicSamplingScheduler:
         request_repeat = request.repeat(repeat_times=len(output_tokens))
         output.non_tensor_batch = request_repeat.non_tensor_batch
         output.meta_info = request_repeat.meta_info
+        if getattr(self.pipeline_config,'social_bp_curriculum',False):
+            reasons = data.meta_info.get('output_finish_reasons',[])
+            if len(reasons)!=len(output_tokens) or any(r not in ('stop','length') for r in reasons):
+                raise RuntimeError('Incomplete native rollout: missing/invalid vLLM finish reasons')
+            output.non_tensor_batch['bp_finish_reason'] = np.array(reasons,dtype=object)
+            # DataProto requires object arrays even for numeric metadata.
+            output.non_tensor_batch['bp_token_count'] = np.array([len(ids) for ids in output_token_ids], dtype=object)
+            if 'bp_sample_seed' in request.meta_info:
+                output.non_tensor_batch['bp_sample_seed'] = np.array([request.meta_info['bp_sample_seed']]*len(output_tokens), dtype=object)
+            output.check_consistency()
         return output
 
     def expand_requests(self, data: DataProto):
@@ -705,8 +749,21 @@ class DynamicSamplingScheduler:
         target_requests = []
         if is_num_return_sequences_expand:
             generation_config["num_return_sequences"] = 1
-            for _ in range(num_return_sequences):
-                target_requests.append(copy.deepcopy(data))
+            for sample_index in range(num_return_sequences):
+                item = copy.deepcopy(data)
+                if getattr(self.pipeline_config, 'social_bp_curriculum', False):
+                    import hashlib, json
+                    task = item.non_tensor_batch['ground_truth'][0]
+                    task = json.loads(task) if isinstance(task,str) else task
+                    if task.get('training_pack_version'):
+                        phase = item.meta_info.get('evaluation_phase', 'train')
+                        step = (item.meta_info.get('evaluated_optimizer_steps') if phase != 'train'
+                                else item.meta_info.get('global_step'))
+                        value = f'{self.pipeline_config.seed}:{phase}:{step}:{task["id"]}:{sample_index}'
+                        seed = int.from_bytes(hashlib.sha256(value.encode()).digest()[:8], 'big') % (2**31-1)
+                        item.meta_info['generation_config']['seed'] = seed
+                        item.meta_info['bp_sample_seed'] = seed
+                target_requests.append(item)
         else:
             generation_config["num_return_sequences"] = num_return_sequences
             target_requests.append(copy.deepcopy(data))

@@ -23,7 +23,7 @@ class SolverLimitError(RuntimeError):
 class SolverResult:
     """Optimal continuation values and proposer action at one state."""
 
-    values: tuple[int, ...]
+    values: tuple[int | float, ...]
     proposal: Proposal
 
     def to_dict(self) -> dict[str, Any]:
@@ -37,8 +37,8 @@ class ResponseEvaluation:
     offer: Offer
     responder_id: int
     response: ResponseAction
-    accept_values: tuple[int, ...]
-    reject_values: tuple[int, ...]
+    accept_values: tuple[int | float, ...]
+    reject_values: tuple[int | float, ...]
 
     @property
     def accepted(self) -> bool:
@@ -83,8 +83,8 @@ class SolverRollout:
     """Serializable summary of applying the solver's policy to a clone."""
 
     final_commitments: tuple[tuple[int, ...], ...]
-    goal_satisfaction: tuple[int, ...]
-    terminal_rewards: tuple[int, ...]
+    goal_satisfaction: tuple[int | float, ...]
+    terminal_rewards: tuple[int | float, ...]
     transcript: tuple[Any, ...]
     steps: tuple[SolverStep, ...]
 
@@ -171,7 +171,7 @@ class PerfectInfoSolver:
 
         if state.is_terminal:
             result = SolverResult(
-                values=tuple(int(value) for value in state.terminal_rewards()),
+                values=tuple(state.terminal_rewards().tolist()),
                 proposal=PassProposal(),
             )
             self._cache[key] = result
@@ -293,8 +293,8 @@ class PerfectInfoSolver:
 
         return SolverRollout(
             final_commitments=working.snapshot_commitments(),
-            goal_satisfaction=tuple(int(value) for value in working.goal_satisfaction()),
-            terminal_rewards=tuple(int(value) for value in working.terminal_rewards()),
+            goal_satisfaction=tuple(working.goal_satisfaction().tolist()),
+            terminal_rewards=tuple(working.terminal_rewards().tolist()),
             transcript=tuple(working.transcript),
             steps=tuple(steps),
         )

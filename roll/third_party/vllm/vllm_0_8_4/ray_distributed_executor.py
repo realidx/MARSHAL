@@ -212,7 +212,8 @@ class CustomRayDistributedExecutor(RayDistributedExecutor):
                           self._get_env_vars_to_be_updated())
 
         distributed_init_method = get_distributed_init_method(
-            driver_ip, get_open_port())
+            "127.0.0.1" if os.environ.get("ROLL_LOCAL_COMM_ADDR") == "127.0.0.1" else driver_ip,
+            get_open_port())
 
         # Initialize the actual workers inside worker wrapper.
         all_kwargs = []
@@ -227,12 +228,16 @@ class CustomRayDistributedExecutor(RayDistributedExecutor):
                 or (rank % self.parallel_config.tensor_parallel_size == 0),
             )
             all_kwargs.append(kwargs)
-        self._run_workers("init_worker", all_kwargs)
-
-        self._run_workers("init_device")
-        self._run_workers("load_model",
-                          max_concurrent_workers=self.parallel_config.
-                          max_parallel_loading_workers)
+        from training.b_sft.bp_startup import startup_phase, environment_config
+        diagnostic_config = environment_config()
+        with startup_phase(diagnostic_config, 'vllm_worker_construct'):
+            self._run_workers("init_worker", all_kwargs)
+        with startup_phase(diagnostic_config, 'vllm_device_initialize'):
+            self._run_workers("init_device")
+        with startup_phase(diagnostic_config, 'vllm_model_load'):
+            self._run_workers("load_model",
+                              max_concurrent_workers=self.parallel_config.
+                              max_parallel_loading_workers)
 
         if self.use_ray_spmd_worker:
             for pp_rank in range(self.parallel_config.pipeline_parallel_size):

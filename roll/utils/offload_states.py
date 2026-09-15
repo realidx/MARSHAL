@@ -4,7 +4,13 @@ from typing import List, Tuple, Union
 import torch
 from torch import Tensor
 from transformers import PreTrainedModel
-from trl import AutoModelForCausalLMWithValueHead
+try:
+    from trl import AutoModelForCausalLMWithValueHead
+except ModuleNotFoundError as exc:
+    if exc.name != "trl":
+        raise
+    # GRPO has no value head and does not require TRL (or its NumPy pin).
+    AutoModelForCausalLMWithValueHead = ()
 
 
 class OffloadStateType(str, Enum):
@@ -46,7 +52,7 @@ def load_hf_model(model: PreTrainedModel):
     else:
         [
             model.get_submodule(layer_name).to(
-                device_id if isinstance(device_id, torch.device) else f"cuda:{device_id}"
+                f"cuda:{device_id}" if isinstance(device_id, int) else device_id
             )
             for layer_name, device_id in device_map.items()
         ]

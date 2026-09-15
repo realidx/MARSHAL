@@ -91,6 +91,13 @@ class StdPublisher:
 
 class LogMonitor(RayLogMonitor):
 
+    def __init__(self, *, gcs_publisher, **kwargs):
+        # Ray 2.58 renamed the constructor argument to gcs_client; both
+        # versions send log batches via publish_logs(data).
+        parameters = inspect.signature(RayLogMonitor.__init__).parameters
+        publisher_arg = "gcs_client" if "gcs_client" in parameters else "gcs_publisher"
+        super().__init__(**kwargs, **{publisher_arg: gcs_publisher})
+
     def update_log_filenames(self):
         """
         Update the list of log files to monitor.
@@ -223,6 +230,9 @@ class LogMonitorListener:
             self.wait_for_grace_stop()
         ray.shutdown()
         logger.info("Execute ray.shutdown before the program exits...")
+        if os.environ.get("MULTI_TENANT") == "1":
+            # ray stop is host-wide and can kill unrelated users' clusters.
+            return
         cmd = f"ray stop --force"
         subprocess.run(cmd, shell=True, capture_output=True)
 

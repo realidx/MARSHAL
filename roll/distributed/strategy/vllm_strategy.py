@@ -11,7 +11,7 @@ import torch
 import torch.distributed as dist
 from torch.nn.utils.rnn import pad_sequence
 from transformers import set_seed
-from mcore_adapter.models.converter.convert_utils import RecvBucketManager
+from roll.utils.send_recv_utils import RecvBucketManager
 from vllm import SamplingParams, RequestOutput
 from vllm.utils import random_uuid
 
@@ -76,7 +76,9 @@ class VllmStrategy(InferenceStrategy):
         logger.info(f"vllm_config: {vllm_config}")
         assert not dist.is_initialized()
         if engine_mode == "sync":
-            self.model = LLM(resource_placement_groups=self.worker_config.resource_placement_groups, **vllm_config)
+            from training.b_sft.bp_startup import startup_phase
+            with startup_phase(self.worker.pipeline_config, 'vllm_engine_create'):
+                self.model = LLM(resource_placement_groups=self.worker_config.resource_placement_groups, **vllm_config)
             self.tokenizer = self.model.get_tokenizer()
         else:
             self.model = AsyncLLM(resource_placement_groups=self.worker_config.resource_placement_groups, **vllm_config)
@@ -95,13 +97,15 @@ class VllmStrategy(InferenceStrategy):
 
         self.worker.rank_info.dp_rank = self.worker.rank
         self.worker.rank_info.dp_size = self.worker.world_size
-        collective.init_collective_group(
-            world_size=self.worker.world_size,
-            rank=self.worker.rank,
-            group_name=self.group_name,
-            master_addr=self.worker.master_addr,
-            master_port=self.worker.master_port,
-        )
+        from training.b_sft.bp_startup import startup_phase
+        with startup_phase(self.worker.pipeline_config, 'vllm_rollout_collective'):
+            collective.init_collective_group(
+                world_size=self.worker.world_size,
+                rank=self.worker.rank,
+                group_name=self.group_name,
+                master_addr=self.worker.master_addr,
+                master_port=self.worker.master_port,
+            )
 
     def op_compute_log_probs(self, logits: torch.Tensor, input_ids: torch.Tensor, attention_mask: torch.Tensor):
         """
@@ -150,6 +154,7 @@ class VllmStrategy(InferenceStrategy):
                 output_token_ids.append(completion_output.token_ids)
             output_data = DataProto(meta_info=self.request_metas[request_id])
             output_data.meta_info["output_token_ids"] = output_token_ids
+            output_data.meta_info['output_finish_reasons'] = [getattr(c,'finish_reason',None) for c in request_output.outputs]
             request_complete_callback(data=output_data)
 
     def start_server(self, data: DataProto, request_complete_callback):
@@ -296,6 +301,7 @@ def create_sampling_params_for_vllm(gen_kwargs):
         )
     return SamplingParams(
         max_tokens=gen_kwargs["max_new_tokens"],
+        seed=gen_kwargs.get('seed'),
         temperature=gen_kwargs["temperature"],
         top_p=gen_kwargs["top_p"],
         top_k=gen_kwargs["top_k"],
@@ -311,6 +317,7 @@ def create_sampling_params_for_vllm(gen_kwargs):
 def compare_sampling_params(params1: SamplingParams, params2: SamplingParams) -> bool:
     # 只比较采样参数的配置
     param_attrs = [
+        "seed",
         "temperature",
         "top_p",
         "top_k",

@@ -59,8 +59,8 @@ class EpisodeResult:
 
     seed: int
     final_commitments: tuple[tuple[int, ...], ...]
-    goal_satisfaction: tuple[int, ...]
-    terminal_rewards: tuple[int, ...]
+    goal_satisfaction: tuple[int | float, ...]
+    terminal_rewards: tuple[int | float, ...]
     transcript: tuple[PublicEvent, ...]
     invalid_action_count: int
 
@@ -186,8 +186,8 @@ class GameRunner:
         return EpisodeResult(
             seed=int(self.spec.seed),
             final_commitments=state.snapshot_commitments(),
-            goal_satisfaction=tuple(int(value) for value in state.goal_satisfaction()),
-            terminal_rewards=tuple(int(value) for value in state.terminal_rewards()),
+            goal_satisfaction=tuple(state.goal_satisfaction().tolist()),
+            terminal_rewards=tuple(state.terminal_rewards().tolist()),
             transcript=tuple(state.transcript),
             invalid_action_count=sum(event.invalid_action for event in state.transcript),
         )

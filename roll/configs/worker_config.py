@@ -27,6 +27,7 @@ class StrategyArguments:
 
 @dataclass
 class WorkerConfig:
+    keep_states_on_device: bool = False
     name: str = field(
         default=None,
         metadata={"help": "name of this role."},

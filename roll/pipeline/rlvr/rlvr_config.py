@@ -78,6 +78,11 @@ class RewardConfig(WorkerConfig):
 
 @dataclass
 class RLVRConfig(BaseConfig):
+    bp_two_gpu_preflight: bool = False
+    evaluate_final_model: bool = False
+    social_b_curriculum: bool = False
+    social_bp_curriculum: bool = False
+    expected_actor_optimizer_steps_per_rollout: Optional[int] = None
     # global
     global_template: str = field(
         default=None,

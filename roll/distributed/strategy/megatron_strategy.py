@@ -54,6 +54,9 @@ class MegatronInferStrategy(InferenceStrategy):
     def __init__(self, worker: Worker):
         super().__init__(worker)
         config_dict = self.worker_config.training_args.to_dict()
+        # ROLL's DeepSpeed backend selector is not an MCA TrainingArguments field.
+        config_dict.pop('optimizer_backend', None)
+        config_dict['seed'] = self.worker.pipeline_config.seed
         config_dict.update(self.worker_config.strategy_args.strategy_config)
         # maybe put max_grad_norm into training_args as transformers do, rather
         # than in pipeline_config (PPOConfig)
@@ -247,19 +250,22 @@ class MegatronTrainStrategy(MegatronInferStrategy, TrainStrategy):
         self.processor = None
 
     def initialize(self, model_provider):
-        initialize_megatron(args=self.megatron_train_args)
+        from training.b_sft.bp_startup import startup_phase
+        with startup_phase(self.worker.pipeline_config, 'megatron_distributed_initialize'):
+            initialize_megatron(args=self.megatron_train_args)
 
         self.forward_backward_func = get_forward_backward_func()
         self.seq_length = self.worker.pipeline_config.sequence_length
 
         self.tokenizer = default_tokenizer_provider(model_args=self.worker_config.model_args)
         self.processor = default_processor_provider(model_args=self.worker_config.model_args)
-        self.model = model_provider(
-            tokenizer=self.tokenizer,
-            model_args=self.worker_config.model_args,
-            training_args=self.megatron_train_args,
-            is_trainable=True,
-        )
+        with startup_phase(self.worker.pipeline_config, 'megatron_model_load'):
+            self.model = model_provider(
+                tokenizer=self.tokenizer,
+                model_args=self.worker_config.model_args,
+                training_args=self.megatron_train_args,
+                is_trainable=True,
+            )
         self.model.config.finalize_model_grads_func = finalize_model_grads
         ddp_config = DistributedDataParallelConfig(
             grad_reduce_in_fp32=self.megatron_train_args.accumulate_allreduce_grads_in_fp32,
@@ -301,7 +307,8 @@ class MegatronTrainStrategy(MegatronInferStrategy, TrainStrategy):
             use_distributed_optimizer=self.megatron_train_args.use_distributed_optimizer,
             clip_grad=self.megatron_train_args.max_grad_norm,
         )
-        self.optimizer: MegatronOptimizer = get_megatron_optimizer(optimizer_config, self.models_wrapped)
+        with startup_phase(self.worker.pipeline_config, 'megatron_optimizer_setup'):
+            self.optimizer: MegatronOptimizer = get_megatron_optimizer(optimizer_config, self.models_wrapped)
 
         logger.info(f"megatron optimizer: {self.optimizer}")
 
@@ -569,7 +576,7 @@ class MegatronTrainStrategy(MegatronInferStrategy, TrainStrategy):
         self.optimizer.load_state_dict(state_dict)
 
         # load lr_scheduler
-        self.scheduler.load_state_dict(torch.load(os.path.join(load_dir, SCHEDULER_NAME)))
+        self.scheduler.load_state_dict(torch.load(os.path.join(load_dir, SCHEDULER_NAME), weights_only=False))
 
         # load model state dict
         state_dict = load_state_dict_from_checkpoint(load_dir)
@@ -582,7 +589,7 @@ class MegatronTrainStrategy(MegatronInferStrategy, TrainStrategy):
         rng_file = os.path.join(load_dir, RNG_STATE_DIR, f"rng_state_{dist.get_rank()}.pth")
         if os.path.exists(rng_file):
             logger.info(f"Loading rng states from {rng_file}")
-            checkpoint_rng_state = torch.load(rng_file)
+            checkpoint_rng_state = torch.load(rng_file, map_location='cpu', weights_only=False)
             random.setstate(checkpoint_rng_state["random_rng_state"])
             np.random.set_state(checkpoint_rng_state["np_rng_state"])
             torch.set_rng_state(checkpoint_rng_state["torch_rng_state"])
@@ -592,4 +599,6 @@ class MegatronTrainStrategy(MegatronInferStrategy, TrainStrategy):
                 raise KeyError
             tensor_parallel.get_cuda_rng_tracker().set_states(checkpoint_rng_state["rng_tracker_states"])
         else:
+            if getattr(self.worker.pipeline_config, 'bp_two_gpu_preflight', False):
+                raise RuntimeError(f'Missing Megatron RNG checkpoint: {rng_file}')
             logger.info(f"not load rng state, not found file: {rng_file}")

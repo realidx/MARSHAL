@@ -3,7 +3,6 @@ from collections import defaultdict
 from datetime import timedelta
 from typing import List, Optional, Callable, Dict, Tuple
 
-import deepspeed
 import torch
 import torch.distributed as dist
 from accelerate import cpu_offload_with_hook
@@ -33,17 +32,23 @@ class HfInferStrategy(InferenceStrategy):
 
     def initialize(self, model_provider):
         set_seed(seed=self.worker.pipeline_config.seed)
-        dist.init_process_group(backend="nccl", timeout=timedelta(minutes=self.worker_config.backend_timeout))
-        dist.all_reduce(torch.zeros(1).cuda())
+        if (getattr(self.worker.pipeline_config, 'social_bp_curriculum', False)
+                and self.worker.pipeline_config.num_gpus_per_node == 2):
+            self.worker_config.model_args.device_map = f'cuda:{torch.cuda.current_device()}'
+        from training.b_sft.bp_startup import startup_phase
+        with startup_phase(self.worker.pipeline_config, 'reference_nccl'):
+            dist.init_process_group(backend="nccl", timeout=timedelta(minutes=self.worker_config.backend_timeout))
+            dist.all_reduce(torch.zeros(1).cuda())
 
         self.worker.rank_info.dp_rank = dist.get_rank()
         self.worker.rank_info.dp_size = dist.get_world_size()
 
         self.tokenizer = default_tokenizer_provider(model_args=self.worker_config.model_args)
 
-        self.model = model_provider(
-            tokenizer=self.tokenizer, model_args=self.worker_config.model_args, is_trainable=False
-        )
+        with startup_phase(self.worker.pipeline_config, 'reference_model_load'):
+            self.model = model_provider(
+                tokenizer=self.tokenizer, model_args=self.worker_config.model_args, is_trainable=False
+            )
         logger.info(f"{self.model}")
 
     def forward_step(
@@ -174,9 +179,13 @@ class HfInferStrategy(InferenceStrategy):
 
     # offload/load 相关接口
     def load_states(self, *args, **kwargs):
+        if self.worker_config.keep_states_on_device:
+            return
         load_hf_model(model=self.model)
 
     def offload_states(self, include=None, non_blocking=False):
+        if self.worker_config.keep_states_on_device:
+            return
         if include is None or OffloadStateType.model_params in include:
             offload_hf_model(model=self.model)
         torch.cuda.empty_cache()

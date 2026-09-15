@@ -71,7 +71,10 @@ class BasePipeline:
     def do_checkpoint(self, global_step):
         metrics = self.state.log_history[-1]
         metrics["system/step"] = global_step
-        if global_step > 0 and (global_step + 1) % self.pipeline_config.save_steps == 0:
+        checkpoint_config = self.pipeline_config.checkpoint_config or {}
+        final_save = checkpoint_config.get("save_final", False) and global_step + 1 == self.pipeline_config.max_steps
+        periodic_save = self.pipeline_config.save_steps > 0 and global_step >= 0 and (global_step + 1) % self.pipeline_config.save_steps == 0
+        if periodic_save or final_save:
             ckpt_metrics_refss = []
             for cluster in self.checkpoint_clusters:
                 ckpt_metrics_refss.append(cluster.do_checkpoint(global_step=global_step, blocking=False))
@@ -86,6 +89,20 @@ class BasePipeline:
             self.state.save_to_json(save_dir=save_dir, tag="pipeline")
             self.state.save_rng_state(save_dir=save_dir, tag="pipeline")
             self.checkpoint_manager.upload(ckpt_id=ckpt_id, local_state_path=pipeline_save_dir)
+            if checkpoint_config.get("verify_deepspeed_checkpoint", False):
+                if checkpoint_config.get("async_upload", True):
+                    raise ValueError("Checkpoint completion verification requires synchronous upload")
+                from roll.utils.checkpoint_integrity import complete_deepspeed_checkpoint
+                complete_deepspeed_checkpoint(
+                    os.path.join(checkpoint_config["output_dir"], ckpt_id),
+                    self.pipeline_config.actor_train.world_size, global_step,
+                )
+            if checkpoint_config.get('verify_megatron_checkpoint',False):
+                if checkpoint_config.get('async_upload',True):
+                    raise ValueError('Megatron completion verification requires synchronous upload')
+                from training.b_sft.bp_megatron import complete_checkpoint
+                complete_checkpoint(os.path.join(checkpoint_config['output_dir'],ckpt_id),
+                                    self.pipeline_config.actor_train.world_size,global_step)
 
         futures.wait(self.resume_futures)
         self.resume_futures.clear()

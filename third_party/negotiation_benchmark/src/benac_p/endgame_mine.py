@@ -18,10 +18,13 @@ from benac_p.diagnose_suite import dump
 from dataclasses import replace
 
 
-def candidates(seed, max_nodes=2000, actions_per_player=1, n_goals=4, n_rounds=2, unknown_goals=1, on_rejection=None, max_remaining_turns=3, max_query_sets=None):
-    spec=replace(generate_game(seed,GeneratorConfig(n_players=3,actions_per_player=actions_per_player,n_goals=n_goals,n_rounds=n_rounds)),menu_enabled=True)
+def candidates(seed, max_nodes=2000, actions_per_player=1, n_goals=4, n_rounds=2, unknown_goals=1, on_rejection=None, max_remaining_turns=3, max_query_sets=None, n_players=3, trajectory_seed=None, on_event=None):
+    spec=replace(generate_game(seed,GeneratorConfig(n_players=n_players,actions_per_player=actions_per_player,n_goals=n_goals,n_rounds=n_rounds)),menu_enabled=True)
+    emit = on_event or (lambda event: None)
+    emit(dict(event="game_generated", seed=seed, game=spec.to_dict(include_private=False)))
+    path_seed = seed if trajectory_seed is None else trajectory_seed
     ego=seed % spec.n_players
-    target=[p for p in range(spec.n_players) if p!=ego][(seed//spec.n_players)%2]
+    target=[p for p in range(spec.n_players) if p!=ego][(seed//spec.n_players)%(spec.n_players-1)]
     # Keep every type valid under the original generator's preference validity
     # constraints; no correlation between different players is introduced.
     eligible=[g.goal_id for g in spec.goals if any(a.player_id==target for a in g.required_actions)]
@@ -32,8 +35,11 @@ def candidates(seed, max_nodes=2000, actions_per_player=1, n_goals=4, n_rounds=2
     for goals in query_sets:
         goal=goals[0]
         rows=[tuple(map(int,row)) for row in spec.private_preferences]
-        if not any(v==1 for j,v in enumerate(rows[target]) if j not in goals):continue
-        if any(all(rows[p][g]==0 for p in range(spec.n_players) if p!=target) for g in goals):continue
+        if not any(v==1 for j,v in enumerate(rows[target]) if j not in goals):
+            emit(dict(event='configuration_skipped',goals=list(goals),reason='No fixed positive target preference'));continue
+        if any(all(rows[p][g]==0 for p in range(spec.n_players) if p!=target) for g in goals):
+            emit(dict(event='configuration_skipped',goals=list(goals),reason='Queried goal has no nonneutral other player'));continue
+        emit(dict(event='configuration_started',seed=seed,goals=list(goals),trajectory_seed=path_seed))
         types={p:(row,) for p,row in enumerate(rows)}
         types[target]=tuple(tuple(dict(zip(goals,vs)).get(j,old) for j,old in enumerate(rows[target])) for vs in product((1,0,-1),repeat=len(goals)))
         try:
@@ -55,12 +61,14 @@ def candidates(seed, max_nodes=2000, actions_per_player=1, n_goals=4, n_rounds=2
                         assert check.root.state.snapshot_commitments()==node.state.snapshot_commitments()
                         yield raw
                     decision=PartnerDecision(ego,node.state.public_state(),rows[ego],search.actions(node),None if node.pending is None else node.pending.to_dict())
-                    action=decision.legal_actions[int(np.random.default_rng(seed+index*701+goal*97).integers(len(decision.legal_actions)))];index+=1
+                    action=decision.legal_actions[int(np.random.default_rng(path_seed+index*701+goal*97).integers(len(decision.legal_actions)))];index+=1
                 else:
                     action=search._partner_action(node,world)
                     node.worlds=tuple(w for w in node.worlds if search._partner_action(node,w)==action)
                 prefix.append(action);node=search._apply(node,action)
+            emit(dict(event='trajectory_finished',seed=seed,goals=list(goals),trajectory_seed=path_seed,ego_decisions=index,actions=len(prefix)))
         except (SearchLimit,InformationStateRequired) as exc:
+            emit(dict(event='trajectory_failed',seed=seed,goals=list(goals),trajectory_seed=path_seed,reason=str(exc)))
             if on_rejection is not None:on_rejection(dict(seed=seed,goals=list(goals),reason=str(exc)))
             continue
 

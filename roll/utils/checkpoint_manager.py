@@ -51,6 +51,7 @@ class CheckpointManager:
 
     def __init__(self, checkpoint_config=None):
         self.checkpoint_config: Dict = copy.deepcopy(checkpoint_config)
+        self.raise_on_error = bool((checkpoint_config or {}).get("raise_on_error", False))
         self.uploader = None
         logger.info(f"checkpoint_config: {checkpoint_config}")
         if self.checkpoint_config:
@@ -76,3 +77,5 @@ class CheckpointManager:
         except Exception as e:
             traceback.print_exc()
             logger.error(f"upload failed, {e}")
+            if self.raise_on_error:
+                raise

@@ -32,6 +32,20 @@ from roll.utils.offload_states import OffloadStateType
 logger = get_logger()
 
 
+def create_train_scheduler(training_args, optimizer, num_training_steps):
+    # min_lr is specific to these cosine schedules, not a universal HF option.
+    name = training_args.lr_scheduler_type
+    kwargs = {"min_lr": 0.0} if name in (
+        "cosine_with_min_lr", "cosine_warmup_with_min_lr"
+    ) else {}
+    return get_scheduler(
+        name, optimizer,
+        num_warmup_steps=training_args.get_warmup_steps(num_training_steps),
+        num_training_steps=num_training_steps,
+        scheduler_specific_kwargs=kwargs,
+    )
+
+
 class DeepSpeedInferStrategy(InferenceStrategy):
     strategy_name = "deepspeed_infer"
 
@@ -168,6 +182,8 @@ class DeepSpeedInferStrategy(InferenceStrategy):
 
     # offload/load 相关接口
     def load_states(self, include=None, non_blocking=False):
+        if self.worker_config.keep_states_on_device:
+            return
         if include is not None:
             ds_include = []
             if OffloadStateType.model_params in include:
@@ -182,6 +198,8 @@ class DeepSpeedInferStrategy(InferenceStrategy):
         self.model.reload_states(include=include, non_blocking=non_blocking)
 
     def offload_states(self, include=None, non_blocking=False):
+        if self.worker_config.keep_states_on_device:
+            return
         if include is not None:
             ds_include = []
             if OffloadStateType.model_params in include:
@@ -205,8 +223,10 @@ class DeepSpeedTrainStrategy(DeepSpeedInferStrategy, TrainStrategy):
         assert self.ds_config._stage > 0, "deepspeed train only supports zero > 0."
 
         set_seed(seed=self.worker.pipeline_config.seed)
-        deepspeed.init_distributed(timeout=timedelta(minutes=self.worker_config.backend_timeout))
-        dist.all_reduce(torch.zeros(1).cuda())
+        from training.b_sft.bp_startup import startup_phase
+        with startup_phase(self.worker.pipeline_config, 'actor_nccl'):
+            deepspeed.init_distributed(timeout=timedelta(minutes=self.worker_config.backend_timeout))
+            dist.all_reduce(torch.zeros(1).cuda())
 
         self.worker.rank_info.dp_rank = dist.get_rank()
         self.worker.rank_info.dp_size = dist.get_world_size()
@@ -214,9 +234,20 @@ class DeepSpeedTrainStrategy(DeepSpeedInferStrategy, TrainStrategy):
         self.tokenizer = default_tokenizer_provider(model_args=self.worker_config.model_args)
         self.processor = default_processor_provider(model_args=self.worker_config.model_args)
 
-        model = model_provider(tokenizer=self.tokenizer, model_args=self.worker_config.model_args, is_trainable=True)
+        if (getattr(self.worker.pipeline_config, 'social_bp_curriculum', False)
+                and self.worker.pipeline_config.num_gpus_per_node == 2):
+            self.worker_config.model_args.device_map = f'cuda:{torch.cuda.current_device()}'
+        with startup_phase(self.worker.pipeline_config, 'actor_model_load'):
+            model = model_provider(tokenizer=self.tokenizer, model_args=self.worker_config.model_args, is_trainable=True)
 
         adam_optimizer = DeepSpeedCPUAdam if self.ds_config.is_offload() else FusedAdam
+        backend = self.worker_config.training_args.optimizer_backend
+        if backend in ('torch_adamw','torch_adamw_fused'):
+            if self.ds_config.is_offload():
+                raise ValueError('torch_adamw backend is for resident ZeRO training, not CPU offload')
+            adam_optimizer = torch.optim.AdamW
+        elif backend != 'deepspeed':
+            raise ValueError('Unknown optimizer backend: '+backend)
         optim_params = get_optimizer_grouped_parameters(
             model, weight_decay=self.worker_config.training_args.weight_decay
         )
@@ -224,6 +255,8 @@ class DeepSpeedTrainStrategy(DeepSpeedInferStrategy, TrainStrategy):
             optim_params,
             lr=self.worker_config.training_args.learning_rate,
             betas=(self.worker_config.training_args.adam_beta1, self.worker_config.training_args.adam_beta2),
+            **({'foreach': False} if backend == 'torch_adamw' else
+               {'fused': True} if backend == 'torch_adamw_fused' else {}),
         )
 
         logger.info(f"max steps pipeline {self.worker_config.training_args.max_steps}")
@@ -232,26 +265,20 @@ class DeepSpeedTrainStrategy(DeepSpeedInferStrategy, TrainStrategy):
         )
         logger.info(f"max steps worker train {self.worker_config.training_args.max_steps}")
 
-        scheduler = get_scheduler(
-            self.worker_config.training_args.lr_scheduler_type,
-            optimizer,
-            num_warmup_steps=self.worker_config.training_args.get_warmup_steps(
-                self.worker_config.training_args.max_steps
-            ),
-            num_training_steps=self.worker_config.training_args.max_steps,
-            scheduler_specific_kwargs={
-                "min_lr": 0.0,
-            },
+        scheduler = create_train_scheduler(
+            self.worker_config.training_args, optimizer,
+            self.worker_config.training_args.max_steps,
         )
 
-        self.model, self.optimizer, _, self.scheduler = deepspeed.initialize(
-            model_parameters=model.parameters(),
-            model=model,
-            optimizer=optimizer,
-            lr_scheduler=scheduler,
-            config=self.worker_config.strategy_args.strategy_config,
-            dist_init_required=True,
-        )
+        with startup_phase(self.worker.pipeline_config, 'deepspeed_optimizer_setup'):
+            self.model, self.optimizer, _, self.scheduler = deepspeed.initialize(
+                model_parameters=model.parameters(),
+                model=model,
+                optimizer=optimizer,
+                lr_scheduler=scheduler,
+                config=self.worker_config.strategy_args.strategy_config,
+                dist_init_required=True,
+            )
         bind_deepspeed_offload_states_func(self.model)
 
         logger.info(f"{self.model}")
@@ -270,6 +297,13 @@ class DeepSpeedTrainStrategy(DeepSpeedInferStrategy, TrainStrategy):
 
         for step in range(mini_steps):
             data: DataProto = next(data_iter)
+            if (getattr(self.worker.pipeline_config,'social_bp_curriculum',False)
+                    and self.worker.pipeline_config.num_gpus_per_node==2):
+                from training.b_sft.bp_memory import trim_training_padding
+                original_width=data.batch['input_ids'].shape[-1]
+                data=trim_training_padding(data)
+                if step==0:
+                    logger.info(f'B/P training token width: {original_width} -> {data.batch["input_ids"].shape[-1]} (right padding removed)')
             input_ids = data.batch["input_ids"]
             attention_mask = data.batch["attention_mask"]
             position_ids = data.batch["position_ids"]
@@ -296,6 +330,8 @@ class DeepSpeedTrainStrategy(DeepSpeedInferStrategy, TrainStrategy):
             loss, loss_reduced = loss_func(data, output.logits)
             append_to_dict(metrics, loss_reduced)
             self.model.backward(loss)
+            # Release vocabulary logits before optimizer onload and the next forward.
+            del output, loss
 
             is_gradient_accumulation_boundary = self.model.is_gradient_accumulation_boundary()
             if is_gradient_accumulation_boundary:
@@ -342,6 +378,10 @@ class DeepSpeedTrainStrategy(DeepSpeedInferStrategy, TrainStrategy):
                 self.processor.save_pretrained(save_dir)
             # save tokenizer
         self.model.save_checkpoint(save_dir, tag=tag, **kwargs)
+        if getattr(self.worker.pipeline_config, 'bp_two_gpu_preflight', False):
+            from roll.utils.worker_state import WorkerState
+            WorkerState.save_rng_state(save_dir, f'actor_rank{self.worker.rank}')
+            dist.barrier()
 
         if self.worker_config.checkpoint_config.get("async_upload", True):
             self.thread_executor.submit(self.checkpoint_manager.upload, ckpt_id=ckpt_id, local_state_path=save_dir)
@@ -355,7 +395,15 @@ class DeepSpeedTrainStrategy(DeepSpeedInferStrategy, TrainStrategy):
 
     def load_checkpoint(self, load_dir, tag="checkpoint", **kwargs):
         logger.info(f"load checkpoint from {load_dir}")
-        self.model.load_checkpoint(load_dir, tag=tag, **kwargs)
+        loaded, _ = self.model.load_checkpoint(load_dir, tag=tag, **kwargs)
+        if loaded is None:
+            raise RuntimeError(f'DeepSpeed did not restore a checkpoint from {load_dir}')
+        if getattr(self.worker.pipeline_config, 'bp_two_gpu_preflight', False):
+            from roll.utils.worker_state import WorkerState
+            path = os.path.join(load_dir, f'rng_state_actor_rank{self.worker.rank}.pth')
+            if not os.path.isfile(path):
+                raise RuntimeError(f'Missing actor RNG checkpoint: {path}')
+            WorkerState.load_rng_state(load_dir, f'actor_rank{self.worker.rank}')
 
     def model_update(self, tgt_workers, broadcast_tgt_devices, p2p_tgt_devices):
         comm_plan = self.model_update_comm_plan[self.worker.rank_info.pp_rank]

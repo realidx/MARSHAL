@@ -40,7 +40,7 @@ def _commitment_map(
 
 def _goal_to_agent_dict(goal: Goal) -> dict[str, Any]:
     return {
-        "type": "ALL_OF",
+        "type": "ALL_OF" if goal.binary else "LINEAR",
         "requires": [
             f"{_player_name(action.player_id)}:{_action_name(action.action_id)}"
             for action in goal.required_actions
@@ -326,7 +326,7 @@ class PlayerObservation:
         return tuple(tuple(row) for row in rows)
 
     def state_facts(self, commitments: tuple[tuple[int, ...], ...]) -> dict[str, Any]:
-        """Mechanical ALL_OF facts; utility is a snapshot, not a continuation value."""
+        """Mechanical goal facts; utility is a snapshot, not a continuation value."""
 
         goals = {}
         utility = None if self.own_preferences is None else 0
@@ -338,7 +338,8 @@ class PlayerObservation:
             ]
             contribution = (
                 None if self.own_preferences is None
-                else int(not missing) * PREFERENCE_TO_VALUE[self.own_preferences[goal.goal_id]]
+                else (int(not missing) if goal.binary else (len(goal.required_actions) - len(missing)) / len(goal.required_actions))
+                * PREFERENCE_TO_VALUE[self.own_preferences[goal.goal_id]]
             )
             goals[f"G{goal.goal_id}"] = {
                 "satisfied": not missing,

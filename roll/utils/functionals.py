@@ -7,7 +7,9 @@ import torch
 import torch.nn.functional as F
 from tensordict import TensorDict
 
-from roll.pipeline.agentic.agentic_config import AgenticConfig
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from roll.pipeline.agentic.agentic_config import AgenticConfig
 from roll.pipeline.rlvr.rlvr_config import RLVRConfig
 from roll.utils.kl_controller import AdaptiveKLController
 from roll.utils.logging import get_logger
@@ -863,7 +865,7 @@ def reward_normalize_by_player(data: "DataProto", rewards: torch.Tensor, rn_cfg,
 
 
 @torch.no_grad()
-def reward_postprocess_agentic(data: "DataProto", pipeline_config: AgenticConfig, running_ctrl=None, kl_ctrl=None):
+def reward_postprocess_agentic(data: "DataProto", pipeline_config: "AgenticConfig", running_ctrl=None, kl_ctrl=None):
     # 0. get rewards (process token_level_rewards directly if use_turn_scores is True)
     if pipeline_config.use_turn_scores:
         rewards = data.batch["token_level_rewards"].clone().detach()
