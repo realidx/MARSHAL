@@ -35,6 +35,9 @@ class ConfigurationTests(unittest.TestCase):
      with self.subTest(profile=profile,arm=arm),patch.dict(os.environ,SOCIAL_GPU_PROFILE=profile,SOCIAL_MODEL='/not-loaded',ROLL_OUTPUT_DIR=root,ROLL_LOG_DIR=root+'/logs',PYTHONPATH=os.getcwd()):
       cfg,resolved=configuration(arm)
       self.assertTrue(cfg.actor_infer.strategy_args.strategy_config['enforce_eager'])
+      self.assertEqual(cfg.actor_train.system_envs['CUDNN_FRONTEND_CUDART_LIB_NAME'],'libcudart.so.13')
+      self.assertEqual(cfg.actor_train.system_envs['NVTE_FUSED_ATTN'],'0')
+      self.assertEqual(cfg.actor_infer.system_envs['CUDNN_FRONTEND_CUDART_LIB_NAME'],'libcudart.so.13')
       self.assertEqual(cfg.max_steps,1000)
       self.assertEqual(cfg.actor_train.training_args.max_steps,1000)
       self.assertEqual(resolved['actor_train']['training_args']['max_steps'],1000)

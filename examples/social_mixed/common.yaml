@@ -38,6 +38,8 @@ whiten_advantages: false
 loss_agg_mode: seq-mean-token-mean
 system_envs:
   VLLM_TOOL_CALL_PARSER: hermes
+  CUDNN_FRONTEND_CUDART_LIB_NAME: libcudart.so.13
+  NVTE_FUSED_ATTN: '0'
   TOKENIZERS_PARALLELISM: 'false'
   CUDA_DEVICE_MAX_CONNECTIONS: '1'
   OMP_NUM_THREADS: '4'
