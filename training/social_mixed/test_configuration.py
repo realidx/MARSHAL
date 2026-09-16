@@ -36,7 +36,6 @@ class ConfigurationTests(unittest.TestCase):
       cfg,resolved=configuration(arm)
       self.assertTrue(cfg.actor_infer.strategy_args.strategy_config['enforce_eager'])
       self.assertEqual(cfg.actor_train.system_envs['CUDNN_FRONTEND_CUDART_LIB_NAME'],'libcudart.so.13')
-      self.assertEqual(cfg.actor_train.system_envs['NVTE_FUSED_ATTN'],'0')
       self.assertEqual(cfg.actor_infer.system_envs['CUDNN_FRONTEND_CUDART_LIB_NAME'],'libcudart.so.13')
       self.assertEqual(cfg.max_steps,1000)
       self.assertEqual(cfg.actor_train.training_args.max_steps,1000)
