@@ -37,7 +37,6 @@ init_kl_coef: 0.0
 whiten_advantages: false
 loss_agg_mode: seq-mean-token-mean
 system_envs:
-  VLLM_USE_V1: '0'
   VLLM_TOOL_CALL_PARSER: hermes
   TOKENIZERS_PARALLELISM: 'false'
   CUDA_DEVICE_MAX_CONNECTIONS: '1'
@@ -107,7 +106,7 @@ actor_infer:
       gpu_memory_utilization: 0.65
       max_model_len: 4096
       max_num_seqs: 16
-      enforce_eager: false
+      enforce_eager: true
       enable_prefix_caching: false
       enable_sleep_mode: true
       sleep_level: 1

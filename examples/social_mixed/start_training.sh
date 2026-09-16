@@ -12,7 +12,8 @@ source "$CONDA_HOME/etc/profile.d/conda.sh"
 conda activate "$CONDA_ENV"
 export PYTHONPATH="$PWD:$PWD/mcore_adapter/src:$PWD/third_party/negotiation_benchmark/src:${PYTHONPATH:-}"
 export SOCIAL_MODEL=/home/e/e1300530/models/Qwen3-4B-Instruct-2507
-export VLLM_USE_V1=0 VLLM_TOOL_CALL_PARSER=hermes TOKENIZERS_PARALLELISM=false
+unset VLLM_USE_V1  # vLLM 0.28 uses V1; this retired variable cannot select V0.
+export VLLM_TOOL_CALL_PARSER=hermes TOKENIZERS_PARALLELISM=false
 export OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1
 export SOCIAL_GPU_PROFILE="$PROFILE" SOCIAL_ARM="$ARM" SOCIAL_SEED=42
 export SOCIAL_TOTAL_TOKENS=6553600 SOCIAL_TOKENS_PER_UPDATE=65536 SOCIAL_KEEP_CHECKPOINTS=2

@@ -5,7 +5,7 @@
 
 目标：marshal-vllm09 环境（路径名不是版本），Qwen3-4B-Instruct-2507，gpu-long 的两张 h100-96，Megatron TP=2，两个 actor-local vLLM TP=1 副本，HF reference 两个 worker。不启动 HTTP 服务，不安装依赖，不使用 H100-47/MIG 作为默认。
 
-vLLM 0.28 适配明确调用 V1。VLLM_USE_V1=0 保留交接要求，但不代表运行 V0。实际 executor 被适配器设为 uni，因为 ROLL 已管理每个 actor 的 GPU 和进程。CUDA_HOME/nvcc/LD_LIBRARY_PATH 保留交接分支逻辑，继承新 Conda 环境激活后的 cu13 路径。
+vLLM 0.28 适配明确调用 V1。删除无效的 VLLM_USE_V1=0；它不能切换到 V0。实际 executor 被适配器设为 uni，因为 ROLL 已管理每个 actor 的 GPU 和进程。CUDA_HOME/nvcc/LD_LIBRARY_PATH 保留交接分支逻辑，继承新 Conda 环境激活后的 cu13 路径。
 
 新增修复：SocialWorker.generate_native 使用 prompts=[{'prompt_token_ids': ...}]，旧的独立 prompt_token_ids 参数不适用于 vLLM 0.28。依据：https://github.com/vllm-project/vllm/blob/v0.28.0/vllm/entrypoints/llm.py 。依赖检查验证实际生成方法签名。
 
@@ -77,3 +77,7 @@ bash examples/social_mixed/submit_soc.sh h200-141 mixed
 ```bash
 bash examples/social_mixed/submit_soc.sh h200-141 mixed /absolute/path/to/checkpoint-N
 ```
+
+## 权重同步后非法显存访问的临时规避
+
+当前训练默认 enforce_eager=true，关闭 vLLM torch.compile/CUDA Graph。V1 仍保留。此修改用于绕开可疑编译/图执行路径，尚未证明根因，也未完成远程 GPU 验证。采样吞吐可能下降，编译/捕图初始化减少。不要复用已发生 illegal memory access 的进程。若 eager 仍失败，需检查首次 CUDA 错误及权重同步、sleep/wake、attention kernel；不能归因于图执行。
