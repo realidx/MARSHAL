@@ -1,4 +1,11 @@
 """One local Ray job; no shared head, package installation or model download."""
+import numpy as _numpy
+
+# Megatron Core 0.12.3 still calls the NumPy 1.x alias ``np.product``;
+# NumPy 2.x removed it. Install the alias before Megatron is imported.
+if not hasattr(_numpy, "product"):
+    _numpy.product = _numpy.prod
+
 import argparse
 import faulthandler
 import hashlib
