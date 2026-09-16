@@ -83,15 +83,6 @@ class MegatronInferStrategy(InferenceStrategy):
         self.model.config.finalize_model_grads_func = finalize_model_grads
 
         self.models_unwrapped = self.model.get_models()
-        if self.worker.cluster_name == 'actor_train':
-            probe_model = self.models_unwrapped[0]
-            probe_inv = probe_model.rotary_pos_emb.inv_freq.detach().float().cpu()
-            probe_expected = 5000000.0 ** (-torch.arange(0, 128, 2, dtype=torch.float32) / 128)
-            print('SOCIAL_ROPE_PROBE', dict(rank=self.worker.rank, tp_rank=self.worker.rank_info.tp_rank,
-                  config_rotary_base=getattr(probe_model.config, 'rotary_base', None),
-                  rotary_interleaved=getattr(probe_model.rotary_pos_emb, 'rotary_interleaved', None),
-                  inv_freq_shape=list(probe_inv.shape), selected=probe_inv[[1,16,32,63]].tolist(),
-                  max_error_vs_theta_5m=float((probe_inv-probe_expected).abs().max())), flush=True)
         self.forward_backward_func = get_forward_backward_func()
 
         self.seq_length = self.worker.pipeline_config.sequence_length
@@ -304,15 +295,6 @@ class MegatronTrainStrategy(MegatronInferStrategy, TrainStrategy):
             for model_index, m in enumerate(self.model.get_models())
         ]
         self.models_unwrapped = self.model.get_models()
-        if self.worker.cluster_name == 'actor_train':
-            probe_model = self.models_unwrapped[0]
-            probe_inv = probe_model.rotary_pos_emb.inv_freq.detach().float().cpu()
-            probe_expected = 5000000.0 ** (-torch.arange(0, 128, 2, dtype=torch.float32) / 128)
-            print('SOCIAL_ROPE_PROBE', dict(rank=self.worker.rank, tp_rank=self.worker.rank_info.tp_rank,
-                  config_rotary_base=getattr(probe_model.config, 'rotary_base', None),
-                  rotary_interleaved=getattr(probe_model.rotary_pos_emb, 'rotary_interleaved', None),
-                  inv_freq_shape=list(probe_inv.shape), selected=probe_inv[[1,16,32,63]].tolist(),
-                  max_error_vs_theta_5m=float((probe_inv-probe_expected).abs().max())), flush=True)
         self.model.models = self.models_wrapped
 
         params_dtype = (
