@@ -38,6 +38,10 @@ whiten_advantages: false
 loss_agg_mode: seq-mean-token-mean
 system_envs:
   VLLM_TOOL_CALL_PARSER: hermes
+  CUDNN_FRONTEND_CUDART_LIB_NAME: libcudart.so.13
+  NVTE_FLASH_ATTN: '${oc.env:SOCIAL_NVTE_FLASH_ATTN,1}'
+  NVTE_FUSED_ATTN: '${oc.env:SOCIAL_NVTE_FUSED_ATTN,0}'
+  NVTE_UNFUSED_ATTN: '${oc.env:SOCIAL_NVTE_UNFUSED_ATTN,0}'
   TOKENIZERS_PARALLELISM: 'false'
   CUDA_DEVICE_MAX_CONNECTIONS: '1'
   OMP_NUM_THREADS: '4'
@@ -73,6 +77,7 @@ actor_train:
     strategy_name: megatron_train
     strategy_config:
       tensor_model_parallel_size: 2
+      transformer_impl: ${oc.env:SOCIAL_TRANSFORMER_IMPL,transformer_engine}
       pipeline_model_parallel_size: 1
       sequence_parallel: true
       expert_model_parallel_size: 1

@@ -22,6 +22,7 @@ from megatron.core.transformer.moe.moe_utils import clear_aux_losses_tracker, re
 
 from mcore_adapter import TrainingArguments
 from mcore_adapter.checkpointing import get_checkpoint_dir, load_state_dict_from_checkpoint
+from mcore_adapter.trainer.utils import get_ltor_masks_and_position_ids
 from mcore_adapter.initialize import initialize_megatron
 from mcore_adapter.parallel_functions import vocab_parallel_logprobs, context_parallel_gather
 from mcore_adapter.trainer.utils import get_megatron_lr_scheduler
@@ -173,6 +174,10 @@ class MegatronInferStrategy(InferenceStrategy):
         input_ids = self._get_feature_on_this_cp_rank(input_ids, "input_ids")
         attention_mask = self._get_feature_on_this_cp_rank(attention_mask, "attention_mask")
         position_ids = None
+        if self.models_unwrapped[0].config.transformer_impl == "local":
+            attention_mask, position_ids = get_ltor_masks_and_position_ids(
+                input_ids, build_attention_mask=True, attn_mask_1D=attention_mask
+            )
         # attention_mask: SelfAttention defalt to te DotProductAttention with
         # AttnMaskType.causal in which attention_mask would not be used, pass
         # it mainly for moe aux loss without pad token and it is 2D

@@ -24,6 +24,7 @@ from roll.utils.functionals import (
     agg_loss,
 )
 from roll.utils.offload_states import OffloadStateType
+from roll.utils.tokenizer_utils import get_extra_special_token_ids
 
 
 def masked_ppo_clip_fractions(
@@ -211,7 +212,7 @@ class ActorWorker(Worker):
 
         generation_config["eos_token_id"] = [
             self.tokenizer.eos_token_id
-        ] + ([] if "tools" in data.non_tensor_batch else self.tokenizer.additional_special_tokens_ids)
+        ] + ([] if "tools" in data.non_tensor_batch else get_extra_special_token_ids(self.tokenizer))
         generation_config["pad_token_id"] = self.tokenizer.pad_token_id
 
         global_step = data.meta_info.get("global_step", 0)
@@ -452,7 +453,7 @@ class ActorWorker(Worker):
                 generation_config = data.meta_info["generation_config"]
             generation_config["eos_token_id"] = [
                 self.tokenizer.eos_token_id
-            ] + ([] if "tools" in data.non_tensor_batch else self.tokenizer.additional_special_tokens_ids)
+            ] + ([] if "tools" in data.non_tensor_batch else get_extra_special_token_ids(self.tokenizer))
             generation_config["pad_token_id"] = self.tokenizer.pad_token_id
             data.meta_info["generation_config"] = generation_config
             self.response_call_back_fns[data.meta_info["request_id"]] = data.meta_info.pop("response_callback_fn")

@@ -3,4 +3,5 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 export SOCIAL_DIAGNOSE_PROBABILITIES=1
+export SOCIAL_SUBMIT_PARTITION=gpu
 bash examples/social_mixed/start_training.sh "${1:-h100-96}" mixed

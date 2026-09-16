@@ -17,6 +17,13 @@ case "$PROFILE" in
   h200-141) GPUS=1; PARTITION=gpu; LIMIT=03:00:00;;
   *) echo 'Unknown GPU profile' >&2; exit 2;;
 esac
+if [[ -n "${SOCIAL_SUBMIT_PARTITION:-}" ]]; then
+  case "$SOCIAL_SUBMIT_PARTITION" in
+    gpu|gpu-long) PARTITION="$SOCIAL_SUBMIT_PARTITION";;
+    *) echo 'SOCIAL_SUBMIT_PARTITION must be gpu or gpu-long' >&2; exit 2;;
+  esac
+  [[ "$PARTITION" == gpu ]] && LIMIT=03:00:00
+fi
 export SOCIAL_GPU_PROFILE="$PROFILE" SOCIAL_ARM="$ARM"
 export SOCIAL_SEED="${SOCIAL_SEED:-42}"
 if [[ -n "${3:-}" ]]; then

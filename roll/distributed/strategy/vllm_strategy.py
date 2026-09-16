@@ -24,6 +24,7 @@ from roll.utils.collective import collective
 from roll.utils.functionals import concatenate_input_and_output, GenerateRequestType
 from roll.utils.logging import get_logger
 from roll.utils.offload_states import OffloadStateType
+from roll.utils.tokenizer_utils import extend_extra_special_tokens, get_extra_special_tokens
 
 logger = get_logger()
 
@@ -84,16 +85,14 @@ class VllmStrategy(InferenceStrategy):
             self.model = AsyncLLM(resource_placement_groups=self.worker_config.resource_placement_groups, **vllm_config)
             loop = asyncio.get_event_loop()
             self.tokenizer = loop.run_until_complete(self.model.get_tokenizer())
-        additional_special_tokens = self.tokenizer.additional_special_tokens
+        extra_special_tokens = get_extra_special_tokens(self.tokenizer)
         special_tokens = [
             add_token
             for add_token in self.tokenizer.added_tokens_decoder.values()
-            if add_token.special and add_token.content not in additional_special_tokens
+            if add_token.special and add_token.content not in extra_special_tokens
         ]
-        self.tokenizer.add_special_tokens(
-            {"additional_special_tokens": special_tokens}, replace_additional_special_tokens=False
-        )
-        logger.info(f"add {special_tokens} to additional_special_tokens: {self.tokenizer.additional_special_tokens}")
+        extend_extra_special_tokens(self.tokenizer, special_tokens)
+        logger.info(f"add {special_tokens} to extra special tokens: {get_extra_special_tokens(self.tokenizer)}")
 
         self.worker.rank_info.dp_rank = self.worker.rank
         self.worker.rank_info.dp_size = self.worker.world_size

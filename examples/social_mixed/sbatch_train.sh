@@ -41,6 +41,9 @@ fi
 export PATH="$CUDA_HOME/bin:$PATH"
 SOCIAL_SITE="$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
 export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$CONDA_PREFIX/targets/x86_64-linux/lib:$SOCIAL_SITE/nvidia/cuda_runtime/lib:$SOCIAL_SITE/nvidia/cudnn/lib:${LD_LIBRARY_PATH:-}"
+# Transformer Engine uses CUDA 13 while vLLM also installs a CUDA 12 runtime.
+# Keep cuDNN frontend from selecting the incompatible libcudart.so.12.
+export CUDNN_FRONTEND_CUDART_LIB_NAME=libcudart.so.13
 export ROLL_OUTPUT_DIR="$PWD/runs/social_mixed/${SOCIAL_ARM}-seed${SOCIAL_SEED}-${SLURM_JOB_ID}"
 export ROLL_LOG_DIR="$ROLL_OUTPUT_DIR/logs" BP_DIAGNOSTICS_DIR="$ROLL_OUTPUT_DIR"
 mkdir -p "$ROLL_LOG_DIR"

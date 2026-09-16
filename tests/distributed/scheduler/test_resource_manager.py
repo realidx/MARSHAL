@@ -8,7 +8,12 @@ from ray.util.scheduling_strategies import PlacementGroupSchedulingStrategy
 
 from roll.distributed.scheduler.driver_utils import get_driver_world_size
 from roll.distributed.scheduler.initialize import init
-from roll.distributed.scheduler.resource_manager import ResourceManager
+from roll.distributed.scheduler.resource_manager import ResourceManager, logical_node_gpu_ranks
+
+
+def test_mig_ids_are_kept_out_of_roll_logical_ranks():
+    visible = [["MIG-e9fc", "MIG-fb9f"]]
+    assert logical_node_gpu_ranks(visible) == [0]
 
 
 @ray.remote

@@ -290,6 +290,12 @@ class Template:
         for k, v in self.config_hf_to_mca.items():
             if hasattr(hf_config, k):
                 kw_args[v] = getattr(hf_config, k)
+        # Transformers 5 migrated RoPE fields into rope_parameters. Keep the
+        # legacy template mapping working without silently falling back to 10000.
+        if "rope_theta" in self.config_hf_to_mca and "rotary_base" not in kw_args:
+            rope_parameters = getattr(hf_config, "rope_parameters", None)
+            if isinstance(rope_parameters, dict) and "rope_theta" in rope_parameters:
+                kw_args[self.config_hf_to_mca["rope_theta"]] = rope_parameters["rope_theta"]
         kw_args["hf_model_type"] = self.hf_model_type
         kw_args["name_or_path"] = hf_config.name_or_path
         kw_args["hf_config_json"] = hf_config.to_json_string()

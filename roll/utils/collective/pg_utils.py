@@ -1,6 +1,17 @@
+import inspect
 import time
 
 import torch
+
+
+def process_group_options_keyword(helper):
+    """Select the private PyTorch option keyword from its runtime signature."""
+    parameters = inspect.signature(helper).parameters
+    if "backend_options" in parameters:
+        return "backend_options"
+    if "pg_options" in parameters:
+        return "pg_options"
+    raise TypeError("Unsupported _new_process_group_helper signature")
 
 
 # Copy from pytorch and OpenRLHF to allow creating multiple main groups.
@@ -53,10 +64,7 @@ def init_custom_process_group(
         # different systems (e.g. RPC) in case the store is multi-tenant.
         store = PrefixStore(group_name, store)
 
-    # NOTE: The pg_options parameter was renamed into backend_options in PyTorch 2.6.0
-    # https://github.com/pytorch/pytorch/commit/a0c7029a75628cd5fa8df83c0de0ea98ee7fd844
-    # We need to determine the appropriate parameter name based on PyTorch version
-    pg_options_param_name = "backend_options" if str(torch.__version__) >= "2.6" else "pg_options"
+    pg_options_param_name = process_group_options_keyword(_new_process_group_helper)
     pg, _ = _new_process_group_helper(
         world_size,
         rank,
