@@ -1,3 +1,4 @@
+import os
 """Fixed execution profiles; no change to rewards, sampling or token budgets."""
 PROFILES={
  'h100-47':dict(gpus=2,tp=2,train_microbatch=1,reference_microbatch=1,train_resident=False,reference_resident=False,vllm_memory=.50,max_num_seqs=16,recompute='full'),
@@ -11,7 +12,7 @@ def apply(config,name):
  for worker in (config.actor_train,config.actor_infer,config.reference):
   worker.device_mapping=str(list(range(p['gpus'])))
  config.actor_train.strategy_args.strategy_config.tensor_model_parallel_size=p['tp']
- config.actor_train.strategy_args.strategy_config.sequence_parallel=p['tp']>1
+ config.actor_train.strategy_args.strategy_config.sequence_parallel=os.getenv('SOCIAL_SEQUENCE_PARALLEL','1' if p['tp']>1 else '0')=='1'
  config.actor_train.training_args.per_device_train_batch_size=p['train_microbatch']
  config.actor_train.keep_states_on_device=p['train_resident']
  config.reference.infer_batch_size=p['reference_microbatch']
