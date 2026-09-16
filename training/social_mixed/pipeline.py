@@ -104,8 +104,13 @@ class SocialPipeline(BasePipeline):
         if original==0:return []
         encoded=[]
         for req in requests:
-            ids = self.tokenizer.apply_chat_template(req['messages'],tools=req['tools'],
-                        tokenize=True,add_generation_prompt=True)
+            rendered = self.tokenizer.apply_chat_template(
+                req['messages'], tools=req['tools'], tokenize=True,
+                add_generation_prompt=True, return_dict=True, truncation=False)
+            ids = rendered['input_ids']
+            if (not isinstance(ids, list) or not ids
+                    or any(not isinstance(token_id, int) for token_id in ids)):
+                raise TypeError('Chat template must return one unbatched list of integer input_ids')
             if len(ids)+1024>self.pipeline_config.sequence_length:
                 raise ValueError(f'Prompt has {len(ids)} tokens; refusing to truncate private/public state')
             encoded.append(dict(prompt_ids=ids,seed=req['seed']))

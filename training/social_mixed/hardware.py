@@ -19,6 +19,5 @@ def apply(config,name):
  config.reference.keep_states_on_device=p['reference_resident']
  config.actor_infer.strategy_args.strategy_config.gpu_memory_utilization=p['vllm_memory']
  config.actor_infer.strategy_args.strategy_config.max_num_seqs=p['max_num_seqs']
- config.actor_infer.strategy_args.strategy_config.enable_prefix_caching=True
  config.actor_train.strategy_args.strategy_config.recompute_granularity=p['recompute']
  return dict(p)
