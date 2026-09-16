@@ -8,6 +8,11 @@ from ray.util.placement_group import PlacementGroup
 from roll.utils.ray_utils import get_visible_gpus, get_node_rank
 
 
+def logical_node_gpu_ranks(visible_gpu_ids):
+    """Return ROLL node-local ranks without interpreting Ray GPU ID tokens."""
+    return [0 for _ in visible_gpu_ids]
+
+
 class ResourceManager:
     def __init__(self, num_gpus_per_node, num_nodes):
         """
@@ -59,7 +64,10 @@ class ResourceManager:
                 # NODE_RANK environment variable is not set in the cluster, so a default value is used for NODE_RANK.
                 self.node_ranks = list(range(len(self.placement_groups)))
 
-            self.gpu_ranks = [int(gpu_rank[0]) for gpu_rank in gpu_ranks]
+            # Ray may return physical indices, GPU UUIDs, or MIG UUIDs here.
+            # ROLL device mappings are node-local logical ranks; translating them
+            # back to scheduler-assigned device tokens happens when actors start.
+            self.gpu_ranks = logical_node_gpu_ranks(gpu_ranks)
             self.node2pg: Dict[int, PlacementGroup] = {}
             for node_rank, placement_group in zip(self.node_ranks, self.placement_groups):
                 self.node2pg[node_rank] = placement_group
