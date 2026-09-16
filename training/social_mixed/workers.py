@@ -71,6 +71,31 @@ class SocialWorker(ActorWorker):
         return DataProto.from_dict(tensors={'index':torch.arange(len(records))},
                                    non_tensors={'records':object_array(records)}, meta_info={'metrics':metrics})
 
+    @register(dispatch_mode=Dispatch.DP_MP_COMPUTE, clear_cache=False)
+    @torch.no_grad()
+    def diagnostic_prompt_log_probs(self, data):
+        """Teacher-force identical full token sequences through vLLM prefill."""
+        from vllm import SamplingParams
+        requests=data.non_tensor_batch['requests'].tolist()
+        with state_offload_manger(self.strategy, {}, 'diagnostic/prompt', is_offload_states=False):
+            self.strategy.model.reset_prefix_cache()
+            outputs=self.strategy.model.generate(
+                prompts=[{'prompt_token_ids':r['prompt_ids']+r['response_ids']} for r in requests],
+                sampling_params=SamplingParams(max_tokens=1,temperature=1.,prompt_logprobs=0),
+                use_tqdm=False)
+        if len(outputs)!=len(requests):raise RuntimeError('Diagnostic output count mismatch')
+        records=[]
+        for r,o in zip(requests,outputs):
+            ids=r['prompt_ids']+r['response_ids']; n=len(r['prompt_ids'])
+            if list(o.prompt_token_ids)!=ids:raise RuntimeError('Diagnostic prompt mismatch')
+            if o.prompt_logprobs is None or len(o.prompt_logprobs)!=len(ids):
+                raise RuntimeError('Missing diagnostic prompt logprobs')
+            values=[float(o.prompt_logprobs[i][ids[i]].logprob) for i in range(n,len(ids))]
+            if not np.isfinite(values).all():raise RuntimeError('Nonfinite diagnostic logprobs')
+            records.append(values)
+        return DataProto.from_dict(tensors={'index':torch.arange(len(records))},
+                                   non_tensors={'records':object_array(records)})
+
     def forward_func_log_probs(self, data, output_tensor):
         # This experiment has no entropy bonus. Avoid a second vocabulary-wide
         # softmax/allocation just to log an unused entropy tensor.

@@ -102,6 +102,7 @@ def main():
     cli.add_argument('--tokens-per-update',type=int,default=65536)
     cli.add_argument('--keep-checkpoints',type=int,default=2)
     cli.add_argument('--resume')
+    cli.add_argument('--diagnose-probabilities',action='store_true')
     cli.add_argument('--check-only',action='store_true')
     args=cli.parse_args()
     source_hash=verify_bundle()
@@ -159,7 +160,12 @@ def main():
                  _system_config={'object_spilling_config':json.dumps({'type':'filesystem','params':{'directory_path':str(temp/'spill')}})})
         from training.social_mixed.pipeline import SocialPipeline
         pipeline=SocialPipeline(cfg,options)
-        pipeline.run()
+        if args.diagnose_probabilities:
+            if args.resume:raise ValueError('Probability diagnosis starts from the original model, not resume')
+            from training.social_mixed.probability_diagnostic import run as diagnose
+            diagnose(pipeline)
+        else:
+            pipeline.run()
     finally:
         done.set()
         faulthandler.cancel_dump_traceback_later()
