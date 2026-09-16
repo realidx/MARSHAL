@@ -76,6 +76,17 @@ class TrainingTests(unittest.TestCase):
             self.assertEqual(a.actor_train.training_args.max_steps,1000)
             self.assertFalse(a.social_bp_curriculum) # no A100-specific NCCL preload gate
 
+    def test_logprob_result_does_not_alias_megatron_scheduler_loss(self):
+        worker=SocialWorker.__new__(SocialWorker)
+        expected=torch.tensor([[1.,2.,3.]])
+        worker.strategy=SimpleNamespace(op_compute_log_probs=lambda **kwargs:expected.clone())
+        data=SimpleNamespace(batch={'input_ids':torch.ones(1,4,dtype=torch.long),
+                                    'response_mask':torch.ones(1,4,dtype=torch.long)},meta_info={})
+        scheduler_value,recorded=worker.forward_func_log_probs(data,torch.empty(0))
+        scheduler_value.div_(3)
+        torch.testing.assert_close(recorded['log_probs'],expected)
+
+
     def test_logprob_odd_padding_is_removed(self):
         batch=make_batch(rows()+rows()[:1],0)
         def compute(work,blocking):

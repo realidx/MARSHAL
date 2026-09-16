@@ -103,7 +103,10 @@ class SocialWorker(ActorWorker):
                     input_ids=data.batch['input_ids'], attention_mask=data.batch['response_mask'])
         width=data.meta_info.get('social_original_width',data.batch['input_ids'].shape[1])-1
         log_probs=torch.nn.functional.pad(log_probs,(0,width-log_probs.shape[1]))
-        return log_probs, {'log_probs':log_probs.detach(), 'entropy':torch.zeros_like(log_probs)}
+        # Megatron's forward-only scheduler scales the first return value in place.
+        # Clone the recorded result so scheduler bookkeeping cannot divide it by
+        # the number of microbatches through shared tensor storage.
+        return log_probs, {'log_probs':log_probs.detach().clone(), 'entropy':torch.zeros_like(log_probs)}
 
     def loss_func(self, data, output_tensor):
         mask = data.batch['response_mask'][:,1:].float()
