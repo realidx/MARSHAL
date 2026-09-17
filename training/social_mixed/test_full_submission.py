@@ -10,7 +10,7 @@ import unittest
 ROOT=Path(__file__).resolve().parents[2]
 
 class SubmissionTests(unittest.TestCase):
-    def run_submission(self, fail_second=False):
+    def run_submission(self, fail_second=False, arm="both"):
         tmp=tempfile.TemporaryDirectory();self.addCleanup(tmp.cleanup);root=Path(tmp.name)
         scripts=root/'examples/social_mixed';scripts.mkdir(parents=True)
         for name in ('start_training.sh','submit_soc.sh'):
@@ -40,9 +40,9 @@ if os.environ.get('STUB_FAIL_SECOND')=='1' and rows:sys.exit(1)
 print(9000+len(rows))
 ''');sbatch.chmod(0o755)
         env=dict(os.environ,PATH=str(binary)+os.pathsep+os.environ['PATH'],PYTHONPATH=str(ROOT),CONDA_HOME=str(root/'conda'),CONDA_ENV='/stub/env',SOCIAL_MODEL=str(model),STUB_CALLS=str(root/'calls.jsonl'),STUB_FAIL_SECOND=str(int(fail_second)),SOCIAL_SEED='123',SOCIAL_DIAGNOSE_PROBABILITIES='1',SOCIAL_RESUME='/bad/old-checkpoint')
-        result=subprocess.run(['bash',str(scripts/'start_training.sh'),'h200-141','both'],env=env,text=True,capture_output=True)
+        result=subprocess.run(['bash',str(scripts/'start_training.sh'),'h200-141',arm],env=env,text=True,capture_output=True)
         calls=[json.loads(l) for l in (root/'calls.jsonl').read_text().splitlines()]
-        receipts=list((root/'submission').glob('*/mixed.json'))
+        receipts=list((root/'submission').glob('*/'+('mixed' if arm=='both' else arm)+'.json'))
         self.assertEqual(len(receipts),1,result.stdout+result.stderr)
         return result,calls,receipts[0].parent
 
@@ -57,10 +57,21 @@ print(9000+len(rows))
         a=json.loads((folder/'mixed.json').read_text());b=json.loads((folder/'selfplay.json').read_text())
         self.assertEqual(a['data_manifest_sha256'],b['data_manifest_sha256'])
         for receipt in (a,b):
+            self.assertEqual(receipt['keep_checkpoints'],2)
             self.assertEqual(receipt['dataset'],'data_binary_linear_v3')
             self.assertEqual(receipt['allowed_completion_modes'],['binary','linear'])
         self.assertEqual(a['source_version'],b['source_version'])
         self.assertNotEqual(a['job_id'],b['job_id'])
+
+    def test_bp_only_submits_one_full_budget_job(self):
+        result,calls,folder=self.run_submission(arm='bp')
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertEqual([c['arm'] for c in calls],['bp'])
+        receipt=json.loads((folder/'bp.json').read_text())
+        self.assertEqual(receipt['arm'],'bp')
+        self.assertEqual(receipt['keep_checkpoints'],1)
+        self.assertEqual(receipt['total_tokens'],6553600)
+        self.assertFalse((folder/'selfplay.json').exists())
 
     def test_partial_submission_preserves_first_job_receipt(self):
         result,calls,folder=self.run_submission(fail_second=True)

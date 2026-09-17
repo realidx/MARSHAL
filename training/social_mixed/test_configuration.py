@@ -31,7 +31,7 @@ class ConfigurationTests(unittest.TestCase):
  def test_all_profiles_and_arms_preserve_optimizer_step_budget(self):
   with temporary_configuration_dir() as root:
    for profile,expected in PROFILES.items():
-    for arm in ('mixed','selfplay'):
+    for arm in ('mixed','selfplay','bp'):
      with self.subTest(profile=profile,arm=arm),patch.dict(os.environ,SOCIAL_GPU_PROFILE=profile,SOCIAL_MODEL='/not-loaded',ROLL_OUTPUT_DIR=root,ROLL_LOG_DIR=root+'/logs',PYTHONPATH=os.getcwd()):
       cfg,resolved=configuration(arm)
       self.assertTrue(cfg.actor_infer.strategy_args.strategy_config['enforce_eager'])
