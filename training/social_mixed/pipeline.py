@@ -213,7 +213,7 @@ class SocialPipeline(BasePipeline):
             if force or (step+1)%cfg.save_steps==0:self.save(step,force=force)
             with (self.root/'metrics.jsonl').open('a') as f:f.write(json.dumps(metrics)+'\n')
             self.tracker.log(metrics,step=step)
-            if (step+1)%cfg.eval_steps==0 and not self.stop_requested:
+            if ((step+1)%cfg.eval_steps==0 or consumed>=self.options['total_tokens'] or step+1==cfg.max_steps) and not self.stop_requested:
                 with self.phase('validation'):
                     self.model_update(step+1)
                     erows,eunits,egames,emetrics=self.collector.collect(0,'mixed',validation=True)

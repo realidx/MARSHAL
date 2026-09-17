@@ -11,7 +11,7 @@ from training.social_mixed.weighted_rules import OutcomeRules
 from training.social_mixed import policy_prompt as sp_prompt
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA = ROOT/'examples/social_mixed/data_distribution_v1'
+DATA = ROOT/'examples/social_mixed/data_binary_linear_v3'
 
 
 def seed_for(*values):
@@ -32,6 +32,8 @@ def load_data():
         rows = [json.loads(line) for line in payload.splitlines()]
         split = 'validation' if 'validation' in name else 'train'
         assert all(r['split']==split for r in rows)
+        from training.social_mixed.scoring_scope import validate_rows
+        validate_rows(rows, name)
         result[name.removesuffix('.jsonl')] = rows
     return result
 
@@ -158,6 +160,17 @@ def assign_advantages(rows, units, arm):
         complete = all(u['utility'] is not None for u in members)
         values = [(u['utility'] if complete else 0.0)+u['protocol'] for u in members]
         adv = centered(values)
+        # Task-gradient coverage is distinct from formatting/protocol rewards.
+        if kind in ('B', 'P'):
+            labels = {u.get('diagnostic_cell', 'legacy') for u in members}
+            assert len(labels) == 1
+            cell = next(iter(labels))
+            prefix = f'task_signal/{cell}'
+            metrics[prefix+'/groups'] += 1
+            metrics[prefix+'/nonzero_advantage_groups'] += int(any(abs(a)>1e-9 for a in adv))
+            metrics[prefix+'/utility_mixed_groups'] += int(complete and max(u['utility'] for u in members)-min(u['utility'] for u in members)>1e-9)
+            metrics[prefix+'/correct_samples'] += sum(u['utility']==1 for u in members)
+            metrics[prefix+'/samples'] += len(members)
         metrics[f'{kind}/groups'] += 1
         metrics[f'{kind}/mixed_groups'] += int(max(values)-min(values)>1e-9)
         metrics[f'{kind}/outcome_incomplete_groups'] += int(not complete)
@@ -218,8 +231,11 @@ class Collector:
                     unit = f'{group}:r{replica}'
                     rows.append(dict(output, kind=task['task'], skill=task['pool'], group=group,
                                      unit=unit, replica=replica, task_id=task['id'], kernel=task['kernel'], background_profile=task['background_profile'], score=scored))
+                    role = ('full_support' if len(task['teacher']['gold']['possible_preferences'])==3 else 'reduced_support') if task['task']=='B' else task.get('information_role','na')
+                    cell = '/'.join((task['kernel'], task['completion_mode'], role, task.get('p4_case','na')))
+                    rows[-1]['diagnostic_cell'] = cell
                     units.append(dict(group=group, unit=unit, replica=replica, kind=task['task'],
-                                      utility=scored['reward'], protocol=0.0))
+                                      diagnostic_cell=cell, utility=scored['reward'], protocol=0.0))
                     tokens += len(output['response_ids'])
         candidates = self.data[f'selfplay_{split}']
         reset_order = list(range(len(candidates)))
@@ -262,6 +278,14 @@ class Collector:
                        terminal_games=sum(g['status']=='terminal' for g in games),
                        admitted_reset_groups=cursor,peak_active_games=peak_active,
                        truncated=sum(r['completion']['finish_reason']=='length' for r in rows))
+        for cell in sorted({r['diagnostic_cell'] for r in rows if 'diagnostic_cell' in r}):
+            chosen = [r for r in rows if r.get('diagnostic_cell')==cell]
+            prefix = 'behavior/'+cell
+            metrics[prefix+'/samples'] = len(chosen)
+            metrics[prefix+'/accuracy'] = sum(r['score']['reward'] for r in chosen)/len(chosen)
+            metrics[prefix+'/format_failure_rate'] = sum(r['score']['status']=='format_failure' for r in chosen)/len(chosen)
+            metrics[prefix+'/truncation_rate'] = sum(r['completion']['finish_reason']=='length' for r in chosen)/len(chosen)
+            metrics[prefix+'/investigate_call_rate'] = sum(any(c.get('function',{}).get('name')=='INVESTIGATE' for c in (r['completion'].get('raw_message',{}).get('tool_calls') or [])) for r in chosen)/len(chosen)
         for kind in ('B','P'):
             for skill in ('all','formation','maintain','update','complete','uncertain','result_use','information'):
                 chosen = [r for r in rows if r['kind']==kind and (skill=='all' or r['skill']==skill)]

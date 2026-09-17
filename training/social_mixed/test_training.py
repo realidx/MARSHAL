@@ -137,7 +137,7 @@ class TrainingTests(unittest.TestCase):
             root=Path(tmp);ckpt=root/'checkpoints/checkpoint-0';ckpt.mkdir(parents=True)
             (ckpt/'COMPLETE.json').write_text('{}')
             options=dict(arm='mixed',seed=42,tokens_per_update=65536)
-            source=hashlib.sha256((ROOT/'examples/social_mixed/data_distribution_v1/manifest.json').read_bytes()).hexdigest()
+            source=hashlib.sha256((ROOT/'examples/social_mixed/data_binary_linear_v3/manifest.json').read_bytes()).hexdigest()
             (root/'experiment.json').write_text(json.dumps(dict(options=options,model='/base',data_manifest_sha256=source)))
             validate_resume(ckpt,options,'/base')
             with self.assertRaises(ValueError):validate_resume(ckpt,dict(options,arm='selfplay'),'/base')

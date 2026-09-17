@@ -35,6 +35,25 @@ def select(rows,step,seed,validation=False):
   p=profiles[pi];options=[k for k in available if k[1]==p]
   if not options:raise ValueError('Missing kernel/profile '+kernel+'/'+p)
   unit=options[cycle%len(options)];selected+=units[unit]
+ # Fixed development evaluation covers every available kernel/scoring/role
+ # cell. A single arbitrary first group can hide all positive query examples.
+ if validation:
+  def cells(ts):
+   return {(t['kernel'],t['completion_mode'],t.get('information_role','na')) for t in ts}
+  missing=cells(rows)-cells(selected)
+  while missing:
+   key=min(units,key=lambda k:(-len(cells(units[k]) & missing),k))
+   if not cells(units[key]) & missing:raise ValueError('Uncovered validation cell')
+   selected+=units[key];missing-=cells(units[key])
+ # Every P4 training update contains both incentives. Keep entire contrast units,
+ # including the answer-use/deadline controls, instead of sampling isolated labels.
+ if not validation and any(t['kernel']=='P4' for t in selected):
+  for role in ('query_only','ordinary_only'):
+   if not any(t['kernel']=='P4' and t.get('information_role')==role for t in selected):
+    options=sorted(k for k,v in units.items() if k[0]=='P4' and
+                   any(t.get('information_role')==role for t in v))
+    if not options:raise ValueError('Missing P4 training control: '+role)
+    selected+=units[options[(step//4)%len(options)]]
  # Add complete B control units if a sampled batch lacks one set-size role.
  for full in (True,False):
   if not any(t['task']=='B' and (len(t['teacher']['gold']['possible_preferences'])==3)==full for t in selected):

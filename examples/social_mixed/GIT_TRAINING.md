@@ -1,5 +1,9 @@
 # Git 训练入口
 
+当前完整实验使用 data_binary_linear_v3。新数据、双臂提交和回执说明见 [FULL_TRAINING.md](FULL_TRAINING.md)。
+
+一次提交完整 Mixed 与 SP-only：`bash examples/social_mixed/start_training.sh h100-96 both`。
+
 不再生成或上传 tar 包。Git checkout 优先以 commit 校验代码，不读取旧 bundle_manifest；训练的 experiment.json 记录 source_commit/source_version。无 .git 的历史上传包仍使用 manifest 校验。
 
 本地提交并 push 后，在服务器的已有仓库执行（将 origin/new 换成需要的已推送分支或 commit）：

@@ -1,4 +1,6 @@
-# SoC 当前训练入口（2026-09-16）
+# SoC 运行时历史交接（2026-09-16）
+
+2026-09-17 当前训练已切换至 data_binary_linear_v3，并接入完整预算双臂提交。执行请以 [FULL_TRAINING.md](FULL_TRAINING.md) 和 [GIT_TRAINING.md](GIT_TRAINING.md) 为准。下文 tar/v1 命令保留为历史记录。
 
 运行时适配来源：origin/codex/outcome-rollout-nus-1gpu，提交 e1430bb。
 仅合入 vLLM 0.28 适配、Hermes/ChatCompletionRequest 新导入路径、HF reference 去除非必需 DeepSpeed 导入、依赖检查及 Conda 默认值。数据仍使用 data_distribution_v1，未采用远程分支的旧 data/ 课程。
@@ -9,7 +11,7 @@ vLLM 0.28 适配明确调用 V1。删除无效的 VLLM_USE_V1=0；它不能切�
 
 新增修复：SocialWorker.generate_native 使用 prompts=[{'prompt_token_ids': ...}]，旧的独立 prompt_token_ids 参数不适用于 vLLM 0.28。依据：https://github.com/vllm-project/vllm/blob/v0.28.0/vllm/entrypoints/llm.py 。依赖检查验证实际生成方法签名。
 
-提交前在新环境运行 training.social_mixed.check_dependencies（不加载模型）。作业内开启 SOCIAL_GPU_PREFLIGHT=1：独立 torchrun 按 profile 的 rank 数 检查 CUDA 可见性和 NCCL all_reduce，进程退出释放上下文，再进入模型初始化。失败日志为 gpu_topology.log、nccl_preflight.log。driver 心跳、phases.jsonl 和 BP_STARTUP_DIAGNOSTICS 继续记录初始化阶段。默认每10步验证/保存，首步及终止边界强制保存；最近两份完整 checkpoint 保留。
+提交前在新环境运行 training.social_mixed.check_dependencies（不加载模型）。作业内开启 SOCIAL_GPU_PREFLIGHT=1：独立 torchrun 按 profile 的 rank 数 检查 CUDA 可见性和 NCCL all_reduce，进程退出释放上下文，再进入模型初始化。失败日志为 gpu_topology.log、nccl_preflight.log。driver 心跳、phases.jsonl 和 BP_STARTUP_DIAGNOSTICS 继续记录初始化阶段。当前每10步验证/保存，仅终止边界强制保存（首步强制保存已删除）；最近两份完整 checkpoint 保留。
 
 本地没有该 CUDA/Ray/vLLM 训练环境，因此本地语法、数据和脚本测试不能代表远程训练已通过。最终需核对训练 metrics、实际参数更新、权重同步、原生 checkpoint 和恢复。
 

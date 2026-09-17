@@ -1,0 +1,284 @@
+{
+  "version": "public-prior-margin-v1",
+  "files": {
+    "bp_validation.jsonl": {
+      "count": 301,
+      "sha256": "91daaf01439d3c9a5b897f37ddcc76ea8b3cdd6bbd3383dad6857cca22622d37"
+    },
+    "selfplay_validation.jsonl": {
+      "count": 48,
+      "sha256": "038bbaedc738d36e3f41f1ba40666b26e385db58cac9acb5d23c8c99ae73b9bb"
+    },
+    "bp_test.jsonl": {
+      "count": 65,
+      "sha256": "ff51b4ef96b1199124dca79cce8947845caa5824d1a862d6b0b99b8049a0a1ac"
+    },
+    "selfplay_train.jsonl": {
+      "count": 144,
+      "sha256": "ac81703af59e8c0a55f7ca3535f0017816000f521a385e3265fb35af0b023dc4"
+    },
+    "expansion_progress.jsonl": {
+      "count": 125,
+      "sha256": "d7251dccca0b2b52213e4656049a603f8bca4d1e8158db28b8620468ed8c694e"
+    },
+    "bp_train.jsonl": {
+      "count": 442,
+      "sha256": "252a847f9ffdad04f2fb0b86db00b47e0990e6d9d6855bd6f3452fbf621eccda"
+    },
+    "diagnostics.jsonl": {
+      "count": 4,
+      "sha256": "aa22247ffa79eaa0b0f52f3b08ade030f2eed0c09134932abf48ae9af298a8e5"
+    },
+    "requests_train.jsonl": {
+      "count": 442,
+      "sha256": "13c891c9d7f7a5bc9887ee1923cff88f244a528b893d852e417f533837fb344a"
+    },
+    "requests_validation.jsonl": {
+      "count": 301,
+      "sha256": "73aae1449a98977f1dd947fb45089ce372f9673882725da1b93bc91a44ed00f8"
+    },
+    "requests_test.jsonl": {
+      "count": 65,
+      "sha256": "4aaecf763b12466ab7f3aea84b330cac575c2b44cad1acb0afefd50fdc4a4391"
+    }
+  },
+  "prompt_sources": {
+    "training/b_sft/preference_contract.py": "0eef1a38f40c097ffb2d6e21c1f3b4556997c7b8f31a83f9c009ef26f729063f",
+    "training/b_sft/review_prompt.py": "8502c3ee09c95c3d5eda721820df492d8b9fc29c1c55ccc0b625f9c560d150e8",
+    "training/b_sft/social_prompt.py": "d31d14af6a04af833228455d7d3017a8f4cc8ccb45ceabdc8758c38fa5ad5c9a",
+    "training/b_sft/social_named_probe.py": "9c82c5bcb0ff7b42341b92651066a916dc6740c1955eeaf4699a6b759806b41d",
+    "training/b_sft/social_private_teacher.py": "7de7b48a6266be266891d58866114a02a045efa89490073f95f47a5014c2e6e9",
+    "training/b_sft/decision_policy.py": "8671683f9cde5f5fc30c3fe7d37a070ad97b4da4e00876f6bea9301f1a976b62",
+    "training/b_sft/social_p_qualitative.py": "dbc16d2c09047dcf02bac198d99d8376c474c20beebab713865806f81ce45843",
+    "training/social_mixed/policy_prompt.py": "c41a7a1fd4244a7eba0a508aa1b352503ce9736eefbc26afec365e09b419d3aa",
+    "training/social_mixed/weighted_rules.py": "10ae1221ba35b601365a6f5e9ba44b5194816dc319b057d9a619e57a1a23fb53",
+    "training/social_mixed/distribution_sampling.py": "69eeb22d6c4599743ce35397a8c3433717555acf4c372116737440efe7566c20",
+    "training/social_mixed/frozen/bp_display.py": "fde12fc51376b92fda8dc25d03c16d9ffff854713298fc50b268fa2798107e53",
+    "training/social_mixed/frozen/selfplay_prompt.py": "fb8b656934292920e1f5491cb7f7fddd0e0e27d877eea206371c5e17427247e4"
+  },
+  "counts": {
+    "train": {
+      "P1": 80,
+      "P2": 60,
+      "P3": 28,
+      "B3": 58,
+      "B2": 52,
+      "B1": 104,
+      "P4": 60
+    },
+    "validation": {
+      "P2": 30,
+      "P4": 32,
+      "B1": 70,
+      "B2": 61,
+      "B3": 26,
+      "P1": 58,
+      "A0": 8,
+      "P3": 16
+    },
+    "test": {
+      "P1": 15,
+      "B3": 6,
+      "P2": 9,
+      "P4": 8,
+      "P3": 6,
+      "B2": 9,
+      "B1": 12
+    }
+  },
+  "errors": 6,
+  "b_margin": 0.1,
+  "p_own_tolerance": 0.1,
+  "p_social_tolerance": 0.1,
+  "profiles": {
+    "balanced": {
+      "version": "public-prior-margin-v1",
+      "name": "balanced",
+      "weights": {
+        "want": 1,
+        "neutral": 1,
+        "avoid": 1
+      }
+    },
+    "want_heavy": {
+      "version": "public-prior-margin-v1",
+      "name": "want_heavy",
+      "weights": {
+        "want": 2,
+        "neutral": 1,
+        "avoid": 1
+      }
+    },
+    "neutral_heavy": {
+      "version": "public-prior-margin-v1",
+      "name": "neutral_heavy",
+      "weights": {
+        "want": 1,
+        "neutral": 2,
+        "avoid": 1
+      }
+    },
+    "avoid_heavy": {
+      "version": "public-prior-margin-v1",
+      "name": "avoid_heavy",
+      "weights": {
+        "want": 1,
+        "neutral": 1,
+        "avoid": 2
+      }
+    }
+  },
+  "original_source_sha256": "a32561a48fd737bb0bae5fbf640be15eb2c7d38aa89d1be7903b3b7574cbb168",
+  "model_calls": 0,
+  "formal_mixed_training_ready": true,
+  "coverage": {
+    "bp_test": {
+      "B1/binary/na": 4,
+      "B1/linear/na": 4,
+      "B1/mixed/na": 4,
+      "B2/binary/na": 3,
+      "B2/linear/na": 3,
+      "B2/mixed/na": 3,
+      "B3/binary/na": 2,
+      "B3/linear/na": 2,
+      "B3/mixed/na": 2,
+      "P1/binary/ordinary_only": 5,
+      "P1/linear/ordinary_only": 5,
+      "P1/mixed/ordinary_only": 5,
+      "P2/binary/ordinary_only": 3,
+      "P2/linear/ordinary_only": 3,
+      "P2/mixed/ordinary_only": 3,
+      "P3/binary/ordinary_only": 2,
+      "P3/linear/ordinary_only": 2,
+      "P3/mixed/ordinary_only": 2,
+      "P4/binary/both": 1,
+      "P4/binary/ordinary_only": 2,
+      "P4/binary/query_only": 1,
+      "P4/linear/ordinary_only": 2,
+      "P4/mixed/ordinary_only": 2
+    },
+    "bp_train": {
+      "B1/binary/na": 84,
+      "B1/linear/na": 20,
+      "B2/binary/na": 40,
+      "B2/linear/na": 12,
+      "B3/binary/na": 34,
+      "B3/linear/na": 24,
+      "P1/binary/ordinary_only": 44,
+      "P1/linear/ordinary_only": 28,
+      "P1/mixed/ordinary_only": 8,
+      "P2/binary/ordinary_only": 32,
+      "P2/linear/ordinary_only": 24,
+      "P2/mixed/ordinary_only": 4,
+      "P3/binary/ordinary_only": 12,
+      "P3/linear/ordinary_only": 12,
+      "P3/mixed/ordinary_only": 4,
+      "P4/binary/ordinary_only": 24,
+      "P4/binary/query_only": 8,
+      "P4/linear/both": 4,
+      "P4/linear/ordinary_only": 16,
+      "P4/linear/query_only": 8
+    },
+    "bp_validation": {
+      "A0/binary/na": 8,
+      "B1/binary/na": 60,
+      "B1/linear/na": 5,
+      "B1/mixed/na": 5,
+      "B2/binary/na": 52,
+      "B2/linear/na": 5,
+      "B2/mixed/na": 4,
+      "B3/binary/na": 20,
+      "B3/linear/na": 3,
+      "B3/mixed/na": 3,
+      "P1/binary/ordinary_only": 48,
+      "P1/linear/ordinary_only": 5,
+      "P1/mixed/ordinary_only": 5,
+      "P2/binary/ordinary_only": 24,
+      "P2/linear/ordinary_only": 3,
+      "P2/mixed/ordinary_only": 3,
+      "P3/binary/ordinary_only": 12,
+      "P3/linear/ordinary_only": 2,
+      "P3/mixed/ordinary_only": 2,
+      "P4/binary/both": 7,
+      "P4/binary/ordinary_only": 17,
+      "P4/linear/ordinary_only": 3,
+      "P4/linear/query_only": 1,
+      "P4/mixed/both": 1,
+      "P4/mixed/ordinary_only": 3
+    },
+    "selfplay_train": {
+      "selfplay/binary/na": 48,
+      "selfplay/linear/na": 48,
+      "selfplay/mixed/na": 48
+    },
+    "selfplay_validation": {
+      "selfplay/binary/na": 16,
+      "selfplay/linear/na": 16,
+      "selfplay/mixed/na": 16
+    }
+  },
+  "diagnostic_count": 4,
+  "dataset_version": "coverage-v2",
+  "parent_manifest_sha256": "c60aa5816ef06e7742e1836a71e33a099bf3f5dd85075969705d85c4f197ee40",
+  "expansion_errors": [
+    {
+      "source_id": "11cbbe38264691c7665b",
+      "kernel": "P4",
+      "mode": "linear",
+      "split": "test",
+      "status": "unavailable",
+      "error": "SearchLimit: Synchronous terminal policy iteration cycled; no label"
+    },
+    {
+      "source_id": "11cbbe38264691c7665b",
+      "kernel": "P4",
+      "mode": "mixed",
+      "split": "test",
+      "status": "unavailable",
+      "error": "SearchLimit: Synchronous terminal policy iteration cycled; no label"
+    },
+    {
+      "source_id": "1f1fac4e33b0b3725c6b",
+      "kernel": "B2",
+      "mode": "mixed",
+      "split": "validation",
+      "status": "unavailable",
+      "error": "ValueError: Action incompatible with selected teacher; no reset"
+    },
+    {
+      "source_id": "4cf657ed061ea5f47945",
+      "kernel": "P4",
+      "mode": "linear",
+      "split": "test",
+      "status": "unavailable",
+      "error": "SearchLimit: Synchronous terminal policy iteration cycled; no label"
+    },
+    {
+      "source_id": "4cf657ed061ea5f47945",
+      "kernel": "P4",
+      "mode": "mixed",
+      "split": "test",
+      "status": "unavailable",
+      "error": "SearchLimit: Synchronous terminal policy iteration cycled; no label"
+    },
+    {
+      "source_id": "901cdd838cfd42eb43f7",
+      "kernel": "P4",
+      "mode": "linear",
+      "split": "validation",
+      "status": "unavailable",
+      "error": "SearchLimit: Synchronous terminal policy iteration cycled; no label"
+    },
+    {
+      "source_id": "901cdd838cfd42eb43f7",
+      "kernel": "P4",
+      "mode": "mixed",
+      "split": "validation",
+      "status": "unavailable",
+      "error": "SearchLimit: Synchronous terminal policy iteration cycled; no label"
+    }
+  ],
+  "evaluation_scope": "validation is development; test candidate structures frozen before solver execution, never selected using model outcomes",
+  "candidate_freeze_sha256": "073e33a9cf2e23b4ec2a87a1a3f38da9c58983898ddae524f6d63bf4a6ae24b7",
+  "expansion_source_sha256": "a32561a48fd737bb0bae5fbf640be15eb2c7d38aa89d1be7903b3b7574cbb168"
+}

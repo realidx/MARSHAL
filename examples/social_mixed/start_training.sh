@@ -1,36 +1,60 @@
 #!/usr/bin/env bash
-# Activate the existing SoC environment, verify, then submit exactly one selected arm.
+# Full binary/linear experiment; mixed below names the B/P+self-play arm only.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 PROFILE="${1:-h100-96}"
-ARM="${2:?Usage: start_training.sh <GPU profile> <mixed|selfplay>}"
-case "$ARM" in mixed|selfplay);; *) echo 'ARM must be mixed or selfplay' >&2; exit 2;; esac
+ARM="${2:?Usage: start_training.sh <GPU profile> <mixed|selfplay|both>}"
+case "$ARM" in mixed|selfplay|both);; *) echo 'ARM must be mixed, selfplay or both' >&2; exit 2;; esac
 case "$PROFILE" in h100-47|h100-96|h200-141);; *) echo 'Unknown GPU profile' >&2; exit 2;; esac
-export CONDA_HOME=/home/e/e1300530/miniconda3
-export CONDA_ENV=/home/e/e1300530/tmp/marshal-vllm09
+export CONDA_HOME="${CONDA_HOME:-/home/e/e1300530/miniconda3}"
+export CONDA_ENV="${CONDA_ENV:-/home/e/e1300530/tmp/marshal-vllm09}"
 source "$CONDA_HOME/etc/profile.d/conda.sh"
 conda activate "$CONDA_ENV"
 export PYTHONPATH="$PWD:$PWD/mcore_adapter/src:$PWD/third_party/negotiation_benchmark/src:${PYTHONPATH:-}"
-export SOCIAL_MODEL=/home/e/e1300530/models/Qwen3-4B-Instruct-2507
+export SOCIAL_MODEL="${SOCIAL_MODEL:-/home/e/e1300530/models/Qwen3-4B-Instruct-2507}"
 unset VLLM_USE_V1  # vLLM 0.28 uses V1; this retired variable cannot select V0.
 export VLLM_TOOL_CALL_PARSER=hermes TOKENIZERS_PARALLELISM=false
 export OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1
-export SOCIAL_GPU_PROFILE="$PROFILE" SOCIAL_ARM="$ARM" SOCIAL_SEED=42
+export SOCIAL_GPU_PROFILE="$PROFILE" SOCIAL_ARM="$ARM"
+export SOCIAL_SEED="${SOCIAL_SEED:-42}"
 export SOCIAL_TOTAL_TOKENS=6553600 SOCIAL_TOKENS_PER_UPDATE=65536 SOCIAL_KEEP_CHECKPOINTS=2
-unset SOCIAL_RESUME SOCIAL_SOURCE_COMMIT
+unset SOCIAL_RESUME SOCIAL_SOURCE_COMMIT SOCIAL_DIAGNOSE_PROBABILITIES
 [[ -f "$SOCIAL_MODEL/config.json" ]] || { echo 'Missing local model' >&2; exit 2; }
 mkdir -p submission
-python -c 'from training.social_mixed.run import verify_bundle; from training.social_mixed.core import load_data; verify_bundle(); load_data()'
-echo 'Checking all three hardware profiles and both experiment configurations'
-if ! python -m unittest training.social_mixed.test_configuration -q > submission/configuration.log 2>&1; then
-  cat submission/configuration.log
+SOCIAL_SUBMISSION_DIR="$(mktemp -d "$PWD/submission/binary-linear-v3-${PROFILE}-XXXXXX")"
+python -c 'import json,sys; from pathlib import Path; from training.social_mixed.run import verify_bundle; Path(sys.argv[1]).write_text(json.dumps(verify_bundle(),indent=2)+"\n")' "$SOCIAL_SUBMISSION_DIR/source.json"
+python -m training.social_mixed.preflight --output "$SOCIAL_SUBMISSION_DIR/data-preflight.json"
+echo 'Binary/linear-only data verified; checking hardware profiles and both training arms'
+if ! python -m unittest training.social_mixed.test_configuration -q > "$SOCIAL_SUBMISSION_DIR/configuration.log" 2>&1; then
+  cat "$SOCIAL_SUBMISSION_DIR/configuration.log"
   exit 1
 fi
-echo 'Checking existing SoC dependencies; details in submission/dependencies.log'
-if ! python -u -m training.social_mixed.check_dependencies > submission/dependencies.json 2> submission/dependencies.log; then
-  cat submission/dependencies.json
-  tail -n 40 submission/dependencies.log
+echo "Checking existing SoC dependencies; details in $SOCIAL_SUBMISSION_DIR/dependencies.log"
+if ! python -u -m training.social_mixed.check_dependencies > "$SOCIAL_SUBMISSION_DIR/dependencies.json" 2> "$SOCIAL_SUBMISSION_DIR/dependencies.log"; then
+  cat "$SOCIAL_SUBMISSION_DIR/dependencies.json"
+  tail -n 40 "$SOCIAL_SUBMISSION_DIR/dependencies.log"
   exit 1
 fi
-bash examples/social_mixed/submit_soc.sh "$PROFILE" "$ARM" | tee "submission/$ARM.txt"
+# A receipt is saved after each successful submission, including partial success.
+ARMS=("$ARM")
+[[ "$ARM" == both ]] && ARMS=(mixed selfplay)
+export SOCIAL_SUBMIT_PARSABLE=1
+for SOCIAL_SELECTED_ARM in "${ARMS[@]}"; do
+  SOCIAL_JOB_ID="$(bash examples/social_mixed/submit_soc.sh "$PROFILE" "$SOCIAL_SELECTED_ARM")"
+  printf '%s\n' "$SOCIAL_JOB_ID" > "$SOCIAL_SUBMISSION_DIR/$SOCIAL_SELECTED_ARM.jobid"
+  python - "$SOCIAL_SUBMISSION_DIR" "$SOCIAL_SELECTED_ARM" "$SOCIAL_JOB_ID" <<'PYRECEIPT'
+import json,os,sys
+from pathlib import Path
+from training.social_mixed.run import data_manifest_sha256
+folder,arm,job=sys.argv[1:]
+record=dict(job_id=job,arm=arm,runtime=os.getcwd(),profile=os.environ['SOCIAL_GPU_PROFILE'],
+            seed=int(os.environ['SOCIAL_SEED']),total_tokens=int(os.environ['SOCIAL_TOTAL_TOKENS']),
+            tokens_per_update=int(os.environ['SOCIAL_TOKENS_PER_UPDATE']),
+            data_manifest_sha256=data_manifest_sha256(),fresh_start=True,
+            dataset='data_binary_linear_v3',allowed_completion_modes=['binary','linear'],
+            source_version=json.loads((Path(folder)/'source.json').read_text()))
+(Path(folder)/(arm+'.json')).write_text(json.dumps(record,indent=2)+'\n')
+PYRECEIPT
+  printf 'SUBMITTED arm=%s job=%s receipt=%s\n' "$SOCIAL_SELECTED_ARM" "$SOCIAL_JOB_ID" "$SOCIAL_SUBMISSION_DIR/$SOCIAL_SELECTED_ARM.json"
+done
 printf 'RUNTIME=%s\n' "$PWD"

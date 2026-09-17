@@ -40,6 +40,11 @@ else
   unset SOCIAL_SOURCE_COMMIT
 fi
 # Single H200; dual H100.
-sbatch --job-name="social-${ARM}-${PROFILE}" --partition="$PARTITION" \
+if [[ "${SOCIAL_SUBMIT_PARSABLE:-0}" == 1 ]]; then
+  set -- --parsable
+else
+  set --
+fi
+sbatch "$@" --job-name="social-${ARM}-${PROFILE}" --partition="$PARTITION" \
  --gres="gpu:${PROFILE}:${GPUS}" --time="$LIMIT" --export=ALL \
  examples/social_mixed/sbatch_train.sh

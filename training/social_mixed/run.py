@@ -22,6 +22,11 @@ import time
 ROOT=Path(__file__).resolve().parents[2]
 
 
+def data_manifest_sha256():
+    from training.social_mixed.core import DATA
+    return hashlib.sha256((DATA/'manifest.json').read_bytes()).hexdigest()
+
+
 def verify_bundle():
     # Retain compatibility with archive launchers; prefer Git when available.
     from training.social_mixed.source_version import verify_source
@@ -85,7 +90,7 @@ def validate_resume(path, options, model):
     keys=('arm','seed','tokens_per_update')
     if any(old['options'][k]!=options[k] for k in keys) or old['model']!=model:
         raise ValueError('Resume must preserve experiment arm, seed, batch budget and base reference')
-    manifest=hashlib.sha256((ROOT/'examples/social_mixed/data_distribution_v1/manifest.json').read_bytes()).hexdigest()
+    manifest=data_manifest_sha256()
     if old['data_manifest_sha256']!=manifest:
         raise ValueError('Resume data differs from original experiment')
 
@@ -148,7 +153,9 @@ def main():
     environment(root)
     print('ENVIRONMENT_CHECK_PASSED',flush=True)
     (root/'experiment.json').write_text(json.dumps(dict(options=options,model=model,source_version=source_hash,source_commit=source_hash.get('commit'),source_bundle_sha256=source_hash.get('sha256'),
-        data_manifest_sha256=hashlib.sha256((ROOT/'examples/social_mixed/data_distribution_v1/manifest.json').read_bytes()).hexdigest(),
+        data_manifest_sha256=data_manifest_sha256(),
+        dataset=__import__('training.social_mixed.core',fromlist=['DATA']).DATA.name,
+        allowed_completion_modes=['binary','linear'],
         execution_profile=__import__('training.social_mixed.hardware',fromlist=['PROFILES']).PROFILES[options['gpu_profile']],
         reward='B/P binary; own terminal utility plus separately recorded protocol cost',
         mixture={'B':.25,'P':.25,'selfplay':.5} if args.arm=='mixed' else {'selfplay':1.0},
