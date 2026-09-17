@@ -1,6 +1,7 @@
 """Real CPU TensorDict/autograd checks; no simulated CUDA success claims."""
 from copy import deepcopy
 import json
+import logging
 import os
 from pathlib import Path
 import tempfile
@@ -8,6 +9,7 @@ import unittest
 from unittest.mock import patch
 from types import SimpleNamespace
 from contextlib import nullcontext
+from contextlib import contextmanager
 import sys
 
 import torch
@@ -17,6 +19,20 @@ from training.social_mixed.workers import object_array, weighted_objective
 from training.social_mixed.workers import SocialWorker
 from training.social_mixed.run import configuration, validate_resume
 from training.social_mixed.core import ROOT, load_data
+
+@contextmanager
+def temporary_configuration_dir():
+    with tempfile.TemporaryDirectory() as root:
+        try:
+            yield root
+        finally:
+            from roll.utils import logging as roll_logging
+            if roll_logging.logger is not None:
+                for handler in roll_logging.logger.handlers[:]:
+                    if isinstance(handler, logging.FileHandler):
+                        roll_logging.logger.removeHandler(handler)
+                        handler.close()
+            roll_logging.logger_log_dir = None
 
 
 def rows():
@@ -68,7 +84,7 @@ class TrainingTests(unittest.TestCase):
         self.assertTrue(torch.allclose(full.grad,micro.grad))
 
     def test_both_configs_use_same_model_optimizer_and_limits(self):
-        with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,ROLL_OUTPUT_DIR=tmp,ROLL_LOG_DIR=tmp+'/logs',SOCIAL_MODEL='/model',PYTHONPATH=str(ROOT)):
+        with temporary_configuration_dir() as tmp,patch.dict(os.environ,ROLL_OUTPUT_DIR=tmp,ROLL_LOG_DIR=tmp+'/logs',SOCIAL_MODEL='/model',PYTHONPATH=str(ROOT)):
             a,ra=configuration('mixed');b,rb=configuration('selfplay')
             ra.pop('exp_name');rb.pop('exp_name')
             self.assertEqual(ra,rb)
@@ -102,8 +118,9 @@ class TrainingTests(unittest.TestCase):
             self.assertEqual(len(work),4)
             return DataProto.from_dict(tensors={'log_probs':torch.ones(4,5)})
         pipeline=SocialPipeline.__new__(SocialPipeline)
+        cluster=SimpleNamespace(compute_log_probs=compute,dp_size=2)
         with patch.object(DataProto,'materialize_concat',side_effect=lambda value:value):
-            pipeline.log_probs(SimpleNamespace(compute_log_probs=compute),batch,'ref_log_probs')
+            pipeline.log_probs(cluster,batch,'ref_log_probs')
         self.assertEqual(batch.batch['ref_log_probs'].shape,(3,5))
 
     def test_stop_handler_does_not_mutate_training_state(self):
@@ -135,8 +152,8 @@ class TrainingTests(unittest.TestCase):
         import hashlib
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);ckpt=root/'checkpoints/checkpoint-0';ckpt.mkdir(parents=True)
-            (ckpt/'COMPLETE.json').write_text('{}')
-            options=dict(arm='mixed',seed=42,tokens_per_update=65536)
+            (ckpt/'COMPLETE.json').write_text(json.dumps(dict(tp=2,world_size=2)))
+            options=dict(arm='mixed',seed=42,tokens_per_update=65536,gpu_profile='h100-96')
             source=hashlib.sha256((ROOT/'examples/social_mixed/data_binary_linear_v3/manifest.json').read_bytes()).hexdigest()
             (root/'experiment.json').write_text(json.dumps(dict(options=options,model='/base',data_manifest_sha256=source)))
             validate_resume(ckpt,options,'/base')
