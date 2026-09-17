@@ -13,7 +13,7 @@ case "$PROFILE" in
       *gpu:h100-47:*) PARTITION=gpu-long; LIMIT=3-00:00:00;;
       *) PARTITION=gpu; LIMIT=03:00:00;;
     esac;;
-  h100-96) PARTITION=gpu-long; LIMIT=3-00:00:00;;
+  h100-96) PARTITION=gpu-long; LIMIT=23:59:00;;
   h200-141) GPUS=1; PARTITION=gpu; LIMIT=03:00:00;;
   *) echo 'Unknown GPU profile' >&2; exit 2;;
 esac
