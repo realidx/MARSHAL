@@ -1,4 +1,5 @@
 import os
+import inspect
 import random
 from collections import defaultdict
 from functools import partial
@@ -14,6 +15,8 @@ from megatron.core.dist_checkpointing.strategies.fully_parallel import (
     FullyParallelLoadStrategyWrapper,
     FullyParallelSaveStrategyWrapper,
 )
+from megatron.core.dist_checkpointing.strategies import filesystem_async as _filesystem_async
+from torch.distributed.checkpoint.filesystem import SerializationFormat as _SerializationFormat
 from megatron.core.distributed import DistributedDataParallelConfig, finalize_model_grads
 from megatron.core.models.common.embeddings import RotaryEmbedding
 from megatron.core.optimizer import OptimizerConfig, MegatronOptimizer
@@ -47,6 +50,26 @@ from roll.utils.logging import get_logger
 from roll.utils.offload_states import OffloadStateType
 
 logger = get_logger()
+
+
+def _patch_async_checkpoint_writer_for_torch_api():
+    """Bridge Megatron 0.12.3 to the installed torch DCP writer API."""
+    write_item = _filesystem_async._write_item
+    if "serialization_format" not in inspect.signature(write_item).parameters:
+        return
+    if getattr(_filesystem_async, "_roll_torch_api_compat", False):
+        return
+
+    def write_item_compat(*args, **kwargs):
+        if "serialization_format" not in kwargs and len(args) == 5:
+            args = (*args, _SerializationFormat.TORCH_SAVE)
+        return write_item(*args, **kwargs)
+
+    _filesystem_async._write_item = write_item_compat
+    _filesystem_async._roll_torch_api_compat = True
+
+
+_patch_async_checkpoint_writer_for_torch_api()
 
 
 class MegatronInferStrategy(InferenceStrategy):

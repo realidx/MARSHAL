@@ -2,6 +2,11 @@
 import numpy as np
 import torch
 
+# Ray actors import this module in fresh processes, so install the same narrow
+# NumPy 2 compatibility alias before importing ROLL/Megatron.
+if not hasattr(np, "product"):
+    np.product = np.prod
+
 from roll.distributed.scheduler.decorator import register, Dispatch
 from roll.distributed.scheduler.protocol import DataProto
 from roll.pipeline.base_worker import ActorWorker
