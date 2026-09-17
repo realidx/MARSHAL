@@ -209,7 +209,7 @@ class SocialPipeline(BasePipeline):
             self.state.step=step
             self.state.kv['training_response_tokens']=consumed
             self.state.log_history.append(metrics)
-            force=step==0 or consumed>=self.options['total_tokens'] or self.stop_requested or step+1==cfg.max_steps
+            force=consumed>=self.options['total_tokens'] or self.stop_requested or step+1==cfg.max_steps
             if force or (step+1)%cfg.save_steps==0:self.save(step,force=force)
             with (self.root/'metrics.jsonl').open('a') as f:f.write(json.dumps(metrics)+'\n')
             self.tracker.log(metrics,step=step)
