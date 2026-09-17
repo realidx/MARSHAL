@@ -1,0 +1,294 @@
+"""Generate, certify and freeze twelve small native CalBench scenarios.
+
+References are evaluator-only. Enumeration is over all final meeting slots and
+all injective private-item placements; nonnegative per-move costs give a lower
+bound for any successful execution. Native one-batch replays attain the bound.
+"""
+import argparse
+from collections import Counter
+from copy import deepcopy
+import hashlib
+from itertools import permutations, product
+import json
+from pathlib import Path
+import random
+
+HERE = Path(__file__).resolve().parent
+FROZEN = HERE / 'calbench_frozen_v1'
+IDS = [f'{g}{i}' for g in 'FDC' for i in range(1, 5)]
+CONFIG = dict(num_agents=4, num_slots=8, num_meetings=1, num_participants=3,
+              max_turns_per_round=4, decision_retries=1, enable_fallback=False,
+              enable_reflection=False, communication_protocol='dm',
+              errand_cost_level=8, meeting_cost_level=1)
+SAMPLING = dict(temperature=0.0, max_tokens=768, max_model_len=32768)
+
+
+def dump(value):
+    return json.dumps(value, sort_keys=True, indent=2, ensure_ascii=False) + '\n'
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def build_case(name):
+    c = [[dict(errand_id=1000+a*8+s, cost=1, blocked=True) for s in range(8)] for a in range(4)]
+    prior = []
+    incoming = [0, 1, 2] if name[0] != 'C' else [1, 2, 3]
+    def free(a, *slots):
+        for s in slots: c[a][s] = None
+    def errand(a, s, cost):
+        c[a][s] = dict(errand_id=100+a*8+s, cost=cost)
+    def old(mid, participants, slot):
+        prior.append(dict(id=mid, participants=participants, slot=slot, duration=1, cost=1))
+        for a in participants: c[a][slot] = dict(meeting_id=mid, cost=1)
+    if name == 'F1':
+        free(0,0,1,2); free(1,0,1,3); free(2,0,2,3)
+    elif name == 'F2':
+        for a in range(3): free(a,3,4,a)
+    elif name == 'F3':
+        free(0,4); free(1,1,4); free(2,1,2,4)
+    elif name == 'F4':
+        for a in range(3): free(a,0,1,2)
+        errand(0,1,3); errand(1,2,1)
+        free(0,3); free(1,4)
+    elif name in ('D1','D2'):
+        for a in range(3): free(a,0,1)
+        errand(0,0,8 if name == 'D1' else 3)
+        errand(1,1,3); errand(2,1,3)
+        free(0,2); free(1,3); free(2,4)
+    elif name == 'D3':
+        for a in range(3):
+            free(a,0,1,2,3+a); errand(a,a,[1,3,8][a])
+    elif name == 'D4':
+        for a in range(3): free(a,0,1,2+a)
+        errand(0,0,1); errand(1,0,3); errand(0,1,3); errand(2,1,1)
+    elif name == 'C1':
+        old(100,[0,1,2],0)
+        for a in range(3): free(a,1,2)
+        errand(0,2,3); free(0,3); free(3,0)
+    elif name in ('C2','C3'):
+        old(100,[0,1,2],0)
+        for a in range(3): free(a,1)
+        for a in incoming: free(a,2)
+        errand(3,2,8 if name == 'C2' else 1); free(3,0,3)
+    elif name == 'C4':
+        old(100,[0,1,2],0); old(101,[0,2,3],1)
+        for a in (0,1,2): free(a,2)
+        for a in (0,2,3): free(a,3)
+        errand(0,3,3); free(0,4); free(3,0); free(1,1)
+    else:
+        raise ValueError(name)
+    i = IDS.index(name)
+    # Excluded identities 0,1,2,3 occur once per stratum. First speaker is
+    # (excluded+1)%4, so each identity also speaks first once per stratum.
+    excluded = next(a for a in range(4) if a not in incoming)
+    shift = (i % 4 - excluded) % 4
+    amap = {a:(a+shift)%4 for a in range(4)}
+    smap = list(range(8))
+    random.Random(2026091800+i).shuffle(smap)
+    # F2 retains the intended three distinct first private free slots.
+    if name == 'F2': smap = [0,1,2,5,6,3,4,7]
+    calendars = [[None]*8 for _ in range(4)]
+    for a in range(4):
+        for s in range(8): calendars[amap[a]][smap[s]] = c[a][s]
+    for m in prior:
+        m['participants'] = [amap[a] for a in m['participants']]
+        m['slot'] = smap[m['slot']]
+    participants = [amap[a] for a in incoming]
+    first = (i % 4+1)%4
+    order = [first]+sorted(a for a in participants if a != first)
+    scenario = dict(seed=2026091800+i, calendars=calendars,
+                    meetings=[dict(id=1,participants=participants,speaker_order=order,duration=1,cost=1)],
+                    prior_meetings=prior)
+    return dict(id=name, family=name[0], structure_group={'D2':'D1_D2','D1':'D1_D2','C2':'C2_C3','C3':'C2_C3'}.get(name,name),
+                provenance='researcher-authored formal template; no model-based selection',
+                scenario=scenario, permutations=dict(players=amap,slots=smap))
+
+
+def structural_signature(scenario, costs=False):
+    """Exact isomorphism fingerprint for these duration-one calendars.
+
+    Quotient out player, time-slot, private-item and old-meeting ID names.
+    Slot order and speaker order are deliberately not structural evidence.
+    """
+    prior = scenario.get('prior_meetings', [])
+    encodings = []
+    for rows in permutations(range(4)):
+        for mids in permutations([m['id'] for m in prior]):
+            labels = {mid:i for i,mid in enumerate(mids)}
+            columns = []
+            for s in range(8):
+                col=[]
+                for a in rows:
+                    item=scenario['calendars'][a][s]
+                    if item is None: code=('F',)
+                    elif item.get('blocked'): code=('B',)
+                    elif 'meeting_id' in item: code=('M',labels[item['meeting_id']])
+                    else: code=('E',)
+                    if costs and item is not None: code += (item['cost'],)
+                    col.append(code)
+                columns.append(col)
+            head=[int(a in scenario['meetings'][0]['participants']) for a in rows]
+            old_members=[[int(a in next(m for m in prior if m['id']==mid)['participants']) for a in rows] for mid in mids]
+            encodings.append(json.dumps([head,old_members,sorted(columns)],separators=(',',':')))
+    return sha(min(encodings).encode())
+
+
+def enumerate_plans(scenario):
+    """Exhaustive minimum displacement over ALL final meeting assignments."""
+    from calendar_game.calendar import Calendar, validate_batch, apply_batch
+    meetings = scenario['meetings'] + scenario.get('prior_meetings', [])
+    plans=[]
+    for slots in product(range(8),repeat=len(meetings)):
+        placements={m['id']:s for m,s in zip(meetings,slots)}
+        actions=[]; total=0
+        for a,initial in enumerate(scenario['calendars']):
+            fixed={s for s,item in enumerate(initial) if item and item.get('blocked')}
+            occupied=[placements[m['id']] for m in meetings if a in m['participants']]
+            if len(set(occupied)) != len(occupied) or fixed.intersection(occupied): break
+            private=[(s,item) for s,item in enumerate(initial) if item and 'errand_id' in item and not item.get('blocked')]
+            available=sorted(set(range(8))-fixed-set(occupied))
+            best=None
+            for destinations in permutations(available,len(private)):
+                moves=[]; cost=0
+                for (src,item),dest in zip(private,destinations):
+                    if src != dest:
+                        moves.append(dict(type='reschedule',item_id=item['errand_id'],from_slot=src,to_slot=dest,justification='Reference replay'))
+                        cost += item['cost']
+                for src,item in enumerate(initial):
+                    if item and 'meeting_id' in item and placements[item['meeting_id']] != src:
+                        moves.append(dict(type='reschedule',item_id=item['meeting_id'],from_slot=src,to_slot=placements[item['meeting_id']],justification='Reference replay'))
+                        cost += item['cost']
+                active=a in meetings[0]['participants']
+                if active: moves.append(dict(type='schedule',meeting_id=meetings[0]['id'],slot=slots[0],cost=1))
+                cal=Calendar(8); cal.slots=deepcopy(initial)
+                ok,why=validate_batch(cal,moves,require_schedule=active)
+                assert ok, why
+                apply_batch(cal,moves)
+                if best is None or cost < best[0]: best=(cost,moves)
+            if best is None: break
+            total += best[0]; actions.append(best[1])
+        else:
+            plans.append(dict(cost=total,assignments=placements,actions=actions))
+    return sorted(plans,key=lambda p:(p['cost'],tuple(p['assignments'].values())))
+
+
+def replay(scenario, plan, contact=True):
+    from calendar_game.game import CalendarGame
+    from calendar_game.agents import Agent, BaseClient, TurnResult, DecideResult
+    from calendar_game.calendar import Calendar
+    scenario=deepcopy(scenario)
+    participants=scenario['meetings'][0]['participants']
+    external=[a for a in range(4) if a not in participants and plan['actions'][a]]
+    class Client(BaseClient):
+        def register(self,aid,config): self.aid=aid
+        def start_round(self,*args): pass
+        def turn(self,*args,**kwargs):
+            calls=[dict(type='dm',to=a,content='Coordinate the prior meeting changes.') for a in external] if contact and self.aid==participants[0] else []
+            return TurnResult(calls,None,None,None,None,None)
+        def decide(self,*args): return DecideResult(deepcopy(plan['actions'][self.aid]),None,None,None,None,None)
+        def voluntary_decide(self,*args): return self.decide()
+    agents=[]
+    for a,slots in enumerate(scenario['calendars']):
+        agent=Agent(Client()); agent.calendar=Calendar(8); agent.calendar.slots=deepcopy(slots); agents.append(agent)
+    return CalendarGame(dict(CONFIG,seed=scenario['seed']))._run_with_agents(agents,scenario)
+
+
+def certify(case):
+    from calendar_game.solver import solve_optimal
+    s=case['scenario']; plans=enumerate_plans(s)
+    assert plans, case['id']
+    expected=dict(F1=0,F2=0,F3=0,F4=0,D1=6,D2=3,D3=1,D4=4,C1=3,C2=3,C3=1,C4=3)
+    assert plans[0]['cost']==expected[case['id']], (case['id'],plans[0]['cost'])
+    reference=dict(minimum_team_cost=plans[0]['cost'],optimal_assignments=[p['assignments'] for p in plans if p['cost']==plans[0]['cost']],
+                   all_feasible_meeting_assignments=[dict(cost=p['cost'],assignments=p['assignments']) for p in plans],
+                   assignments_examined=8**(1+len(s['prior_meetings'])),
+                   proof='Enumerate all final meeting slots and injective private-item placements. Nonnegative per-move costs lower-bound every successful history; validated native batches attain the global minimum.',
+                   best_plan=plans[0])
+    s['optimal']=dict(cost=plans[0]['cost'],assignments=plans[0]['assignments'])
+    replays=[]
+    # Replay every minimum-cost meeting assignment, plus every other feasible
+    # meeting assignment's minimum-cost realization (small finite cases).
+    for plan in plans:
+        trace=replay(s,plan)
+        assert trace.metrics['meetings_scheduled']==1, (case['id'],plan)
+        assert trace.metrics['realized_cost']==plan['cost'], (case['id'],trace.metrics,plan)
+        assert not any(e.type in ('batch_rejected','consistency_violation','invalid_tool_call') for e in trace.events)
+        replays.append(dict(kind='success',plan=plan,trace=json.loads(trace.model_dump_json())))
+    if s['prior_meetings']:
+        moved=next(p for p in plans if any(p['actions'][a] for a in range(4) if a not in s['meetings'][0]['participants']))
+        trace=replay(s,moved,contact=False)
+        assert trace.metrics['meetings_scheduled']==0
+        assert any(e.type=='consistency_violation' for e in trace.events)
+        replays.append(dict(kind='missing_external_contact',plan=moved,trace=json.loads(trace.model_dump_json())))
+    else:
+        native=solve_optimal(s['calendars'],s['meetings'],8)
+        assert native['cost']==plans[0]['cost'], (case['id'],native)
+        reference['native_static_solver_cost']=native['cost']
+    case['reference']=reference
+    case['structure_signature']=structural_signature(s)
+    case['cost_signature']=structural_signature(s,costs=True)
+    return replays
+
+
+def load_frozen(path=FROZEN):
+    path=Path(path)
+    expected=(path/'MANIFEST.sha256').read_text().split()[0]
+    if sha((path/'manifest.json').read_bytes()) != expected: raise ValueError('Frozen manifest mismatch')
+    manifest=json.loads((path/'manifest.json').read_text())
+    for name,digest in manifest['files'].items():
+        if sha((path/name).read_bytes()) != digest: raise ValueError(f'Frozen suite mismatch: {name}')
+    cases=[json.loads((path/f'cases/{name}.json').read_text()) for name in manifest['case_ids']]
+    return manifest,cases
+
+
+def freeze(output):
+    from examples.final_evaluation.calbench_local import verify_source
+    from examples.final_evaluation.calbench_development_cases import build_case as development_case
+    verify_source()
+    output=Path(output)
+    if output.exists(): raise FileExistsError('Refuse to overwrite frozen suite: '+str(output))
+    cases=[]; replay_data={}
+    for name in IDS:
+        case=build_case(name); replay_data[name]=certify(case); cases.append(case)
+        print(name,'cost=',case['reference']['minimum_team_cost'],'replays=',len(replay_data[name]),flush=True)
+    development=[development_case(n)['scenario'] for n in ('cost_conflict','prior_commitment')]
+    assert all(c['cost_signature'] not in [structural_signature(d,True) for d in development] for c in cases)
+    topology_groups={}
+    for c in cases: topology_groups.setdefault(c['structure_signature'],[]).append(c['id'])
+    assert sorted(sorted(v) for v in topology_groups.values() if len(v)>1)==[['C2','C3'],['D1','D2']]
+    excluded=Counter(next(a for a in range(4) if a not in c['scenario']['meetings'][0]['participants']) for c in cases)
+    first=Counter(c['scenario']['meetings'][0]['speaker_order'][0] for c in cases)
+    assert set(excluded.values())==set(first.values())=={3}
+    output.mkdir(parents=True); (output/'cases').mkdir(); (output/'certificates').mkdir()
+    for c in cases:
+        (output/f"cases/{c['id']}.json").write_text(dump(c))
+        (output/f"certificates/{c['id']}.json").write_text(dump(replay_data[c['id']]))
+    audit=dict(topology_groups=list(topology_groups.values()),development_exact_cost_isomorphs=[],
+               development_topology_matches={c['id']:[i for i,d in enumerate(development) if c['structure_signature']==structural_signature(d)] for c in cases},
+               excluded_player_counts=excluded,first_speaker_counts=first,
+               native_success_replays=sum(sum(r['kind']=='success' for r in rs) for rs in replay_data.values()),
+               native_missing_contact_replays=4)
+    (output/'audit.json').write_text(dump(audit))
+    (output/'generator.py.snapshot').write_bytes(Path(__file__).read_bytes())
+    (output/'protocol.md').write_bytes((HERE.parents[1]/'new/calbench_formal_evaluation_protocol_20260918.md').read_bytes())
+    (output/'source.json').write_bytes((HERE/'calbench_source.json').read_bytes())
+    files={str(p.relative_to(output)):sha(p.read_bytes()) for p in sorted(output.rglob('*')) if p.is_file()}
+    manifest=dict(suite='calbench_frozen_v1',stage='formal',frozen_before_model_evaluation=True,case_ids=IDS,
+                  config=CONFIG,sampling=SAMPLING,files=files,structure_group_count=len(topology_groups),
+                  note='12 cases / 10 structural signatures / 3 strata; paired cost controls are not independent topologies.')
+    (output/'manifest.json').write_text(dump(manifest))
+    (output/'MANIFEST.sha256').write_text(sha((output/'manifest.json').read_bytes())+'  manifest.json\n')
+    load_frozen(output)
+
+
+if __name__=='__main__':
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--freeze',type=Path)
+    parser.add_argument('--verify',type=Path)
+    args=parser.parse_args()
+    if args.freeze: freeze(args.freeze)
+    elif args.verify:
+        manifest,cases=load_frozen(args.verify); print(dump(dict(suite=manifest['suite'],cases=len(cases))))
+    else: parser.error('Choose --freeze or --verify')

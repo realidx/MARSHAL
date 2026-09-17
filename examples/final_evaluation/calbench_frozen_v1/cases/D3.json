@@ -1,0 +1,255 @@
+{
+  "cost_signature": "31f4b957c7256fd180d8dc7fe94e5ccffc8fd5003666fc58cf6f8e4da6ec623a",
+  "family": "D",
+  "id": "D3",
+  "permutations": {
+    "players": {
+      "0": 3,
+      "1": 0,
+      "2": 1,
+      "3": 2
+    },
+    "slots": [
+      1,
+      2,
+      6,
+      7,
+      5,
+      3,
+      0,
+      4
+    ]
+  },
+  "provenance": "researcher-authored formal template; no model-based selection",
+  "reference": {
+    "all_feasible_meeting_assignments": [
+      {
+        "assignments": {
+          "1": 1
+        },
+        "cost": 1
+      },
+      {
+        "assignments": {
+          "1": 2
+        },
+        "cost": 3
+      },
+      {
+        "assignments": {
+          "1": 6
+        },
+        "cost": 8
+      }
+    ],
+    "assignments_examined": 8,
+    "best_plan": {
+      "actions": [
+        [
+          {
+            "cost": 1,
+            "meeting_id": 1,
+            "slot": 1,
+            "type": "schedule"
+          }
+        ],
+        [
+          {
+            "cost": 1,
+            "meeting_id": 1,
+            "slot": 1,
+            "type": "schedule"
+          }
+        ],
+        [],
+        [
+          {
+            "from_slot": 1,
+            "item_id": 100,
+            "justification": "Reference replay",
+            "to_slot": 2,
+            "type": "reschedule"
+          },
+          {
+            "cost": 1,
+            "meeting_id": 1,
+            "slot": 1,
+            "type": "schedule"
+          }
+        ]
+      ],
+      "assignments": {
+        "1": 1
+      },
+      "cost": 1
+    },
+    "minimum_team_cost": 1,
+    "native_static_solver_cost": 1,
+    "optimal_assignments": [
+      {
+        "1": 1
+      }
+    ],
+    "proof": "Enumerate all final meeting slots and injective private-item placements. Nonnegative per-move costs lower-bound every successful history; validated native batches attain the global minimum."
+  },
+  "scenario": {
+    "calendars": [
+      [
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1014
+        },
+        null,
+        {
+          "cost": 3,
+          "errand_id": 109
+        },
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1013
+        },
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1015
+        },
+        null,
+        null,
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1011
+        }
+      ],
+      [
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1022
+        },
+        null,
+        null,
+        null,
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1023
+        },
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1020
+        },
+        {
+          "cost": 8,
+          "errand_id": 118
+        },
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1019
+        }
+      ],
+      [
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1030
+        },
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1024
+        },
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1025
+        },
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1029
+        },
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1031
+        },
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1028
+        },
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1026
+        },
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1027
+        }
+      ],
+      [
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1006
+        },
+        {
+          "cost": 1,
+          "errand_id": 100
+        },
+        null,
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1005
+        },
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1007
+        },
+        {
+          "blocked": true,
+          "cost": 1,
+          "errand_id": 1004
+        },
+        null,
+        null
+      ]
+    ],
+    "meetings": [
+      {
+        "cost": 1,
+        "duration": 1,
+        "id": 1,
+        "participants": [
+          3,
+          0,
+          1
+        ],
+        "speaker_order": [
+          3,
+          0,
+          1
+        ]
+      }
+    ],
+    "optimal": {
+      "assignments": {
+        "1": 1
+      },
+      "cost": 1
+    },
+    "prior_meetings": [],
+    "seed": 2026091806
+  },
+  "structure_group": "D3",
+  "structure_signature": "735e9410c48ce8fbb42c4f6b14e5b22a724056462f8ad4020a7011dd09e1a379"
+}
