@@ -1,0 +1,39 @@
+{
+  "options": {
+    "arm": "selfplay",
+    "seed": 42,
+    "total_tokens": 6553600,
+    "tokens_per_update": 65536,
+    "keep_checkpoints": 2,
+    "resume": null,
+    "diagnose_probabilities": false,
+    "check_only": false,
+    "gpu_profile": "h200-141"
+  },
+  "model": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+  "source_version": {
+    "kind": "git",
+    "commit": "6b97dc3e9c70becd95cb4800d27d18a3b670cf44",
+    "clean": true
+  },
+  "source_commit": "6b97dc3e9c70becd95cb4800d27d18a3b670cf44",
+  "source_bundle_sha256": null,
+  "data_manifest_sha256": "c60aa5816ef06e7742e1836a71e33a099bf3f5dd85075969705d85c4f197ee40",
+  "execution_profile": {
+    "gpus": 1,
+    "tp": 1,
+    "train_microbatch": 2,
+    "reference_microbatch": 4,
+    "train_resident": false,
+    "reference_resident": true,
+    "vllm_memory": 0.45,
+    "max_num_seqs": 32,
+    "recompute": "full"
+  },
+  "reward": "B/P binary; own terminal utility plus separately recorded protocol cost",
+  "mixture": {
+    "selfplay": 1.0
+  },
+  "grouping": "B/P task; selfplay reset and player seat across replicas",
+  "budget": "Generated response tokens entering training, including retries; finish current groups at boundary"
+}

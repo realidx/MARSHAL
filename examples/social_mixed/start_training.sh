@@ -3,8 +3,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 PROFILE="${1:-h100-96}"
-ARM="${2:?Usage: start_training.sh <GPU profile> <mixed|selfplay|both>}"
-case "$ARM" in mixed|selfplay|both);; *) echo 'ARM must be mixed, selfplay or both' >&2; exit 2;; esac
+ARM="${2:?Usage: start_training.sh <GPU profile> <mixed|selfplay|bp|both>}"
+case "$ARM" in mixed|selfplay|bp|both);; *) echo 'ARM must be mixed, selfplay, bp or both' >&2; exit 2;; esac
 case "$PROFILE" in h100-47|h100-96|h200-141);; *) echo 'Unknown GPU profile' >&2; exit 2;; esac
 export CONDA_HOME="${CONDA_HOME:-/home/e/e1300530/miniconda3}"
 export CONDA_ENV="${CONDA_ENV:-/home/e/e1300530/tmp/marshal-vllm09}"
@@ -18,13 +18,14 @@ export OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1
 export SOCIAL_GPU_PROFILE="$PROFILE" SOCIAL_ARM="$ARM"
 export SOCIAL_SEED="${SOCIAL_SEED:-42}"
 export SOCIAL_TOTAL_TOKENS=6553600 SOCIAL_TOKENS_PER_UPDATE=65536 SOCIAL_KEEP_CHECKPOINTS=2
+[[ "$ARM" == bp ]] && export SOCIAL_KEEP_CHECKPOINTS=1
 unset SOCIAL_RESUME SOCIAL_SOURCE_COMMIT SOCIAL_DIAGNOSE_PROBABILITIES
 [[ -f "$SOCIAL_MODEL/config.json" ]] || { echo 'Missing local model' >&2; exit 2; }
 mkdir -p submission
 SOCIAL_SUBMISSION_DIR="$(mktemp -d "$PWD/submission/binary-linear-v3-${PROFILE}-XXXXXX")"
 python -c 'import json,sys; from pathlib import Path; from training.social_mixed.run import verify_bundle; Path(sys.argv[1]).write_text(json.dumps(verify_bundle(),indent=2)+"\n")' "$SOCIAL_SUBMISSION_DIR/source.json"
 python -m training.social_mixed.preflight --output "$SOCIAL_SUBMISSION_DIR/data-preflight.json"
-echo 'Binary/linear-only data verified; checking hardware profiles and both training arms'
+echo 'Binary/linear-only data verified; checking hardware profiles and all three training arms'
 if ! python -m unittest training.social_mixed.test_configuration -q > "$SOCIAL_SUBMISSION_DIR/configuration.log" 2>&1; then
   cat "$SOCIAL_SUBMISSION_DIR/configuration.log"
   exit 1
@@ -50,6 +51,7 @@ folder,arm,job=sys.argv[1:]
 record=dict(job_id=job,arm=arm,runtime=os.getcwd(),profile=os.environ['SOCIAL_GPU_PROFILE'],
             seed=int(os.environ['SOCIAL_SEED']),total_tokens=int(os.environ['SOCIAL_TOTAL_TOKENS']),
             tokens_per_update=int(os.environ['SOCIAL_TOKENS_PER_UPDATE']),
+            keep_checkpoints=int(os.environ['SOCIAL_KEEP_CHECKPOINTS']),
             data_manifest_sha256=data_manifest_sha256(),fresh_start=True,
             dataset='data_binary_linear_v3',allowed_completion_modes=['binary','linear'],
             source_version=json.loads((Path(folder)/'source.json').read_text()))

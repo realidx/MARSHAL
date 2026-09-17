@@ -6,9 +6,10 @@
 
 - 所有提交均限定 binary/linear；启动及加载数据时检查真实目标规则。活跃数据为 `data_binary_linear_v3`：426 道 B/P 训练题、275 道开发题、96/32 个 self-play 配置。44 道结构测试题不进入训练或周期验证。
 - P4 每次被采样时同时包含 query_only 与 ordinary_only；日志包含分内核、规则、角色与题型的有效 advantage 组及全样本表现。
-- Mixed 损失权重 B/P/SP = 25%/25%/50%；SP-only 为纯 self-play。两组均从同一本地基础模型重新开始，seed 默认 42，各 6,553,600 个训练响应 token，每更新目标 65,536 token，已开始的组完整结束。
-- 两组使用相同固定开发评估：33 道 B/P 题、每题 2 次，加已有 self-play 验证。每 10 步及正常终止边界评估，评估响应不计入训练预算。
-- checkpoint 每 10 步与终止边界保存，不再首步强制保存，保留最近两份完整 checkpoint。SIGUSR1/TERM 请求保存退出；不会自动重新排队。不能从失败的 mixed-851174 或 v1 数据 checkpoint 续训。
+- 三种训练组：Mixed 的 B/P/SP 权重为 25%/25%/50%；SP-only 为纯 self-play；B/P-only（命令参数 `bp`）为 B/P 各 50%，仍使用二值任务奖励的 GRPO，不是答案 token 的 SFT。三组都从同一本地基础模型重新开始，seed 默认 42，各 6,553,600 个训练响应 token。
+- Mixed/SP-only 的 65,536 tokens/update 是停止补充 self-play 的软目标，不是硬批量上限，完整游戏收尾可能显著超出。B/P-only 每步使用与 Mixed 相同调度的完整 B/P 对照组，每题 8 次，不补 self-play，也不强制凑齐 65,536 tokens。三组都按实际进入训练的响应 token 累计停训，不保证 100 步或相同更新次数；另有 1000 步安全上限。
+- 三组使用相同固定开发评估：33 道 B/P 题、每题 2 次，加已有 self-play 验证。每 10 步及正常终止边界评估，评估响应不计入训练预算。
+- checkpoint 每 10 步与终止边界保存，不再首步强制保存，Mixed/SP-only 保留最近两份完整 checkpoint，B/P-only 仅保留最新一份完整 checkpoint（新 checkpoint 完整写入后才删除旧的）。SIGUSR1/TERM 请求保存退出；不会自动重新排队。不能从失败的 mixed-851174 或 v1 数据 checkpoint 续训。
 - 提交前只做 CPU 数据/采样检查、配置构造和环境依赖检查，不运行训练或模型 rollout；作业内继续已有 GPU/NCCL 启动检查。
 
 ## 本地发布本次修改
@@ -20,6 +21,7 @@ cd /Users/bruce/MARSHAL
 git add examples/social_mixed/data_binary_linear_v3 \
   examples/social_mixed/data_distribution_v2 \
   examples/social_mixed/start_training.sh examples/social_mixed/submit_soc.sh \
+  examples/social_mixed/bp.yaml examples/social_mixed/sbatch_train.sh \
   examples/social_mixed/FULL_TRAINING.md examples/social_mixed/GIT_TRAINING.md \
   examples/social_mixed/SOC_CURRENT.md \
   training/social_mixed/core.py training/social_mixed/distribution_sampling.py \
@@ -29,7 +31,9 @@ git add examples/social_mixed/data_binary_linear_v3 \
   training/social_mixed/test_scoring_scope.py \
   training/social_mixed/structure_coverage.py \
   training/social_mixed/test_structure_coverage.py \
-  training/social_mixed/test_full_submission.py training/social_mixed/test_training.py
+  training/social_mixed/test_full_submission.py training/social_mixed/test_training.py \
+  training/social_mixed/test_bp_only.py training/social_mixed/test_configuration.py \
+  training/social_mixed/checkpoints.py training/social_mixed/test_checkpoint_retention.py
 git commit -m "Exclude mixed scoring and connect binary-linear full training"
 git push origin new
 ```
@@ -47,7 +51,15 @@ cd "$SOCIAL_WORKTREE"
 bash examples/social_mixed/start_training.sh h100-96 both
 ```
 
-`both` 提交两个独立作业，每组两张 H100-96、gpu-long 最长 72 小时。如果使用单卡 H200，将 profile 改为 `h200-141`；每组一张卡，gpu 分区最长 3 小时，可能需要之后恢复。只提交一组可将 `both` 改为 `mixed` 或 `selfplay`。
+`both` 提交两个独立作业，每组两张 H100-96、gpu-long 最长 72 小时。如果使用单卡 H200，将 profile 改为 `h200-141`；每组一张卡，gpu 分区最长 3 小时，可能需要之后恢复。只提交一组可将 `both` 改为 `mixed`、`selfplay` 或 `bp`。`both` 保持原义：仅 Mixed 与 SP-only，不会自动增加第三组。
+
+新增 B/P-only 的完整实验：
+
+```bash
+bash examples/social_mixed/start_training.sh h100-96 bp
+```
+
+B/P-only 训练路径不访问 self-play 配置、不产生终局收益训练样本；共同验证仍包含完整游戏，只用于评估，不计入训练 token 或梯度。配置为 `examples/social_mixed/bp.yaml`，回执和输出目录使用 `bp` 前缀。
 
 默认沿用环境 `/home/e/e1300530/tmp/marshal-vllm09` 和模型 `/home/e/e1300530/models/Qwen3-4B-Instruct-2507`。这是 SoC 训练入口，不是 chenjiahao 的 A100 rollout 环境。
 
@@ -66,3 +78,5 @@ bash examples/social_mixed/submit_soc.sh h200-141 mixed /absolute/path/to/checkp
 本地已通过数据检查与 CPU/模拟 Slurm 提交检查；未运行新的 GPU 训练。此次 SoC SSH 连接被跳板机 password 认证拒绝，因此没有真实 job ID。
 
 仅使用 homogeneous binary / homogeneous linear 游戏，mixed 完成规则已从所有活跃数据及请求文件排除。Mixed 训练组名称仅表示 B/P+self-play 的损失组合。继承 test 来源的历史使用情况尚未独立核实，作为实验解释限制记录。
+
+B/P-only 接入验证：23 项 CPU／模拟提交测试通过，覆盖零 self-play 训练、B/P 各 50% 权重、每题八重复及三组一致的开发评估。当前本地缺少 Hydra，完整配置构造测试无法在本机运行；提交入口会在已有 SoC 环境检查三个训练组配置后才调用 sbatch。尚未提交 B/P-only GPU 作业。

@@ -51,7 +51,11 @@ printf '%s\n' "$ROLL_OUTPUT_DIR" > "runs/social_mixed/${SOCIAL_ARM}_latest.txt"
 args=(--arm "$SOCIAL_ARM" --seed "$SOCIAL_SEED" --total-tokens "${SOCIAL_TOTAL_TOKENS:-6553600}")
 args+=(--tokens-per-update "${SOCIAL_TOKENS_PER_UPDATE:-65536}")
 if [[ "${SOCIAL_DIAGNOSE_PROBABILITIES:-0}" == 1 ]]; then args+=(--diagnose-probabilities); fi
-args+=(--keep-checkpoints "${SOCIAL_KEEP_CHECKPOINTS:-2}")
+if [[ "$SOCIAL_ARM" == bp ]]; then
+  args+=(--keep-checkpoints 1)
+else
+  args+=(--keep-checkpoints "${SOCIAL_KEEP_CHECKPOINTS:-2}")
+fi
 if [[ -n "${SOCIAL_RESUME:-}" ]]; then args+=(--resume "$SOCIAL_RESUME"); fi
 # No ray stop --force: this job owns a private local head.
 python -u -m training.social_mixed.run "${args[@]}" > "$ROLL_OUTPUT_DIR/train.log" 2>&1 &

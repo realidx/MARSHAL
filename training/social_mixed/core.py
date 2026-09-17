@@ -142,6 +142,12 @@ def centered(values):
     return [(v-mean)/(math.sqrt(var)+1e-6) for v in values]
 
 
+def arm_mixture(arm):
+    return {'mixed': {'B': .25, 'P': .25, 'selfplay': .5},
+            'selfplay': {'selfplay': 1.0},
+            'bp': {'B': .5, 'P': .5}}[arm].copy()
+
+
 def assign_advantages(rows, units, arm):
     """One reward per player/episode, never one reward per decision in baseline.
 
@@ -183,7 +189,7 @@ def assign_advantages(rows, units, arm):
     kind_units = defaultdict(set)
     for r in rows:
         kind_units[r['kind']].add(r['unit'])
-    proportions = {'B':.25, 'P':.25, 'selfplay':.5} if arm=='mixed' else {'selfplay':1.0}
+    proportions = arm_mixture(arm)
     if set(kind_units) != set(proportions):
         raise ValueError(f'Missing task domain: {set(kind_units)}')
     # Worker averages rows over all microbatches. These weights produce exactly
@@ -201,6 +207,7 @@ class Collector:
         self.data, self.generate, self.seed, self.concurrency = data, generate, seed, concurrency
 
     def collect(self, step, arm, token_target=65536, validation=False):
+        arm_mixture(arm)  # Reject unknown arms before generating samples.
         from training.b_sft.social_named_probe import request
         from training.b_sft.social_bp_training import reward
         split = 'validation' if validation else 'train'
@@ -210,7 +217,7 @@ class Collector:
         # Small validation is fixed across arms and checkpoints; no training gate.
         if validation:
             rng = random.Random(seed_for(self.seed, 'validation'))
-        if arm=='mixed' or validation:
+        if arm in ('mixed','bp') or validation:
             candidates = self.data[f'bp_{split}']
             from training.social_mixed.distribution_sampling import select
             selected = select(candidates,step,self.seed,validation)
@@ -237,42 +244,44 @@ class Collector:
                     units.append(dict(group=group, unit=unit, replica=replica, kind=task['task'],
                                       diagnostic_cell=cell, utility=scored['reward'], protocol=0.0))
                     tokens += len(output['response_ids'])
-        candidates = self.data[f'selfplay_{split}']
-        reset_order = list(range(len(candidates)))
-        rng.shuffle(reset_order)
-        cursor = 0
-        episodes = []
-        def admit_group():
-            nonlocal cursor
-            reset=candidates[reset_order[cursor%len(reset_order)]]
-            group=f'{split}:step{step}:sp{cursor}:{reset["id"]}'
-            episodes.extend(Episode(reset,group,replica,self.seed) for replica in range(2 if validation else 4))
-            cursor+=1
-        initial_groups=2 if validation else self.concurrency//4
-        for _ in range(initial_groups):admit_group()
-        peak_active=0
-        while True:
-            active=[e for e in episodes if e.status=='running']
-            # Refill only in complete four-replica groups. Stop admitting once
-            # the token budget is reached; drain every previously admitted game.
-            if not validation and tokens<token_target:
-                while len(active)+4<=self.concurrency:
-                    admit_group()
-                    active=[e for e in episodes if e.status=='running']
-            if not active:break
-            peak_active=max(peak_active,len(active))
-            for start in range(0,len(active),self.concurrency):
-                chunk=active[start:start+self.concurrency]
-                outputs=self.generate([e.request() for e in chunk])
-                assert len(outputs)==len(chunk)
-                for episode,output in zip(chunk,outputs):
-                    episode.accept(output)
-                    tokens+=len(output['response_ids'])
-            # Retire finished games immediately; their siblings can keep running.
-            finished=[e for e in episodes if e.status!='running']
-            for episode in finished:
-                rows.extend(episode.calls);units.extend(episode.units());games.append(episode.summary())
-            episodes=[e for e in episodes if e.status=='running']
+        cursor = peak_active = 0
+        if arm != 'bp' or validation:
+            candidates = self.data[f'selfplay_{split}']
+            reset_order = list(range(len(candidates)))
+            rng.shuffle(reset_order)
+            cursor = 0
+            episodes = []
+            def admit_group():
+                nonlocal cursor
+                reset=candidates[reset_order[cursor%len(reset_order)]]
+                group=f'{split}:step{step}:sp{cursor}:{reset["id"]}'
+                episodes.extend(Episode(reset,group,replica,self.seed) for replica in range(2 if validation else 4))
+                cursor+=1
+            initial_groups=2 if validation else self.concurrency//4
+            for _ in range(initial_groups):admit_group()
+            peak_active=0
+            while True:
+                active=[e for e in episodes if e.status=='running']
+                # Refill only in complete four-replica groups. Stop admitting once
+                # the token budget is reached; drain every previously admitted game.
+                if not validation and tokens<token_target:
+                    while len(active)+4<=self.concurrency:
+                        admit_group()
+                        active=[e for e in episodes if e.status=='running']
+                if not active:break
+                peak_active=max(peak_active,len(active))
+                for start in range(0,len(active),self.concurrency):
+                    chunk=active[start:start+self.concurrency]
+                    outputs=self.generate([e.request() for e in chunk])
+                    assert len(outputs)==len(chunk)
+                    for episode,output in zip(chunk,outputs):
+                        episode.accept(output)
+                        tokens+=len(output['response_ids'])
+                # Retire finished games immediately; their siblings can keep running.
+                finished=[e for e in episodes if e.status!='running']
+                for episode in finished:
+                    rows.extend(episode.calls);units.extend(episode.units());games.append(episode.summary())
+                episodes=[e for e in episodes if e.status=='running']
         metrics = assign_advantages(rows, units, 'mixed' if validation else arm)
         metrics.update(generated_tokens=tokens, rows=len(rows), games=len(games),
                        terminal_games=sum(g['status']=='terminal' for g in games),

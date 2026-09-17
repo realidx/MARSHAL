@@ -1,0 +1,1099 @@
+[
+  {
+    "case_id": "mixed_partial_completion:voluntary",
+    "family": "mixed_partial_completion",
+    "source_id": "76f5161cdd20b31e3a67",
+    "provenance": "voluntary",
+    "mode": "mixed",
+    "schedule_change": {
+      "before": [
+        1,
+        0
+      ],
+      "after": [
+        1,
+        0
+      ]
+    },
+    "teacher": {
+      "version": "social-private-selected-policy-response-only-v2",
+      "objective_version": "response-only-altruism-v1",
+      "verified": true,
+      "uniqueness_proven": false,
+      "uniqueness_required": false,
+      "label_reference": "selected_contingent_policy",
+      "policy_sha256": "0764f50f9dcdfe16840781d900adb34d3acb0598a8920aad0a106421a8bda466",
+      "information_set_checks": 440,
+      "diagnostic_policy": false,
+      "terminal": true,
+      "nodes": 543,
+      "sweeps": 6,
+      "initialization": "uniform",
+      "type_checks": [
+        {
+          "player": 0,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        },
+        {
+          "player": 1,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        },
+        {
+          "player": 1,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        },
+        {
+          "player": 1,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        }
+      ],
+      "audit_update_order": null,
+      "selection": "Synchronous best-response iteration; uniform residual optimal ties",
+      "selection_contract": "Default model initializes all legal choices uniformly and updates every player synchronously until the full policy is stable. Execute this selected policy throughout the episode. No alternative initialization or order is a silent fallback.",
+      "scope": "Labels are conditional on this reproducibly selected full-terminal teacher, not universal consequences of rationality or a unique solution of the game",
+      "game_version": "social-private-investigate-per-player-v1",
+      "information": "Public action history + own preferences + own private query answers; perfect recall",
+      "off_path": "Initial prior conditioned on own preferences and own private answers; no actual-world fallback"
+    },
+    "native_transition_audit": {
+      "edges": 542,
+      "leaves": 377,
+      "all_values_match": true
+    },
+    "independent_final_payoffs_match": true,
+    "trace": [
+      {
+        "actor": 1,
+        "event": {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        "likelihood_by_world": [
+          0.0,
+          0.25,
+          1.0
+        ],
+        "probability": 0.41666666666666663
+      },
+      {
+        "actor": 0,
+        "event": {
+          "response": "ACCEPT"
+        },
+        "likelihood_by_world": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "probability": 1.0
+      }
+    ],
+    "history_probability": 0.41666666666666663,
+    "worlds": [
+      [
+        [
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          0,
+          0,
+          1
+        ]
+      ],
+      [
+        [
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          1
+        ]
+      ],
+      [
+        [
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          -1,
+          0,
+          0,
+          1
+        ]
+      ]
+    ],
+    "prior": [
+      0.3333333333333333,
+      0.3333333333333333,
+      0.3333333333333333
+    ],
+    "posterior": [
+      0.0,
+      0.2,
+      0.8
+    ],
+    "b_gold": {
+      "possible_preferences": [
+        "neutral",
+        "avoid"
+      ],
+      "favored": "avoid"
+    },
+    "posterior_acceptable": [
+      1,
+      2
+    ],
+    "prior_acceptable": [
+      3
+    ],
+    "action_values": [
+      [
+        1.0,
+        1.0
+      ],
+      [
+        2.0,
+        1.0
+      ],
+      [
+        2.0,
+        1.0
+      ],
+      [
+        1.6,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ]
+    ],
+    "prior_action_values": [
+      [
+        1.0,
+        1.0
+      ],
+      [
+        2.0,
+        1.0
+      ],
+      [
+        2.0,
+        1.0
+      ],
+      [
+        3.0,
+        1.3333333333333333
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ]
+    ],
+    "actions": [
+      {
+        "action": "PASS"
+      },
+      {
+        "action": "OFFER",
+        "partner_id": 1,
+        "proposer_action": [
+          0,
+          1
+        ],
+        "partner_action": [
+          1,
+          1
+        ]
+      },
+      {
+        "action": "OFFER",
+        "partner_id": 1,
+        "proposer_action": [
+          1,
+          1
+        ],
+        "partner_action": [
+          0,
+          1
+        ]
+      },
+      {
+        "action": "OFFER",
+        "partner_id": 1,
+        "proposer_action": [
+          1,
+          1
+        ],
+        "partner_action": [
+          1,
+          1
+        ]
+      },
+      {
+        "action": "INVESTIGATE",
+        "player": 1,
+        "goal": 0
+      },
+      {
+        "action": "INVESTIGATE",
+        "player": 1,
+        "goal": 1
+      },
+      {
+        "action": "INVESTIGATE",
+        "player": 1,
+        "goal": 2
+      },
+      {
+        "action": "INVESTIGATE",
+        "player": 1,
+        "goal": 3
+      }
+    ],
+    "min_regret_of_prior_acceptable_under_posterior": 0.3999999999999999
+  },
+  {
+    "case_id": "mixed_partial_completion:preset",
+    "family": "mixed_partial_completion",
+    "source_id": "76f5161cdd20b31e3a67",
+    "provenance": "preset",
+    "mode": "mixed",
+    "schedule_change": {
+      "before": [
+        1,
+        0
+      ],
+      "after": [
+        1,
+        0
+      ]
+    },
+    "teacher": {
+      "version": "social-private-selected-policy-response-only-v2",
+      "objective_version": "response-only-altruism-v1",
+      "verified": true,
+      "uniqueness_proven": false,
+      "uniqueness_required": false,
+      "label_reference": "selected_contingent_policy",
+      "policy_sha256": "e936e59d2679cd85c8a72b29a3f20f5a4e5f2f1f2745e063d70f2dd6c7db00d8",
+      "information_set_checks": 10,
+      "diagnostic_policy": false,
+      "terminal": true,
+      "nodes": 15,
+      "sweeps": 2,
+      "initialization": "uniform",
+      "type_checks": [
+        {
+          "player": 0,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        },
+        {
+          "player": 1,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        },
+        {
+          "player": 1,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        },
+        {
+          "player": 1,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        }
+      ],
+      "audit_update_order": null,
+      "selection": "Synchronous best-response iteration; uniform residual optimal ties",
+      "selection_contract": "Default model initializes all legal choices uniformly and updates every player synchronously until the full policy is stable. Execute this selected policy throughout the episode. No alternative initialization or order is a silent fallback.",
+      "scope": "Labels are conditional on this reproducibly selected full-terminal teacher, not universal consequences of rationality or a unique solution of the game",
+      "game_version": "social-private-investigate-per-player-v1",
+      "information": "Public action history + own preferences + own private query answers; perfect recall",
+      "off_path": "Initial prior conditioned on own preferences and own private answers; no actual-world fallback"
+    },
+    "native_transition_audit": {
+      "edges": 14,
+      "leaves": 11,
+      "all_values_match": true
+    },
+    "independent_final_payoffs_match": true,
+    "trace": [],
+    "history_probability": null,
+    "worlds": [
+      [
+        [
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          0,
+          0,
+          1
+        ]
+      ],
+      [
+        [
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          1
+        ]
+      ],
+      [
+        [
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          -1,
+          0,
+          0,
+          1
+        ]
+      ]
+    ],
+    "prior": [
+      0.3333333333333333,
+      0.3333333333333333,
+      0.3333333333333333
+    ],
+    "posterior": [
+      0.3333333333333333,
+      0.3333333333333333,
+      0.3333333333333333
+    ],
+    "b_gold": {
+      "possible_preferences": [
+        "want",
+        "neutral",
+        "avoid"
+      ],
+      "favored": "undetermined"
+    },
+    "posterior_acceptable": [
+      3
+    ],
+    "prior_acceptable": [
+      3
+    ],
+    "action_values": [
+      [
+        1.0,
+        1.0
+      ],
+      [
+        2.0,
+        1.0
+      ],
+      [
+        2.0,
+        1.0
+      ],
+      [
+        3.0,
+        1.3333333333333333
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ]
+    ],
+    "prior_action_values": [
+      [
+        1.0,
+        1.0
+      ],
+      [
+        2.0,
+        1.0
+      ],
+      [
+        2.0,
+        1.0
+      ],
+      [
+        3.0,
+        1.3333333333333333
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ]
+    ],
+    "actions": [
+      {
+        "action": "PASS"
+      },
+      {
+        "action": "OFFER",
+        "partner_id": 1,
+        "proposer_action": [
+          0,
+          1
+        ],
+        "partner_action": [
+          1,
+          1
+        ]
+      },
+      {
+        "action": "OFFER",
+        "partner_id": 1,
+        "proposer_action": [
+          1,
+          1
+        ],
+        "partner_action": [
+          0,
+          1
+        ]
+      },
+      {
+        "action": "OFFER",
+        "partner_id": 1,
+        "proposer_action": [
+          1,
+          1
+        ],
+        "partner_action": [
+          1,
+          1
+        ]
+      },
+      {
+        "action": "INVESTIGATE",
+        "player": 1,
+        "goal": 0
+      },
+      {
+        "action": "INVESTIGATE",
+        "player": 1,
+        "goal": 1
+      },
+      {
+        "action": "INVESTIGATE",
+        "player": 1,
+        "goal": 2
+      },
+      {
+        "action": "INVESTIGATE",
+        "player": 1,
+        "goal": 3
+      }
+    ],
+    "min_regret_of_prior_acceptable_under_posterior": 0.0
+  },
+  {
+    "case_id": "binary_complementarity:voluntary",
+    "family": "binary_complementarity",
+    "source_id": "6465d8b4c2aff4f1a189",
+    "provenance": "voluntary",
+    "mode": "binary",
+    "schedule_change": {
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        1,
+        0
+      ]
+    },
+    "teacher": {
+      "version": "social-private-selected-policy-response-only-v2",
+      "objective_version": "response-only-altruism-v1",
+      "verified": true,
+      "uniqueness_proven": false,
+      "uniqueness_required": false,
+      "label_reference": "selected_contingent_policy",
+      "policy_sha256": "f594804de2904639705c9a410924c93f46bc43c998f904034122306197122566",
+      "information_set_checks": 415,
+      "diagnostic_policy": false,
+      "terminal": true,
+      "nodes": 493,
+      "sweeps": 5,
+      "initialization": "uniform",
+      "type_checks": [
+        {
+          "player": 0,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        },
+        {
+          "player": 1,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        },
+        {
+          "player": 1,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        },
+        {
+          "player": 1,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        }
+      ],
+      "audit_update_order": null,
+      "selection": "Synchronous best-response iteration; uniform residual optimal ties",
+      "selection_contract": "Default model initializes all legal choices uniformly and updates every player synchronously until the full policy is stable. Execute this selected policy throughout the episode. No alternative initialization or order is a silent fallback.",
+      "scope": "Labels are conditional on this reproducibly selected full-terminal teacher, not universal consequences of rationality or a unique solution of the game",
+      "game_version": "social-private-investigate-per-player-v1",
+      "information": "Public action history + own preferences + own private query answers; perfect recall",
+      "off_path": "Initial prior conditioned on own preferences and own private answers; no actual-world fallback"
+    },
+    "native_transition_audit": {
+      "edges": 492,
+      "leaves": 336,
+      "all_values_match": true
+    },
+    "independent_final_payoffs_match": true,
+    "trace": [
+      {
+        "actor": 1,
+        "event": {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        "likelihood_by_world": [
+          0.0,
+          0.125,
+          0.3333333333333333
+        ],
+        "probability": 0.15277777777777776
+      },
+      {
+        "actor": 0,
+        "event": {
+          "response": "ACCEPT"
+        },
+        "likelihood_by_world": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "probability": 1.0
+      }
+    ],
+    "history_probability": 0.15277777777777776,
+    "worlds": [
+      [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          0,
+          1
+        ]
+      ],
+      [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          0,
+          0
+        ]
+      ],
+      [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          0,
+          -1
+        ]
+      ]
+    ],
+    "prior": [
+      0.3333333333333333,
+      0.3333333333333333,
+      0.3333333333333333
+    ],
+    "posterior": [
+      0.0,
+      0.27272727272727276,
+      0.7272727272727273
+    ],
+    "b_gold": {
+      "possible_preferences": [
+        "neutral",
+        "avoid"
+      ],
+      "favored": "avoid"
+    },
+    "posterior_acceptable": [
+      1
+    ],
+    "prior_acceptable": [
+      3
+    ],
+    "action_values": [
+      [
+        1.0,
+        1.0
+      ],
+      [
+        2.0,
+        1.0
+      ],
+      [
+        1.272727272727273,
+        1.0
+      ],
+      [
+        1.5454545454545456,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ]
+    ],
+    "prior_action_values": [
+      [
+        1.0,
+        1.0
+      ],
+      [
+        2.0,
+        1.0
+      ],
+      [
+        1.6666666666666665,
+        1.3333333333333333
+      ],
+      [
+        2.3333333333333335,
+        1.3333333333333333
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ]
+    ],
+    "actions": [
+      {
+        "action": "PASS"
+      },
+      {
+        "action": "OFFER",
+        "partner_id": 1,
+        "proposer_action": [
+          0,
+          1
+        ],
+        "partner_action": [
+          1,
+          1
+        ]
+      },
+      {
+        "action": "OFFER",
+        "partner_id": 1,
+        "proposer_action": [
+          1,
+          1
+        ],
+        "partner_action": [
+          1,
+          0
+        ]
+      },
+      {
+        "action": "OFFER",
+        "partner_id": 1,
+        "proposer_action": [
+          1,
+          1
+        ],
+        "partner_action": [
+          1,
+          1
+        ]
+      },
+      {
+        "action": "INVESTIGATE",
+        "player": 1,
+        "goal": 0
+      },
+      {
+        "action": "INVESTIGATE",
+        "player": 1,
+        "goal": 1
+      },
+      {
+        "action": "INVESTIGATE",
+        "player": 1,
+        "goal": 2
+      }
+    ],
+    "min_regret_of_prior_acceptable_under_posterior": 0.45454545454545436
+  },
+  {
+    "case_id": "binary_complementarity:preset",
+    "family": "binary_complementarity",
+    "source_id": "6465d8b4c2aff4f1a189",
+    "provenance": "preset",
+    "mode": "binary",
+    "schedule_change": {
+      "before": [
+        0,
+        1
+      ],
+      "after": [
+        1,
+        0
+      ]
+    },
+    "teacher": {
+      "version": "social-private-selected-policy-response-only-v2",
+      "objective_version": "response-only-altruism-v1",
+      "verified": true,
+      "uniqueness_proven": false,
+      "uniqueness_required": false,
+      "label_reference": "selected_contingent_policy",
+      "policy_sha256": "88ccfd820cf997e2996afaadbde4e37eeb011a42e690894759b0141f9daf9c61",
+      "information_set_checks": 10,
+      "diagnostic_policy": false,
+      "terminal": true,
+      "nodes": 14,
+      "sweeps": 2,
+      "initialization": "uniform",
+      "type_checks": [
+        {
+          "player": 0,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        },
+        {
+          "player": 1,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        },
+        {
+          "player": 1,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        },
+        {
+          "player": 1,
+          "own_gain": 0.0,
+          "others_gain": 0.0
+        }
+      ],
+      "audit_update_order": null,
+      "selection": "Synchronous best-response iteration; uniform residual optimal ties",
+      "selection_contract": "Default model initializes all legal choices uniformly and updates every player synchronously until the full policy is stable. Execute this selected policy throughout the episode. No alternative initialization or order is a silent fallback.",
+      "scope": "Labels are conditional on this reproducibly selected full-terminal teacher, not universal consequences of rationality or a unique solution of the game",
+      "game_version": "social-private-investigate-per-player-v1",
+      "information": "Public action history + own preferences + own private query answers; perfect recall",
+      "off_path": "Initial prior conditioned on own preferences and own private answers; no actual-world fallback"
+    },
+    "native_transition_audit": {
+      "edges": 13,
+      "leaves": 10,
+      "all_values_match": true
+    },
+    "independent_final_payoffs_match": true,
+    "trace": [],
+    "history_probability": null,
+    "worlds": [
+      [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          0,
+          1
+        ]
+      ],
+      [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          0,
+          0
+        ]
+      ],
+      [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          0,
+          -1
+        ]
+      ]
+    ],
+    "prior": [
+      0.3333333333333333,
+      0.3333333333333333,
+      0.3333333333333333
+    ],
+    "posterior": [
+      0.3333333333333333,
+      0.3333333333333333,
+      0.3333333333333333
+    ],
+    "b_gold": {
+      "possible_preferences": [
+        "want",
+        "neutral",
+        "avoid"
+      ],
+      "favored": "undetermined"
+    },
+    "posterior_acceptable": [
+      3
+    ],
+    "prior_acceptable": [
+      3
+    ],
+    "action_values": [
+      [
+        1.0,
+        1.0
+      ],
+      [
+        2.0,
+        1.0
+      ],
+      [
+        1.6666666666666665,
+        1.3333333333333333
+      ],
+      [
+        2.3333333333333335,
+        1.3333333333333333
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ]
+    ],
+    "prior_action_values": [
+      [
+        1.0,
+        1.0
+      ],
+      [
+        2.0,
+        1.0
+      ],
+      [
+        1.6666666666666665,
+        1.3333333333333333
+      ],
+      [
+        2.3333333333333335,
+        1.3333333333333333
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ],
+      [
+        1.0,
+        1.0
+      ]
+    ],
+    "actions": [
+      {
+        "action": "PASS"
+      },
+      {
+        "action": "OFFER",
+        "partner_id": 1,
+        "proposer_action": [
+          0,
+          1
+        ],
+        "partner_action": [
+          1,
+          1
+        ]
+      },
+      {
+        "action": "OFFER",
+        "partner_id": 1,
+        "proposer_action": [
+          1,
+          1
+        ],
+        "partner_action": [
+          1,
+          0
+        ]
+      },
+      {
+        "action": "OFFER",
+        "partner_id": 1,
+        "proposer_action": [
+          1,
+          1
+        ],
+        "partner_action": [
+          1,
+          1
+        ]
+      },
+      {
+        "action": "INVESTIGATE",
+        "player": 1,
+        "goal": 0
+      },
+      {
+        "action": "INVESTIGATE",
+        "player": 1,
+        "goal": 1
+      },
+      {
+        "action": "INVESTIGATE",
+        "player": 1,
+        "goal": 2
+      }
+    ],
+    "min_regret_of_prior_acceptable_under_posterior": 0.0
+  }
+]

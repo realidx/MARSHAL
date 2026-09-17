@@ -96,19 +96,19 @@ def validate_resume(path, options, model):
 
 
 def validate_course_coverage(data, arm):
-    if arm != 'mixed':
+    if arm not in ('mixed','bp'):
         return
     required={'B1','B2','B3','P1','P2','P3','P4'}
     present={t.get('kernel') for t in data['bp_train']}
     missing=sorted(required-present)
     if missing:
-        raise ValueError('Incomplete mixed-training curriculum; missing kernels: '+', '.join(missing)+
+        raise ValueError('Incomplete B/P curriculum; missing kernels: '+', '.join(missing)+
                          '. Restore complete reasoning and contrast coverage before formal training.')
 
 
 def main():
     cli=argparse.ArgumentParser(description=__doc__)
-    cli.add_argument('--arm',choices=['mixed','selfplay'],required=True)
+    cli.add_argument('--arm',choices=['mixed','selfplay','bp'],required=True)
     cli.add_argument('--seed',type=int,default=42)
     cli.add_argument('--total-tokens',type=int,default=6553600)
     cli.add_argument('--tokens-per-update',type=int,default=65536)
@@ -118,19 +118,22 @@ def main():
     cli.add_argument('--check-only',action='store_true')
     args=cli.parse_args()
     source_hash=verify_bundle()
-    from training.social_mixed.core import load_data
+    from training.social_mixed.core import load_data, arm_mixture
     data = load_data()
     if not args.check_only:validate_course_coverage(data,args.arm)
-    if args.arm == 'mixed':
+    if args.arm in ('mixed','bp'):
         from training.b_sft.decision_policy import VERSION as objective_version
         if any(t.get('objective_version') != objective_version or not t.get('training_ready')
                for split in ('train', 'validation') for t in data['bp_'+split]):
             raise ValueError('B/P data is not approved under the active label contract. '
                              'Complete response_only_v1 migration and curriculum review before training.')
+    if args.arm == 'bp':
+        args.keep_checkpoints = 1
     options=vars(args).copy()
     options['gpu_profile']=os.environ.get('SOCIAL_GPU_PROFILE','h100-96')
     if args.total_tokens<1 or args.tokens_per_update<1:raise ValueError('Token budgets must be positive')
-    if args.keep_checkpoints<2:raise ValueError('Keep at least two complete recovery points')
+    if args.keep_checkpoints < (1 if args.arm=='bp' else 2):
+        raise ValueError('B/P-only requires one recovery point; other arms require at least two')
     root=Path(os.environ['ROLL_OUTPUT_DIR']).resolve()
     root.mkdir(parents=True,exist_ok=True)
     if (root/'experiment.json').exists():raise FileExistsError('Use a fresh output directory, including on resume')
@@ -157,8 +160,8 @@ def main():
         dataset=__import__('training.social_mixed.core',fromlist=['DATA']).DATA.name,
         allowed_completion_modes=['binary','linear'],
         execution_profile=__import__('training.social_mixed.hardware',fromlist=['PROFILES']).PROFILES[options['gpu_profile']],
-        reward='B/P binary; own terminal utility plus separately recorded protocol cost',
-        mixture={'B':.25,'P':.25,'selfplay':.5} if args.arm=='mixed' else {'selfplay':1.0},
+        reward=('B/P binary task rewards only' if args.arm=='bp' else 'B/P binary; own terminal utility plus separately recorded protocol cost'),
+        mixture=arm_mixture(args.arm),
         grouping='B/P task; selfplay reset and player seat across replicas',
         budget='Generated response tokens entering training, including retries; finish current groups at boundary'),indent=2)+'\n')
     if args.check_only:

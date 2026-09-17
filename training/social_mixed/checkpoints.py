@@ -4,7 +4,7 @@ import shutil
 
 
 def prune(root, keep=2):
-    if keep<2:raise ValueError('Keep at least two complete recovery points')
+    if keep<1:raise ValueError('Keep at least one complete recovery point')
     root=Path(root).resolve()
     completed=[]
     for path in (root/'checkpoints').glob('checkpoint-*'):
