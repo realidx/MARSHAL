@@ -1,6 +1,7 @@
 import os
 import inspect
 import random
+from contextlib import contextmanager
 from collections import defaultdict
 from functools import partial
 from typing import List, Dict, Iterator, Callable, Tuple
@@ -70,6 +71,32 @@ def _patch_async_checkpoint_writer_for_torch_api():
 
 
 _patch_async_checkpoint_writer_for_torch_api()
+
+
+@contextmanager
+def _reuse_te_fp32_optimizer_state_buffers():
+    """Avoid a second full Adam-state allocation while restoring on 47GB MIG."""
+    try:
+        from transformer_engine.pytorch.optimizers import FusedAdam
+    except ImportError:
+        yield
+        return
+    original = FusedAdam.set_scaled_state
+    def set_scaled_state(self, param, state_name, unscaled_state):
+        state = self.state[param]
+        desired_dtype = self.name_to_dtype_map[state_name]
+        if (state_name not in state and desired_dtype == torch.float32
+                and unscaled_state.dtype == torch.float32
+                and unscaled_state.device == param.device
+                and not hasattr(param, "_local_tensor")):
+            state[state_name] = unscaled_state
+            return
+        return original(self, param, state_name, unscaled_state)
+    FusedAdam.set_scaled_state = set_scaled_state
+    try:
+        yield
+    finally:
+        FusedAdam.set_scaled_state = original
 
 
 class MegatronInferStrategy(InferenceStrategy):
@@ -593,21 +620,22 @@ class MegatronTrainStrategy(MegatronInferStrategy, TrainStrategy):
             f"Loading optimizer from {optimizer_checkpoint}, process_index: {self.megatron_train_args.process_index}"
         )
 
-        if self.megatron_train_args.use_distributed_optimizer:
-            model_shared_state_dict = self.model.sharded_state_dict()
-            sharded_state_dict = self.optimizer.sharded_state_dict(
-                model_shared_state_dict, is_loading=True, sharding_type="fully_sharded_model_space"
-            )
-            load_strategy = dist_checkpointing.serialization.get_default_load_sharded_strategy(optimizer_checkpoint)
-            load_strategy = FullyParallelLoadStrategyWrapper(
-                load_strategy, mpu.get_data_parallel_group(with_context_parallel=True)
-            )
-            state_dict = dist_checkpointing.load(sharded_state_dict, optimizer_checkpoint, load_strategy)
-        else:
-            state_dict = torch.load(
-                os.path.join(optimizer_checkpoint, OPTIMIZER_NAME), map_location=self.megatron_train_args.device
-            )
-        self.optimizer.load_state_dict(state_dict)
+        with _reuse_te_fp32_optimizer_state_buffers():
+            if self.megatron_train_args.use_distributed_optimizer:
+                model_shared_state_dict = self.model.sharded_state_dict()
+                sharded_state_dict = self.optimizer.sharded_state_dict(
+                    model_shared_state_dict, is_loading=True, sharding_type="fully_sharded_model_space"
+                )
+                load_strategy = dist_checkpointing.serialization.get_default_load_sharded_strategy(optimizer_checkpoint)
+                load_strategy = FullyParallelLoadStrategyWrapper(
+                    load_strategy, mpu.get_data_parallel_group(with_context_parallel=True)
+                )
+                state_dict = dist_checkpointing.load(sharded_state_dict, optimizer_checkpoint, load_strategy)
+            else:
+                state_dict = torch.load(
+                    os.path.join(optimizer_checkpoint, OPTIMIZER_NAME), map_location=self.megatron_train_args.device
+                )
+            self.optimizer.load_state_dict(state_dict)
 
         # load lr_scheduler
         self.scheduler.load_state_dict(torch.load(os.path.join(load_dir, SCHEDULER_NAME), weights_only=False))
