@@ -1,0 +1,103 @@
+{
+  "stage": "formal",
+  "suite": {
+    "version": "benac-a-v1",
+    "seed": 2026091901,
+    "resets": 16,
+    "seats": [
+      0,
+      1,
+      2
+    ],
+    "games_per_model": 48,
+    "opponents": [
+      "Q0",
+      "Q0"
+    ],
+    "sampling": {
+      "temperature": 1.0,
+      "top_p": 1.0,
+      "max_tokens": 1024
+    },
+    "retries": 1,
+    "selection": "No LLM outcomes, utility filters or solver feasibility used",
+    "id_definition": "Seen training geometry with new indexed preference world; not structural generalization",
+    "ood_definition": "Dependency incidence non-isomorphic to current BP/SP train and validation, ignoring labels, scoring and timing",
+    "source_hashes": {
+      "examples/social_mixed/data_binary_linear_v3/bp_train.jsonl": "608ea64b45431022a7a47d11bdbdca0fadef5556b71dffcfecc08bcff2f79f97",
+      "examples/social_mixed/data_binary_linear_v3/bp_validation.jsonl": "b26c75624e37a85a880f1d83849dbbf455e72992751af4a1e0c2508ca953f575",
+      "examples/social_mixed/data_binary_linear_v3/selfplay_train.jsonl": "dcb97221919ec9b71a8414d21855207cef75fc41d175ae7a2c97c7623ab9e2ae",
+      "examples/social_mixed/data_binary_linear_v3/selfplay_validation.jsonl": "2d6da4cf7af71414c1486cad3e192167433c09c8e0c0e485aee4c543356aa18c"
+    },
+    "code_hashes": {
+      "examples/final_evaluation/benac_a_suite.py": "a87d20c34139ded63810fdcc8693729c826029dab3be8b0070e846093a646c1a",
+      "training/social_mixed/core.py": "83956d8a49988c96962cef49dc57f451ff59413f0f0d778c669f5beeccee6dc9",
+      "training/social_mixed/weighted_rules.py": "10ae1221ba35b601365a6f5e9ba44b5194816dc319b057d9a619e57a1a23fb53",
+      "training/social_mixed/policy_prompt.py": "c41a7a1fd4244a7eba0a508aa1b352503ce9736eefbc26afec365e09b419d3aa",
+      "training/social_mixed/frozen/__init__.py": "1b8d5b373bda1307c9c57256e08465709ac3be05b9b44f981f2a428152f1f849",
+      "training/social_mixed/frozen/benac_p/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "training/social_mixed/frozen/benac_p/bayes_planner.py": "b09b6c1382cbeb28dd91b6d09502c331ae3ec6f2486009bc5f034b017365b973",
+      "training/social_mixed/frozen/benac_p/belief.py": "602408a98db72cf76b108c023dcfee57319cf99e729270db23e4ea9eab8d1ac2",
+      "training/social_mixed/frozen/benac_p/controlled.py": "253c99966add165ce8da10ec4134cdcc498e6732b7b3c91ed4baa3addbc3d93b",
+      "training/social_mixed/frozen/benac_p/dependency_certificate.py": "cdd42709c008abbe0472b8fc275a2e3a45f1c8c4d047ec4889bb0f3dd2c7227e",
+      "training/social_mixed/frozen/benac_p/diagnose_instances.py": "68201b1da728781f519ba3011a289718213007287a174e7f51a5d3c55da836f1",
+      "training/social_mixed/frozen/benac_p/diagnose_protocol.py": "3870b8230fd502f046b324dc414bf6c814502cef7bc5bc53a97e0bfce14e82da",
+      "training/social_mixed/frozen/benac_p/diagnose_suite.py": "6772f47b8432e0127f8cac747490707686c1dc8d826fb3d453430c92e3a30b69",
+      "training/social_mixed/frozen/benac_p/endgame.py": "84159f70b3d36e192501017749cab258c0874abe365b7aa05ee96a8929dfc00f",
+      "training/social_mixed/frozen/benac_p/endgame_diagnose.py": "814094e52ff022ef7c19d7fa6a44f1f815116deb67ee8ca86c35f61daccf5abf",
+      "training/social_mixed/frozen/benac_p/endgame_mine.py": "d29f9b568281c79afdb78013e0812e10d1b018476090573af190351841864a50",
+      "training/social_mixed/frozen/benac_p/endgame_partner.py": "4dd1f55b91fe24b753eab956460f717cd325bb3acba819c12675186a6e42c943",
+      "training/social_mixed/frozen/benac_p/functional_dependency.py": "dd82b645ee590d8d7e4a799e9943de359d28fd004df9293caa0c3e5c3e745ffe",
+      "training/social_mixed/frozen/benac_p/generator.py": "17726984e2ca9860397db46c8d3744861f9d10faeaafafefd0363fed2ebbba9d",
+      "training/social_mixed/frozen/benac_p/menu_diagnose.py": "7ef525d85b9926a7032f535d2b42eafc23c3881721bcd8d05fa817efbe692895",
+      "training/social_mixed/frozen/benac_p/observations.py": "3b723b2a5efca15b02074b8dac111b0ae67037eb4813010af5d2a4c29736884c",
+      "training/social_mixed/frozen/benac_p/policies.py": "411eaa531e69a5e73016211b2498faaa2c341fd6c0c475b3c6c6864b9132416b",
+      "training/social_mixed/frozen/benac_p/runner.py": "fb1cd002595359babcff1a99c8355e623dc87e359f888be90aa717bf318ae3e2",
+      "training/social_mixed/frozen/benac_p/schema.py": "13c4d5ab63189c95c239a410bfebb3addec28af498cc15e43d09ba3f1860f19b",
+      "training/social_mixed/frozen/benac_p/state.py": "fb584cefac184387239f4d9c051b0def3609d2a700d88d9856dfc0b78cad809d",
+      "training/social_mixed/frozen/bp_display.py": "fde12fc51376b92fda8dc25d03c16d9ffff854713298fc50b268fa2798107e53",
+      "training/social_mixed/frozen/methods/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "training/social_mixed/frozen/methods/vllm_client.py": "75aae87a0ae606bca0e686a4dc47b79718aa227a3c134e400edc4307a7b4b593",
+      "training/social_mixed/frozen/outcome_rules.py": "04d1cdeb66c4a98d2f119f94886302973cce48eb41563a598dfd5a2266879796",
+      "training/social_mixed/frozen/selfplay_prompt.py": "fb8b656934292920e1f5491cb7f7fddd0e0e27d877eea206371c5e17427247e4",
+      "training/social_mixed/frozen/training/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "training/social_mixed/frozen/training/b_sft/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "training/social_mixed/frozen/training/b_sft/catalogues.py": "012cef1645799f61ccd66dba8068f2b107caed7569c46ad1d305ccb6cfaca3d0",
+      "training/social_mixed/frozen/training/b_sft/decision_corpus.py": "20785368b0d29acb6c0767e376525cfcf92d297e81dca00837a75511c3101ab6",
+      "training/social_mixed/frozen/training/b_sft/evidence_switch.py": "fe6ad3d08923dfa4e089e41ea5852968d6908893e453aebe72d7fb85548f623e",
+      "training/social_mixed/frozen/training/b_sft/favored_belief.py": "678aa4f5e1dddad00fca16f5d5030421a115d748b5a5bd95932aebb59325bdcb",
+      "training/social_mixed/frozen/training/b_sft/shared_teacher.py": "d945675794443948cfbbc837bd18d7bc9d530c9dba7ff492fb3cb95c0643b148",
+      "training/social_mixed/frozen/training/b_sft/social_b_oracle.py": "3dad43ac028b84c3f88d55b1e6a053b8ddd6d9a12fd4e6cbaa021c610b1933f2",
+      "training/social_mixed/frozen/training/b_sft/social_b_random_window.py": "4fbe03ffa02567184ba00bcb881a9b62e555cd0a43c3db2b96b90ba0378c9c8b",
+      "training/social_mixed/frozen/training/b_sft/social_private_teacher.py": "688a52bbdaf4ee273d20c6d94619a528656ea82a2f2b0b246337a1d47f56847c",
+      "training/social_mixed/frozen/training/b_sft/social_rollout.py": "ced54c5c886e89bf862fc7f8e7cb3fdcfc17a8319c2bf62f0fe35f3d3571aa64",
+      "training/social_mixed/frozen/training/b_sft/social_terminal_teacher.py": "e977d2daf37664b77081636f65a67a7de12d67e47489042c042f33cf219a3fbc",
+      "training/social_mixed/frozen/training/b_sft/structure_audit.py": "3765ab168c114ce0bc5d751993be2a50c7813f58dd3ae78680d3b9d855c7cf1b"
+    },
+    "files": {
+      "resets.jsonl": "d1bf0840525785fce71ab4d4d0b287909a39a0b490d7ca0c7c04411a8cb0785a",
+      "generation_attempts.json": "aedc8e6f18479fce6518f12fa3c58d0d6f2fded0240d0fe62cbe1eef49a8f60f"
+    },
+    "teacher_condition": "Not included: exact same-information teacher scope/off-path policy not validated",
+    "structure_counts": {
+      "ID": 3,
+      "OOD": 8
+    }
+  },
+  "routes": {
+    "focal": {
+      "base_url": "http://127.0.0.1:35526/v1",
+      "model": "benac-focal"
+    },
+    "q0": {
+      "base_url": "http://127.0.0.1:35527/v1",
+      "model": "benac-q0"
+    }
+  },
+  "replicas": 1,
+  "seat_rotation": [
+    0,
+    1,
+    2
+  ]
+}

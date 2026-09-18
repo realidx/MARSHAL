@@ -1,0 +1,179 @@
+{
+  "reset": {
+    "id": "A-ID-linear-2r-avoid_heavy",
+    "split": "test",
+    "players": 3,
+    "rounds": 2,
+    "raw": {
+      "game": {
+        "n_players": 3,
+        "n_actions_per_player": [
+          2,
+          2,
+          2
+        ],
+        "goals": [
+          {
+            "goal_id": 0,
+            "binary": false,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              }
+            ]
+          },
+          {
+            "goal_id": 1,
+            "binary": false,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 1
+              },
+              {
+                "player_id": 1,
+                "action_id": 0
+              }
+            ]
+          },
+          {
+            "goal_id": 2,
+            "binary": false,
+            "required_actions": [
+              {
+                "player_id": 0,
+                "action_id": 0
+              },
+              {
+                "player_id": 1,
+                "action_id": 1
+              },
+              {
+                "player_id": 2,
+                "action_id": 1
+              }
+            ]
+          }
+        ],
+        "round_robin": [
+          1,
+          2,
+          0,
+          1,
+          0,
+          2
+        ],
+        "max_changes": 1,
+        "forbidden_actions": null
+      },
+      "history": [],
+      "preference_generation": {
+        "version": "public-prior-margin-v1",
+        "values": [
+          -1,
+          0,
+          1
+        ],
+        "background_prior": {
+          "version": "public-prior-margin-v1",
+          "name": "avoid_heavy",
+          "weights": {
+            "want": 1,
+            "neutral": 1,
+            "avoid": 2
+          }
+        }
+      }
+    },
+    "realized_world": [
+      [
+        1,
+        1,
+        -1
+      ],
+      [
+        -1,
+        0,
+        1
+      ],
+      [
+        1,
+        -1,
+        0
+      ]
+    ],
+    "background_profile": "avoid_heavy",
+    "preference_redraw": {
+      "seed": 1877278393,
+      "rejection_count": 1,
+      "duplicate_attempt": 0,
+      "source": "public weighted prior; no outcome filtering"
+    },
+    "geometry_source_id": "random-v2-3p-linear-foundation-0",
+    "geometry_generation": {
+      "seed": 2422374439,
+      "config": {
+        "n_players": 3,
+        "actions_per_player": 2,
+        "n_goals": 3,
+        "n_rounds": 2,
+        "max_changes": 1,
+        "goal_arities": [
+          2,
+          3
+        ],
+        "goal_arity_probs": null,
+        "preference_probs": [
+          0.5,
+          0.5,
+          0
+        ],
+        "max_attempts": 1000,
+        "linear_goal_fraction": 1.0
+      },
+      "attempt": 0,
+      "source": "native generate_game; no teaching prefix or outcome selection"
+    },
+    "evaluation_split": "ID",
+    "pair_id": "linear-2r-avoid_heavy",
+    "origin_id": "random-v2-3p-linear-foundation-0:avoid_heavy",
+    "structure_family": "74002e190f0adc13c6c5b4a7"
+  },
+  "group": "A-ID-linear-2r-avoid_heavy",
+  "replica": 0,
+  "status": "terminal",
+  "terminal_utility": [
+    -0.16666666666666663,
+    0.16666666666666663,
+    0.5
+  ],
+  "protocol": [
+    -0.1,
+    0.0,
+    -0.1
+  ],
+  "decisions": 8,
+  "focal_seat": 0,
+  "error": null,
+  "split": "ID",
+  "mode": "linear",
+  "structure_family": "74002e190f0adc13c6c5b4a7",
+  "calls": 10,
+  "invalid_calls": 2,
+  "truncated_calls": 2,
+  "focal_calls": 3,
+  "focal_invalid_calls": 1,
+  "focal_truncated_calls": 1,
+  "completion_tokens": 4793,
+  "focal_utility": -0.16666666666666663,
+  "total_utility": 0.5,
+  "missing_utility_bounds": [
+    -1,
+    2
+  ]
+}
