@@ -1,0 +1,1531 @@
+{
+  "q0": {
+    "run": "runs/remote-results/calbench-three-model-results/runs/calbench-three-models-20260917-154659/q0",
+    "counts": {
+      "ok": 176,
+      "strict_envelope_errors": 2,
+      "old_meeting_moves": 0,
+      "truncated": 1
+    },
+    "mean_completion_tokens": 191.24858757062148,
+    "median_completion_tokens": 178,
+    "mean_valid_json_thinking_characters": 510.2342857142857,
+    "first_prompt_hashes": [
+      "b7a833119787cb161e78468a6bb13331486e74c0edbdb7d5411258a335d2b7a7",
+      "2cfca301cb25f5bc83768fee2d35a9d92536d1c2f06df5685456f8d1489ca037",
+      "0943e0006d7d7f7bd6da9824f774d53f39bf225a74de1a483698b9a28ed509f9",
+      "93ce5f129e8ad3dd7e5440d084341ce9a304611da30fd83b3b721c11545ab2fd",
+      "5970143c7d034eae90b11ccab916ba95f46a7b8dd2c896db537b8838fef60f61",
+      "0df5568dcca5f812e182c557be02fdfcc8d98cc522d894c3516552856e5be868",
+      "32f0b181e66eb5e973e4ca6f16874c96e6e764c7f7ceb0f084a6740ebe0cf372",
+      "f7d06c3a3653c4d2c44fce3e7e67a33940b6885d54b1aa80cec9056ba8afbf00",
+      "d299d2e7a4a6d17c1d841a7ba71d235a8cacf9982762297a5d8c55c0641259d2",
+      "5ccd55cf2a735d3b28c59b8bade23073ca759e2f3abf654b1922b5d77f6f0965",
+      "d6de57cab8965ed40d4e282295c8808a87d12a50e880afd259f17b026852de39",
+      "4c2cd0851b0a49c9a463664eaa278807b4fb0b5d21623a1e07695378489db4d1"
+    ],
+    "cases": [
+      {
+        "case": "F1",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F2",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 12,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F3",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 9,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F4",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 12,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D1",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 16,
+          "strict_envelope_errors": 1,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": [
+          {
+            "line": 46,
+            "data": {
+              "round": 0,
+              "turn": 4,
+              "phase": "DECISION",
+              "agent_id": 1,
+              "attempt": 0,
+              "conflict_description": "Two or more actions target slot 4.",
+              "actions": [
+                {
+                  "type": "reschedule",
+                  "item_id": 100,
+                  "from_slot": 0,
+                  "to_slot": 4,
+                  "justification": "I need to move my errand to slot 4 to free up the meeting slot, as no other free slot is available to all participants without requiring displacement. This is necessary to coordinate the meeting with Aunt Mary, and slot 4 was the only mutually feasible option after negotiation."
+                },
+                {
+                  "type": "schedule",
+                  "meeting_id": 1,
+                  "slot": 4,
+                  "cost": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "case": "D2",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 17,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": [
+          {
+            "line": 41,
+            "data": {
+              "round": 0,
+              "turn": 4,
+              "phase": "DECISION",
+              "agent_id": 2,
+              "attempt": 0,
+              "conflict_description": "Two or more actions target slot 6.",
+              "actions": [
+                {
+                  "type": "reschedule",
+                  "item_id": 100,
+                  "from_slot": 6,
+                  "to_slot": 6,
+                  "justification": "I need to reschedule my errand to slot 6 to free it for the meeting with the community orchestra librarian. This is the only shared free slot available for all participants, and no other slot is feasible without blocking or requiring higher displacement. Moving this commitment is necessary to enable coordination and avoid conflicts with other participants' schedules."
+                },
+                {
+                  "type": "schedule",
+                  "meeting_id": 1,
+                  "slot": 6,
+                  "cost": 1
+                }
+              ]
+            }
+          },
+          {
+            "line": 46,
+            "data": {
+              "round": 0,
+              "turn": 4,
+              "phase": "DECISION",
+              "agent_id": 3,
+              "attempt": 0,
+              "conflict_description": "Two or more actions target slot 6.",
+              "actions": [
+                {
+                  "type": "reschedule",
+                  "item_id": 109,
+                  "from_slot": 3,
+                  "to_slot": 6,
+                  "justification": "Agent 2's errand was rescheduled to slot 6 to free up the meeting slot, which was mutually agreed upon during CHEAP_TALK. This avoids blocking any shared free slot and minimizes displacement for all participants, as no other common free slot was available without requiring movement."
+                },
+                {
+                  "type": "schedule",
+                  "meeting_id": 1,
+                  "slot": 6,
+                  "cost": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "case": "D3",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D4",
+        "success": false,
+        "optimal": false,
+        "cost": 3,
+        "counts": {
+          "ok": 16,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": [
+          {
+            "line": 50,
+            "data": {
+              "round": 0,
+              "turn": 4,
+              "phase": "DECISION",
+              "agent_id": 0,
+              "attempt": 0,
+              "conflict_description": "Two or more actions target slot 4.",
+              "actions": [
+                {
+                  "type": "reschedule",
+                  "item_id": 100,
+                  "from_slot": 4,
+                  "to_slot": 4,
+                  "justification": "I am rescheduling this call to slot 4 to free up the slot for the meeting, as agreed during CHEAP_TALK. The original slot was occupied, and the meeting requires a shared slot. This move is necessary to coordinate with Agent 1, who is also rescheduling their errand to make space. The patient advocate call is sensitive but can be moved to a time that aligns with the meeting's coordination needs without compromising the outcome."
+                },
+                {
+                  "type": "schedule",
+                  "meeting_id": 1,
+                  "slot": 4,
+                  "cost": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "case": "C1",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C2",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C3",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 19,
+          "strict_envelope_errors": 1,
+          "truncated": 1,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [
+          {
+            "line": 12,
+            "sender": 0,
+            "action": {
+              "type": "dm",
+              "to": 2,
+              "content": "I suggest slot 7 for the meeting. It's free and doesn't interfere with your schedule. Please let me know if you have any conflicts."
+            }
+          },
+          {
+            "line": 27,
+            "sender": 0,
+            "action": {
+              "type": "dm",
+              "to": 2,
+              "content": "Slot 7 is still free and available for all. I'm confirming it's a good option—no conflicts on my end. Let me know if you have any issues with it."
+            }
+          },
+          {
+            "line": 38,
+            "sender": 3,
+            "action": {
+              "type": "dm",
+              "to": 2,
+              "content": "I'm unable to find a free slot that works for everyone without requiring me to reschedule my existing meeting. Slot 3 is currently occupied, and all other proposed slots are either blocked or conflict with commitments. I'm sorry, but I cannot proceed without a clear justification to move my meeting. Would you be able to adjust your schedule to accommodate a different time? I'm open to discussing alternatives if possible."
+            }
+          },
+          {
+            "line": 41,
+            "sender": 0,
+            "action": {
+              "type": "dm",
+              "to": 2,
+              "content": "Slot 7 is still free and works for me. I'm proposing it as the only conflict-free option. Let me know if you have any issues with it."
+            }
+          }
+        ],
+        "rejected_batches": []
+      },
+      {
+        "case": "C4",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      }
+    ]
+  },
+  "marshal": {
+    "run": "runs/remote-results/calbench-external-4096-results/runs/calbench-marshal-4096-20260917-170425",
+    "counts": {
+      "ok": 155,
+      "strict_envelope_errors": 7,
+      "old_meeting_moves": 0,
+      "truncated": 7
+    },
+    "mean_completion_tokens": 883.574074074074,
+    "median_completion_tokens": 670,
+    "mean_valid_json_thinking_characters": 132.23870967741937,
+    "first_prompt_hashes": [
+      "b7a833119787cb161e78468a6bb13331486e74c0edbdb7d5411258a335d2b7a7",
+      "2cfca301cb25f5bc83768fee2d35a9d92536d1c2f06df5685456f8d1489ca037",
+      "0943e0006d7d7f7bd6da9824f774d53f39bf225a74de1a483698b9a28ed509f9",
+      "93ce5f129e8ad3dd7e5440d084341ce9a304611da30fd83b3b721c11545ab2fd",
+      "5970143c7d034eae90b11ccab916ba95f46a7b8dd2c896db537b8838fef60f61",
+      "0df5568dcca5f812e182c557be02fdfcc8d98cc522d894c3516552856e5be868",
+      "32f0b181e66eb5e973e4ca6f16874c96e6e764c7f7ceb0f084a6740ebe0cf372",
+      "f7d06c3a3653c4d2c44fce3e7e67a33940b6885d54b1aa80cec9056ba8afbf00",
+      "d299d2e7a4a6d17c1d841a7ba71d235a8cacf9982762297a5d8c55c0641259d2",
+      "5ccd55cf2a735d3b28c59b8bade23073ca759e2f3abf654b1922b5d77f6f0965",
+      "d6de57cab8965ed40d4e282295c8808a87d12a50e880afd259f17b026852de39",
+      "4c2cd0851b0a49c9a463664eaa278807b4fb0b5d21623a1e07695378489db4d1"
+    ],
+    "cases": [
+      {
+        "case": "F1",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F2",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 8,
+          "strict_envelope_errors": 1,
+          "truncated": 1,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F3",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 12,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F4",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 12,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D1",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 14,
+          "strict_envelope_errors": 1,
+          "truncated": 1,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D2",
+        "success": true,
+        "optimal": true,
+        "cost": 3,
+        "counts": {
+          "ok": 12,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D3",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D4",
+        "success": false,
+        "optimal": false,
+        "cost": 3,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C1",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 10,
+          "strict_envelope_errors": 2,
+          "truncated": 2,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C2",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 14,
+          "strict_envelope_errors": 1,
+          "truncated": 1,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C3",
+        "success": true,
+        "optimal": true,
+        "cost": 1,
+        "counts": {
+          "truncated": 2,
+          "strict_envelope_errors": 2,
+          "ok": 13,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C4",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      }
+    ]
+  },
+  "socialr1": {
+    "run": "runs/remote-results/calbench-external-4096-results/runs/calbench-socialr1-4096-20260917-174119",
+    "counts": {
+      "ok": 167,
+      "strict_envelope_errors": 1,
+      "old_meeting_moves": 0
+    },
+    "mean_completion_tokens": 322.1437125748503,
+    "median_completion_tokens": 319,
+    "mean_valid_json_thinking_characters": 87.07831325301204,
+    "first_prompt_hashes": [
+      "b7a833119787cb161e78468a6bb13331486e74c0edbdb7d5411258a335d2b7a7",
+      "2cfca301cb25f5bc83768fee2d35a9d92536d1c2f06df5685456f8d1489ca037",
+      "0943e0006d7d7f7bd6da9824f774d53f39bf225a74de1a483698b9a28ed509f9",
+      "93ce5f129e8ad3dd7e5440d084341ce9a304611da30fd83b3b721c11545ab2fd",
+      "5970143c7d034eae90b11ccab916ba95f46a7b8dd2c896db537b8838fef60f61",
+      "0df5568dcca5f812e182c557be02fdfcc8d98cc522d894c3516552856e5be868",
+      "32f0b181e66eb5e973e4ca6f16874c96e6e764c7f7ceb0f084a6740ebe0cf372",
+      "f7d06c3a3653c4d2c44fce3e7e67a33940b6885d54b1aa80cec9056ba8afbf00",
+      "d299d2e7a4a6d17c1d841a7ba71d235a8cacf9982762297a5d8c55c0641259d2",
+      "5ccd55cf2a735d3b28c59b8bade23073ca759e2f3abf654b1922b5d77f6f0965",
+      "d6de57cab8965ed40d4e282295c8808a87d12a50e880afd259f17b026852de39",
+      "4c2cd0851b0a49c9a463664eaa278807b4fb0b5d21623a1e07695378489db4d1"
+    ],
+    "cases": [
+      {
+        "case": "F1",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 1,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F2",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F3",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 9,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F4",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 12,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D1",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D2",
+        "success": false,
+        "optimal": false,
+        "cost": 3,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D3",
+        "success": true,
+        "optimal": true,
+        "cost": 1,
+        "counts": {
+          "ok": 12,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D4",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 16,
+          "strict_envelope_errors": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": [
+          {
+            "line": 51,
+            "data": {
+              "round": 0,
+              "turn": 4,
+              "phase": "DECISION",
+              "agent_id": 1,
+              "attempt": 0,
+              "conflict_description": "Reschedule claims item_id=4 at slot 6, but slot contains None.",
+              "actions": [
+                {
+                  "type": "reschedule",
+                  "item_id": 4,
+                  "from_slot": 6,
+                  "to_slot": 4,
+                  "justification": "The errand in slot 6 is being moved to slot 4 to free the agreed meeting slot, as participants confirmed slot 4 is workable for all."
+                },
+                {
+                  "type": "schedule",
+                  "meeting_id": 1,
+                  "slot": 4,
+                  "cost": 1
+                }
+              ]
+            }
+          },
+          {
+            "line": 52,
+            "data": {
+              "round": 0,
+              "turn": 4,
+              "phase": "DECISION",
+              "agent_id": 1,
+              "attempt": 1,
+              "conflict_description": "Reschedule claims item_id=4 at slot 4, but slot contains {'cost': 3, 'errand_id': 108}.",
+              "actions": [
+                {
+                  "type": "reschedule",
+                  "item_id": 4,
+                  "from_slot": 4,
+                  "to_slot": 6,
+                  "justification": "The errand in slot 4 is being moved to slot 6 to free the agreed meeting slot, as participants confirmed slot 4 is workable for all."
+                },
+                {
+                  "type": "schedule",
+                  "meeting_id": 1,
+                  "slot": 4,
+                  "cost": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "case": "C1",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C2",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C3",
+        "success": true,
+        "optimal": true,
+        "cost": 1,
+        "counts": {
+          "ok": 13,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": [
+          {
+            "line": 39,
+            "data": {
+              "round": 0,
+              "turn": 3,
+              "phase": "DECISION",
+              "agent_id": 1,
+              "attempt": 0,
+              "conflict_description": "Reschedule targets slot 7, which is occupied by {'blocked': True, 'cost': 1, 'errand_id': 1025} and not freed by this batch.",
+              "actions": [
+                {
+                  "type": "reschedule",
+                  "item_id": 126,
+                  "from_slot": 3,
+                  "to_slot": 7,
+                  "justification": "My employment coach consultation (errand #126) must move to slot 7 to free slot 3 for the critical meeting with Aunt Mary and Uncle Steve. Slot 3 was unanimously confirmed by all participants as the best compromise."
+                },
+                {
+                  "type": "schedule",
+                  "meeting_id": 1,
+                  "slot": 3,
+                  "cost": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "case": "C4",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      }
+    ]
+  },
+  "bp": {
+    "run": "runs/calbench_soc/bp-step139-formal-857442",
+    "counts": {
+      "ok": 172,
+      "strict_envelope_errors": 1,
+      "old_meeting_moves": 0,
+      "truncated": 1
+    },
+    "mean_completion_tokens": 186.53757225433526,
+    "median_completion_tokens": 156,
+    "mean_valid_json_thinking_characters": 434.29651162790697,
+    "first_prompt_hashes": [
+      "b7a833119787cb161e78468a6bb13331486e74c0edbdb7d5411258a335d2b7a7",
+      "2cfca301cb25f5bc83768fee2d35a9d92536d1c2f06df5685456f8d1489ca037",
+      "0943e0006d7d7f7bd6da9824f774d53f39bf225a74de1a483698b9a28ed509f9",
+      "93ce5f129e8ad3dd7e5440d084341ce9a304611da30fd83b3b721c11545ab2fd",
+      "5970143c7d034eae90b11ccab916ba95f46a7b8dd2c896db537b8838fef60f61",
+      "0df5568dcca5f812e182c557be02fdfcc8d98cc522d894c3516552856e5be868",
+      "32f0b181e66eb5e973e4ca6f16874c96e6e764c7f7ceb0f084a6740ebe0cf372",
+      "f7d06c3a3653c4d2c44fce3e7e67a33940b6885d54b1aa80cec9056ba8afbf00",
+      "d299d2e7a4a6d17c1d841a7ba71d235a8cacf9982762297a5d8c55c0641259d2",
+      "5ccd55cf2a735d3b28c59b8bade23073ca759e2f3abf654b1922b5d77f6f0965",
+      "d6de57cab8965ed40d4e282295c8808a87d12a50e880afd259f17b026852de39",
+      "4c2cd0851b0a49c9a463664eaa278807b4fb0b5d21623a1e07695378489db4d1"
+    ],
+    "cases": [
+      {
+        "case": "F1",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F2",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F3",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 12,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F4",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D1",
+        "success": false,
+        "optimal": false,
+        "cost": 8,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D2",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 10,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": [
+          {
+            "line": 26,
+            "data": {
+              "round": 0,
+              "turn": 2,
+              "phase": "DECISION",
+              "agent_id": 2,
+              "attempt": 0,
+              "conflict_description": "Two or more actions target slot 6.",
+              "actions": [
+                {
+                  "type": "reschedule",
+                  "item_id": 100,
+                  "from_slot": 6,
+                  "to_slot": 6,
+                  "justification": "The meeting with the community orchestra librarian is essential for returning borrowed scores, and slot 6 was the only mutually available slot after all participants confirmed their constraints. My errand in slot 6 must be moved to free the slot for the meeting, as no other free slot is feasible for all parties."
+                },
+                {
+                  "type": "schedule",
+                  "meeting_id": 1,
+                  "slot": 6,
+                  "cost": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "case": "D3",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D4",
+        "success": true,
+        "optimal": true,
+        "cost": 4,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C1",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C2",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C3",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C4",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 1,
+          "truncated": 1
+        },
+        "external_contacts": [],
+        "rejected_batches": [
+          {
+            "line": 44,
+            "data": {
+              "round": 0,
+              "turn": 4,
+              "phase": "DECISION",
+              "agent_id": 1,
+              "attempt": 0,
+              "conflict_description": "Expected exactly 1 schedule action, got 0.",
+              "actions": []
+            }
+          },
+          {
+            "line": 45,
+            "data": {
+              "round": 0,
+              "turn": 4,
+              "phase": "DECISION",
+              "agent_id": 1,
+              "attempt": 1,
+              "conflict_description": "Expected exactly 1 schedule action, got 0.",
+              "actions": []
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "mixed": {
+    "run": "runs/calbench_soc/mixed-step59-formal-857444",
+    "counts": {
+      "ok": 167,
+      "strict_envelope_errors": 1,
+      "old_meeting_moves": 0
+    },
+    "mean_completion_tokens": 165.90419161676647,
+    "median_completion_tokens": 169,
+    "mean_valid_json_thinking_characters": 428.68674698795184,
+    "first_prompt_hashes": [
+      "b7a833119787cb161e78468a6bb13331486e74c0edbdb7d5411258a335d2b7a7",
+      "2cfca301cb25f5bc83768fee2d35a9d92536d1c2f06df5685456f8d1489ca037",
+      "0943e0006d7d7f7bd6da9824f774d53f39bf225a74de1a483698b9a28ed509f9",
+      "93ce5f129e8ad3dd7e5440d084341ce9a304611da30fd83b3b721c11545ab2fd",
+      "5970143c7d034eae90b11ccab916ba95f46a7b8dd2c896db537b8838fef60f61",
+      "0df5568dcca5f812e182c557be02fdfcc8d98cc522d894c3516552856e5be868",
+      "32f0b181e66eb5e973e4ca6f16874c96e6e764c7f7ceb0f084a6740ebe0cf372",
+      "f7d06c3a3653c4d2c44fce3e7e67a33940b6885d54b1aa80cec9056ba8afbf00",
+      "d299d2e7a4a6d17c1d841a7ba71d235a8cacf9982762297a5d8c55c0641259d2",
+      "5ccd55cf2a735d3b28c59b8bade23073ca759e2f3abf654b1922b5d77f6f0965",
+      "d6de57cab8965ed40d4e282295c8808a87d12a50e880afd259f17b026852de39",
+      "4c2cd0851b0a49c9a463664eaa278807b4fb0b5d21623a1e07695378489db4d1"
+    ],
+    "cases": [
+      {
+        "case": "F1",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F2",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 12,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F3",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 12,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F4",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 9,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D1",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 12,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D2",
+        "success": true,
+        "optimal": true,
+        "cost": 3,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D3",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 16,
+          "strict_envelope_errors": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": [
+          {
+            "line": 46,
+            "data": {
+              "round": 0,
+              "turn": 4,
+              "phase": "DECISION",
+              "agent_id": 1,
+              "attempt": 0,
+              "conflict_description": "Reschedule claims item_id=118 at slot 2, but slot contains None.",
+              "actions": [
+                {
+                  "type": "reschedule",
+                  "item_id": 118,
+                  "from_slot": 2,
+                  "to_slot": 1,
+                  "justification": "I need to move Agent 0's errand from slot 2 to slot 1 to free up slot 2 for the urgent meeting with Aunt Mary. Slot 2 was the only mutually available free slot after coordination, and moving the errand to slot 1 is the lowest-disruption alternative that preserves the meeting's timing and avoids blocking any other participant's schedule."
+                },
+                {
+                  "type": "schedule",
+                  "meeting_id": 1,
+                  "slot": 2,
+                  "cost": 1
+                }
+              ]
+            }
+          },
+          {
+            "line": 47,
+            "data": {
+              "round": 0,
+              "turn": 4,
+              "phase": "DECISION",
+              "agent_id": 1,
+              "attempt": 1,
+              "conflict_description": "Reschedule claims item_id=118 at slot 2, but slot contains None.",
+              "actions": [
+                {
+                  "type": "reschedule",
+                  "item_id": 118,
+                  "from_slot": 2,
+                  "to_slot": 1,
+                  "justification": "I need to move Agent 0's errand from slot 2 to slot 1 to free up slot 2 for the urgent meeting with Aunt Mary. Slot 2 was the only mutually available free slot after coordination, and moving the errand to slot 1 is the lowest-disruption alternative that preserves the meeting's timing and avoids blocking any other participant's schedule."
+                },
+                {
+                  "type": "schedule",
+                  "meeting_id": 1,
+                  "slot": 2,
+                  "cost": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "case": "D4",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C1",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C2",
+        "success": true,
+        "optimal": false,
+        "cost": 8,
+        "counts": {
+          "ok": 16,
+          "strict_envelope_errors": 1,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": [
+          {
+            "line": 46,
+            "data": {
+              "round": 0,
+              "turn": 4,
+              "phase": "DECISION",
+              "agent_id": 3,
+              "attempt": 0,
+              "conflict_description": "Reschedule claims item_id=101 at slot 0, but slot contains None.",
+              "actions": [
+                {
+                  "type": "reschedule",
+                  "item_id": 101,
+                  "from_slot": 0,
+                  "to_slot": 1,
+                  "justification": "I need to move my user's errand from slot 0 to slot 1 to free up slot 0 for the urgent and confidential school safety meeting. Slot 0 was the only mutually available slot after coordination, and delaying this meeting would compromise coordination with the safety team, which involves a family member and requires immediate attention."
+                },
+                {
+                  "type": "schedule",
+                  "meeting_id": 1,
+                  "slot": 0,
+                  "cost": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "case": "C3",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C4",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      }
+    ]
+  },
+  "sp": {
+    "run": "runs/calbench_soc/selfplay-step69-formal-857446",
+    "counts": {
+      "ok": 172,
+      "strict_envelope_errors": 5,
+      "old_meeting_moves": 0
+    },
+    "mean_completion_tokens": 165.9418604651163,
+    "median_completion_tokens": 166,
+    "mean_valid_json_thinking_characters": 419.8383233532934,
+    "first_prompt_hashes": [
+      "b7a833119787cb161e78468a6bb13331486e74c0edbdb7d5411258a335d2b7a7",
+      "2cfca301cb25f5bc83768fee2d35a9d92536d1c2f06df5685456f8d1489ca037",
+      "0943e0006d7d7f7bd6da9824f774d53f39bf225a74de1a483698b9a28ed509f9",
+      "93ce5f129e8ad3dd7e5440d084341ce9a304611da30fd83b3b721c11545ab2fd",
+      "5970143c7d034eae90b11ccab916ba95f46a7b8dd2c896db537b8838fef60f61",
+      "0df5568dcca5f812e182c557be02fdfcc8d98cc522d894c3516552856e5be868",
+      "32f0b181e66eb5e973e4ca6f16874c96e6e764c7f7ceb0f084a6740ebe0cf372",
+      "f7d06c3a3653c4d2c44fce3e7e67a33940b6885d54b1aa80cec9056ba8afbf00",
+      "d299d2e7a4a6d17c1d841a7ba71d235a8cacf9982762297a5d8c55c0641259d2",
+      "5ccd55cf2a735d3b28c59b8bade23073ca759e2f3abf654b1922b5d77f6f0965",
+      "d6de57cab8965ed40d4e282295c8808a87d12a50e880afd259f17b026852de39",
+      "4c2cd0851b0a49c9a463664eaa278807b4fb0b5d21623a1e07695378489db4d1"
+    ],
+    "cases": [
+      {
+        "case": "F1",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F2",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 9,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F3",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 12,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "F4",
+        "success": true,
+        "optimal": true,
+        "cost": 0,
+        "counts": {
+          "ok": 9,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D1",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D2",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 16,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": [
+          {
+            "line": 46,
+            "data": {
+              "round": 0,
+              "turn": 4,
+              "phase": "DECISION",
+              "agent_id": 2,
+              "attempt": 0,
+              "conflict_description": "Two or more actions target slot 6.",
+              "actions": [
+                {
+                  "type": "reschedule",
+                  "item_id": 100,
+                  "from_slot": 6,
+                  "to_slot": 6,
+                  "justification": "I must reschedule my errand to free slot 6 because it was the only slot agreed upon by all participants without requiring any of them to move their commitments. All other slots were either blocked or required displacement, making slot 6 the only viable option for coordination."
+                },
+                {
+                  "type": "schedule",
+                  "meeting_id": 1,
+                  "slot": 6,
+                  "cost": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "case": "D3",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 4,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "D4",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C1",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 16,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": [
+          {
+            "line": 49,
+            "data": {
+              "round": 0,
+              "turn": 4,
+              "phase": "DECISION",
+              "agent_id": 3,
+              "attempt": 0,
+              "conflict_description": "Expected exactly 1 schedule action, got 0.",
+              "actions": []
+            }
+          }
+        ]
+      },
+      {
+        "case": "C2",
+        "success": true,
+        "optimal": false,
+        "cost": 8,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 1,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      },
+      {
+        "case": "C3",
+        "success": true,
+        "optimal": true,
+        "cost": 1,
+        "counts": {
+          "ok": 20,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [
+          {
+            "line": 12,
+            "sender": 0,
+            "action": {
+              "type": "dm",
+              "to": 2,
+              "content": "I suggest slot 7 for the meeting. It's free and doesn't interfere with my current commitments. Please let me know if you have any conflicts."
+            }
+          },
+          {
+            "line": 31,
+            "sender": 1,
+            "action": {
+              "type": "dm",
+              "to": 2,
+              "content": "I propose slot 6 instead. It's free on my calendar and doesn't require any rescheduling. Would that work for you?"
+            }
+          },
+          {
+            "line": 46,
+            "sender": 1,
+            "action": {
+              "type": "dm",
+              "to": 2,
+              "content": "I agree to slot 3. I need to reschedule my errand at slot 3 to make space, as it's the only free slot that works for all of us. The meeting is urgent to coordinate with Aunt Mary on Uncle Steve's alcoholism intervention, and this slot is the only one available without conflicting with others' commitments. I will move my errand to a different time to free up slot 3."
+            }
+          }
+        ],
+        "rejected_batches": []
+      },
+      {
+        "case": "C4",
+        "success": false,
+        "optimal": false,
+        "cost": 0,
+        "counts": {
+          "ok": 15,
+          "strict_envelope_errors": 0,
+          "old_meeting_moves": 0
+        },
+        "external_contacts": [],
+        "rejected_batches": []
+      }
+    ]
+  }
+}

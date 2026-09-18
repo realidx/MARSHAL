@@ -75,6 +75,8 @@ class Transport:
         body = dict(model=self.route['model'], messages=messages,
                     temperature=self.config.get('temperature', 0.0),
                     max_tokens=kwargs.get('max_tokens') or self.config.get('max_tokens', 768), seed=seed)
+        if 'chat_template_kwargs' in self.config:
+            body['chat_template_kwargs'] = self.config['chat_template_kwargs']
         record = dict(agent_id=self.agent_id, call_index=index, base_url=self.route['base_url'], request=body)
         try:
             key = os.environ.get(self.route.get('api_key_env', ''), 'EMPTY')
@@ -239,6 +241,8 @@ def main():
             protocol=routes.get('execution_protocol','reasoning-separated-v2-tokens-768'),
             max_tokens=budget,original_frozen_max_tokens=frozen['sampling']['max_tokens'],
             temperature=routes['temperature'],prompt_changed=False,
+            chat_template_kwargs=routes.get('chat_template_kwargs',{}),
+            model_chat_template_changed=bool(routes.get('chat_template_kwargs')),
             reasoning_normalization='separate leading think block; preserve raw output'),indent=2)+'\n')
         jobs=[dict(game_id=c['id'],formal_case=c['id'],seed=c['scenario']['seed'],focal_seat=i) for i,c in enumerate(cases)]
         (args.output/'frozen_manifest.json').write_bytes((FROZEN/'manifest.json').read_bytes())

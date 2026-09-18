@@ -10,7 +10,7 @@ import socket
 import subprocess
 import sys
 import time
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 ROOT=Path(__file__).resolve().parents[2]
 
 
@@ -21,6 +21,7 @@ def main():
     parser.add_argument('--model',type=Path,default=Path('/raid/chenjiahao/mas/models/Qwen3-4B-Instruct-2507'))
     parser.add_argument('--ports',type=int,nargs='+',default=[18105,18106])
     parser.add_argument('--max-tokens',type=int,choices=[768,4096],default=768)
+    parser.add_argument('--disable-thinking',action='store_true',help='Use the tokenizer non-thinking template; preserve native JSON thinking')
     parser.add_argument('--max-model-len',type=int,default=32768)
     parser.add_argument('--runner-python',type=Path,default=Path('/raid/chenjiahao/mas/.venv-calbench/bin/python'))
     parser.add_argument('--parallel-games',type=int,default=2)
@@ -34,6 +35,14 @@ def main():
     if len(args.ports)!=len(gpus) or len(set(args.ports))!=len(args.ports):
         parser.error('Provide one distinct --ports value per allocated GPU')
     if not (args.model/'config.json').is_file():raise FileNotFoundError(args.model)
+    if args.disable_thinking:
+        from transformers import AutoTokenizer
+        tokenizer=AutoTokenizer.from_pretrained(str(args.model),local_files_only=True)
+        messages=[dict(role='user',content='Reply with OK.')]
+        on=tokenizer.apply_chat_template(messages,tokenize=False,add_generation_prompt=True,enable_thinking=True)
+        off=tokenizer.apply_chat_template(messages,tokenize=False,add_generation_prompt=True,enable_thinking=False)
+        if on==off or '<think>\n\n</think>' not in off:
+            raise ValueError('Tokenizer does not implement the expected Qwen3 non-thinking switch; stop before evaluation')
     for port in args.ports:
         with socket.socket() as sock:sock.bind(('127.0.0.1',port))
     out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
@@ -45,6 +54,9 @@ def main():
     config['endpoints']['focal']=dict(config['equivalent_replicas'][0])
     config['endpoints']['q0']=dict(config['equivalent_replicas'][-1])
     config['execution_protocol']=f'reasoning-separated-v2-tokens-{args.max_tokens}'
+    if args.disable_thinking:
+        config['chat_template_kwargs']={'enable_thinking':False}
+        (out/'thinking_template_check.json').write_text(json.dumps(dict(enabled_suffix=on[-200:],disabled_suffix=off[-200:]),indent=2)+'\n')
     routes=out/'routes.json';routes.write_text(json.dumps(config,indent=2)+'\n')
     if args.suite=='formal':
         if args.max_model_len!=32768: raise ValueError('Formal context budget is frozen at 32768')
@@ -111,6 +123,17 @@ def main():
             if int(elapsed//30)!=last:
                 last=int(elapsed//30);print(f'Startup {elapsed:.0f}s ready={sorted(ready)}',flush=True)
             if len(ready)<len(gpus):time.sleep(1)
+        if args.disable_thinking:
+            for index,endpoint in enumerate(config['equivalent_replicas']):
+                body=dict(model=endpoint['model'],messages=[dict(role='user',content='Reply with exactly OK.')],
+                          temperature=0.0,max_tokens=128,chat_template_kwargs={'enable_thinking':False})
+                req=Request(endpoint['base_url']+'/chat/completions',data=json.dumps(body).encode(),headers={'Content-Type':'application/json'})
+                with urlopen(req,timeout=120) as response:probe=json.load(response)
+                (out/f'thinking_probe-{index}.json').write_text(json.dumps(dict(request=body,response=probe),indent=2)+'\n')
+                answer=probe['choices'][0]['message'].get('content') or ''
+                if '<think>' in answer or '</think>' in answer or probe['choices'][0]['finish_reason']=='length':
+                    raise RuntimeError('Non-thinking probe emitted think tags or truncated; inspect thinking_probe before proceeding')
+            print('Non-thinking template and server probes passed',flush=True)
         subprocess.run([str(args.runner_python),'-u','-m','examples.final_evaluation.calbench_local',
                         '--routes',str(routes),'--output',str(out/'games'),'--games','2',
                         '--parallel-games',str(args.parallel_games),'--suite',args.suite],
