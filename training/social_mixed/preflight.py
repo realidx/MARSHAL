@@ -36,6 +36,8 @@ def check():
     p4_updates = 0
     for step in range(512):
         batch = select(data['bp_train'], step, 42)
+        if {t['task'] for t in batch}!={'B','P'}:
+            raise ValueError(f'Training update {step} is missing B or P')
         tested.update(t['id'] for t in batch)
         p4 = [t for t in batch if t['kernel']=='P4']
         if p4:

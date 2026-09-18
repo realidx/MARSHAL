@@ -7,6 +7,18 @@ from training.social_mixed.distribution_sampling import select as original
 
 
 class CurriculumTests(unittest.TestCase):
+    def test_every_update_preserves_both_domains_and_budget(self):
+        rows=read(OUT/'bp_train.jsonl');baseline=read(SOURCE/'bp_train.jsonl')
+        for seed in (42,123):
+            seen=set()
+            for step in range(1000):
+                batch=select(rows,step,seed)
+                self.assertEqual({t['task'] for t in batch},{'B','P'},(seed,step))
+                self.assertLessEqual(len(batch),len(original(baseline,step,seed)))
+                seen.update(t['id'] for t in batch)
+                p4=[t for t in batch if t['kernel']=='P4']
+                if p4:self.assertTrue({'query_only','ordinary_only'}<={t['information_role'] for t in p4})
+            self.assertEqual(seen,{t['id'] for t in rows})
     def test_legacy_schedule_unchanged(self):
         rows=read(SOURCE/'bp_train.jsonl')
         for step in range(20):
@@ -58,13 +70,16 @@ class CurriculumTests(unittest.TestCase):
         from training.social_mixed.core import Collector,seed_for
         from training.b_sft.social_bp_training import native_completion
         data={name:read(OUT/(name+'.jsonl')) for name in ('bp_train','bp_validation','selfplay_train','selfplay_validation')}
-        step=1;selected=select(data['bp_train'],step,42)
-        lookup={seed_for(42,t['id'],r,step):t for t in selected for r in range(8)}
-        def generate(reqs):
-            return [dict(prompt_ids=[1],response_ids=[2],behavior_log_probs=[-.1],completion=native_completion(lookup[r['seed']])) for r in reqs]
-        rows,_,_,_=Collector(data,generate,42,16).collect(step,'bp')
-        self.assertEqual(Counter(r['task_id'] for r in rows),{t['id']:8 for t in selected})
-        self.assertTrue(all(r['score']['correct'] for r in rows))
+        for step in range(16):
+            selected=select(data['bp_train'],step,42)
+            lookup={seed_for(42,t['id'],r,step):t for t in selected for r in range(8)}
+            def generate(reqs):
+                return [dict(prompt_ids=[1],response_ids=[2],behavior_log_probs=[-.1],completion=native_completion(lookup[r['seed']])) for r in reqs]
+            rows,_,_,_=Collector(data,generate,42,16).collect(step,'bp')
+            self.assertEqual(Counter(r['task_id'] for r in rows),{t['id']:8 for t in selected})
+            self.assertTrue(all(r['score']['correct'] for r in rows))
+            for kind in ('B','P'):
+                self.assertAlmostEqual(sum(r['loss_weight'] for r in rows if r['kind']==kind)/len(rows),.5)
 
 
 if __name__=='__main__':unittest.main()

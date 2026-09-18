@@ -44,13 +44,27 @@ def select(rows, step, seed, validation=False):
         def take(ts):
             addition={t['id']:t for t in ts if t['id'] not in chosen}
             if addition and len(chosen)+len(addition)<=cap:
+                prospective=chosen|addition
+                missing={'B','P'}-{t['task'] for t in prospective.values()}
+                # Reserve room for an intact unit of the other domain BEFORE
+                # accepting a practice group; never repair by splitting it.
+                for domain in missing:
+                    costs=[len({t['id'] for t in unit}-prospective.keys())
+                           for unit in plan['regular'].values()
+                           if any(t['task']==domain for t in unit)]
+                    if not costs or len(prospective)+min(costs)>cap:return False
                 chosen.update(addition);return True
             return False
         role=('bridge','history','reduced','result')[s%4]
         for _,ts in sorted(plan['practice'][role].items(),key=rank):
             if take(ts):break
+        for domain in ('B','P'):
+            if any(t['task']==domain for t in chosen.values()):continue
+            for _,ts in sorted(plan['regular'].items(),key=rank):
+                if any(t['task']==domain for t in ts) and take(ts):break
         for _,ts in sorted(plan['regular'].items(),key=rank):take(ts)
-        if not chosen:raise ValueError('No intact unit fits original batch budget')
+        if {t['task'] for t in chosen.values()}!={'B','P'}:
+            raise ValueError(f'No intact B/P pair fits original batch budget at step {s}')
         counts.update(chosen.keys());plan['batches'].append(list(chosen.values()))
     return plan['batches'][step]
 
