@@ -1,0 +1,654 @@
+{
+  "validation": "192 episodes replayed against frozen native rules; all summaries, source manifests, initial requests and shared Q0 hashes consistent",
+  "models": {
+    "q0": {
+      "counts": {
+        "focal_calls": 234,
+        "focal_invalid": 45,
+        "focal_truncated": 41,
+        "valid_proposal_decisions": 139,
+        "investigate_last_global_opportunity": 1,
+        "q0_calls": 450,
+        "q0_invalid": 80,
+        "q0_truncated": 75
+      },
+      "actions": {
+        "INVESTIGATE": 43,
+        "OFFER": 48,
+        "ACCEPT": 17,
+        "REJECT": 33,
+        "PASS": 48
+      },
+      "errors": {
+        "truncated": 41,
+        "native_illegal_action": 4
+      },
+      "failure_actor": {
+        "focal": 2,
+        "q0": 2
+      },
+      "mean_tokens": 451.6111111111111,
+      "median_tokens": 363.5,
+      "total_tokens": 105677,
+      "mean_reasoning_chars": 1986.2692307692307,
+      "strata": {
+        "all/all": {
+          "n": 48,
+          "completed": 44,
+          "utility": 0.178030303030303,
+          "team": 0.4431818181818182,
+          "bounds": [
+            0.12152777777777778,
+            0.2673611111111111
+          ]
+        },
+        "all/binary": {
+          "n": 24,
+          "completed": 23,
+          "utility": 0.13043478260869565,
+          "team": 0.2608695652173913,
+          "bounds": [
+            0.08333333333333333,
+            0.16666666666666666
+          ]
+        },
+        "all/linear": {
+          "n": 24,
+          "completed": 21,
+          "utility": 0.23015873015873015,
+          "team": 0.6428571428571429,
+          "bounds": [
+            0.15972222222222224,
+            0.3680555555555556
+          ]
+        },
+        "ID/all": {
+          "n": 24,
+          "completed": 22,
+          "utility": 0.28787878787878785,
+          "team": 0.5833333333333333,
+          "bounds": [
+            0.2222222222222222,
+            0.34722222222222227
+          ]
+        },
+        "ID/binary": {
+          "n": 12,
+          "completed": 11,
+          "utility": 0.2727272727272727,
+          "team": 0.45454545454545453,
+          "bounds": [
+            0.16666666666666666,
+            0.3333333333333333
+          ]
+        },
+        "ID/linear": {
+          "n": 12,
+          "completed": 11,
+          "utility": 0.303030303030303,
+          "team": 0.712121212121212,
+          "bounds": [
+            0.27777777777777773,
+            0.3611111111111111
+          ]
+        },
+        "OOD/all": {
+          "n": 24,
+          "completed": 22,
+          "utility": 0.06818181818181818,
+          "team": 0.303030303030303,
+          "bounds": [
+            0.02083333333333334,
+            0.1875
+          ]
+        },
+        "OOD/binary": {
+          "n": 12,
+          "completed": 12,
+          "utility": 0.0,
+          "team": 0.08333333333333333,
+          "bounds": [
+            0.0,
+            0.0
+          ]
+        },
+        "OOD/linear": {
+          "n": 12,
+          "completed": 10,
+          "utility": 0.15,
+          "team": 0.5666666666666667,
+          "bounds": [
+            0.04166666666666668,
+            0.375
+          ]
+        }
+      }
+    },
+    "sp": {
+      "counts": {
+        "focal_calls": 189,
+        "focal_invalid": 27,
+        "focal_truncated": 25,
+        "valid_proposal_decisions": 126,
+        "q0_calls": 432,
+        "q0_invalid": 79,
+        "q0_truncated": 73,
+        "investigate_last_global_opportunity": 2
+      },
+      "actions": {
+        "OFFER": 54,
+        "ACCEPT": 15,
+        "INVESTIGATE": 32,
+        "PASS": 40,
+        "REJECT": 21
+      },
+      "errors": {
+        "truncated": 25,
+        "native_illegal_action": 2
+      },
+      "failure_actor": {
+        "focal": 5,
+        "q0": 5
+      },
+      "mean_tokens": 501.6878306878307,
+      "median_tokens": 414,
+      "total_tokens": 94819,
+      "mean_reasoning_chars": 2175.4444444444443,
+      "strata": {
+        "all/all": {
+          "n": 48,
+          "completed": 38,
+          "utility": 0.2675438596491228,
+          "team": 0.881578947368421,
+          "bounds": [
+            0.06597222222222221,
+            0.4826388888888889
+          ]
+        },
+        "all/binary": {
+          "n": 24,
+          "completed": 20,
+          "utility": 0.35,
+          "team": 0.8,
+          "bounds": [
+            0.125,
+            0.5
+          ]
+        },
+        "all/linear": {
+          "n": 24,
+          "completed": 18,
+          "utility": 0.1759259259259259,
+          "team": 0.9722222222222222,
+          "bounds": [
+            0.006944444444444429,
+            0.46527777777777773
+          ]
+        },
+        "ID/all": {
+          "n": 24,
+          "completed": 20,
+          "utility": 0.525,
+          "team": 1.1166666666666667,
+          "bounds": [
+            0.3125,
+            0.6041666666666666
+          ]
+        },
+        "ID/binary": {
+          "n": 12,
+          "completed": 10,
+          "utility": 0.8,
+          "team": 1.5,
+          "bounds": [
+            0.5,
+            0.8333333333333334
+          ]
+        },
+        "ID/linear": {
+          "n": 12,
+          "completed": 10,
+          "utility": 0.25,
+          "team": 0.7333333333333333,
+          "bounds": [
+            0.125,
+            0.375
+          ]
+        },
+        "OOD/all": {
+          "n": 24,
+          "completed": 18,
+          "utility": -0.01851851851851853,
+          "team": 0.6203703703703703,
+          "bounds": [
+            -0.18055555555555558,
+            0.3611111111111111
+          ]
+        },
+        "OOD/binary": {
+          "n": 12,
+          "completed": 10,
+          "utility": -0.1,
+          "team": 0.1,
+          "bounds": [
+            -0.25,
+            0.16666666666666666
+          ]
+        },
+        "OOD/linear": {
+          "n": 12,
+          "completed": 8,
+          "utility": 0.0833333333333333,
+          "team": 1.2708333333333333,
+          "bounds": [
+            -0.11111111111111112,
+            0.5555555555555555
+          ]
+        }
+      }
+    },
+    "bp": {
+      "counts": {
+        "focal_calls": 195,
+        "focal_invalid": 34,
+        "focal_truncated": 28,
+        "valid_proposal_decisions": 126,
+        "q0_calls": 445,
+        "q0_invalid": 77,
+        "q0_truncated": 62,
+        "investigate_last_global_opportunity": 3
+      },
+      "actions": {
+        "OFFER": 69,
+        "INVESTIGATE": 34,
+        "ACCEPT": 13,
+        "REJECT": 22,
+        "PASS": 23
+      },
+      "errors": {
+        "truncated": 28,
+        "native_illegal_action": 5,
+        "not_exactly_one_tool": 1
+      },
+      "failure_actor": {
+        "q0": 4,
+        "focal": 4
+      },
+      "mean_tokens": 493.71794871794873,
+      "median_tokens": 446,
+      "total_tokens": 96275,
+      "mean_reasoning_chars": 2226.630769230769,
+      "strata": {
+        "all/all": {
+          "n": 48,
+          "completed": 40,
+          "utility": 0.29583333333333334,
+          "team": 0.6791666666666667,
+          "bounds": [
+            0.07986111111111112,
+            0.517361111111111
+          ]
+        },
+        "all/binary": {
+          "n": 24,
+          "completed": 21,
+          "utility": 0.2857142857142857,
+          "team": 0.42857142857142855,
+          "bounds": [
+            0.08333333333333333,
+            0.4166666666666667
+          ]
+        },
+        "all/linear": {
+          "n": 24,
+          "completed": 19,
+          "utility": 0.30701754385964913,
+          "team": 0.9561403508771931,
+          "bounds": [
+            0.0763888888888889,
+            0.6180555555555556
+          ]
+        },
+        "ID/all": {
+          "n": 24,
+          "completed": 19,
+          "utility": 0.25438596491228066,
+          "team": 0.631578947368421,
+          "bounds": [
+            0.0763888888888889,
+            0.576388888888889
+          ]
+        },
+        "ID/binary": {
+          "n": 12,
+          "completed": 10,
+          "utility": 0.4,
+          "team": 0.6,
+          "bounds": [
+            0.16666666666666666,
+            0.5833333333333334
+          ]
+        },
+        "ID/linear": {
+          "n": 12,
+          "completed": 9,
+          "utility": 0.0925925925925926,
+          "team": 0.6666666666666666,
+          "bounds": [
+            -0.013888888888888886,
+            0.5694444444444444
+          ]
+        },
+        "OOD/all": {
+          "n": 24,
+          "completed": 21,
+          "utility": 0.3333333333333333,
+          "team": 0.7222222222222222,
+          "bounds": [
+            0.08333333333333333,
+            0.4583333333333333
+          ]
+        },
+        "OOD/binary": {
+          "n": 12,
+          "completed": 11,
+          "utility": 0.18181818181818182,
+          "team": 0.2727272727272727,
+          "bounds": [
+            0.0,
+            0.25
+          ]
+        },
+        "OOD/linear": {
+          "n": 12,
+          "completed": 10,
+          "utility": 0.5,
+          "team": 1.2166666666666666,
+          "bounds": [
+            0.16666666666666666,
+            0.6666666666666666
+          ]
+        }
+      }
+    },
+    "mixed": {
+      "counts": {
+        "q0_calls": 477,
+        "q0_invalid": 79,
+        "q0_truncated": 67,
+        "focal_calls": 177,
+        "focal_invalid": 22,
+        "focal_truncated": 0,
+        "valid_proposal_decisions": 121,
+        "investigate_last_global_opportunity": 0
+      },
+      "actions": {
+        "ACCEPT": 19,
+        "REJECT": 15,
+        "OFFER": 111,
+        "PASS": 7,
+        "INVESTIGATE": 3
+      },
+      "errors": {
+        "native_illegal_action": 22
+      },
+      "failure_actor": {
+        "q0": 3,
+        "focal": 10
+      },
+      "mean_tokens": 58.220338983050844,
+      "median_tokens": 39,
+      "total_tokens": 10305,
+      "mean_reasoning_chars": 116.32768361581921,
+      "strata": {
+        "all/all": {
+          "n": 48,
+          "completed": 35,
+          "utility": 0.06666666666666665,
+          "team": 0.6,
+          "bounds": [
+            -0.15972222222222224,
+            0.4236111111111111
+          ]
+        },
+        "all/binary": {
+          "n": 24,
+          "completed": 19,
+          "utility": -0.05263157894736842,
+          "team": 0.3684210526315789,
+          "bounds": [
+            -0.25,
+            0.25
+          ]
+        },
+        "all/linear": {
+          "n": 24,
+          "completed": 16,
+          "utility": 0.20833333333333331,
+          "team": 0.875,
+          "bounds": [
+            -0.06944444444444445,
+            0.5972222222222222
+          ]
+        },
+        "ID/all": {
+          "n": 24,
+          "completed": 18,
+          "utility": 0.3611111111111111,
+          "team": 0.9907407407407407,
+          "bounds": [
+            0.10416666666666667,
+            0.5625
+          ]
+        },
+        "ID/binary": {
+          "n": 12,
+          "completed": 11,
+          "utility": 0.36363636363636365,
+          "team": 1.0909090909090908,
+          "bounds": [
+            0.25,
+            0.4166666666666667
+          ]
+        },
+        "ID/linear": {
+          "n": 12,
+          "completed": 7,
+          "utility": 0.35714285714285715,
+          "team": 0.8333333333333333,
+          "bounds": [
+            -0.041666666666666685,
+            0.7083333333333334
+          ]
+        },
+        "OOD/all": {
+          "n": 24,
+          "completed": 17,
+          "utility": -0.2450980392156863,
+          "team": 0.18627450980392155,
+          "bounds": [
+            -0.42361111111111116,
+            0.2847222222222222
+          ]
+        },
+        "OOD/binary": {
+          "n": 12,
+          "completed": 8,
+          "utility": -0.625,
+          "team": -0.625,
+          "bounds": [
+            -0.75,
+            0.08333333333333333
+          ]
+        },
+        "OOD/linear": {
+          "n": 12,
+          "completed": 9,
+          "utility": 0.0925925925925926,
+          "team": 0.9074074074074073,
+          "bounds": [
+            -0.09722222222222221,
+            0.4861111111111111
+          ]
+        }
+      }
+    }
+  },
+  "paired": {
+    "sp-q0": {
+      "all": {
+        "common_terminal": 35,
+        "mean_difference": 0.13809523809523808,
+        "wins": 10,
+        "ties": 15,
+        "losses": 10,
+        "a_only_complete": 3,
+        "b_only_complete": 9
+      },
+      "ID": {
+        "common_terminal": 18,
+        "mean_difference": 0.17592592592592593,
+        "wins": 5,
+        "ties": 8,
+        "losses": 5,
+        "a_only_complete": 2,
+        "b_only_complete": 4
+      },
+      "OOD": {
+        "common_terminal": 17,
+        "mean_difference": 0.0980392156862745,
+        "wins": 5,
+        "ties": 7,
+        "losses": 5,
+        "a_only_complete": 1,
+        "b_only_complete": 5
+      }
+    },
+    "bp-q0": {
+      "all": {
+        "common_terminal": 36,
+        "mean_difference": 0.0925925925925926,
+        "wins": 11,
+        "ties": 13,
+        "losses": 12,
+        "a_only_complete": 4,
+        "b_only_complete": 8
+      },
+      "ID": {
+        "common_terminal": 17,
+        "mean_difference": 0.03921568627450981,
+        "wins": 5,
+        "ties": 5,
+        "losses": 7,
+        "a_only_complete": 2,
+        "b_only_complete": 5
+      },
+      "OOD": {
+        "common_terminal": 19,
+        "mean_difference": 0.14035087719298248,
+        "wins": 6,
+        "ties": 8,
+        "losses": 5,
+        "a_only_complete": 2,
+        "b_only_complete": 3
+      }
+    },
+    "mixed-q0": {
+      "all": {
+        "common_terminal": 34,
+        "mean_difference": -0.06372549019607844,
+        "wins": 8,
+        "ties": 13,
+        "losses": 13,
+        "a_only_complete": 1,
+        "b_only_complete": 10
+      },
+      "ID": {
+        "common_terminal": 18,
+        "mean_difference": 0.06481481481481481,
+        "wins": 5,
+        "ties": 7,
+        "losses": 6,
+        "a_only_complete": 0,
+        "b_only_complete": 4
+      },
+      "OOD": {
+        "common_terminal": 16,
+        "mean_difference": -0.20833333333333334,
+        "wins": 3,
+        "ties": 6,
+        "losses": 7,
+        "a_only_complete": 1,
+        "b_only_complete": 6
+      }
+    },
+    "mixed-sp": {
+      "all": {
+        "common_terminal": 29,
+        "mean_difference": -0.2413793103448276,
+        "wins": 8,
+        "ties": 9,
+        "losses": 12,
+        "a_only_complete": 6,
+        "b_only_complete": 9
+      },
+      "ID": {
+        "common_terminal": 15,
+        "mean_difference": -0.25555555555555554,
+        "wins": 3,
+        "ties": 6,
+        "losses": 6,
+        "a_only_complete": 3,
+        "b_only_complete": 5
+      },
+      "OOD": {
+        "common_terminal": 14,
+        "mean_difference": -0.2261904761904762,
+        "wins": 5,
+        "ties": 3,
+        "losses": 6,
+        "a_only_complete": 3,
+        "b_only_complete": 4
+      }
+    },
+    "mixed-bp": {
+      "all": {
+        "common_terminal": 30,
+        "mean_difference": -0.2555555555555556,
+        "wins": 6,
+        "ties": 10,
+        "losses": 14,
+        "a_only_complete": 5,
+        "b_only_complete": 10
+      },
+      "ID": {
+        "common_terminal": 15,
+        "mean_difference": -0.12222222222222222,
+        "wins": 5,
+        "ties": 3,
+        "losses": 7,
+        "a_only_complete": 3,
+        "b_only_complete": 4
+      },
+      "OOD": {
+        "common_terminal": 15,
+        "mean_difference": -0.38888888888888895,
+        "wins": 1,
+        "ties": 7,
+        "losses": 7,
+        "a_only_complete": 2,
+        "b_only_complete": 6
+      }
+    }
+  },
+  "all_four_complete": {
+    "count": 25,
+    "means": {
+      "q0": 0.08,
+      "sp": 0.2333333333333333,
+      "bp": 0.25333333333333335,
+      "mixed": 0.006666666666666667
+    }
+  },
+  "limitations": "One rollout per seat. ID spans 3 geometries; OOD 8. Missingness is policy-dependent; survivor means and common-terminal pairs are diagnostic only. No independent-seat significance test."
+}

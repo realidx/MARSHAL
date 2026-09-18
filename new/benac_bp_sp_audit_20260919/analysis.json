@@ -1,0 +1,555 @@
+{
+  "models": {
+    "q0": {
+      "diagnostics": {
+        "queries": 43,
+        "query_has_later_valid_focal_action": 39,
+        "offer_own_immediate_zero": 17,
+        "response_negative_ACCEPT": 4,
+        "response_zero_ACCEPT": 7,
+        "offer_own_immediate_positive": 22,
+        "response_positive_REJECT": 8,
+        "terminal_response_total": 2,
+        "terminal_response_own_optimal": 1,
+        "response_zero_REJECT": 16,
+        "response_negative_REJECT": 9,
+        "offer_own_immediate_negative": 9,
+        "response_positive_ACCEPT": 6,
+        "last_offer_own_immediate_negative": 1
+      },
+      "invalid_call_types": {
+        "output_truncated": 41,
+        "already_bound_commitment": 2,
+        "other_illegal_action": 2
+      }
+    },
+    "bp": {
+      "diagnostics": {
+        "offer_own_immediate_zero": 30,
+        "queries": 34,
+        "query_has_later_valid_focal_action": 26,
+        "response_zero_ACCEPT": 3,
+        "offer_own_immediate_positive": 26,
+        "response_zero_REJECT": 10,
+        "response_positive_ACCEPT": 7,
+        "offer_own_immediate_negative": 13,
+        "response_negative_REJECT": 5,
+        "last_offer_own_immediate_zero": 3,
+        "response_negative_ACCEPT": 3,
+        "terminal_response_total": 1,
+        "terminal_response_own_optimal": 1,
+        "last_offer_own_immediate_positive": 2,
+        "response_positive_REJECT": 7,
+        "last_offer_own_immediate_negative": 1
+      },
+      "invalid_call_types": {
+        "output_truncated": 28,
+        "already_bound_commitment": 5,
+        "tool_count_0": 1
+      }
+    },
+    "sp": {
+      "diagnostics": {
+        "offer_own_immediate_zero": 22,
+        "response_positive_ACCEPT": 6,
+        "queries": 32,
+        "query_has_later_valid_focal_action": 24,
+        "response_zero_REJECT": 9,
+        "response_zero_ACCEPT": 6,
+        "response_negative_ACCEPT": 3,
+        "response_positive_REJECT": 7,
+        "offer_own_immediate_negative": 7,
+        "response_negative_REJECT": 5,
+        "terminal_response_total": 1,
+        "terminal_response_own_optimal": 1,
+        "offer_own_immediate_positive": 25,
+        "last_offer_own_immediate_positive": 1
+      },
+      "invalid_call_types": {
+        "output_truncated": 25,
+        "other_illegal_action": 1,
+        "already_bound_commitment": 1
+      }
+    }
+  },
+  "training_coverage": {
+    "B1": {
+      "rows": 104,
+      "origin_ids": 26,
+      "players": {
+        "2": 104
+      },
+      "mode": {
+        "linear": 20,
+        "binary": 84
+      },
+      "public_unfixed_slots": {
+        "1": 88,
+        "2": 16
+      },
+      "own_has_avoid": 48,
+      "supplied_belief": 0
+    },
+    "B2": {
+      "rows": 52,
+      "origin_ids": 13,
+      "players": {
+        "2": 40,
+        "3": 12
+      },
+      "mode": {
+        "linear": 12,
+        "binary": 40
+      },
+      "public_unfixed_slots": {
+        "1": 48,
+        "2": 4
+      },
+      "own_has_avoid": 4,
+      "supplied_belief": 0
+    },
+    "B3": {
+      "rows": 58,
+      "origin_ids": 16,
+      "players": {
+        "2": 54,
+        "3": 4
+      },
+      "mode": {
+        "linear": 24,
+        "binary": 34
+      },
+      "public_unfixed_slots": {
+        "2": 30,
+        "1": 28
+      },
+      "own_has_avoid": 0,
+      "supplied_belief": 0
+    },
+    "P1": {
+      "rows": 72,
+      "origin_ids": 18,
+      "players": {
+        "2": 68,
+        "3": 4
+      },
+      "mode": {
+        "linear": 28,
+        "binary": 44
+      },
+      "public_unfixed_slots": {
+        "0": 68,
+        "1": 4
+      },
+      "own_has_avoid": 20,
+      "supplied_belief": 72
+    },
+    "P2": {
+      "rows": 56,
+      "origin_ids": 14,
+      "players": {
+        "2": 48,
+        "3": 8
+      },
+      "mode": {
+        "linear": 24,
+        "binary": 32
+      },
+      "public_unfixed_slots": {
+        "1": 32,
+        "2": 24
+      },
+      "own_has_avoid": 8,
+      "supplied_belief": 56
+    },
+    "P3": {
+      "rows": 24,
+      "origin_ids": 6,
+      "players": {
+        "2": 24
+      },
+      "mode": {
+        "linear": 12,
+        "binary": 12
+      },
+      "public_unfixed_slots": {
+        "1": 24
+      },
+      "own_has_avoid": 0,
+      "supplied_belief": 24
+    },
+    "P4": {
+      "rows": 60,
+      "origin_ids": 15,
+      "players": {
+        "2": 60
+      },
+      "mode": {
+        "linear": 28,
+        "binary": 32
+      },
+      "public_unfixed_slots": {
+        "1": 52,
+        "2": 8
+      },
+      "own_has_avoid": 52,
+      "supplied_belief": 60
+    }
+  },
+  "failures": [
+    {
+      "model": "q0",
+      "game": "A-ID-binary-4r-balanced-seat2",
+      "status": "invalid_action",
+      "responsible_role": "focal",
+      "player": 2,
+      "focal_seat": 2,
+      "first_reason": "output_truncated",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 15,
+      "retry_line": 16,
+      "path": "runs/benac_a_soc/q0-formal-859851/games/A-ID-binary-4r-balanced-seat2"
+    },
+    {
+      "model": "q0",
+      "game": "A-OOD-linear-2r-avoid_heavy-seat2",
+      "status": "invalid_action",
+      "responsible_role": "q0",
+      "player": 0,
+      "focal_seat": 2,
+      "first_reason": "output_truncated",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 6,
+      "retry_line": 7,
+      "path": "runs/benac_a_soc/q0-formal-859851/games/A-OOD-linear-2r-avoid_heavy-seat2"
+    },
+    {
+      "model": "q0",
+      "game": "A-OOD-linear-2r-avoid_heavy-seat0",
+      "status": "invalid_action",
+      "responsible_role": "focal",
+      "player": 0,
+      "focal_seat": 0,
+      "first_reason": "output_truncated",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 7,
+      "retry_line": 8,
+      "path": "runs/benac_a_soc/q0-formal-859851/games/A-OOD-linear-2r-avoid_heavy-seat0"
+    },
+    {
+      "model": "q0",
+      "game": "A-ID-linear-4r-balanced-seat2",
+      "status": "invalid_action",
+      "responsible_role": "q0",
+      "player": 0,
+      "focal_seat": 2,
+      "first_reason": "output_truncated",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 8,
+      "retry_line": 9,
+      "path": "runs/benac_a_soc/q0-formal-859851/games/A-ID-linear-4r-balanced-seat2"
+    },
+    {
+      "model": "bp",
+      "game": "A-OOD-binary-4r-balanced-seat1",
+      "status": "invalid_action",
+      "responsible_role": "q0",
+      "player": 2,
+      "focal_seat": 1,
+      "first_reason": "output_truncated",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 6,
+      "retry_line": 7,
+      "path": "runs/benac_a_soc/bp-step139-formal-859921/games/A-OOD-binary-4r-balanced-seat1"
+    },
+    {
+      "model": "bp",
+      "game": "A-ID-binary-4r-avoid_heavy-seat1",
+      "status": "invalid_action",
+      "responsible_role": "q0",
+      "player": 2,
+      "focal_seat": 1,
+      "first_reason": "output_truncated",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 10,
+      "retry_line": 11,
+      "path": "runs/benac_a_soc/bp-step139-formal-859921/games/A-ID-binary-4r-avoid_heavy-seat1"
+    },
+    {
+      "model": "bp",
+      "game": "A-ID-binary-4r-avoid_heavy-seat2",
+      "status": "invalid_action",
+      "responsible_role": "focal",
+      "player": 2,
+      "focal_seat": 2,
+      "first_reason": "output_truncated",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 10,
+      "retry_line": 11,
+      "path": "runs/benac_a_soc/bp-step139-formal-859921/games/A-ID-binary-4r-avoid_heavy-seat2"
+    },
+    {
+      "model": "bp",
+      "game": "A-ID-linear-2r-balanced-seat2",
+      "status": "invalid_action",
+      "responsible_role": "q0",
+      "player": 1,
+      "focal_seat": 2,
+      "first_reason": "other_illegal_action",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 5,
+      "retry_line": 6,
+      "path": "runs/benac_a_soc/bp-step139-formal-859921/games/A-ID-linear-2r-balanced-seat2"
+    },
+    {
+      "model": "bp",
+      "game": "A-ID-linear-2r-balanced-seat1",
+      "status": "invalid_action",
+      "responsible_role": "focal",
+      "player": 1,
+      "focal_seat": 1,
+      "first_reason": "output_truncated",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 9,
+      "retry_line": 10,
+      "path": "runs/benac_a_soc/bp-step139-formal-859921/games/A-ID-linear-2r-balanced-seat1"
+    },
+    {
+      "model": "bp",
+      "game": "A-ID-linear-2r-avoid_heavy-seat0",
+      "status": "invalid_action",
+      "responsible_role": "focal",
+      "player": 0,
+      "focal_seat": 0,
+      "first_reason": "output_truncated",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 4,
+      "retry_line": 5,
+      "path": "runs/benac_a_soc/bp-step139-formal-859921/games/A-ID-linear-2r-avoid_heavy-seat0"
+    },
+    {
+      "model": "bp",
+      "game": "A-OOD-linear-4r-balanced-seat1",
+      "status": "invalid_action",
+      "responsible_role": "q0",
+      "player": 0,
+      "focal_seat": 1,
+      "first_reason": "output_truncated",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 8,
+      "retry_line": 9,
+      "path": "runs/benac_a_soc/bp-step139-formal-859921/games/A-OOD-linear-4r-balanced-seat1"
+    },
+    {
+      "model": "bp",
+      "game": "A-OOD-linear-4r-avoid_heavy-seat1",
+      "status": "invalid_action",
+      "responsible_role": "focal",
+      "player": 1,
+      "focal_seat": 1,
+      "first_reason": "output_truncated",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 6,
+      "retry_line": 7,
+      "path": "runs/benac_a_soc/bp-step139-formal-859921/games/A-OOD-linear-4r-avoid_heavy-seat1"
+    },
+    {
+      "model": "sp",
+      "game": "A-ID-binary-4r-balanced-seat1",
+      "status": "truncated_response",
+      "responsible_role": "focal",
+      "player": 1,
+      "focal_seat": 1,
+      "first_reason": "output_truncated",
+      "retry_reason": "output_truncated",
+      "same_function_retry": true,
+      "first_line": 14,
+      "retry_line": 15,
+      "path": "runs/benac_a_soc/selfplay-step69-formal-859921/games/A-ID-binary-4r-balanced-seat1"
+    },
+    {
+      "model": "sp",
+      "game": "A-OOD-binary-4r-balanced-seat2",
+      "status": "truncated_response",
+      "responsible_role": "focal",
+      "player": 2,
+      "focal_seat": 2,
+      "first_reason": "output_truncated",
+      "retry_reason": "output_truncated",
+      "same_function_retry": true,
+      "first_line": 8,
+      "retry_line": 9,
+      "path": "runs/benac_a_soc/selfplay-step69-formal-859921/games/A-OOD-binary-4r-balanced-seat2"
+    },
+    {
+      "model": "sp",
+      "game": "A-OOD-binary-4r-avoid_heavy-seat1",
+      "status": "invalid_action",
+      "responsible_role": "q0",
+      "player": 0,
+      "focal_seat": 1,
+      "first_reason": "output_truncated",
+      "retry_reason": "goal_as_commitment",
+      "same_function_retry": false,
+      "first_line": 5,
+      "retry_line": 6,
+      "path": "runs/benac_a_soc/selfplay-step69-formal-859921/games/A-OOD-binary-4r-avoid_heavy-seat1"
+    },
+    {
+      "model": "sp",
+      "game": "A-ID-binary-4r-avoid_heavy-seat2",
+      "status": "invalid_action",
+      "responsible_role": "q0",
+      "player": 1,
+      "focal_seat": 2,
+      "first_reason": "output_truncated",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 10,
+      "retry_line": 11,
+      "path": "runs/benac_a_soc/selfplay-step69-formal-859921/games/A-ID-binary-4r-avoid_heavy-seat2"
+    },
+    {
+      "model": "sp",
+      "game": "A-ID-linear-2r-balanced-seat0",
+      "status": "truncated_response",
+      "responsible_role": "focal",
+      "player": 0,
+      "focal_seat": 0,
+      "first_reason": "output_truncated",
+      "retry_reason": "output_truncated",
+      "same_function_retry": true,
+      "first_line": 5,
+      "retry_line": 6,
+      "path": "runs/benac_a_soc/selfplay-step69-formal-859921/games/A-ID-linear-2r-balanced-seat0"
+    },
+    {
+      "model": "sp",
+      "game": "A-OOD-linear-2r-balanced-seat0",
+      "status": "truncated_response",
+      "responsible_role": "focal",
+      "player": 0,
+      "focal_seat": 0,
+      "first_reason": "output_truncated",
+      "retry_reason": "output_truncated",
+      "same_function_retry": true,
+      "first_line": 8,
+      "retry_line": 9,
+      "path": "runs/benac_a_soc/selfplay-step69-formal-859921/games/A-OOD-linear-2r-balanced-seat0"
+    },
+    {
+      "model": "sp",
+      "game": "A-OOD-linear-2r-balanced-seat2",
+      "status": "invalid_action",
+      "responsible_role": "q0",
+      "player": 0,
+      "focal_seat": 2,
+      "first_reason": "output_truncated",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 6,
+      "retry_line": 7,
+      "path": "runs/benac_a_soc/selfplay-step69-formal-859921/games/A-OOD-linear-2r-balanced-seat2"
+    },
+    {
+      "model": "sp",
+      "game": "A-ID-linear-2r-avoid_heavy-seat2",
+      "status": "invalid_action",
+      "responsible_role": "q0",
+      "player": 0,
+      "focal_seat": 2,
+      "first_reason": "output_truncated",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 6,
+      "retry_line": 7,
+      "path": "runs/benac_a_soc/selfplay-step69-formal-859921/games/A-ID-linear-2r-avoid_heavy-seat2"
+    },
+    {
+      "model": "sp",
+      "game": "A-OOD-linear-2r-avoid_heavy-seat0",
+      "status": "truncated_response",
+      "responsible_role": "focal",
+      "player": 0,
+      "focal_seat": 0,
+      "first_reason": "output_truncated",
+      "retry_reason": "output_truncated",
+      "same_function_retry": true,
+      "first_line": 7,
+      "retry_line": 8,
+      "path": "runs/benac_a_soc/selfplay-step69-formal-859921/games/A-OOD-linear-2r-avoid_heavy-seat0"
+    },
+    {
+      "model": "sp",
+      "game": "A-OOD-linear-4r-balanced-seat2",
+      "status": "invalid_action",
+      "responsible_role": "q0",
+      "player": 0,
+      "focal_seat": 2,
+      "first_reason": "output_truncated",
+      "retry_reason": "already_bound_commitment",
+      "same_function_retry": false,
+      "first_line": 8,
+      "retry_line": 9,
+      "path": "runs/benac_a_soc/selfplay-step69-formal-859921/games/A-OOD-linear-4r-balanced-seat2"
+    }
+  ],
+  "terminal_decisions": [
+    {
+      "model": "q0",
+      "game": "A-ID-binary-2r-balanced-seat2",
+      "line": 10,
+      "action": {
+        "response": "REJECT"
+      },
+      "accept_delta": 1.0,
+      "own_optimal": false,
+      "path": "runs/benac_a_soc/q0-formal-859851/games/A-ID-binary-2r-balanced-seat2"
+    },
+    {
+      "model": "q0",
+      "game": "A-ID-linear-4r-avoid_heavy-seat2",
+      "line": 18,
+      "action": {
+        "response": "REJECT"
+      },
+      "accept_delta": -0.33333333333333337,
+      "own_optimal": true,
+      "path": "runs/benac_a_soc/q0-formal-859851/games/A-ID-linear-4r-avoid_heavy-seat2"
+    },
+    {
+      "model": "bp",
+      "game": "A-OOD-binary-2r-avoid_heavy-seat2",
+      "line": 10,
+      "action": {
+        "response": "REJECT"
+      },
+      "accept_delta": 0.0,
+      "own_optimal": true,
+      "path": "runs/benac_a_soc/bp-step139-formal-859921/games/A-OOD-binary-2r-avoid_heavy-seat2"
+    },
+    {
+      "model": "sp",
+      "game": "A-OOD-binary-2r-avoid_heavy-seat2",
+      "line": 8,
+      "action": {
+        "response": "REJECT"
+      },
+      "accept_delta": 0.0,
+      "own_optimal": true,
+      "path": "runs/benac_a_soc/selfplay-step69-formal-859921/games/A-OOD-binary-2r-avoid_heavy-seat2"
+    }
+  ]
+}

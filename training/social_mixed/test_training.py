@@ -153,9 +153,10 @@ class TrainingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);ckpt=root/'checkpoints/checkpoint-0';ckpt.mkdir(parents=True)
             (ckpt/'COMPLETE.json').write_text(json.dumps(dict(tp=2,world_size=2)))
-            options=dict(arm='mixed',seed=42,tokens_per_update=65536,gpu_profile='h100-96')
+            options=dict(arm='mixed',seed=42,tokens_per_update=65536,gpu_profile='h100-96',protocol_coefficient=.2)
             source=hashlib.sha256((ROOT/'examples/social_mixed/data_binary_linear_v3/manifest.json').read_bytes()).hexdigest()
-            (root/'experiment.json').write_text(json.dumps(dict(options=options,model='/base',data_manifest_sha256=source)))
+            from training.social_mixed.core import PROTOCOL_VERSION
+            (root/'experiment.json').write_text(json.dumps(dict(options=options,model='/base',data_manifest_sha256=source,advantage_version=PROTOCOL_VERSION)))
             validate_resume(ckpt,options,'/base')
             with self.assertRaises(ValueError):validate_resume(ckpt,dict(options,arm='selfplay'),'/base')
 

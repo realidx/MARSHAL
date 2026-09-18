@@ -11,7 +11,8 @@
 #SBATCH --output=slurm-%x-%j.out
 set -euo pipefail
 cd "${SLURM_SUBMIT_DIR:?Submit from the MARSHAL repository}"
-SOCIAL_ARM="${SOCIAL_ARM:-mixed}"
+SOCIAL_ARM="${SOCIAL_ARM:-bp}"
+export SOCIAL_DATA_DIR="${SOCIAL_DATA_DIR:-$PWD/examples/social_mixed/data_reasoning_v5_candidate}"
 SOCIAL_SEED="${SOCIAL_SEED:-42}"
 source "${CONDA_HOME:-/home/e/e1300530/miniconda3}/etc/profile.d/conda.sh"
 conda activate "${CONDA_ENV:-/home/e/e1300530/tmp/marshal-vllm09}"
@@ -51,11 +52,7 @@ printf '%s\n' "$ROLL_OUTPUT_DIR" > "runs/social_mixed/${SOCIAL_ARM}_latest.txt"
 args=(--arm "$SOCIAL_ARM" --seed "$SOCIAL_SEED" --total-tokens "${SOCIAL_TOTAL_TOKENS:-6553600}")
 args+=(--tokens-per-update "${SOCIAL_TOKENS_PER_UPDATE:-65536}")
 if [[ "${SOCIAL_DIAGNOSE_PROBABILITIES:-0}" == 1 ]]; then args+=(--diagnose-probabilities); fi
-if [[ "$SOCIAL_ARM" == bp ]]; then
-  args+=(--keep-checkpoints 1)
-else
-  args+=(--keep-checkpoints "${SOCIAL_KEEP_CHECKPOINTS:-2}")
-fi
+args+=(--keep-checkpoints 2 --protocol-coefficient "${SOCIAL_PROTOCOL_COEFFICIENT:-0.2}")
 if [[ -n "${SOCIAL_RESUME:-}" ]]; then args+=(--resume "$SOCIAL_RESUME"); fi
 # No ray stop --force: this job owns a private local head.
 python -u -m training.social_mixed.run "${args[@]}" > "$ROLL_OUTPUT_DIR/train.log" 2>&1 &

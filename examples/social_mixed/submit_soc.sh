@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Usage: bash examples/social_mixed/submit_soc.sh h200-141 mixed [checkpoint]
+# Usage: bash examples/social_mixed/submit_soc.sh h200-141 bp [checkpoint]
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 PROFILE="${1:?Choose h100-47, h100-96 or h200-141}"
-ARM="${2:-mixed}"
-case "$ARM" in mixed|selfplay|bp);; *) echo 'ARM must be mixed, selfplay or bp' >&2; exit 2;; esac
+ARM="${2:-bp}"
+case "$ARM" in selfplay|bp);; *) echo 'ARM must be selfplay or bp' >&2; exit 2;; esac
 GPUS=2
 case "$PROFILE" in
   h100-47)
@@ -24,6 +24,7 @@ if [[ -n "${SOCIAL_SUBMIT_PARTITION:-}" ]]; then
   esac
   [[ "$PARTITION" == gpu ]] && LIMIT=03:00:00
 fi
+export SOCIAL_DATA_DIR="${SOCIAL_DATA_DIR:-$PWD/examples/social_mixed/data_reasoning_v5_candidate}"
 export SOCIAL_GPU_PROFILE="$PROFILE" SOCIAL_ARM="$ARM"
 export SOCIAL_SEED="${SOCIAL_SEED:-42}"
 if [[ -n "${3:-}" ]]; then

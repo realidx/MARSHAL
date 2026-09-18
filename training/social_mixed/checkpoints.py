@@ -2,6 +2,20 @@
 from pathlib import Path
 import shutil
 
+SELECTION_VERSION='development-best-v1'
+
+def selection_score(metrics,arm):
+    """Development only; failed games enter SP's conservative cohort bound."""
+    if arm=='bp':
+        b=sum(metrics[f'bp/{k}/{mode}/accuracy'] for k in ('B1','B2','B3') for mode in ('binary','linear'))/6
+        p=sum(metrics[f'bp/{k}/{mode}/accuracy'] for k in ('P1','P2','P3','P4') for mode in ('binary','linear'))/8
+        return [.5*(b+p)]
+    if arm=='selfplay':
+        return [metrics['games/current_team/all/cohort_player_utility_lower'],
+                metrics['games/current_team/all/completion_rate'],
+                -metrics['games/current_team/all/invalid_rate']]
+    raise ValueError('Best-checkpoint selection supports bp and selfplay only')
+
 
 def prune(root, keep=2):
     if keep<1:raise ValueError('Keep at least one complete recovery point')
@@ -11,7 +25,11 @@ def prune(root, keep=2):
         suffix=path.name.removeprefix('checkpoint-')
         if suffix.isdigit() and (path/'COMPLETE.json').is_file():completed.append((int(suffix),path))
     removed=[]
+    protected=set()
+    pointer=root/'BEST_CHECKPOINT'
+    if pointer.exists():protected.add(Path(pointer.read_text().strip()).resolve())
     for step,path in sorted(completed,reverse=True)[keep:]:
+        if path.resolve() in protected:continue
         name=path.name
         # Uploader uses hardlinks: delete this run's staging links as well.
         locations=[path,root/'pipeline'/name,root/'actor_train-0'/name,root/'actor_train-1'/name]

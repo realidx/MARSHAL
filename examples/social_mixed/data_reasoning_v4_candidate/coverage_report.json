@@ -1,0 +1,72 @@
+{
+  "train": {
+    "total": 563,
+    "added": 137,
+    "new_bp_geometries": 6,
+    "added_cells": {
+      "B3/update/binary": 27,
+      "P2/history_planning/binary": 16,
+      "B1/formation/binary": 4,
+      "P2/history_planning/linear": 8,
+      "B3/update/linear": 19,
+      "B3/maintain/linear": 13,
+      "B3/maintain/binary": 12,
+      "P4/result_use/binary": 18,
+      "P4/result_use/linear": 20
+    },
+    "history_action_points": 31,
+    "history_sensitive_points": 4,
+    "exact_posterior_pairs": 31,
+    "b3_update": 68,
+    "b3_maintain": 61,
+    "p4_result_use": 58,
+    "periodic_panel": {}
+  },
+  "validation": {
+    "total": 471,
+    "added": 196,
+    "new_bp_geometries": 5,
+    "added_cells": {
+      "B3/maintain/binary": 12,
+      "B3/update/binary": 20,
+      "P2/history_planning/binary": 32,
+      "B3/update/linear": 26,
+      "P2/history_planning/linear": 26,
+      "B3/maintain/linear": 7,
+      "P4/result_use/binary": 50,
+      "P4/result_use/linear": 18,
+      "B1/formation/binary": 5
+    },
+    "history_action_points": 63,
+    "history_sensitive_points": 5,
+    "exact_posterior_pairs": 63,
+    "b3_update": 46,
+    "b3_maintain": 42,
+    "p4_result_use": 68,
+    "periodic_panel": {
+      "B": 22,
+      "P": 23
+    }
+  },
+  "schedule_194_updates": {
+    "distinct_seen": 556,
+    "total": 563,
+    "unseen_ids": [
+      "16b4187888e129376130",
+      "206d419d637c94d741d2",
+      "546c2aeec97cc35cc3b6",
+      "6166ae2c2d519df41ef0",
+      "70cade064f036d8e95df",
+      "b065e5ec1409565bf430",
+      "d2f8f414803864ef56b1"
+    ],
+    "scope": "Deterministic task schedule only; actual token exhaustion may stop earlier. Not a learning or repeated-exposure guarantee."
+  },
+  "limitations": [
+    "History-sensitive means the acceptable set changes; it need not become disjoint from the prior-only set.",
+    "No on-policy OFFER-acquisition premium certified in the inspected P4 sources. Response-conditioned reasoning and query-result use are covered; strategic OFFER information acquisition remains open.",
+    "SP geometries are native random full games with no outcome-based admission. Longer horizons do not certify useful information opportunities.",
+    "Teacher assumptions and exact zero-likelihood fragility remain unchanged. Failed/cycling solves are logged and never labelled.",
+    "Source-family split independence is checked; inherited historical test usage is not independently established."
+  ]
+}

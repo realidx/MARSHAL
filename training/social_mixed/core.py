@@ -6,12 +6,13 @@ import json
 from pathlib import Path
 import random
 import math
+import os
 
 from training.social_mixed.weighted_rules import OutcomeRules
 from training.social_mixed import policy_prompt as sp_prompt
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA = ROOT/'examples/social_mixed/data_binary_linear_v3'
+DATA = Path(os.environ.get('SOCIAL_DATA_DIR', ROOT/'examples/social_mixed/data_binary_linear_v3')).resolve()
 
 
 def seed_for(*values):
@@ -70,6 +71,9 @@ class Episode:
     def request(self):
         obs = self.observation()
         messages = [dict(role='system', content=sp_prompt.SYSTEM), dict(role='user', content=sp_prompt.render(obs))]
+        from training.social_mixed.prompt_clarification import VERSION,clarify
+        if self.reset.get('prompt_clarification')==VERSION:
+            messages[1]['content']=clarify(messages[1]['content'])
         if self.attempt:
             messages.append(dict(role='user', content=sp_prompt.RETRY))
         return dict(messages=messages, tools=sp_prompt.tools_for(obs),
@@ -148,12 +152,17 @@ def arm_mixture(arm):
             'bp': {'B': .5, 'P': .5}}[arm].copy()
 
 
-def assign_advantages(rows, units, arm):
-    """One reward per player/episode, never one reward per decision in baseline.
+PROTOCOL_VERSION = 'call-local-negative-v1'
 
-    A failed full-game group has no outcome advantage; its separately observed
-    protocol returns remain trainable. Never invent zero terminal utilities.
+
+def assign_advantages(rows, units, arm, protocol_coefficient=0.2):
+    """Task advantage for valid calls; uncentered negative signal for failures.
+
+    Incomplete SP groups have no outcome advantage. Episode protocol totals are
+    retained for auditing only, never used to reward or punish other calls.
     """
+    if not math.isfinite(protocol_coefficient) or protocol_coefficient <= 0:
+        raise ValueError('Protocol coefficient must be finite and positive')
     groups = defaultdict(list)
     for unit in units:
         groups[unit['group']].append(unit)
@@ -164,7 +173,7 @@ def assign_advantages(rows, units, arm):
         assert len(members) >= 2
         kind = members[0]['kind']
         complete = all(u['utility'] is not None for u in members)
-        values = [(u['utility'] if complete else 0.0)+u['protocol'] for u in members]
+        values = [u['utility'] if complete else 0.0 for u in members]
         adv = centered(values)
         # Task-gradient coverage is distinct from formatting/protocol rewards.
         if kind in ('B', 'P'):
@@ -195,20 +204,39 @@ def assign_advantages(rows, units, arm):
     # Worker averages rows over all microbatches. These weights produce exactly
     # the specified task mixture, averaging decisions within each player episode.
     for r in rows:
-        r['advantage'] = advantages[r['unit']]
+        completion=r.get('completion',{})
+        status=r.get('score',{}).get('status')
+        if completion.get('status')=='infrastructure_failure' or status=='infrastructure_failure':
+            raise ValueError('Infrastructure failure cannot enter optimizer data')
+        truncated=completion.get('finish_reason')=='length' or status=='truncated'
+        invalid=truncated or (not r.get('valid',True) if r['kind']=='selfplay' else status=='format_failure')
+        r['task_advantage']=0.0 if invalid else advantages[r['unit']]
+        r['protocol_advantage']=-protocol_coefficient if invalid else 0.0
+        r['advantage']=r['task_advantage']+r['protocol_advantage']
+        r['protocol_failure']='truncated' if truncated else 'invalid_action' if invalid else None
+        r['advantage_version']=PROTOCOL_VERSION
         r['loss_weight'] = len(rows)*proportions[r['kind']]/len(kind_units[r['kind']])/by_unit[r['unit']]
+        prefix=f"{r['kind']}/call_signal"
+        metrics[prefix+'/calls']+=1
+        metrics[prefix+'/truncated']+=int(truncated)
+        metrics[prefix+'/invalid_nontruncated']+=int(invalid and not truncated)
+        metrics[prefix+'/protocol_negative_calls']+=int(invalid)
+        metrics[prefix+'/nonzero_task_calls']+=int(abs(r['task_advantage'])>1e-9)
+        metrics[prefix+'/task_abs_weighted_mass']+=abs(r['task_advantage'])*r['loss_weight']/len(rows)
+        metrics[prefix+'/protocol_abs_weighted_mass']+=abs(r['protocol_advantage'])*r['loss_weight']/len(rows)
     assert abs(sum(r['loss_weight'] for r in rows)-len(rows))<1e-6
     return dict(metrics)
 
 
 class Collector:
-    def __init__(self, data, generate, seed=42, concurrency=32):
+    def __init__(self, data, generate, seed=42, concurrency=32, protocol_coefficient=0.2):
         if concurrency<4 or concurrency%4:raise ValueError("Concurrency must be a positive multiple of four")
         self.data, self.generate, self.seed, self.concurrency = data, generate, seed, concurrency
+        self.protocol_coefficient=protocol_coefficient
 
     def collect(self, step, arm, token_target=65536, validation=False):
         arm_mixture(arm)  # Reject unknown arms before generating samples.
-        from training.b_sft.social_named_probe import request
+        from training.social_mixed.prompt_clarification import request
         from training.b_sft.social_bp_training import reward
         split = 'validation' if validation else 'train'
         rng = random.Random(seed_for(self.seed, step, split))
@@ -219,7 +247,7 @@ class Collector:
             rng = random.Random(seed_for(self.seed, 'validation'))
         if arm in ('mixed','bp') or validation:
             candidates = self.data[f'bp_{split}']
-            from training.social_mixed.distribution_sampling import select
+            from training.social_mixed.curriculum_sampling import select
             selected = select(candidates,step,self.seed,validation)
             jobs = []
             for task in selected:
@@ -247,8 +275,8 @@ class Collector:
         cursor = peak_active = 0
         if arm != 'bp' or validation:
             candidates = self.data[f'selfplay_{split}']
-            reset_order = list(range(len(candidates)))
-            rng.shuffle(reset_order)
+            from training.social_mixed.curriculum_sampling import reset_order as schedule_resets
+            reset_order = schedule_resets(candidates,rng)
             cursor = 0
             episodes = []
             def admit_group():
@@ -282,7 +310,7 @@ class Collector:
                 for episode in finished:
                     rows.extend(episode.calls);units.extend(episode.units());games.append(episode.summary())
                 episodes=[e for e in episodes if e.status=='running']
-        metrics = assign_advantages(rows, units, 'mixed' if validation else arm)
+        metrics = assign_advantages(rows, units, 'mixed' if validation else arm, self.protocol_coefficient)
         metrics.update(generated_tokens=tokens, rows=len(rows), games=len(games),
                        terminal_games=sum(g['status']=='terminal' for g in games),
                        admitted_reset_groups=cursor,peak_active_games=peak_active,

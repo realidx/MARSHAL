@@ -87,6 +87,9 @@ def validate_resume(path, options, model):
     if checkpoint.get('tp')!=expected['tp'] or checkpoint.get('world_size')!=expected['gpus']:
         raise ValueError('Native resume requires the same TP/world size; TP=2 checkpoints cannot resume on single H200 TP=1')
     old=json.loads((path.parents[1]/'experiment.json').read_text())
+    from training.social_mixed.core import PROTOCOL_VERSION
+    if old.get('advantage_version')!=PROTOCOL_VERSION or old['options'].get('protocol_coefficient')!=options.get('protocol_coefficient'):
+        raise ValueError('Resume must preserve protocol advantage version and coefficient; use a new experiment for changed objectives')
     keys=('arm','seed','tokens_per_update')
     if any(old['options'][k]!=options[k] for k in keys) or old['model']!=model:
         raise ValueError('Resume must preserve experiment arm, seed, batch budget and base reference')
@@ -108,15 +111,18 @@ def validate_course_coverage(data, arm):
 
 def main():
     cli=argparse.ArgumentParser(description=__doc__)
-    cli.add_argument('--arm',choices=['mixed','selfplay','bp'],required=True)
+    cli.add_argument('--arm',choices=['selfplay','bp'],required=True)
     cli.add_argument('--seed',type=int,default=42)
     cli.add_argument('--total-tokens',type=int,default=6553600)
     cli.add_argument('--tokens-per-update',type=int,default=65536)
     cli.add_argument('--keep-checkpoints',type=int,default=2)
+    cli.add_argument('--protocol-coefficient',type=float,default=0.2)
     cli.add_argument('--resume')
     cli.add_argument('--diagnose-probabilities',action='store_true')
     cli.add_argument('--check-only',action='store_true')
     args=cli.parse_args()
+    if not _numpy.isfinite(args.protocol_coefficient) or args.protocol_coefficient<=0:
+        raise ValueError('Protocol coefficient must be finite and positive')
     source_hash=verify_bundle()
     from training.social_mixed.core import load_data, arm_mixture
     data = load_data()
@@ -127,8 +133,7 @@ def main():
                for split in ('train', 'validation') for t in data['bp_'+split]):
             raise ValueError('B/P data is not approved under the active label contract. '
                              'Complete response_only_v1 migration and curriculum review before training.')
-    if args.arm == 'bp':
-        args.keep_checkpoints = 1
+    args.keep_checkpoints = 2  # Best and latest; same checkpoint may fill both.
     options=vars(args).copy()
     options['gpu_profile']=os.environ.get('SOCIAL_GPU_PROFILE','h100-96')
     if args.total_tokens<1 or args.tokens_per_update<1:raise ValueError('Token budgets must be positive')
@@ -160,7 +165,8 @@ def main():
         dataset=__import__('training.social_mixed.core',fromlist=['DATA']).DATA.name,
         allowed_completion_modes=['binary','linear'],
         execution_profile=__import__('training.social_mixed.hardware',fromlist=['PROFILES']).PROFILES[options['gpu_profile']],
-        reward=('B/P binary task rewards only' if args.arm=='bp' else 'B/P binary; own terminal utility plus separately recorded protocol cost'),
+        reward='B/P binary; SP own terminal utility; invalid/truncated calls use independent negative advantage instead of task advantage',
+        advantage_version=__import__('training.social_mixed.core',fromlist=['PROTOCOL_VERSION']).PROTOCOL_VERSION,
         mixture=arm_mixture(args.arm),
         grouping='B/P task; selfplay reset and player seat across replicas',
         budget='Generated response tokens entering training, including retries; finish current groups at boundary'),indent=2)+'\n')

@@ -5,7 +5,7 @@ import hashlib
 import json
 from pathlib import Path
 from training.social_mixed.core import DATA, load_data
-from training.social_mixed.distribution_sampling import select
+from training.social_mixed.curriculum_sampling import select
 from training.social_mixed.structure_coverage import audit
 from training.social_mixed.scoring_scope import ALLOWED_MODES, validate_rows
 
@@ -44,15 +44,17 @@ def check():
                 raise ValueError('P4 update lacks positive/negative control')
     if tested != {t['id'] for t in data['bp_train']}:
         raise ValueError('Training schedule leaves unused tasks')
-    validation = select(data['bp_validation'], 0, 42, validation=True)
+    from training.social_mixed.validation import Validator
+    validator=Validator(data,lambda requests: [])
+    validation=validator.tasks
     cell = lambda t: (t['kernel'],t['completion_mode'],t.get('information_role','na'))
-    if {cell(t) for t in validation} != {cell(t) for t in data['bp_validation']}:
+    if {cell(t) for t in validation} != {cell(t) for t in data['bp_validation'] if t['kernel']!='A0'}:
         raise ValueError('Development evaluation misses available cells')
     if not any(t['kernel']=='P4' and t.get('information_role')=='query_only' for t in validation):
         raise ValueError('Development evaluation cannot detect never-investigate')
     return dict(dataset=DATA.name, allowed_completion_modes=list(ALLOWED_MODES), mode_counts=manifest['mode_counts'], manifest_sha256=hashlib.sha256((DATA/'manifest.json').read_bytes()).hexdigest(),
                 counts={k:len(v) for k,v in data.items()}, development_tasks_per_evaluation=len(validation),
-                development_calls_per_evaluation=2*len(validation),
+                development_calls_per_evaluation=len(validation), development_selfplay_games=len(validator.resets),
                 scheduled_training_tasks=len(tested), checked_updates=512, paired_p4_updates=p4_updates,
                 structure_families_by_split=dict(Counter({split:len({r['structure_family'] for r in report['records'] if r['split']==split}) for split in ('train','validation','test')})),
                 test_used_for_training_or_periodic_validation=False,

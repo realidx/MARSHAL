@@ -1,46 +1,32 @@
-# 完整训练入口（2026-09-17）
+# 下一轮训练：B/P-only 与 SP-only
 
-直接运行完整预算实验，不插入小规模训练能力实验。Teacher 使用已修复的现有精确版本；本次噪声与初始化审查不改变训练标签。
+本轮只运行 `bp` 和 `selfplay`，`both` 表示这两个独立实验，不运行 Mixed。提交入口默认选择 `data_reasoning_v5_candidate`；底层历史代码的默认数据不改变，直接调用 Python 时需显式设置 `SOCIAL_DATA_DIR`。
 
-## 已接入
+## 已冻结的设置
 
-- 所有提交均限定 binary/linear；启动及加载数据时检查真实目标规则。活跃数据为 `data_binary_linear_v3`：426 道 B/P 训练题、275 道开发题、96/32 个 self-play 配置。44 道结构测试题不进入训练或周期验证。
-- P4 每次被采样时同时包含 query_only 与 ordinary_only；日志包含分内核、规则、角色与题型的有效 advantage 组及全样本表现。
-- 三种训练组：Mixed 的 B/P/SP 权重为 25%/25%/50%；SP-only 为纯 self-play；B/P-only（命令参数 `bp`）为 B/P 各 50%，仍使用二值任务奖励的 GRPO，不是答案 token 的 SFT。三组都从同一本地基础模型重新开始，seed 默认 42，各 6,553,600 个训练响应 token。
-- Mixed/SP-only 的 65,536 tokens/update 是停止补充 self-play 的软目标，不是硬批量上限，完整游戏收尾可能显著超出。B/P-only 每步使用与 Mixed 相同调度的完整 B/P 对照组，每题 8 次，不补 self-play，也不强制凑齐 65,536 tokens。三组都按实际进入训练的响应 token 累计停训，不保证 100 步或相同更新次数；另有 1000 步安全上限。
-- 三组使用相同固定开发评估：33 道 B/P 题、每题 2 次，加已有 self-play 验证。每 10 步及正常终止边界评估，评估响应不计入训练预算。
-- checkpoint 每 10 步与终止边界保存，不再首步强制保存，Mixed/SP-only 保留最近两份完整 checkpoint，B/P-only 仅保留最新一份完整 checkpoint（新 checkpoint 完整写入后才删除旧的）。SIGUSR1/TERM 请求保存退出；不会自动重新排队。不能从失败的 mixed-851174 或 v1 数据 checkpoint 续训。
-- 提交前只做 CPU 数据/采样检查、配置构造和环境依赖检查，不运行训练或模型 rollout；作业内继续已有 GPU/NCCL 启动检查。
+- 数据：594 道 B/P 训练题、495 道开发题，108/36 个 SP train/dev reset，仅 binary/linear。
+- B/P 在原 v4 每步任务组上限内重分配；同题 8 个 replica。SP 为每 reset 4 个 replica。两臂各 6,553,600 个训练响应 token，输出上限 1024。
+- 截断／非法调用使用默认 −0.2 的独立负 advantage；合法调用保留任务 advantage。详见 [PROTOCOL_SIGNAL.md](../../training/social_mixed/PROTOCOL_SIGNAL.md)。
+- Prompt 只修改目标依赖表的玩家列名，并增加一句“所需承诺不是偏好；一个承诺可以影响多个目标”。没有增加 grounding 任务或额外状态表。历史 v3/v4、正式 A、CalBench 提示文件不被改写。
+- **第 0 步验证**：参数更新前，当前模型完成 45 道 B/P（各一次）与 8 局 SP，保存 `validation/step-0.json`。不保存初始 checkpoint。之后每 10 次更新和正常训练结束验证，评估 token 不计训练预算；两臂验证相同，不加载 Q0。
 
-## 本地发布本次修改
+## Best 与 last
 
-本次实现保留为工作区修改，尚未 commit/push。按下面显式路径提交，避免带入下载的结果与其他本地审查目录：
+每臂保留最佳开发验证 checkpoint 和最新完整 checkpoint。两者相同则只有一份实体。先写入完整 checkpoint，再清理不再需要的旧 checkpoint 及其 staging 链接。
 
-```bash
-cd /Users/bruce/MARSHAL
-git add examples/social_mixed/data_binary_linear_v3 \
-  examples/social_mixed/data_distribution_v2 \
-  examples/social_mixed/start_training.sh examples/social_mixed/submit_soc.sh \
-  examples/social_mixed/bp.yaml examples/social_mixed/sbatch_train.sh \
-  examples/social_mixed/FULL_TRAINING.md examples/social_mixed/GIT_TRAINING.md \
-  examples/social_mixed/SOC_CURRENT.md \
-  training/social_mixed/core.py training/social_mixed/distribution_sampling.py \
-  training/social_mixed/pipeline.py training/social_mixed/run.py \
-  training/social_mixed/preflight.py training/social_mixed/prepare_coverage_v2.py \
-  training/social_mixed/prepare_binary_linear.py training/social_mixed/scoring_scope.py \
-  training/social_mixed/test_scoring_scope.py \
-  training/social_mixed/structure_coverage.py \
-  training/social_mixed/test_structure_coverage.py \
-  training/social_mixed/test_full_submission.py training/social_mixed/test_training.py \
-  training/social_mixed/test_bp_only.py training/social_mixed/test_configuration.py \
-  training/social_mixed/checkpoints.py training/social_mixed/test_checkpoint_retention.py
-git commit -m "Exclude mixed scoring and connect binary-linear full training"
-git push origin new
-```
+- B/P best：先分别平均 B1/B2/B3 与 P1/P2/P3/P4 的 binary/linear 准确率，再按 B/P 各 50% 合并。格式失败和截断按原完整样本评分计入。
+- SP best：固定开发 reset 的 `cohort_player_utility_lower` 最大；未完成局用其偏好可计算的效用下界计入，不只算完成者。平分时依次比较完成率、较低非法调用率。
+- 完全平分保留较早 checkpoint。best 只在训练后验证点中选；step 0 是基线，不作为待保存的训练 checkpoint。
+- 指针：`BEST_CHECKPOINT`、`LATEST_CHECKPOINT`，退出时另写 `LAST_CHECKPOINT`；选择分数存 `BEST_VALIDATION.json`。目录 `checkpoint-N` 中 N 为从零计的优化器 step，完成更新数是 N+1。
+- SIGUSR1/TERM 在当前更新结束后保存最新状态。初次周期验证前若被抢占，可能暂时只有 latest；恢复后继续验证。没有自动重新排队。
 
-## SoC 提交
+小开发面板的 best 是选择规则，不是正式泛化结论。旧奖励版本不能作为相同实验续训；版本、数据指纹和协议系数均检查。
 
-在 SoC 已有 MARSHAL Git 仓库中执行。独立 worktree 固定此次训练代码，不影响后续继续开发 new：
+## 发布与提交
+
+先在本地检查工作区，将本轮训练代码、v4/v5 候选数据及构建所需基础题归档提交，再 push 到 `new`。不要提交下载的 rollout、checkpoint 或 runs 目录。此文不执行远程操作。
+
+在 SoC 仓库中固定此次代码：
 
 ```bash
 git fetch origin
@@ -51,32 +37,18 @@ cd "$SOCIAL_WORKTREE"
 bash examples/social_mixed/start_training.sh h100-96 both
 ```
 
-`both` 提交两个独立作业，每组两张 H100-96、gpu-long 最长 72 小时。如果使用单卡 H200，将 profile 改为 `h200-141`；每组一张卡，gpu 分区最长 3 小时，可能需要之后恢复。只提交一组可将 `both` 改为 `mixed`、`selfplay` 或 `bp`。`both` 保持原义：仅 Mixed 与 SP-only，不会自动增加第三组。
+单独提交将 `both` 改为 `bp` 或 `selfplay`。单卡 H200 将 profile 改为 `h200-141`。每臂独立 token 预算；B/P 不为凑齐 SP 的软批量 token 目标而补题，不保证相同步数。
 
-新增 B/P-only 的完整实验：
+提交入口先运行数据、配置、依赖检查，然后调用 sbatch。保留现有 SoC conda 环境和本地 Qwen3-4B-Instruct-2507 模型路径；本地不代为操作远程。回执在 `submission/reasoning-v5-<profile>-*/`。若第二臂提交失败，只补交缺少的那一臂。
 
-```bash
-bash examples/social_mixed/start_training.sh h100-96 bp
-```
-
-B/P-only 训练路径不访问 self-play 配置、不产生终局收益训练样本；共同验证仍包含完整游戏，只用于评估，不计入训练 token 或梯度。配置为 `examples/social_mixed/bp.yaml`，回执和输出目录使用 `bp` 前缀。
-
-默认沿用环境 `/home/e/e1300530/tmp/marshal-vllm09` 和模型 `/home/e/e1300530/models/Qwen3-4B-Instruct-2507`。这是 SoC 训练入口，不是 chenjiahao 的 A100 rollout 环境。
-
-提交输出给出每组 job ID 与回执路径 `submission/binary-linear-v3-<profile>-*/<arm>.json`，包含 source version、数据哈希、seed 和预算。若第二组提交失败，第一组的 job ID 已保存；只补交缺少的一组，不要重复运行 both。
-
-训练结果在 `runs/social_mixed/<arm>-seed<seed>-<jobid>/`：`metrics.jsonl`、`validation/`、`checkpoints/`、`RESULT.json`、`EXIT_CODE`。H200 等时间限制下，确认完整 checkpoint 后，用原入口按相同硬件布局恢复：
+结果在 `runs/social_mixed/<arm>-seed<seed>-<jobid>/`。同版本实验恢复用：
 
 ```bash
-bash examples/social_mixed/submit_soc.sh h200-141 mixed /absolute/path/to/checkpoint-N
+bash examples/social_mixed/submit_soc.sh h200-141 bp /absolute/path/to/checkpoint-N
 ```
 
-`start_training.sh` 总是新实验；恢复应使用 `submit_soc.sh`。作业排队或运行期间不要修改训练 worktree。训练完成前不使用结构测试选择 checkpoint。
+`start_training.sh` 始终新建实验；恢复用 `submit_soc.sh`。训练 worktree 在运行期间保持不变。
 
-## 验证状态与限制
+## 本地验证边界
 
-本地已通过数据检查与 CPU/模拟 Slurm 提交检查；未运行新的 GPU 训练。此次 SoC SSH 连接被跳板机 password 认证拒绝，因此没有真实 job ID。
-
-仅使用 homogeneous binary / homogeneous linear 游戏，mixed 完成规则已从所有活跃数据及请求文件排除。Mixed 训练组名称仅表示 B/P+self-play 的损失组合。继承 test 来源的历史使用情况尚未独立核实，作为实验解释限制记录。
-
-B/P-only 接入验证：23 项 CPU／模拟提交测试通过，覆盖零 self-play 训练、B/P 各 50% 权重、每题八重复及三组一致的开发评估。当前本地缺少 Hydra，完整配置构造测试无法在本机运行；提交入口会在已有 SoC 环境检查三个训练组配置后才调用 sbatch。尚未提交 B/P-only GPU 作业。
+CPU 数据、采样、prompt、step 0 编排、checkpoint 清理和模拟 Slurm 测试可在本地执行。Ray/Hydra 与真实 Megatron/vLLM checkpoint 写入仍需 SoC 环境的启动检查；没有宣称本地已经跑过 GPU 训练。

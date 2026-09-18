@@ -82,11 +82,11 @@ class CoreTests(unittest.TestCase):
         for row in rows:mass[row['unit']]+=row['loss_weight']
         self.assertAlmostEqual(min(mass.values()),max(mass.values()))
 
-    def test_incomplete_group_uses_only_recorded_protocol(self):
+    def test_incomplete_group_penalizes_only_invalid_call(self):
         units=[dict(group='g',unit=str(i),replica=i,kind='selfplay',utility=None if i==0 else 100*i,protocol=-.2 if i==0 else 0) for i in range(4)]
-        rows=[dict(unit=str(i),kind='selfplay') for i in range(4)]
+        rows=[dict(unit=str(i),kind='selfplay',valid=i!=0) for i in range(4)]
         metrics=assign_advantages(rows,units,'selfplay')
-        expected=centered([-.2,0,0,0])
+        expected=[-.2,0,0,0]
         self.assertEqual([r['advantage'] for r in rows],expected)
         self.assertEqual(metrics['selfplay/outcome_incomplete_groups'],1)
         self.assertIsNone(units[0]['utility'])

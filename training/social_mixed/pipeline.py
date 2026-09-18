@@ -76,7 +76,11 @@ class SocialPipeline(BasePipeline):
         self.set_model_update_pair(self.actor_train,self.actor_infer,frequency=1)
         self.set_checkpoint_clusters(self.actor_train)
         self.collector = Collector(load_data(), self.generate, seed=config.seed,
-                                   concurrency=config.actor_infer.world_size*config.actor_infer.strategy_args.strategy_config['max_num_seqs'])
+                                   concurrency=config.actor_infer.world_size*config.actor_infer.strategy_args.strategy_config['max_num_seqs'],
+                                   protocol_coefficient=options.get('protocol_coefficient',0.2))
+        from training.social_mixed.validation import Validator
+        self.validator=Validator(self.collector.data,self.generate,seed=config.seed,
+                                 concurrency=self.collector.concurrency)
 
     def request_stop(self, signum, frame):
         self.stop_requested = True
@@ -160,18 +164,61 @@ class SocialPipeline(BasePipeline):
         finally:
             self.pipeline_config.save_steps=old
             self.actor_train.offload_states(blocking=True)
+        if not (checkpoint/'COMPLETE.json').is_file():
+            raise RuntimeError(f'Checkpoint did not complete: {checkpoint}')
         if (checkpoint/'COMPLETE.json').exists():
             (self.root/'LATEST_CHECKPOINT').write_text(str(checkpoint.resolve())+'\n')
             from training.social_mixed.checkpoints import prune
-            removed=prune(self.root,self.options['keep_checkpoints'])
+            removed=prune(self.root,1)
             if removed:
                 with (self.root/'checkpoint_retention.jsonl').open('a') as log:
                     log.write(json.dumps(dict(saved=step,removed=removed))+'\n')
 
     @torch.no_grad()
+    def validate(self, step, consumed):
+        from training.social_mixed.validation import persist
+        with self.phase('validation'):
+            try:
+                report=self.validator.run()
+                # Release inference weights before checkpointing optimizer state.
+                self.actor_infer.offload_states(blocking=True)
+                metrics=persist(self.root,report,step,consumed,self.tracker)
+                self.state.log_history.append(metrics)
+                if step>=0:
+                    from training.social_mixed.checkpoints import selection_score,SELECTION_VERSION,prune
+                    score=selection_score(report['metrics'],self.options['arm'])
+                    previous=self.state.kv.get('best_validation')
+                    if previous is None or score>previous['score']:
+                        checkpoint=self.root/'checkpoints'/f'checkpoint-{step}'
+                        best=dict(score=score,step=step,completed_updates=step+1,
+                                  selection_version=SELECTION_VERSION,checkpoint=str(checkpoint.resolve()))
+                        self.state.kv['best_validation']=best
+                        self.save(step,force=True)
+                        if not (checkpoint/'COMPLETE.json').is_file():
+                            raise RuntimeError('Best checkpoint did not complete')
+                        (self.root/'BEST_CHECKPOINT').write_text(str(checkpoint.resolve())+'\n')
+                        (self.root/'BEST_VALIDATION.json').write_text(json.dumps(best,indent=2)+'\n')
+                        prune(self.root,1)
+            except Exception as exc:
+                folder=self.root/'validation';folder.mkdir(exist_ok=True)
+                (folder/f'step-{step+1}.FAILED.json').write_text(json.dumps(dict(error=repr(exc),scored=False))+'\n')
+                raise
+            finally:
+                self.actor_infer.offload_states(blocking=True)
+
+    @torch.no_grad()
     def run(self):
         cfg=self.pipeline_config
         consumed=int(self.state.kv.get('training_response_tokens',0))
+        if self.state.step<0:
+            with self.phase('initial_weight_sync'):
+                self.actor_train.offload_states(blocking=True)
+                self.model_update(0)
+            self.validate(-1,consumed)
+        elif self.state.kv.get('best_validation'):
+            best=self.state.kv['best_validation']
+            (self.root/'BEST_CHECKPOINT').write_text(best['checkpoint']+'\n')
+            (self.root/'BEST_VALIDATION.json').write_text(json.dumps(best,indent=2)+'\n')
         for step in range(self.state.step+1,cfg.max_steps):
             if consumed>=self.options['total_tokens'] or self.stop_requested:break
             with self.phase('weight_sync'):
@@ -210,20 +257,21 @@ class SocialPipeline(BasePipeline):
             self.state.kv['training_response_tokens']=consumed
             self.state.log_history.append(metrics)
             force=consumed>=self.options['total_tokens'] or self.stop_requested or step+1==cfg.max_steps
-            if force or (step+1)%cfg.save_steps==0:self.save(step,force=force)
             with (self.root/'metrics.jsonl').open('a') as f:f.write(json.dumps(metrics)+'\n')
-            self.tracker.log(metrics,step=step)
+            self.tracker.log(metrics,step=step+1)
             if ((step+1)%cfg.eval_steps==0 or consumed>=self.options['total_tokens'] or step+1==cfg.max_steps) and not self.stop_requested:
-                with self.phase('validation'):
-                    self.model_update(step+1)
-                    erows,eunits,egames,emetrics=self.collector.collect(0,'mixed',validation=True)
-                    folder=self.root/'validation';folder.mkdir(exist_ok=True)
-                    (folder/f'step-{step+1}.json').write_text(json.dumps(dict(metrics=emetrics,calls=erows,games=egames))+'\n')
-                    self.actor_infer.offload_states(blocking=True)
+                self.model_update(step+1)
+                self.validate(step,consumed)
+            if force or (step+1)%cfg.save_steps==0:self.save(step,force=force)
             if self.stop_requested:break
         # A time-limit stop while validating also needs the latest optimizer state.
         if self.stop_requested and self.state.step>=0:
             self.save(self.state.step,force=True)
+        if self.state.step>=0:
+            latest=self.root/'checkpoints'/f'checkpoint-{self.state.step}'
+            if not (latest/'COMPLETE.json').is_file():self.save(self.state.step,force=True)
+            if (latest/'COMPLETE.json').is_file():
+                (self.root/'LAST_CHECKPOINT').write_text(str(latest.resolve())+'\n')
         result=dict(status='paused' if self.stop_requested else 'complete',updates=self.state.step+1,
                     training_response_tokens=consumed,token_budget=self.options['total_tokens'])
         if not self.stop_requested and consumed<self.options['total_tokens']:
