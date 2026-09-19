@@ -16,6 +16,15 @@ This report records the completed training and CalBench evidence for three socia
 
 The large native checkpoints, HF weights, full calls, games, and validation JSON files remain in the run directories and are not duplicated in Git. Exact local evidence paths are listed at the end.
 
+The repository also includes a lightweight evidence bundle beside this report:
+
+- `training_metrics/`: five original per-update `metrics.jsonl` files covering initial/continued B/P, initial/continued SP, and B/P99-to-SP;
+- `validation_trajectories/`: compact validation records for all three arms, including each fixed game's terminal utility;
+- `validation_trajectories/sp_key_behavior_trajectories.json`: actions and outcomes for the two fixed games compared at SP steps 39, 49, and 54;
+- `calbench_results/`: the four original formal CalBench `games/results.json` files.
+
+Full token/log-probability arrays, every training call, model weights, and optimizer states are excluded because they are large runtime artifacts rather than reviewable Git evidence.
+
 ## Executive result
 
 1. B/P checkpoint 99 is the strongest evaluated model on CalBench.
