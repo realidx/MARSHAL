@@ -134,7 +134,7 @@ def run_one(job, routes, output):
                errand_cost_level=3, meeting_cost_level=1, max_turns_per_round=2,
                decision_retries=1, enable_fallback=False, enable_reflection=False,
                communication_protocol='dm', agents=[dict(type='llm', model='q0', agent_id=i) for i in range(4)])
-    if not job.get('case') and not job.get('formal_case'):
+    if not job.get('case') and not job.get('formal_case') and not job.get('stream_case'):
         cfg['agents'][job['focal_seat']]['model'] = 'focal'
     # Two overlapping participant sets exercise native multi-meeting transitions.
     scenario = generate_scenario(job['seed'], 4, 8, .5, 3, 2,
@@ -146,15 +146,18 @@ def run_one(job, routes, output):
         scenario=case['scenario']
         cfg.update(num_meetings=1,max_turns_per_round=4,errand_cost_level=8)
         (folder/'case_reference.json').write_text(json.dumps(case,indent=2)+'\n')
-    if job.get('formal_case'):
-        from examples.final_evaluation.calbench_formal import load_frozen
+    if job.get('formal_case') or job.get('stream_case'):
+        if job.get('stream_case'):
+            from examples.final_evaluation.calbench_stream import load_frozen
+        else:
+            from examples.final_evaluation.calbench_formal import load_frozen
         frozen, cases = load_frozen()
-        case = next(c for c in cases if c['id'] == job['formal_case'])
+        case = next(c for c in cases if c['id'] == job.get('formal_case', job.get('stream_case')))
         scenario = copy.deepcopy(case['scenario'])
         cfg.update(frozen['config'], seed=scenario['seed'])
         (folder/'case_reference.json').write_text(json.dumps(case,indent=2)+'\n')
     (folder / 'scenario.json').write_text(json.dumps(scenario, indent=2) + '\n')
-    (folder / 'manifest.json').write_text(json.dumps(dict(stage='formal' if job.get('formal_case') else 'development', formal_test=bool(job.get('formal_case')),
+    (folder / 'manifest.json').write_text(json.dumps(dict(stage='formal' if job.get('formal_case') or job.get('stream_case') else 'development', formal_test=bool(job.get('formal_case') or job.get('stream_case')),
         source_hash=source_hash, config=cfg, routes=routes, job=job), indent=2) + '\n')
     original = game_module.make_llm_client
     def factory(spec):
@@ -186,19 +189,33 @@ def run_one(job, routes, output):
                       healthy_transport=bool(calls) and counts['infrastructure_failure']==0,
                       all_generations_untruncated=counts['truncated']==0)
         if case:
-            result['reference' if job.get('formal_case') else 'development_reference']=case['reference']
+            result['reference' if job.get('formal_case') or job.get('stream_case') else 'development_reference']=case['reference']
             result['native_oracle_scores_valid']=not bool(case['scenario'].get('prior_meetings'))
             result['verified_reference_excess_cost']=(trace.metrics['realized_cost']-case['reference']['minimum_team_cost']
-                if trace.metrics['meetings_scheduled']==1 else None)
+                if trace.metrics['meetings_scheduled']==len(scenario['meetings']) else None)
         if job.get('formal_case'):
             succeeded = trace.metrics['meetings_scheduled']==1
             result.update(formal_test=True,family=case['family'],structure_group=case['structure_group'],
                           coordinated_success=succeeded,
                           successful_and_optimal=succeeded and trace.metrics['realized_cost']==case['reference']['minimum_team_cost'])
+        if job.get('stream_case'):
+            n = len(scenario['meetings'])
+            from examples.final_evaluation.calbench_stream_metrics import diagnose
+            diagnostics = diagnose(json.loads(trace.model_dump_json()),scenario,calls,case['family']=='replan')
+            result['diagnostics'] = diagnostics
+            complete = diagnostics['full_stream_completion']
+            result['verified_reference_excess_cost'] = (trace.metrics['realized_cost']-case['reference']['minimum_team_cost'] if complete else None)
+            result.update(formal_test=True, suite='calbench_stream_v1', family=case['family'],
+                structure_group=case['structure_group'], scenario_seed=case['scenario_seed'],
+                cost_regime=case['cost_regime'], meetings_requested=n,
+                meeting_completion_rate=diagnostics['final_valid_meetings']/n,
+                coordinated_success=complete,
+                successful_and_optimal=complete and trace.metrics['realized_cost']==case['reference']['minimum_team_cost'],
+                oracle_scope='Full-stream hindsight; not an online-policy oracle')
         (folder / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
         return result
     except InfrastructureFailure as exc:
-        result=dict(game_id=job['game_id'],formal_test=bool(job.get('formal_case')),engine_finished=False,
+        result=dict(game_id=job['game_id'],formal_test=bool(job.get('formal_case') or job.get('stream_case')),engine_finished=False,
                     healthy_transport=False,error_type='InfrastructureFailure',error=str(exc),
                     elapsed_seconds=time.monotonic()-started,metrics=None)
         (folder/'result.json').write_text(json.dumps(result,indent=2)+'\n')
@@ -214,7 +231,7 @@ def main():
     parser.add_argument('--games', type=int, default=2)
     parser.add_argument('--parallel-games', type=int, default=2)
     parser.add_argument('--seed', type=int, default=2026091800)
-    parser.add_argument('--suite',choices=['smoke','structures','formal'],default='smoke')
+    parser.add_argument('--suite',choices=['smoke','structures','formal','stream'],default='smoke')
     args = parser.parse_args()
     if not 1 <= args.games <= 4 or args.parallel_games < 1:
         parser.error('Development run: games=1..4, parallel-games>=1')
@@ -227,8 +244,11 @@ def main():
         validation=validate_cases()
         (args.output/'structure_validation.json').write_text(json.dumps(validation,indent=2)+'\n')
         jobs=[dict(game_id=name,case=name,seed=args.seed,focal_seat=i) for i,name in enumerate(('cost_conflict','prior_commitment'))]
-    if args.suite=='formal':
-        from examples.final_evaluation.calbench_formal import load_frozen, FROZEN
+    if args.suite in ('formal','stream'):
+        if args.suite == 'stream':
+            from examples.final_evaluation.calbench_stream import load_frozen, FROZEN
+        else:
+            from examples.final_evaluation.calbench_formal import load_frozen, FROZEN
         frozen, cases = load_frozen()
         if routes.get('temperature')!=frozen['sampling']['temperature']:
             raise ValueError('Formal temperature differs from frozen protocol')
@@ -239,12 +259,14 @@ def main():
             raise ValueError('Output budget override requires an explicit execution protocol')
         (args.output/'execution_protocol.json').write_text(json.dumps(dict(
             protocol=routes.get('execution_protocol','reasoning-separated-v2-tokens-768'),
+            result_role=('primary' if budget==frozen['sampling']['max_tokens'] else 'diagnostic_budget'),
             max_tokens=budget,original_frozen_max_tokens=frozen['sampling']['max_tokens'],
             temperature=routes['temperature'],prompt_changed=False,
             chat_template_kwargs=routes.get('chat_template_kwargs',{}),
             model_chat_template_changed=bool(routes.get('chat_template_kwargs')),
             reasoning_normalization='separate leading think block; preserve raw output'),indent=2)+'\n')
-        jobs=[dict(game_id=c['id'],formal_case=c['id'],seed=c['scenario']['seed'],focal_seat=i) for i,c in enumerate(cases)]
+        jobs=[dict(game_id=c['id'],seed=c['scenario']['seed'],focal_seat=i,
+                   **{('stream_case' if args.suite=='stream' else 'formal_case'):c['id']}) for i,c in enumerate(cases)]
         (args.output/'frozen_manifest.json').write_bytes((FROZEN/'manifest.json').read_bytes())
     results = []
     with ProcessPoolExecutor(max_workers=args.parallel_games, mp_context=mp.get_context('spawn')) as pool:
@@ -261,7 +283,7 @@ def main():
                 (args.output/'RUN_FAILED.json').write_text(json.dumps(dict(reason='infrastructure_failure',
                     attempted=[r['game_id'] for r in results],not_started=[j['game_id'] for j in jobs[offset+args.parallel_games:]]),indent=2)+'\n')
                 raise RuntimeError('Infrastructure failure; remaining games were not started')
-    (args.output / 'RUN_FINISHED.json').write_text(json.dumps(dict(formal_test=args.suite=='formal',
+    (args.output / 'RUN_FINISHED.json').write_text(json.dumps(dict(formal_test=args.suite in ('formal','stream'),
         engine_finished=True, healthy_transport=all(r['healthy_transport'] for r in results))) + '\n')
 
 

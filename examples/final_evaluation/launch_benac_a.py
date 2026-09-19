@@ -19,7 +19,12 @@ def main():
     p.add_argument('--model',type=Path,required=True);p.add_argument('--q0',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True);p.add_argument('--ports',type=int,nargs=2,required=True)
     p.add_argument('--stage',choices=['smoke','formal'],default='smoke');p.add_argument('--parallel-games',type=int,default=4)
-    a=p.parse_args();load()
+    p.add_argument('--protocol',choices=['v1','v2'],default='v1')
+    a=p.parse_args()
+    if a.protocol=='v2':
+        from examples.final_evaluation.adversarial_suite import load as load_v2
+        load_v2()
+    else:load()
     cards=os.environ.get('CUDA_VISIBLE_DEVICES','').split(',')
     if len(cards)!=2 or len(set(cards))!=2 or not all(cards):p.error('Exactly two allocated CUDA devices required')
     if importlib.metadata.version('vllm').split('+')[0]!='0.28.0':raise RuntimeError('Expected existing SoC vLLM 0.28.0 environment')
@@ -44,6 +49,10 @@ def main():
     identity['versions']={name:importlib.metadata.version(name) for name in ('vllm','torch','transformers')}
     identity['evaluation_scripts']={f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in Path(__file__).parent.glob('*benac_a*.py')}
     (out/'execution_identity.json').write_text(json.dumps(identity,indent=2)+'\n')
+    if a.protocol=='v2' and a.model.resolve()==a.q0.resolve():
+        assert identity['focal']['files']==identity['q0']['files']
+        routes['focal']=dict(routes['q0'])
+        (out/'routes.json').write_text(json.dumps(routes,indent=2)+'\n')
     procs=[];logs=[];commands=[]
     def stop(*_):raise KeyboardInterrupt
     signal.signal(signal.SIGTERM,stop);signal.signal(signal.SIGINT,stop)
@@ -71,7 +80,7 @@ def main():
             if elapsed>1200:raise TimeoutError('Startup exceeded 1200s')
             if int(elapsed//30)!=last:last=int(elapsed//30);print(f'Startup {elapsed:.0f}s ready={sorted(ready)}',flush=True)
             if len(ready)<2:time.sleep(1)
-        subprocess.run([sys.executable,'-u','-m','examples.final_evaluation.benac_a','--routes',str(out/'routes.json'),
+        subprocess.run([sys.executable,'-u','-m',('examples.final_evaluation.adversarial' if a.protocol=='v2' else 'examples.final_evaluation.benac_a'),'--routes',str(out/'routes.json'),
                         '--output',str(out/'games'),'--stage',a.stage,'--parallel-games',str(a.parallel_games)],cwd=ROOT,check=True)
         (out/'EXIT_CODE').write_text('0\n')
     except BaseException as exc:

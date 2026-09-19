@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Usage: submit_calbench_soc.sh h100-96|h200-141 q0|marshal|socialr1|/HF/model structures|formal [768|4096]
+# Usage: submit_calbench_soc.sh h100-96|h200-141 q0|marshal|socialr1|/HF/model structures|formal|stream [768|4096]
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 profile="${1:?Choose h100-96 or h200-141}"
 model="${2:?Choose model alias or absolute Hugging Face model directory}"
 export CALBENCH_SUITE="${3:-structures}"
 export CALBENCH_MAX_TOKENS="${4:-4096}"
-case "$CALBENCH_SUITE" in structures|formal);; *) echo 'Suite must be structures or formal' >&2; exit 2;; esac
+case "$CALBENCH_SUITE" in structures|formal|stream);; *) echo 'Suite must be structures, formal or stream' >&2; exit 2;; esac
 case "$CALBENCH_MAX_TOKENS" in 768|4096);; *) echo 'Budget must be 768 or 4096' >&2; exit 2;; esac
 case "$profile" in
   h100-96) partition=gpu-long; gpus=2; limit=06:00:00;;

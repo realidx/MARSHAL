@@ -98,7 +98,8 @@ def test_unfinished_reasoning_never_becomes_an_action():
 
 
 @pytest.mark.parametrize('gpu_count',[1,2])
-def test_soc_launcher_uses_slurm_devices_and_v1_flags(tmp_path,monkeypatch,gpu_count):
+@pytest.mark.parametrize('suite',['formal','stream'])
+def test_soc_launcher_uses_slurm_devices_and_v1_flags(tmp_path,monkeypatch,gpu_count,suite):
     import sys
     from examples.final_evaluation import launch_calbench_local as launcher
     model=tmp_path/'model';model.mkdir();(model/'config.json').write_text('{}')
@@ -128,7 +129,7 @@ def test_soc_launcher_uses_slurm_devices_and_v1_flags(tmp_path,monkeypatch,gpu_c
     monkeypatch.setattr(launcher.os,'killpg',lambda *a:None)
     monkeypatch.setattr(launcher.signal,'signal',lambda *a:None)
     monkeypatch.setattr(sys,'argv',['launcher','--runtime','soc','--model',str(model),'--output',str(output),
-                                  '--suite','formal','--max-tokens','4096','--ports']+[str(27101+i) for i in range(gpu_count)])
+                                  '--suite',suite,'--max-tokens','4096','--ports']+[str(27101+i) for i in range(gpu_count)])
     launcher.main()
     assert len(commands)==gpu_count
     for i,(cmd,env) in enumerate(commands):
@@ -141,3 +142,89 @@ def test_soc_launcher_uses_slurm_devices_and_v1_flags(tmp_path,monkeypatch,gpu_c
     assert len(config['equivalent_replicas'])==gpu_count
     assert config['max_tokens']==4096 and config['timeout_seconds']==600
     assert runner and (output/'EXIT_CODE').read_text()=='0\n'
+
+
+def test_stream_suite_native_replays_and_seed_coverage():
+    from collections import defaultdict
+    from examples.final_evaluation.calbench_stream import load_frozen, plans, replay
+    verify_source()
+    manifest, cases = load_frozen()
+    assert len(cases) == 24
+    assert manifest['sampling']['temperature'] == 0
+    groups = defaultdict(list)
+    for case in cases:
+        groups[case['structure_group']].append(case)
+        scenario = case['scenario']
+        cost, slots = plans(scenario)[0]
+        trace = replay(scenario, slots)
+        assert trace.metrics['meetings_scheduled'] == 3
+        assert trace.metrics['realized_cost'] == cost == case['reference']['minimum_team_cost']
+        if case['family'] == 'replan':
+            valid = replay(scenario, (1,0,2), replan=True)
+            invalid = replay(scenario, (1,0,2), replan=True, contact=False)
+            assert valid.metrics['meetings_scheduled'] == 3
+            assert valid.metrics['realized_cost'] == 3
+            assert invalid.metrics['meetings_scheduled'] < 3
+            assert any(e.type == 'consistency_violation' for e in invalid.events)
+    assert len(groups) == 8
+    for cases in groups.values():
+        assert {c['scenario_seed'] for c in cases} == set(manifest['scenario_seeds'])
+        # Distinct initial calendars, not just distinct seed labels.
+        assert len({json.dumps(c['scenario']['calendars'],sort_keys=True) for c in cases}) == 3
+
+
+def test_stream_runner_uses_homogeneous_team_and_three_meeting_reference(tmp_path, monkeypatch):
+    from examples.final_evaluation.calbench_stream import load_frozen, plans, replay
+    from examples.final_evaluation.calbench_local import run_one
+    verify_source()
+    from calendar_game.game import CalendarGame
+    _, cases = load_frozen()
+    case = next(c for c in cases if c['id']=='dense_uniform_s1')
+    cost, slots = plans(case['scenario'])[0]
+    trace = replay(case['scenario'], slots)
+    def fake_run(game, scenario):
+        assert game.config.num_meetings == 3
+        assert [a.model for a in game.config.agents] == ['q0']*4
+        return trace
+    monkeypatch.setattr(CalendarGame, 'run_with_scenario', fake_run)
+    result = run_one(dict(game_id=case['id'],stream_case=case['id'],seed=case['scenario_seed'],focal_seat=23),
+                     {'endpoints':{'q0':{},'focal':{}}},tmp_path)
+    assert result['coordinated_success']
+    assert result['successful_and_optimal']
+    assert result['meeting_completion_rate'] == 1
+    assert result['verified_reference_excess_cost'] == 0
+
+    trace.metrics['meetings_scheduled'] = 3  # Historical successes must not mask final corruption.
+    for row in trace.final_state['calendars']:
+        for i,item in enumerate(row):
+            if item and item.get('meeting_id') in (2,3): row[i]=None
+    result = run_one(dict(game_id='incomplete',stream_case=case['id'],seed=case['scenario_seed'],focal_seat=23),
+                     {'endpoints':{'q0':{},'focal':{}}},tmp_path)
+    assert not result['coordinated_success']
+    assert result['verified_reference_excess_cost'] is None
+    assert result['meeting_completion_rate'] == 1/3
+
+
+def test_stream_diagnostics_replan_and_final_consistency():
+    from examples.final_evaluation.calbench_stream import load_frozen, FROZEN
+    from examples.final_evaluation.calbench_stream_metrics import diagnose
+    _,cases=load_frozen()
+    case=next(c for c in cases if c['id']=='replan_uniform_s1')
+    certificates=json.loads((FROZEN/'certificates/replan_uniform_s1.json').read_text())
+    expected=[(0,0,0,1),(1,1,1,0),(1,0,0,0)]
+    for cert,counts in zip(certificates,expected):
+        trace=cert['trace']
+        d=diagnose(trace,case['scenario'],replan=True)
+        assert tuple(d['replan_branch'].values())==counts
+        assert d['vps'] is None
+        assert d['full_stream_completion']==(cert['kind']!='replan_missing_contact')
+    assert d['coordination_failures']['prior_meeting_inconsistency_rounds']==2
+    trace=certificates[0]['trace']
+    trace['events'].extend([
+        dict(type='batch_rejected',data={'conflict_description':'Schedule action missing required field slot'}),
+        dict(type='batch_rejected',data={'conflict_description':'Cannot move blocked errand'}),
+        dict(type='batch_applied',data={})])
+    d=diagnose(trace,case['scenario'],[{'strict_envelope_valid':False}])
+    assert d['format_errors']==dict(strict_envelope_calls=1,native_schema_rejections=1)
+    assert d['semantic_invalid_actions']==1
+    assert d['full_stream_completion']

@@ -1,3 +1,5 @@
+> 当前训练入口使用 [social-stable-v1](STABLE_TRAINING.md)。B/P 有界补采样、SP 历史 baseline、token cosine 和恢复限制以该文档为准；旧配方不能直接 resume。
+
 # 下一轮训练：B/P-only 与 SP-only
 
 本轮只运行 `bp` 和 `selfplay`，`both` 表示这两个独立实验，不运行 Mixed。提交入口默认选择 `data_reasoning_v5_candidate`；底层历史代码的默认数据不改变，直接调用 Python 时需显式设置 `SOCIAL_DATA_DIR`。

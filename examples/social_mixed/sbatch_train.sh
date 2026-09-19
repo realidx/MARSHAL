@@ -12,7 +12,7 @@
 set -euo pipefail
 cd "${SLURM_SUBMIT_DIR:?Submit from the MARSHAL repository}"
 SOCIAL_ARM="${SOCIAL_ARM:-bp}"
-export SOCIAL_DATA_DIR="${SOCIAL_DATA_DIR:-$PWD/examples/social_mixed/data_reasoning_v5_candidate}"
+export SOCIAL_DATA_DIR="${SOCIAL_DATA_DIR:-$PWD/examples/social_mixed/data_reasoning_v6}"
 SOCIAL_SEED="${SOCIAL_SEED:-42}"
 source "${CONDA_HOME:-/home/e/e1300530/miniconda3}/etc/profile.d/conda.sh"
 conda activate "${CONDA_ENV:-/home/e/e1300530/tmp/marshal-vllm09}"

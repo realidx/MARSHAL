@@ -20,13 +20,15 @@ def main():
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--model',type=Path,default=Path('/raid/chenjiahao/mas/models/Qwen3-4B-Instruct-2507'))
     parser.add_argument('--ports',type=int,nargs='+',default=[18105,18106])
-    parser.add_argument('--max-tokens',type=int,choices=[768,4096],default=768)
+    parser.add_argument('--max-tokens',type=int,choices=[768,4096],default=None)
     parser.add_argument('--disable-thinking',action='store_true',help='Use the tokenizer non-thinking template; preserve native JSON thinking')
     parser.add_argument('--max-model-len',type=int,default=32768)
     parser.add_argument('--runner-python',type=Path,default=Path('/raid/chenjiahao/mas/.venv-calbench/bin/python'))
     parser.add_argument('--parallel-games',type=int,default=2)
-    parser.add_argument('--suite',choices=['smoke','structures','formal'],default='smoke')
+    parser.add_argument('--suite',choices=['smoke','structures','formal','stream'],default='smoke')
     args=parser.parse_args()
+    if args.max_tokens is None:
+        args.max_tokens = 4096 if args.suite == 'stream' else 768
     if args.parallel_games<1:parser.error('--parallel-games must be positive')
     gpus=os.environ.get('CUDA_VISIBLE_DEVICES','').split(',')
     allowed=(1,2) if args.runtime=='soc' else (2,)
@@ -58,7 +60,7 @@ def main():
         config['chat_template_kwargs']={'enable_thinking':False}
         (out/'thinking_template_check.json').write_text(json.dumps(dict(enabled_suffix=on[-200:],disabled_suffix=off[-200:]),indent=2)+'\n')
     routes=out/'routes.json';routes.write_text(json.dumps(config,indent=2)+'\n')
-    if args.suite=='formal':
+    if args.suite in ('formal','stream'):
         if args.max_model_len!=32768: raise ValueError('Formal context budget is frozen at 32768')
         files={}
         for path in sorted(args.model.rglob('*')):
@@ -109,7 +111,7 @@ def main():
                 env.update(VLLM_USE_V1='0',VLLM_ATTENTION_BACKEND='XFORMERS',TRITON_PTXAS_PATH=str(ptxas.resolve()))
             log=(out/f'server-{index}.log').open('w');logs.append(log)
             processes.append(subprocess.Popen(cmd,env=env,stdout=log,stderr=subprocess.STDOUT,start_new_session=True));commands.append(cmd)
-        (out/'servers.json').write_text(json.dumps(dict(commands=commands,gpus=gpus,pids=[p.pid for p in processes],development_only=args.suite!='formal'),indent=2)+'\n')
+        (out/'servers.json').write_text(json.dumps(dict(commands=commands,gpus=gpus,pids=[p.pid for p in processes],development_only=args.suite not in ('formal','stream')),indent=2)+'\n')
         started=time.monotonic();ready=set();last=-1
         while len(ready)<len(gpus):
             for index,(proc,port) in enumerate(zip(processes,args.ports)):

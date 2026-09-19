@@ -26,7 +26,11 @@ export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$CONDA_PREFIX/targets/x86_64-linux/lib
 export CUDNN_FRONTEND_CUDART_LIB_NAME=libcudart.so.13
 runner="${CALBENCH_RUNNER_PYTHON:-$PWD/.venv-calbench/bin/python}"
 "$runner" -c 'from examples.final_evaluation.calbench_local import verify_source; verify_source()'
-"$runner" -m examples.final_evaluation.calbench_formal --verify examples/final_evaluation/calbench_frozen_v1
+if [[ "$CALBENCH_SUITE" == stream ]]; then
+  "$runner" -m examples.final_evaluation.calbench_stream --verify examples/final_evaluation/calbench_stream_v1
+else
+  "$runner" -m examples.final_evaluation.calbench_formal --verify examples/final_evaluation/calbench_frozen_v1
+fi
 python - <<'PY'
 import torch
 assert torch.cuda.is_available()

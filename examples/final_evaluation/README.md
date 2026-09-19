@@ -1,3 +1,7 @@
+## 对抗测试（原评测包 A）
+
+当前设计与历史结果边界见 [对抗测试协议](ADVERSARIAL_TEST.md)。v2 已接通并通过 CPU 原生回放；SoC 提交入口默认 v2，历史 v1 可通过 BENAC_A_PROTOCOL=v1 显式选择。
+
 > 当前迁移环境已改为 CalBench；C2C 仅保留历史开发代码。参见 [CALBENCH.md](CALBENCH.md)。CalBench 采用全员同模型团队；结构开发用 `--suite structures`。
 
 # 最终评估链路的开发接入
@@ -96,3 +100,6 @@ These changes require a fresh launch; speedup has not yet been benchmarked.
 
 2007041
 2007042
+## CalBench sequential suite
+
+New `--suite stream`: 24 frozen four-player, three-meeting games with temperature 0 and three scenario seeds per condition. See [design, scoring and commands](CALBENCH_STREAM.md). The historical 12-case `formal` suite is unchanged.

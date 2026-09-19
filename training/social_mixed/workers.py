@@ -31,6 +31,9 @@ def weighted_objective(log_probs, old, reference, advantage, mask, weights, clip
     return ((pg_rows+kl_coef*kl_rows)*weights).mean(), pg_rows, kl_rows
 
 
+from training.social_mixed.objective import stable_objective
+
+
 class SocialWorker(ActorWorker):
     @register(dispatch_mode=Dispatch.ONE_TO_ALL)
     def initialize(self, pipeline_config):
@@ -45,7 +48,7 @@ class SocialWorker(ActorWorker):
         requests = data.non_tensor_batch['requests'].tolist()
         if self.worker_config.strategy_args.strategy_name != 'vllm':
             raise ValueError('Native generation requires vLLM')
-        params = [SamplingParams(n=1, temperature=1.0, top_p=1.0, top_k=-1,
+        params = [SamplingParams(n=1, temperature=float(r.get("temperature",1.0)), top_p=1.0, top_k=-1,
                                  repetition_penalty=1.0, max_tokens=1024, logprobs=0,
                                  seed=int(r['seed']), stop_token_ids=[self.tokenizer.eos_token_id])
                   for r in requests]
@@ -117,13 +120,20 @@ class SocialWorker(ActorWorker):
         mask = data.batch['response_mask'][:,1:].float()
         log_probs = self.strategy.op_compute_log_probs(logits=output_tensor,
                     input_ids=data.batch['input_ids'], attention_mask=data.batch['response_mask'])
-        loss, pg, kl = weighted_objective(log_probs, data.batch['old_log_probs'], data.batch['ref_log_probs'],
-                    data.batch['advantages'], mask, data.batch['loss_weight'], self.pipeline_config.pg_clip,
-                    self.pipeline_config.kl_loss_coef)
+        loss, parts = stable_objective(log_probs, data.batch['old_log_probs'], data.batch['ref_log_probs'],
+                                      mask, data.batch, self.pipeline_config.pg_clip,
+                                      self.pipeline_config.kl_loss_coef)
         if not torch.isfinite(loss):
             raise FloatingPointError('Nonfinite policy loss')
-        return loss, {'actor/loss':loss.detach().item(), 'actor/pg_loss':pg.mean().detach().item(),
-                      'actor/kl':kl.mean().detach().item()}
+        metrics={'actor/loss':loss.detach().item(),**{'actor/'+k:v.detach().item() for k,v in parts.items()}}
+        ratio=(log_probs-data.batch['old_log_probs']).exp()
+        metrics['actor/clip_fraction']=(((ratio-1).abs()>self.pipeline_config.pg_clip)*mask).sum().detach().item()/mask.sum().clamp_min(1).item()
+        # This is a log-probability-space diagnostic, explicitly not a parameter gradient norm.
+        if int(data.meta_info.get('global_step',0)) % 10 == 0:
+            for key,value in parts.items():
+                grad=torch.autograd.grad(value,log_probs,retain_graph=True)[0]
+                metrics['actor/logprob_gradient_norm/'+key]=grad.detach().norm().item()
+        return loss,metrics
 
     @register(dispatch_mode=Dispatch.DP_MP_DISPATCH_FIRST)
     def train_social(self, data):
@@ -138,6 +148,8 @@ class SocialWorker(ActorWorker):
             weights=pad_weights(data.batch["loss_weight"],padded)
             data=DataProto.concat([data]+[data[[-1]] for _ in range(padded-count)])
             data.batch["loss_weight"]=weights
+            for key in ('task_weight','protocol_weight','kl_weight'):
+                data.batch[key]=pad_weights(data.batch[key][:count],padded)
         data.meta_info["social_trim_padding"]=True
         metrics = {}
         before = self.strategy.scheduler.state_dict()
@@ -156,6 +168,11 @@ class SocialWorker(ActorWorker):
                         if 'norm' in name and parameter.numel():
                             view=parameter.detach().flatten()[:256]
                             witnesses.append((name,parameter,view.cpu().clone()))
+            # Override immediately before the optimizer; backend scheduler still advances
+            # and is checkpointed, but token progress determines the next applied LR.
+            lr=float(data.meta_info['social_lr'])
+            for group in self.strategy.optimizer.param_groups:
+                group['lr']=lr*group.get('lr_mult',1.)
             output = self.strategy.train_step(data, self.loss_func)
             if witnesses:
                 changed=sum(not torch.equal(before_value,parameter.detach().flatten()[:256].cpu())

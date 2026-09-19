@@ -90,6 +90,9 @@ def validate_resume(path, options, model):
     from training.social_mixed.core import PROTOCOL_VERSION
     if old.get('advantage_version')!=PROTOCOL_VERSION or old['options'].get('protocol_coefficient')!=options.get('protocol_coefficient'):
         raise ValueError('Resume must preserve protocol advantage version and coefficient; use a new experiment for changed objectives')
+    if options.get('recipe_version'):
+        if old['options'].get('recipe_version')!=options['recipe_version'] or old['options'].get('total_tokens')!=options['total_tokens']:
+            raise ValueError('Resume must preserve recipe and cosine token horizon; start a new stage')
     keys=('arm','seed','tokens_per_update')
     if any(old['options'][k]!=options[k] for k in keys) or old['model']!=model:
         raise ValueError('Resume must preserve experiment arm, seed, batch budget and base reference')
@@ -135,6 +138,8 @@ def main():
                              'Complete response_only_v1 migration and curriculum review before training.')
     args.keep_checkpoints = 2  # Best and latest; same checkpoint may fill both.
     options=vars(args).copy()
+    from training.social_mixed.stabilization import VERSION as recipe_version
+    options['recipe_version']=recipe_version
     options['gpu_profile']=os.environ.get('SOCIAL_GPU_PROFILE','h100-96')
     if args.total_tokens<1 or args.tokens_per_update<1:raise ValueError('Token budgets must be positive')
     if args.keep_checkpoints < (1 if args.arm=='bp' else 2):

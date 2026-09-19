@@ -15,7 +15,8 @@ from roll.distributed.scheduler.protocol import DataProto
 from roll.pipeline.base_pipeline import BasePipeline
 from roll.models.model_providers import default_tokenizer_provider
 from roll.utils.functionals import reduce_metrics
-from training.social_mixed.core import Collector, load_data
+from training.social_mixed.core import load_data
+from training.social_mixed.stabilization import StableCollector as Collector, VERSION, learning_rate
 from training.social_mixed.workers import object_array
 
 
@@ -40,7 +41,9 @@ def make_batch(rows, pad_id, tp_multiple=2):
     positions = (attention.cumsum(-1)-1).clamp_min(0)
     return DataProto.from_dict(tensors=dict(input_ids=ids, attention_mask=attention, position_ids=positions,
                 response_mask=mask, advantages=advantages, behavior_log_probs=behavior,
-                loss_weight=torch.tensor([r['loss_weight'] for r in rows],dtype=torch.float32)))
+                loss_weight=torch.tensor([r['loss_weight'] for r in rows],dtype=torch.float32),
+                **{key:torch.tensor([r.get(key, r['advantage'] if key=='task_advantage' else r['loss_weight'] if key.endswith('_weight') else 0.) for r in rows],dtype=torch.float32) for key in
+                   ('task_advantage','protocol_advantage','task_weight','protocol_weight','kl_weight','task_denominator')}))
 
 
 class SocialPipeline(BasePipeline):
@@ -78,6 +81,11 @@ class SocialPipeline(BasePipeline):
         self.collector = Collector(load_data(), self.generate, seed=config.seed,
                                    concurrency=config.actor_infer.world_size*config.actor_infer.strategy_args.strategy_config['max_num_seqs'],
                                    protocol_coefficient=options.get('protocol_coefficient',0.2))
+        saved_recipe=self.state.kv.get('stable_recipe')
+        if saved_recipe:
+            self.collector.restore(saved_recipe)
+        elif self.state.step>=0:
+            raise ValueError('Old recipe checkpoint: export actor and start a new stage; do not resume optimizer silently')
         from training.social_mixed.validation import Validator
         self.validator=Validator(self.collector.data,self.generate,seed=config.seed,
                                  concurrency=self.collector.concurrency)
@@ -117,7 +125,7 @@ class SocialPipeline(BasePipeline):
                 raise TypeError('Chat template must return one unbatched list of integer input_ids')
             if len(ids)+1024>self.pipeline_config.sequence_length:
                 raise ValueError(f'Prompt has {len(ids)} tokens; refusing to truncate private/public state')
-            encoded.append(dict(prompt_ids=ids,seed=req['seed']))
+            encoded.append(dict(prompt_ids=ids,seed=req['seed'],temperature=req.get('temperature',1.0)))
         # Replica dispatch requires divisibility. Dummy padding is never scored or
         # trained, and uses a separate request seed.
         replicas=self.pipeline_config.actor_infer.world_size
@@ -233,6 +241,7 @@ class SocialPipeline(BasePipeline):
                 self.actor_infer.offload_states(blocking=True)
             batch=make_batch(sorted(rows,key=lambda r:len(r['prompt_ids'])+len(r['response_ids'])),self.tokenizer.pad_token_id,tp_multiple=self.pipeline_config.actor_train.strategy_args.strategy_config['tensor_model_parallel_size'])
             batch.meta_info['global_step']=step
+            batch.meta_info['social_lr']=learning_rate(consumed,self.options['total_tokens'])
             with self.phase('reference_log_probs'):
                 self.log_probs(self.reference,batch,'ref_log_probs')
             with self.phase('actor_log_probs'):
@@ -248,13 +257,17 @@ class SocialPipeline(BasePipeline):
             batch.batch['old_log_probs']=batch.batch['behavior_log_probs'].clone()
             if not torch.isfinite(batch.batch['ref_log_probs']).all():
                 raise FloatingPointError('Nonfinite reference log probabilities')
-            with self.phase('optimizer_update'):
-                trained=DataProto.materialize_concat(self.actor_train.train_social(batch,blocking=False))
-                metrics.update(reduce_metrics(trained.meta_info['metrics']))
+            if not metrics.get('skip_optimizer',False):
+                with self.phase('optimizer_update'):
+                    trained=DataProto.materialize_concat(self.actor_train.train_social(batch,blocking=False))
+                    metrics.update(reduce_metrics(trained.meta_info['metrics']))
             consumed+=metrics['generated_tokens']
             metrics.update({'system/step':step,'training_response_tokens':consumed})
             self.state.step=step
             self.state.kv['training_response_tokens']=consumed
+            self.state.kv['stable_recipe']=deepcopy(self.collector.state)
+            metrics['recipe/stable_v1']=1
+            metrics['actor/applied_lr']=batch.meta_info['social_lr'] if not metrics.get('skip_optimizer') else 0.
             self.state.log_history.append(metrics)
             force=consumed>=self.options['total_tokens'] or self.stop_requested or step+1==cfg.max_steps
             with (self.root/'metrics.jsonl').open('a') as f:f.write(json.dumps(metrics)+'\n')

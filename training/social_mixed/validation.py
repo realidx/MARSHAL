@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 from training.social_mixed.core import Episode, seed_for
 
-VERSION='social-validation-v2'
+VERSION='social-validation-v3-greedy-bp'
 
 def select_resets(rows, count=8):
     if any(r['split']!='validation' for r in rows):raise ValueError('Development validation only')
@@ -129,6 +129,7 @@ class Validator:
         bp=[];jobs=[]
         for task in self.tasks:
             req=request(task,'action_tools',task.get('name_variant',0));req['seed']=seed_for(self.seed,VERSION,'bp',task['id'],0)
+            req['temperature']=0.0
             jobs.append((task,req))
         for offset in range(0,len(jobs),self.concurrency):
             batch=jobs[offset:offset+self.concurrency];answers=self.generate([j[1] for j in batch])
@@ -147,7 +148,7 @@ class Validator:
             episodes=[ep for ep in episodes if ep.status=='running']
         metrics=summarize_bp(bp)|summarize_games(games,calls)
         coverage=Counter(k for t in self.tasks for k in cells(t))
-        protocol=dict(coverage=dict(coverage),missing_diagnostics=[k for k in ('P4/result_use','B3/update') if not coverage[k]],version=VERSION,bp_tasks=len(self.tasks),bp_replicas=1,bp_ids=[t['id'] for t in self.tasks],
+        protocol=dict(bp_temperature=0.0,sp_temperature=1.0,coverage=dict(coverage),missing_diagnostics=[k for k in ('P4/result_use','B3/update') if not coverage[k]],version=VERSION,bp_tasks=len(self.tasks),bp_replicas=1,bp_ids=[t['id'] for t in self.tasks],
             reset_ids=[r['id'] for r in self.resets],condition='current_team',seed=self.seed,
             data_sha256=hashlib.sha256(json.dumps(self.data,sort_keys=True).encode()).hexdigest(),
             caveats='Development only. Team behavior, not fixed-opponent improvement. Terminal means are conditional on completion; report bounds alongside. No B→P composition claim. Infrastructure errors abort validation, never score zero.')

@@ -24,7 +24,7 @@ if [[ -n "${SOCIAL_SUBMIT_PARTITION:-}" ]]; then
   esac
   [[ "$PARTITION" == gpu ]] && LIMIT=03:00:00
 fi
-export SOCIAL_DATA_DIR="${SOCIAL_DATA_DIR:-$PWD/examples/social_mixed/data_reasoning_v5_candidate}"
+export SOCIAL_DATA_DIR="${SOCIAL_DATA_DIR:-$PWD/examples/social_mixed/data_reasoning_v6}"
 export SOCIAL_GPU_PROFILE="$PROFILE" SOCIAL_ARM="$ARM"
 export SOCIAL_SEED="${SOCIAL_SEED:-42}"
 if [[ -n "${3:-}" ]]; then

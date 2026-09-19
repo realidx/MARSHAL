@@ -24,7 +24,11 @@ export PATH="$CUDA_HOME/bin:$PATH"
 CALBENCH_SITE="$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
 export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$CONDA_PREFIX/targets/x86_64-linux/lib:$CALBENCH_SITE/nvidia/cuda_runtime/lib:$CALBENCH_SITE/nvidia/cudnn/lib:${LD_LIBRARY_PATH:-}"
 export CUDNN_FRONTEND_CUDART_LIB_NAME=libcudart.so.13
-python -m examples.final_evaluation.benac_a_suite
+if [[ "${BENAC_A_PROTOCOL:-v2}" == v2 ]]; then
+  python -c 'from examples.final_evaluation.adversarial_suite import load; load()'
+else
+  python -m examples.final_evaluation.benac_a_suite
+fi
 python - <<'CHECK'
 import torch
 assert torch.cuda.is_available() and torch.cuda.device_count()==2
@@ -38,5 +42,5 @@ mkdir -p runs/benac_a_soc
 printf '%s\n' "$out" > "runs/benac_a_soc/${BENAC_A_LABEL}-${BENAC_A_STAGE}.latest"
 exec python -u -m examples.final_evaluation.launch_benac_a \
   --model "$BENAC_A_MODEL" --q0 "$BENAC_A_Q0" \
-  --stage "$BENAC_A_STAGE" --ports "$base_port" "$((base_port+1))" \
+  --protocol "${BENAC_A_PROTOCOL:-v2}" --stage "$BENAC_A_STAGE" --ports "$base_port" "$((base_port+1))" \
   --parallel-games 4 --output "$out"

@@ -5,6 +5,7 @@ cd "$(dirname "$0")/../.."
 profile="${1:?Choose h100-96 or h200-141}"
 model="${2:?Choose q0 or absolute HF model path}"
 export BENAC_A_LABEL="${3:?Provide unique model label}"
+export BENAC_A_PROTOCOL="${BENAC_A_PROTOCOL:-v2}"
 export BENAC_A_STAGE="${4:-smoke}"
 export BENAC_A_Q0="${BENAC_A_Q0:-/home/e/e1300530/models/Qwen3-4B-Instruct-2507}"
 case "$profile" in h100-96) partition=gpu-long; limit=06:00:00;; h200-141) partition=gpu; limit=03:00:00;; *) exit 2;; esac
