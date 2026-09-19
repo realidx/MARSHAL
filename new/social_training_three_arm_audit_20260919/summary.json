@@ -1,0 +1,67 @@
+{
+  "audit_date": "2026-09-19",
+  "base_model": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+  "calbench": {
+    "bp99": {
+      "coordinated": 8,
+      "optimal": 7,
+      "total": 12,
+      "mean_headline_score": 0.6388884166666667,
+      "family_coordinated": {"F": 4, "D": 3, "C": 1},
+      "healthy_transport": 12,
+      "untruncated": 12,
+      "strict_envelope_failures": 0
+    },
+    "sp39": {
+      "coordinated": 6,
+      "optimal": 4,
+      "total": 12,
+      "mean_headline_score": 0.46296263660493825,
+      "family_coordinated": {"F": 4, "D": 2, "C": 0},
+      "healthy_transport": 12,
+      "untruncated": 12,
+      "strict_envelope_failures": 0
+    },
+    "bp99_to_sp27": {
+      "coordinated": 4,
+      "optimal": 2,
+      "total": 12,
+      "mean_headline_score": 0.2777775277777778,
+      "family_coordinated": {"F": 2, "D": 1, "C": 1},
+      "healthy_transport": 12,
+      "untruncated": 11,
+      "strict_envelope_failures": 2
+    },
+    "sp54": {
+      "coordinated": 4,
+      "optimal": 4,
+      "total": 12,
+      "mean_headline_score": 0.3333330972222222,
+      "family_coordinated": {"F": 4, "D": 0, "C": 0},
+      "healthy_transport": 12,
+      "untruncated": 12,
+      "strict_envelope_failures": 1
+    }
+  },
+  "training_endpoints": {
+    "bp99": {"optimizer_step": 99, "response_tokens": 2516803, "complete_checkpoint": true},
+    "bp_continued": {"optimizer_step": 199, "response_tokens": 5429956, "complete_checkpoint": false},
+    "sp39": {"optimizer_step": 39, "response_tokens": 5028908, "complete_checkpoint": true},
+    "sp54": {"optimizer_step": 54, "response_tokens": 6660608, "complete_checkpoint": true},
+    "bp99_to_sp27": {"optimizer_step": 27, "response_tokens": 4084634, "complete_checkpoint": true}
+  },
+  "mean_training_signal": {
+    "sp_steps_20_39": {"groups": 20.64, "utility_mixed_groups": 13.96, "mixed_fraction": 0.671, "nonzero_task_calls": 224.16},
+    "sp_steps_40_54": {"groups": 21.133, "utility_mixed_groups": 14.333, "mixed_fraction": 0.684, "nonzero_task_calls": 230.4},
+    "bp99_to_sp_steps_0_27": {"groups": 19.321, "utility_mixed_groups": 12.464, "mixed_fraction": 0.645, "nonzero_task_calls": 216.286},
+    "bp_steps_0_99": {"B_groups": 4.65, "B_utility_mixed_groups": 1.84, "P_groups": 4.62, "P_utility_mixed_groups": 3.38, "actor_kl": 0.0423, "grad_norm": 1.9847},
+    "bp_steps_100_199": {"B_groups": 3.724, "B_utility_mixed_groups": 1.448, "P_groups": 6.048, "P_utility_mixed_groups": 3.981, "actor_kl": 0.1034, "grad_norm": 1.7365}
+  },
+  "conclusions": [
+    "B/P checkpoint 99 is the strongest externally evaluated checkpoint.",
+    "SP continuation from checkpoint 39 to 54 is non-monotonic and loses D-family CalBench success.",
+    "B/P99-to-SP27 does not compose abilities and substantially degrades CalBench performance.",
+    "B/P-only improves during an early phase but later rotates among mechanism-specific abilities.",
+    "The custom SP pipeline broadcasts one terminal player advantage to all valid calls in that episode, unlike the original MARSHAL turn-level design."
+  ]
+}
