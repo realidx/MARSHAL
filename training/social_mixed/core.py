@@ -149,7 +149,7 @@ def centered(values):
 def arm_mixture(arm):
     return {'mixed': {'B': .25, 'P': .25, 'selfplay': .5},
             'selfplay': {'selfplay': 1.0},
-            'bp': {'B': .5, 'P': .5}}[arm].copy()
+            'bp': {'B': .5, 'P': .5}, 'b_only': {'B':1.}, 'p_only': {'P':1.}}[arm].copy()
 
 
 PROTOCOL_VERSION = 'call-local-negative-v1'

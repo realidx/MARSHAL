@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 PROFILE="${1:?Choose h100-47, h100-96 or h200-141}"
 ARM="${2:-bp}"
-case "$ARM" in selfplay|bp);; *) echo 'ARM must be selfplay or bp' >&2; exit 2;; esac
+case "$ARM" in selfplay|bp|b_only|p_only);; *) echo 'ARM must be selfplay, bp, b_only or p_only' >&2; exit 2;; esac
 GPUS=2
 case "$PROFILE" in
   h100-47)

@@ -102,9 +102,9 @@ def validate_resume(path, options, model):
 
 
 def validate_course_coverage(data, arm):
-    if arm not in ('mixed','bp'):
+    if arm not in ('mixed','bp','b_only','p_only'):
         return
-    required={'B1','B2','B3','P1','P2','P3','P4'}
+    required={'B1','B2','B3'} if arm=='b_only' else {'P1','P2','P3','P4'} if arm=='p_only' else {'B1','B2','B3','P1','P2','P3','P4'}
     present={t.get('kernel') for t in data['bp_train']}
     missing=sorted(required-present)
     if missing:
@@ -114,7 +114,7 @@ def validate_course_coverage(data, arm):
 
 def main():
     cli=argparse.ArgumentParser(description=__doc__)
-    cli.add_argument('--arm',choices=['selfplay','bp'],required=True)
+    cli.add_argument('--arm',choices=['selfplay','bp','b_only','p_only'],required=True)
     cli.add_argument('--seed',type=int,default=42)
     cli.add_argument('--total-tokens',type=int,default=6553600)
     cli.add_argument('--tokens-per-update',type=int,default=65536)
@@ -130,7 +130,7 @@ def main():
     from training.social_mixed.core import load_data, arm_mixture
     data = load_data()
     if not args.check_only:validate_course_coverage(data,args.arm)
-    if args.arm in ('mixed','bp'):
+    if args.arm in ('mixed','bp','b_only','p_only'):
         from training.b_sft.decision_policy import VERSION as objective_version
         if any(t.get('objective_version') != objective_version or not t.get('training_ready')
                for split in ('train', 'validation') for t in data['bp_'+split]):

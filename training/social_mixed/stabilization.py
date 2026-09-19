@@ -35,8 +35,8 @@ class StableCollector(Collector):
     def collect(self, step, arm, token_target=65536, validation=False):
         if validation:
             return super().collect(step, arm, token_target, validation)
-        if arm == 'bp':
-            return self.collect_bp(step)
+        if arm in ('bp','b_only','p_only'):
+            return self.collect_bp(step,arm)
         if arm != 'selfplay':
             raise ValueError('Stable recipe supports bp and selfplay only')
         rows, units, games, metrics = super().collect(step, arm, token_target)
@@ -84,12 +84,15 @@ class StableCollector(Collector):
             any(abs(r['task_advantage']) > 1e-9 for r in rs) for rs in unit_rows.values())
         return rows, units, games, metrics
 
-    def collect_bp(self, step):
+    def collect_bp(self, step, arm="bp"):
         from training.social_mixed.b_bridge_requests import request
         from training.b_sft.social_bp_training import reward
         rng = random.Random(seed_for(self.seed, step, VERSION))
-        candidates = self.data['bp_train']
-        if {t['task'] for t in candidates} != {'B', 'P'}:
+        selected_domains={'bp':('B','P'),'b_only':('B',),'p_only':('P',)}[arm]
+        target=8//len(selected_domains)
+        share=1./len(selected_domains)
+        candidates = [t for t in self.data['bp_train'] if t['task'] in selected_domains]
+        if {t['task'] for t in candidates} != set(selected_domains):
             raise ValueError('Both B and P training domains required')
         if len({t['id'] for t in candidates}) != len(candidates):
             raise ValueError('Duplicate training question IDs')
@@ -100,7 +103,7 @@ class StableCollector(Collector):
         semantic = Counter()
         tokens = 0
         for index in range(32):
-            domains = [d for d in ('B', 'P') if effective[d] < 4 and
+            domains = [d for d in selected_domains if effective[d] < target and
                        any(t['task'] == d and t['id'] not in used for t in candidates)]
             if not domains:
                 break
@@ -163,16 +166,16 @@ class StableCollector(Collector):
         n = len(rows)
         for r in rows:
             d = r['kind']
-            r['task_weight'] = n*.5/(effective[d]*8) if r['selected_task_group'] else 0.
-            r['protocol_weight'] = n*.5/(attempts[d]*8)
+            r['task_weight'] = n*share/(effective[d]*8) if r['selected_task_group'] else 0.
+            r['protocol_weight'] = n*share/(attempts[d]*8)
             r['kl_weight'] = r['protocol_weight']
             r['loss_weight'] = r['protocol_weight']
             r['advantage'] = r['task_advantage']+r['protocol_advantage']
         metrics = dict(generated_tokens=tokens, rows=n, games=0,
                        candidate_groups=sum(attempts.values()), skip_optimizer=not any(effective.values()))
-        for d in ('B', 'P'):
+        for d in selected_domains:
             metrics.update({f'{d}/effective_groups':effective[d], f'{d}/candidate_groups':attempts[d],
-                            f'{d}/semantic_contrast_groups':semantic[d], f'{d}/underfilled':int(effective[d]<4)})
+                            f'{d}/semantic_contrast_groups':semantic[d], f'{d}/underfilled':int(effective[d]<target)})
         for stage in ('likelihood','procedure','raw'):
             selected=[r for r in rows if r['kind']=='B' and r['b_bridge_stage']==stage]
             if selected:

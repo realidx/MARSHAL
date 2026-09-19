@@ -39,14 +39,14 @@ class StableTests(unittest.TestCase):
         return [dict(id=f'{d}{i}',task=d,pool='test',kernel=d+'1',completion_mode='binary')
                 for d in ('B','P') for i in range(30)]
 
-    def run_collector(self,mixed):
+    def run_collector(self,mixed,arm="bp"):
         def generate(reqs):
             return [dict(response_ids=[1,2],completion=dict(finish_reason='stop',value=int(mixed and i%2)))
                     for i,r in enumerate(reqs)]
         c=StableCollector({'bp_train':self.tasks()},generate,concurrency=8)
         with patch('training.social_mixed.b_bridge_requests.request',return_value={}),patch(
                 'training.b_sft.social_bp_training.reward',side_effect=lambda t,c:dict(reward=c['value'],status='ok')):
-            result=c.collect(0,'bp')
+            result=c.collect(0,arm)
         return c,result
 
     def test_unique_effective_groups_and_resume(self):
@@ -60,6 +60,15 @@ class StableTests(unittest.TestCase):
         other=StableCollector(c.data,c.generate,concurrency=8);other.restore(c.state)
         self.assertEqual(c.state,other.state)
         with self.assertRaises(ValueError):other.restore({'version':'old'})
+
+    def test_single_domain_arms(self):
+        for arm,domain in [('b_only','B'),('p_only','P')]:
+            _,(rows,units,_,m)=self.run_collector(True,arm)
+            self.assertEqual({r['kind'] for r in rows},{domain})
+            self.assertEqual(m[domain+'/effective_groups'],8)
+            self.assertEqual(m['candidate_groups'],8)
+            self.assertAlmostEqual(sum(r['task_weight'] for r in rows)/len(rows),1.)
+            self.assertAlmostEqual(sum(r['kl_weight'] for r in rows)/len(rows),1.)
 
     def test_zero_signal_bounded_skip(self):
         c,(rows,units,games,m)=self.run_collector(False)
