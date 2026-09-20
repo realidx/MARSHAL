@@ -14,6 +14,21 @@ from build import HERE, sha
 from evaluate import load, summarize
 
 
+def inference_complete(summary):
+    """All planned calls returned without infrastructure failure.
+
+    Truncation and format failures are retained model outcomes, not missing
+    inference, so they must not turn a complete run into an infrastructure
+    failure.
+    """
+    conditions = summary.get('conditions', {})
+    return bool(conditions) and all(
+        row['returned'] == row['planned'] and
+        row.get('statuses', {}).get('infrastructure_failure', 0) == 0
+        for row in conditions.values()
+    )
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--base-url', required=True, nargs='+', help='Explicit inference server URL(s) including /v1')
@@ -74,7 +89,7 @@ def main():
     summary, scored = summarize(records, tasks, a.repeats)
     (a.output / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
     (a.output / 'scored.jsonl').write_text(''.join(json.dumps(r) + '\n' for r in scored))
-    complete = summary['overall']['complete']
+    complete = inference_complete(summary)
     (a.output / ('COMPLETE.json' if complete else 'INCOMPLETE.json')).write_text(json.dumps(config, indent=2) + '\n')
     if not complete: raise SystemExit('Incomplete inference run; inspect infrastructure failures')
 

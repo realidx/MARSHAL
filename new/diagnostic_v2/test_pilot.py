@@ -1,6 +1,7 @@
 import unittest,json
 from copy import deepcopy
 from evaluate import load,score,summarize
+from run import inference_complete
 from training.b_sft.social_bp_training import native_completion
 
 class Pilot(unittest.TestCase):
@@ -14,6 +15,15 @@ class Pilot(unittest.TestCase):
     def test_missing_not_zero(self):
         _,tasks,_=load();summary,_=summarize([],tasks,3)
         self.assertTrue(all(r['accuracy'] is None for r in summary['conditions'].values()))
+        self.assertFalse(inference_complete(summary))
+    def test_completion_tracks_infrastructure_not_model_failures(self):
+        summary={'conditions':{'B':dict(planned=3,returned=3,statuses={'ok':1,'truncated':1,'format_failure':1})}}
+        self.assertTrue(inference_complete(summary))
+        summary['conditions']['B']['statuses']['infrastructure_failure']=1
+        self.assertFalse(inference_complete(summary))
+        summary['conditions']['B']['statuses'].pop('infrastructure_failure')
+        summary['conditions']['B']['returned']=2
+        self.assertFalse(inference_complete(summary))
     def test_inverse_bayes(self):
         _,tasks,_=load()
         for t in tasks.values():
