@@ -143,11 +143,12 @@ def summarize(rows,planned):
 def main():
     p=argparse.ArgumentParser();p.add_argument('--base-url',required=True);p.add_argument('--model',required=True)
     p.add_argument('--output',type=Path,required=True);p.add_argument('--repeats',type=int,default=3)
+    p.add_argument('--max-tokens',type=int,default=4096)
     a=p.parse_args()
-    if a.repeats<1:p.error('repeats must be positive')
+    if a.repeats<1 or a.max_tokens<1:p.error('repeats and max-tokens must be positive')
     a.output.mkdir(parents=True,exist_ok=False)
     manifest=json.loads((HERE/'manifest.json').read_text())
-    (a.output/'protocol.json').write_text(json.dumps(dict(model=a.model,base_url=a.base_url,repeats=a.repeats,temperature=1,top_p=1,max_tokens=1024,manifest=manifest),indent=2))
+    (a.output/'protocol.json').write_text(json.dumps(dict(model=a.model,base_url=a.base_url,repeats=a.repeats,temperature=1,top_p=1,max_tokens=a.max_tokens,manifest=manifest),indent=2))
     cases=load();audit_cases(cases)
     rows=[]
     with (a.output/'calls.jsonl').open('w') as log:
@@ -156,7 +157,7 @@ def main():
                 def call(condition,request):
                     seed_condition='P' if condition.endswith('_model_P') else condition
                     seed=int(hashlib.sha256(f"v3:{case['id']}:{replica}:{seed_condition}".encode()).hexdigest()[:8],16)
-                    body=dict(request,model=a.model,temperature=1,top_p=1,seed=seed)
+                    body=dict(request,model=a.model,temperature=1,top_p=1,max_tokens=a.max_tokens,seed=seed)
                     try:
                         req=Request(a.base_url.rstrip('/')+'/chat/completions',data=json.dumps(body).encode(),headers={'Content-Type':'application/json'})
                         with urlopen(req,timeout=180) as response:raw=json.load(response)

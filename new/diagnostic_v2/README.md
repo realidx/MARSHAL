@@ -30,7 +30,7 @@ python new/diagnostic_v2/run.py \
   --output runs/diagnostic_v2/q0 --repeats 3 --temperature 1 --top-p 1
 ```
 
-训练模型分别使用独立输出目录。每次最多 1024 输出 tokens、无重试；截断和格式失败计入准确率分母，基础设施失败及缺失使对应完整准确率不可报告。原始响应保留。不得向模型发送 tasks.jsonl 或 certificates.json；runner 只发送 requests.jsonl 内的 request。
+训练模型分别使用独立输出目录。每次最多 4096 输出 tokens、无重试；截断和格式失败计入准确率分母，基础设施失败及缺失使对应完整准确率不可报告。原始响应保留。不得向模型发送 tasks.jsonl 或 certificates.json；runner 只发送 requests.jsonl 内的 request。
 
 单项分题结果见 summary.json 的 per_task；同历史和逆向规划配对见 paired_cases。先报告各机制全部结果，再列 base→trained 的错→对、对→错、均对、均错；不能只挑改进案例。独立采样配对不证明内部机制，也不把三个重复当三种结构。
 

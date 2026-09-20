@@ -54,7 +54,7 @@ python new/diagnostic_v3/experiment.py --base-url http://127.0.0.1:8000/v1 \
   --model YOUR_SERVED_MODEL --output runs/diagnostic/q0/repair --repeats 3
 ```
 
-Q0/BP/SP 分别运行并匹配解码设置（temperature=1，top_p=1，1024 tokens，无重试）。总计最多 117 次调用/模型。四格结果在 repair/results.json，完整请求响应在 calls.jsonl，协议与冻结 manifest 在 protocol.json。
+Q0/BP/SP 分别运行并匹配解码设置（temperature=1，top_p=1，4096 tokens，无重试）。总计最多 117 次调用/模型。四格结果在 repair/results.json，完整请求响应在 calls.jsonl，协议与冻结 manifest 在 protocol.json。
 
 格式失败、截断不映射为虚构合法动作，utility/regret 为 null；被阻断的格单列。不得丢弃失败后只报完整四格均值；同时报告各格覆盖率与 B/P 协议失败。基础设施失败单列。独立采样的四格差异不证明模型内部存在对应的因果模块。
 
