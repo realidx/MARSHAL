@@ -1,180 +1,82 @@
 \label{sec:diagnose}
 
-We diagnose two capabilities within the interaction loop
-$B_t\rightarrow P_t\rightarrow e_{t+1}\rightarrow B_{t+1}$:
-forming a task-relevant partner judgment ($B$) and using it to plan an
-interaction ($P$). The diagnosis separates two questions: \emph{what dependencies
-does the task impose?} and \emph{can the model perform the computations required
-at each interface?} An unreliable planner can fail to use a correct judgment,
-and an unreliable updater can fail to use informative evidence. Consequently,
-the final model output alone cannot distinguish an absent dependency from a
-failure to exploit it. We first certify both directions with an oracle, then
-measure model errors under controlled judgments and evidence. The effect of
-replacing one model component is a supplementary observation, not the criterion
-for whether a task dependency exists.
+We test whether a model can infer a partner's preference ($B$), act under a
+correct judgment ($P$), and compose the two.  We freeze legal three-player
+histories and intervene on the judgment and first action, which end-game reward
+alone cannot do.
 
-\subsection{Native endgames and paired interventions}
+\subsection{Controlled native endgames}
 
-\paragraph{Controlled positions.}
-We freeze legal public histories in three-player BENAC-P games and measure at
-most two actual ego decisions, including any intervening response decision.
-The original proposal schedule, full legal action set, independent preference
-catalogues, and irreversible commitments are retained. Partners actively
-propose and respond using the history-aware deterministic policy in
-Section~\ref{sec:benac-p}. In each position, one partner--goal preference is
-queried; all other preference entries are supplied, and uncertainty is over
-\textsc{Want}, \textsc{Neutral}, and \textsc{Avoid}. Exact search supplies
-reference judgments and terminal-utility action values, without exposing the
-realized hidden preference to ego.
+We evaluate Qwen3-4B-Instruct-2507 at temperature zero on 36 positions.  Each
+preassigned stratum--split cell contains six distinct source games, with strata
+\emph{known}, \emph{unknown--irrelevant}, and \emph{unknown--relevant}.  Ego
+knows all but one partner--goal entry, whose
+possibilities are \{\textsc{Want}, \textsc{Neutral}, \textsc{Avoid}\}.  We
+retain the public history, commitments, schedule, and all legal actions.
+Information-limited reference partners compute an exact terminal best response
+to a declared continuation.  At most two ego decisions are measured, making
+counterfactual enumeration exact.
 
-We use two oracle-selected cohorts of six positions each, sharing two
-positions: ten positions from ten source games in total. The $B\rightarrow P$
-cohort requires an action that is optimal under one supported partner type but
-strictly suboptimal under another. Common optimal actions are allowed and
-remain correct. The $P\rightarrow B$ cohort requires two legal first actions
-that induce different expected posterior uncertainty and leave a next ego
-decision on every response branch. These forced actions need not be
-utility-optimal; the reference action used for planning regret always maximizes
-terminal utility over all legal actions. Selection uses game mechanics and
-oracle values, not model errors or the sign of a repair effect.
+Selection uses game mechanics, never model answers.  In an unknown--relevant
+position, an action optimal for one supported type is strictly suboptimal for
+another, certifying $B\!\rightarrow\!P$.  The same position has two legal first
+actions whose response branches differ in expected posterior entropy,
+certifying $P\!\rightarrow\!B$.  Unknown--irrelevant positions control for
+uncertainty that does not change the optimal-action set.  These are task
+certificates, not claims about internal neural modules.
 
-\paragraph{A concrete negotiation.}
-Consider \texttt{native-30040-g6-d2}, where ego is $P_1$, all three players
-have already committed to $A_0$, and the remaining proposers are $P_1$ then
-$P_0$. The queried preference is $P_2$'s attitude toward
-$G_6=(P_0.A_1\land P_2.A_1)$. Ego can offer $O_1$ alone or the menu
-$\{O_1,O_2\}$, with new commitments
-\[
- O_1:\;P_1\text{ adds nothing},\;P_2\text{ adds }A_1;
- \qquad
- O_2:\;P_1\text{ adds }A_1,\;P_2\text{ adds }A_1.
-\]
-Under the declared oracle policy and this game's other preferences, all three
-$P_2$ types accept $O_1$ alone, leaving the queried preference unresolved.
-With the menu, however, \textsc{Avoid} chooses $O_1$, whereas \textsc{Want}
-and \textsc{Neutral} choose $O_2$. Thus the choice supports either
-$\{\textsc{Avoid}\}$ or $\{\textsc{Want},\textsc{Neutral}\}$, while immediately
-binding the selected commitments. Next, $P_0$ actively proposes adding its own
-$A_1$ without further commitments from $P_1$, who must accept or reject.
-This is evidence acquisition followed by a native decision, not an explicit
-query action. In the observed $O_1$ menu branch, the model reports
-$\{\textsc{Want},\textsc{Neutral}\}$ despite the response supporting
-$\{\textsc{Avoid}\}$. Appendix~\ref{app:diagnose-example} gives the preferences
-and oracle payoff comparison underlying this example.
+For $B$, the model returns every type compatible with history; unresolved sets
+are correct.  For $P$, we supply the exact judgment and measure
+$\max_{a'}Q_i^{\star}(h,b^{\star},a')-Q_i^{\star}(h,b^{\star},a)$.  We then
+force lower- and higher-information actions, enumerate all responses, and test
+the next belief, removing the model's first choice as a confound.
 
-\paragraph{Separate capability measurements.}
-For $B$, the model receives the initial possibilities and public history and
-returns the set of partner preferences still compatible with that history.
-We score exact set agreement, allowing a correct answer to remain uncertain.
-For $P$, we supply the evidence-supported reference judgment and ask the model
-to select a legal action. Regret is the difference from the optimal expected
-terminal utility, with reference continuation after the chosen action; all
-optimal ties receive zero regret. The model outputs brief reasoning followed
-by a semantic judgment or action index, never probabilities, $Q$ values, or a
-plan variable. Since $P$ also receives history, this is planning assisted by a
-correct judgment, rather than isolation of an internal planning module.
+\subsection{Both capabilities fail where both are required}
 
-\paragraph{Certifying dependencies and probing their use.}
-For $B\rightarrow P$, exact search holds the physical state, public history
-and legal actions fixed and compares action values under singleton judgments
-for two still-compatible partner types. An action optimal under one judgment
-must be strictly suboptimal under the other. This certifies that partner
-understanding affects action evaluation; shared optimal actions remain valid.
-For $P\rightarrow B$, we force two legal first actions from the same root,
-enumerate subsequent partner actions up to the next ego decision, and compute
-the evidence-supported judgments and their expected uncertainty. This certifies
-that interaction choice affects what can subsequently be inferred. Both are
-oracle selection criteria, established independently of model performance.
-
-We then ask the model to form judgments from those histories and to plan with
-the evidence-supported reference judgment. These tests locate errors in $B$
-and in reference-judgment-assisted $P$, respectively. As a supplementary
-$B\rightarrow P$ probe, we replace the model's explicit judgment with the
-reference judgment in otherwise identical fresh planning contexts. The
-replacement supplies only what the evidence supports, not the realized hidden
-type. Action changes and signed regret differences measure the model's response
-to this input intervention; neither a positive repair benefit nor a gain in
-accuracy between evidence arms is required to certify the task dependencies.
-Because actions also change commitments, utility contrasts are not interpreted
-as pure information effects.
-
-\subsection{Certified dependencies and model errors}
-
-We evaluate Qwen3-4B-Instruct-2507 at temperature zero. All 127 diagnostic tasks
-returned valid submissions, with no truncation and a mean of 230.8 completion
-tokens. The separate empty-history controls scored 3/4: a known
-\textsc{Want} preference was incorrectly expanded to all three possibilities.
-We retain this error and therefore do not attribute all subsequent belief
-errors exclusively to strategic inference. The cohorts are development
-diagnostics, not an untouched confirmation set. Table~\ref{tab:diagnose-main}
-separates oracle-certified dependencies from model measurements; each direction
-uses its own six-game cohort. Appendix~\ref{app:diagnose} gives
-selection, execution and aggregation details.
+Table~\ref{tab:diagnose-main} pools the two preassigned splits for the 12
+unknown--relevant positions.  In all 12, partner information changes both the
+best current action and what can be learned next.
 
 \begin{table}[t]
-\caption{Two levels of diagnosis. Panel A reports exact task properties required
-for selection, not model success rates. Panel B measures model performance at
-the corresponding interfaces. Each direction uses six source games, with two
-shared across directions. Intervals are descriptive 95\% game-bootstrap
-intervals; regret uses additive goal-utility units.}
+\caption{Diagnosis on 12 unknown--relevant endgames. Exactness requires the
+full supported set; regret is in terminal utility units.}
 \label{tab:diagnose-main}
 \centering
 \small
-\begin{tabular}{lrr}
+\begin{tabular}{l r}
 \hline
-Diagnostic quantity & Result & 95\% interval \\
+Quantity & Result \\
 \hline
-\multicolumn{3}{l}{\emph{A. Oracle-certified task dependencies}} \\
-$B\rightarrow P$: judgment changes action optimality & 6/6 cases & --- \\
-$P\rightarrow B$: action changes inferable preferences & 6/6 cases & --- \\
-Posterior entropy: lower / higher information (bits) & 1.585 / 0.667 & --- \\
-\hline
-\multicolumn{3}{l}{\emph{B. Model errors at the two interfaces}} \\
-Root B exact, judgment-sensitive cohort & 16.7\% & [0.0, 50.0]\% \\
-P regret with oracle judgment, judgment-sensitive cohort & 0.444 & [0.167, 0.722] \\
-P regret with oracle judgment, action--evidence cohort & 1.000 & [0.556, 1.556] \\
-B exact after forced lower-information action & 16.7\% & [0.0, 50.0]\% \\
-B exact after forced higher-information action & 22.2\% & [5.6, 44.4]\% \\
+$B\!\rightarrow\!P$: type changes an optimal action & 12/12 \\
+$P\!\rightarrow\!B$: action changes evidence entropy & 12/12 \\
+Mean action loss / entropy contrast & 1.50 / 0.94 bits \\
+Root partner judgment exactly correct & 1/12 (8.3\%) \\
+Planning regret with oracle judgment & 0.56 \\
+Positive regret / exact post-evidence belief & 8/12 / 26.4\% \\
 \hline
 \end{tabular}
 \end{table}
 
-\paragraph{The task couples partner understanding and interaction choice.}
-Panel A makes the two dependencies explicit. In every judgment-sensitive case,
-changing the assumed partner type changes the optimality of at least one legal
-action. In every action--evidence case, changing the forced interaction changes
-the set of partner preferences that subsequent behavior supports. The latter
-reduces expected oracle uncertainty by 0.918 bits for each selected pair.
-Thus, both dependencies exist even before considering whether the model can
-compute an appropriate judgment or action. These are properties of the
-selected endgames, not estimates of their prevalence in random games.
+The exact support is recovered once in 12 roots; the model averages 0.54 false
+exclusions.  Even with the oracle judgment, regret is positive in eight cases
+(mean 0.56).  After oracle-selected interactions, the next belief is exact on
+only 26.4\% of probability-weighted branches.  The model therefore both
+misreads evidence and fails to exploit a correct reading.
 
-\paragraph{The model makes errors at both interfaces.}
-Panel B tests the model against those oracle-defined requirements. At the
-judgment-sensitive roots, only one of six reported partner judgments is exact.
-When the reference judgment is supplied, planning regret remains positive:
-0.444 in the judgment-sensitive cohort and 1.000 in the action--evidence
-cohort. The planning test therefore does not require the model first to infer
-the correct judgment unaided. Conversely, the forced-action tests provide the
-corresponding evidence independently of the model's first-action choice.
-Judgment accuracy is 16.7\% under the lower-information action and 22.2\% under
-the higher-information action. A correct unresolved set receives full credit;
-these errors concern agreement with what the evidence actually supports, not
-failure to identify a type that remains ambiguous.
+\paragraph{Representative failure patterns.}
+Three cases make this concrete.  (i) In \texttt{native-30005-g0-d1}, a
+partner's offer is compatible with all three types, but the model treats a
+commitment used by the goal as a declaration of \textsc{Want} and collapses
+the support.  (ii) In the same state, even when given the correct support, it
+proposes a two-option offer to $P_1$ worth $0$, while an offer to $P_0$ is worth
+$1$: a planning error under an oracle judgment.  (iii) In
+\texttt{native-30040-g3-d2}, an informative interaction separates a
+\textsc{Want} branch from a \{\textsc{Neutral},\textsc{Avoid}\} branch.  The
+model correctly outputs \textsc{Want} after acceptance, yet also outputs it
+after the diagnostic rejection, reversing the evidence on that branch.
 
-\paragraph{Joint responses are supplementary, not a dependency test.}
-Replacing model judgments changes three of six root actions in the
-judgment-sensitive cohort, with two utility-neutral changes and one decrease
-in utility. The mean regret reduction is $-0.111$; the paired difference in
-B accuracy between the forced evidence arms is 5.6 percentage points, with an
-interval spanning zero. Appendix~\ref{app:diagnose} reports these signed effects.
-They describe how the evaluated model responds to the interventions. An output
-that remains wrong after receiving a correct judgment or more informative
-evidence does not erase the independently certified task dependency.
-
-The diagnosis therefore identifies errors in both partner judgment and
-partner-conditioned planning within tasks that couple the two computations.
-It separates the existence of those dependencies from the model's ability to
-use them. This motivates training $B$ and $P$ as separate targets and then
-evaluating their composition and transfer. It does not identify internal neural
-modules or establish that the two errors causally amplify one another.
+Known preferences do not eliminate planning error, while a wrong judgment need
+not matter when the entry is decision-irrelevant.  Our scoped conclusion is
+that both $B$ and $P$ fail in states that couple them, and either failure can
+block a higher-value interaction.  This motivates separate supervision of the
+two targets and explicit evaluation of their composition.

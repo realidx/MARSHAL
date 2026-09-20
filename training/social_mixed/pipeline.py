@@ -81,6 +81,9 @@ class SocialPipeline(BasePipeline):
         self.collector = Collector(load_data(), self.generate, seed=config.seed,
                                    concurrency=config.actor_infer.world_size*config.actor_infer.strategy_args.strategy_config['max_num_seqs'],
                                    protocol_coefficient=options.get('protocol_coefficient',0.2))
+        if options['arm'] in ('outcome','decomposed'):
+            from training.social_mixed.paired_bank import load
+            self.collector.data['bp_train']=load('train')
         saved_recipe=self.state.kv.get('stable_recipe')
         if saved_recipe:
             self.collector.restore(saved_recipe)
@@ -89,6 +92,11 @@ class SocialPipeline(BasePipeline):
         from training.social_mixed.validation import Validator
         self.validator=Validator(self.collector.data,self.generate,seed=config.seed,
                                  concurrency=self.collector.concurrency)
+        if options['arm'] in ('outcome','decomposed'):
+            # Fixed unassisted paired dev; same cases and criterion for both arms.
+            from training.social_mixed.paired_bank import development_panel
+            self.validator.tasks=development_panel()
+
 
     def request_stop(self, signum, frame):
         self.stop_requested = True

@@ -3,8 +3,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 PROFILE="${1:-h100-96}"
-ARM="${2:?Usage: start_training.sh <GPU profile> <selfplay|bp|b_only|p_only|both>}"
-case "$ARM" in selfplay|bp|b_only|p_only|both);; *) echo 'ARM must be selfplay, bp or both' >&2; exit 2;; esac
+ARM="${2:?Usage: start_training.sh <GPU profile> <selfplay|bp|b_only|p_only|outcome|decomposed|both>}"
+case "$ARM" in selfplay|bp|b_only|p_only|outcome|decomposed|both);; *) echo 'ARM must be selfplay, bp or both' >&2; exit 2;; esac
 case "$PROFILE" in h100-47|h100-96|h200-141);; *) echo 'Unknown GPU profile' >&2; exit 2;; esac
 export CONDA_HOME="${CONDA_HOME:-/home/e/e1300530/miniconda3}"
 export CONDA_ENV="${CONDA_ENV:-/home/e/e1300530/tmp/marshal-vllm09}"

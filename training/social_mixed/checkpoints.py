@@ -6,10 +6,12 @@ SELECTION_VERSION='development-best-v1'
 
 def selection_score(metrics,arm):
     """Development only; failed games enter SP's conservative cohort bound."""
-    if arm in ('bp','b_only','p_only'):
+    if arm in ('outcome','decomposed'):
+        return [metrics['bp/P/all/accuracy']]
+    if arm in ('bp','b_only','p_only','outcome','decomposed'):
         b=sum(metrics[f'bp/{k}/{mode}/accuracy'] for k in ('B1','B2','B3') for mode in ('binary','linear'))/6
         p=sum(metrics[f'bp/{k}/{mode}/accuracy'] for k in ('P1','P2','P3','P4') for mode in ('binary','linear'))/8
-        return [b if arm=='b_only' else p if arm=='p_only' else .5*(b+p)]
+        return [b if arm=='b_only' else p if arm=='p_only' else p if arm in ('outcome','decomposed') else .5*(b+p)]
     if arm=='selfplay':
         return [metrics['games/current_team/all/cohort_player_utility_lower'],
                 metrics['games/current_team/all/completion_rate'],

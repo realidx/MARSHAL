@@ -35,7 +35,7 @@ class StableCollector(Collector):
     def collect(self, step, arm, token_target=65536, validation=False):
         if validation:
             return super().collect(step, arm, token_target, validation)
-        if arm in ('bp','b_only','p_only'):
+        if arm in ('bp','b_only','p_only','outcome','decomposed'):
             return self.collect_bp(step,arm)
         if arm != 'selfplay':
             raise ValueError('Stable recipe supports bp and selfplay only')
@@ -88,11 +88,15 @@ class StableCollector(Collector):
         from training.social_mixed.b_bridge_requests import request
         from training.b_sft.social_bp_training import reward
         rng = random.Random(seed_for(self.seed, step, VERSION))
-        selected_domains={'bp':('B','P'),'b_only':('B',),'p_only':('P',)}[arm]
-        target=8//len(selected_domains)
+        selected_domains={'bp':('B','P'),'b_only':('B',),'p_only':('P',),'outcome':('O',),'decomposed':('O','B','Pplus')}[arm]
+        paired=arm in ('outcome','decomposed')
+        if paired:
+            from training.social_mixed.paired_requests import request
+        domain_of=lambda t:t['paired_view'] if paired else t['task']
+        target=(9 if paired else 8)//len(selected_domains)
         share=1./len(selected_domains)
-        candidates = [t for t in self.data['bp_train'] if t['task'] in selected_domains]
-        if {t['task'] for t in candidates} != set(selected_domains):
+        candidates = [t for t in self.data['bp_train'] if domain_of(t) in selected_domains]
+        if {domain_of(t) for t in candidates} != set(selected_domains):
             raise ValueError('Both B and P training domains required')
         if len({t['id'] for t in candidates}) != len(candidates):
             raise ValueError('Duplicate training question IDs')
@@ -102,13 +106,13 @@ class StableCollector(Collector):
         effective, attempts = Counter(), Counter()
         semantic = Counter()
         tokens = 0
-        for index in range(32):
+        for index in range(36 if paired else 32):
             domains = [d for d in selected_domains if effective[d] < target and
-                       any(t['task'] == d and t['id'] not in used for t in candidates)]
+                       any(domain_of(t) == d and t['id'] not in used for t in candidates)]
             if not domains:
                 break
             domain = min(domains, key=lambda d: (attempts[d], d))
-            pool = [t for t in candidates if t['task'] == domain and t['id'] not in used]
+            pool = [t for t in candidates if domain_of(t) == domain and t['id'] not in used]
             # Rotate direct inference aids, procedure-only, and unassisted B.
             # Never let successful scaffold groups permanently replace hard raw B.
             if domain == 'B' and any(t.get('b_bridge') for t in candidates):
@@ -116,6 +120,7 @@ class StableCollector(Collector):
                 staged=[t for t in pool if t.get('b_bridge',{}).get('stage','raw')==stage]
                 if staged:pool=staged
             source = 'coverage' if attempts[domain] % 2 == 0 else 'active'
+            if paired:source='coverage'
             if source == 'active':
                 active = [t for t in pool if old_stats.get(t['id'], {}).get('mixed', 0.) >= .05
                           and step-old_stats[t['id']].get('step',-1000) <= 32]
@@ -125,7 +130,7 @@ class StableCollector(Collector):
                     source = 'coverage_fallback'
             cells = defaultdict(list)
             for t in pool:
-                cells[(t['kernel'], t['completion_mode'], t.get('information_role', 'na'))].append(t)
+                cells[((t['canonical_action_task']['kernel'] if paired else t['kernel']), t['completion_mode'], t.get('information_role', 'na'))].append(t)
             task = rng.choice(cells[rng.choice(sorted(cells))])
             used.add(task['id']); attempts[domain] += 1
             group = f'train:step{step}:bp:{task["id"]}'

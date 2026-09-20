@@ -1,0 +1,31 @@
+{
+  "version": "bp-structure-diagnostic-v4",
+  "split": "frozen_structure_test",
+  "structures": 16,
+  "matched_cases": 32,
+  "planning_assisted_B_structures": 8,
+  "default_repeats": 3,
+  "default_model_calls_per_unassisted_structure": 24,
+  "max_model_calls_per_model": 408,
+  "conditions": [
+    "B",
+    "B_with_planning_assistance",
+    "model_B_model_P",
+    "correct_B_model_P",
+    "end_to_end_P"
+  ],
+  "scoring": "All decision utility uses the certified true posterior. Reference cells are offline exact expected-utility maximizers with uniform exact ties.",
+  "selection": "Teacher-only, geometry-disjoint deterministic search; frozen before model calls.",
+  "files": {
+    "cases.json": "74329e1f3755c4ff46235f0fc02cf455635e57fe47c033d50f2bfaa8beca8c0e",
+    "certificates.json": "6912e31ae542f9eee00499f57bad6fb944a0a9ec4ef7456cc42f530987593bc0",
+    "selection.json": "7dbc1862cff4fb375cad92d0c012b97b5b6d6573e49112aa2da9374a9f02968c"
+  },
+  "dependencies": {
+    "new/diagnostic_v4/build.py": "1fe8adeb4cf8487e459978e37fe90abbbe8288c4226041f4164bb6cd474d3364",
+    "training/b_sft/social_private_teacher.py": "7de7b48a6266be266891d58866114a02a045efa89490073f95f47a5014c2e6e9",
+    "training/b_sft/prepare_no_catalogue_probe.py": "0d4b19f0be3cbd73a68699422d90e62449d2dfd28a65e9ca068526f2a35ff0ee",
+    "training/social_mixed/structure_coverage.py": "7a7b896486a32b528eb3e4f0953ad05dfdef726db69c470c821c8c19f30e52aa",
+    "new/diagnostic_v2/composition/prepare.py": "759a8fec0009e70c02d59833d8e97cc7a102516d9d4a174b897dd943391e505e"
+  }
+}

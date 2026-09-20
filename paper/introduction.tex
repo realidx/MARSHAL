@@ -1,0 +1,59 @@
+Large language models (LLMs) are increasingly deployed as interacting agents that 
+exchange information, negotiate decisions, and coordinate their actions over multiple turns. 
+Such multi-agent systems (MAS) promise to combine information and capabilities distributed 
+across multiple agents, but recent work has exposed substantial failures at the interaction 
+level. [TODO: it is not too proper to mention decisive here cause we do not investigate this,
+better change to cannot actively acquire info, correctly interpret info from others. ground plans is also something we do not address.]
+Agents can overlook decisive information held by others, exchange extensive messages 
+without reaching effective coordination, and fail to maintain grounded plans over multi-turn 
+negotiation \citep{li2026systematic,zhang2026silobench,yao2026talk}. [TODO: this sentence has low information, 
+I believe these 2 cited paper here gives something more interesting to mention] Broader analyses 
+similarly find that failures arising from inter-agent interaction constitute a distinct 
+source of error beyond mistakes made by individual agents in isolation \citep{cemri2025multiagent,anthropic2026multiagent}. 
+Given the growing use of agentic systems, understanding why individually capable agents 
+can still coordinate poorly is an important problem.
+
+[TODO: this is the place where we need to change the framing, as we discussed, we need to let the
+reviewer and readers know the case we are studying is important. also the logic connecting previous paragraph is 
+not smooth. we said there are some issues in the previous paragraph, we should say how we are going to tackle
+not directly ]
+We focus on a particularly consequential class of interactions: 
+\textbf{coordination under partial information and mixed incentives}. 
+These conditions arise whenever agents act on behalf of different participants who 
+do not share all of their information or objectives. Scheduling agents, for example, 
+coordinate using privately held constraints \citep{zou2026calbench}; agents in 
+multi-party negotiation may cooperate while pursuing asymmetric private 
+objectives \citep{oneill2026cooperate}; and autonomous agents representing 
+separate principals can repeatedly interact while retaining distinct economic 
+interests \citep{li2026emergent}. These settings differ from fully cooperative 
+systems with a common objective: successful interaction requires reasoning not 
+only about the task, but also about other decision makers whose relevant information 
+and incentives are only partially observable.
+
+In this work, we examine one interaction-level difficulty that may contribute to failures in such settings. An agent must infer behaviorally relevant latent properties of other agents---such as what they know, prefer, or are likely to do---and use this information when choosing its own interaction. However, inference and decision making are not independent stages. What an agent currently infers changes the value of possible requests, disclosures, offers, or commitments; conversely, the interaction it chooses determines how other agents respond and therefore what evidence becomes available for subsequent inference. Thus, in the settings we study, reasoning repeatedly passes through the dependence
+\begin{equation}
+\text{latent-state inference}
+\rightarrow
+\text{interaction decision}
+\rightarrow
+\text{new evidence}
+\rightarrow
+\text{updated inference}.
+\label{eq:introduction-loop}
+\end{equation}
+This structure is closely related to classical models of interactive decision making in which uncertainty over other agents enters sequential planning \citep{gmytrasiewicz2005ipomdp,huang2024hop}. We ask whether current LLM agents can reliably perform these two computations together, and whether directly supervising them improves subsequent interaction.
+
+Studying this question is difficult with end-task performance alone. Existing benchmarks provide evidence of failures in both inference and downstream coordination: agents fail to recover information distributed across participants \citep{li2026systematic}, struggle with reasoning about other agents in coordination tasks \citep{agashe2025llmcoordination}, and fail to maintain grounding and execute joint plans during negotiation \citep{yao2026talk}. Yet the same unsuccessful outcome can arise for different reasons. An agent may choose a poor interaction because its inference about another agent is unsupported by the available evidence, or it may have an adequate inference but fail to act appropriately on it. To distinguish these cases, we need interaction states for which both the latent-state inference and the values of alternative actions can be evaluated.
+
+Games provide a convenient substrate for constructing such states. Their information structure, latent variables, legal actions, and utilities can be explicitly controlled, and recent work shows that game interaction and self-play can train strategic capabilities that generalize beyond the training games \citep{yuan2026marshal,liu2026spiral,lyu2026gift,he2026stratreasoner}. Our use of games is motivated by a different requirement: \textbf{precise supervision of interaction reasoning}. Rather than relying exclusively on complete-game outcomes, we construct compact strategic slices of a game around decision points where an agent must infer relevant hidden state and act on that inference. This lets us specify not only whether the eventual game was won, but what could be inferred at the decision point and how different interactions should be valued.
+
+To make this supervision possible, we extend commitment-based multi-party negotiation \citep{benac2026benchmark} with partial information and private player preferences. Players privately value public goals and interact through consequential offers, responses, and binding commitments. Their actions therefore simultaneously alter future strategic opportunities and provide evidence about latent preferences. At the same time, the game remains sufficiently compact to permit exact filtering over latent states, oracle partner policies, and counterfactual evaluation of candidate actions. We use this structure to construct \textbf{strategic interaction slices} that retain the information, incentives, and continuation required for meaningful multi-agent reasoning while remaining exactly analyzable.
+
+We first use these slices to characterize failures in current LLM agents. Because the underlying latent states and continuation values are available to an oracle, we can separately measure errors in what the model infers from the interaction history and errors in how it acts under that inference. We then use the same structure to provide detailed supervision for both computations during game training. Importantly, our aim is not to establish that training on shortened game trajectories is generally superior to full-game self-play. The slices serve as a controlled mechanism for supplying supervision at strategically meaningful interaction states. We test whether training with this supervision improves behavior on unseen strategic configurations and, more importantly, whether the resulting interaction capability transfers to external multi-agent settings with different information structures and incentives.
+
+Overall, our work uses a controllable game environment to turn an otherwise entangled multi-agent coordination problem into an interaction process that can be diagnosed and supervised at the decision level. Our contributions are threefold:
+\begin{itemize}
+    \item \textbf{Diagnosing inference and decision making in strategic interaction.} We operationalize the sequential dependence between latent-state inference and interaction decisions in partial-information, mixed-incentive coordination, and separately evaluate failures in the two computations.
+    \item \textbf{Constructing verifiable supervision through game design.} We show how compact game mechanics with private preferences and information-revealing actions can provide exact latent-state targets and counterfactual action values for training social interaction reasoning.
+    \item \textbf{Training and testing transferable interaction capabilities.} We construct strategically meaningful game slices, use their oracle structure for detailed supervision, and evaluate whether the resulting improvements generalize to unseen strategic configurations and external multi-agent environments.
+\end{itemize}

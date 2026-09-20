@@ -93,6 +93,8 @@ def validate_resume(path, options, model):
     if options.get('recipe_version'):
         if old['options'].get('recipe_version')!=options['recipe_version'] or old['options'].get('total_tokens')!=options['total_tokens']:
             raise ValueError('Resume must preserve recipe and cosine token horizon; start a new stage')
+    if old['options'].get('paired_bank_sha256')!=options.get('paired_bank_sha256'):
+        raise ValueError('Paired bank changed on resume')
     keys=('arm','seed','tokens_per_update')
     if any(old['options'][k]!=options[k] for k in keys) or old['model']!=model:
         raise ValueError('Resume must preserve experiment arm, seed, batch budget and base reference')
@@ -114,7 +116,7 @@ def validate_course_coverage(data, arm):
 
 def main():
     cli=argparse.ArgumentParser(description=__doc__)
-    cli.add_argument('--arm',choices=['selfplay','bp','b_only','p_only'],required=True)
+    cli.add_argument('--arm',choices=['selfplay','bp','b_only','p_only','outcome','decomposed'],required=True)
     cli.add_argument('--seed',type=int,default=42)
     cli.add_argument('--total-tokens',type=int,default=6553600)
     cli.add_argument('--tokens-per-update',type=int,default=65536)
@@ -140,6 +142,10 @@ def main():
     options=vars(args).copy()
     from training.social_mixed.stabilization import VERSION as recipe_version
     options['recipe_version']=recipe_version
+    if args.arm in ('outcome','decomposed'):
+        from training.social_mixed.paired_bank import PATH,load
+        load('train')
+        options['paired_bank_sha256']=__import__('hashlib').sha256((PATH/'manifest.json').read_bytes()).hexdigest()
     options['gpu_profile']=os.environ.get('SOCIAL_GPU_PROFILE','h100-96')
     if args.total_tokens<1 or args.tokens_per_update<1:raise ValueError('Token budgets must be positive')
     if args.keep_checkpoints < (1 if args.arm=='bp' else 2):

@@ -128,7 +128,10 @@ class Validator:
         from training.b_sft.social_bp_training import reward
         bp=[];jobs=[]
         for task in self.tasks:
-            req=request(task,'action_tools',task.get('name_variant',0));req['seed']=seed_for(self.seed,VERSION,'bp',task['id'],0)
+            if task.get('paired_view'):
+                from training.social_mixed.paired_requests import request as render
+            else:render=request
+            req=render(task,'action_tools',task.get('name_variant',0));req['seed']=seed_for(self.seed,VERSION,'bp',task['id'],0)
             req['temperature']=0.0
             jobs.append((task,req))
         for offset in range(0,len(jobs),self.concurrency):
