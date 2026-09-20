@@ -1,0 +1,37 @@
+{
+  "version": "bp-structure-diagnostic-v5-native-semantic",
+  "split": "frozen_structure_test",
+  "structures": 16,
+  "matched_cases": 32,
+  "default_repeats": 3,
+  "max_model_calls_per_model": 408,
+  "conditions": [
+    "B",
+    "B_with_qualitative_partner_plan",
+    "model_B_model_P",
+    "correct_B_model_P",
+    "end_to_end_P"
+  ],
+  "model_facing_belief_contract": [
+    "possible_preferences",
+    "favored"
+  ],
+  "forbidden_model_facing_fields": [
+    "posterior",
+    "probability",
+    "joint_distribution",
+    "preference_weights"
+  ],
+  "scoring": "Exact teacher posterior and per-world payoffs are backend-only. No reference-P cell is computed from a model semantic judgment.",
+  "files": {
+    "cases.json": "82bc84c15ce1d74944f1ba2456f5b17936d631affab963767a4ab6940ad7dab0",
+    "certificates.json": "0c8de38530be1021b2a0be56d80411f794de7c253ab1e07ab88b3e4093505cbb",
+    "selection.json": "4e26ba2aa44b93bdb40e408257bf5054873535d45988c545960a4ecea0c3071e"
+  },
+  "dependencies": {
+    "new/diagnostic_v5/build.py": "c7c177ae636b27b206641639e8f2c43297d9456c03bb6c94700ffd87fcce1d94",
+    "new/diagnostic_v4/cases.json": "74329e1f3755c4ff46235f0fc02cf455635e57fe47c033d50f2bfaa8beca8c0e",
+    "new/diagnostic_v4/build.py": "1fe8adeb4cf8487e459978e37fe90abbbe8288c4226041f4164bb6cd474d3364",
+    "training/b_sft/preference_contract.py": "0eef1a38f40c097ffb2d6e21c1f3b4556997c7b8f31a83f9c009ef26f729063f"
+  }
+}
