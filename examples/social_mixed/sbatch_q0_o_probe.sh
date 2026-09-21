@@ -106,7 +106,7 @@ PY
 grep -F 'enable_prefix_caching=True' "$out/server.log"
 grep -F 'enable_chunked_prefill=False' "$out/server.log"
 python -u -m training.social_mixed.reasoning_probe \
-  --views O --cases 32 --seed 42 \
+  --views O --cases 32 --seed 42 --concurrency 32 \
   --base-url "http://127.0.0.1:$port/v1" --model "$served_model" \
   --checkpoint-hash "$checkpoint_hash" --output "$out/probe"
 printf '0\n' > "$out/EXIT_CODE"
