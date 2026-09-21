@@ -1,5 +1,7 @@
 """Small fixed-token backend comparison; no full-game rollout or checkpoint."""
 import json
+import os
+import hashlib
 from pathlib import Path
 import numpy as np
 
@@ -19,10 +21,27 @@ def run(p):
     from training.social_mixed.workers import object_array
     from roll.utils.functionals import reduce_metrics
     root=p.root/'probability_diagnostic';root.mkdir(exist_ok=True)
-    rows=json.loads((Path(__file__).resolve().parents[2]/'examples/social_mixed/probability_cases.json').read_text())
+    replay_path=os.environ.get('SOCIAL_PROBABILITY_REPLAY_CALLS')
+    if replay_path:
+        source=Path(replay_path).resolve()
+        raw=[json.loads(line) for line in source.read_text().splitlines()]
+        if len(raw)<8:raise ValueError('Replay requires at least eight saved rollout calls')
+        ordered=sorted(raw,key=lambda r:len(r['prompt_ids'])+len(r['response_ids']))
+        indices=torch.linspace(0,len(ordered)-1,8).long().tolist()
+        rows=[dict(id=ordered[i]['task_id'],kind=ordered[i]['kind'],
+                   prompt_ids=ordered[i]['prompt_ids'],response_ids=ordered[i]['response_ids'],
+                   behavior_log_probs=ordered[i]['behavior_log_probs'],source_index=i)
+              for i in indices]
+        if any(len(r['response_ids'])!=len(r['behavior_log_probs']) for r in rows):
+            raise ValueError('Saved behavior probabilities do not match response tokens')
+    else:
+        rows=json.loads((Path(__file__).resolve().parents[2]/'examples/social_mixed/probability_cases.json').read_text())
     report={'note':'Prefill same fixed tokens; thresholds are gross-error guards, not numerical equivalence certification.',
             'rows':[dict(id=r['id'],kind=r['kind'],prompt_tokens=len(r['prompt_ids']),response_tokens=len(r['response_ids'])) for r in rows],
             'stages':{},'comparisons':{}}
+    if replay_path:
+        report['replay']=dict(source=str(source),sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
+                              sorted_indices=indices,source_rows=len(raw))
     from training.social_mixed.workers import weighted_objective
     def save():
         (root/'report.json').write_text(json.dumps(report,indent=2)+'\n')
@@ -44,6 +63,9 @@ def run(p):
         report['comparisons'][name]=difference(a,b);save()
     # Inference loads the original HF weights independently, before any sync.
     initial=stage('vllm_original_hf',lambda:native(rows))
+    if replay_path:
+        behavior=stage('rollout_behavior',lambda:[r['behavior_log_probs'] for r in rows])
+        compare('rollout_behavior_vs_vllm_teacher_forcing',behavior,initial)
     p.actor_infer.offload_states(blocking=True)
     ref=stage('hf_reference_batch',lambda:compute('reference',rows))
     ref_single=stage('hf_reference_single',lambda:[compute('reference',[r])[0] for r in rows])
@@ -53,6 +75,8 @@ def run(p):
     compare('hf_vs_megatron',ref,actor)
     compare('hf_batch_vs_single',ref,ref_single)
     compare('megatron_batch_vs_single',actor,actor_single)
+    if replay_path:
+        compare('rollout_behavior_vs_megatron',behavior,actor)
     with p.phase('diagnostic/weight_sync'):
         p.actor_train.offload_states(blocking=True);p.model_update(0)
     synced=stage('vllm_after_sync',lambda:native(rows))
@@ -86,6 +110,10 @@ def run(p):
     if report['gross_mismatch']:
         report['status']='mismatch_found_update_skipped';save()
         print('PROBABILITY_DIAGNOSIS: mismatch found; inspect '+str(root),flush=True)
+        return
+    if replay_path:
+        report['status']='replay_completed_no_update';save()
+        print('PROBABILITY_REPLAY: completed; inspect '+str(root),flush=True)
         return
     # A disposable synthetic gradient exercises update and weight sync only.
     # This is not a scored training experiment and saves no checkpoint.
