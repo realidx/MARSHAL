@@ -123,6 +123,23 @@ done
 launch_arm selfplay "$sp_devices"
 sp_pid=$LAUNCHED_PID
 
+sp_phases="runs/social_mixed/selfplay-seed42-${SLURM_JOB_ID}/phases.jsonl"
+startup_deadline=$((SECONDS + 900))
+while ! grep -q '"phase": "initial_weight_sync", "event": "end"' "$sp_phases" 2>/dev/null; do
+  if ! kill -0 "$sp_pid" 2>/dev/null; then
+    echo 'SP exited before initial weight sync' >&2
+    forward_signal
+    wait "$sp_pid" || true
+    exit 45
+  fi
+  if (( SECONDS >= startup_deadline )); then
+    echo 'SP startup exceeded 15 minutes at collective/initial sync' >&2
+    forward_signal
+    exit 46
+  fi
+  sleep 5
+done
+
 wait_for_child() {
   local pid="$1" result_name="$2" status
   while true; do
