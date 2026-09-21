@@ -40,7 +40,8 @@ def main():
     representatives=norms[:1]+norms[-1:]
     if not representatives:raise ValueError('No representative norm parameters')
     parameters=[p for _,p in representatives]
-    sums={k:[torch.zeros_like(p,dtype=torch.float32) for p in parameters] for k in ('B','P','selfplay','protocol','kl_weighted')}
+    domains=sorted({r['kind'] for r in selected})
+    sums={k:[torch.zeros_like(p,dtype=torch.float32) for p in parameters] for k in domains+['protocol','kl_weighted']}
     ratios=[]
     for r,ref in zip(selected,refs):
         lp=logprobs(actor,r);old=torch.tensor([r['behavior_log_probs']],device=device)
@@ -57,7 +58,9 @@ def main():
     result=dict(rows=len(selected),model=a.model,reference=a.reference,calls=a.calls,
                 parameters=[n for n,_ in representatives],
                 gradient_norms={k:float(g.norm()) for k,g in flat.items()},
-                B_P_cosine=float(torch.nn.functional.cosine_similarity(flat['B'],flat['P'],dim=0)),
+                task_cosines={a+':'+b:(float(torch.nn.functional.cosine_similarity(flat[a],flat[b],dim=0))
+                    if flat[a].norm()>0 and flat[b].norm()>0 else None)
+                    for j,a in enumerate(domains) for b in domains[j+1:]},
                 mean_abs_actor_behavior_logprob_delta=sum(ratios)/len(ratios),
                 limitation='HF diagnostic subset, two norm tensors; not full parameter gradients, not Megatron clipping/update verification. Use matching actor checkpoint and saved calls.')
     Path(a.output).write_text(json.dumps(result,indent=2))

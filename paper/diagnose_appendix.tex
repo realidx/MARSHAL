@@ -73,15 +73,21 @@ execution; repeated requests must agree even when production concurrency and
 chunked prefill are retained. We additionally require that whenever
 $\widehat B=B^\star$, the two controlled-$P$ request bodies (including their
 seed) are identical and return the same action. Replicas are determinism
-checks, not independent statistical samples. The final clean-$P$ run path and
-coverage counts will be inserted after completion.
+checks, not independent statistical samples. Both checkpoint runs contain
+96/96 rows and 408/408 calls. All repeated outputs agree; all semantic
+certificates pass; and the paired-scoring identity has zero row failures
+(maximum residual $0$).
 
 \paragraph{Aggregation.}
-We first average valid replicas within each case and the two matched cases
-within each structure, then weight the 16 structures equally. All
-model-dependent counts will be filled from the new certified run, without
-carrying over values from the previous case inventory or treating the three
-deterministic replicas as additional evidence.
+We first collapse the identical replicas, average valid cases within each
+structure, then weight structures equally. The old and new runs have 16 and 24
+doubly valid paired cases spanning 11 and 14 structures. Their paired repair
+means use those respective subsets. For checkpoint comparison we additionally
+intersect validity masks: 14 paired cases across 10 structures yield repair
+$-0.158$ (old) and $-0.550$ (new); 24 correct-$B$ cases across all 16 structures
+yield regret $0.802$ and $1.130$; and 28 end-to-end cases across 14 structures
+yield $0.690$ and $0.887$. No mean is reconstructed by subtracting metrics
+computed on different valid subsets.
 
 The frozen v6 suite stores the model-facing cases, teacher-only certificates,
 selection record, and both clean controlled-$P$ and native end-to-end

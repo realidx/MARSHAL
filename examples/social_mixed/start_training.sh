@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Next training round: B/P-only and self-play.
+# Four-arm social reasoning; legacy BP remains available explicitly.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 PROFILE="${1:-h100-96}"
-ARM="${2:?Usage: start_training.sh <GPU profile> <selfplay|bp|b_only|p_only|outcome|decomposed|both>}"
-case "$ARM" in selfplay|bp|b_only|p_only|outcome|decomposed|both);; *) echo 'ARM must be selfplay, bp or both' >&2; exit 2;; esac
+ARM="${2:?Usage: start_training.sh <GPU profile> <selfplay|bp|b_only|p_only|outcome|conditioned|decomposed|four|sp_o|both>}"
+case "$ARM" in selfplay|bp|b_only|p_only|outcome|conditioned|decomposed|four|sp_o|both);; *) echo 'Unknown social training arm' >&2; exit 2;; esac
+if [[ "$ARM" == four || "$ARM" == sp_o ]]; then export SOCIAL_RECIPE=reasoning; fi
 case "$PROFILE" in h100-47|h100-96|h200-141);; *) echo 'Unknown GPU profile' >&2; exit 2;; esac
 export CONDA_HOME="${CONDA_HOME:-/home/e/e1300530/miniconda3}"
 export CONDA_ENV="${CONDA_ENV:-/home/e/e1300530/tmp/marshal-vllm09}"
@@ -17,14 +18,20 @@ export VLLM_TOOL_CALL_PARSER=hermes TOKENIZERS_PARALLELISM=false
 export OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1
 export SOCIAL_GPU_PROFILE="$PROFILE" SOCIAL_ARM="$ARM"
 export SOCIAL_SEED="${SOCIAL_SEED:-42}"
-export SOCIAL_TOTAL_TOKENS=6553600 SOCIAL_TOKENS_PER_UPDATE=65536 SOCIAL_KEEP_CHECKPOINTS=2
+export SOCIAL_TOTAL_TOKENS="${SOCIAL_TOTAL_TOKENS:-6553600}" SOCIAL_TOKENS_PER_UPDATE="${SOCIAL_TOKENS_PER_UPDATE:-65536}" SOCIAL_KEEP_CHECKPOINTS=2
 export SOCIAL_DATA_DIR="${SOCIAL_DATA_DIR:-$PWD/examples/social_mixed/data_reasoning_v6}"
 unset SOCIAL_RESUME SOCIAL_SOURCE_COMMIT SOCIAL_DIAGNOSE_PROBABILITIES
 [[ -f "$SOCIAL_MODEL/config.json" ]] || { echo 'Missing local model' >&2; exit 2; }
 mkdir -p submission
-SOCIAL_SUBMISSION_DIR="$(mktemp -d "$PWD/submission/reasoning-v5-${PROFILE}-XXXXXX")"
+SOCIAL_SUBMISSION_DIR="$(mktemp -d "$PWD/submission/reasoning-four-arm-${PROFILE}-XXXXXX")"
 python -c 'import json,sys; from pathlib import Path; from training.social_mixed.run import verify_bundle; Path(sys.argv[1]).write_text(json.dumps(verify_bundle(),indent=2)+"\n")' "$SOCIAL_SUBMISSION_DIR/source.json"
 python -m training.social_mixed.preflight --output "$SOCIAL_SUBMISSION_DIR/data-preflight.json"
+if [[ "${SOCIAL_RECIPE:-reasoning}" == reasoning && ( "$ARM" == four || "$ARM" == sp_o || "$ARM" == both || "$ARM" == selfplay || "$ARM" == outcome || "$ARM" == conditioned || "$ARM" == decomposed ) ]]; then
+  python -m training.social_mixed.reasoning_preflight --tokenizer "$SOCIAL_MODEL" --output "$SOCIAL_SUBMISSION_DIR/reasoning-preflight.json"
+fi
+if [[ "$ARM" == sp_o ]]; then
+  python -m training.social_mixed.sp_o_preflight --tokenizer "$SOCIAL_MODEL" --output "$SOCIAL_SUBMISSION_DIR/sp-o-preflight.json"
+fi
 echo 'Binary/linear-only data verified; checking hardware profiles and training configurations'
 if ! python -m unittest training.social_mixed.test_configuration -q > "$SOCIAL_SUBMISSION_DIR/configuration.log" 2>&1; then
   cat "$SOCIAL_SUBMISSION_DIR/configuration.log"
@@ -39,6 +46,8 @@ fi
 # A receipt is saved after each successful submission, including partial success.
 ARMS=("$ARM")
 [[ "$ARM" == both ]] && ARMS=(bp selfplay)
+[[ "$ARM" == sp_o ]] && ARMS=(selfplay outcome)
+[[ "$ARM" == four ]] && ARMS=(selfplay outcome conditioned decomposed)
 export SOCIAL_SUBMIT_PARSABLE=1
 for SOCIAL_SELECTED_ARM in "${ARMS[@]}"; do
   SOCIAL_JOB_ID="$(bash examples/social_mixed/submit_soc.sh "$PROFILE" "$SOCIAL_SELECTED_ARM")"
@@ -55,6 +64,9 @@ record=dict(job_id=job,arm=arm,runtime=os.getcwd(),profile=os.environ['SOCIAL_GP
             data_manifest_sha256=data_manifest_sha256(),fresh_start=True,
             dataset=__import__('training.social_mixed.core',fromlist=['DATA']).DATA.name,allowed_completion_modes=['binary','linear'],
             source_version=json.loads((Path(folder)/'source.json').read_text()))
+if arm in ('selfplay','outcome','conditioned','decomposed') and os.environ.get('SOCIAL_RECIPE','reasoning')=='reasoning':
+    from training.social_mixed.reasoning_bank import PATH,sha
+    record.update(recipe='reasoning',normalization=os.environ.get('SOCIAL_NORMALIZATION','centered_fixed'),paired_bank_sha256=sha((PATH/'manifest.json').read_bytes()))
 (Path(folder)/(arm+'.json')).write_text(json.dumps(record,indent=2)+'\n')
 PYRECEIPT
   printf 'SUBMITTED arm=%s job=%s receipt=%s\n' "$SOCIAL_SELECTED_ARM" "$SOCIAL_JOB_ID" "$SOCIAL_SUBMISSION_DIR/$SOCIAL_SELECTED_ARM.json"

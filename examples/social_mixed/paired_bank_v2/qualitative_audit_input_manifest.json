@@ -1,0 +1,100 @@
+{
+  "version": "social-reasoning-packages-v4-qualitative-belief",
+  "files": {
+    "tasks.jsonl": {
+      "sha256": "b630bab62dfe89179e05f2414ce475eeaec8c60d7e0b8e428245503efcfa6ab7",
+      "rows": 1491
+    },
+    "cases.jsonl": {
+      "sha256": "42764427e5d825db6362fe99a2f23cfd558da88f9292e37a08c6847533a88a1b",
+      "rows": 497
+    },
+    "relations.jsonl": {
+      "sha256": "a0e5b90eb35da5bdf9a0bb9277cba2a5439449a11cbaa9bed9ef6e734e1f3bdd",
+      "rows": 637
+    },
+    "packages.json": {
+      "sha256": "2aa796190f9b8185b368f7f94c885b46ffc1658e308b097b8433f8e18c5340de",
+      "rows": 175
+    }
+  },
+  "source_manifest_sha256": "458572aecddfe15171d1f898b7d3dbeac7a8edf67c3f11b5efd8c8b4099a7a03",
+  "label_sources": {
+    "training/social_mixed/reasoning_bank.py": "94bea8fb1101169df504a4e6eb971b363cb6d7b5a1ee5e646fa2db37cce4b510",
+    "training/social_mixed/prepare_distribution_curriculum.py": "7cdf914883e32fc617cdaed90690e5a7d406d21179443818c1c8f18692446f04",
+    "training/b_sft/social_bp_curriculum.py": "61608c98213390e7ff31f380392b1e0d03f5f6beb28e3d663f7a4fde8c540895",
+    "training/b_sft/preference_contract.py": "0eef1a38f40c097ffb2d6e21c1f3b4556997c7b8f31a83f9c009ef26f729063f",
+    "training/social_mixed/paired_requests.py": "9b26ac0afd806ce559266df86645938060b2f9de8e9bf8c8ab889dad9d7d5810",
+    "training/social_mixed/history_free_requests.py": "763af2a51f4a17f88b2f4882c9c1d33a8e1239a366f116c8c9e13435727a6c01",
+    "training/b_sft/social_named_probe.py": "9c82c5bcb0ff7b42341b92651066a916dc6740c1955eeaf4699a6b759806b41d"
+  },
+  "counts": {
+    "train": 373,
+    "validation": 124
+  },
+  "packages": 175,
+  "split_policy": {
+    "target_train_fraction": 0.75,
+    "unit": "source family (includes complete parents)",
+    "retained_validation_families": [
+      "01f979b5f141240f829d506b",
+      "24c176f030f4a437f2f1d8ca",
+      "333570fccf36c0df",
+      "45ee4c5eac678a25",
+      "b9459e09c0c49a14",
+      "bec8bbdd222e1465fb35c8de",
+      "ddc4c9e5d7b59d0f"
+    ],
+    "moved_to_train_families": [
+      "047c6da69f0ccf0c",
+      "458abbd4c77436b26cb42b7d",
+      "4ec9d10f4d17d82f0497a77f",
+      "62225bc70fe4a948",
+      "6397726b6b6e49b81402d654",
+      "72112645c6f5f7bf6d0c6bca",
+      "90807805278a1fb311e516f9",
+      "aae4d34167d78a13",
+      "bc657a816afa6b68",
+      "fa2203df5805227a",
+      "ff14ef2890da9e9c"
+    ],
+    "selection": "Case count, source-kernel/completion-mode and action-relevance balance; retain must-change contrasts; no model outcomes",
+    "prior_validation_reused": true
+  },
+  "action_relevant_queries": {
+    "train": 90,
+    "validation": 27
+  },
+  "relations": {
+    "train:same_optimal_set": 406,
+    "train:must_change": 53,
+    "train:overlapping_optima": 31,
+    "validation:same_optimal_set": 136,
+    "validation:overlapping_optima": 5,
+    "validation:must_change": 6
+  },
+  "external_evaluations_used": false,
+  "formal_training_ready": false,
+  "label_build_mode": "previously_replayed_labels_reused",
+  "limitations": [
+    "Semantic B is not certified sufficient for every decision.",
+    "Matched relations do not certify new structural generalization.",
+    "GPU probability, context-length and short learning/retention acceptance still required."
+  ],
+  "fixed_payoff_relations": {
+    "train:same_optimal_set": 394,
+    "train:must_change": 53,
+    "train:overlapping_optima": 28,
+    "validation:same_optimal_set": 134,
+    "validation:must_change": 6,
+    "validation:overlapping_optima": 2
+  },
+  "reused_certified_cases_sha256": "ed1f443c841d4996cf07bffd363cac2b112ea141dde76e9ab0366b661d24b6d2",
+  "p_belief_representation": "Same possible_preferences/favored schema as B; one entry for each partner-goal; no numerical probabilities",
+  "qualitative_decision_sufficiency": {
+    "status": "not_certified_counterexamples_found_under_fixed_continuation",
+    "witness_cases": 3,
+    "audit": "qualitative_ambiguity_audit.json",
+    "scope": "Finite witness search, preserving every support/favored label and original joint support, fixed per-world continuation payoffs. Not exhaustive; alternative posteriors are not certified reachable by the original history."
+  }
+}

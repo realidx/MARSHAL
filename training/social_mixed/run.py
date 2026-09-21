@@ -95,6 +95,10 @@ def validate_resume(path, options, model):
             raise ValueError('Resume must preserve recipe and cosine token horizon; start a new stage')
     if old['options'].get('paired_bank_sha256')!=options.get('paired_bank_sha256'):
         raise ValueError('Paired bank changed on resume')
+    if options.get('recipe')=='reasoning' or old['options'].get('recipe')=='reasoning':
+        for key in ('normalization', 'recipe', 'max_behavior_logprob_delta', 'max_behavior_clip_fraction'):
+            if old['options'].get(key)!=options.get(key):
+                raise ValueError('Resume must preserve '+key)
     keys=('arm','seed','tokens_per_update')
     if any(old['options'][k]!=options[k] for k in keys) or old['model']!=model:
         raise ValueError('Resume must preserve experiment arm, seed, batch budget and base reference')
@@ -116,7 +120,11 @@ def validate_course_coverage(data, arm):
 
 def main():
     cli=argparse.ArgumentParser(description=__doc__)
-    cli.add_argument('--arm',choices=['selfplay','bp','b_only','p_only','outcome','decomposed'],required=True)
+    cli.add_argument('--arm',choices=['selfplay','bp','b_only','p_only','outcome','conditioned','decomposed'],required=True)
+    cli.add_argument('--recipe',choices=['reasoning','legacy'],default=None)
+    cli.add_argument('--normalization',choices=['centered_fixed','standard_sequence'],default='centered_fixed')
+    cli.add_argument('--max-behavior-logprob-delta',type=float,default=.05)
+    cli.add_argument('--max-behavior-clip-fraction',type=float,default=.01)
     cli.add_argument('--seed',type=int,default=42)
     cli.add_argument('--total-tokens',type=int,default=6553600)
     cli.add_argument('--tokens-per-update',type=int,default=65536)
@@ -126,6 +134,15 @@ def main():
     cli.add_argument('--diagnose-probabilities',action='store_true')
     cli.add_argument('--check-only',action='store_true')
     args=cli.parse_args()
+    from training.social_mixed.reasoning_training import ARMS
+    args.recipe=args.recipe or ('reasoning' if args.arm in ARMS else 'legacy')
+    if args.recipe=='reasoning':
+        if args.arm not in ARMS:raise ValueError('Reasoning recipe requires one of SP/O/C/D')
+        if args.tokens_per_update<57344 or args.total_tokens%args.tokens_per_update:
+            raise ValueError('Reasoning uses complete nominal token blocks >=57344 tokens')
+        if not (0<args.max_behavior_logprob_delta<1 and 0<args.max_behavior_clip_fraction<1):
+            raise ValueError('Probability acceptance thresholds must be in (0,1)')
+    elif args.arm=='conditioned':raise ValueError('C requires the reasoning recipe')
     if not _numpy.isfinite(args.protocol_coefficient) or args.protocol_coefficient<=0:
         raise ValueError('Protocol coefficient must be finite and positive')
     source_hash=verify_bundle()
@@ -141,10 +158,16 @@ def main():
     args.keep_checkpoints = 2  # Best and latest; same checkpoint may fill both.
     options=vars(args).copy()
     from training.social_mixed.stabilization import VERSION as recipe_version
+    if args.recipe=='reasoning':
+        from training.social_mixed.reasoning_training import VERSION as recipe_version
     options['recipe_version']=recipe_version
-    if args.arm in ('outcome','decomposed'):
-        from training.social_mixed.paired_bank import PATH,load
+    if args.recipe=='reasoning' or args.arm in ('outcome','decomposed'):
+        if args.recipe=='reasoning':
+            from training.social_mixed.reasoning_bank import PATH,load
+        else:
+            from training.social_mixed.paired_bank import PATH,load
         load('train')
+        load('validation')
         options['paired_bank_sha256']=__import__('hashlib').sha256((PATH/'manifest.json').read_bytes()).hexdigest()
     options['gpu_profile']=os.environ.get('SOCIAL_GPU_PROFILE','h100-96')
     if args.total_tokens<1 or args.tokens_per_update<1:raise ValueError('Token budgets must be positive')
@@ -179,7 +202,8 @@ def main():
         reward='B/P binary; SP own terminal utility; invalid/truncated calls use independent negative advantage instead of task advantage',
         advantage_version=__import__('training.social_mixed.core',fromlist=['PROTOCOL_VERSION']).PROTOCOL_VERSION,
         mixture=arm_mixture(args.arm),
-        grouping='B/P task; selfplay reset and player seat across replicas',
+        grouping=('Fixed candidate slots, legal-only centered advantages; SP historical baseline' if args.recipe=='reasoning'
+                  else 'B/P task; selfplay reset and player seat across replicas'),
         budget='Generated response tokens entering training, including retries; finish current groups at boundary'),indent=2)+'\n')
     if args.check_only:
         done.set();return

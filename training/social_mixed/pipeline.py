@@ -78,10 +78,20 @@ class SocialPipeline(BasePipeline):
                 getattr(self,role).initialize(pipeline_config=cfg, blocking=True)
         self.set_model_update_pair(self.actor_train,self.actor_infer,frequency=1)
         self.set_checkpoint_clusters(self.actor_train)
-        self.collector = Collector(load_data(), self.generate, seed=config.seed,
+        data=load_data()
+        reasoning=options.get('recipe')=='reasoning'
+        collector_type=Collector
+        extra={}
+        if reasoning:
+            from training.social_mixed.reasoning_training import ReasoningCollector
+            from training.social_mixed.reasoning_bank import load
+            collector_type=ReasoningCollector
+            data['bp_train']=load('train')
+            extra['normalization']=options['normalization']
+        self.collector = collector_type(data, self.generate, seed=config.seed,
                                    concurrency=config.actor_infer.world_size*config.actor_infer.strategy_args.strategy_config['max_num_seqs'],
-                                   protocol_coefficient=options.get('protocol_coefficient',0.2))
-        if options['arm'] in ('outcome','decomposed'):
+                                   protocol_coefficient=options.get('protocol_coefficient',0.2),**extra)
+        if not reasoning and options['arm'] in ('outcome','decomposed'):
             from training.social_mixed.paired_bank import load
             self.collector.data['bp_train']=load('train')
         saved_recipe=self.state.kv.get('stable_recipe')
@@ -90,9 +100,11 @@ class SocialPipeline(BasePipeline):
         elif self.state.step>=0:
             raise ValueError('Old recipe checkpoint: export actor and start a new stage; do not resume optimizer silently')
         from training.social_mixed.validation import Validator
+        if reasoning:
+            from training.social_mixed.reasoning_validation import ReasoningValidator as Validator
         self.validator=Validator(self.collector.data,self.generate,seed=config.seed,
                                  concurrency=self.collector.concurrency)
-        if options['arm'] in ('outcome','decomposed'):
+        if not reasoning and options['arm'] in ('outcome','decomposed'):
             # Fixed unassisted paired dev; same cases and criterion for both arms.
             from training.social_mixed.paired_bank import development_panel
             self.validator.tasks=development_panel()
@@ -196,13 +208,27 @@ class SocialPipeline(BasePipeline):
         with self.phase('validation'):
             try:
                 report=self.validator.run()
+                if self.options.get('recipe')=='reasoning':
+                    from training.social_mixed.reasoning_validation import metrics_and_state
+                    retention,state=metrics_and_state(report['bp_calls'],self.state.kv.get('reasoning_retention'))
+                    report['metrics'].update(retention)
+                    self.state.kv['reasoning_retention']=state
+                    self.monitor_o(step,consumed,report['bp_calls'])
                 # Release inference weights before checkpointing optimizer state.
                 self.actor_infer.offload_states(blocking=True)
                 metrics=persist(self.root,report,step,consumed,self.tracker)
                 self.state.log_history.append(metrics)
                 if step>=0:
                     from training.social_mixed.checkpoints import selection_score,SELECTION_VERSION,prune
-                    score=selection_score(report['metrics'],self.options['arm'])
+                    if self.options.get('recipe')=='reasoning':
+                        from training.social_mixed.reasoning_validation import selection_score as reasoning_score, VERSION as SELECTION_VERSION
+                        score=reasoning_score(report['metrics'])
+                        checkpoint=self.root/'checkpoints'/f'checkpoint-{step}'
+                        candidates=self.state.kv.setdefault('reasoning_candidates',[])
+                        candidates.append(dict(step=step,tokens=consumed,checkpoint=str(checkpoint.resolve()),score=score))
+                        (self.root/'EVALUATED_CHECKPOINTS.json').write_text(json.dumps(candidates,indent=2)+'\n')
+                    else:
+                        score=selection_score(report['metrics'],self.options['arm'])
                     previous=self.state.kv.get('best_validation')
                     if previous is None or score>previous['score']:
                         checkpoint=self.root/'checkpoints'/f'checkpoint-{step}'
@@ -215,6 +241,8 @@ class SocialPipeline(BasePipeline):
                         (self.root/'BEST_CHECKPOINT').write_text(str(checkpoint.resolve())+'\n')
                         (self.root/'BEST_VALIDATION.json').write_text(json.dumps(best,indent=2)+'\n')
                         prune(self.root,1)
+                    if self.options.get('recipe')=='reasoning':
+                        self.save(step,force=True)
             except Exception as exc:
                 folder=self.root/'validation';folder.mkdir(exist_ok=True)
                 (folder/f'step-{step+1}.FAILED.json').write_text(json.dumps(dict(error=repr(exc),scored=False))+'\n')
@@ -223,9 +251,28 @@ class SocialPipeline(BasePipeline):
                 self.actor_infer.offload_states(blocking=True)
 
     @torch.no_grad()
+    def monitor_o(self, step, consumed, calls=None):
+        from training.social_mixed.reasoning_validation import metrics_and_state
+        with self.phase('static_o_monitor'):
+            try:
+                if calls is None:calls=self.validator.run_static_o()
+                calls=[r for r in calls if r['task']['paired_view']=='O']
+                metrics,state=metrics_and_state(calls,self.state.kv.get('static_o_retention'))
+                self.state.kv['static_o_retention']=state
+                folder=self.root/'static_o_monitor';folder.mkdir(exist_ok=True)
+                report=dict(step=step,completed_updates=step+1,tokens=consumed,
+                            selection_candidate=False,metrics=metrics,calls=calls)
+                (folder/f'step-{step+1}.json').write_text(json.dumps(report,ensure_ascii=False)+'\n')
+                self.tracker.log({'monitor/'+k:v for k,v in metrics.items()},step=step+1)
+            finally:
+                self.actor_infer.offload_states(blocking=True)
+
+    @torch.no_grad()
     def run(self):
         cfg=self.pipeline_config
         consumed=int(self.state.kv.get('training_response_tokens',0))
+        if self.options.get('recipe')=='reasoning' and self.state.kv.get('reasoning_candidates'):
+            (self.root/'EVALUATED_CHECKPOINTS.json').write_text(json.dumps(self.state.kv['reasoning_candidates'],indent=2)+'\n')
         if self.state.step<0:
             with self.phase('initial_weight_sync'):
                 self.actor_train.offload_states(blocking=True)
@@ -259,6 +306,14 @@ class SocialPipeline(BasePipeline):
             difference=(audit.batch['audit_log_probs']-audit.batch['behavior_log_probs'])[mask].abs()
             metrics['behavior_actor_logprob_abs_mean']=difference.mean().item()
             metrics['behavior_actor_logprob_abs_max']=difference.max().item()
+            if self.options.get('recipe')=='reasoning':
+                ratios=(audit.batch['audit_log_probs']-audit.batch['behavior_log_probs'])[mask].exp()
+                fraction=((ratios<.8)|(ratios>1.2)).float().mean().item()
+                metrics['behavior_preupdate_clip_fraction']=fraction
+                if (not torch.isfinite(difference).all() or difference.mean().item()>self.options['max_behavior_logprob_delta']
+                        or fraction>self.options['max_behavior_clip_fraction']):
+                    (self.root/'PROBABILITY_ACCEPTANCE_FAILED.json').write_text(json.dumps(metrics,indent=2)+'\n')
+                    raise RuntimeError('Actor/behavior probability acceptance failed before optimizer update')
             # Use the actual behavior distribution in the PPO denominator;
             # sampling is unfiltered temperature=1. Save actor recomputation
             # discrepancy to diagnose backend numerical differences.
@@ -274,15 +329,25 @@ class SocialPipeline(BasePipeline):
             self.state.step=step
             self.state.kv['training_response_tokens']=consumed
             self.state.kv['stable_recipe']=deepcopy(self.collector.state)
-            metrics['recipe/stable_v1']=1
+            metrics['recipe/'+('reasoning_fixed_exposure' if self.options.get('recipe')=='reasoning' else 'stable_v1')]=1
             metrics['actor/applied_lr']=batch.meta_info['social_lr'] if not metrics.get('skip_optimizer') else 0.
             self.state.log_history.append(metrics)
             force=consumed>=self.options['total_tokens'] or self.stop_requested or step+1==cfg.max_steps
+            if self.options.get('recipe')=='reasoning':
+                crossed=[q for q in (.25,.5,.75,1.) if consumed-metrics['generated_tokens']<q*self.options['total_tokens']<=consumed]
+                evaluate=bool(crossed) or step+1==cfg.max_steps
+                metrics['evaluation/token_fractions_crossed']=crossed
+            else:
+                evaluate=(step+1)%cfg.eval_steps==0 or consumed>=self.options['total_tokens'] or step+1==cfg.max_steps
             with (self.root/'metrics.jsonl').open('a') as f:f.write(json.dumps(metrics)+'\n')
             self.tracker.log(metrics,step=step+1)
-            if ((step+1)%cfg.eval_steps==0 or consumed>=self.options['total_tokens'] or step+1==cfg.max_steps) and not self.stop_requested:
+            if evaluate and not self.stop_requested:
                 self.model_update(step+1)
                 self.validate(step,consumed)
+            elif (self.options.get('recipe')=='reasoning' and not self.stop_requested
+                  and ((step+1 in (2,4,6,8)) or (step+1>8 and (step+1)%5==0))):
+                self.model_update(step+1)
+                self.monitor_o(step,consumed)
             if force or (step+1)%cfg.save_steps==0:self.save(step,force=force)
             if self.stop_requested:break
         # A time-limit stop while validating also needs the latest optimizer state.

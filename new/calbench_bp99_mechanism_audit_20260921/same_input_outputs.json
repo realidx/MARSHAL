@@ -1,0 +1,218 @@
+[
+  {
+    "case": "blocked_uniform_s1",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I need to find a free slot that is available for all participants (0, 1, 2). My calendar shows free slots at 0, 4. Slot 2 and 7 are blocked, so they are invalid. Slot 1, 3, 5, 6 have errands that I could potentially reschedule, but only if necessary and with justification. Since I must coordinate with agents 1 and 2, I should propose a free slot that minimizes disruption. Slot 4 is free and not blocked, so it's a good candidate. I'll propose slot 4 to all participants and ask if they have any conflicts or preferences.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"I'm proposing slot 4 for our meeting. It's free on my calendar. Do you have any conflicts or preferences?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"I'm proposing slot 4 for our meeting. It's free on my calendar. Do you have any conflicts or preferences?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I need to find a free slot that is available for all participants (0, 1, 2). Slots 0 and 4 are free on my calendar, but I don't have information about others' calendars. I should propose a low-disruption slot that doesn't require anyone to move a high-cost commitment. Slot 0 is free and doesn't conflict with any of my errands, so I'll propose it first. I'll message agents 1 and 2 to check if they can accommodate it.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 0 for our meeting. It's free on my calendar and doesn't require moving any commitments. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 0 for our meeting. It's free on my calendar and doesn't require moving any commitments. What do you think?\"}\n  ]\n}"
+  },
+  {
+    "case": "blocked_uniform_s2",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"Slot 2 and Slot 3 are free and available for all participants. Slot 2 is the earliest free slot and requires no rescheduling for me. I propose Slot 2 as it is low-disruption and mutually workable. I will ask Agent 1 and Agent 2 if they have any preference or conflicts.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing Slot 2 for our meeting. It's free and doesn't conflict with my schedule. Does that work for you?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing Slot 2 for our meeting. It's free and doesn't conflict with my schedule. Does that work for you?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I have free slots at 2 and 3. Slot 2 is the earliest free slot and requires no rescheduling for me. I will propose slot 2 to the participants, as it is free and low-displacement. I will also mention that slot 3 is available as an alternative if needed, but slot 2 is preferable due to its earlier time and minimal disruption.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"I suggest slot 2 for our meeting. It's free and doesn't require moving any of our commitments. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"I suggest slot 2 for our meeting. It's free and doesn't require moving any of our commitments. What do you think?\"}\n  ]\n}"
+  },
+  {
+    "case": "blocked_uniform_s3",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"Slot 4 and Slot 7 are free and available for the meeting. Slot 4 is closer to the middle of the calendar and may be more convenient for all participants. However, I have errands at Slot 2, 3, 5, and 6, which are all in the middle to later slots. Moving to Slot 4 would require no rescheduling on my part, and it's free and accessible. I will propose Slot 4 to Agents 1 and 2 to see if they can accommodate it.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"I suggest we schedule the meeting at Slot 4. It's free and doesn't conflict with any of my current commitments. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"I suggest we schedule the meeting at Slot 4. It's free and doesn't conflict with any of my current commitments. What do you think?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"Slot 4 and Slot 7 are free. Slot 4 is closer to the middle and may be more convenient for all participants. However, I have errands at Slot 2, 3, 5, and 6, which are all in the middle to later slots. Moving to Slot 4 would require no rescheduling on my part, and it's free. I'll propose Slot 4 to Agent 1 and Agent 2 to see if they have any objections or preferences.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"I suggest we schedule the meeting at Slot 4. It's free and doesn't conflict with any of my commitments. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"I suggest we schedule the meeting at Slot 4. It's free and doesn't conflict with any of my commitments. What do you think?\"}\n  ]\n}"
+  },
+  {
+    "case": "blocked_varied_s1",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I need to find a free slot that is available for all participants (0, 1, 2). My calendar shows free slots at 0, 4, and possibly others. Slot 2 and 7 are blocked, so they are out. I should propose a free slot that doesn't require any of us to move high-cost commitments. Slot 4 is free and doesn't conflict with any of my errands. I'll propose slot 4 to all participants, as it's free and low-displacement for me. If they have conflicts, we can adjust, but I must avoid suggesting blocked slots.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"I suggest slot 4 for our meeting. It's free and doesn't conflict with any of my commitments. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"I suggest slot 4 for our meeting. It's free and doesn't conflict with any of my commitments. What do you think?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I need to find a free slot that is available for all participants (0, 1, 2). Slots 0 and 4 are free on my calendar, but I don't have information about others' calendars. I should propose a low-disruption slot that doesn't require anyone to move a high-cost commitment. Slot 0 is free and doesn't conflict with any of my errands, so I'll propose it first. I'll message Agent 1 and Agent 2 to confirm if they can join me there.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 0 for our meeting. It's free on my calendar and doesn't require moving any commitments. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 0 for our meeting. It's free on my calendar and doesn't require moving any commitments. What do you think?\"}\n  ]\n}"
+  },
+  {
+    "case": "blocked_varied_s2",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"Slot 2 and Slot 3 are free and available for all participants. Slot 2 is the earliest free slot and requires no rescheduling for me. I propose Slot 2 as it is low-displacement and mutually workable. I will ask Agent 1 and Agent 2 if they have any preference or conflicts.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"I suggest we schedule the meeting at slot 2. It's free and doesn't conflict with any of my commitments. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"I suggest we schedule the meeting at slot 2. It's free and doesn't conflict with any of my commitments. What do you think?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I notice that slots 2 and 3 are free and available for all participants. Slot 2 is the earliest free slot and would require no rescheduling for me. My errands are at slots 1, 4, 6, and 7, which are all movable only if necessary. Since I have no blocked slots and only errands, I can propose a low-disruption slot. I'll suggest slot 2 first, as it's free and requires no movement for me. I'll reach out to agents 1 and 2 to confirm if they can also accommodate it.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and doesn't conflict with my schedule. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and doesn't conflict with my schedule. What do you think?\"}\n  ]\n}"
+  },
+  {
+    "case": "blocked_varied_s3",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"Slot 4 and Slot 7 are free and available for the meeting. Slot 4 has no conflicts, but Slot 7 is also free and might be better for minimizing disruption. I have errands at Slot 2, 3, 5, and 6, so moving any of those would incur cost. I should propose Slot 7 as it is free and requires no rescheduling on my end. I'll ask Agent 1 and Agent 2 if they have availability or preferences.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing Slot 7 for our meeting. It's free and doesn't conflict with any of my commitments. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing Slot 7 for our meeting. It's free and doesn't conflict with any of my commitments. What do you think?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"Slot 4 and Slot 7 are free and available. Slot 4 has lower displacement cost if needed, but Slot 7 is also free and less likely to conflict with other commitments. I will propose Slot 7 first since it's later in the day and may be more convenient for all participants. I'll ask Agent 1 and Agent 2 if they have any preferences or conflicts.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing Slot 7 for our meeting. It's free and should work well for everyone. Do you have any conflicts?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing Slot 7 for our meeting. It's free and should work well for everyone. Do you have any conflicts?\"}\n  ]\n}"
+  },
+  {
+    "case": "dense_uniform_s1",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"Slot 2 and Slot 7 are free on my calendar. I propose Slot 2 as it is early in the day and less disruptive. However, I need to confirm if other participants have conflicts. I'll reach out to Agent 1 and Agent 2 to check their availability and see if they have any commitments in those slots.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing Slot 2 for our meeting with the support coordinator. It's free for me and seems early in the day. Do you have any conflicts?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing Slot 2 for our meeting with the support coordinator. It's free for me and seems early in the day. Do you have any conflicts?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I notice that slots 2 and 7 are free on my calendar. Slot 2 is early and might be better for coordination, especially since it's before other errands. I'll propose slot 2 to all participants, as it requires no rescheduling for me and is a low-disruption option. I'll first message agent 1 and agent 2 to confirm their availability and ask if they have any preferences.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 2 for our meeting with the support coordinator. It's free for me and avoids any displacement. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 2 for our meeting with the support coordinator. It's free for me and avoids any displacement. What do you think?\"}\n  ]\n}"
+  },
+  {
+    "case": "dense_uniform_s2",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I notice that slots 0 and 5 are free and would be ideal for scheduling the meeting. Slot 5 is currently free and does not conflict with any of my errands. I will propose slot 5 to the participants, as it is a low-displacement option and avoids moving any of my commitments. I will also mention that it's a good time for a sensitive discussion due to its neutral timing.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I suggest we schedule the meeting at slot 5. It's free and doesn't conflict with any of my commitments. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I suggest we schedule the meeting at slot 5. It's free and doesn't conflict with any of my commitments. What do you think?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I notice that slots 0, 5 are free and would be ideal for scheduling. Slot 5 is currently free and doesn't conflict with any of my errands. I'll propose slot 5 to all participants, as it requires no rescheduling on my end and is mutually convenient. I'll first message agent 1 and then agent 2 to confirm their availability and willingness to use slot 5.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 5 for our meeting with the support coordinator. It's free and doesn't conflict with any of my commitments. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 5 for our meeting with the support coordinator. It's free and doesn't conflict with any of my commitments. What do you think?\"}\n  ]\n}"
+  },
+  {
+    "case": "dense_uniform_s3",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I need to coordinate with participants 1 and 2 to find a free slot that minimizes disruption. All slots are free except for my errands. Since the meeting is sensitive and requires coordination, I should propose a slot that doesn't conflict with any existing commitments. Slot 0 is free and available for all participants. I'll propose it first, as it's low-displacement and accessible.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 0 for our meeting. It's free and doesn't conflict with any of my commitments. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 0 for our meeting. It's free and doesn't conflict with any of my commitments. What do you think?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I need to coordinate with participants 1 and 2 to find a free slot that minimizes disruption. All slots are free except for my errands. Since the meeting is sensitive and requires coordination, I should propose a slot that doesn't conflict with any existing commitments. Slot 0 is free and doesn't require any rescheduling, making it low-displacement. I'll propose it to both participants.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"I suggest slot 0 for our meeting. It's free and doesn't conflict with any of my commitments. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"I suggest slot 0 for our meeting. It's free and doesn't conflict with any of my commitments. What do you think?\"}\n  ]\n}"
+  },
+  {
+    "case": "dense_varied_s1",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"Slot 2 and Slot 7 are free on my calendar. I propose Slot 2 as it is early in the day and less disruptive. Agent 1 and Agent 2 are participants; I should check if they have conflicts or preferences. I'll reach out to both to confirm availability and avoid any rescheduling of their commitments.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing Slot 2 for our meeting with the support coordinator. It's free for me and seems convenient. Do you have any conflicts?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing Slot 2 for our meeting with the support coordinator. It's free for me and seems convenient. Do you have any conflicts?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I notice that slots 2 and 7 are free on my calendar. Slot 2 is earlier and might be more convenient for all participants. I should propose slot 2 first, as it requires no rescheduling on my end and is a low-disruption option. I'll reach out to agents 1 and 2 to confirm if they can join me there.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 2 for our meeting with the support coordinator. It's free and doesn't conflict with my schedule. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 2 for our meeting with the support coordinator. It's free and doesn't conflict with my schedule. What do you think?\"}\n  ]\n}"
+  },
+  {
+    "case": "dense_varied_s2",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I notice that slots 0 and 5 are free, and both are available for all participants. Slot 5 is slightly more convenient as it's not near my high-cost errands. I will propose slot 5 to all participants, as it avoids any displacement for me and is free for everyone. If any participant has a conflict, I can adjust accordingly, but this is a low-disruption option.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"I suggest slot 5 for our meeting. It's free and doesn't conflict with any of my commitments. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"I suggest slot 5 for our meeting. It's free and doesn't conflict with any of my commitments. What do you think?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I notice that slots 0 and 5 are free, and they are the only free slots available. Slot 5 is particularly good because it doesn't conflict with any of my errands. I will propose slot 5 to the participants, as it is free and requires no rescheduling for me. I will also mention that it's a neutral time that doesn't interfere with sensitive errands like the therapy appointment or the immigration call.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content: \"I suggest slot 5 for our meeting. It's free and doesn't conflict with any of our key errands. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content: \"I suggest slot 5 for our meeting. It's free and doesn't conflict with any of our key errands. What do you think?\"}\n  ]\n}"
+  },
+  {
+    "case": "dense_varied_s3",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I need to coordinate with participants 1 and 2 to find a free slot that minimizes disruption. My calendar has no blocked slots, but several errands are scheduled. I should propose free slots that don't require moving any commitments, starting with slot 0 or 1. Since the meeting is sensitive, a quiet, early slot might be preferable. I'll first reach out to agent 1 to discuss options.\",\n  \"actions\": [\n    {\n      \"type\": \"dm\",\n      \"to\": 1,\n      \"content\": \"Hi, I'm looking for a good slot to schedule our meeting about the sensitive scheduling matter. Slot 0 or 1 are free and would avoid any disruption. What do you think?\"\n    },\n    {\n      \"type\": \"dm\",\n      \"to\": 2,\n      \"content\": \"Hi, I'm looking for a good slot to schedule our meeting about the sensitive scheduling matter. Slot 0 or 1 are free and would avoid any disruption. What do you think?\"\n    }\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I need to coordinate with participants 1 and 2 to find a free slot that minimizes disruption. Slots 0, 1, and 6 are free, but slot 6 has a low-cost errand (cost=1) that could be moved with minimal penalty. However, I should avoid proposing a slot that requires moving a high-cost errand. I'll first propose slot 1, which is free and has no conflicts, and ask if they have any preferences or constraints.\",\n  \"actions\": [\n    {\n      \"type\": \"dm\",\n      \"to\": 1,\n      \"content\": \"Hi, I'm proposing slot 1 for our meeting with the support coordinator. It's free and doesn't conflict with my schedule. Does that work for you? If not, let me know what you'd prefer.\"\n    },\n    {\n      \"type\": \"dm\",\n      \"to\": 2,\n      \"content\": \"Hi, I'm proposing slot 1 for our meeting with the support coordinator. It's free and doesn't conflict with my schedule. Does that work for you? If not, let me know what you'd prefer.\"\n    }\n  ]\n}"
+  },
+  {
+    "case": "loose_uniform_s1",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I have free slots at 1, 2, 5, and 7. Slots 1 and 2 are early and less disruptive. I propose slot 2 as it's free, not near my errands, and offers good coordination potential. I'll ask agent 1 and agent 2 if they have availability or conflicts there.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and not conflicting with any of my commitments. Does that work for you?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and not conflicting with any of my commitments. Does that work for you?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I notice slots 1, 2, 5, and 7 are free. Slot 2 is early and might be less disruptive for all participants. I'll propose slot 2 first, as it's free and requires no rescheduling for me. I'll reach out to agents 1 and 2 to confirm if they have conflicts or preferences.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and doesn't conflict with my schedule. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and doesn't conflict with my schedule. What do you think?\"}\n  ]\n}"
+  },
+  {
+    "case": "loose_uniform_s2",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I notice that slots 0, 1, 5, 6 are free, and slots 2, 3, 4, 7 have errands. Since the meeting involves sensitive coordination, I want to avoid any slot that requires moving an errand, especially one with a private or emotionally charged context. I propose slot 5 as a neutral, free, and accessible time that doesn't conflict with any of my existing commitments. I'll ask agent 1 and agent 2 if they have availability or preferences.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 5 for our meeting on sensitive scheduling matter 13. It's free and doesn't require moving any of your commitments. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 5 for our meeting on sensitive scheduling matter 13. It's free and doesn't require moving any of your commitments. What do you think?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I notice that slots 0, 1, 5, 6 are free, and slots 2, 3, 4, 7 have errands. Since I have errands at slots 2, 3, 4, and 7, I should avoid proposing those. Slot 5 and 6 are free and would require no rescheduling for me. I'll propose slot 5 first as it's mid-day and likely workable for others. I'll reach out to agents 1 and 2 to check if they have conflicts or preferences.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 5 for our meeting. It's free for me and seems convenient. Do you have any conflicts?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 5 for our meeting. It's free for me and seems convenient. Do you have any conflicts?\"}\n  ]\n}"
+  },
+  {
+    "case": "loose_uniform_s3",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I notice that slots 0, 2, 5 are free and would be low-displacement options. Slot 3, 4, 6, and 7 have errands that would require rescheduling if used. Since the meeting involves sensitive coordination, I want to avoid disrupting any existing commitments. I'll propose slot 2, which is free and doesn't require any movement on my end, and ask the other participants if they have availability there.\",\n  \"actions\": [\n    {\n      \"type\": \"dm\",\n      \"to\": 1,\n      \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free on my calendar and doesn't require moving any commitments. What do you think?\"\n    },\n    {\n      \"type\": \"dm\",\n      \"to\": 2,\n      \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free on my calendar and doesn't require moving any commitments. What do you think?\"\n    }\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I notice that slots 0, 2, 5 are free and would require no rescheduling. Slot 3, 4, 6, and 7 have errands that would incur a cost of 1 each if moved. To minimize disruption, I should propose a free slot that is mutually convenient. Slot 5 is free and not occupied by any errand, making it a low-displacement option. I'll propose slot 5 to agents 1 and 2, as it avoids any need for rescheduling on my end and is a reasonable time for a sensitive meeting.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"How does slot 5 sound for our meeting? It's free and doesn't conflict with your schedule, I believe.\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Slot 5 is free and would work well for us. Does that work for you?\"}\n  ]\n}"
+  },
+  {
+    "case": "loose_varied_s1",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I have free slots at 1, 2, 5, and 7. Slots 1 and 2 are early and less disruptive. I propose slot 2 as it's free, not near my errands, and offers a good balance of availability and low displacement. I'll ask agent 1 and agent 2 if they have any preference or conflicts.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and not conflicting with any of my commitments. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and not conflicting with any of my commitments. What do you think?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I notice slots 1, 2, 5, and 7 are free. Slot 2 is early and has low displacement cost if needed. I'll propose slot 2 as it's free for all and requires no rescheduling for me. I'll reach out to agents 1 and 2 to confirm if they have conflicts or preferences.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free for me and seems convenient. Do you have any preference or conflict?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free for me and seems convenient. Do you have any preference or conflict?\"}\n  ]\n}"
+  },
+  {
+    "case": "loose_varied_s2",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I notice that slots 0, 1, 5, 6 are free, and slots 2, 3, 4, 7 have errands. Since the meeting involves sensitive coordination, I want to avoid any slot with existing commitments. I propose slot 5 as a low-disruption, free slot that is accessible to all participants. I'll check with agent 1 and agent 2 to confirm if they have any conflicts or preferences.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 5 for our meeting on sensitive scheduling matter 13. It's free for me and seems convenient. Do you have any preference or conflict with that slot?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I notice that slots 0, 1, 5, 6 are free, and slots 2, 3, 4, 7 have errands. I should propose a free slot that minimizes disruption. Slot 5 is free and not occupied by any errand, making it a low-displacement option. I'll suggest slot 5 to agents 1 and 2, as it's available and doesn't require moving any of their commitments (assuming they don't have conflicting items).\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"How about slot 5 for our meeting? It's free and doesn't conflict with your schedule, I believe.\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Slot 5 seems available and free for us. Would that work for you?\"}\n  ]\n}"
+  },
+  {
+    "case": "loose_varied_s3",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I notice that slots 0, 2, 5 are free and would be low-displacement options. Slot 3, 4, 6, and 7 have errands that would require rescheduling if used. I should propose a free slot that is mutually convenient and avoid any that require moving high-cost errands. I'll first reach out to Agent 1 to discuss slot 2, which is free and doesn't conflict with any of my commitments.\",\n  \"actions\": [\n    {\n      \"type\": \"dm\",\n      \"to\": 1,\n      \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free on my calendar and doesn't require moving any of my commitments. What do you think? If you have a preference, let me know.\"\n    },\n    {\n      \"type\": \"dm\",\n      \"to\": 2,\n      \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free on my calendar and doesn't require moving any of my commitments. What do you think? If you have a preference, let me know.\"\n    }\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I notice that slots 0, 2, 5 are free and would be low-displacement options. Slot 3, 4, 6, and 7 have errands that would require rescheduling if used. I should propose a free slot that is mutually convenient and avoid any that require moving high-cost errands. I'll first reach out to Agent 1 to discuss slot 2, which is free and doesn't conflict with any of my commitments.\",\n  \"actions\": [\n    {\n      \"type\": \"dm\",\n      \"to\": 1,\n      \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free on my calendar and doesn't require moving any of my commitments. What do you think?\"\n    },\n    {\n      \"type\": \"dm\",\n      \"to\": 2,\n      \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free on my calendar and doesn't require moving any of my commitments. What do you think?\"\n    }\n  ]\n}"
+  },
+  {
+    "case": "replan_uniform_s1",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I have no blocked slots available, and my only occupied slot is an errand at slot 7. Since slots 3-6 are blocked, I can only use slots 0, 1, 2, or 7. Slot 7 has an errand, so I can only propose free slots (0, 1, 2). I will reach out to participants 1 and 2 to find a mutually agreeable slot among these, prioritizing low-displacement options.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm looking for a good slot for our meeting. Slots 0, 1, and 2 are free for me. What works best for you?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm looking for a good slot for our meeting. Slots 0, 1, and 2 are free for me. What works best for you?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I notice that slots 3-6 are blocked and slot 7 has a private errand. The only free slots are 0, 1, 2. I should propose a free slot that is mutually accessible and requires minimal disruption. Slot 2 is free and not blocked, so it's a good candidate. I'll reach out to participants 1 and 2 to see if they have availability or objections.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and doesn't conflict with my schedule. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and doesn't conflict with my schedule. What do you think?\"}\n  ]\n}"
+  },
+  {
+    "case": "replan_uniform_s2",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I have no blocked slots available, and my only occupied slot is an errand at slot 7. Since slots 3-6 are blocked, I can only use slots 0, 1, 2, or 7. Slot 7 has an errand, so I can only propose free slots (0, 1, 2). I will reach out to participants 1 and 2 to find a mutually agreeable slot among these, prioritizing low-displacement options.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm looking for a good slot for our meeting. Slots 0, 1, and 2 are free for me. What works best for you?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm looking for a good slot for our meeting. Slots 0, 1, and 2 are free for me. What works best for you?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I notice that slots 3-6 are blocked and slot 7 has a private errand. The only free slots are 0, 1, 2. I should propose a free slot that is mutually accessible and requires minimal disruption. Slot 2 is free and not blocked, so it's a good candidate. I'll reach out to participants 1 and 2 to see if they have availability or objections.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and doesn't conflict with my schedule. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and doesn't conflict with my schedule. What do you think?\"}\n  ]\n}"
+  },
+  {
+    "case": "replan_uniform_s3",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I have no blocked slots available, and my only occupied slot is an errand at slot 7. Since slots 3-6 are blocked, I can only use slots 0, 1, 2, or 7. Slot 7 has an errand, so I can only propose free slots (0, 1, 2). I will reach out to participants 1 and 2 to find a mutually agreeable slot among these, prioritizing low-displacement options.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm looking for a good slot for our meeting. Slots 0, 1, and 2 are free for me. What works best for you?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm looking for a good slot for our meeting. Slots 0, 1, and 2 are free for me. What works best for you?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I notice that slots 3-6 are blocked and slot 7 has a private errand. The only free slots are 0, 1, 2. I should propose a free slot that is mutually accessible and requires minimal disruption. Slot 2 is free and not blocked, so it's a good candidate. I'll reach out to participants 1 and 2 to see if they have availability or objections.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and doesn't conflict with my schedule. What do you think?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and doesn't conflict with my schedule. What do you think?\"}\n  ]\n}"
+  },
+  {
+    "case": "replan_varied_s1",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I have blocked slots at 3, 4, 5, and 6, and an errand at slot 7. The only free slots are 0, 1, and 2. I propose slot 2 as it is free and requires no displacement for me. I will check with participants 1 and 2 to see if they have availability or conflicts. Slot 2 is low-displacement and mutually workable.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and doesn't conflict with my schedule. Do you have availability there?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and doesn't conflict with my schedule. Do you have availability there?\"}\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"I notice that slots 3-6 are blocked and cannot be used. Slot 7 has a private errand that I may need to reschedule if necessary. Since the meeting requires participation from agents 0, 1, and 2, I should propose a free slot that is accessible to all. Slots 0, 1, and 2 are free and available. I will propose slot 2 as it is early in the day and avoids any conflicts. I'll reach out to agent 1 first to confirm feasibility and ask if they have any preferences.\",\n  \"actions\": [\n    {\n      \"type\": \"dm\",\n      \"to\": 1,\n      \"content\": \"Hi, I'm proposing slot 2 for our meeting with the support coordinator. It's free and early in the day. Does that work for you? If not, let me know what you'd prefer.\"\n    },\n    {\n      \"type\": \"dm\",\n      \"to\": 2,\n      \"content\": \"Hi, I'm proposing slot 2 for our meeting with the support coordinator. It's free and early in the day. Does that work for you? If not, let me know what you'd prefer.\"\n    }\n  ]\n}"
+  },
+  {
+    "case": "replan_varied_s2",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I have no blocked slots available, and my only occupied slot is an errand at slot 7. Since slots 3-6 are blocked, I can only use slots 0, 1, 2, or 7. Slot 7 has a private errand, so I can consider rescheduling it only if necessary. I should propose a free slot that is also free for participants 1 and 2. Slots 0, 1, and 2 are all free and low-displacement. I'll start by proposing slot 2, which is early and avoids any potential conflicts.\",\n  \"actions\": [\n    {\n      \"type\": \"dm\",\n      \"to\": 1,\n      \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and early in the day. Would that work for you? If not, let me know what you prefer.\"\n    },\n    {\n      \"type\": \"dm\",\n      \"to\": 2,\n      \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and early in the day. Would that work for you? If not, let me know what you prefer.\"\n    }\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"Slots 3 through 6 are blocked and cannot be used. Slot 7 has a private errand that I may need to reschedule if necessary. I propose slot 0 or slot 1 as free, low-disruption options. Since slot 0 is the earliest and most available, I'll suggest it first to the participants, asking for their input.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 0 for our meeting. It's free and early. Does that work for you?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 0 for our meeting. It's free and early. Does that work for you?\"}\n  ]\n}"
+  },
+  {
+    "case": "replan_varied_s3",
+    "agent": 0,
+    "old_line": 1,
+    "new_line": 1,
+    "same_output": false,
+    "old_output": "{\n  \"thinking\": \"I have no blocked slots available, and my only occupied slot is an errand at slot 7. Since slots 3-6 are blocked, I can only use slots 0, 1, 2, or 7. Slot 7 has a private errand, so I can consider rescheduling it only if necessary. I should propose a free slot that is also free for participants 1 and 2. Slots 0, 1, and 2 are all free and low-displacement. I'll start by proposing slot 2, which is early and avoids any potential conflicts.\",\n  \"actions\": [\n    {\n      \"type\": \"dm\",\n      \"to\": 1,\n      \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and early in the day. Would that work for you? If not, let me know what you prefer.\"\n    },\n    {\n      \"type\": \"dm\",\n      \"to\": 2,\n      \"content\": \"Hi, I'm proposing slot 2 for our meeting. It's free and early in the day. Would that work for you? If not, let me know what you prefer.\"\n    }\n  ]\n}",
+    "new_output": "{\n  \"thinking\": \"Slots 3 through 6 are blocked and cannot be used. Slot 7 has a private errand that I may need to reschedule if necessary. I propose slot 0 or slot 1 as free, low-disruption options. Since slot 0 is the earliest and most available, I'll suggest it first to the participants, asking for their input.\",\n  \"actions\": [\n    {\"type\": \"dm\", \"to\": 1, \"content\": \"Hi, I'm proposing slot 0 for our meeting. It's free and early. Does that work for you?\"},\n    {\"type\": \"dm\", \"to\": 2, \"content\": \"Hi, I'm proposing slot 0 for our meeting. It's free and early. Does that work for you?\"}\n  ]\n}"
+  }
+]

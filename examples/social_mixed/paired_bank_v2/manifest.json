@@ -1,0 +1,155 @@
+{
+  "version": "social-reasoning-packages-v4-qualitative-belief",
+  "files": {
+    "tasks.jsonl": {
+      "sha256": "c7e0467de120148b3e21f1785d09755d9d043076cea53577217b6d50e0522e8a",
+      "rows": 1491
+    },
+    "cases.jsonl": {
+      "sha256": "bf862021f845ca0ecb2df0c0dcb74a7020323cd25ee953a039051a224d0f6124",
+      "rows": 497
+    },
+    "relations.jsonl": {
+      "sha256": "6522f33c26580e5370883f0af95333b0fdca41e4a86cefe7e85a00700cd6ef25",
+      "rows": 637
+    },
+    "packages.json": {
+      "sha256": "2aa796190f9b8185b368f7f94c885b46ffc1658e308b097b8433f8e18c5340de",
+      "rows": 175
+    }
+  },
+  "source_manifest_sha256": "458572aecddfe15171d1f898b7d3dbeac7a8edf67c3f11b5efd8c8b4099a7a03",
+  "label_sources": {
+    "training/social_mixed/reasoning_bank.py": "bcf58ba6fbb8aae6355c2ad4f611e5ada5d42ae4f9b068dfb4413cf348bed490",
+    "training/social_mixed/prepare_distribution_curriculum.py": "7cdf914883e32fc617cdaed90690e5a7d406d21179443818c1c8f18692446f04",
+    "training/b_sft/social_bp_curriculum.py": "61608c98213390e7ff31f380392b1e0d03f5f6beb28e3d663f7a4fde8c540895",
+    "training/b_sft/preference_contract.py": "0eef1a38f40c097ffb2d6e21c1f3b4556997c7b8f31a83f9c009ef26f729063f",
+    "training/social_mixed/paired_requests.py": "9b26ac0afd806ce559266df86645938060b2f9de8e9bf8c8ab889dad9d7d5810",
+    "training/social_mixed/history_free_requests.py": "763af2a51f4a17f88b2f4882c9c1d33a8e1239a366f116c8c9e13435727a6c01",
+    "training/b_sft/social_named_probe.py": "9c82c5bcb0ff7b42341b92651066a916dc6740c1955eeaf4699a6b759806b41d",
+    "training/social_mixed/apply_reasoning_policy.py": "f6bbb5d0c64bd1a60dbb6f132f34d9fb77313276194bfef1e30401af98ace941",
+    "training/social_mixed/reasoning_scoring.py": "f8f42035734a7e678cefdcc1b181580940449e071f65f7aaf95509a93c0f01d2",
+    "training/social_mixed/reasoning_training.py": "60183de3f9a032e0730bfb01983639111777b1d5ae4ba2e397806d8f9b74beaa",
+    "training/social_mixed/reasoning_validation.py": "411570a38f97a652443d91c96e2610d9d115d08f31031ace51b8391b094e0eed"
+  },
+  "counts": {
+    "train": 373,
+    "validation": 124
+  },
+  "packages": 175,
+  "split_policy": {
+    "target_train_fraction": 0.75,
+    "unit": "source family (includes complete parents)",
+    "retained_validation_families": [
+      "01f979b5f141240f829d506b",
+      "24c176f030f4a437f2f1d8ca",
+      "333570fccf36c0df",
+      "45ee4c5eac678a25",
+      "b9459e09c0c49a14",
+      "bec8bbdd222e1465fb35c8de",
+      "ddc4c9e5d7b59d0f"
+    ],
+    "moved_to_train_families": [
+      "047c6da69f0ccf0c",
+      "458abbd4c77436b26cb42b7d",
+      "4ec9d10f4d17d82f0497a77f",
+      "62225bc70fe4a948",
+      "6397726b6b6e49b81402d654",
+      "72112645c6f5f7bf6d0c6bca",
+      "90807805278a1fb311e516f9",
+      "aae4d34167d78a13",
+      "bc657a816afa6b68",
+      "fa2203df5805227a",
+      "ff14ef2890da9e9c"
+    ],
+    "selection": "Case count, source-kernel/completion-mode and action-relevance balance; retain must-change contrasts; no model outcomes",
+    "prior_validation_reused": true
+  },
+  "action_relevant_queries": {
+    "train": 90,
+    "validation": 24
+  },
+  "relations": {
+    "train:same_optimal_set": 406,
+    "train:must_change": 53,
+    "train:overlapping_optima": 31,
+    "validation:same_optimal_set": 136,
+    "validation:overlapping_optima": 5,
+    "validation:must_change": 6
+  },
+  "external_evaluations_used": false,
+  "formal_training_ready": false,
+  "label_build_mode": "previously_replayed_labels_reused",
+  "limitations": [
+    "Semantic B is not certified sufficient for every decision.",
+    "Matched relations do not certify new structural generalization.",
+    "GPU probability, context-length and short learning/retention acceptance still required."
+  ],
+  "fixed_payoff_relations": {
+    "train:same_optimal_set": 394,
+    "train:must_change": 53,
+    "train:overlapping_optima": 28,
+    "validation:same_optimal_set": 134,
+    "validation:must_change": 6,
+    "validation:overlapping_optima": 2
+  },
+  "reused_certified_cases_sha256": "ed1f443c841d4996cf07bffd363cac2b112ea141dde76e9ab0366b661d24b6d2",
+  "p_belief_representation": "Same possible_preferences/favored schema as B; one entry for each partner-goal; no numerical probabilities",
+  "qualitative_decision_sufficiency": {
+    "status": "scoped_tristate_roles_active",
+    "approved_P_cases": 453,
+    "P_training_eligible_cases": 420,
+    "actual_train_P_cases": 314,
+    "scope": "Fixed teacher world universe and continuation values; masked outcomes excluded from semantic supervision. Not a universal social-reasoning certificate."
+  },
+  "qualitative_audit_artifacts": {
+    "qualitative_case_audit.jsonl": "d24c58c5a1492e17bdc7a1384e2e394077e660b9530bb11c5e6c05dbf9ba0ef0",
+    "qualitative_case_audit_summary.json": "9b68460ce10d57f22826b08ca65d770a66650df03c3443fe96826b1a45f08686",
+    "qualitative_review_queue.json": "3af225e6e2f209e0e2588cb2efe1276d0676384572cbf34dae878b39e378507e",
+    "QUALITATIVE_CASE_AUDIT.md": "0d21a5ee9db3936b6b1074fa42053fd4760874ec5d573d63f8b8ad907bdc8b31",
+    "qualitative_audit_input_manifest.json": "af4cd67c3407c48b87424a3d5c960ae1632e05a8253bc111eba414b0c13831b2"
+  },
+  "training_plan_sha256": "d7b0567daa8b56c4cf8a8129d1e4489660f458106dab6a697ae2d68c0bcc2f8a",
+  "active_recipe": "audited-tristate-v1",
+  "remaining_acceptance": [
+    "exact tokenizer context",
+    "Q0 semantic mixed-group probe",
+    "GPU actor/behavior probabilities, resume and short learning/retention"
+  ],
+  "policy_audit_bindings_sha256": "8ba89d4dc711d845d04a368f7ed7f22bcb7f87ec40dcbfcad0a8ecf2a37fd8be",
+  "unfiltered_qualitative_decision_sufficiency": {
+    "status": "not_accepted",
+    "case_audit": "qualitative_case_audit_summary.json",
+    "summaries": {
+      "text_envelope": {
+        "statuses": {
+          "reward_labels_invariant_in_envelope": 394,
+          "reward_label_changes_witnessed": 103
+        },
+        "original_positive_labels_robust": 453,
+        "has_universally_acceptable_action": 454,
+        "disjoint_witness_cases": 27,
+        "witness_cases_by_split": {
+          "train": 80,
+          "validation": 23
+        }
+      },
+      "b_contract": {
+        "statuses": {
+          "reward_labels_invariant_in_envelope": 407,
+          "reward_label_changes_witnessed": 86,
+          "original_positive_labels_robust_negative_labels_unresolved": 4
+        },
+        "original_positive_labels_robust": 459,
+        "has_universally_acceptable_action": 460,
+        "disjoint_witness_cases": 19,
+        "witness_cases_by_split": {
+          "train": 68,
+          "validation": 18
+        }
+      }
+    },
+    "scope": "LP extrema over available teacher world universe, with explicit own preferences and all qualitative supports; per-world continuation values held fixed. Certificates are scoped to this model, not a proof of reachable alternative histories or re-equilibrated future policy."
+  },
+  "local_recipe_checks_passed": true
+}

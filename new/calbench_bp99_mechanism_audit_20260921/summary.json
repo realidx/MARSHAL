@@ -1,0 +1,536 @@
+{
+  "scope": "Four agents routed to the same BP export per run; not focal BP with Q0 partners.",
+  "weight_verification": "Recorded SHA256 identities compared; weight bytes unavailable locally.",
+  "models": {
+    "old": {
+      "identity_checks": {
+        "chat_template.jinja": true,
+        "config.json": true,
+        "export_source.json": true,
+        "generation_config.json": true,
+        "tokenizer_config.json": true,
+        "weight_identity_across_calbench_diagnostic_export": true
+      },
+      "overall": {
+        "games": 24,
+        "success": 10,
+        "optimal": 8,
+        "meetings": 44,
+        "headline": 0.5933637916857425,
+        "messages": 604,
+        "calls": 992,
+        "statuses": {
+          "ok": 992
+        },
+        "strict_envelope_failures": 1,
+        "semantic_invalid": 29,
+        "mismatched_rounds": 25,
+        "prior_inconsistency_rounds": 0,
+        "all_healthy_transport": true,
+        "all_engine_finished": true
+      },
+      "families": {
+        "blocked": {
+          "games": 6,
+          "success": 1,
+          "optimal": 0,
+          "meetings": 10,
+          "headline": 0.5462958811805555,
+          "messages": 159,
+          "calls": 244,
+          "statuses": {
+            "ok": 244
+          },
+          "strict_envelope_failures": 1,
+          "semantic_invalid": 8,
+          "mismatched_rounds": 7,
+          "prior_inconsistency_rounds": 0,
+          "all_healthy_transport": true,
+          "all_engine_finished": true
+        },
+        "dense": {
+          "games": 6,
+          "success": 2,
+          "optimal": 2,
+          "meetings": 9,
+          "headline": 0.48148117598765433,
+          "messages": 153,
+          "calls": 249,
+          "statuses": {
+            "ok": 249
+          },
+          "strict_envelope_failures": 0,
+          "semantic_invalid": 13,
+          "mismatched_rounds": 8,
+          "prior_inconsistency_rounds": 0,
+          "all_healthy_transport": true,
+          "all_engine_finished": true
+        },
+        "loose": {
+          "games": 6,
+          "success": 3,
+          "optimal": 2,
+          "meetings": 12,
+          "headline": 0.6234563055624143,
+          "messages": 158,
+          "calls": 262,
+          "statuses": {
+            "ok": 262
+          },
+          "strict_envelope_failures": 0,
+          "semantic_invalid": 8,
+          "mismatched_rounds": 5,
+          "prior_inconsistency_rounds": 0,
+          "all_healthy_transport": true,
+          "all_engine_finished": true
+        },
+        "replan": {
+          "games": 6,
+          "success": 4,
+          "optimal": 4,
+          "meetings": 13,
+          "headline": 0.7222218040123457,
+          "messages": 134,
+          "calls": 237,
+          "statuses": {
+            "ok": 237
+          },
+          "strict_envelope_failures": 0,
+          "semantic_invalid": 0,
+          "mismatched_rounds": 5,
+          "prior_inconsistency_rounds": 0,
+          "all_healthy_transport": true,
+          "all_engine_finished": true
+        }
+      },
+      "coordinated_by_round": [
+        16,
+        17,
+        11
+      ],
+      "failed_resolution_types": {
+        "different_slots": 25,
+        "null_calendar_outcome": 3
+      },
+      "behavior_event_counts": {
+        "CHEAP_TALK_calls": 750,
+        "CHEAP_TALK_empty": 321,
+        "action_dm": 604,
+        "DECISION_calls": 216,
+        "DECISION_empty": 2,
+        "action_schedule": 216,
+        "action_reschedule": 34,
+        "reschedule_same_slot": 12
+      },
+      "routes": {
+        "local_only": true,
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "timeout_seconds": 600,
+        "endpoints": {
+          "focal": {
+            "model": "social-replica-0",
+            "base_url": "http://127.0.0.1:28934/v1"
+          },
+          "q0": {
+            "model": "social-replica-0",
+            "base_url": "http://127.0.0.1:28934/v1"
+          }
+        },
+        "equivalent_replicas": [
+          {
+            "model": "social-replica-0",
+            "base_url": "http://127.0.0.1:28934/v1"
+          }
+        ],
+        "execution_protocol": "reasoning-separated-v2-tokens-4096"
+      },
+      "caveat": "Behavior event counts exclude retry outputs that lack turn_end/decide_end; rejection totals include retries."
+    },
+    "new": {
+      "identity_checks": {
+        "chat_template.jinja": true,
+        "config.json": true,
+        "export_source.json": true,
+        "generation_config.json": true,
+        "tokenizer_config.json": true,
+        "weight_identity_across_calbench_diagnostic_export": true
+      },
+      "overall": {
+        "games": 24,
+        "success": 5,
+        "optimal": 5,
+        "meetings": 36,
+        "headline": 0.47878050969248326,
+        "messages": 654,
+        "calls": 1018,
+        "statuses": {
+          "ok": 1015,
+          "truncated": 3
+        },
+        "strict_envelope_failures": 5,
+        "semantic_invalid": 39,
+        "mismatched_rounds": 28,
+        "prior_inconsistency_rounds": 0,
+        "all_healthy_transport": true,
+        "all_engine_finished": true
+      },
+      "families": {
+        "blocked": {
+          "games": 6,
+          "success": 0,
+          "optimal": 0,
+          "meetings": 7,
+          "headline": 0.3796293457253086,
+          "messages": 155,
+          "calls": 268,
+          "statuses": {
+            "ok": 266,
+            "truncated": 2
+          },
+          "strict_envelope_failures": 2,
+          "semantic_invalid": 22,
+          "mismatched_rounds": 5,
+          "prior_inconsistency_rounds": 0,
+          "all_healthy_transport": true,
+          "all_engine_finished": true
+        },
+        "dense": {
+          "games": 6,
+          "success": 0,
+          "optimal": 0,
+          "meetings": 5,
+          "headline": 0.2268516543614969,
+          "messages": 184,
+          "calls": 253,
+          "statuses": {
+            "ok": 252,
+            "truncated": 1
+          },
+          "strict_envelope_failures": 3,
+          "semantic_invalid": 8,
+          "mismatched_rounds": 12,
+          "prior_inconsistency_rounds": 0,
+          "all_healthy_transport": true,
+          "all_engine_finished": true
+        },
+        "loose": {
+          "games": 6,
+          "success": 3,
+          "optimal": 3,
+          "meetings": 15,
+          "headline": 0.8086413596707819,
+          "messages": 161,
+          "calls": 244,
+          "statuses": {
+            "ok": 244
+          },
+          "strict_envelope_failures": 0,
+          "semantic_invalid": 5,
+          "mismatched_rounds": 2,
+          "prior_inconsistency_rounds": 0,
+          "all_healthy_transport": true,
+          "all_engine_finished": true
+        },
+        "replan": {
+          "games": 6,
+          "success": 2,
+          "optimal": 2,
+          "meetings": 9,
+          "headline": 0.4999996790123457,
+          "messages": 154,
+          "calls": 253,
+          "statuses": {
+            "ok": 253
+          },
+          "strict_envelope_failures": 0,
+          "semantic_invalid": 4,
+          "mismatched_rounds": 9,
+          "prior_inconsistency_rounds": 0,
+          "all_healthy_transport": true,
+          "all_engine_finished": true
+        }
+      },
+      "coordinated_by_round": [
+        17,
+        10,
+        9
+      ],
+      "failed_resolution_types": {
+        "different_slots": 28,
+        "null_calendar_outcome": 8
+      },
+      "behavior_event_counts": {
+        "CHEAP_TALK_calls": 771,
+        "CHEAP_TALK_empty": 338,
+        "action_dm": 654,
+        "DECISION_calls": 216,
+        "DECISION_empty": 5,
+        "action_schedule": 211,
+        "action_reschedule": 24,
+        "reschedule_same_slot": 12
+      },
+      "routes": {
+        "local_only": true,
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "timeout_seconds": 600,
+        "endpoints": {
+          "focal": {
+            "model": "social-replica-0",
+            "base_url": "http://127.0.0.1:28933/v1"
+          },
+          "q0": {
+            "model": "social-replica-0",
+            "base_url": "http://127.0.0.1:28933/v1"
+          }
+        },
+        "equivalent_replicas": [
+          {
+            "model": "social-replica-0",
+            "base_url": "http://127.0.0.1:28933/v1"
+          }
+        ],
+        "execution_protocol": "reasoning-separated-v2-tokens-4096"
+      },
+      "caveat": "Behavior event counts exclude retry outputs that lack turn_end/decide_end; rejection totals include retries."
+    }
+  },
+  "checks": {
+    "same_case_ids": true,
+    "same_versions": true,
+    "same_scripts": true,
+    "same_runtime_environment.json": true,
+    "same_games/execution_protocol.json": true,
+    "same_games/frozen_manifest.json": true,
+    "same_scenarios": true
+  },
+  "case_pairs": [
+    {
+      "case": "blocked_uniform_s1",
+      "old_meetings": 1,
+      "new_meetings": 2,
+      "old_headline": 0.3333331388888889,
+      "new_headline": 0.6666662222222222,
+      "old_semantic_invalid": 2,
+      "new_semantic_invalid": 2
+    },
+    {
+      "case": "blocked_uniform_s2",
+      "old_meetings": 2,
+      "new_meetings": 1,
+      "old_headline": 0.6666661296296296,
+      "new_headline": 0.2777776113888889,
+      "old_semantic_invalid": 1,
+      "new_semantic_invalid": 1
+    },
+    {
+      "case": "blocked_uniform_s3",
+      "old_meetings": 2,
+      "new_meetings": 0,
+      "old_headline": 0.6666661111111111,
+      "new_headline": 0.0,
+      "old_semantic_invalid": 3,
+      "new_semantic_invalid": 6
+    },
+    {
+      "case": "blocked_varied_s1",
+      "old_meetings": 2,
+      "new_meetings": 2,
+      "old_headline": 0.6666660185185185,
+      "new_headline": 0.6666660555555555,
+      "old_semantic_invalid": 0,
+      "new_semantic_invalid": 4
+    },
+    {
+      "case": "blocked_varied_s2",
+      "old_meetings": 3,
+      "new_meetings": 1,
+      "old_headline": 0.9444438889351853,
+      "new_headline": 0.3333330648148148,
+      "old_semantic_invalid": 0,
+      "new_semantic_invalid": 5
+    },
+    {
+      "case": "blocked_varied_s3",
+      "old_meetings": 0,
+      "new_meetings": 1,
+      "old_headline": 0.0,
+      "new_headline": 0.33333312037037033,
+      "old_semantic_invalid": 2,
+      "new_semantic_invalid": 4
+    },
+    {
+      "case": "dense_uniform_s1",
+      "old_meetings": 1,
+      "new_meetings": 0,
+      "old_headline": 0.2962960001234568,
+      "new_headline": 0.0,
+      "old_semantic_invalid": 5,
+      "new_semantic_invalid": 5
+    },
+    {
+      "case": "dense_uniform_s2",
+      "old_meetings": 3,
+      "new_meetings": 1,
+      "old_headline": 0.9999994722222222,
+      "new_headline": 0.2222220462962963,
+      "old_semantic_invalid": 1,
+      "new_semantic_invalid": 0
+    },
+    {
+      "case": "dense_uniform_s3",
+      "old_meetings": 2,
+      "new_meetings": 1,
+      "old_headline": 0.5925920002469136,
+      "new_headline": 0.33333310185185183,
+      "old_semantic_invalid": 2,
+      "new_semantic_invalid": 0
+    },
+    {
+      "case": "dense_varied_s1",
+      "old_meetings": 0,
+      "new_meetings": 0,
+      "old_headline": 0.0,
+      "new_headline": 0.0,
+      "old_semantic_invalid": 2,
+      "new_semantic_invalid": 0
+    },
+    {
+      "case": "dense_varied_s2",
+      "old_meetings": 3,
+      "new_meetings": 1,
+      "old_headline": 0.9999995833333334,
+      "new_headline": 0.3333331111111111,
+      "old_semantic_invalid": 1,
+      "new_semantic_invalid": 1
+    },
+    {
+      "case": "dense_varied_s3",
+      "old_meetings": 0,
+      "new_meetings": 2,
+      "old_headline": 0.0,
+      "new_headline": 0.4722216669097222,
+      "old_semantic_invalid": 2,
+      "new_semantic_invalid": 2
+    },
+    {
+      "case": "loose_uniform_s1",
+      "old_meetings": 3,
+      "new_meetings": 2,
+      "old_headline": 0.9629621852263375,
+      "new_headline": 0.6296290370987654,
+      "old_semantic_invalid": 1,
+      "new_semantic_invalid": 2
+    },
+    {
+      "case": "loose_uniform_s2",
+      "old_meetings": 3,
+      "new_meetings": 3,
+      "old_headline": 0.9999992777777779,
+      "new_headline": 0.99999925,
+      "old_semantic_invalid": 0,
+      "new_semantic_invalid": 0
+    },
+    {
+      "case": "loose_uniform_s3",
+      "old_meetings": 1,
+      "new_meetings": 2,
+      "old_headline": 0.22222203703703702,
+      "new_headline": 0.6666661481481482,
+      "old_semantic_invalid": 4,
+      "new_semantic_invalid": 1
+    },
+    {
+      "case": "loose_varied_s1",
+      "old_meetings": 3,
+      "new_meetings": 3,
+      "old_headline": 0.9999993333333334,
+      "new_headline": 0.9999993611111111,
+      "old_semantic_invalid": 0,
+      "new_semantic_invalid": 0
+    },
+    {
+      "case": "loose_varied_s2",
+      "old_meetings": 1,
+      "new_meetings": 2,
+      "old_headline": 0.22222199074074073,
+      "new_headline": 0.5555551116666666,
+      "old_semantic_invalid": 1,
+      "new_semantic_invalid": 2
+    },
+    {
+      "case": "loose_varied_s3",
+      "old_meetings": 1,
+      "new_meetings": 3,
+      "old_headline": 0.33333300925925924,
+      "new_headline": 0.99999925,
+      "old_semantic_invalid": 2,
+      "new_semantic_invalid": 0
+    },
+    {
+      "case": "replan_uniform_s1",
+      "old_meetings": 3,
+      "new_meetings": 1,
+      "old_headline": 0.9999994444444443,
+      "new_headline": 0.3333330740740741,
+      "old_semantic_invalid": 0,
+      "new_semantic_invalid": 0
+    },
+    {
+      "case": "replan_uniform_s2",
+      "old_meetings": 3,
+      "new_meetings": 3,
+      "old_headline": 0.9999994722222222,
+      "new_headline": 0.9999994166666667,
+      "old_semantic_invalid": 0,
+      "new_semantic_invalid": 0
+    },
+    {
+      "case": "replan_uniform_s3",
+      "old_meetings": 3,
+      "new_meetings": 0,
+      "old_headline": 0.9999993611111111,
+      "new_headline": 0.0,
+      "old_semantic_invalid": 0,
+      "new_semantic_invalid": 2
+    },
+    {
+      "case": "replan_varied_s1",
+      "old_meetings": 1,
+      "new_meetings": 1,
+      "old_headline": 0.33333312962962963,
+      "new_headline": 0.3333330925925926,
+      "old_semantic_invalid": 0,
+      "new_semantic_invalid": 0
+    },
+    {
+      "case": "replan_varied_s2",
+      "old_meetings": 0,
+      "new_meetings": 1,
+      "old_headline": 0.0,
+      "new_headline": 0.3333330740740741,
+      "old_semantic_invalid": 0,
+      "new_semantic_invalid": 2
+    },
+    {
+      "case": "replan_varied_s3",
+      "old_meetings": 3,
+      "new_meetings": 3,
+      "old_headline": 0.9999994166666667,
+      "new_headline": 0.9999994166666667,
+      "old_semantic_invalid": 0,
+      "new_semantic_invalid": 0
+    }
+  ],
+  "meeting_count_pair_outcomes": {
+    "new_more": 7,
+    "old_more": 10,
+    "equal": 7
+  },
+  "identical_request_comparisons": {
+    "count": 24,
+    "identical_outputs": 0,
+    "interpretation": "Selection-conditioned natural overlap, not randomized fixed-state evaluation; exact request equality includes history and decoding."
+  }
+}

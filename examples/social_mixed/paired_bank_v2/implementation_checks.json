@@ -1,0 +1,157 @@
+{
+  "cpu_tests": {
+    "passed": 54,
+    "suites": [
+      "tristate_recipe",
+      "reasoning_training",
+      "reasoning_bank",
+      "qualitative_case_audit",
+      "candidate_453",
+      "stabilization",
+      "next_training",
+      "checkpoint_retention",
+      "core",
+      "validation",
+      "paired_bank",
+      "training_contract"
+    ]
+  },
+  "label_preflight": {
+    "counts": {
+      "train": {
+        "cases": 373,
+        "views": 1119
+      },
+      "validation": {
+        "cases": 124,
+        "views": 372
+      }
+    },
+    "parent_split_disjoint": true,
+    "source_family_split_disjoint": true,
+    "panel_cases": 25,
+    "history_free_P_checked": 497,
+    "identical_P_prompt_targets_consistent": true,
+    "active_P_roles": {
+      "train:trainable": 314,
+      "train:quarantined": 30,
+      "train:evaluation_only_no_negative": 29,
+      "validation:trainable": 106,
+      "validation:evaluation_only_no_negative": 4,
+      "validation:quarantined": 14
+    },
+    "isolated_B_validation_pairs": 2,
+    "context_checked": false,
+    "context_failures": [],
+    "max_prompt_tokens": null,
+    "passed": true,
+    "GPU_acceptance": "not performed"
+  },
+  "training_configuration_test": {
+    "status": "blocked_by_environment",
+    "reason": "ModuleNotFoundError: hydra"
+  },
+  "exact_tokenizer_context_check": {
+    "status": "not_run",
+    "reason": "Local transformers/tokenizers packages unavailable"
+  },
+  "GPU_training": {
+    "status": "not_run"
+  },
+  "q0_probe": {
+    "status": "requests_prepared_only",
+    "directory": "/tmp/social-reasoning-q0-20260921-tristate",
+    "cases": 32,
+    "responses": 712,
+    "view_responses": {
+      "O": 256,
+      "B": 256,
+      "Pplus": 200
+    },
+    "request_sha256": "7fd4d87748e0482bde4541c012e2e0231101cc115a611d4221253ffc12c2630b"
+  },
+  "external_benchmark_cases_used_for_construction": false,
+  "information_contract": "History-free P uses the same possible_preferences/favored schema as B; no numeric probabilities or joint distribution in model requests",
+  "bank_version": "social-reasoning-packages-v4-qualitative-belief",
+  "qualitative_ambiguity_audit": {
+    "scope": "Finite witness search, preserving every support/favored label and original joint support, fixed per-world continuation payoffs. Not exhaustive; alternative posteriors are not certified reachable by the original history.",
+    "cases_checked": 497,
+    "cases_with_disjoint_action_witness": 3,
+    "counts_by_split": {
+      "train": 3
+    },
+    "final_turn_pending_offer_witnesses": 0
+  },
+  "semantic_training_acceptance": "Local tri-state loss, role sampling, validation and retention checks passed; model/GPU acceptance pending",
+  "qualitative_case_audit": {
+    "cases": 497,
+    "audit_sha256": "d24c58c5a1492e17bdc7a1384e2e394077e660b9530bb11c5e6c05dbf9ba0ef0",
+    "auditor_sha256": "3a54d37805cb897a722da1c11cb0cdd515bf5a957fc42ca0d5223beb6e3fb43e",
+    "bank_manifest_sha256_at_audit": "af4cd67c3407c48b87424a3d5c960ae1632e05a8253bc111eba414b0c13831b2",
+    "numerical_method": "SciPy HiGHS LP, primal/dual feasibility tolerance 1e-9; finite-precision certificates, not exact rational proofs",
+    "scope": "LP extrema over available teacher world universe, with explicit own preferences and all qualitative supports; per-world continuation values held fixed. Certificates are scoped to this model, not a proof of reachable alternative histories or re-equilibrated future policy.",
+    "text_envelope": "Favored strictly leads; undetermined has no numerical constraint. Closure used for conservative robustness bounds. This deliberately overapproximates unspecified natural-language strength.",
+    "b_contract": "Existing B_MARGIN is used only internally. Undetermined is a union of top/runner-up regions. No numbers added to model beliefs.",
+    "summaries": {
+      "text_envelope": {
+        "statuses": {
+          "reward_labels_invariant_in_envelope": 394,
+          "reward_label_changes_witnessed": 103
+        },
+        "original_positive_labels_robust": 453,
+        "has_universally_acceptable_action": 454,
+        "disjoint_witness_cases": 27,
+        "witness_cases_by_split": {
+          "train": 80,
+          "validation": 23
+        }
+      },
+      "b_contract": {
+        "statuses": {
+          "reward_labels_invariant_in_envelope": 407,
+          "reward_label_changes_witnessed": 86,
+          "original_positive_labels_robust_negative_labels_unresolved": 4
+        },
+        "original_positive_labels_robust": 459,
+        "has_universally_acceptable_action": 460,
+        "disjoint_witness_cases": 19,
+        "witness_cases_by_split": {
+          "train": 68,
+          "validation": 18
+        }
+      }
+    }
+  },
+  "candidate_453_audit": {
+    "status": "completed_not_training_ready",
+    "report": "CANDIDATE_453_AUDIT.md",
+    "train_cases": 343,
+    "validation_cases": 110,
+    "P_train_without_definite_negative": 29,
+    "P_validation_without_definite_negative": 4,
+    "semantic_mask_implemented": false,
+    "validation_isolated_B_contrast_pairs": 0,
+    "historical_snapshot": true
+  },
+  "active_roles": {
+    "train:trainable": 314,
+    "train:quarantined": 30,
+    "train:evaluation_only_no_negative": 29,
+    "validation:trainable": 106,
+    "validation:evaluation_only_no_negative": 4,
+    "validation:quarantined": 14
+  },
+  "current_recipe": {
+    "semantic_mask_implemented": true,
+    "validation_isolated_B_contrast_pairs": 2,
+    "full_O_B_parent_packages_preserved": 175,
+    "P3_linear_O_B_restored": true,
+    "P3_linear_P_certified": false
+  },
+  "environment": {
+    "CUDA_available": false,
+    "hydra_available": false,
+    "transformers_available": false,
+    "tokenizers_available": false
+  }
+}

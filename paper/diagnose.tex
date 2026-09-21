@@ -72,56 +72,72 @@ are missing rather than replaced with a default action.
 
 \subsection{Inference failure and clean planning intervention}
 
-Table~\ref{tab:diagnose-main} records the completed structural checks. Model
-results are left blank pending the run on the newly certified suite; values
-from the previous case inventory are not reused. Exact $B$ will require both
-the complete possible set and the correct favored field.
+Table~\ref{tab:diagnose-main} compares two BP checkpoints on the same frozen
+suite. Exact $B$ requires both the complete possible set and the correct
+favored field. All 408 calls per checkpoint completed, and the three replicas
+were identical; replicas are therefore collapsed rather than treated as
+independent samples.
 
 \begin{table}[t]
-\caption{Native-semantic diagnosis. Dashes mark the pending run on the
-decision-sufficient suite; inference will weight the 16 structures equally.}
+\caption{Native-semantic diagnosis on 16 matched structures (32 cases), all
+decision-sufficient. Regrets are structure means over each condition's valid
+outputs; repair uses only identical doubly valid pairs.}
 \label{tab:diagnose-main}
 \centering
 \small
-\begin{tabular}{l r}
+\begin{tabular}{l rr}
 \hline
-Quantity & Result \\
+Quantity & Old BP-99 & New BP-99 \\
 \hline
-Independent structures / matched cases & $16$ / $32$ \\
-Same state, actions, and payoff table & $16/16$ \\
-Different $B^\star$ and disjoint optimal-action sets & $16/16$ \\
-Decision-sufficient semantic cases & $32/32$ \\
-Exact-posterior decision gap, minimum / mean & $0.33$ / $0.67$ \\
-\hline
-Native semantic $B$ exact (both summary fields) & -- \\
-Possible-set exact / favored exact & -- \\
-Mean $P$ regret given correct semantic summary & -- \\
-Positive regret given correct semantic summary & -- \\
-Mean $\widehat B\!\rightarrow\!P$ composition regret & -- \\
-Native end-to-end regret & -- \\
-Action changed under $B$ repair & -- \\
-Mean paired judgment-repair effect $\Delta_B$ & -- \\
-Qualitative partner-plan assistance: $B$ exact gain & -- \\
+Semantic $B$ exact & $15.6\%$ & $15.6\%$ \\
+Voluntary-case $B$ exact & $0/16$ & $0/16$ \\
+Possible-set exact & $43.8\%$ & $50.0\%$ \\
+Correct-$B$ $P$ valid & $25/32$ & $29/32$ \\
+Correct-$B$ $P$ regret & $0.828$ & $1.135$ \\
+Model-$B$ $P$ valid & $20/32$ & $27/32$ \\
+Model-$B$ $P$ regret & $0.568$ & $0.845$ \\
+Native end-to-end valid & $28/32$ & $32/32$ \\
+Native end-to-end regret & $0.690$ & $0.854$ \\
+Paired cases (structures) & $16\ (11)$ & $24\ (14)$ \\
+Action changed under repair & $7/16$ & $16/24$ \\
+Repair negative / zero / positive & $3/13/0$ & $6/18/0$ \\
+Mean paired repair $\Delta_B$ & $-0.144$ & $-0.310$ \\
+Qualitative-plan $B$ exact gain & $0$ pp & $0$ pp \\
 \hline
 \end{tabular}
 \end{table}
 
-The structural rows establish that inference matters: changing only
-evidential status changes the invariant optimum, with a nontrivial minimum
-gap. They also close the interface ambiguity present in the previous suite.
-Although the native summary omits probability magnitudes, those magnitudes
-cannot change which actions are optimal in any retained case. Consequently,
-regret under $B^\star$ measures planning after a sufficient deployed belief
-interface is fixed, while $\Delta_B$ measures whether repairing that interface
-changes the same planner's utility. The native history-to-action condition
-still measures composition and cannot alone localize a failure. We will report
-condition-specific means with their valid counts and use only doubly valid
-paired records for repair identities.
+Both checkpoints fail to recover the voluntary evidence: neither produces one
+exact judgment in 16 voluntary cases. Their five exact judgments occur only in
+the preset half. The new model's possible-set gain also comes from preset cases
+($16/16$ versus $14/16$); both score $0/16$ on voluntary possible sets.
+Qualitative descriptions of the reference plan change no exact judgment.
+
+Planning remains defective after inference is fixed. With the correct,
+decision-sufficient $B^\star$, regret is positive on $19/25$ valid old-model
+cases and $27/29$ new-model cases. Hence this failure cannot be attributed to
+missing posterior magnitudes. The new model produces valid actions more often,
+yet has higher regret. On the common valid subsets, correct-$B$ regret is
+$0.802$ versus $1.130$ over 24 cases spanning all 16 structures, while
+end-to-end regret is $0.690$ versus $0.887$ over 28 cases and 14 structures.
+Thus improved protocol compliance does not translate into better decisions.
+
+Repair exposes the coupling between the two capabilities. Changing only the
+semantic judgment changes the action in $7/16$ and $16/24$ paired cases, so the
+planner does respond to $B$; however, no repair improves utility. Three old and
+six new cases become worse, while the rest are utility-equivalent. On the 14
+cases (10 structures) valid for both checkpoints, mean repair is $-0.158$ and
+$-0.550$, respectively. We interpret this as a misaligned belief-to-action
+interface and error cancellation, not as evidence that the planner ignores
+$B$ or as an additive decomposition of error.
 
 \paragraph{Illustrative failure patterns.}
-After the certified run, we will select one inference trace and one clean
-planning trace from the frozen cases. The former must expose a concrete misuse
-of voluntary versus imposed evidence; the latter must choose outside the
-certified invariant optimal set despite receiving $B^\star$. This keeps the
-examples illustrative without using them as substitutes for aggregate
-evidence.
+In \texttt{binary-20796:preset}, the new model conflates a goal's required
+action with preference, calling Blair's Library preference ``publicly known''
+and favoring \textsc{Want}; this wrong $B$ nevertheless elicits the certified
+optimal offer. Replacing it with the correct \textsc{Undetermined} judgment
+makes the same planner choose \textsc{Investigate}, despite stating that the
+game ends after this turn, increasing regret from $0$ to $2$. This is a
+recurrent opportunity-cost failure: under correct $B$, all 7 old-model and all
+14 new-model investigations have positive regret. The trace makes the negative
+repair concrete: an inference error and a planning error can cancel.

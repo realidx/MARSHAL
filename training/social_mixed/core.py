@@ -149,7 +149,7 @@ def centered(values):
 def arm_mixture(arm):
     return {'mixed': {'B': .25, 'P': .25, 'selfplay': .5},
             'selfplay': {'selfplay': 1.0},
-            'bp': {'B': .5, 'P': .5}, 'b_only': {'B':1.}, 'p_only': {'P':1.}, 'outcome': {'O':1.}, 'decomposed': {'O':1/3,'B':1/3,'Pplus':1/3}}[arm].copy()
+            'bp': {'B': .5, 'P': .5}, 'b_only': {'B':1.}, 'p_only': {'P':1.}, 'outcome': {'O':1.}, 'conditioned': {'O':2/3,'Pplus':1/3}, 'decomposed': {'O':1/3,'B':1/3,'Pplus':1/3}}[arm].copy()
 
 
 PROTOCOL_VERSION = 'call-local-negative-v1'
@@ -279,13 +279,16 @@ class Collector:
             reset_order = schedule_resets(candidates,rng)
             cursor = 0
             episodes = []
+            replicas = 2 if validation else getattr(self, 'sp_replicas', 4)
+            initial_groups = 2 if validation else getattr(self, 'sp_initial_groups', self.concurrency//replicas)
+            active_limit = initial_groups * replicas
             def admit_group():
                 nonlocal cursor
-                reset=candidates[reset_order[cursor%len(reset_order)]]
+                reset=(self.next_training_reset(candidates) if not validation and hasattr(self, 'next_training_reset')
+                       else candidates[reset_order[cursor%len(reset_order)]])
                 group=f'{split}:step{step}:sp{cursor}:{reset["id"]}'
-                episodes.extend(Episode(reset,group,replica,self.seed) for replica in range(2 if validation else 4))
+                episodes.extend(Episode(reset,group,replica,self.seed) for replica in range(replicas))
                 cursor+=1
-            initial_groups=2 if validation else self.concurrency//4
             for _ in range(initial_groups):admit_group()
             peak_active=0
             while True:
@@ -293,7 +296,7 @@ class Collector:
                 # Refill only in complete four-replica groups. Stop admitting once
                 # the token budget is reached; drain every previously admitted game.
                 if not validation and tokens<token_target:
-                    while len(active)+4<=self.concurrency:
+                    while len(active)+replicas<=active_limit:
                         admit_group()
                         active=[e for e in episodes if e.status=='running']
                 if not active:break

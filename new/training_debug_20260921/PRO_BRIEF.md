@@ -74,7 +74,40 @@ Sol摘要中的三组数不满足该恒等式，且无法由三位小数舍入�
 - 其regret混合了planner行为与semantic接口丢失的概率信息，不能单独解释成纯P缺陷；
 - `B exact`只检查possible set与favored两个字段。若所有B输出有效且replica确定，摘要中的.063与.156分别很可能对应2/32与5/32，但其确切分母仍须由原始记录确认；它们不是posterior accuracy。
 
-上述结论适用于旧v5 case inventory。论文版v6现已替换结构，而不是复用这14个歧义case：对native semantic judgment的完整连续posterior区域做有理数凸多面体顶点枚举，并保守纳入零质量与0.1阈值边界；仅保留所有顶点具有相同精确最优动作集合的case。冻结集仍为16个matched structures（8 binary、8 linear，32 cases），32/32均通过，且每对voluntary/preset的不变最优集合不相交。新v6尚无模型结果，旧v5的B/P数值和failure trace不得迁移。因此新v6的`correct-B P regret`可解释为**给定决策充分的原生semantic接口后的规划regret**，但仍不是posterior预测准确率。
+上述结论适用于旧v5 case inventory。论文版v6现已替换结构，而不是复用这14个歧义case：对native semantic judgment的完整连续posterior区域做有理数凸多面体顶点枚举，并保守纳入零质量与0.1阈值边界；仅保留所有顶点具有相同精确最优动作集合的case。冻结集仍为16个matched structures（8 binary、8 linear，32 cases），32/32均通过，且每对voluntary/preset的不变最优集合不相交。旧v5的B/P数值和failure trace不得迁移；新v6的`correct-B P regret`可解释为**给定决策充分的原生semantic接口后的规划regret**，但仍不是posterior预测准确率。
+
+### 2.2 强化版v6最终结果（本地原始记录复核）
+
+最终run已同步到：
+
+- `runs/diagnostic/old-bp99-v6s-biinv-v1-870332/structure_v6`
+- `runs/diagnostic/new-bp99-v6s-biinv-v1-870333/structure_v6`
+
+两者均为96/96 rows、408/408 calls、三次重复逐字段一致；manifest/runtime hash相同，temperature=0，batch-invariant，32/32 decision-sufficiency certificates通过。paired-scoring逐行失败均为0，最大逐行残差0。
+
+主要复核结果：
+
+| 指标 | 旧BP-99 | 新BP-99 |
+|---|---:|---:|
+| semantic B exact | 15.63% | 15.63% |
+| voluntary B exact | 0/16 | 0/16 |
+| possible-set exact | 43.75% | 50.00% |
+| correct-B P有效case | 25/32 | 29/32 |
+| correct-B P regret | .828 | 1.135 |
+| model-B P有效case | 20/32 | 27/32 |
+| model-B P regret | .568 | .845 |
+| end-to-end P有效case | 28/32 | 32/32 |
+| end-to-end regret | .690 | .854 |
+| paired case（structure） | 16（11） | 24（14） |
+| action changed under repair | 7/16 | 16/24 |
+| repair负／零／正 | 3/13/0 | 6/18/0 |
+| paired repair mean | -.144 | -.310 |
+
+aggregate B exact的5个正确项全部来自preset；两个模型在16个真正需要利用voluntary行为证据的case上均为0/16。新模型possible-set的2题净增也只来自preset（preset 16/16 vs旧14/16）；voluntary possible-set仍均为0/16。因此不能把headline的set改善写成行为推断改善。
+
+为避免跨模型有效子集不同，另在共同有效记录上比较：14个paired cases／10 structures的repair为旧-.158、新-.550；24个correct-B cases／全部16 structures的regret为旧.802、新1.130；28个end-to-end cases／14 structures为旧.690、新.887。故新模型的格式覆盖更好，但共同题上的决策质量仍更差。
+
+负repair不是“忽略B”：动作分别在7/16与16/24 paired cases中改变，说明P会响应semantic B。更准确的结论是响应方向失配和错误抵消。没有任何case因repair提高效用；旧3题、新6题下降，其余效用不变。典型`binary-20796:preset`中，新模型的错误favored=want恰好诱发认证最优offer；换成正确undetermined后，模型明知是最后一步仍选择INVESTIGATE，使regret从0升至2。该模式具有重复性：correct-B条件下旧模型7次、新模型14次INVESTIGATE全部为正regret。
 
 ## 3. 实际训练实现与参数（证据包核查后更新）
 

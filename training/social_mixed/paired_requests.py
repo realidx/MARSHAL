@@ -7,6 +7,10 @@ from training.b_sft import social_named_probe as named
 
 def request(task,arm='action_tools',variant=0):
     if arm!='action_tools':raise ValueError('Paired bank requires native tools')
+    if task.get('p_information_contract'):
+        if task['paired_view'] != 'Pplus': raise ValueError('P-only information contract')
+        from training.social_mixed.history_free_requests import request as p_request
+        return p_request(task, variant)
     base=deepcopy(task['canonical_action_task'])
     result=history_request(base,arm,variant)
     text=result['messages'][1]['content']
