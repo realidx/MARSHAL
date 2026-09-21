@@ -24,6 +24,8 @@ export RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES=1
 unset VLLM_USE_V1  # vLLM 0.28 uses V1; this retired variable cannot select V0.
 export TOKENIZERS_PARALLELISM=false CUDA_DEVICE_MAX_CONNECTIONS=1
 export VLLM_TOOL_CALL_PARSER=hermes
+# Training vLLM must not inherit the frozen external-evaluation setting.
+export VLLM_BATCH_INVARIANT=0
 export NCCL_SOCKET_IFNAME=lo GLOO_SOCKET_IFNAME=lo
 export OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1
 export ROLL_LOCAL_COMM_ADDR=127.0.0.1
@@ -53,8 +55,11 @@ args=(--arm "$SOCIAL_ARM" --seed "$SOCIAL_SEED" --total-tokens "${SOCIAL_TOTAL_T
 if [[ -n "${SOCIAL_RECIPE:-}" ]]; then args+=(--recipe "$SOCIAL_RECIPE"); fi
 args+=(--normalization "${SOCIAL_NORMALIZATION:-standard_sequence}")
 args+=(--tokens-per-update "${SOCIAL_TOKENS_PER_UPDATE:-65536}")
+if [[ -n "${SOCIAL_PAUSE_AFTER_UPDATES:-}" ]]; then
+  args+=(--pause-after-updates "$SOCIAL_PAUSE_AFTER_UPDATES")
+fi
 if [[ "${SOCIAL_DIAGNOSE_PROBABILITIES:-0}" == 1 ]]; then args+=(--diagnose-probabilities); fi
-args+=(--keep-checkpoints 2 --protocol-coefficient "${SOCIAL_PROTOCOL_COEFFICIENT:-0.2}")
+args+=(--keep-checkpoints "${SOCIAL_KEEP_CHECKPOINTS:-2}" --protocol-coefficient "${SOCIAL_PROTOCOL_COEFFICIENT:-0.2}")
 if [[ -n "${SOCIAL_RESUME:-}" ]]; then args+=(--resume "$SOCIAL_RESUME"); fi
 # No ray stop --force: this job owns a private local head.
 python -u -m training.social_mixed.run "${args[@]}" > "$ROLL_OUTPUT_DIR/train.log" 2>&1 &

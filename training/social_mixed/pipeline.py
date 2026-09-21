@@ -233,15 +233,18 @@ class SocialPipeline(BasePipeline):
                     previous=self.state.kv.get('best_validation')
                     if previous is None or score>previous['score']:
                         checkpoint=self.root/'checkpoints'/f'checkpoint-{step}'
+                        retained=self.options['keep_checkpoints']>1
                         best=dict(score=score,step=step,completed_updates=step+1,
-                                  selection_version=SELECTION_VERSION,checkpoint=str(checkpoint.resolve()))
+                                  selection_version=SELECTION_VERSION,checkpoint=str(checkpoint.resolve()),
+                                  checkpoint_retained=retained)
                         self.state.kv['best_validation']=best
-                        self.save(step,force=True)
-                        if not (checkpoint/'COMPLETE.json').is_file():
-                            raise RuntimeError('Best checkpoint did not complete')
-                        (self.root/'BEST_CHECKPOINT').write_text(str(checkpoint.resolve())+'\n')
                         (self.root/'BEST_VALIDATION.json').write_text(json.dumps(best,indent=2)+'\n')
-                        prune(self.root,1)
+                        if retained:
+                            self.save(step,force=True)
+                            if not (checkpoint/'COMPLETE.json').is_file():
+                                raise RuntimeError('Best checkpoint did not complete')
+                            (self.root/'BEST_CHECKPOINT').write_text(str(checkpoint.resolve())+'\n')
+                            prune(self.root,1)
                     if self.options.get('recipe')=='reasoning':
                         self.save(step,force=True)
             except Exception as exc:
@@ -272,6 +275,7 @@ class SocialPipeline(BasePipeline):
     def run(self):
         cfg=self.pipeline_config
         consumed=int(self.state.kv.get('training_response_tokens',0))
+        early_gate_reached=False
         if self.options.get('recipe')=='reasoning' and self.state.kv.get('reasoning_candidates'):
             (self.root/'EVALUATED_CHECKPOINTS.json').write_text(json.dumps(self.state.kv['reasoning_candidates'],indent=2)+'\n')
         if self.state.step<0:
@@ -281,7 +285,8 @@ class SocialPipeline(BasePipeline):
             self.validate(-1,consumed)
         elif self.state.kv.get('best_validation'):
             best=self.state.kv['best_validation']
-            (self.root/'BEST_CHECKPOINT').write_text(best['checkpoint']+'\n')
+            if best.get('checkpoint_retained',True):
+                (self.root/'BEST_CHECKPOINT').write_text(best['checkpoint']+'\n')
             (self.root/'BEST_VALIDATION.json').write_text(json.dumps(best,indent=2)+'\n')
         for step in range(self.state.step+1,cfg.max_steps):
             if consumed>=self.options['total_tokens'] or self.stop_requested:break
@@ -343,7 +348,9 @@ class SocialPipeline(BasePipeline):
             metrics['recipe/'+('reasoning_fixed_exposure' if self.options.get('recipe')=='reasoning' else 'stable_v1')]=1
             metrics['actor/applied_lr']=batch.meta_info['social_lr'] if not metrics.get('skip_optimizer') else 0.
             self.state.log_history.append(metrics)
-            force=consumed>=self.options['total_tokens'] or self.stop_requested or step+1==cfg.max_steps
+            pause_after=self.options.get('pause_after_updates')
+            early_gate_reached=pause_after is not None and step+1>=pause_after
+            force=consumed>=self.options['total_tokens'] or self.stop_requested or early_gate_reached or step+1==cfg.max_steps
             evaluate=(step+1)%cfg.eval_steps==0 or consumed>=self.options['total_tokens'] or step+1==cfg.max_steps
             with (self.root/'metrics.jsonl').open('a') as f:f.write(json.dumps(metrics)+'\n')
             self.tracker.log(metrics,step=step+1)
@@ -359,6 +366,7 @@ class SocialPipeline(BasePipeline):
                 self.monitor_o(step,consumed)
             if force or (step+1)%cfg.save_steps==0:self.save(step,force=force)
             if self.stop_requested:break
+            if early_gate_reached:break
         # A time-limit stop while validating also needs the latest optimizer state.
         if self.stop_requested and self.state.step>=0:
             self.save(self.state.step,force=True)
@@ -367,8 +375,9 @@ class SocialPipeline(BasePipeline):
             if not (latest/'COMPLETE.json').is_file():self.save(self.state.step,force=True)
             if (latest/'COMPLETE.json').is_file():
                 (self.root/'LAST_CHECKPOINT').write_text(str(latest.resolve())+'\n')
-        result=dict(status='paused' if self.stop_requested else 'complete',updates=self.state.step+1,
+        status='paused' if self.stop_requested else 'early_gate' if early_gate_reached else 'complete'
+        result=dict(status=status,updates=self.state.step+1,
                     training_response_tokens=consumed,token_budget=self.options['total_tokens'])
-        if not self.stop_requested and consumed<self.options['total_tokens']:
+        if not self.stop_requested and not early_gate_reached and consumed<self.options['total_tokens']:
             result['status']='step_limit_before_token_budget'
         (self.root/'RESULT.json').write_text(json.dumps(result,indent=2)+'\n')

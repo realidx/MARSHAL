@@ -29,6 +29,7 @@ def prune(root, keep=2):
         if suffix.isdigit() and (path/'COMPLETE.json').is_file():completed.append((int(suffix),path))
     removed=[]
     protected=set()
+    # Preserve evaluated checkpoints for longitudinal capability comparisons.
     candidates=root/'EVALUATED_CHECKPOINTS.json'
     if candidates.exists():
         protected.update(Path(row['checkpoint']).resolve() for row in json.loads(candidates.read_text()))

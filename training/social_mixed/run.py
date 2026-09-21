@@ -129,6 +129,7 @@ def main():
     cli.add_argument('--total-tokens',type=int,default=6553600)
     cli.add_argument('--tokens-per-update',type=int,default=65536)
     cli.add_argument('--keep-checkpoints',type=int,default=2)
+    cli.add_argument('--pause-after-updates',type=int)
     cli.add_argument('--protocol-coefficient',type=float,default=0.2)
     cli.add_argument('--resume')
     cli.add_argument('--diagnose-probabilities',action='store_true')
@@ -155,7 +156,6 @@ def main():
                for split in ('train', 'validation') for t in data['bp_'+split]):
             raise ValueError('B/P data is not approved under the active label contract. '
                              'Complete response_only_v1 migration and curriculum review before training.')
-    args.keep_checkpoints = 2  # Best and latest; same checkpoint may fill both.
     options=vars(args).copy()
     from training.social_mixed.stabilization import VERSION as recipe_version
     if args.recipe=='reasoning':
@@ -171,8 +171,9 @@ def main():
         options['paired_bank_sha256']=__import__('hashlib').sha256((PATH/'manifest.json').read_bytes()).hexdigest()
     options['gpu_profile']=os.environ.get('SOCIAL_GPU_PROFILE','h100-96')
     if args.total_tokens<1 or args.tokens_per_update<1:raise ValueError('Token budgets must be positive')
-    if args.keep_checkpoints < (1 if args.arm=='bp' else 2):
-        raise ValueError('B/P-only requires one recovery point; other arms require at least two')
+    if args.pause_after_updates is not None and args.pause_after_updates<1:
+        raise ValueError('pause-after-updates must be positive')
+    if args.keep_checkpoints<1:raise ValueError('Keep at least one complete recovery point')
     root=Path(os.environ['ROLL_OUTPUT_DIR']).resolve()
     root.mkdir(parents=True,exist_ok=True)
     if (root/'experiment.json').exists():raise FileExistsError('Use a fresh output directory, including on resume')
