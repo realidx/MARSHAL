@@ -1,0 +1,141 @@
+{
+  "planned_rows": 96,
+  "returned_rows": 96,
+  "missing_rows": 0,
+  "complete_composition_rows": 48,
+  "row_level": {
+    "B_exact": {
+      "valid": 96,
+      "mean": 0.15625
+    },
+    "B_set_exact": {
+      "valid": 96,
+      "mean": 0.4375
+    },
+    "B_favored_exact": {
+      "valid": 96,
+      "mean": 0.15625
+    },
+    "B_false_exclusions": {
+      "valid": 96,
+      "mean": 0.25
+    },
+    "B_unsupported_additions": {
+      "valid": 96,
+      "mean": 0.90625
+    },
+    "gold_B_planning_regret": {
+      "valid": 75,
+      "mean": 0.8733333333333332
+    },
+    "model_B_planning_regret": {
+      "valid": 60,
+      "mean": 0.6250000000000001
+    },
+    "end_to_end_P_regret": {
+      "valid": 84,
+      "mean": 0.6904761904761905
+    },
+    "B_repair_gain": {
+      "valid": 48,
+      "mean": -0.1979166666666667
+    },
+    "qualitative_partner_plan_exact_gain": {
+      "valid": 24,
+      "mean": 0.0
+    }
+  },
+  "structure_level": {
+    "B_exact": {
+      "valid": 16,
+      "mean": 0.15625
+    },
+    "B_set_exact": {
+      "valid": 16,
+      "mean": 0.4375
+    },
+    "B_favored_exact": {
+      "valid": 16,
+      "mean": 0.15625
+    },
+    "B_false_exclusions": {
+      "valid": 16,
+      "mean": 0.25
+    },
+    "B_unsupported_additions": {
+      "valid": 16,
+      "mean": 0.90625
+    },
+    "gold_B_planning_regret": {
+      "valid": 16,
+      "mean": 0.828125
+    },
+    "model_B_planning_regret": {
+      "valid": 11,
+      "mean": 0.5681818181818182
+    },
+    "end_to_end_P_regret": {
+      "valid": 14,
+      "mean": 0.6904761904761905
+    },
+    "B_repair_gain": {
+      "valid": 11,
+      "mean": -0.14393939393939392
+    },
+    "qualitative_partner_plan_exact_gain": {
+      "valid": 8,
+      "mean": 0.0
+    }
+  },
+  "condition_coverage": {
+    "B": {
+      "returned": 96,
+      "statuses": {
+        "ok": 96
+      }
+    },
+    "B_with_qualitative_partner_plan": {
+      "returned": 24,
+      "statuses": {
+        "ok": 24
+      }
+    },
+    "correct_B_model_P": {
+      "returned": 96,
+      "statuses": {
+        "ok": 75,
+        "format_failure": 21
+      }
+    },
+    "model_B_model_P": {
+      "returned": 96,
+      "statuses": {
+        "ok": 60,
+        "format_failure": 36
+      }
+    },
+    "end_to_end_P": {
+      "returned": 96,
+      "statuses": {
+        "ok": 84,
+        "format_failure": 12
+      }
+    }
+  },
+  "interpretation": "B is scored on the native semantic contract. Correct B means the correct possible_preferences/favored summary, not a complete posterior. Every retained semantic summary is certified to induce one invariant exact optimal-action set over all compatible posteriors. Controlled P receives no behavioral chronology, so correct-B regret isolates action selection given a sufficient deployed B interface, while B_repair_gain is a paired intervention on that interface. End-to-end P separately retains the native history.",
+  "paired_scoring_identity": {
+    "rows": 48,
+    "structures": 11,
+    "scoring_belief": "teacher_posterior",
+    "reference_value": "same per-case exact teacher optimum",
+    "normalization": "raw terminal own utility; no normalization",
+    "model_B_regret": 0.5227272727272727,
+    "correct_semantic_B_regret": 0.6666666666666666,
+    "regret_difference": -0.14393939393939392,
+    "repair_gain": -0.14393939393939392,
+    "aggregate_identity_residual": 0.0,
+    "row_identity_failures": 0,
+    "max_abs_row_identity_residual": 0.0,
+    "note": "These three means use the identical paired rows and structure weights. Condition-specific means in structure_level may use different valid subsets and must not be subtracted."
+  }
+}
