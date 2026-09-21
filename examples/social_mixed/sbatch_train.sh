@@ -25,7 +25,7 @@ unset VLLM_USE_V1  # vLLM 0.28 uses V1; this retired variable cannot select V0.
 export TOKENIZERS_PARALLELISM=false CUDA_DEVICE_MAX_CONNECTIONS=1
 export VLLM_TOOL_CALL_PARSER=hermes
 # Training vLLM must not inherit the frozen external-evaluation setting.
-unset VLLM_BATCH_INVARIANT
+export VLLM_BATCH_INVARIANT=0
 export NCCL_SOCKET_IFNAME=lo GLOO_SOCKET_IFNAME=lo
 export OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1
 export ROLL_LOCAL_COMM_ADDR=127.0.0.1
