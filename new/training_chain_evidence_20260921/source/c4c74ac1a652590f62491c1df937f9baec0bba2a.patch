@@ -1,0 +1,34 @@
+diff --git a/examples/social_mixed/sbatch_bp_sp_4x_h10047.sh b/examples/social_mixed/sbatch_bp_sp_4x_h10047.sh
+index ae2dce6..40ec356 100755
+--- a/examples/social_mixed/sbatch_bp_sp_4x_h10047.sh
++++ b/examples/social_mixed/sbatch_bp_sp_4x_h10047.sh
+@@ -83,7 +83,7 @@ allocation_log="runs/social_mixed/bp-sp-allocation-${SLURM_JOB_ID}.log"
+ 
+ run_arm() {
+   local arm="$1" pair="$2"
+-  local resume_var resume
++  local resume_var resume child status
+   if [[ "$arm" == bp ]]; then resume_var=SOCIAL_BP_RESUME; else resume_var=SOCIAL_SP_RESUME; fi
+   resume="${!resume_var:-}"
+   [[ -n "$resume" && -f "$resume/COMPLETE.json" ]] || {
+@@ -92,7 +92,19 @@ run_arm() {
+   }
+   SOCIAL_ARM="$arm" SOCIAL_RESUME="$resume" CUDA_VISIBLE_DEVICES="$pair" \
+     bash examples/social_mixed/sbatch_train.sh \
+-    > "runs/social_mixed/joint-${arm}-${SLURM_JOB_ID}.log" 2>&1
++    > "runs/social_mixed/joint-${arm}-${SLURM_JOB_ID}.log" 2>&1 &
++  child=$!
++  # The outer wrapper signals this background run_arm subshell. Explicitly
++  # relay that signal to sbatch_train, which relays it to the Python driver.
++  trap 'kill -USR1 "$child" 2>/dev/null || true' USR1 TERM
++  set +e
++  while true; do
++    wait "$child"
++    status=$?
++    kill -0 "$child" 2>/dev/null || break
++  done
++  set -e
++  return "$status"
+ }
+ run_arm bp "${left[0]},${right[0]}" & bp_pid=$!
+ run_arm selfplay "${left[1]},${right[1]}" & sp_pid=$!

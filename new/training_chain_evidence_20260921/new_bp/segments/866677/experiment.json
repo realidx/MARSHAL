@@ -1,0 +1,48 @@
+{
+  "options": {
+    "arm": "bp",
+    "seed": 42,
+    "total_tokens": 6553600,
+    "tokens_per_update": 65536,
+    "keep_checkpoints": 2,
+    "protocol_coefficient": 0.2,
+    "resume": "/home/e/e1300530/MARSHAL-train-20260916-063308/runs/social_mixed/bp-seed42-865319/checkpoints/checkpoint-29",
+    "diagnose_probabilities": false,
+    "check_only": false,
+    "recipe_version": "social-stable-v2-b-bridges",
+    "gpu_profile": "h100-47"
+  },
+  "model": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+  "source_version": {
+    "kind": "git",
+    "commit": "dbd4585ea6a4acf01d3acc0ad893ed0c98a1c52f",
+    "clean": true
+  },
+  "source_commit": "dbd4585ea6a4acf01d3acc0ad893ed0c98a1c52f",
+  "source_bundle_sha256": null,
+  "data_manifest_sha256": "730f0d819b3a9e48cbcdc781b17cd5db580317d569f196ae0b97f2fb66e0729d",
+  "dataset": "data_reasoning_v6",
+  "allowed_completion_modes": [
+    "binary",
+    "linear"
+  ],
+  "execution_profile": {
+    "gpus": 2,
+    "tp": 2,
+    "train_microbatch": 1,
+    "reference_microbatch": 1,
+    "train_resident": false,
+    "reference_resident": false,
+    "vllm_memory": 0.5,
+    "max_num_seqs": 16,
+    "recompute": "full"
+  },
+  "reward": "B/P binary; SP own terminal utility; invalid/truncated calls use independent negative advantage instead of task advantage",
+  "advantage_version": "call-local-negative-v1",
+  "mixture": {
+    "B": 0.5,
+    "P": 0.5
+  },
+  "grouping": "B/P task; selfplay reset and player seat across replicas",
+  "budget": "Generated response tokens entering training, including retries; finish current groups at boundary"
+}

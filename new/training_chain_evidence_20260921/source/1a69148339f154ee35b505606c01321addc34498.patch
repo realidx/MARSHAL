@@ -1,0 +1,115 @@
+diff --git a/examples/social_mixed/sbatch_bp_sp_4x_h10047.sh b/examples/social_mixed/sbatch_bp_sp_4x_h10047.sh
+new file mode 100755
+index 0000000..5e7a413
+--- /dev/null
++++ b/examples/social_mixed/sbatch_bp_sp_4x_h10047.sh
+@@ -0,0 +1,109 @@
++#!/usr/bin/env bash
++# One full H100-47 node: run B/P-only and self-play on separate cross-parent pairs.
++set -euo pipefail
++
++repo="${SLURM_SUBMIT_DIR:?Submit from the clean social-training checkout}"
++cd "$repo"
++export SOCIAL_GPU_PROFILE=h100-47
++export SOCIAL_DATA_DIR="${SOCIAL_DATA_DIR:-$repo/examples/social_mixed/data_reasoning_v5_candidate}"
++export SOCIAL_TOTAL_TOKENS="${SOCIAL_TOTAL_TOKENS:-6553600}"
++export SOCIAL_TOKENS_PER_UPDATE="${SOCIAL_TOKENS_PER_UPDATE:-65536}"
++export SOCIAL_KEEP_CHECKPOINTS=2
++export SOCIAL_SOURCE_COMMIT="${SOCIAL_SOURCE_COMMIT:-$(git rev-parse HEAD)}"
++
++assigned_raw="${CUDA_VISIBLE_DEVICES:?Slurm must expose four assigned MIG devices}"
++IFS=',' read -r -a assigned <<< "$assigned_raw"
++if (( ${#assigned[@]} != 4 )); then
++  echo "Expected four assigned H100-47 MIG devices, got: $assigned_raw" >&2
++  exit 43
++fi
++
++topology="$(nvidia-smi -L)"
++mapfile -t mapped < <(
++  ASSIGNED="$assigned_raw" TOPOLOGY="$topology" python - <<'PY'
++import os,re
++assigned=os.environ['ASSIGNED'].split(',')
++logical=all(re.fullmatch(r'\d+', value) for value in assigned)
++wanted=set(assigned)
++parent=None
++found={}
++all_migs=[]
++for line in os.environ['TOPOLOGY'].splitlines():
++    m=re.match(r'GPU\s+(\d+):.*\(UUID:\s*(GPU-[^)]+)\)',line)
++    if m:
++        parent=m.group(2)
++        continue
++    m=re.search(r'UUID:\s*(MIG-[^)]+)',line)
++    if m:
++        all_migs.append((m.group(1),parent))
++        if m.group(1) in wanted:
++            found[m.group(1)]=parent
++if logical:
++    if len(all_migs) != 4:
++        raise SystemExit(f'Expected exactly four MIG slices for full-node logical allocation, found {len(all_migs)}')
++    assigned=[uuid for uuid,_ in all_migs]
++    found=dict(all_migs)
++for uuid in assigned:
++    if uuid not in found or found[uuid] is None:
++        raise SystemExit(f'Cannot map assigned MIG UUID to parent: {uuid}')
++    print(f'{found[uuid]}\t{uuid}')
++PY
++)
++
++declare -A by_parent
++parents=()
++for row in "${mapped[@]}"; do
++  parent="${row%%$'\t'*}"
++  uuid="${row#*$'\t'}"
++  if [[ -z "${by_parent[$parent]+x}" ]]; then parents+=("$parent"); fi
++  by_parent[$parent]="${by_parent[$parent]:-} ${uuid}"
++done
++if (( ${#parents[@]} != 2 )); then
++  printf 'Expected exactly two physical parents, mapped rows:\n%s\n' "${mapped[*]}" >&2
++  exit 43
++fi
++read -r -a left <<< "${by_parent[${parents[0]}]}"
++read -r -a right <<< "${by_parent[${parents[1]}]}"
++if (( ${#left[@]} != 2 || ${#right[@]} != 2 )); then
++  echo "Expected two allocated slices on each parent" >&2
++  exit 43
++fi
++
++mkdir -p runs/social_mixed
++allocation_log="runs/social_mixed/bp-sp-allocation-${SLURM_JOB_ID}.log"
++{
++  echo "SLURM_JOB_ID=$SLURM_JOB_ID"
++  echo "SLURM_NODELIST=${SLURM_NODELIST:-}"
++  echo "SOURCE_COMMIT=$SOCIAL_SOURCE_COMMIT"
++  echo "ASSIGNED=$assigned_raw"
++  printf 'BP_PAIR=%s,%s parents=%s,%s\n' "${left[0]}" "${right[0]}" "${parents[0]}" "${parents[1]}"
++  printf 'SP_PAIR=%s,%s parents=%s,%s\n' "${left[1]}" "${right[1]}" "${parents[0]}" "${parents[1]}"
++  printf '%s\n' "$topology"
++} > "$allocation_log"
++
++run_arm() {
++  local arm="$1" pair="$2"
++  if [[ "$arm" == selfplay && -n "${SOCIAL_SP_RESUME:-}" ]]; then
++    [[ -f "$SOCIAL_SP_RESUME/COMPLETE.json" ]] || {
++      echo "Incomplete SP resume checkpoint: $SOCIAL_SP_RESUME" >&2
++      return 2
++    }
++    SOCIAL_ARM="$arm" SOCIAL_RESUME="$SOCIAL_SP_RESUME" CUDA_VISIBLE_DEVICES="$pair" \
++      bash examples/social_mixed/sbatch_train.sh \
++      > "runs/social_mixed/joint-${arm}-${SLURM_JOB_ID}.log" 2>&1
++  else
++    SOCIAL_ARM="$arm" CUDA_VISIBLE_DEVICES="$pair" \
++      bash examples/social_mixed/sbatch_train.sh > "runs/social_mixed/joint-${arm}-${SLURM_JOB_ID}.log" 2>&1
++  fi
++}
++run_arm bp "${left[0]},${right[0]}" & bp_pid=$!
++run_arm selfplay "${left[1]},${right[1]}" & sp_pid=$!
++
++forward_stop() { kill -USR1 "$bp_pid" "$sp_pid" 2>/dev/null || true; }
++trap forward_stop USR1 TERM
++set +e
++wait "$bp_pid"; bp_status=$?
++wait "$sp_pid"; sp_status=$?
++set -e
++printf 'bp_status=%s\nselfplay_status=%s\n' "$bp_status" "$sp_status" >> "$allocation_log"
++(( bp_status == 0 && sp_status == 0 ))
