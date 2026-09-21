@@ -21,12 +21,32 @@ def summarize(rows):
         stats[view]['semantic_masked']+=sum(r['score'].get('semantic_outcome')=='masked' for r in valid)
         stats[view]['semantic_scored']+=len(values)
         s=stats[view];s['groups']+=1;s['responses']+=len(rs);s['valid']+=len(valid)
+        s['truncated']+=sum(r['completion']['finish_reason']=='length' for r in rs)
+        s['invalid_nontruncated']+=sum(r['completion']['finish_reason']!='length' and r['score']['status']!='ok' for r in rs)
+        s['positive']+=sum(v>0 for v in values)
+        s['negative']+=sum(v==0 for v in values)
+        s['one_scored_groups']+=int(len(values)==1)
         s['correct']+=sum(values)
         s['semantic_mixed_groups']+=int(bool(values) and max(values)>min(values))
         s['no_correct_groups']+=int(bool(values) and not any(values))
         s['no_scored_groups']+=int(not values)
         s['all_legal_correct_groups']+=int(bool(values) and all(values))
+    for view,s in stats.items():
+        selected=[r for r in rows if r['view']==view]
+        s['unique_cases']=len({r['canonical_id'] for r in selected})
+        s['unique_parents']=len({r['package_id'] for r in selected if 'package_id' in r})
     return {k:dict(v) for k,v in stats.items()}
+
+
+def detailed_summary(rows):
+    cells=defaultdict(list);groups=defaultdict(list)
+    for r in rows:
+        key='/'.join((r['view'],r['source_kernel'],r.get('completion_mode','unknown'),
+                      'terminal' if r.get('all_actions_terminal') else 'multistep'))
+        cells[key].append(r)
+        groups[r['canonical_id'],r['view']].append(r)
+    return dict(by_source={k:summarize(v) for k,v in cells.items()},
+                by_case={cid+':'+view:summarize(rs)[view] for (cid,view),rs in groups.items()})
 
 
 def main():
@@ -45,6 +65,7 @@ def main():
     if any(out.iterdir()):raise FileExistsError('Use a fresh probe directory')
     tasks=load('train');schedule=case_schedule(tasks,args.seed)[:args.cases]
     by={(t['canonical_id'],t['paired_view']):t for t in tasks};jobs=[]
+    cases={c['canonical_id']:c for c in load('train','cases.jsonl')}
     for cid in schedule:
         for view in dict.fromkeys(args.views):
             t=by[cid,view]
@@ -53,7 +74,9 @@ def main():
                 req=request(t,'action_tools',t.get('name_variant',0))
                 req.update(seed=seed_for(args.seed,'reasoning-q0-probe',cid,view,replica),temperature=1.,top_p=1.,max_tokens=1024)
                 jobs.append(dict(canonical_id=cid,view=view,replica=replica,request=req,
-                                 belief_action_relevant=t['belief_action_relevant'],source_kernel=t['source_kernel']))
+                                 belief_action_relevant=t['belief_action_relevant'],source_kernel=t['source_kernel'],
+                                 package_id=t['package_id'],completion_mode=t['completion_mode'],
+                                 all_actions_terminal=all(x['terminal'] for x in cases[cid]['labels']['immediate_transitions'])))
     (out/'requests.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in jobs))
     protocol=dict(cases=len(schedule),responses=len(jobs),split='train',checkpoint_hash=args.checkpoint_hash,
         model=args.model,view_responses=dict(Counter(j['view'] for j in jobs)),P_eligibility_filter=True,request_sha256=sha((out/'requests.jsonl').read_bytes()),
@@ -79,6 +102,7 @@ def main():
             if completed%24==0:print(f'completed {completed}/{len(jobs)}',flush=True)
     with (out/'calls.jsonl').open('w') as f:
         for row in rows:f.write(json.dumps(row)+'\n')
+    (out/'detailed_summary.json').write_text(json.dumps(detailed_summary(rows),indent=2)+'\n')
     (out/'summary.json').write_text(json.dumps(summarize(rows),indent=2)+'\n')
     (out/'COMPLETE.json').write_text(json.dumps(dict(rows=len(rows),checkpoint_hash=args.checkpoint_hash))+'\n')
 
