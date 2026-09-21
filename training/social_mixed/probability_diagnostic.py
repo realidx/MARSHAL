@@ -30,7 +30,9 @@ def run(p):
         indices=torch.linspace(0,len(ordered)-1,8).long().tolist()
         rows=[dict(id=ordered[i]['task_id'],kind=ordered[i]['kind'],
                    prompt_ids=ordered[i]['prompt_ids'],response_ids=ordered[i]['response_ids'],
-                   behavior_log_probs=ordered[i]['behavior_log_probs'],source_index=i)
+                   behavior_log_probs=ordered[i]['behavior_log_probs'],
+                   advantage=ordered[i]['advantage'],loss_weight=ordered[i]['loss_weight'],
+                   source_index=i)
               for i in indices]
         if any(len(r['response_ids'])!=len(r['behavior_log_probs']) for r in rows):
             raise ValueError('Saved behavior probabilities do not match response tokens')
