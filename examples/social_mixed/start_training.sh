@@ -15,7 +15,7 @@ export PYTHONPATH="$PWD:$PWD/mcore_adapter/src:$PWD/third_party/negotiation_benc
 export SOCIAL_MODEL="${SOCIAL_MODEL:-/home/e/e1300530/models/Qwen3-4B-Instruct-2507}"
 unset VLLM_USE_V1  # vLLM 0.28 uses V1; this retired variable cannot select V0.
 export VLLM_TOOL_CALL_PARSER=hermes TOKENIZERS_PARALLELISM=false
-export VLLM_BATCH_INVARIANT=1
+export VLLM_BATCH_INVARIANT=0
 export OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1
 export SOCIAL_GPU_PROFILE="$PROFILE" SOCIAL_ARM="$ARM"
 export SOCIAL_SEED="${SOCIAL_SEED:-42}"
