@@ -1,45 +1,78 @@
 \label{sec:diagnose}
 
-We test whether a model can infer a partner's preference ($B$), act under a
-correct judgment ($P$), and compose the two.  We freeze legal three-player
-histories and intervene on the judgment and first action, which end-game reward
-alone cannot do.
+We next test whether an LLM can recover the partner state needed for a
+decision ($B$), choose an effective interaction when that state is supplied
+($P$), and compose the two. Final game reward alone cannot distinguish these
+failures: a poor action may follow either a wrong judgment or poor use of a
+correct one, while two errors may occasionally cancel.
 
-\subsection{Controlled native endgames}
+\subsection{Matched semantic interventions}
 
-We evaluate Qwen3-4B-Instruct-2507 at temperature zero on 36 positions.  Each
-preassigned stratum--split cell contains six distinct source games, with strata
-\emph{known}, \emph{unknown--irrelevant}, and \emph{unknown--relevant}.  Ego
-knows all but one partner--goal entry, whose
-possibilities are \{\textsc{Want}, \textsc{Neutral}, \textsc{Avoid}\}.  We
-retain the public history, commitments, schedule, and all legal actions.
-Information-limited reference partners compute an exact terminal best response
-to a declared continuation.  At most two ego decisions are measured, making
-counterfactual enumeration exact.
+We construct 16 held-out two-player structures, evenly divided between binary
+and linear goals. Each structure yields a matched pair. In the
+\emph{voluntary} case, the displayed partner actions are observations generated
+by the fixed reference policy; in the \emph{preset} case, the same actions are
+imposed interventions and hence provide no evidence about preference. The two
+cases end at exactly the same physical state and have the same legal actions,
+per-world payoff table, and fixed continuation policy. Changing evidential
+status therefore changes only the posterior weights used to evaluate this
+otherwise identical planning problem. Selection uses teacher quantities only.
+In every pair, the correct semantic judgment changes and the two exact
+reference-optimal action sets are disjoint, certifying that inference is
+decision-relevant rather than incidental.
 
-Selection uses game mechanics, never model answers.  In an unknown--relevant
-position, an action optimal for one supported type is strictly suboptimal for
-another, certifying $B\!\rightarrow\!P$.  The same position has two legal first
-actions whose response branches differ in expected posterior entropy,
-certifying $P\!\rightarrow\!B$.  Unknown--irrelevant positions control for
-uncertainty that does not change the optimal-action set.  These are task
-certificates, not claims about internal neural modules.
+The model-facing interface is the one used by our agent. For the single
+unknown partner--goal preference, $B$ returns (i) the complete subset of
+\textsc{Want}, \textsc{Neutral}, and \textsc{Avoid} that remains possible and
+(ii) the uniquely most supported value, or \textsc{Undetermined}. It never
+returns probabilities. We then query fresh planning contexts with either the
+model judgment $\widehat B$ or the correct semantic judgment $B^\star$. These
+controlled planning prompts retain the complete current decision state---the
+binding commitments, remaining turns, investigation quota, legal actions, and
+fixed continuation policy---but remove the behavioral chronology from which
+$B$ was inferred. Before inserting the judgment, the voluntary and preset
+planning requests are byte-identical. Thus the supplied judgment is the only
+route by which their evidential distinction reaches $P$. A third condition
+asks for a native history-to-action decision without an explicit judgment.
+Exact posteriors and per-world payoffs remain in the backend and are used only
+for scoring. In an auxiliary condition on eight voluntary
+structures, $B$ additionally receives a qualitative reference-planner
+statement---e.g., that the observed sequence is impossible, more likely, or
+less likely under each preference---but still receives no numerical belief.
+This tests whether failures arise from modeling the partner's plan or from
+subsequently integrating that behavioral evidence.
 
-For $B$, the model returns every type compatible with history; unresolved sets
-are correct.  For $P$, we supply the exact judgment and measure
-$\max_{a'}Q_i^{\star}(h,b^{\star},a')-Q_i^{\star}(h,b^{\star},a)$.  We then
-force lower- and higher-information actions, enumerate all responses, and test
-the next belief, removing the model's first choice as a confound.
+Let $F_c(a,\theta)$ be the certified payoff of legal action $a$ in case $c$
+when the unknown preference is $\theta$, under the same fixed continuation,
+and let $b_c^\star$ be the backend posterior. We score every action using
+\begin{equation}
+ V_c(a)=\sum_{\theta}b_c^\star(\theta)F_c(a,\theta),\qquad
+ \operatorname{Reg}_c(a)=\max_{a'}V_c(a')-V_c(a).
+ \label{eq:diagnose-regret}
+\end{equation}
+Thus an action prompted by an incorrect judgment is still evaluated in the
+correct world distribution. We also measure the paired judgment-repair effect
+\begin{equation}
+ \Delta_B=V_c\!\left(\widehat a(B^\star)\right)
+          -V_c\!\left(\widehat a(\widehat B)\right),
+ \label{eq:diagnose-b-repair}
+\end{equation}
+using deterministic decoding so that the two calls differ only in the supplied
+judgment. A positive value means that repairing $B$ improves this planner; it
+is not an additive estimate of a standalone ``B error.'' Invalid tool outputs
+are missing rather than replaced with a default action.
 
-\subsection{Both capabilities fail where both are required}
+\subsection{Inference failure and clean planning intervention}
 
-Table~\ref{tab:diagnose-main} pools the two preassigned splits for the 12
-unknown--relevant positions.  In all 12, partner information changes both the
-best current action and what can be learned next.
+Table~\ref{tab:diagnose-main} reports the completed inference-side results for
+Qwen3-4B-Instruct-2507. Exact $B$ requires both the complete possible set and
+the correct favored field. The controlled planning and repair entries are
+left blank pending the history-free rerun; the earlier values are not reused
+because their planning prompts retained the evidence supplied to $B$.
 
 \begin{table}[t]
-\caption{Diagnosis on 12 unknown--relevant endgames. Exactness requires the
-full supported set; regret is in terminal utility units.}
+\caption{Native-semantic diagnosis. Inference means weight the 16 structures
+equally. Dashes mark the pending history-free controlled-$P$ rerun.}
 \label{tab:diagnose-main}
 \centering
 \small
@@ -47,36 +80,51 @@ full supported set; regret is in terminal utility units.}
 \hline
 Quantity & Result \\
 \hline
-$B\!\rightarrow\!P$: type changes an optimal action & 12/12 \\
-$P\!\rightarrow\!B$: action changes evidence entropy & 12/12 \\
-Mean action loss / entropy contrast & 1.50 / 0.94 bits \\
-Root partner judgment exactly correct & 1/12 (8.3\%) \\
-Planning regret with oracle judgment & 0.56 \\
-Positive regret / exact post-evidence belief & 8/12 / 26.4\% \\
+Independent structures / matched cases & $16$ / $32$ \\
+Same state, actions, and payoff table & $16/16$ \\
+Different $B^\star$ and disjoint optimal-action sets & $16/16$ \\
+Certified decision gap, minimum / mean & $0.17$ / $0.50$ \\
+\hline
+Native semantic $B$ exact & $9.4\%$ \\
+Possible-set exact / favored exact & $43.8\%$ / $12.5\%$ \\
+Mean $P$ regret given $B^\star$ & -- \\
+Positive regret given $B^\star$ & -- \\
+Mean $\widehat B\!\rightarrow\!P$ composition regret & -- \\
+Native end-to-end regret & $1.11$ \\
+Action changed under $B$ repair & -- \\
+Mean paired judgment-repair effect $\Delta_B$ & -- \\
+Qualitative partner-plan assistance: $B$ exact gain & $0.0$ pp \\
 \hline
 \end{tabular}
 \end{table}
 
-The exact support is recovered once in 12 roots; the model averages 0.54 false
-exclusions.  Even with the oracle judgment, regret is positive in eight cases
-(mean 0.56).  After oracle-selected interactions, the next belief is exact on
-only 26.4\% of probability-weighted branches.  The model therefore both
-misreads evidence and fails to exploit a correct reading.
+The task rows first establish that inference matters: changing only evidential
+status changes the optimum, with a nontrivial minimum decision gap. Yet the
+model recovers the full semantic $B$ in only $9.4\%$ of cases. The much higher
+possible-set accuracy than favored accuracy shows that retaining candidates is
+easier than comparing their behavioral support; errors are dominated by
+unsupported additions rather than exclusions. Qualitative partner-plan
+assistance yields no exact-accuracy gain on its eight cases, so supplying the
+likelihood ordering alone does not make the model integrate that evidence
+correctly.
 
-\paragraph{Representative failure patterns.}
-Three cases make this concrete.  (i) In \texttt{native-30005-g0-d1}, a
-partner's offer is compatible with all three types, but the model treats a
-commitment used by the goal as a declaration of \textsc{Want} and collapses
-the support.  (ii) In the same state, even when given the correct support, it
-proposes a two-option offer to $P_1$ worth $0$, while an offer to $P_0$ is worth
-$1$: a planning error under an oracle judgment.  (iii) In
-\texttt{native-30040-g3-d2}, an informative interaction separates a
-\textsc{Want} branch from a \{\textsc{Neutral},\textsc{Avoid}\} branch.  The
-model correctly outputs \textsc{Want} after acceptance, yet also outputs it
-after the diagnostic rejection, reversing the evidence on that branch.
+The native history-to-action condition has mean regret $1.11$, showing that
+the integrated decision problem remains difficult, but it cannot by itself
+localize the failure to inference or planning. The history-free controlled
+$P$ calls are required for that attribution: once completed, regret under
+$B^\star$ will measure planning with the inference result fixed, while
+$\Delta_B$ will measure whether changing that result alters the same planner's
+utility. These two quantities have different meanings and will not be
+subtracted as additive error components.
 
-Known preferences do not eliminate planning error, while a wrong judgment need
-not matter when the entry is decision-irrelevant.  Our scoped conclusion is
-that both $B$ and $P$ fail in states that couple them, and either failure can
-block a higher-value interaction.  This motivates separate supervision of the
-two targets and explicit evaluation of their composition.
+\paragraph{Illustrative failure patterns.}
+One completed trace exposes a specific inference failure. In the preset case of
+\texttt{binary-12066}, the prompt says that Blair was required to add
+\textsc{Cedar} and that preset events are non-evidential. The model nevertheless
+favors \textsc{Want} for Blair's Library preference because Cedar appears in
+Library's requirements; the correct judgment is the full set with
+\textsc{Undetermined}. The explanation therefore treats a required physical
+transition as preference evidence even when the prompt explicitly identifies
+it as an intervention. We select the planning-side trace only after the clean
+$P$ rerun, so that it cannot be explained by the model rereading the original
+behavioral evidence.

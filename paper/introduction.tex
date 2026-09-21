@@ -26,17 +26,34 @@ evidence becomes available for subsequent inference. Established models of multi
 decision making identify these two computations as fundamental components of interaction, 
 motivating us to ask whether current LLM agents can reliably perform them together \citep{riemer2025tom}.
 
-We study this question in \textbf{incomplete-information, mixed-incentive coordination}. This setting is important both structurally and practically. Incomplete information makes relevant properties of other decision makers latent, creating a genuine inference problem; mixed incentives make those properties consequential for action selection, because an interaction that is beneficial under one counterpart objective may be ineffective or harmful under another. Their combination therefore preserves both sides of the interactive decision problem: the agent must infer whom it is interacting with and reason about how that inference changes the value of its own actions. These conditions arise naturally when agents act on behalf of distinct principals. Scheduling agents coordinate around privately held constraints and individual disruption costs \citep{zou2026calbench}; strategic negotiation agents pursue asymmetric private objectives while forming temporary alliances \citep{oneill2026cooperate}; and agents representing separate economic principals exhibit state-dependent strategic behavior over repeated commercial interactions \citep{li2026emergent}. We therefore use incomplete-information, mixed-incentive interaction not as an attempt to reproduce every form of MAS, but as a controlled and practically meaningful realization of the interactive-decision structure above.
+How can these capabilities be diagnosed and trained in a controlled way? 
+Games provide a natural substrate because their information structure, utilities, legal 
+actions, and strategic consequences can be specified and verified exactly. 
+Recent work has accordingly used multi-agent games and self-play to train strategic 
+or transferable reasoning in LLMs \citep{yuan2026marshal,liu2026spiral,lyu2026gift,he2026stratreasoner}. 
+However, these environments are primarily designed around game-level performance rather than 
+separate supervision of interactive-state inference and the planning that follows from it. 
+Compact self-play games make scalable training possible but often abstract away the 
+combination of latent information and heterogeneous incentives, whereas richer social games 
+can entangle deduction, communication, deception, commitment and execution within the same 
+trajectory \citep{light2023avalonbench}. To obtain precise supervision for the interaction 
+structure above, we instead extend an existing commitment-based multi-party negotiation 
+game \citep{benac2026benchmark}, which makes the environment becomes incomplete information and mixed incentives. 
+Incomplete information makes relevant properties of other agents latent and therefore creates an inference problem, 
+while mixed incentives make those inferred properties consequential for planning because the value of an interaction depends on what the other agents know, prefer, or are likely to do. 
+Their combination captures an important class of real interactions in which agents act 
+on behalf of different principals---for example, coordinating around private scheduling 
+constraints \citep{zou2026calbench}, negotiating under asymmetric private objectives \citep{oneill2026cooperate}, 
+or interacting repeatedly on behalf of distinct economic interests \citep{li2026emergent}.
 
-Having identified the capabilities of interest, the next challenge is \textbf{how to diagnose and train them}. Games are an attractive substrate because their information structure, utilities, legal actions, and outcomes can be controlled and verified. Recent work has consequently used multi-agent games and self-play to train strategic or transferable reasoning in LLMs \citep{yuan2026marshal,liu2026spiral,lyu2026gift,he2026stratreasoner}. However, these environments are generally designed to optimize and evaluate game-level behavior rather than to provide separate supervision for interactive-state inference and the planning that follows from it. Scalable self-play often relies on compact competitive or cooperative games that do not simultaneously require incomplete information and mixed incentives, while richer social games can combine deduction, communication, deception, coordination, memory, and long-horizon execution within the same trajectory \citep{light2023avalonbench}. Both are valuable training paradigms, but neither is designed around the diagnostic granularity required here: for a particular interaction, \textbf{what should the agent infer, and what should it do given that inference?}
-
-We construct a controlled game environment to make both quantities explicit. Starting from commitment-based multi-party negotiation \citep{benac2026benchmark}, we introduce private player preferences and incomplete information. Players assign different values to public goals and interact through consequential offers, responses, and binding commitments. Their actions therefore serve two roles at once: they alter future strategic opportunities and provide evidence about the latent preferences that generated them. The environment is deliberately compact. Its purpose is not to maximize surface realism, but to preserve the structural ingredients of incomplete-information, mixed-incentive interaction while remaining small enough for exact filtering over latent agent states, oracle partner policies, and counterfactual evaluation of alternative interactions. This gives us a controlled realization of the classical interactive-decision problem in which both inference and planning can be inspected directly.
-
-We first use this environment to diagnose current LLM agents. At the same decision point, we can separately test whether a model's inference is supported by the interaction history and whether its planned interaction is appropriate under that inference. This exposes errors that final game reward alone cannot distinguish and allows us to examine how inference and planning interact. We then construct \textbf{strategic game slices} around such decision points. Each slice retains the interaction history, latent state, incentive structure, and relevant continuation of the original game, but provides oracle targets for both what can be inferred and how alternative interactions should be valued. The purpose of these slices is not to claim that shortened-game training is generally superior to full-game self-play; they provide a controlled unit for supplying detailed supervision to the specific computations revealed by our diagnosis.
-
-Finally, we train LLM agents using this supervision and ask whether the resulting improvement extends beyond the states on which it was provided. We evaluate generalization to structurally unseen configurations of the training game and transfer to external multi-agent environments with different interaction mechanics. Our aim is therefore broader than producing a stronger negotiation agent: \textbf{we test whether targeted game supervision can improve interaction reasoning that remains useful when the surface game changes.}
+Using this controlled setting, we separately diagnose failures in interactive-state inference 
+and interaction planning, then construct strategic game slices that provide oracle 
+supervision for both. We train on these slices and evaluate whether the resulting 
+improvements generalize to unseen strategic configurations and transfer to external 
+multi-agent environments. 
 
 Our contributions are threefold:
+
 \begin{itemize}
     \item \textbf{A controlled diagnosis of interactive reasoning in LLM-based MAS.} Grounded in classical interactive decision making, we study interactive-state inference and interaction planning in incomplete-information, mixed-incentive coordination, and separately measure failures in the two while retaining their sequential dependence.
     \item \textbf{A compact game construction for verifiable social-reasoning supervision.} We show how private preferences, consequential commitments, and information-revealing actions can instantiate a practically relevant interactive-decision problem while providing exact latent-state targets and counterfactual action values.

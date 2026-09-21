@@ -2,12 +2,7 @@
 \label{sec:coordination-formulation}
 
 Coordination with private information is naturally an interactive partially
-observable decision problem.  For agent $i$, an I-POMDP is
-\begin{equation}
- \mathcal I_i=\langle IS_i,A,T_i,\Omega_i,O_i,R_i\rangle,
- \qquad IS_i=S\times\prod_{j\neq i}M_j,
- \label{eq:ipomdp-definition}
-\end{equation}
+observable decision problem.  For agent $i$, an I-POMDP is $\mathcal I_i=\langle IS_i,A,T_i,\Omega_i,O_i,R_i\rangle, IS_i=S\times\prod_{j\neq i}M_j$
 where $S$ is the physical state, $M_j$ models agent $j$, $A$ is the joint
 action space, and $T_i,O_i,R_i$ specify transition, observation, and
 reward~\citep{gmytrasiewicz2005ipomdp}.  Uncertainty therefore covers not only
@@ -15,17 +10,10 @@ the world but also others' information, preferences, and policies.  This view
 underlies opponent modelling and belief-space coordination
 \citep{carmel1996opponent,huang2024hop,goel2026bayesian}; the observation--belief--action
 links nevertheless remain fragile for LLM agents
-\citep{sobotka2026strategic,jha2026modeling}.
-
+\citep{sobotka2026strategic,jha2026modeling}. 
 Let $b_t^i\in\Delta(IS_i)$ be agent $i$'s belief after public history $h_t$.
 An observation updates it as $b_{t+1}^i=\tau_i(b_t^i,a_t^i,o_{t+1}^i)$, while
-an action is selected by belief-conditioned planning,
-\begin{equation}
- a_t^{i,*}\in\arg\max_{a\in A_i}
- \mathbb E\!\left[\sum_{k=t}^{T}\gamma^{k-t}R_i(x_k,a_k)
- \mid b_t^i,a_t^i=a,\pi_{-i}\right].
- \label{eq:belief-conditioned-planning}
-\end{equation}
+an action is selected by belief-conditioned planning, $a_t^{i,*}\in\arg\max_{a\in A_i}\mathbb E\!\left[\sum_{k=t}^{T}\gamma^{k-t}R_i(x_k,a_k)\mid b_t^i,a_t^i=a,\pi_{-i}\right]$
 We call these computations \emph{partner inference} ($B$), which maintains the
 part of $b_t^i$ predictive of others, and \emph{partner-conditioned planning}
 ($P$), which evaluates actions under that belief.  They form the loop
@@ -54,7 +42,6 @@ empty, irreversible commitment state $C_0$.  Each player privately observes a
 preference type $v_i\in\Theta_i\subseteq\{-1,0,+1\}^{|\mathcal G|}$, drawn
 from common prior $\mu_0$; entries mean \textsc{Avoid}, \textsc{Neutral}, or
 \textsc{Want}.  Vector $\mathbf q$ records remaining investigation budgets.
-
 For commitment state $C$, goal satisfaction and terminal utility are
 \begin{equation}
  S_g(C)=
@@ -65,8 +52,7 @@ For commitment state $C$, goal satisfaction and terminal utility are
  \qquad U_i(C;v_i)=\sum_g v_{ig}S_g(C).
  \label{eq:benac-i-utility}
 \end{equation}
-On a proposal turn, a player may pass, offer new commitments (optionally as two
-alternatives), or use
+On a proposal turn, a player may \textsc{pass}, \textsc{offer} new commitments, or use
 \textsc{Investigate}$(j,g)$ when $q_i>0$.  Acceptance irreversibly binds both
 sides' proposed additions; rejection binds none; choosing from a two-offer
 proposal binds only the selected option.  Investigation instead consumes the

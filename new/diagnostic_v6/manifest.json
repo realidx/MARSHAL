@@ -1,0 +1,52 @@
+{
+  "version": "bp-structure-diagnostic-v6-clean-planning-state",
+  "source_suite": "bp-structure-diagnostic-v5-native-semantic",
+  "split": "frozen_structure_test",
+  "structures": 16,
+  "matched_cases": 32,
+  "default_repeats": 3,
+  "max_model_calls_per_model": 408,
+  "conditions": [
+    "B",
+    "B_with_qualitative_partner_plan",
+    "model_B_model_P",
+    "correct_B_model_P",
+    "end_to_end_P"
+  ],
+  "controlled_P_contract": {
+    "included": [
+      "game rules",
+      "goal requirements",
+      "known preferences",
+      "current commitments",
+      "remaining turns",
+      "investigation quota",
+      "legal actions",
+      "fixed partner policy",
+      "supplied semantic judgment"
+    ],
+    "excluded": [
+      "behavioral chronology",
+      "voluntary/preset provenance",
+      "case metadata",
+      "numeric posterior",
+      "per-world payoff"
+    ],
+    "pair_invariant": "Before judgment insertion, voluntary and preset controlled-P requests are byte-identical within each structure."
+  },
+  "model_facing_belief_contract": [
+    "possible_preferences",
+    "favored"
+  ],
+  "scoring": "Exact teacher posterior and per-world payoffs are backend-only. End-to-end P retains the original history; controlled P does not.",
+  "files": {
+    "cases.json": "8f232e4174b8b50515e370543718e0bc87f8f945e05d7d41f41e49b8d9051cbc",
+    "certificates.json": "0c8de38530be1021b2a0be56d80411f794de7c253ab1e07ab88b3e4093505cbb",
+    "selection.json": "0d536fa7e7916c4eba68aa85543e307705a7cc962ded635bbfa6bf286778e3ee"
+  },
+  "dependencies": {
+    "new/diagnostic_v6/build.py": "5e4fc0bfd201d1198dd5c525d70d6f0aa70346bbc9b0e2ab20c3e2c2e38191bd",
+    "new/diagnostic_v5/manifest.json": "04c9c120ce18534fade06857fab15c0b146274e33006d67329d985963ad83caf",
+    "new/diagnostic_v5/cases.json": "82bc84c15ce1d74944f1ba2456f5b17936d631affab963767a4ab6940ad7dab0"
+  }
+}
