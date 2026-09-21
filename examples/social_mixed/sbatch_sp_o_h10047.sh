@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Two independent TP=2 reasoning arms in one four-slice H100-47 allocation.
 #SBATCH --job-name=social-sp-o-gate
-#SBATCH --partition=gpu
+#SBATCH --partition=gpu-long
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:h100-47:4
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=96
 #SBATCH --mem=0
-#SBATCH --time=03:00:00
+#SBATCH --time=10:00:00
 #SBATCH --signal=B:USR1@900
 #SBATCH --output=slurm-%x-%j.out
 
@@ -72,10 +72,10 @@ sp_devices="${parent0_uuids[1]},${parent1_uuids[1]}"
 } > "$topology_log"
 
 launch_arm() {
-  local arm="$1" devices="$2" port="$3"
+  local arm="$1" devices="$2"
   local ray_root="/tmp/social-${SLURM_JOB_ID}-${arm}"
   mkdir -p "$ray_root"
-  setsid env -u SOCIAL_RESUME \
+  setsid env -u SOCIAL_RESUME -u MASTER_PORT \
     SOCIAL_ARM="$arm" \
     SOCIAL_RECIPE=reasoning \
     SOCIAL_GPU_PROFILE=h100-47 \
@@ -86,24 +86,42 @@ launch_arm() {
     SOCIAL_RAY_ROOT="$ray_root" \
     CUDA_VISIBLE_DEVICES="$devices" \
     ROLL_ASSIGNED_CUDA_DEVICES="$devices" \
-    MASTER_PORT="$port" \
     SLURM_CPUS_PER_TASK=48 \
     bash examples/social_mixed/sbatch_train.sh &
   LAUNCHED_PID=$!
 }
 
-launch_arm outcome "$o_devices" 29541
+launch_arm outcome "$o_devices"
 o_pid=$LAUNCHED_PID
-launch_arm selfplay "$sp_devices" 29542
-sp_pid=$LAUNCHED_PID
+sp_pid=""
 
 forward_signal() {
   local pgid
   for pgid in "$o_pid" "$sp_pid"; do
-    kill -USR1 -- "-$pgid" 2>/dev/null || true
+    if [[ -n "$pgid" ]]; then kill -USR1 -- "-$pgid" 2>/dev/null || true; fi
   done
 }
 trap forward_signal USR1 TERM
+
+# Both jobs previously hung while creating NCCL model-update groups together.
+# Complete O's initial sync before starting SP; training then runs concurrently.
+o_phases="runs/social_mixed/outcome-seed42-${SLURM_JOB_ID}/phases.jsonl"
+startup_deadline=$((SECONDS + 900))
+while ! grep -q '"phase": "initial_weight_sync", "event": "end"' "$o_phases" 2>/dev/null; do
+  if ! kill -0 "$o_pid" 2>/dev/null; then
+    echo 'O exited before initial weight sync; refusing to launch SP' >&2
+    wait "$o_pid" || true
+    exit 45
+  fi
+  if (( SECONDS >= startup_deadline )); then
+    echo 'O startup exceeded 15 minutes at collective/initial sync' >&2
+    forward_signal
+    exit 46
+  fi
+  sleep 5
+done
+launch_arm selfplay "$sp_devices"
+sp_pid=$LAUNCHED_PID
 
 wait_for_child() {
   local pid="$1" result_name="$2" status
