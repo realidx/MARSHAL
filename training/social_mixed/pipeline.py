@@ -232,15 +232,18 @@ class SocialPipeline(BasePipeline):
                     previous=self.state.kv.get('best_validation')
                     if previous is None or score>previous['score']:
                         checkpoint=self.root/'checkpoints'/f'checkpoint-{step}'
+                        retained=self.options['keep_checkpoints']>1
                         best=dict(score=score,step=step,completed_updates=step+1,
-                                  selection_version=SELECTION_VERSION,checkpoint=str(checkpoint.resolve()))
+                                  selection_version=SELECTION_VERSION,checkpoint=str(checkpoint.resolve()),
+                                  checkpoint_retained=retained)
                         self.state.kv['best_validation']=best
-                        self.save(step,force=True)
-                        if not (checkpoint/'COMPLETE.json').is_file():
-                            raise RuntimeError('Best checkpoint did not complete')
-                        (self.root/'BEST_CHECKPOINT').write_text(str(checkpoint.resolve())+'\n')
                         (self.root/'BEST_VALIDATION.json').write_text(json.dumps(best,indent=2)+'\n')
-                        prune(self.root,1)
+                        if retained:
+                            self.save(step,force=True)
+                            if not (checkpoint/'COMPLETE.json').is_file():
+                                raise RuntimeError('Best checkpoint did not complete')
+                            (self.root/'BEST_CHECKPOINT').write_text(str(checkpoint.resolve())+'\n')
+                            prune(self.root,1)
                     if self.options.get('recipe')=='reasoning':
                         self.save(step,force=True)
             except Exception as exc:
@@ -281,7 +284,8 @@ class SocialPipeline(BasePipeline):
             self.validate(-1,consumed)
         elif self.state.kv.get('best_validation'):
             best=self.state.kv['best_validation']
-            (self.root/'BEST_CHECKPOINT').write_text(best['checkpoint']+'\n')
+            if best.get('checkpoint_retained',True):
+                (self.root/'BEST_CHECKPOINT').write_text(best['checkpoint']+'\n')
             (self.root/'BEST_VALIDATION.json').write_text(json.dumps(best,indent=2)+'\n')
         for step in range(self.state.step+1,cfg.max_steps):
             if consumed>=self.options['total_tokens'] or self.stop_requested:break

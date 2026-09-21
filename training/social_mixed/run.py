@@ -156,7 +156,6 @@ def main():
                for split in ('train', 'validation') for t in data['bp_'+split]):
             raise ValueError('B/P data is not approved under the active label contract. '
                              'Complete response_only_v1 migration and curriculum review before training.')
-    args.keep_checkpoints = 2  # Best and latest; same checkpoint may fill both.
     options=vars(args).copy()
     from training.social_mixed.stabilization import VERSION as recipe_version
     if args.recipe=='reasoning':
@@ -174,8 +173,7 @@ def main():
     if args.total_tokens<1 or args.tokens_per_update<1:raise ValueError('Token budgets must be positive')
     if args.pause_after_updates is not None and args.pause_after_updates<1:
         raise ValueError('pause-after-updates must be positive')
-    if args.keep_checkpoints < (1 if args.arm=='bp' else 2):
-        raise ValueError('B/P-only requires one recovery point; other arms require at least two')
+    if args.keep_checkpoints<1:raise ValueError('Keep at least one complete recovery point')
     root=Path(os.environ['ROLL_OUTPUT_DIR']).resolve()
     root.mkdir(parents=True,exist_ok=True)
     if (root/'experiment.json').exists():raise FileExistsError('Use a fresh output directory, including on resume')
