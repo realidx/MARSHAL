@@ -17,9 +17,11 @@ cases end at exactly the same physical state and have the same legal actions,
 per-world payoff table, and fixed continuation policy. Changing evidential
 status therefore changes only the posterior weights used to evaluate this
 otherwise identical planning problem. Selection uses teacher quantities only.
-In every pair, the correct semantic judgment changes and the two exact
-reference-optimal action sets are disjoint, certifying that inference is
-decision-relevant rather than incidental.
+In every pair, the correct semantic judgment changes. We retain a structure
+only if, on each side, every posterior compatible with that semantic judgment
+has the same exact optimal-action set, and the two invariant sets are
+disjoint. Thus the deployed judgment is sufficient for the decision while the
+inference difference remains decision-relevant.
 
 The model-facing interface is the one used by our agent. For the single
 unknown partner--goal preference, $B$ returns (i) the complete subset of
@@ -35,7 +37,13 @@ planning requests are byte-identical. Thus the supplied judgment is the only
 route by which their evidential distinction reaches $P$. A third condition
 asks for a native history-to-action decision without an explicit judgment.
 Exact posteriors and per-world payoffs remain in the backend and are used only
-for scoring. In an auxiliary condition on eight voluntary
+for scoring. Importantly, $B^\star$ denotes the correct deployed semantic
+summary, not the full posterior. We certify its decision sufficiency by
+decomposing the compatible posterior region into convex polytopes and exactly
+enumerating their rational vertices. Since action values are affine in the
+posterior, an identical optimal-action set at every vertex proves invariance
+throughout the region. We conservatively include the closure of strict support
+and favored-margin constraints. In an auxiliary condition on eight voluntary
 structures, $B$ additionally receives a qualitative reference-planner
 statement---e.g., that the observed sequence is impossible, more likely, or
 less likely under each preference---but still receives no numerical belief.
@@ -64,15 +72,14 @@ are missing rather than replaced with a default action.
 
 \subsection{Inference failure and clean planning intervention}
 
-Table~\ref{tab:diagnose-main} reports the completed inference-side results for
-Qwen3-4B-Instruct-2507. Exact $B$ requires both the complete possible set and
-the correct favored field. The controlled planning and repair entries are
-left blank pending the history-free rerun; the earlier values are not reused
-because their planning prompts retained the evidence supplied to $B$.
+Table~\ref{tab:diagnose-main} records the completed structural checks. Model
+results are left blank pending the run on the newly certified suite; values
+from the previous case inventory are not reused. Exact $B$ will require both
+the complete possible set and the correct favored field.
 
 \begin{table}[t]
-\caption{Native-semantic diagnosis. Inference means weight the 16 structures
-equally. Dashes mark the pending history-free controlled-$P$ rerun.}
+\caption{Native-semantic diagnosis. Dashes mark the pending run on the
+decision-sufficient suite; inference will weight the 16 structures equally.}
 \label{tab:diagnose-main}
 \centering
 \small
@@ -83,48 +90,38 @@ Quantity & Result \\
 Independent structures / matched cases & $16$ / $32$ \\
 Same state, actions, and payoff table & $16/16$ \\
 Different $B^\star$ and disjoint optimal-action sets & $16/16$ \\
-Certified decision gap, minimum / mean & $0.17$ / $0.50$ \\
+Decision-sufficient semantic cases & $32/32$ \\
+Exact-posterior decision gap, minimum / mean & $0.33$ / $0.67$ \\
 \hline
-Native semantic $B$ exact & $9.4\%$ \\
-Possible-set exact / favored exact & $43.8\%$ / $12.5\%$ \\
-Mean $P$ regret given $B^\star$ & -- \\
-Positive regret given $B^\star$ & -- \\
+Native semantic $B$ exact (both summary fields) & -- \\
+Possible-set exact / favored exact & -- \\
+Mean $P$ regret given correct semantic summary & -- \\
+Positive regret given correct semantic summary & -- \\
 Mean $\widehat B\!\rightarrow\!P$ composition regret & -- \\
-Native end-to-end regret & $1.11$ \\
+Native end-to-end regret & -- \\
 Action changed under $B$ repair & -- \\
 Mean paired judgment-repair effect $\Delta_B$ & -- \\
-Qualitative partner-plan assistance: $B$ exact gain & $0.0$ pp \\
+Qualitative partner-plan assistance: $B$ exact gain & -- \\
 \hline
 \end{tabular}
 \end{table}
 
-The task rows first establish that inference matters: changing only evidential
-status changes the optimum, with a nontrivial minimum decision gap. Yet the
-model recovers the full semantic $B$ in only $9.4\%$ of cases. The much higher
-possible-set accuracy than favored accuracy shows that retaining candidates is
-easier than comparing their behavioral support; errors are dominated by
-unsupported additions rather than exclusions. Qualitative partner-plan
-assistance yields no exact-accuracy gain on its eight cases, so supplying the
-likelihood ordering alone does not make the model integrate that evidence
-correctly.
-
-The native history-to-action condition has mean regret $1.11$, showing that
-the integrated decision problem remains difficult, but it cannot by itself
-localize the failure to inference or planning. The history-free controlled
-$P$ calls are required for that attribution: once completed, regret under
-$B^\star$ will measure planning with the inference result fixed, while
-$\Delta_B$ will measure whether changing that result alters the same planner's
-utility. These two quantities have different meanings and will not be
-subtracted as additive error components.
+The structural rows establish that inference matters: changing only
+evidential status changes the invariant optimum, with a nontrivial minimum
+gap. They also close the interface ambiguity present in the previous suite.
+Although the native summary omits probability magnitudes, those magnitudes
+cannot change which actions are optimal in any retained case. Consequently,
+regret under $B^\star$ measures planning after a sufficient deployed belief
+interface is fixed, while $\Delta_B$ measures whether repairing that interface
+changes the same planner's utility. The native history-to-action condition
+still measures composition and cannot alone localize a failure. We will report
+condition-specific means with their valid counts and use only doubly valid
+paired records for repair identities.
 
 \paragraph{Illustrative failure patterns.}
-One completed trace exposes a specific inference failure. In the preset case of
-\texttt{binary-12066}, the prompt says that Blair was required to add
-\textsc{Cedar} and that preset events are non-evidential. The model nevertheless
-favors \textsc{Want} for Blair's Library preference because Cedar appears in
-Library's requirements; the correct judgment is the full set with
-\textsc{Undetermined}. The explanation therefore treats a required physical
-transition as preference evidence even when the prompt explicitly identifies
-it as an intervention. We select the planning-side trace only after the clean
-$P$ rerun, so that it cannot be explained by the model rereading the original
-behavioral evidence.
+After the certified run, we will select one inference trace and one clean
+planning trace from the frozen cases. The former must expose a concrete misuse
+of voluntary versus imposed evidence; the latter must choose outside the
+certified invariant optimal set despite receiving $B^\star$. This keeps the
+examples illustrative without using them as substitutes for aggregate
+evidence.

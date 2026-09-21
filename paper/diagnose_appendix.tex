@@ -9,10 +9,10 @@ sets, per-world payoff tables, and fixed continuation policies. They differ
 only in whether the displayed prefix was chosen by the reference partner or
 externally imposed. Model outputs were not used for selection. CPU
 certificates verify that the two cases have different correct semantic
-judgments and disjoint exact reference-optimal action sets. The gap between
-the best and best non-optimal action ranges from 0.17 to 1.00 terminal-utility
-units (mean 0.50), ruling out nominal differences caused only by numerical
-ties.
+judgments and disjoint invariant optimal-action sets. The exact-posterior gap
+between the best and best non-optimal action ranges from 0.33 to 1.00
+terminal-utility units (mean 0.67), ruling out nominal differences caused only
+by numerical ties.
 
 The queried uncertainty is one partner--goal preference in
 $\{\textsc{Want},\textsc{Neutral},\textsc{Avoid}\}$. The deployed $B$
@@ -25,6 +25,16 @@ Condition names, case identifiers, correctness claims, posterior
 probabilities, and payoff values are absent from model prompts. Exact
 posteriors remain in the scorer and are used with the common per-world payoff
 table to compute Eq.~\ref{eq:diagnose-regret}.
+
+The correct semantic judgment is not a complete posterior, so selection
+explicitly certifies that the omitted magnitudes are decision-irrelevant. For
+each case, we express its support and favored-margin semantics as a finite
+union of rational convex polytopes and enumerate every vertex exactly. We also
+include zero-mass and threshold boundaries, obtaining a conservative superset
+of the strict semantic region. All vertices must induce the same exact
+optimal-action set. Since expected action value is affine in the posterior,
+this proves invariance over every compatible posterior; all 32 retained cases
+pass. The invariant voluntary and preset sets must additionally be disjoint.
 
 \paragraph{Calls and interventions.}
 For each case we obtain: (i) a native semantic $B$ judgment; (ii) a fresh $P$
@@ -49,6 +59,11 @@ different continuation separately in each hidden world. The paired quantity
 $\Delta_B$ is therefore the effect of changing the semantic input to the same
 model planner. It can have either sign and is not combined with planning
 regret as an additive error decomposition.
+Condition-specific regret means may have different valid subsets. We therefore
+also aggregate both regrets and $\Delta_B$ on the identical doubly valid
+case/replica pairs and identical structure weights, where the implementation
+checks $\Delta_B=\operatorname{Reg}(\widehat B)-
+\operatorname{Reg}(B^\star)$ row by row and after aggregation.
 
 \paragraph{Execution and determinism.}
 We evaluate Qwen3-4B-Instruct-2507 through vLLM and the Hermes tool-call
@@ -63,12 +78,10 @@ coverage counts will be inserted after completion.
 
 \paragraph{Aggregation.}
 We first average valid replicas within each case and the two matched cases
-within each structure, then weight the 16 structures equally. Completed $B$
-results correspond to 3/32 exact judgments, 14/32 exact possible sets, and
-4/32 correct favored fields; qualitative partner-plan assistance converts
-none of its eight cases into an exact semantic judgment. Controlled-$P$
-coverage and paired repair counts will be filled from the history-free run,
-without treating the three deterministic replicas as additional evidence.
+within each structure, then weight the 16 structures equally. All
+model-dependent counts will be filled from the new certified run, without
+carrying over values from the previous case inventory or treating the three
+deterministic replicas as additional evidence.
 
 The frozen v6 suite stores the model-facing cases, teacher-only certificates,
 selection record, and both clean controlled-$P$ and native end-to-end

@@ -24,6 +24,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 from new.diagnostic_v5 import experiment as v5
+from new.diagnostic_v6.semantic_sufficiency import certify
 
 
 def sha(path):
@@ -132,6 +133,14 @@ def audit_cases(cases):
                          'displayed history')
     for case in cases:
         grouped[case['structure_id']].append(case)
+        saved_certificate = case.get('semantic_decision_certificate')
+        if not saved_certificate or not saved_certificate.get('decision_sufficient'):
+            raise AssertionError('Uncertified semantic planning case')
+        reproduced = certify(case['gold_judgment'],
+                             case['task']['teacher']['per_world_payoffs'])
+        if any(reproduced.get(key) != value
+               for key, value in saved_certificate.items()):
+            raise AssertionError('Semantic decision certificate changed')
         base = case['requests']['P_clean']
         base_text = json.dumps(base).lower()
         if any(token in base_text for token in forbidden_history):
@@ -176,6 +185,10 @@ def audit_cases(cases):
         if not set(v5.reference(first)['action_indices']).isdisjoint(
                 v5.reference(second)['action_indices']):
             raise AssertionError('Reference-optimal actions overlap')
+        semantic_sets = [set(case['semantic_decision_certificate'][
+            'invariant_optimal_action_indices']) for case in pair]
+        if semantic_sets[0] & semantic_sets[1]:
+            raise AssertionError('Invariant semantic-optimal actions overlap')
         if first['requests']['P_clean']['tools'] != second['requests']['P_clean']['tools']:
             raise AssertionError('Controlled-P tools differ')
     return dict(
@@ -183,6 +196,9 @@ def audit_cases(cases):
         no_numeric_belief_in_model_requests=True,
         same_state_actions_payoffs=True, semantic_labels_differ=True,
         exact_reference_actions_disjoint=True,
+        all_semantic_regions_decision_sufficient=True,
+        semantic_certificate_method='exact-rational-polytope-vertices-v1',
+        invariant_semantic_optimal_actions_disjoint=True,
         controlled_P_history_free=True,
         controlled_P_pair_base_byte_identical=True,
         end_to_end_history_retained=all(
@@ -192,11 +208,59 @@ def audit_cases(cases):
 
 def summarize(rows, cases, repeats):
     result = v5.summarize(rows, cases, repeats)
+    paired = [row for row in rows
+              if row['model_B_model_P'].get('regret') is not None
+              and row['correct_B_model_P'].get('regret') is not None
+              and row.get('B_repair_gain') is not None]
+    residuals = [
+        row['B_repair_gain'] - (
+            row['model_B_model_P']['regret'] -
+            row['correct_B_model_P']['regret'])
+        for row in paired]
+    grouped = defaultdict(list)
+    for row in paired:
+        grouped[row['structure_id']].append(row)
+
+    def paired_macro(getter):
+        values = [sum(getter(row) for row in selected) / len(selected)
+                  for selected in grouped.values()]
+        return None if not values else sum(values) / len(values)
+
+    paired_model = paired_macro(
+        lambda row: row['model_B_model_P']['regret'])
+    paired_correct = paired_macro(
+        lambda row: row['correct_B_model_P']['regret'])
+    paired_repair = paired_macro(lambda row: row['B_repair_gain'])
+    result['paired_scoring_identity'] = {
+        'rows': len(paired), 'structures': len(grouped),
+        'scoring_belief': 'teacher_posterior',
+        'reference_value': 'same per-case exact teacher optimum',
+        'normalization': 'raw terminal own utility; no normalization',
+        'model_B_regret': paired_model,
+        'correct_semantic_B_regret': paired_correct,
+        'regret_difference': (None if paired_model is None else
+                              paired_model-paired_correct),
+        'repair_gain': paired_repair,
+        'aggregate_identity_residual': (
+            None if paired_repair is None else
+            paired_repair-(paired_model-paired_correct)),
+        'row_identity_failures': sum(abs(value) > 1e-9
+                                     for value in residuals),
+        'max_abs_row_identity_residual':
+            max((abs(value) for value in residuals), default=None),
+        'note': (
+            'These three means use the identical paired rows and structure '
+            'weights. Condition-specific means in structure_level may use '
+            'different valid subsets and must not be subtracted.')}
     result['interpretation'] = (
-        'B is scored on the native semantic contract. Controlled P receives no '
-        'behavioral chronology, so B_repair_gain is a paired intervention on the '
-        'only preference judgment available to the same model planner. End-to-end '
-        'P separately retains the native history.')
+        'B is scored on the native semantic contract. Correct B means the '
+        'correct possible_preferences/favored summary, not a complete posterior. '
+        'Every retained semantic summary is certified to induce one invariant '
+        'exact optimal-action set over all compatible posteriors. Controlled P '
+        'receives no behavioral chronology, so correct-B regret isolates action '
+        'selection given a sufficient deployed B interface, while B_repair_gain '
+        'is a paired intervention on that interface. End-to-end P separately '
+        'retains the native history.')
     return result
 
 
@@ -213,6 +277,7 @@ def main():
     parser.add_argument('--concurrency-per-endpoint', type=int, default=16)
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--timeout', type=float, default=180.)
+    parser.add_argument('--checkpoint-hash')
     args = parser.parse_args()
     if (args.repeats < 1 or args.max_tokens < 1 or args.temperature < 0 or
             not 0 < args.top_p <= 1 or args.concurrency_per_endpoint < 1):
@@ -227,6 +292,7 @@ def main():
         retry=0, timeout=args.timeout,
         concurrency_per_endpoint=args.concurrency_per_endpoint,
         independent_contexts=True, controlled_P_history_free=True,
+        checkpoint_hash=args.checkpoint_hash,
         manifest_sha256=sha(HERE / 'manifest.json'),
         runtime_sha256=sha(Path(__file__)), audit=audit)
     (args.output / 'protocol.json').write_text(json.dumps(config, indent=2) + '\n')

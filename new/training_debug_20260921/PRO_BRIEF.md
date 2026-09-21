@@ -50,6 +50,32 @@ P分布均为P1=88、P2=90、P3=24、P4=98。原B分布B1=113、B2=52、B3=129�
 观察支持“该批测试上显式B与行动表现没有同步改善”。但不能证明v6数据是原因：数据、采样、更新数、token剂量、loss和运行代码可能同时变化。也不能从5/24到6/24或单次行为翻转确定能力变化的机制。
 旧12题CalBench、当前24局stream必须分开，不能拼成同一学习曲线。内部current-team SP utility与固定伙伴单体收益也不是同一指标。
 
+### 2.1 diagnostic regret／repair 的即时一致性核查
+
+若 `model-B P regret` 与 `correct-B P regret` 使用相同正确posterior、相同参考值、相同有效记录和相同权重，则逐记录以及同权聚合都必须满足：
+
+`B_repair_gain = model-B P regret - correct-B P regret`。
+
+Sol摘要中的三组数不满足该恒等式，且无法由三位小数舍入解释：旧BP99的regret差为-.053而repair报-.075；新BP99为+.097而repair报+.041；新BP139为-.006而repair报-.037。**当前不能将其写成实现bug**，因为本包仍不包含这三个checkpoint的diagnostic原始`results.json`、`summary.json`与`protocol.json`，无法区分条件特定失效、不同macro权重、不同评分belief或摘要串运行。
+
+已对本地可用的最终q0-v5运行 `runs/diagnostic/q0-v5-t0-no-cache-serial-868698/structure_v5` 做同样核查：
+
+- 96行中93行双条件有效；逐行恒等式失败0，最大绝对残差 `2.22e-16`；
+- structure-macro：model-B regret 1.215625，correct-B regret 1.2572917，差为-.0416667，与repair -.0416667一致；
+- 三项在配对记录上的权重完全相同。
+
+这说明当前本地评分定义在共同样本上满足代数恒等式，但不能替代三个训练checkpoint的原始记录。v5聚合器会对每个指标分别丢弃无效行再做structure macro；若两个P条件的有效集合不同，两个headline regret均值就不能直接相减，repair必须在共同有效配对上单独报告。复算脚本为 `audit_diagnostic_consistency.py`，逐记录表为 `diagnostic_record_audit.csv`，报告为 `diagnostic_consistency_audit.json`。
+
+本地较早的三个v5运行直接复现了这种“逐行恒等式成立、headline均值不成立”的情形：逐行失败均为0，但独立structure-macro的恒等式残差分别为-.0112、+.0234和+.0314；原因正是两个条件及repair的有效行／权重不同。这使“条件特定缺失或macro权重”成为远端三组差异的具体高优先级解释，但在拿到其原始记录前仍不能断言就是该原因。
+
+同一离线审计还检查了“正确semantic B”是否足以唯一确定行动排序。对每个case，在符合其`possible_preferences/favored`及0.1 favored margin的0.01概率网格上搜索：32个case中17个允许多个行动价值排序，14个允许不同最优动作集合（13个preset、1个voluntary）。这是构造性反例：至少这些case中，正确semantic摘要并非决策充分的完整belief。故：
+
+- `correct-B`只能称“correct semantic summary”，不能称完整修复B或oracle posterior；
+- 其regret混合了planner行为与semantic接口丢失的概率信息，不能单独解释成纯P缺陷；
+- `B exact`只检查possible set与favored两个字段。若所有B输出有效且replica确定，摘要中的.063与.156分别很可能对应2/32与5/32，但其确切分母仍须由原始记录确认；它们不是posterior accuracy。
+
+上述结论适用于旧v5 case inventory。论文版v6现已替换结构，而不是复用这14个歧义case：对native semantic judgment的完整连续posterior区域做有理数凸多面体顶点枚举，并保守纳入零质量与0.1阈值边界；仅保留所有顶点具有相同精确最优动作集合的case。冻结集仍为16个matched structures（8 binary、8 linear，32 cases），32/32均通过，且每对voluntary/preset的不变最优集合不相交。新v6尚无模型结果，旧v5的B/P数值和failure trace不得迁移。因此新v6的`correct-B P regret`可解释为**给定决策充分的原生semantic接口后的规划regret**，但仍不是posterior预测准确率。
+
 ## 3. 实际训练实现与参数（证据包核查后更新）
 
 ### 3.1 运行链与可恢复范围
@@ -146,7 +172,7 @@ CalBench的冻结推理设置也不是训练设置，不能把其temperature=0�
 1. **运行身份和优化链路**：确认新旧run的模型起点、resume方式、代码、数据哈希、reference、loss归一化、LR与KL实际生效。先排工程错误，再谈训练方法。
 2. **在原P题完全保留的条件下，什么发生了变化？** 对齐累计token和更新数，比较逐task/kernel/stage曝光、全对/全错/有效组、合法语义有效组、task/protocol/KL权重。是否补采样选择偏向易产生奖励差异的题，而降低其他能力覆盖？
 3. **B bridge是否迁移到raw B？** 将三种stage分开；检查raw B原题与未见题，而非只看混合B分数。检验B改进与P变化是否时间相关，但不能用相关性证明梯度干扰。
-4. **规划下降还是评测接口/失效分母变化？** diagnostic_v5的correct-B只给possible/favored，不是完整joint posterior；history仍可见。该条件不是纯规划隔离，也不是完整oracle belief。检查所有条件合法率、截断、缺失及有效样本数量，regret不能只报幸存样本均值。负repair gain本身不证明belief无用或内部B→P链断裂。
+4. **规划下降还是评测接口/失效分母变化？** 旧diagnostic_v5既保留history，又有14/32个semantic摘要决策不充分，不能作最终规划隔离。新v6已同时移除两项混淆并冻结32/32决策充分case；须在新inventory上重跑，不能搬用旧数值。仍需检查所有条件合法率、截断、缺失及有效样本数量；headline regret若使用不同有效集合不得相减。负repair gain本身不证明belief无用或内部B→P链断裂。
 5. **训练后期是否发生可复现的退化？** 固定case、seed、prompt、checkpoint来源后比逐题变化。不能将小validation的波动直接确诊为灾难性遗忘，更不能据此直接认定KL太弱或LR是原因。
 6. SP暂列次优先：终局reward广播是合法的Monte Carlo策略梯度做法，信用分配粗可能增加方差，但不是算法错误的充分证据。仅终局reward且gamma=1时，turn-level return仍相同；要解释不同信用必须说明中间reward或baseline。按动作统计advantage mass也受动作频率/长度/权重影响，不能单凭正PASS mass认定PASS被错误奖励。
 
@@ -164,4 +190,5 @@ CalBench的冻结推理设置也不是训练设置，不能把其temperature=0�
 - 不能认定新P题更差：本地原P题没有改变。
 - 不能仅凭config声明constant LR、KL太弱、没有任何回访或SP信用算法错误。
 - 不能把某个checkpoint的测试优势当成已证明的训练配方优势，也不据CalBench继续选择正式主模型。
+- 不能概括为“后期所有能力都在退化”：新BP99→BP139时diagnostic若干regret上升且B exact不变，但CalBench headline .479→.518、协调成功5/24→6/24，方向并不一致。当前最多写“部分诊断出现退化信号”。
 - 本轮先核查事实，不立即追加reward、改温度、扩大validation或加入新保持约束。

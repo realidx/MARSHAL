@@ -1,24 +1,51 @@
 {
-  "version": "bp-structure-diagnostic-v6-clean-planning-state",
+  "version": "bp-structure-diagnostic-v6-semantic-sufficient",
   "selected_structures": 16,
   "modes": {
-    "binary": 16,
-    "linear": 16
+    "binary": 8,
+    "linear": 8
   },
-  "source": "Fifteen v4 geometries plus one teacher-only replacement search.",
-  "replaced_structure": "linear-12647",
-  "replacement_structure": "linear-13001",
-  "rule": "Require different native semantic B labels across each matched voluntary/preset pair; no learner output enters selection.",
-  "planning_assisted_B_structures": [
-    "binary-12088",
-    "binary-12504",
-    "binary-12506",
-    "binary-12540",
-    "linear-12031",
-    "linear-12073",
-    "linear-12545",
-    "linear-12991"
+  "selected": {
+    "binary": [
+      20358,
+      20796,
+      20838,
+      20908,
+      20966,
+      21030,
+      21350,
+      21598
+    ],
+    "linear": [
+      12073,
+      12231,
+      12921,
+      13027,
+      20241,
+      20469,
+      23037,
+      26565
+    ]
+  },
+  "protected_sources": [
+    "examples/social_mixed/data_reasoning_v6/bp_train.jsonl",
+    "examples/social_mixed/data_reasoning_v6/bp_validation.jsonl",
+    "examples/social_mixed/data_reasoning_v6/bp_test.jsonl",
+    "examples/social_mixed/data_reasoning_v6/selfplay_train.jsonl",
+    "examples/social_mixed/data_reasoning_v6/selfplay_validation.jsonl",
+    "examples/final_evaluation/benac_a_v1/resets.jsonl",
+    "new/diagnostic_v3/cases.json"
   ],
+  "rule": "Teacher-only deterministic selection. Retain a matched structure only when exact rational polytope certificates prove that every posterior compatible with each native semantic judgment has the same exact optimal-action set, and the two invariant sets are disjoint. No learner output enters selection.",
   "planning_intervention": "Controlled P receives current physical state and a supplied semantic judgment, but no behavioral chronology or provenance metadata.",
-  "source_suite": "bp-structure-diagnostic-v5-native-semantic"
+  "planning_assisted_B_structures": [
+    "binary-20796",
+    "binary-20908",
+    "binary-20966",
+    "binary-21030",
+    "linear-12231",
+    "linear-12921",
+    "linear-20241",
+    "linear-26565"
+  ]
 }

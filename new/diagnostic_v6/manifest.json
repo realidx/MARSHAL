@@ -1,6 +1,5 @@
 {
-  "version": "bp-structure-diagnostic-v6-clean-planning-state",
-  "source_suite": "bp-structure-diagnostic-v5-native-semantic",
+  "version": "bp-structure-diagnostic-v6-semantic-sufficient",
   "split": "frozen_structure_test",
   "structures": 16,
   "matched_cases": 32,
@@ -38,15 +37,26 @@
     "possible_preferences",
     "favored"
   ],
+  "belief_scope": "Correct semantic B is the deployed summary, not a numeric posterior. Every retained case is certified decision-sufficient: its complete compatible posterior region has one invariant exact optimal-action set.",
+  "semantic_sufficiency": {
+    "method": "exact-rational-polytope-vertices-v1",
+    "certified_cases": 32,
+    "certified_matched_structures": 16,
+    "matched_invariant_optimal_sets_disjoint": 16,
+    "boundary_policy": "Certify the closed semantic region, a conservative superset of posteriors serialized by the strict support/favored rules."
+  },
   "scoring": "Exact teacher posterior and per-world payoffs are backend-only. End-to-end P retains the original history; controlled P does not.",
   "files": {
-    "cases.json": "8f232e4174b8b50515e370543718e0bc87f8f945e05d7d41f41e49b8d9051cbc",
-    "certificates.json": "0c8de38530be1021b2a0be56d80411f794de7c253ab1e07ab88b3e4093505cbb",
-    "selection.json": "0d536fa7e7916c4eba68aa85543e307705a7cc962ded635bbfa6bf286778e3ee"
+    "cases.json": "d8c00465bf70c5e12a5de3abaa6edca333523866e52853fa88a322d04794b2fd",
+    "certificates.json": "8595267414d603ef1eb42ac300aefea40b3bbf62a45035208a0ebc03d6519179",
+    "selection.json": "e5ff98292a38eb91a56c27d99cfa8e70cb75111beefd31c59bb8e1393596b364"
   },
   "dependencies": {
-    "new/diagnostic_v6/build.py": "5e4fc0bfd201d1198dd5c525d70d6f0aa70346bbc9b0e2ab20c3e2c2e38191bd",
-    "new/diagnostic_v5/manifest.json": "04c9c120ce18534fade06857fab15c0b146274e33006d67329d985963ad83caf",
-    "new/diagnostic_v5/cases.json": "82bc84c15ce1d74944f1ba2456f5b17936d631affab963767a4ab6940ad7dab0"
+    "new/diagnostic_v6/build.py": "af55287b05be46a0ca4d0c9c0bcac0d292fbcd53deb4841bfe4a9725a2e101a2",
+    "new/diagnostic_v6/candidates.py": "04cab723532499226e4c6c8b520cfad55547b63ef62f660db4177a7f5835ccbd",
+    "new/diagnostic_v6/semantic_sufficiency.py": "12c9d32c5c0bae504081022ba4b38b5b07b899af472c87730b7a363e8a941d3f",
+    "new/diagnostic_v4/build.py": "1fe8adeb4cf8487e459978e37fe90abbbe8288c4226041f4164bb6cd474d3364",
+    "new/diagnostic_v5/build.py": "c7c177ae636b27b206641639e8f2c43297d9456c03bb6c94700ffd87fcce1d94",
+    "training/b_sft/preference_contract.py": "0eef1a38f40c097ffb2d6e21c1f3b4556997c7b8f31a83f9c009ef26f729063f"
   }
 }

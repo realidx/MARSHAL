@@ -29,6 +29,8 @@ class CleanPlanningSuite(unittest.TestCase):
         self.assertTrue(report['controlled_P_history_free'])
         self.assertTrue(report['controlled_P_pair_base_byte_identical'])
         self.assertTrue(report['end_to_end_history_retained'])
+        self.assertTrue(report['all_semantic_regions_decision_sufficient'])
+        self.assertTrue(report['invariant_semantic_optimal_actions_disjoint'])
         self.assertEqual(sum(case['mode'] == 'binary'
                              for case in self.cases), 16)
         self.assertEqual(sum(case['planning_assisted_B']
@@ -83,6 +85,15 @@ class CleanPlanningSuite(unittest.TestCase):
             self.assertEqual(status, 'ok')
             self.assertEqual(value, case['gold_judgment'])
 
+    def test_every_semantic_summary_has_one_invariant_optimal_set(self):
+        for case in self.cases:
+            certificate = case['semantic_decision_certificate']
+            self.assertTrue(certificate['decision_sufficient'])
+            self.assertEqual(len(certificate[
+                'distinct_vertex_optimal_action_sets']), 1)
+            self.assertIsNotNone(certificate[
+                'invariant_optimal_action_indices'])
+
     def test_requests_never_expose_numeric_posterior(self):
         for case in self.cases:
             requests = [b_request(case),
@@ -131,7 +142,11 @@ class CleanPlanningSuite(unittest.TestCase):
         row = dict(run_case(case, call), replica=0)
         summary = summarize([row], self.cases, 3)
         self.assertEqual(summary['planned_rows'], 96)
-        self.assertIn('no behavioral chronology', summary['interpretation'])
+        self.assertIn('sufficient deployed B interface',
+                      summary['interpretation'])
+        identity = summary['paired_scoring_identity']
+        self.assertEqual(identity['row_identity_failures'], 0)
+        self.assertAlmostEqual(identity['aggregate_identity_residual'], 0.)
 
 
 if __name__ == '__main__':
