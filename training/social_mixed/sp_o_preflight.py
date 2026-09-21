@@ -29,7 +29,13 @@ def audit(tokenizer=None):
     for reset in resets:
         req=Episode(reset,'preflight',0,42).request()
         if tokenizer is not None:
-            ids=tokenizer.apply_chat_template(req['messages'],tools=req['tools'],tokenize=True,add_generation_prompt=True)
+            rendered=tokenizer.apply_chat_template(
+                req['messages'],tools=req['tools'],tokenize=True,
+                add_generation_prompt=True,return_dict=True)
+            ids=rendered['input_ids']
+            if (not isinstance(ids,list) or not ids or
+                    any(not isinstance(token_id,int) for token_id in ids)):
+                raise TypeError('Tokenizer must return one unbatched input_ids list')
             lengths.append(dict(id=reset['id'],tokens=len(ids)))
     failures=[r for r in lengths if r['tokens']>3072]
     tasks=[t for t in data['bp_train'] if t['paired_view']=='O']

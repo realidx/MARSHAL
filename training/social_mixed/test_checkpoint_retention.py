@@ -1,3 +1,4 @@
+import json
 import tempfile
 from pathlib import Path
 import unittest
@@ -19,5 +20,20 @@ class RetentionTests(unittest.TestCase):
             (root/'checkpoints/checkpoint-29/COMPLETE.json').write_text('{}')
             self.assertEqual(prune(root,1),[19])
             self.assertTrue((root/'checkpoints/checkpoint-29/COMPLETE.json').exists())
+
+    def test_evaluated_ledger_does_not_protect_every_checkpoint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            for step in (9,19,29):
+                path=root/'checkpoints'/f'checkpoint-{step}'
+                path.mkdir(parents=True)
+                (path/'COMPLETE.json').write_text('{}')
+            rows=[{'step':step,'checkpoint':str((root/'checkpoints'/f'checkpoint-{step}').resolve())}
+                  for step in (9,19,29)]
+            (root/'EVALUATED_CHECKPOINTS.json').write_text(json.dumps(rows))
+            (root/'BEST_CHECKPOINT').write_text(str((root/'checkpoints'/'checkpoint-9').resolve()))
+            self.assertEqual(prune(root,1),[19])
+            self.assertTrue((root/'checkpoints/checkpoint-9').exists())
+            self.assertTrue((root/'checkpoints/checkpoint-29').exists())
 
 if __name__=='__main__':unittest.main()

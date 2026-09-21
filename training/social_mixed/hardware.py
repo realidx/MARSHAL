@@ -1,8 +1,8 @@
 import os
 """Fixed execution profiles; no change to rewards, sampling or token budgets."""
 PROFILES={
- 'h100-47':dict(gpus=2,tp=2,train_microbatch=1,reference_microbatch=1,train_resident=False,reference_resident=False,vllm_memory=.50,max_num_seqs=16,recompute='full'),
- 'h100-96':dict(gpus=2,tp=2,train_microbatch=2,reference_microbatch=4,train_resident=False,reference_resident=True,vllm_memory=.55,max_num_seqs=16,recompute='full'),
+ 'h100-47':dict(gpus=2,tp=2,train_microbatch=1,reference_microbatch=1,train_resident=False,reference_resident=False,vllm_memory=.50,max_num_seqs=32,recompute='full'),
+ 'h100-96':dict(gpus=2,tp=2,train_microbatch=2,reference_microbatch=4,train_resident=False,reference_resident=True,vllm_memory=.55,max_num_seqs=32,recompute='full'),
  'h200-141':dict(gpus=1,tp=1,train_microbatch=2,reference_microbatch=4,train_resident=False,reference_resident=True,vllm_memory=.45,max_num_seqs=32,recompute='full'),
 }
 def apply(config,name):
