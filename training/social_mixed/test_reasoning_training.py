@@ -24,6 +24,17 @@ class ReasoningTests(unittest.TestCase):
             'training.b_sft.social_bp_training.reward',side_effect=lambda t,c:dict(reward=c['value'],status='ok')):
             return c.collect(step,arm)
 
+    def test_default_normalization_and_sp_parallelism_restored(self):
+        c=self.collector()
+        self.assertEqual(c.normalization,'standard_sequence')
+        self.assertEqual(getattr(c,'sp_replicas',4),4)
+        self.assertEqual(c.sp_initial_groups,8)
+        self.assertEqual(c.sp_initial_groups*c.sp_replicas,32)
+        scores=[dict(status='ok',reward=v) for v in (0,1)]
+        outputs=[dict(completion=dict(finish_reason='stop'))]*2
+        advantages,_=group_advantages(scores,outputs,c.normalization)
+        self.assertAlmostEqual(advantages[1],1.,places=5)
+
     def test_sp_schedule_continues_on_resume_and_covers_resets(self):
         from training.social_mixed.curriculum_sampling import reset_order
         import random
@@ -76,7 +87,7 @@ class ReasoningTests(unittest.TestCase):
         self.assertFalse(metrics['skip_optimizer']) # candidate KL/protocol still have a defined objective
         d=self.collector(mixed=False);d.restore(c.state)
         self.assertEqual(self.run_batch(c,1,'decomposed'),self.run_batch(d,1,'decomposed'))
-        bad=deepcopy(d.state);bad['normalization']='standard_sequence'
+        bad=deepcopy(d.state);bad['normalization']='centered_fixed'
         with self.assertRaises(ValueError):d.restore(bad)
 
     def test_paired_O_anchor_does_not_skip_full_coverage_cases(self):

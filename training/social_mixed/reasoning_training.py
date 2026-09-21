@@ -7,7 +7,7 @@ import random
 from training.social_mixed.core import seed_for
 from training.social_mixed.stabilization import StableCollector
 
-VERSION = 'social-reasoning-tristate-exposure-v3'
+VERSION = 'social-reasoning-tristate-exposure-v5'
 ARMS = ('selfplay', 'outcome', 'conditioned', 'decomposed')
 WEIGHTS = {'outcome': {'O':1.}, 'conditioned': {'O':2/3, 'Pplus':1/3},
            'decomposed': {'O':1/3, 'B':1/3, 'Pplus':1/3}}
@@ -52,12 +52,12 @@ def group_advantages(scores, outputs, normalization):
 
 
 class ReasoningCollector(StableCollector):
-    def __init__(self,*args,normalization='centered_fixed',**kwargs):
+    def __init__(self,*args,normalization='standard_sequence',**kwargs):
         super().__init__(*args,**kwargs)
         if normalization not in NORMALIZATIONS:raise ValueError('Unknown normalization')
         self.normalization=normalization
-        self.sp_replicas=1
-        self.sp_initial_groups=1  # Complete one episode at a time, bounded overshoot.
+        self.sp_replicas=4
+        self.sp_initial_groups=8  # 32 active trajectories, independent of inference chunk size.
         self.state=dict(version=VERSION,normalization=normalization,questions={},baselines={},
                         block=0,consumed=0,fill_cursor=0,sp_cursor=0)
         self.schedule=case_schedule(self.data['bp_train'],self.seed)

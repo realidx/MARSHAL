@@ -122,7 +122,7 @@ def main():
     cli=argparse.ArgumentParser(description=__doc__)
     cli.add_argument('--arm',choices=['selfplay','bp','b_only','p_only','outcome','conditioned','decomposed'],required=True)
     cli.add_argument('--recipe',choices=['reasoning','legacy'],default=None)
-    cli.add_argument('--normalization',choices=['centered_fixed','standard_sequence'],default='centered_fixed')
+    cli.add_argument('--normalization',choices=['centered_fixed','standard_sequence'],default='standard_sequence')
     cli.add_argument('--max-behavior-logprob-delta',type=float,default=.05)
     cli.add_argument('--max-behavior-clip-fraction',type=float,default=.01)
     cli.add_argument('--seed',type=int,default=42)

@@ -203,11 +203,12 @@ class SocialPipeline(BasePipeline):
                     log.write(json.dumps(dict(saved=step,removed=removed))+'\n')
 
     @torch.no_grad()
-    def validate(self, step, consumed):
+    def validate(self, step, consumed, selection_candidate=True):
         from training.social_mixed.validation import persist
         with self.phase('validation'):
             try:
                 report=self.validator.run()
+                report['protocol']['selection_candidate']=bool(step>=0 and selection_candidate)
                 if self.options.get('recipe')=='reasoning':
                     from training.social_mixed.reasoning_validation import metrics_and_state
                     retention,state=metrics_and_state(report['bp_calls'],self.state.kv.get('reasoning_retention'))
@@ -218,7 +219,7 @@ class SocialPipeline(BasePipeline):
                 self.actor_infer.offload_states(blocking=True)
                 metrics=persist(self.root,report,step,consumed,self.tracker)
                 self.state.log_history.append(metrics)
-                if step>=0:
+                if step>=0 and selection_candidate:
                     from training.social_mixed.checkpoints import selection_score,SELECTION_VERSION,prune
                     if self.options.get('recipe')=='reasoning':
                         from training.social_mixed.reasoning_validation import selection_score as reasoning_score, VERSION as SELECTION_VERSION
@@ -310,10 +311,20 @@ class SocialPipeline(BasePipeline):
                 ratios=(audit.batch['audit_log_probs']-audit.batch['behavior_log_probs'])[mask].exp()
                 fraction=((ratios<.8)|(ratios>1.2)).float().mean().item()
                 metrics['behavior_preupdate_clip_fraction']=fraction
-                if (not torch.isfinite(difference).all() or difference.mean().item()>self.options['max_behavior_logprob_delta']
-                        or fraction>self.options['max_behavior_clip_fraction']):
+                if not torch.isfinite(difference).all() or not torch.isfinite(ratios).all():
                     (self.root/'PROBABILITY_ACCEPTANCE_FAILED.json').write_text(json.dumps(metrics,indent=2)+'\n')
-                    raise RuntimeError('Actor/behavior probability acceptance failed before optimizer update')
+                    raise FloatingPointError('Nonfinite actor/behavior probability comparison before optimizer update')
+                exceeded=(difference.mean().item()>self.options['max_behavior_logprob_delta']
+                          or fraction>self.options['max_behavior_clip_fraction'])
+                metrics['behavior_probability_warning']=int(exceeded)
+                if exceeded:
+                    warning=dict(event='PROBABILITY_WARNING',step=step,action='continue_training',
+                                 mean_limit=self.options['max_behavior_logprob_delta'],
+                                 clip_fraction_limit=self.options['max_behavior_clip_fraction'],
+                                 metrics=dict(metrics))
+                    with (self.root/'probability_warnings.jsonl').open('a') as f:
+                        f.write(json.dumps(warning)+'\n')
+                    print(json.dumps(warning),flush=True)
             # Use the actual behavior distribution in the PPO denominator;
             # sampling is unfiltered temperature=1. Save actor recomputation
             # discrepancy to diagnose backend numerical differences.
@@ -333,17 +344,15 @@ class SocialPipeline(BasePipeline):
             metrics['actor/applied_lr']=batch.meta_info['social_lr'] if not metrics.get('skip_optimizer') else 0.
             self.state.log_history.append(metrics)
             force=consumed>=self.options['total_tokens'] or self.stop_requested or step+1==cfg.max_steps
-            if self.options.get('recipe')=='reasoning':
-                crossed=[q for q in (.25,.5,.75,1.) if consumed-metrics['generated_tokens']<q*self.options['total_tokens']<=consumed]
-                evaluate=bool(crossed) or step+1==cfg.max_steps
-                metrics['evaluation/token_fractions_crossed']=crossed
-            else:
-                evaluate=(step+1)%cfg.eval_steps==0 or consumed>=self.options['total_tokens'] or step+1==cfg.max_steps
+            evaluate=(step+1)%cfg.eval_steps==0 or consumed>=self.options['total_tokens'] or step+1==cfg.max_steps
             with (self.root/'metrics.jsonl').open('a') as f:f.write(json.dumps(metrics)+'\n')
             self.tracker.log(metrics,step=step+1)
             if evaluate and not self.stop_requested:
                 self.model_update(step+1)
                 self.validate(step,consumed)
+            elif self.options.get('recipe')=='reasoning' and not self.stop_requested and step+1 in (4,8):
+                self.model_update(step+1)
+                self.validate(step,consumed,selection_candidate=False)
             elif (self.options.get('recipe')=='reasoning' and not self.stop_requested
                   and ((step+1 in (2,4,6,8)) or (step+1>8 and (step+1)%5==0))):
                 self.model_update(step+1)

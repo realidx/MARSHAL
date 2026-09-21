@@ -29,9 +29,11 @@ class ValidationTests(unittest.TestCase):
         answers={seed_for(42,VERSION,'bp',t['id'],0):native_completion(t) for t in select_bp(self.data['bp_validation'])}
         def run(fail):
             def generate(reqs):
+                self.assertTrue(all(r.get("temperature")==0.0 for r in reqs))
                 return [dict(completion=answers[r['seed']]) if r['seed'] in answers else generated('PASS',{},'length' if fail else 'stop') for r in reqs]
             return Validator(self.data,generate).run()
         report=run(False)
+        self.assertEqual(report["protocol"]["sp_temperature"],0.0)
         self.assertEqual(len(report['bp_calls']),32)
         self.assertEqual(report['metrics']['bp/B/all/correct'],16)
         self.assertEqual(report['metrics']['games/current_team/all/completed'],8)

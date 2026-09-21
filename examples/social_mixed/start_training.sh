@@ -66,7 +66,7 @@ record=dict(job_id=job,arm=arm,runtime=os.getcwd(),profile=os.environ['SOCIAL_GP
             source_version=json.loads((Path(folder)/'source.json').read_text()))
 if arm in ('selfplay','outcome','conditioned','decomposed') and os.environ.get('SOCIAL_RECIPE','reasoning')=='reasoning':
     from training.social_mixed.reasoning_bank import PATH,sha
-    record.update(recipe='reasoning',normalization=os.environ.get('SOCIAL_NORMALIZATION','centered_fixed'),paired_bank_sha256=sha((PATH/'manifest.json').read_bytes()))
+    record.update(recipe='reasoning',normalization=os.environ.get('SOCIAL_NORMALIZATION','standard_sequence'),paired_bank_sha256=sha((PATH/'manifest.json').read_bytes()))
 (Path(folder)/(arm+'.json')).write_text(json.dumps(record,indent=2)+'\n')
 PYRECEIPT
   printf 'SUBMITTED arm=%s job=%s receipt=%s\n' "$SOCIAL_SELECTED_ARM" "$SOCIAL_JOB_ID" "$SOCIAL_SUBMISSION_DIR/$SOCIAL_SELECTED_ARM.json"

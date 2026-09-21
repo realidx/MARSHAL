@@ -51,7 +51,7 @@ mkdir -p "$ROLL_LOG_DIR"
 printf '%s\n' "$ROLL_OUTPUT_DIR" > "runs/social_mixed/${SOCIAL_ARM}_latest.txt"
 args=(--arm "$SOCIAL_ARM" --seed "$SOCIAL_SEED" --total-tokens "${SOCIAL_TOTAL_TOKENS:-6553600}")
 if [[ -n "${SOCIAL_RECIPE:-}" ]]; then args+=(--recipe "$SOCIAL_RECIPE"); fi
-args+=(--normalization "${SOCIAL_NORMALIZATION:-centered_fixed}")
+args+=(--normalization "${SOCIAL_NORMALIZATION:-standard_sequence}")
 args+=(--tokens-per-update "${SOCIAL_TOKENS_PER_UPDATE:-65536}")
 if [[ "${SOCIAL_DIAGNOSE_PROBABILITIES:-0}" == 1 ]]; then args+=(--diagnose-probabilities); fi
 args+=(--keep-checkpoints 2 --protocol-coefficient "${SOCIAL_PROTOCOL_COEFFICIENT:-0.2}")

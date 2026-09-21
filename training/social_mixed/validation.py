@@ -143,7 +143,9 @@ class Validator:
         episodes=[Episode(r,f'{VERSION}:current_team:{r["id"]}',0,self.seed) for r in self.resets]
         while episodes:
             for offset in range(0,len(episodes),self.concurrency):
-                batch=episodes[offset:offset+self.concurrency];outputs=self.generate([ep.request() for ep in batch])
+                batch=episodes[offset:offset+self.concurrency]
+                requests=[dict(ep.request(),temperature=0.0) for ep in batch]
+                outputs=self.generate(requests)
                 if len(outputs)!=len(batch):raise RuntimeError('Missing game validation answers')
                 for ep,answer in zip(batch,outputs):
                     ep.accept(answer);c=ep.calls[-1];c.update(evaluation_game=ep.group,evaluation_role='current_team');calls.append(c)
@@ -151,7 +153,7 @@ class Validator:
             episodes=[ep for ep in episodes if ep.status=='running']
         metrics=summarize_bp(bp)|summarize_games(games,calls)
         coverage=Counter(k for t in self.tasks for k in cells(t))
-        protocol=dict(bp_temperature=0.0,sp_temperature=1.0,coverage=dict(coverage),missing_diagnostics=[k for k in ('P4/result_use','B3/update') if not coverage[k]],version=VERSION,bp_tasks=len(self.tasks),bp_replicas=1,bp_ids=[t['id'] for t in self.tasks],
+        protocol=dict(bp_temperature=0.0,sp_temperature=0.0,coverage=dict(coverage),missing_diagnostics=[k for k in ('P4/result_use','B3/update') if not coverage[k]],version=VERSION,bp_tasks=len(self.tasks),bp_replicas=1,bp_ids=[t['id'] for t in self.tasks],
             reset_ids=[r['id'] for r in self.resets],condition='current_team',seed=self.seed,
             data_sha256=hashlib.sha256(json.dumps(self.data,sort_keys=True).encode()).hexdigest(),
             caveats='Development only. Team behavior, not fixed-opponent improvement. Terminal means are conditional on completion; report bounds alongside. No B→P composition claim. Infrastructure errors abort validation, never score zero.')
