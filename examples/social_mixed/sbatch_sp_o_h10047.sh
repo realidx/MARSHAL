@@ -93,7 +93,8 @@ launch_arm() {
 
 launch_arm outcome "$o_devices"
 o_pid=$LAUNCHED_PID
-sp_pid=""
+launch_arm selfplay "$sp_devices"
+sp_pid=$LAUNCHED_PID
 
 forward_signal() {
   local pgid
@@ -103,13 +104,13 @@ forward_signal() {
 }
 trap forward_signal USR1 TERM
 
-# Both jobs previously hung while creating NCCL model-update groups together.
-# Complete O's initial sync before starting SP; training then runs concurrently.
+# Initialize both arms concurrently; fail fast if either startup hangs.
 o_phases="runs/social_mixed/outcome-seed42-${SLURM_JOB_ID}/phases.jsonl"
 startup_deadline=$((SECONDS + 900))
 while ! grep -q '"phase": "initial_weight_sync", "event": "end"' "$o_phases" 2>/dev/null; do
   if ! kill -0 "$o_pid" 2>/dev/null; then
-    echo 'O exited before initial weight sync; refusing to launch SP' >&2
+    echo 'O exited before initial weight sync' >&2
+    forward_signal
     wait "$o_pid" || true
     exit 45
   fi
@@ -120,8 +121,6 @@ while ! grep -q '"phase": "initial_weight_sync", "event": "end"' "$o_phases" 2>/
   fi
   sleep 5
 done
-launch_arm selfplay "$sp_devices"
-sp_pid=$LAUNCHED_PID
 
 sp_phases="runs/social_mixed/selfplay-seed42-${SLURM_JOB_ID}/phases.jsonl"
 startup_deadline=$((SECONDS + 900))
