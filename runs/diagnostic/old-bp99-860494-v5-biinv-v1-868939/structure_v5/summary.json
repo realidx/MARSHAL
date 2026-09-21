@@ -1,0 +1,126 @@
+{
+  "planned_rows": 96,
+  "returned_rows": 96,
+  "missing_rows": 0,
+  "complete_composition_rows": 78,
+  "row_level": {
+    "B_exact": {
+      "valid": 96,
+      "mean": 0.0625
+    },
+    "B_set_exact": {
+      "valid": 96,
+      "mean": 0.40625
+    },
+    "B_favored_exact": {
+      "valid": 96,
+      "mean": 0.09375
+    },
+    "B_false_exclusions": {
+      "valid": 96,
+      "mean": 0.1875
+    },
+    "B_unsupported_additions": {
+      "valid": 96,
+      "mean": 0.65625
+    },
+    "gold_B_planning_regret": {
+      "valid": 87,
+      "mean": 0.8102052869669063
+    },
+    "model_B_planning_regret": {
+      "valid": 81,
+      "mean": 0.8332371332371329
+    },
+    "end_to_end_P_regret": {
+      "valid": 84,
+      "mean": 0.5808542389287732
+    },
+    "B_repair_gain": {
+      "valid": 78,
+      "mean": -0.07045707915273128
+    },
+    "qualitative_partner_plan_exact_gain": {
+      "valid": 24,
+      "mean": 0.0
+    }
+  },
+  "structure_level": {
+    "B_exact": {
+      "valid": 16,
+      "mean": 0.0625
+    },
+    "B_set_exact": {
+      "valid": 16,
+      "mean": 0.40625
+    },
+    "B_favored_exact": {
+      "valid": 16,
+      "mean": 0.09375
+    },
+    "B_false_exclusions": {
+      "valid": 16,
+      "mean": 0.1875
+    },
+    "B_unsupported_additions": {
+      "valid": 16,
+      "mean": 0.65625
+    },
+    "gold_B_planning_regret": {
+      "valid": 15,
+      "mean": 0.8387539996235648
+    },
+    "model_B_planning_regret": {
+      "valid": 15,
+      "mean": 0.7864213564213565
+    },
+    "end_to_end_P_regret": {
+      "valid": 15,
+      "mean": 0.5564163372859026
+    },
+    "B_repair_gain": {
+      "valid": 15,
+      "mean": -0.07455486542443061
+    },
+    "qualitative_partner_plan_exact_gain": {
+      "valid": 8,
+      "mean": 0.0
+    }
+  },
+  "condition_coverage": {
+    "B": {
+      "returned": 96,
+      "statuses": {
+        "ok": 96
+      }
+    },
+    "B_with_qualitative_partner_plan": {
+      "returned": 24,
+      "statuses": {
+        "ok": 24
+      }
+    },
+    "correct_B_model_P": {
+      "returned": 96,
+      "statuses": {
+        "ok": 87,
+        "format_failure": 9
+      }
+    },
+    "model_B_model_P": {
+      "returned": 96,
+      "statuses": {
+        "format_failure": 15,
+        "ok": 81
+      }
+    },
+    "end_to_end_P": {
+      "returned": 96,
+      "statuses": {
+        "format_failure": 12,
+        "ok": 84
+      }
+    }
+  },
+  "interpretation": "B is scored only on the native semantic contract. P regret is evaluated backend-side under the certified posterior. B_repair_gain is a paired intervention on the same model planner; there is intentionally no reference-P cell under a model semantic B."
+}
