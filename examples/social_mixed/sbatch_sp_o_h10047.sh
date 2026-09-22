@@ -97,9 +97,12 @@ launch_arm selfplay "$sp_devices"
 sp_pid=$LAUNCHED_PID
 
 forward_signal() {
-  local pgid
-  for pgid in "$o_pid" "$sp_pid"; do
-    if [[ -n "$pgid" ]]; then kill -USR1 -- "-$pgid" 2>/dev/null || true; fi
+  local child_pid
+  # Signal only each arm's launcher shell. It forwards USR1 to its Python
+  # driver, which saves at an optimizer boundary; broadcasting to the process
+  # group would also kill Ray workers and interrupt checkpoint writes.
+  for child_pid in "$o_pid" "$sp_pid"; do
+    if [[ -n "$child_pid" ]]; then kill -USR1 "$child_pid" 2>/dev/null || true; fi
   done
 }
 trap forward_signal USR1 TERM
