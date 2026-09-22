@@ -21,7 +21,7 @@ class RetentionTests(unittest.TestCase):
             self.assertEqual(prune(root,1),[19])
             self.assertTrue((root/'checkpoints/checkpoint-29/COMPLETE.json').exists())
 
-    def test_evaluated_checkpoints_preserved_for_capability_comparison(self):
+    def test_evaluated_checkpoints_do_not_bypass_storage_cap(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
             for step in (9,19,29):
@@ -32,8 +32,20 @@ class RetentionTests(unittest.TestCase):
                   for step in (9,19,29)]
             (root/'EVALUATED_CHECKPOINTS.json').write_text(json.dumps(rows))
             (root/'BEST_CHECKPOINT').write_text(str((root/'checkpoints'/'checkpoint-9').resolve()))
-            self.assertEqual(prune(root,1),[])
-            self.assertTrue((root/'checkpoints/checkpoint-19').exists())
+            self.assertEqual(prune(root,1),[9,19])
+            self.assertFalse((root/'checkpoints/checkpoint-19').exists())
+            self.assertFalse((root/'checkpoints/checkpoint-9').exists())
+            self.assertTrue((root/'checkpoints/checkpoint-29').exists())
+
+    def test_keep_two_reserves_best_and_latest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            for step in (9,19,29):
+                path=root/'checkpoints'/f'checkpoint-{step}'
+                path.mkdir(parents=True)
+                (path/'COMPLETE.json').write_text('{}')
+            (root/'BEST_CHECKPOINT').write_text(str((root/'checkpoints/checkpoint-9').resolve()))
+            self.assertEqual(prune(root,2),[19])
             self.assertTrue((root/'checkpoints/checkpoint-9').exists())
             self.assertTrue((root/'checkpoints/checkpoint-29').exists())
 

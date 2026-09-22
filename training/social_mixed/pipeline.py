@@ -197,7 +197,7 @@ class SocialPipeline(BasePipeline):
         if (checkpoint/'COMPLETE.json').exists():
             (self.root/'LATEST_CHECKPOINT').write_text(str(checkpoint.resolve())+'\n')
             from training.social_mixed.checkpoints import prune
-            removed=prune(self.root,1)
+            removed=prune(self.root,self.options['keep_checkpoints'])
             if removed:
                 with (self.root/'checkpoint_retention.jsonl').open('a') as log:
                     log.write(json.dumps(dict(saved=step,removed=removed))+'\n')
@@ -244,7 +244,7 @@ class SocialPipeline(BasePipeline):
                             if not (checkpoint/'COMPLETE.json').is_file():
                                 raise RuntimeError('Best checkpoint did not complete')
                             (self.root/'BEST_CHECKPOINT').write_text(str(checkpoint.resolve())+'\n')
-                            prune(self.root,1)
+                            prune(self.root,self.options['keep_checkpoints'])
                     if self.options.get('recipe')=='reasoning':
                         self.save(step,force=True)
             except Exception as exc:
@@ -357,13 +357,6 @@ class SocialPipeline(BasePipeline):
             if evaluate and not self.stop_requested:
                 self.model_update(step+1)
                 self.validate(step,consumed)
-            elif self.options.get('recipe')=='reasoning' and not self.stop_requested and step+1 in (4,8):
-                self.model_update(step+1)
-                self.validate(step,consumed,selection_candidate=False)
-            elif (self.options.get('recipe')=='reasoning' and not self.stop_requested
-                  and ((step+1 in (2,4,6,8)) or (step+1>8 and (step+1)%5==0))):
-                self.model_update(step+1)
-                self.monitor_o(step,consumed)
             if force or (step+1)%cfg.save_steps==0:self.save(step,force=force)
             if self.stop_requested:break
             if early_gate_reached:break

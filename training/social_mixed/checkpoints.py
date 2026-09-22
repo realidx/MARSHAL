@@ -29,14 +29,18 @@ def prune(root, keep=2):
         if suffix.isdigit() and (path/'COMPLETE.json').is_file():completed.append((int(suffix),path))
     removed=[]
     protected=set()
-    # Preserve evaluated checkpoints for longitudinal capability comparisons.
-    candidates=root/'EVALUATED_CHECKPOINTS.json'
-    if candidates.exists():
-        protected.update(Path(row['checkpoint']).resolve() for row in json.loads(candidates.read_text()))
+    # A one-checkpoint run keeps only its latest recovery point. With more
+    # capacity, reserve one slot for the best checkpoint if it is in this run.
     pointer=root/'BEST_CHECKPOINT'
-    if pointer.exists():protected.add(Path(pointer.read_text().strip()).resolve())
-    for step,path in sorted(completed,reverse=True)[keep:]:
-        if path.resolve() in protected:continue
+    if keep>1 and pointer.exists():
+        best=Path(pointer.read_text().strip()).resolve()
+        if best in {path.resolve() for _,path in completed}:protected.add(best)
+    retained=set(protected)
+    for _,path in sorted(completed,reverse=True):
+        if len(retained)>=keep:break
+        retained.add(path.resolve())
+    for step,path in completed:
+        if path.resolve() in retained:continue
         name=path.name
         # Uploader uses hardlinks: delete this run's staging links as well.
         locations=[path,root/'pipeline'/name,root/'actor_train-0'/name,root/'actor_train-1'/name]
@@ -46,4 +50,4 @@ def prune(root, keep=2):
                     raise ValueError('Checkpoint cleanup escaped this run')
                 shutil.rmtree(location)
         removed.append(step)
-    return removed
+    return sorted(removed)
