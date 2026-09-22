@@ -25,10 +25,10 @@ def main():
     parser.add_argument('--max-model-len',type=int,default=32768)
     parser.add_argument('--runner-python',type=Path,default=Path('/raid/chenjiahao/mas/.venv-calbench/bin/python'))
     parser.add_argument('--parallel-games',type=int,default=2)
-    parser.add_argument('--suite',choices=['smoke','structures','formal','stream'],default='smoke')
+    parser.add_argument('--suite',choices=['smoke','structures','formal','stream','shapefactory'],default='smoke')
     args=parser.parse_args()
     if args.max_tokens is None:
-        args.max_tokens = 4096 if args.suite == 'stream' else 768
+        args.max_tokens = 4096 if args.suite in ('stream','shapefactory') else 768
     if args.parallel_games<1:parser.error('--parallel-games must be positive')
     gpus=os.environ.get('CUDA_VISIBLE_DEVICES','').split(',')
     allowed=(1,2) if args.runtime=='soc' else (2,)
@@ -60,7 +60,7 @@ def main():
         config['chat_template_kwargs']={'enable_thinking':False}
         (out/'thinking_template_check.json').write_text(json.dumps(dict(enabled_suffix=on[-200:],disabled_suffix=off[-200:]),indent=2)+'\n')
     routes=out/'routes.json';routes.write_text(json.dumps(config,indent=2)+'\n')
-    if args.suite in ('formal','stream'):
+    if args.suite in ('formal','stream','shapefactory'):
         if args.max_model_len!=32768: raise ValueError('Formal context budget is frozen at 32768')
         files={}
         for path in sorted(args.model.rglob('*')):
@@ -111,7 +111,7 @@ def main():
                 env.update(VLLM_USE_V1='0',VLLM_ATTENTION_BACKEND='XFORMERS',TRITON_PTXAS_PATH=str(ptxas.resolve()))
             log=(out/f'server-{index}.log').open('w');logs.append(log)
             processes.append(subprocess.Popen(cmd,env=env,stdout=log,stderr=subprocess.STDOUT,start_new_session=True));commands.append(cmd)
-        (out/'servers.json').write_text(json.dumps(dict(commands=commands,gpus=gpus,pids=[p.pid for p in processes],development_only=args.suite not in ('formal','stream')),indent=2)+'\n')
+        (out/'servers.json').write_text(json.dumps(dict(commands=commands,gpus=gpus,pids=[p.pid for p in processes],development_only=args.suite not in ('formal','stream','shapefactory')),indent=2)+'\n')
         started=time.monotonic();ready=set();last=-1
         while len(ready)<len(gpus):
             for index,(proc,port) in enumerate(zip(processes,args.ports)):
@@ -136,9 +136,11 @@ def main():
                 if '<think>' in answer or '</think>' in answer or probe['choices'][0]['finish_reason']=='length':
                     raise RuntimeError('Non-thinking probe emitted think tags or truncated; inspect thinking_probe before proceeding')
             print('Non-thinking template and server probes passed',flush=True)
-        subprocess.run([str(args.runner_python),'-u','-m','examples.final_evaluation.calbench_local',
-                        '--routes',str(routes),'--output',str(out/'games'),'--games','2',
-                        '--parallel-games',str(args.parallel_games),'--suite',args.suite],
+        runner_module='examples.final_evaluation.shapefactory_local' if args.suite=='shapefactory' else 'examples.final_evaluation.calbench_local'
+        runner_args=[] if args.suite=='shapefactory' else ['--games','2','--suite',args.suite]
+        subprocess.run([str(args.runner_python),'-u','-m',runner_module,
+                        '--routes',str(routes),'--output',str(out/'games'),
+                        '--parallel-games',str(args.parallel_games),*runner_args],
                        cwd=ROOT,env=dict(os.environ,PYTHONPATH=str(ROOT)),check=True)
         (out/'EXIT_CODE').write_text('0\n')
     except BaseException as exc:
