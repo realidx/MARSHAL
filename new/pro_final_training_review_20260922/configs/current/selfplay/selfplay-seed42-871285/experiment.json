@@ -1,0 +1,53 @@
+{
+  "options": {
+    "arm": "selfplay",
+    "recipe": "reasoning",
+    "normalization": "standard_sequence",
+    "max_behavior_logprob_delta": 0.05,
+    "max_behavior_clip_fraction": 0.01,
+    "seed": 42,
+    "total_tokens": 6553600,
+    "tokens_per_update": 65536,
+    "keep_checkpoints": 1,
+    "pause_after_updates": null,
+    "protocol_coefficient": 0.2,
+    "resume": "/home/e/e1300530/tmp/MARSHAL-benac-results-push/runs/social_mixed/selfplay-seed42-871236/checkpoints/checkpoint-7",
+    "diagnose_probabilities": false,
+    "check_only": false,
+    "recipe_version": "social-reasoning-tristate-exposure-v5",
+    "paired_bank_sha256": "0fe7e360aa6637f54274c3507db726977ebe9d53c01db79c307fe9504b8a4b54",
+    "gpu_profile": "h100-47"
+  },
+  "model": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+  "source_version": {
+    "kind": "git",
+    "commit": "5bdb8482d5c9c8d4d391b4f2ddf4f9002efae95d",
+    "clean": true
+  },
+  "source_commit": "5bdb8482d5c9c8d4d391b4f2ddf4f9002efae95d",
+  "source_bundle_sha256": null,
+  "data_manifest_sha256": "730f0d819b3a9e48cbcdc781b17cd5db580317d569f196ae0b97f2fb66e0729d",
+  "dataset": "data_reasoning_v6",
+  "allowed_completion_modes": [
+    "binary",
+    "linear"
+  ],
+  "execution_profile": {
+    "gpus": 2,
+    "tp": 2,
+    "train_microbatch": 1,
+    "reference_microbatch": 1,
+    "train_resident": false,
+    "reference_resident": false,
+    "vllm_memory": 0.5,
+    "max_num_seqs": 32,
+    "recompute": "full"
+  },
+  "reward": "B/P binary; SP own terminal utility; invalid/truncated calls use independent negative advantage instead of task advantage",
+  "advantage_version": "call-local-negative-v1",
+  "mixture": {
+    "selfplay": 1.0
+  },
+  "grouping": "Fixed candidate slots, legal-only centered advantages; SP historical baseline",
+  "budget": "Generated response tokens entering training, including retries; finish current groups at boundary"
+}

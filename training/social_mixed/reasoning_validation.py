@@ -4,7 +4,7 @@ from copy import deepcopy
 from training.social_mixed.validation import Validator
 from training.social_mixed.reasoning_bank import load, panel
 
-VERSION='reasoning-development-tristate-v2'
+VERSION='reasoning-calbench-dev8-v3'
 
 
 def metrics_and_state(calls, previous=None):
@@ -62,13 +62,14 @@ def metrics_and_state(calls, previous=None):
 def selection_score(metrics):
     # Same current-team unassisted interaction and O tie-break for all arms.
     # This is explicitly not a fixed-Q0-opponent or benchmark-based criterion.
-    return [metrics['games/current_team/all/cohort_player_utility_lower'],
+    return [metrics['calbench/headline'],metrics['calbench/success_rate'],
             metrics['reasoning/O/macro_accuracy']]
 
 
 class ReasoningValidator(Validator):
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
+        self.calbench_development=True
         self.tasks=[t for t in panel() if t.get('paired_view')!='Pplus' or t.get('p_pool_status')!='quarantined']
 
     def run_static_o(self):
@@ -124,7 +125,7 @@ class ReasoningValidator(Validator):
             report['metrics'][f'reasoning/{view}/isolated_B_action_pairs']=len(links)
             report['metrics'][f'reasoning/{view}/isolated_B_scored_pairs']=len(scored)
             if scored:report['metrics'][f'reasoning/{view}/isolated_B_both_correct']=sum(all(indexed[r[k],view]['score']['correct'] is True for k in ('left','right')) for r in scored)/len(scored)
-        report['protocol'].update(version=VERSION,selection='current-team utility lower bound; then O parent-macro; earlier tie',
+        report['protocol'].update(version=VERSION,selection='CalBench dev8 headline; success rate; O parent-macro; earlier tie',
             package_ids=sorted({t['package_id'] for t in self.tasks}),
             auxiliary_scores_for_selection=False,
             caveats='Internal development, all seats current policy. P receives current state and correct qualitative beliefs without history; each entry uses the B answer schema. Same panel and candidate token fractions for all four arms.')

@@ -1,0 +1,207 @@
+{
+  "exp_name": "social_outcome_4b",
+  "seed": 42,
+  "pretrain": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+  "output_dir": "/home/e/e1300530/tmp/MARSHAL-benac-results-push/runs/social_mixed/outcome-seed42-871236",
+  "logging_dir": "/home/e/e1300530/tmp/MARSHAL-benac-results-push/runs/social_mixed/outcome-seed42-871236/logs",
+  "track_with": "stdout",
+  "num_nodes": 1,
+  "num_gpus_per_node": 2,
+  "max_steps": 1000,
+  "rollout_batch_size": 1,
+  "num_return_sequences_in_group": 1,
+  "sequence_length": 4096,
+  "prompt_length": 3072,
+  "save_steps": 10,
+  "eval_steps": 10,
+  "logging_steps": 1,
+  "resume_from_checkpoint": false,
+  "checkpoint_config": {
+    "type": "file_system",
+    "async_upload": false,
+    "raise_on_error": true,
+    "use_hardlinks": true,
+    "save_final": true,
+    "verify_megatron_checkpoint": true,
+    "output_dir": "/home/e/e1300530/tmp/MARSHAL-benac-results-push/runs/social_mixed/outcome-seed42-871236/checkpoints"
+  },
+  "ppo_epochs": 1,
+  "adv_estimator": "grpo",
+  "pg_clip": 0.2,
+  "use_kl_loss": true,
+  "kl_loss_coef": 0.01,
+  "init_kl_coef": 0.0,
+  "whiten_advantages": false,
+  "loss_agg_mode": "seq-mean-token-mean",
+  "system_envs": {
+    "VLLM_TOOL_CALL_PARSER": "hermes",
+    "VLLM_BATCH_INVARIANT": "0",
+    "CUDNN_FRONTEND_CUDART_LIB_NAME": "libcudart.so.13",
+    "NVTE_FLASH_ATTN": "1",
+    "NVTE_FUSED_ATTN": "0",
+    "NVTE_UNFUSED_ATTN": "0",
+    "TOKENIZERS_PARALLELISM": "false",
+    "CUDA_DEVICE_MAX_CONNECTIONS": "1",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "1",
+    "ROLL_LOCAL_COMM_ADDR": "127.0.0.1",
+    "NCCL_SOCKET_IFNAME": "lo",
+    "GLOO_SOCKET_IFNAME": "lo",
+    "PYTHONPATH": "/home/e/e1300530/tmp/MARSHAL-benac-results-push:/home/e/e1300530/tmp/MARSHAL-benac-results-push/mcore_adapter/src:/home/e/e1300530/tmp/MARSHAL-benac-results-push/third_party/negotiation_benchmark/src:",
+    "BP_STARTUP_DIAGNOSTICS": "1",
+    "BP_DIAGNOSTICS_DIR": "/home/e/e1300530/tmp/MARSHAL-benac-results-push/runs/social_mixed/outcome-seed42-871236"
+  },
+  "actor_train": {
+    "worker_cls": "training.social_mixed.workers.SocialWorker",
+    "keep_states_on_device": false,
+    "model_args": {
+      "dtype": "bf16",
+      "disable_gradient_checkpointing": false
+    },
+    "training_args": {
+      "optimizer_backend": "megatron",
+      "learning_rate": 1e-06,
+      "weight_decay": 0.0,
+      "adam_beta1": 0.9,
+      "adam_beta2": 0.95,
+      "per_device_train_batch_size": 1,
+      "gradient_accumulation_steps": 1,
+      "warmup_steps": 0,
+      "warmup_ratio": 0.0,
+      "lr_scheduler_type": "constant_with_warmup",
+      "lr_scheduler_kwargs": {
+        "init_lr": 1e-06
+      },
+      "max_steps": 1000
+    },
+    "data_args": {
+      "template": "native"
+    },
+    "strategy_args": {
+      "strategy_name": "megatron_train",
+      "strategy_config": {
+        "tensor_model_parallel_size": 2,
+        "transformer_impl": "transformer_engine",
+        "pipeline_model_parallel_size": 1,
+        "sequence_parallel": true,
+        "expert_model_parallel_size": 1,
+        "use_distributed_optimizer": true,
+        "recompute_granularity": "full",
+        "accumulate_allreduce_grads_in_fp32": true,
+        "check_for_nan_in_loss_and_grad": true,
+        "overlap_grad_reduce": false,
+        "overlap_param_gather": false
+      }
+    },
+    "device_mapping": "[0, 1]",
+    "infer_batch_size": 1,
+    "system_envs": {
+      "VLLM_TOOL_CALL_PARSER": "hermes",
+      "VLLM_BATCH_INVARIANT": "0",
+      "CUDNN_FRONTEND_CUDART_LIB_NAME": "libcudart.so.13",
+      "NVTE_FLASH_ATTN": "1",
+      "NVTE_FUSED_ATTN": "0",
+      "NVTE_UNFUSED_ATTN": "0",
+      "TOKENIZERS_PARALLELISM": "false",
+      "CUDA_DEVICE_MAX_CONNECTIONS": "1",
+      "OMP_NUM_THREADS": "4",
+      "OPENBLAS_NUM_THREADS": "1",
+      "ROLL_LOCAL_COMM_ADDR": "127.0.0.1",
+      "NCCL_SOCKET_IFNAME": "lo",
+      "GLOO_SOCKET_IFNAME": "lo",
+      "PYTHONPATH": "/home/e/e1300530/tmp/MARSHAL-benac-results-push:/home/e/e1300530/tmp/MARSHAL-benac-results-push/mcore_adapter/src:/home/e/e1300530/tmp/MARSHAL-benac-results-push/third_party/negotiation_benchmark/src:",
+      "BP_STARTUP_DIAGNOSTICS": "1",
+      "BP_DIAGNOSTICS_DIR": "/home/e/e1300530/tmp/MARSHAL-benac-results-push/runs/social_mixed/outcome-seed42-871236"
+    }
+  },
+  "actor_infer": {
+    "worker_cls": "training.social_mixed.workers.SocialWorker",
+    "model_args": {
+      "dtype": "bf16"
+    },
+    "data_args": {
+      "template": "native"
+    },
+    "generating_args": {
+      "max_new_tokens": 1024,
+      "temperature": 1.0,
+      "top_p": 1.0,
+      "top_k": -1,
+      "repetition_penalty": 1.0,
+      "num_return_sequences": 1
+    },
+    "strategy_args": {
+      "strategy_name": "vllm",
+      "strategy_config": {
+        "engine_mode": "sync",
+        "tensor_parallel_size": 1,
+        "gpu_memory_utilization": 0.5,
+        "max_model_len": 4096,
+        "max_num_seqs": 32,
+        "enforce_eager": true,
+        "enable_prefix_caching": true,
+        "enable_chunked_prefill": false,
+        "disable_cascade_attn": true,
+        "enable_sleep_mode": true,
+        "sleep_level": 1,
+        "distributed_executor_backend": "ray",
+        "load_format": "auto"
+      }
+    },
+    "device_mapping": "[0, 1]",
+    "infer_batch_size": 1,
+    "system_envs": {
+      "VLLM_TOOL_CALL_PARSER": "hermes",
+      "VLLM_BATCH_INVARIANT": "0",
+      "CUDNN_FRONTEND_CUDART_LIB_NAME": "libcudart.so.13",
+      "NVTE_FLASH_ATTN": "1",
+      "NVTE_FUSED_ATTN": "0",
+      "NVTE_UNFUSED_ATTN": "0",
+      "TOKENIZERS_PARALLELISM": "false",
+      "CUDA_DEVICE_MAX_CONNECTIONS": "1",
+      "OMP_NUM_THREADS": "4",
+      "OPENBLAS_NUM_THREADS": "1",
+      "ROLL_LOCAL_COMM_ADDR": "127.0.0.1",
+      "NCCL_SOCKET_IFNAME": "lo",
+      "GLOO_SOCKET_IFNAME": "lo",
+      "PYTHONPATH": "/home/e/e1300530/tmp/MARSHAL-benac-results-push:/home/e/e1300530/tmp/MARSHAL-benac-results-push/mcore_adapter/src:/home/e/e1300530/tmp/MARSHAL-benac-results-push/third_party/negotiation_benchmark/src:",
+      "BP_STARTUP_DIAGNOSTICS": "1",
+      "BP_DIAGNOSTICS_DIR": "/home/e/e1300530/tmp/MARSHAL-benac-results-push/runs/social_mixed/outcome-seed42-871236"
+    }
+  },
+  "reference": {
+    "worker_cls": "training.social_mixed.workers.SocialWorker",
+    "keep_states_on_device": false,
+    "model_args": {
+      "dtype": "bf16",
+      "attn_implementation": "flash_attention_2",
+      "disable_gradient_checkpointing": true
+    },
+    "data_args": {
+      "template": "native"
+    },
+    "strategy_args": {
+      "strategy_name": "hf_infer"
+    },
+    "device_mapping": "[0, 1]",
+    "infer_batch_size": 1,
+    "system_envs": {
+      "VLLM_TOOL_CALL_PARSER": "hermes",
+      "VLLM_BATCH_INVARIANT": "0",
+      "CUDNN_FRONTEND_CUDART_LIB_NAME": "libcudart.so.13",
+      "NVTE_FLASH_ATTN": "1",
+      "NVTE_FUSED_ATTN": "0",
+      "NVTE_UNFUSED_ATTN": "0",
+      "TOKENIZERS_PARALLELISM": "false",
+      "CUDA_DEVICE_MAX_CONNECTIONS": "1",
+      "OMP_NUM_THREADS": "4",
+      "OPENBLAS_NUM_THREADS": "1",
+      "ROLL_LOCAL_COMM_ADDR": "127.0.0.1",
+      "NCCL_SOCKET_IFNAME": "lo",
+      "GLOO_SOCKET_IFNAME": "lo",
+      "PYTHONPATH": "/home/e/e1300530/tmp/MARSHAL-benac-results-push:/home/e/e1300530/tmp/MARSHAL-benac-results-push/mcore_adapter/src:/home/e/e1300530/tmp/MARSHAL-benac-results-push/third_party/negotiation_benchmark/src:",
+      "BP_STARTUP_DIAGNOSTICS": "1",
+      "BP_DIAGNOSTICS_DIR": "/home/e/e1300530/tmp/MARSHAL-benac-results-push/runs/social_mixed/outcome-seed42-871236"
+    }
+  }
+}

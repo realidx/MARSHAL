@@ -96,12 +96,16 @@ class SocialPipeline(BasePipeline):
             self.collector.data['bp_train']=load('train')
         saved_recipe=self.state.kv.get('stable_recipe')
         if saved_recipe:
-            self.collector.restore(saved_recipe)
+            self.collector.restore(saved_recipe, arm=options['arm']) if reasoning else self.collector.restore(saved_recipe)
         elif self.state.step>=0:
             raise ValueError('Old recipe checkpoint: export actor and start a new stage; do not resume optimizer silently')
         from training.social_mixed.validation import Validator
         if reasoning:
             from training.social_mixed.reasoning_validation import ReasoningValidator as Validator
+        if reasoning and self.state.kv.get('best_validation'):
+            from training.social_mixed.reasoning_validation import VERSION as validation_version
+            if self.state.kv['best_validation'].get('selection_version')!=validation_version:
+                raise ValueError('Validation selection changed to CalBench dev8; start a new stage to avoid comparing unlike scores')
         self.validator=Validator(self.collector.data,self.generate,seed=config.seed,
                                  concurrency=self.collector.concurrency)
         if not reasoning and options['arm'] in ('outcome','decomposed'):
@@ -162,7 +166,7 @@ class SocialPipeline(BasePipeline):
         outputs=outputs[:original]
         results=[]
         for req,out in zip(requests,outputs):
-            completion=parse_completion(self.parser,out['text'],req['tools'],truncated=out['finish_reason']=='length')
+            completion={} if req.get('raw_text') else parse_completion(self.parser,out['text'],req['tools'],truncated=out['finish_reason']=='length')
             results.append(dict(out,completion=completion,request=req))
         return results
 

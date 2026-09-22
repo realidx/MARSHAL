@@ -27,8 +27,6 @@ def request(task,arm='action_tools',variant=0):
         text=text.replace('Choose your next action.','Assess the queried preference; do not take a game action.')
         br=named.request(task,arm,variant)
         text+='\nBELIEF QUESTION\n'+json.dumps(visible['belief_question'])+'\n'+str(visible['belief_rules'])
-        if 'correct_previous_belief' in visible:
-            text+='\nCORRECT PREVIOUS BELIEF (before the final new history segment):\n'+json.dumps(visible['correct_previous_belief'])
         text+='\nBriefly explain, then submit exactly one SUBMIT_BELIEFS call.'
         result['tools']=br['tools']
     elif view!='O':raise ValueError(view)

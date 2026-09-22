@@ -1,0 +1,47 @@
+{
+  "options": {
+    "arm": "bp",
+    "seed": 42,
+    "total_tokens": 6553600,
+    "tokens_per_update": 65536,
+    "keep_checkpoints": 2,
+    "protocol_coefficient": 0.2,
+    "resume": null,
+    "diagnose_probabilities": false,
+    "check_only": false,
+    "gpu_profile": "h100-47"
+  },
+  "model": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+  "source_version": {
+    "kind": "git",
+    "commit": "1a69148339f154ee35b505606c01321addc34498",
+    "clean": true
+  },
+  "source_commit": "1a69148339f154ee35b505606c01321addc34498",
+  "source_bundle_sha256": null,
+  "data_manifest_sha256": "9e5aa61fc089189a062d4aa296df74a635d50be0e49c7478a7450358c7d2fa7d",
+  "dataset": "data_reasoning_v5_candidate",
+  "allowed_completion_modes": [
+    "binary",
+    "linear"
+  ],
+  "execution_profile": {
+    "gpus": 2,
+    "tp": 2,
+    "train_microbatch": 1,
+    "reference_microbatch": 1,
+    "train_resident": false,
+    "reference_resident": false,
+    "vllm_memory": 0.5,
+    "max_num_seqs": 16,
+    "recompute": "full"
+  },
+  "reward": "B/P binary; SP own terminal utility; invalid/truncated calls use independent negative advantage instead of task advantage",
+  "advantage_version": "call-local-negative-v1",
+  "mixture": {
+    "B": 0.5,
+    "P": 0.5
+  },
+  "grouping": "B/P task; selfplay reset and player seat across replicas",
+  "budget": "Generated response tokens entering training, including retries; finish current groups at boundary"
+}

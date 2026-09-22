@@ -251,3 +251,34 @@ bash examples/social_mixed/start_training.sh h100-96 four
 ## 当前验收边界
 
 CPU重算与接口检查不等于模型已经学会social reasoning。本轮SP/O启动前还需Q0可训练性、精确tokenizer长度与现有GPU概率监测及非有限值门禁；完整GPU恢复/累积梯度专项和B/Pplus保持验收暂不列为本轮必做项。当前manifest保持`formal_training_ready=false`。本机没有Hydra、Transformers/tokenizers及训练GPU环境，未报告这些GPU/配置检查为通过。
+
+## C/D启动边界更新
+
+按用户决定，多步P后续策略对源历史的潜在依赖作为持续复核项，不再单独作为C/D启动硬门槛。现有同提示对照未发现价值/标签冲突，未修改175道多步train P资格，也不宣称完成普遍历史独立性证明。后续发现具体反例时再针对相应题目处理。B/P探测用户指出已测试；当前本地未定位到本轮实际输出摘要，因此不重复提交探测，也不填写未经核实的通过率。
+
+## SP奖励比较恢复（2026-09-22，最新实现）
+
+当前reasoning入口的SP已撤销历史baseline：按同一reset采样组、同一席位，将已完成副本的终局utility减组均值、除总体标准差加1e-6。未完成副本不参与均值/标准差、任务advantage为0，不清空同组已完成副本；仅一个完成或完成副本同分时任务advantage为0。非法/截断调用仍保留原协议负项，任务项为0；轨迹权重、KL、实际回答长度平均、8×4并发、连续曝光和LR保持不变。新SP状态记录`sp_advantage_version=reset-seat-completed-standard-v1`，禁止静默恢复历史baseline的SP checkpoint；O/C/D恢复不受此标记限制。历史StableCollector实现保留用于溯源，当前reasoning SP直接走基础Collector后重新分配组内优势。未启动GPU训练。此前文中“当前SP采用历史baseline”的描述现在仅适用于已经完成的历史运行。
+
+## 反馈窗口采样改进（2026-09-22，后续新阶段）
+
+采用Q0初始化，不采用旧BP99初始化；未启动训练。C的O:P=2:1、D的O:B:P=1:1:1、标准差归一化、学习率、KL、每题8回答及P资格规则均保持。以下是新采样阶段，不能直接将旧C与新D解释为只差B的严格对照。
+
+- 现有训练侧严格历史前缀筛选得到28对B更新窗口、8对B保持窗口。固定游戏、自身偏好、公开偏好、先验、伙伴策略、setup和查询对象；私人结果改变时，仅接受可对应到当前观察者单次INVESTIGATE的新结果。不编造事件，不从validation迁移题目。标签保持只指当前定性标签相同，不证明数值posterior未变。
+- B输入仍是各时点原生可见历史，输出仍是possible_preferences/favored。不提供正确previous belief；前后题独立调用、独立评分，不宣称模型闭环维护自己的belief。每个D更新的三个B槽位中，两槽放同一窗口前后题，更新/保持窗口交替；另一槽继续formation覆盖。
+- C的对应两槽也换成同一窗口的O；O臂同样使用该窗口。保证采样组织同时作用于O/C/D，P槽与P屏蔽不改。
+- 每个更新另收集一个实际O奖励接受集合不相交的行动对，两题分别8回答、分别归一化；筛选同时要求fixed continuation payoff一致、已有isolated_B_action_pair标记。共53个训练对（不是53个独立结构，且与旧exact-argmax的53对不应仅凭数量视为同一集合）。按parent对交错轮转。
+- 保留至少一个全题库O覆盖组，防止对比题挤掉原有覆盖。因此最少9候选题组，不是PRO建议的固定12组；继续按原token目标收集，完整题组可超额，若连续长回答使最小批量超过目标，不能保证后续完全抵消。实际token与更新次数须记录。
+- 题库题文、teacher、split未重建；改的是已有题之间的关系筛选和采样。`feedback_windows.json`列出当前关系；运行时从实际加载的题和关系重新验证。新checkpoint状态标记feedback_version，旧O/C/D采样状态不能静默恢复到新阶段。SP不受反馈窗口采样改变影响。
+
+代码：training/social_mixed/feedback_sampling.py、reasoning_training.py。资格与提示检查见test_feedback_sampling.py；本地测试不能替代GPU工程验收或证明性能提升。
+
+## 训练内CalBench开发验证（2026-09-22）
+
+reasoning入口的O/SP/C/D完整交互验证现替换为8局CalBench stream：loose/dense/blocked/replan × uniform/varied，各取固定s1。不按模型成绩挑题。保留每局3次会议、4个当前actor席位、原生提示/JSON解析/动作规则及重试配置；不额外加载模型。原静态O/B/P面板及早期O监测保留。
+
+沿用Q0、第4/8更新的完整监测和每10更新正式评测/保存节奏。正式选择改为CalBench开发集headline、成功率、O parent-macro依次比较，早期监测仍不参与选择。报告保存各局完整trace/events、调用提示和原始文本、格式/截断及分场景成功率。旧选择分数不能直接resume混比。
+
+temperature=0，不开启batch-invariant，仍有数值/批次噪声。沿用训练常驻推理长度4096、回答上限1024，**不等同于冻结外部CalBench的32768/4096**；长历史超过限制会明确报错，不截断。训练机真实长度与GPU验收尚未执行。依赖examples/final_evaluation/calbench_requirements.txt；本地在/tmp/calbench-verify-env完成原生8局、216次脚本调用的集成检查，没有模型推理。
+
+这8个s1案例现在用于训练开发与checkpoint选择，不能再作为独立held-out案例汇总进原24局。其余16个s2/s3未由该验证器调用，但此前已有研究查看记录，不能称全新盲测。未来正式评测须清楚声明开发/评测边界。

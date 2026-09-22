@@ -4,10 +4,11 @@ from copy import deepcopy
 import math
 import random
 
-from training.social_mixed.core import seed_for
+from training.social_mixed.core import Collector, centered, seed_for
 from training.social_mixed.stabilization import StableCollector
 
 VERSION = 'social-reasoning-tristate-exposure-v5'
+SP_ADVANTAGE_VERSION = 'reset-seat-completed-standard-v1'
 ARMS = ('selfplay', 'outcome', 'conditioned', 'decomposed')
 WEIGHTS = {'outcome': {'O':1.}, 'conditioned': {'O':2/3, 'Pplus':1/3},
            'decomposed': {'O':1/3, 'B':1/3, 'Pplus':1/3}}
@@ -51,6 +52,45 @@ def group_advantages(scores, outputs, normalization):
     return [(v-mean)/scale if ok else 0. for v,ok in zip(values,semantic)],valid
 
 
+def assign_sp_completed_advantages(rows, units, metrics):
+    """Compare completed replicas only, independently for each reset-seat group."""
+    groups=defaultdict(list)
+    by_unit=defaultdict(list)
+    for row in rows:by_unit[row['unit']].append(row)
+    for unit in units:groups[unit['group']].append(unit)
+    mixed=0
+    for members in groups.values():
+        complete=[u for u in members if u['utility'] is not None]
+        values=[u['utility'] for u in complete]
+        if any(not math.isfinite(v) for v in values):
+            raise ValueError('Non-finite SP terminal utility')
+        mean=sum(values)/len(values) if values else 0.
+        std=math.sqrt(sum((v-mean)**2 for v in values)/len(values)) if values else 0.
+        advantages=dict(zip((u['unit'] for u in complete),centered(values) if values else []))
+        mixed+=int(bool(values) and max(values)>min(values))
+        for unit in members:
+            rs=by_unit[unit['unit']]
+            for row in rs:
+                row['task_advantage']=advantages.get(unit['unit'],0.) if not row['protocol_failure'] else 0.
+                row['task_weight']=len(rows)/len(by_unit)/len(rs)
+                row['protocol_weight']=row['loss_weight']
+                row['kl_weight']=row['loss_weight']
+                row['task_denominator']=0.
+                row['baseline']=mean
+                row['group_reward_std']=std
+                row['completed_replicas']=len(complete)
+                row['sp_advantage_version']=SP_ADVANTAGE_VERSION
+                row['advantage']=row['task_advantage']+row['protocol_advantage']
+    # Original collector metrics describe the legacy all-complete calculation.
+    for key in list(metrics):
+        if 'mixed_groups' in key or 'task_abs_weighted_mass' in key or 'nonzero_task_calls' in key:
+            metrics['legacy_group/'+key]=metrics.pop(key)
+    metrics.update({'selfplay/completed_mixed_groups':mixed,
+                    'selfplay/completed_player_episodes':sum(u['utility'] is not None for u in units),
+                    'selfplay/censored_player_episodes':sum(u['utility'] is None for u in units),
+                    'selfplay/nonzero_task_calls':sum(abs(r['task_advantage'])>1e-9 for r in rows)})
+
+
 class ReasoningCollector(StableCollector):
     def __init__(self,*args,normalization='standard_sequence',**kwargs):
         super().__init__(*args,**kwargs)
@@ -59,7 +99,7 @@ class ReasoningCollector(StableCollector):
         self.sp_replicas=4
         self.sp_initial_groups=8  # 32 active trajectories, independent of inference chunk size.
         self.state=dict(version=VERSION,normalization=normalization,questions={},baselines={},
-                        block=0,consumed=0,fill_cursor=0,sp_cursor=0)
+                        block=0,consumed=0,fill_cursor=0,sp_cursor=0,sp_advantage_version=SP_ADVANTAGE_VERSION)
         self.schedule=case_schedule(self.data['bp_train'],self.seed)
         self.views={(t['canonical_id'],t['paired_view']):t for t in self.data['bp_train']}
         if any(t.get('paired_view')=='Pplus' and 'teacher' in t and 'p_supervision' not in t for t in self.data['bp_train']):
@@ -68,6 +108,14 @@ class ReasoningCollector(StableCollector):
             raise ValueError('Incomplete reasoning package')
         self.informative=[c for c in self.schedule if self.views[c,'O']['belief_action_relevant'] and self.views[c,'Pplus'].get('p_train_eligible',True)]
         self.controls=[c for c in self.schedule if not self.views[c,'O']['belief_action_relevant'] and self.views[c,'Pplus'].get('p_train_eligible',True)]
+        self.feedback_windows={}
+        if all('canonical_action_task' in t for t in self.data['bp_train']):
+            from training.social_mixed.reasoning_bank import load
+            from training.social_mixed.feedback_sampling import build_windows, VERSION as feedback_version
+            self.feedback_windows=build_windows(self.data['bp_train'],load('train','relations.jsonl'))
+            if not all(self.feedback_windows.values()):
+                raise ValueError('Feedback recipe requires certified update, maintain and action pairs')
+            self.state['feedback_version']=feedback_version
         if not self.informative or not self.controls:
             raise ValueError('Both decision-relevant beliefs and control cases are required')
 
@@ -82,9 +130,13 @@ class ReasoningCollector(StableCollector):
         self.state['sp_cursor']=cursor+1
         return candidates[order[offset]]
 
-    def restore(self,state):
+    def restore(self,state,arm=None):
         if state.get('version')!=VERSION or state.get('normalization')!=self.normalization:
             raise ValueError('Reasoning recipe changed on resume')
+        if arm not in ('outcome','conditioned','decomposed') and state.get('sp_advantage_version')!=SP_ADVANTAGE_VERSION:
+            raise ValueError('SP advantage recipe changed; start a new stage, do not silently resume historical baseline')
+        if self.feedback_windows and arm!='selfplay' and state.get('feedback_version')!=self.state.get('feedback_version'):
+            raise ValueError('Feedback sampling changed; start a new stage')
         self.state=deepcopy(state)
 
     def collect(self,step,arm,token_target=65536,validation=False):
@@ -92,7 +144,8 @@ class ReasoningCollector(StableCollector):
         if arm not in ARMS:raise ValueError('Unknown four-arm condition')
         if arm=='selfplay':
             boundary=(self.state['block']+1)*token_target
-            rows,units,games,metrics=super().collect(step,arm,max(1,boundary-self.state['consumed']))
+            rows,units,games,metrics=Collector.collect(self,step,arm,max(1,boundary-self.state['consumed']))
+            assign_sp_completed_advantages(rows,units,metrics)
             self.state['block']+=1
             self.state['consumed']+=metrics['generated_tokens']
             metrics.update(token_boundary=boundary,token_overshoot=self.state['consumed']-boundary,
@@ -146,10 +199,18 @@ class ReasoningCollector(StableCollector):
         anchors.append(self.controls[block%len(self.controls)])
         for slot in range(6):
             canonical=self.schedule[block%len(self.schedule)] if slot==5 else anchors[slot%3]
+            if self.feedback_windows and slot in (3,4):
+                kind='update' if block%2==0 else 'maintain'
+                windows=self.feedback_windows[kind]
+                canonical=windows[(block//2)%len(windows)][slot-3]
             view='Pplus' if slot<3 and arm!='outcome' else 'B' if slot>=3 and arm=='decomposed' else 'O'
             collect_group(canonical,view,f'paired-{slot}')
+        # Same action contrast for O/C/D; independent eight-response groups.
+        if self.feedback_windows:
+            pair=self.feedback_windows['must_change'][block%len(self.feedback_windows['must_change'])]
+            for j,canonical in enumerate(pair):collect_group(canonical,'O',f'must-change-{j}')
         # O has a separate deterministic full-coverage stream; no reward-dependent resampling.
-        while counts['O']==0 or start+tokens<boundary:
+        while counts['O']==0 or start+tokens<boundary or (self.feedback_windows and not any(r.get('exposure_slot','').startswith('fill-') for r in rows)):
             cursor=self.state['fill_cursor']
             if counts['O']==0:
                 collect_group(anchors[block%3],'O','paired-O-anchor')

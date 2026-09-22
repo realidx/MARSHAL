@@ -139,24 +139,31 @@ class Validator:
             if len(answers)!=len(batch):raise RuntimeError('Missing validation answers')
             for (task,req),answer in zip(batch,answers):
                 bp.append(dict(answer,task=task,replica=0,request=req,score=reward(task,answer['completion'])))
-        games=[];calls=[]
-        episodes=[Episode(r,f'{VERSION}:current_team:{r["id"]}',0,self.seed) for r in self.resets]
-        while episodes:
-            for offset in range(0,len(episodes),self.concurrency):
-                batch=episodes[offset:offset+self.concurrency]
-                requests=[dict(ep.request(),temperature=0.0) for ep in batch]
-                outputs=self.generate(requests)
-                if len(outputs)!=len(batch):raise RuntimeError('Missing game validation answers')
-                for ep,answer in zip(batch,outputs):
-                    ep.accept(answer);c=ep.calls[-1];c.update(evaluation_game=ep.group,evaluation_role='current_team');calls.append(c)
-            games.extend(dict(ep.summary(),condition='current_team') for ep in episodes if ep.status!='running')
-            episodes=[ep for ep in episodes if ep.status=='running']
-        metrics=summarize_bp(bp)|summarize_games(games,calls)
+        if getattr(self,'calbench_development',False):
+            from training.social_mixed.calbench_validation import run
+            games,calls,game_metrics,calbench_protocol=run(self.generate,self.seed)
+            metrics=summarize_bp(bp)|game_metrics
+        else:
+            games=[];calls=[]
+            episodes=[Episode(r,f'{VERSION}:current_team:{r["id"]}',0,self.seed) for r in self.resets]
+            while episodes:
+                for offset in range(0,len(episodes),self.concurrency):
+                    batch=episodes[offset:offset+self.concurrency]
+                    requests=[dict(ep.request(),temperature=0.0) for ep in batch]
+                    outputs=self.generate(requests)
+                    if len(outputs)!=len(batch):raise RuntimeError('Missing game validation answers')
+                    for ep,answer in zip(batch,outputs):
+                        ep.accept(answer);c=ep.calls[-1];c.update(evaluation_game=ep.group,evaluation_role='current_team');calls.append(c)
+                games.extend(dict(ep.summary(),condition='current_team') for ep in episodes if ep.status!='running')
+                episodes=[ep for ep in episodes if ep.status=='running']
+            metrics=summarize_bp(bp)|summarize_games(games,calls)
         coverage=Counter(k for t in self.tasks for k in cells(t))
         protocol=dict(bp_temperature=0.0,sp_temperature=0.0,coverage=dict(coverage),missing_diagnostics=[k for k in ('P4/result_use','B3/update') if not coverage[k]],version=VERSION,bp_tasks=len(self.tasks),bp_replicas=1,bp_ids=[t['id'] for t in self.tasks],
             reset_ids=[r['id'] for r in self.resets],condition='current_team',seed=self.seed,
             data_sha256=hashlib.sha256(json.dumps(self.data,sort_keys=True).encode()).hexdigest(),
             caveats='Development only. Team behavior, not fixed-opponent improvement. Terminal means are conditional on completion; report bounds alongside. No B→P composition claim. Infrastructure errors abort validation, never score zero.')
+        if getattr(self,'calbench_development',False):
+            protocol.update(calbench=calbench_protocol,reset_ids=[],sp_temperature=None)
         return dict(protocol=protocol,metrics=metrics,bp_calls=bp,game_calls=calls,games=games)
 
 

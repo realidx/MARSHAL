@@ -114,7 +114,8 @@ class ReasoningTests(unittest.TestCase):
         m,_=metrics_and_state(calls(dict(O=False,B=True,Pplus=True)),state)
         self.assertEqual(m['reasoning/O/forgotten_from_previous'],1)
         self.assertEqual(m['reasoning/B_Pplus_correct_O_wrong'],1)
-        m['games/current_team/all/cohort_player_utility_lower']=.2
+        m['calbench/headline']=.2
+        m['calbench/success_rate']=.25
         a=selection_score(m);m['reasoning/B/macro_accuracy']=100
         self.assertEqual(a,selection_score(m))
 
