@@ -143,7 +143,7 @@ def main():
     args.recipe=args.recipe or ('reasoning' if args.arm in ARMS else 'legacy')
     if args.recipe=='reasoning':
         if args.arm not in ARMS:raise ValueError('Reasoning recipe requires one of SP/O/C/D')
-        if args.tokens_per_update<57344 or args.total_tokens%args.tokens_per_update:
+        if args.arm!='decomposed' and (args.tokens_per_update<57344 or args.total_tokens%args.tokens_per_update):
             raise ValueError('Reasoning uses complete nominal token blocks >=57344 tokens')
         if not (0<args.max_behavior_logprob_delta<1 and 0<args.max_behavior_clip_fraction<1):
             raise ValueError('Probability acceptance thresholds must be in (0,1)')
@@ -165,6 +165,10 @@ def main():
     if args.recipe=='reasoning':
         from training.social_mixed.reasoning_training import VERSION as recipe_version
     options['recipe_version']=recipe_version
+    if args.recipe=='reasoning' and args.arm=='decomposed':
+        from training.social_mixed.coverage_sampling import VERSION as coverage_version
+        options['coverage_version']=coverage_version
+        options['candidate_groups_per_update']={'O':4,'B':4,'Pplus':4}
     if args.recipe=='reasoning' or args.arm in ('outcome','decomposed'):
         if args.recipe=='reasoning':
             from training.social_mixed.reasoning_bank import PATH,load

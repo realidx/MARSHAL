@@ -100,6 +100,8 @@ class ReasoningCollector(StableCollector):
         self.sp_initial_groups=8  # 32 active trajectories, independent of inference chunk size.
         self.state=dict(version=VERSION,normalization=normalization,questions={},baselines={},
                         block=0,consumed=0,fill_cursor=0,sp_cursor=0,sp_advantage_version=SP_ADVANTAGE_VERSION)
+        from training.social_mixed.coverage_sampling import VERSION as coverage_version
+        self.state.update(coverage_version=coverage_version,coverage={})
         self.schedule=case_schedule(self.data['bp_train'],self.seed)
         self.views={(t['canonical_id'],t['paired_view']):t for t in self.data['bp_train']}
         if any(t.get('paired_view')=='Pplus' and 'teacher' in t and 'p_supervision' not in t for t in self.data['bp_train']):
@@ -137,6 +139,10 @@ class ReasoningCollector(StableCollector):
             raise ValueError('SP advantage recipe changed; start a new stage, do not silently resume historical baseline')
         if self.feedback_windows and arm!='selfplay' and state.get('feedback_version')!=self.state.get('feedback_version'):
             raise ValueError('Feedback sampling changed; start a new stage')
+        if arm=='decomposed':
+            from training.social_mixed.coverage_sampling import VERSION as coverage_version
+            if state.get('coverage_version')!=coverage_version:
+                raise ValueError('D coverage/update recipe changed; start a new stage')
         self.state=deepcopy(state)
 
     def collect(self,step,arm,token_target=65536,validation=False):
@@ -158,7 +164,7 @@ class ReasoningCollector(StableCollector):
     def collect_paired(self,step,arm,token_target):
         from training.social_mixed.paired_requests import request
         from training.social_mixed.reasoning_scoring import score as reward
-        if token_target < 7*8*1024:
+        if arm!='decomposed' and token_target < 7*8*1024:
             raise ValueError('Token block must fit six auxiliary groups plus one O group at max length')
         block=self.state['block']; rows=[]; units=[]; counts=Counter(); effective=Counter(); tokens=0
         boundary=(block+1)*token_target
@@ -182,6 +188,9 @@ class ReasoningCollector(StableCollector):
                 for s,o in zip(scores,outputs):s.update(decision_metrics(task,o['completion']))
             advantages,valid=group_advantages(scores,outputs,self.normalization)
             counts[view]+=1;effective[view]+=int(any(abs(a)>1e-12 for a in advantages))
+            if arm=='decomposed':
+                entry=self.state['coverage'][view+':'+canonical]
+                entry['effective']=entry.get('effective',0)+int(any(abs(a)>1e-12 for a in advantages))
             for replica,(o,s,a,ok) in enumerate(zip(outputs,scores,advantages,valid)):
                 unit=f'{group}:r{replica}'
                 rows.append(dict(o,kind=view,skill=task['pool'],kernel=task['kernel'],group=group,unit=unit,
@@ -194,29 +203,33 @@ class ReasoningCollector(StableCollector):
                     task_denominator=0. if self.normalization=='standard_sequence' else 1024.,advantage_version=VERSION))
                 units.append(dict(group=group,unit=unit,replica=replica,kind=view,utility=s['reward']))
                 tokens+=len(o['response_ids'])
-        # C/D see identical Pplus cases, seeds and slots. B replaces C's O slots.
-        anchors=[self.informative[(2*block+j)%len(self.informative)] for j in range(2)]
-        anchors.append(self.controls[block%len(self.controls)])
-        for slot in range(6):
-            canonical=self.schedule[block%len(self.schedule)] if slot==5 else anchors[slot%3]
-            if self.feedback_windows and slot in (3,4):
-                kind='update' if block%2==0 else 'maintain'
-                windows=self.feedback_windows[kind]
-                canonical=windows[(block//2)%len(windows)][slot-3]
-            view='Pplus' if slot<3 and arm!='outcome' else 'B' if slot>=3 and arm=='decomposed' else 'O'
-            collect_group(canonical,view,f'paired-{slot}')
-        # Same action contrast for O/C/D; independent eight-response groups.
-        if self.feedback_windows:
-            pair=self.feedback_windows['must_change'][block%len(self.feedback_windows['must_change'])]
-            for j,canonical in enumerate(pair):collect_group(canonical,'O',f'must-change-{j}')
-        # O has a separate deterministic full-coverage stream; no reward-dependent resampling.
-        while counts['O']==0 or start+tokens<boundary or (self.feedback_windows and not any(r.get('exposure_slot','').startswith('fill-') for r in rows)):
-            cursor=self.state['fill_cursor']
-            if counts['O']==0:
-                collect_group(anchors[block%3],'O','paired-O-anchor')
-            else:
-                collect_group(self.schedule[cursor%len(self.schedule)],'O',f'fill-{cursor}')
-                self.state['fill_cursor']=cursor+1
+        if arm=='decomposed':
+            from training.social_mixed.coverage_sampling import plan
+            for canonical,view,slot in plan(self):collect_group(canonical,view,slot)
+        else:
+            # C/D see identical Pplus cases, seeds and slots. B replaces C's O slots.
+            anchors=[self.informative[(2*block+j)%len(self.informative)] for j in range(2)]
+            anchors.append(self.controls[block%len(self.controls)])
+            for slot in range(6):
+                canonical=self.schedule[block%len(self.schedule)] if slot==5 else anchors[slot%3]
+                if self.feedback_windows and slot in (3,4):
+                    kind='update' if block%2==0 else 'maintain'
+                    windows=self.feedback_windows[kind]
+                    canonical=windows[(block//2)%len(windows)][slot-3]
+                view='Pplus' if slot<3 and arm!='outcome' else 'B' if slot>=3 and arm=='decomposed' else 'O'
+                collect_group(canonical,view,f'paired-{slot}')
+            # Same action contrast for O/C/D; independent eight-response groups.
+            if self.feedback_windows:
+                pair=self.feedback_windows['must_change'][block%len(self.feedback_windows['must_change'])]
+                for j,canonical in enumerate(pair):collect_group(canonical,'O',f'must-change-{j}')
+            # O has a separate deterministic full-coverage stream; no reward-dependent resampling.
+            while counts['O']==0 or start+tokens<boundary or (self.feedback_windows and not any(r.get('exposure_slot','').startswith('fill-') for r in rows)):
+                cursor=self.state['fill_cursor']
+                if counts['O']==0:
+                    collect_group(anchors[block%3],'O','paired-O-anchor')
+                else:
+                    collect_group(self.schedule[cursor%len(self.schedule)],'O',f'fill-{cursor}')
+                    self.state['fill_cursor']=cursor+1
         n=len(rows)
         for r in rows:
             w=n*WEIGHTS[arm][r['kind']]/(8*counts[r['kind']])
@@ -226,6 +239,10 @@ class ReasoningCollector(StableCollector):
         metrics=dict(generated_tokens=tokens,rows=n,games=0,candidate_groups=sum(counts.values()),
                      skip_optimizer=False,token_block=block,token_boundary=boundary,
                      token_overshoot=start+tokens-boundary)
+        if arm=='decomposed':
+            metrics.pop('token_boundary');metrics.pop('token_overshoot')
+            metrics['fixed_candidate_groups']=12
+            metrics['coverage_unique_tasks']=len(self.state['coverage'])
         for view in WEIGHTS[arm]:
             rs=[r for r in rows if r['kind']==view]
             metrics.update({f'{view}/candidate_groups':counts[view],f'{view}/semantic_contrast_groups':effective[view],

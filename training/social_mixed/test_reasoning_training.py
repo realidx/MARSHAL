@@ -65,23 +65,20 @@ class ReasoningTests(unittest.TestCase):
             validator.generate=lambda reqs:[]
             with self.assertRaises(RuntimeError):validator.run_static_o()
 
-    def test_auxiliary_exposure_matches_with_different_response_lengths(self):
-        c,d=self.collector(1024),self.collector(900)
-        for step in range(2):
-            cr,_,_,cm=self.run_batch(c,step,'conditioned');dr,_,_,dm=self.run_batch(d,step,'decomposed')
-            for rows in (cr,dr):self.assertTrue(any(r['kind']=='O' for r in rows))
-            cv=[(r['canonical_id'],r['request']['seed']) for r in cr if r['kind']=='Pplus']
-            dv=[(r['canonical_id'],r['request']['seed']) for r in dr if r['kind']=='Pplus']
-            self.assertEqual(cv,dv);self.assertEqual(len(cv),24)
-            self.assertEqual(cm['Pplus/candidate_groups'],3);self.assertEqual(dm['B/candidate_groups'],3)
-            self.assertLess(dm['token_overshoot'],8192)
-            for arm,rows in [('conditioned',cr),('decomposed',dr)]:
-                for view,w in WEIGHTS[arm].items():
-                    self.assertAlmostEqual(sum(r['task_weight'] for r in rows if r['kind']==view)/len(rows),w)
+    def test_fixed_D_exposure_independent_of_lengths(self):
+        c,d=self.collector(1024),self.collector(20)
+        for step in range(3):
+            cr,_,_,cm=self.run_batch(c,step,'decomposed');dr,_,_,dm=self.run_batch(d,step,'decomposed')
+            self.assertEqual([(r['canonical_id'],r['request']['seed']) for r in cr],
+                             [(r['canonical_id'],r['request']['seed']) for r in dr])
+            self.assertEqual(len(cr),96)
+            for view,w in WEIGHTS['decomposed'].items():
+                self.assertEqual(cm[view+'/candidate_groups'],4)
+                self.assertAlmostEqual(sum(r['task_weight'] for r in cr if r['kind']==view)/len(cr),w)
 
     def test_resume_schedule_and_zero_signal_do_not_resample(self):
         c=self.collector(mixed=False);rows,_,_,metrics=self.run_batch(c,0,'decomposed')
-        self.assertEqual(metrics['candidate_groups'],8)
+        self.assertEqual(metrics['candidate_groups'],12)
         self.assertEqual(metrics['B/semantic_contrast_groups'],0)
         self.assertTrue(all(r['task_advantage']==0 for r in rows))
         self.assertFalse(metrics['skip_optimizer']) # candidate KL/protocol still have a defined objective
@@ -94,8 +91,8 @@ class ReasoningTests(unittest.TestCase):
         c=self.collector();visited=[]
         for step in range(12):
             rows,_,_,_=self.run_batch(c,step,'decomposed')
-            visited.extend(r['canonical_id'] for r in rows if r['replica']==0 and r['exposure_slot'].startswith('fill-'))
-        self.assertEqual(visited,c.schedule)
+            visited.extend(r['canonical_id'] for r in rows if r['replica']==0 and r['kind']=='O')
+        self.assertEqual(set(visited),set(c.schedule))
 
     def test_invalids_do_not_create_fake_semantic_contrast(self):
         scores=[dict(status='ok',reward=1)]*4+[dict(status='format_failure',reward=0)]*4

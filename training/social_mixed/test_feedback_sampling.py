@@ -35,6 +35,27 @@ class FeedbackTests(unittest.TestCase):
                     text=request(t)['messages'][1]['content']
                     self.assertNotIn('CORRECT PREVIOUS BELIEF',text)
 
+    def test_fixed_coverage_relations_and_resume(self):
+        from training.social_mixed.coverage_sampling import plan
+        c=ReasoningCollector({'bp_train':self.tasks},lambda r:[])
+        for step in range(50):
+            c.state['block']=step
+            batch=plan(c)
+            for view in ('O','B','Pplus'):
+                ids=[cid for cid,v,slot in batch if v==view]
+                self.assertEqual(len(ids),4);self.assertEqual(len(set(ids)),4)
+            pair=tuple(cid for cid,v,slot in batch if slot.startswith('must-change'))
+            self.assertIn(pair,self.windows['must_change'])
+            kind='update' if step%2==0 else 'maintain'
+            self.assertIn(tuple(cid for cid,v,slot in batch if slot.startswith(kind)),self.windows[kind])
+            for cid,v,slot in batch:
+                if v=='Pplus':self.assertTrue(c.views[cid,v].get('p_train_eligible',True))
+        d=ReasoningCollector({'bp_train':self.tasks},lambda r:[])
+        d.restore(deepcopy(c.state),arm='decomposed')
+        self.assertEqual(plan(c),plan(d))
+        bad=deepcopy(c.state);bad.pop('coverage_version')
+        with self.assertRaises(ValueError):d.restore(bad,arm='decomposed')
+
     def test_resume_identifies_sampling_change(self):
         c=ReasoningCollector({'bp_train':self.tasks},lambda r:[])
         old=deepcopy(c.state);old.pop('feedback_version')
