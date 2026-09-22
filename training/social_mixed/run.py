@@ -43,6 +43,10 @@ def configuration(arm, seed=42, resume=None):
         value.seed=seed
         from training.social_mixed.hardware import apply
         apply(value,os.environ.get("SOCIAL_GPU_PROFILE","h100-96"))
+        # Resident CalBench uses the formal 32K inference context; training
+        # optimizer batches retain the independent 4096-token sequence limit.
+        if arm in ('selfplay','outcome','conditioned','decomposed'):
+            value.actor_infer.strategy_args.strategy_config.max_model_len=32768
         # SocialPipeline performs exactly one optimizer update per collected
         # batch. Generic RLVR derives steps from its fixed rollout_batch_size
         # (a placeholder here), which floors to zero for microbatch > 1.

@@ -147,8 +147,11 @@ class SocialPipeline(BasePipeline):
             if (not isinstance(ids, list) or not ids
                     or any(not isinstance(token_id, int) for token_id in ids)):
                 raise TypeError('Chat template must return one unbatched list of integer input_ids')
-            if len(ids)+1024>self.pipeline_config.sequence_length:
-                raise ValueError(f'Prompt has {len(ids)} tokens; refusing to truncate private/public state')
+            # Only CalBench raw-text requests use the larger inference context.
+            limit=(self.pipeline_config.actor_infer.strategy_args.strategy_config['max_model_len']
+                   if req.get('raw_text') else self.pipeline_config.sequence_length)
+            if len(ids)+1024>limit:
+                raise ValueError(f'Prompt has {len(ids)} tokens, limit={limit}; refusing to truncate private/public state')
             encoded.append(dict(prompt_ids=ids,seed=req['seed'],temperature=req.get('temperature',1.0)))
         # Replica dispatch requires divisibility. Dummy padding is never scored or
         # trained, and uses a separate request seed.
