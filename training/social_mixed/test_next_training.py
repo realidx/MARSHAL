@@ -63,5 +63,26 @@ class NextTrainingTests(unittest.TestCase):
             self.assertEqual(events,['offload',('sync',0),('validation',-1,0)])
             self.assertFalse((Path(tmp)/'checkpoints').exists())
 
+    def test_resume_does_not_restore_deleted_best_checkpoint_pointer(self):
+        source=Path(__file__).with_name('pipeline.py').read_text()
+        cls=next(n for n in ast.parse(source).body if isinstance(n,ast.ClassDef) and n.name=='SocialPipeline')
+        method=next(n for n in cls.body if isinstance(n,ast.FunctionDef) and n.name=='run')
+        method.decorator_list=[]
+        namespace={'json':json,'Path':Path}
+        exec(compile(ast.fix_missing_locations(ast.Module(body=[method],type_ignores=[])),'pipeline.run','exec'),namespace)
+        with TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            latest=root/'checkpoints/checkpoint-0'
+            latest.mkdir(parents=True)
+            (latest/'COMPLETE.json').write_text('{}')
+            best=dict(checkpoint=str(root/'deleted-checkpoint-19'),checkpoint_retained=True,score=[1])
+            state=SimpleNamespace(step=0,kv={'best_validation':best})
+            fake=SimpleNamespace(root=root,pipeline_config=SimpleNamespace(max_steps=1),state=state,
+                options={'total_tokens':1},stop_requested=False,save=lambda *args,**kwargs:self.fail('unexpected save'))
+            namespace['run'](fake)
+            self.assertFalse((root/'BEST_CHECKPOINT').exists())
+            self.assertFalse(state.kv['best_validation']['checkpoint_retained'])
+            self.assertEqual(json.loads((root/'BEST_VALIDATION.json').read_text())['checkpoint'],best['checkpoint'])
+
 
 if __name__=='__main__':unittest.main()

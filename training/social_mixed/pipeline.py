@@ -286,7 +286,11 @@ class SocialPipeline(BasePipeline):
         elif self.state.kv.get('best_validation'):
             best=self.state.kv['best_validation']
             if best.get('checkpoint_retained',True):
-                (self.root/'BEST_CHECKPOINT').write_text(best['checkpoint']+'\n')
+                if (Path(best['checkpoint'])/'COMPLETE.json').is_file():
+                    (self.root/'BEST_CHECKPOINT').write_text(best['checkpoint']+'\n')
+                else:
+                    best=dict(best,checkpoint_retained=False)
+                    self.state.kv['best_validation']=best
             (self.root/'BEST_VALIDATION.json').write_text(json.dumps(best,indent=2)+'\n')
         for step in range(self.state.step+1,cfg.max_steps):
             if consumed>=self.options['total_tokens'] or self.stop_requested:break
