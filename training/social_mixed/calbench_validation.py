@@ -11,6 +11,18 @@ CASE_IDS=[f'{family}_{cost}_s1' for family in ('loose','dense','blocked','replan
 
 def run(generate,seed):
     source=verify_source()
+    # Training uses Python 3.10, while the pinned CalBench runner uses 3.11.
+    # Supply the standard-library names imported by the hash-verified source.
+    import enum
+    import typing
+    import typing_extensions
+    if not hasattr(enum,'StrEnum'):
+        class StrEnum(str,enum.Enum):
+            pass
+        enum.StrEnum=StrEnum
+    for name in ('NotRequired','Required','Self'):
+        if not hasattr(typing,name):
+            setattr(typing,name,getattr(typing_extensions,name))
     from calendar_game.game import CalendarGame
     import calendar_game.game as module
     manifest,cases=load_frozen()
