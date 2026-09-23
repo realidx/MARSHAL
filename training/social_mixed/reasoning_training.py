@@ -111,9 +111,12 @@ class ReasoningCollector(StableCollector):
         self.informative=[c for c in self.schedule if self.views[c,'O']['belief_action_relevant'] and self.views[c,'Pplus'].get('p_train_eligible',True)]
         self.controls=[c for c in self.schedule if not self.views[c,'O']['belief_action_relevant'] and self.views[c,'Pplus'].get('p_train_eligible',True)]
         self.feedback_windows={}
+        self.p_categories={}
         if all('canonical_action_task' in t for t in self.data['bp_train']):
             from training.social_mixed.reasoning_bank import load
             from training.social_mixed.feedback_sampling import build_windows, VERSION as feedback_version
+            from training.social_mixed.p_task_categories import inventory
+            self.p_categories=inventory(self.data['bp_train'],load('train','cases.jsonl'))
             self.feedback_windows=build_windows(self.data['bp_train'],load('train','relations.jsonl'))
             if not all(self.feedback_windows.values()):
                 raise ValueError('Feedback recipe requires certified update, maintain and action pairs')

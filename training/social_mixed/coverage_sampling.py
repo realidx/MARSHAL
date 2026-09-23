@@ -1,5 +1,5 @@
 """Fixed D batches, intact relations and checkpointed exposure balancing."""
-VERSION = 'd-coverage-fixed12-v1'
+VERSION = 'd-coverage-fixed12-pcategories-v2'
 
 
 def plan(collector):
@@ -34,5 +34,13 @@ def plan(collector):
     for view in ('O','B','Pplus'):
         eligible=[c for c in collector.schedule if view!='Pplus' or collector.views[c,view].get('p_train_eligible',True)]
         while len(used[view])<4:
-            choose(view,[(c,) for c in eligible],'coverage-'+view)
+            candidates=[c for c in eligible if c not in used[view]]
+            if view=='Pplus' and collector.p_categories:
+                from training.social_mixed.p_task_categories import cell as p_cell
+                buckets={}
+                for c in candidates:buckets.setdefault(p_cell(collector.p_categories[c]),[]).append(c)
+                visits=state.setdefault('p_category_exposure',{})
+                chosen=min(buckets,key=lambda k:(visits.get(k,0),k))
+                candidates=buckets[chosen];visits[chosen]=visits.get(chosen,0)+1
+            choose(view,[(c,) for c in candidates],'coverage-'+view)
     return result

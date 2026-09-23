@@ -50,6 +50,9 @@ class FeedbackTests(unittest.TestCase):
             self.assertIn(tuple(cid for cid,v,slot in batch if slot.startswith(kind)),self.windows[kind])
             for cid,v,slot in batch:
                 if v=='Pplus':self.assertTrue(c.views[cid,v].get('p_train_eligible',True))
+        visits=list(c.state['p_category_exposure'].values())
+        self.assertEqual(len(visits),12)
+        self.assertLessEqual(max(visits)-min(visits),1)
         d=ReasoningCollector({'bp_train':self.tasks},lambda r:[])
         d.restore(deepcopy(c.state),arm='decomposed')
         self.assertEqual(plan(c),plan(d))
