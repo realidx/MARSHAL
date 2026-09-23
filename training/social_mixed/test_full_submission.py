@@ -24,7 +24,8 @@ class SubmissionTests(unittest.TestCase):
 from pathlib import Path
 if '-c' in sys.argv:
     Path(sys.argv[-1]).write_text(json.dumps(dict(kind='stub',commit='test-revision')))
-elif 'unittest' in sys.argv or 'training.social_mixed.check_dependencies' in sys.argv:
+elif ('unittest' in sys.argv or 'training.social_mixed.check_dependencies' in sys.argv
+      or 'training.social_mixed.reasoning_preflight' in sys.argv):
     print('{}')
 else:
     os.execv(sys.executable,[sys.executable]+sys.argv[1:])
