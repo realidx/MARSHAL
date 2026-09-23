@@ -2,7 +2,7 @@
 
 官方仓库完整源码保存在 `third_party/CollabSim`，固定 commit：
 `08ed0ed1cefb2edf1ea389b20ba8355815a7c8d0`。
-来自 GitHub 完整源码压缩包，160个文件，不含Git历史；保留LICENSE、README、源码、提示、配置、文档和uv.lock。`third_party/CollabSim.source.json`记录逐文件SHA256；启动前核验。没有修改上游文件。
+来自 GitHub 完整源码压缩包；对提交到 Git 的156个文件逐个校验SHA256，不含Git历史、`.DS_Store`和3张未提交的生成图。保留LICENSE、README、源码、提示、配置、文档和uv.lock。`third_party/CollabSim.source.json`记录逐文件SHA256；启动前核验。没有修改上游文件。
 
 入口：`python -m examples.final_evaluation.shapefactory_lite`。不再导入旧的固定周期Factory、Lite v2引导提示或旧JSON规范化器。通过独立子进程在官方仓库目录调用 `python -m src.cli`，沿用原生提示组合、persona、对话历史、状态格式、解析、反馈、控制器和探测。
 
@@ -36,7 +36,7 @@ python -m examples.final_evaluation.shapefactory_lite \
 
 ## 已检查与限制
 
-- 160个原生文件SHA256一致。
+- 156个已提交原生文件SHA256一致。
 - 四配置通过原生schema校验。
 - 测试确保prompts/protocol/probe/controls/action_space与对应原配置完全相同。
 - 原生经济状态转换测试：非专长生产再履约，余额220。该测试直接验证经济动作，不冒充控制器真实30秒计时验收。

@@ -25,11 +25,14 @@ def main():
     parser.add_argument('--max-model-len',type=int,default=32768)
     parser.add_argument('--runner-python',type=Path,default=Path('/raid/chenjiahao/mas/.venv-calbench/bin/python'))
     parser.add_argument('--parallel-games',type=int,default=2)
-    parser.add_argument('--suite',choices=['smoke','structures','formal','stream','shapefactory'],default='smoke')
+    parser.add_argument('--max-num-seqs',type=int,default=4)
+    parser.add_argument('--disable-chunked-prefill',action='store_true')
+    parser.add_argument('--disable-cascade-attn',action='store_true')
+    parser.add_argument('--suite',choices=['smoke','structures','formal','stream','shapefactory','shapefactory_native_lite'],default='smoke')
     args=parser.parse_args()
     if args.max_tokens is None:
-        args.max_tokens = 4096 if args.suite in ('stream','shapefactory') else 768
-    if args.parallel_games<1:parser.error('--parallel-games must be positive')
+        args.max_tokens = 4096 if args.suite in ('stream','shapefactory','shapefactory_native_lite') else 768
+    if args.parallel_games<1 or args.max_num_seqs<1:parser.error('--parallel-games and --max-num-seqs must be positive')
     gpus=os.environ.get('CUDA_VISIBLE_DEVICES','').split(',')
     allowed=(1,2) if args.runtime=='soc' else (2,)
     if len(gpus) not in allowed or any(not g for g in gpus) or len(set(gpus))!=len(gpus):
@@ -60,7 +63,7 @@ def main():
         config['chat_template_kwargs']={'enable_thinking':False}
         (out/'thinking_template_check.json').write_text(json.dumps(dict(enabled_suffix=on[-200:],disabled_suffix=off[-200:]),indent=2)+'\n')
     routes=out/'routes.json';routes.write_text(json.dumps(config,indent=2)+'\n')
-    if args.suite in ('formal','stream','shapefactory'):
+    if args.suite in ('formal','stream','shapefactory','shapefactory_native_lite'):
         if args.max_model_len!=32768: raise ValueError('Formal context budget is frozen at 32768')
         files={}
         for path in sorted(args.model.rglob('*')):
@@ -97,8 +100,10 @@ def main():
         for index,(gpu,port,name) in enumerate(zip(gpus,args.ports,[f'social-replica-{i}' for i in range(len(gpus))])):
             cmd=[sys.executable,'-u','-m','vllm.entrypoints.openai.api_server','--model',str(args.model.resolve()),
                  '--served-model-name',name,'--host','127.0.0.1','--port',str(port),'--tensor-parallel-size','1',
-                 '--dtype','bfloat16','--max-model-len',str(args.max_model_len),'--max-num-seqs','4',
+                 '--dtype','bfloat16','--max-model-len',str(args.max_model_len),'--max-num-seqs',str(args.max_num_seqs),
                  '--gpu-memory-utilization','0.65','--enable-prefix-caching']
+            if args.disable_chunked_prefill:cmd+=['--no-enable-chunked-prefill']
+            if args.disable_cascade_attn:cmd+=['--disable-cascade-attn']
             env=dict(os.environ,CUDA_VISIBLE_DEVICES=gpu,
                      OMP_NUM_THREADS='4',OPENBLAS_NUM_THREADS='1',TOKENIZERS_PARALLELISM='false',
                      TRITON_CACHE_DIR=str(out/f'triton-{index}'))
@@ -111,7 +116,7 @@ def main():
                 env.update(VLLM_USE_V1='0',VLLM_ATTENTION_BACKEND='XFORMERS',TRITON_PTXAS_PATH=str(ptxas.resolve()))
             log=(out/f'server-{index}.log').open('w');logs.append(log)
             processes.append(subprocess.Popen(cmd,env=env,stdout=log,stderr=subprocess.STDOUT,start_new_session=True));commands.append(cmd)
-        (out/'servers.json').write_text(json.dumps(dict(commands=commands,gpus=gpus,pids=[p.pid for p in processes],development_only=args.suite not in ('formal','stream','shapefactory')),indent=2)+'\n')
+        (out/'servers.json').write_text(json.dumps(dict(commands=commands,gpus=gpus,pids=[p.pid for p in processes],development_only=args.suite not in ('formal','stream','shapefactory','shapefactory_native_lite')),indent=2)+'\n')
         started=time.monotonic();ready=set();last=-1
         while len(ready)<len(gpus):
             for index,(proc,port) in enumerate(zip(processes,args.ports)):
@@ -136,11 +141,17 @@ def main():
                 if '<think>' in answer or '</think>' in answer or probe['choices'][0]['finish_reason']=='length':
                     raise RuntimeError('Non-thinking probe emitted think tags or truncated; inspect thinking_probe before proceeding')
             print('Non-thinking template and server probes passed',flush=True)
-        runner_module='examples.final_evaluation.shapefactory_local' if args.suite=='shapefactory' else 'examples.final_evaluation.calbench_local'
-        runner_args=[] if args.suite=='shapefactory' else ['--games','2','--suite',args.suite]
-        subprocess.run([str(args.runner_python),'-u','-m',runner_module,
-                        '--routes',str(routes),'--output',str(out/'games'),
-                        '--parallel-games',str(args.parallel_games),*runner_args],
+        if args.suite=='shapefactory_native_lite':
+            runner_module='examples.final_evaluation.shapefactory_lite'
+            runner_args=['--model',config['equivalent_replicas'][0]['model'],
+                         '--base-url',config['equivalent_replicas'][0]['base_url'],
+                         '--output',str(out/'games'),'--run']
+        else:
+            runner_module='examples.final_evaluation.shapefactory_local' if args.suite=='shapefactory' else 'examples.final_evaluation.calbench_local'
+            runner_args=['--routes',str(routes),'--output',str(out/'games'),
+                         '--parallel-games',str(args.parallel_games)]
+            if args.suite!='shapefactory':runner_args+=['--games','2','--suite',args.suite]
+        subprocess.run([str(args.runner_python),'-u','-m',runner_module,*runner_args],
                        cwd=ROOT,env=dict(os.environ,PYTHONPATH=str(ROOT)),check=True)
         (out/'EXIT_CODE').write_text('0\n')
     except BaseException as exc:
