@@ -44,20 +44,35 @@ class FeedbackTests(unittest.TestCase):
             for view in ('O','B','Pplus'):
                 ids=[cid for cid,v,slot in batch if v==view]
                 self.assertEqual(len(ids),4);self.assertEqual(len(set(ids)),4)
-            pair=tuple(cid for cid,v,slot in batch if slot.startswith('must-change'))
-            self.assertIn(pair,self.windows['must_change'])
-            kind='update' if step%2==0 else 'maintain'
-            self.assertIn(tuple(cid for cid,v,slot in batch if slot.startswith(kind)),self.windows[kind])
+            for kind,prefix in [('must_change','must_change'),('update','update'),('maintain','maintain')]:
+                pair=tuple(cid for cid,v,slot in batch if slot.startswith(prefix))
+                if pair:self.assertIn(pair,self.windows[kind])
             for cid,v,slot in batch:
                 if v=='Pplus':self.assertTrue(c.views[cid,v].get('p_train_eligible',True))
-        visits=list(c.state['p_category_exposure'].values())
-        self.assertEqual(len(visits),12)
-        self.assertLessEqual(max(visits)-min(visits),1)
+        # No task can run far ahead of the global frontier, even inside a tiny relation pool.
+        for view in ('O','B','Pplus'):
+            counts=[c.state['coverage'].get(view+':'+cid,{}).get('count',0)
+                    for cid in c.schedule if view!='Pplus' or c.views[cid,view].get('p_train_eligible',True)]
+            self.assertLessEqual(max(counts)-min(counts),1)
         d=ReasoningCollector({'bp_train':self.tasks},lambda r:[])
         d.restore(deepcopy(c.state),arm='decomposed')
         self.assertEqual(plan(c),plan(d))
         bad=deepcopy(c.state);bad.pop('coverage_version')
         with self.assertRaises(ValueError):d.restore(bad,arm='decomposed')
+
+    def test_P_difficulty_ignores_audit_history_and_gold(self):
+        from training.social_mixed.task_difficulty import describe
+        t=deepcopy(next(t for t in self.tasks if t['paired_view']=='Pplus'))
+        before=describe(t)
+        t['input']['voluntary_history']=[{'action':'PASS'}]*100
+        t['teacher']={}
+        self.assertEqual(before,describe(t))
+
+    def test_all_three_arms_reject_old_sampling_state(self):
+        c=ReasoningCollector({'bp_train':self.tasks},lambda r:[])
+        old=deepcopy(c.state);old['coverage_version']='d-coverage-fixed12-pcategories-v2'
+        for arm in ('outcome','conditioned','decomposed'):
+            with self.assertRaises(ValueError):c.restore(old,arm=arm)
 
     def test_resume_identifies_sampling_change(self):
         c=ReasoningCollector({'bp_train':self.tasks},lambda r:[])

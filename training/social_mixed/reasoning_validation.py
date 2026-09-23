@@ -4,7 +4,7 @@ from copy import deepcopy
 from training.social_mixed.validation import Validator
 from training.social_mixed.reasoning_bank import load, panel
 
-VERSION='reasoning-calbench-dev8-v3'
+VERSION='reasoning-static-obp-v5'
 
 
 def metrics_and_state(calls, previous=None):
@@ -49,7 +49,7 @@ def metrics_and_state(calls, previous=None):
             metrics[prefix+'/samples']=len(subset)
             if subset:metrics[prefix+'/accuracy']=sum(bool(r['score']['correct']) for r in subset)/len(subset)
         if view=='B':
-            for field in ('set_exact','favored_exact'):
+            for field in ('set_exact','favored_exact','favored_accepted','strict_correct'):
                 metrics[f'reasoning/B/{field}']=sum(bool(r['score'].get(field)) for r in rs)/len(rs)
     by_case=defaultdict(dict)
     for r in calls:by_case[r['task']['canonical_id']][r['task']['paired_view']]=r['score'].get('correct')
@@ -60,16 +60,16 @@ def metrics_and_state(calls, previous=None):
 
 
 def selection_score(metrics):
-    # Same current-team unassisted interaction and O tie-break for all arms.
-    # This is explicitly not a fixed-Q0-opponent or benchmark-based criterion.
-    return [metrics['calbench/headline'],metrics['calbench/success_rate'],
-            metrics['reasoning/O/macro_accuracy']]
+    # Keep unassisted O as the selection criterion; B/P remain diagnostic.
+    return [metrics['reasoning/O/macro_accuracy']]
 
 
 class ReasoningValidator(Validator):
-    def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
-        self.calbench_development=True
+    def __init__(self,data,generate,seed=42,concurrency=16,**kwargs):
+        if concurrency<1:raise ValueError('Positive validation concurrency required')
+        self.data=data;self.generate=generate;self.seed=seed;self.concurrency=concurrency
+        self.static_only=True
+        self.resets=[]
         self.tasks=[t for t in panel() if t.get('paired_view')!='Pplus' or t.get('p_pool_status')!='quarantined']
 
     def run_static_o(self):
@@ -125,8 +125,8 @@ class ReasoningValidator(Validator):
             report['metrics'][f'reasoning/{view}/isolated_B_action_pairs']=len(links)
             report['metrics'][f'reasoning/{view}/isolated_B_scored_pairs']=len(scored)
             if scored:report['metrics'][f'reasoning/{view}/isolated_B_both_correct']=sum(all(indexed[r[k],view]['score']['correct'] is True for k in ('left','right')) for r in scored)/len(scored)
-        report['protocol'].update(version=VERSION,selection='CalBench dev8 headline; success rate; O parent-macro; earlier tie',
+        report['protocol'].update(version=VERSION,selection='Static O parent-macro; earlier tie',
             package_ids=sorted({t['package_id'] for t in self.tasks}),
             auxiliary_scores_for_selection=False,
-            caveats='Internal development, all seats current policy. P receives current state and correct qualitative beliefs without history; each entry uses the B answer schema. Same panel and candidate token fractions for all four arms.')
+            caveats='Static O/B/P only; no interaction evaluation. P receives state and qualitative beliefs without history. P masked coverage is reported. Temperature zero does not guarantee batch-invariant inference.')
         return report

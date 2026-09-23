@@ -26,7 +26,8 @@ def request(task,arm='action_tools',variant=0):
         text=text.split('RESPONSE INSTRUCTIONS')[0]
         text=text.replace('Choose your next action.','Assess the queried preference; do not take a game action.')
         br=named.request(task,arm,variant)
-        text+='\nBELIEF QUESTION\n'+json.dumps(visible['belief_question'])+'\n'+str(visible['belief_rules'])
+        from training.social_mixed.b_belief_contract import RULES
+        text+='\nBELIEF QUESTION\n'+json.dumps(visible['belief_question'])+'\n'+RULES
         text+='\nBriefly explain, then submit exactly one SUBMIT_BELIEFS call.'
         result['tools']=br['tools']
     elif view!='O':raise ValueError(view)

@@ -59,7 +59,7 @@ if [[ -n "${SOCIAL_PAUSE_AFTER_UPDATES:-}" ]]; then
   args+=(--pause-after-updates "$SOCIAL_PAUSE_AFTER_UPDATES")
 fi
 if [[ "${SOCIAL_DIAGNOSE_PROBABILITIES:-0}" == 1 ]]; then args+=(--diagnose-probabilities); fi
-args+=(--keep-checkpoints "${SOCIAL_KEEP_CHECKPOINTS:-2}" --protocol-coefficient "${SOCIAL_PROTOCOL_COEFFICIENT:-0.2}")
+args+=(--keep-checkpoints "${SOCIAL_KEEP_CHECKPOINTS:-1}" --protocol-coefficient "${SOCIAL_PROTOCOL_COEFFICIENT:-0.2}")
 if [[ -n "${SOCIAL_RESUME:-}" ]]; then args+=(--resume "$SOCIAL_RESUME"); fi
 # No ray stop --force: this job owns a private local head.
 python -u -m training.social_mixed.run "${args[@]}" > "$ROLL_OUTPUT_DIR/train.log" 2>&1 &

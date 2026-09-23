@@ -1,0 +1,17 @@
+# 旧训练任务与诊断构念边界（2026-09-24）
+
+逐条读取examples/social_mixed/data_reasoning_v5_candidate/bp_train.jsonl，并核对reasoning_requests、social_named_probe及review_prompt实际渲染路径；不是根据B/P名称推断。
+
+旧B294：formation77、update134、maintain83；217条输入含previous_belief，并在渲染中作为Correct belief BEFORE the new evidence呈现。旧P300按skill为complete84、uncertain76、result_use66、information40、history_planning34。后两类source统计与kernel计数不同，不能互换。
+
+旧P实际接口：36条belief_source=history，经专用请求去掉给定belief，要求从历史行动；其余264条走supplied接口（并非全部有显式belief_source字段）。其中84条给joint_distribution，渲染为Probability逐世界描述。所有普通supplied渲染仍包含chronology段，但其中部分没有真实历史事件；不能写成264题都给完整且有信息历史。原始P有92条voluntary_history非空。36条oracle_pair_of对应raw题，是同一来源的给定belief行动视图，不是把当前模型的B输出传给P。history专项练习标记含9组B/raw/oracle三元组（27条，跨任务）；不能把所有36个raw/oracle对都称为该专项三元组。
+
+旧P中16条bridge：已知偏好回应6、已知偏好提案6、只差伙伴承诺2、避免多加自身承诺2。它们是行动前提练习，不是新版v6的B likelihood/procedure辅助。
+
+诊断v6s针对16个结构的32case：同一物理状态/工具，两种伙伴判断对应不相交的精确最优集合，定性语义由多面体顶点认证决策充分。适合检验这组条件下显式B、给定定性B行动和接口修复效果，不全面覆盖所有complete/uncertain/information/result_use、旧previous-belief更新维护接口或多方闭环交流。证书是在指定continuation/payoff模型下成立，不宣称任意环境的伙伴推理完备性。
+
+旧训练P300条都启用required-commitments-v1表格澄清（列名是每个玩家required commitments，并注明非偏好），canonical旧BP99诊断408请求中该句出现0次。诊断自身仍有明确目标要求规则，不能据此宣布prompt有错；但这是实际表示变化，目标名当承诺名的非法动作可能体现表示/执行泛化失败，不能直接等同于不具备belief或纯规划能力。
+
+链接需要区分：数据来源关联、训练输出级连接、内部推断被行动因果使用、交互闭环。旧数据明确具有关联及历史行动训练，没有模型生成B→P在线训练闭环。当前诊断可检验显式摘要接口的干预，但不识别端到端模型内部是否形成和使用latent belief。负repair gain不是belief无用的定理，可能由下游P错误、接口变化及合法子集选择共同产生。
+
+结论：当前数据不是旧B/P只增加一个O臂，而是监督接口、操作覆盖和训练分布的重构；观察到更好的CalBench但不强的B/P单项，既不证明“强链接”，也不证明无链接。诊断作为局部压力测试有价值，作为全面能力证书不充分。现有实验不支持继续把优化微调当首要默认解释，也不具备断言优化影响很小的单变量证据。需要明确被检验的假设是何种belief表示、何种监督以及何种迁移，而不是笼统支持或否定belief/planning。

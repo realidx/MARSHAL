@@ -97,6 +97,8 @@ def validate_resume(path, options, model):
     if options.get('recipe_version'):
         if old['options'].get('recipe_version')!=options['recipe_version'] or old['options'].get('total_tokens')!=options['total_tokens']:
             raise ValueError('Resume must preserve recipe and cosine token horizon; start a new stage')
+    if old['options'].get('compact_bank_sha256')!=options.get('compact_bank_sha256'):
+        raise ValueError('Training pool changed on resume')
     if old['options'].get('paired_bank_sha256')!=options.get('paired_bank_sha256'):
         raise ValueError('Paired bank changed on resume')
     if options.get('recipe')=='reasoning' or old['options'].get('recipe')=='reasoning':
@@ -132,7 +134,7 @@ def main():
     cli.add_argument('--seed',type=int,default=42)
     cli.add_argument('--total-tokens',type=int,default=6553600)
     cli.add_argument('--tokens-per-update',type=int,default=65536)
-    cli.add_argument('--keep-checkpoints',type=int,default=2)
+    cli.add_argument('--keep-checkpoints',type=int,default=1)
     cli.add_argument('--pause-after-updates',type=int)
     cli.add_argument('--protocol-coefficient',type=float,default=0.2)
     cli.add_argument('--resume')
@@ -165,10 +167,14 @@ def main():
     if args.recipe=='reasoning':
         from training.social_mixed.reasoning_training import VERSION as recipe_version
     options['recipe_version']=recipe_version
-    if args.recipe=='reasoning' and args.arm=='decomposed':
+    if args.recipe=='reasoning' and args.arm in ('outcome','conditioned','decomposed'):
         from training.social_mixed.coverage_sampling import VERSION as coverage_version
         options['coverage_version']=coverage_version
-        options['candidate_groups_per_update']={'O':4,'B':4,'Pplus':4}
+        if args.arm=='decomposed':options['candidate_groups_per_update']={'O':4,'B':4,'Pplus':4}
+        options['difficulty_version']='within-view-curriculum-v2'
+        from training.social_mixed.compact_bank import load as compact_load
+        _, _, options['compact_bank_sha256'] = compact_load()
+        options['training_pool']='compact-200-operations-v2'
     if args.recipe=='reasoning' or args.arm in ('outcome','decomposed'):
         if args.recipe=='reasoning':
             from training.social_mixed.reasoning_bank import PATH,load

@@ -112,7 +112,12 @@ class ReasoningCollector(StableCollector):
         self.controls=[c for c in self.schedule if not self.views[c,'O']['belief_action_relevant'] and self.views[c,'Pplus'].get('p_train_eligible',True)]
         self.feedback_windows={}
         self.p_categories={}
-        if all('canonical_action_task' in t for t in self.data['bp_train']):
+        if 'compact_metadata' in self.data:
+            self.p_categories=self.data['compact_metadata']['categories']
+            self.feedback_windows=self.data['compact_metadata']['windows']
+            from training.social_mixed.feedback_sampling import VERSION as feedback_version
+            self.state.update(feedback_version=feedback_version,compact_bank_sha256=self.data['compact_bank_sha256'])
+        elif all('canonical_action_task' in t for t in self.data['bp_train']):
             from training.social_mixed.reasoning_bank import load
             from training.social_mixed.feedback_sampling import build_windows, VERSION as feedback_version
             from training.social_mixed.p_task_categories import inventory
@@ -142,10 +147,12 @@ class ReasoningCollector(StableCollector):
             raise ValueError('SP advantage recipe changed; start a new stage, do not silently resume historical baseline')
         if self.feedback_windows and arm!='selfplay' and state.get('feedback_version')!=self.state.get('feedback_version'):
             raise ValueError('Feedback sampling changed; start a new stage')
-        if arm=='decomposed':
+        if arm in ('outcome','conditioned','decomposed'):
             from training.social_mixed.coverage_sampling import VERSION as coverage_version
             if state.get('coverage_version')!=coverage_version:
-                raise ValueError('D coverage/update recipe changed; start a new stage')
+                raise ValueError('Coverage/difficulty recipe changed; start a new stage')
+        if state.get('compact_bank_sha256') != self.state.get('compact_bank_sha256'):
+            raise ValueError('Training pool changed; start a new stage')
         self.state=deepcopy(state)
 
     def collect(self,step,arm,token_target=65536,validation=False):
@@ -175,6 +182,8 @@ class ReasoningCollector(StableCollector):
         def collect_group(canonical,view,slot):
             nonlocal tokens
             task=self.views[canonical,view]
+            from training.social_mixed.task_difficulty import describe
+            difficulty=describe(task)
             group=f'block{block}:{slot}:{task["id"]}'
             requests=[]
             for replica in range(8):
@@ -191,7 +200,7 @@ class ReasoningCollector(StableCollector):
                 for s,o in zip(scores,outputs):s.update(decision_metrics(task,o['completion']))
             advantages,valid=group_advantages(scores,outputs,self.normalization)
             counts[view]+=1;effective[view]+=int(any(abs(a)>1e-12 for a in advantages))
-            if arm=='decomposed':
+            if view+':'+canonical in self.state['coverage']:
                 entry=self.state['coverage'][view+':'+canonical]
                 entry['effective']=entry.get('effective',0)+int(any(abs(a)>1e-12 for a in advantages))
             for replica,(o,s,a,ok) in enumerate(zip(outputs,scores,advantages,valid)):
@@ -199,7 +208,7 @@ class ReasoningCollector(StableCollector):
                 rows.append(dict(o,kind=view,skill=task['pool'],kernel=task['kernel'],group=group,unit=unit,
                     replica=replica,task_id=task['id'],canonical_id=canonical,package_id=task['package_id'],
                     belief_action_relevant=task['belief_action_relevant'],
-                    exposure_slot=slot,token_block=block,score=s,task_advantage=a,
+                    exposure_slot=slot,difficulty=difficulty,token_block=block,score=s,task_advantage=a,
                     protocol_advantage=0. if ok else -self.protocol_coefficient,
                     protocol_failure=None if ok else 'truncated' if o['completion']['finish_reason']=='length' else 'invalid_action',
                     selected_task_group=any(abs(x)>1e-12 for x in advantages),
@@ -210,29 +219,14 @@ class ReasoningCollector(StableCollector):
             from training.social_mixed.coverage_sampling import plan
             for canonical,view,slot in plan(self):collect_group(canonical,view,slot)
         else:
-            # C/D see identical Pplus cases, seeds and slots. B replaces C's O slots.
-            anchors=[self.informative[(2*block+j)%len(self.informative)] for j in range(2)]
-            anchors.append(self.controls[block%len(self.controls)])
-            for slot in range(6):
-                canonical=self.schedule[block%len(self.schedule)] if slot==5 else anchors[slot%3]
-                if self.feedback_windows and slot in (3,4):
-                    kind='update' if block%2==0 else 'maintain'
-                    windows=self.feedback_windows[kind]
-                    canonical=windows[(block//2)%len(windows)][slot-3]
-                view='Pplus' if slot<3 and arm!='outcome' else 'B' if slot>=3 and arm=='decomposed' else 'O'
-                collect_group(canonical,view,f'paired-{slot}')
-            # Same action contrast for O/C/D; independent eight-response groups.
-            if self.feedback_windows:
-                pair=self.feedback_windows['must_change'][block%len(self.feedback_windows['must_change'])]
-                for j,canonical in enumerate(pair):collect_group(canonical,'O',f'must-change-{j}')
-            # O has a separate deterministic full-coverage stream; no reward-dependent resampling.
-            while counts['O']==0 or start+tokens<boundary or (self.feedback_windows and not any(r.get('exposure_slot','').startswith('fill-') for r in rows)):
-                cursor=self.state['fill_cursor']
-                if counts['O']==0:
-                    collect_group(anchors[block%3],'O','paired-O-anchor')
-                else:
-                    collect_group(self.schedule[cursor%len(self.schedule)],'O',f'fill-{cursor}')
-                    self.state['fill_cursor']=cursor+1
+            # O/C retain their token boundary and task weights; share D's global coverage rule.
+            from training.social_mixed.coverage_sampling import choose_view
+            if arm=='conditioned':
+                for canonical,view,slot in choose_view(self,'Pplus',3):collect_group(canonical,view,slot)
+            for canonical,view,slot in choose_view(self,'O',6 if arm=='outcome' else 3):
+                collect_group(canonical,view,slot)
+            while start+tokens<boundary:
+                for canonical,view,slot in choose_view(self,'O',1):collect_group(canonical,view,slot)
         n=len(rows)
         for r in rows:
             w=n*WEIGHTS[arm][r['kind']]/(8*counts[r['kind']])

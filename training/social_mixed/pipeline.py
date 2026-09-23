@@ -87,6 +87,11 @@ class SocialPipeline(BasePipeline):
             from training.social_mixed.reasoning_bank import load
             collector_type=ReasoningCollector
             data['bp_train']=load('train')
+            if options['arm'] in ('outcome','conditioned','decomposed'):
+                from training.social_mixed.compact_bank import load as compact_load
+                data['bp_train'], data['compact_metadata'], data['compact_bank_sha256'] = compact_load()
+                if data['compact_bank_sha256'] != options.get('compact_bank_sha256'):
+                    raise ValueError('Compact bank differs from launch metadata')
             extra['normalization']=options['normalization']
         self.collector = collector_type(data, self.generate, seed=config.seed,
                                    concurrency=config.actor_infer.world_size*config.actor_infer.strategy_args.strategy_config['max_num_seqs'],
@@ -105,7 +110,7 @@ class SocialPipeline(BasePipeline):
         if reasoning and self.state.kv.get('best_validation'):
             from training.social_mixed.reasoning_validation import VERSION as validation_version
             if self.state.kv['best_validation'].get('selection_version')!=validation_version:
-                raise ValueError('Validation selection changed to CalBench dev8; start a new stage to avoid comparing unlike scores')
+                raise ValueError('Validation selection changed to static O/B/P; start a new stage to avoid comparing unlike scores')
         self.validator=Validator(self.collector.data,self.generate,seed=config.seed,
                                  concurrency=self.collector.concurrency)
         if not reasoning and options['arm'] in ('outcome','decomposed'):

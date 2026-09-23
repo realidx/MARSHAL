@@ -5,5 +5,7 @@ exp_name: social_decomposed_4b
 # Fixed 96-response batches stop on actual total_tokens; avoid the old 1000-step cap.
 max_steps: 100000
 
-# D only: retain Q0/final validation; periodic validation every 20 updates.
+
+# Static O/B/P validation and checkpoint cadence (completed updates).
 eval_steps: 20
+save_steps: 20

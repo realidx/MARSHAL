@@ -20,7 +20,7 @@ def selection_score(metrics,arm):
     raise ValueError('Best-checkpoint selection supports bp and selfplay only')
 
 
-def prune(root, keep=2):
+def prune(root, keep=1):
     if keep<1:raise ValueError('Keep at least one complete recovery point')
     root=Path(root).resolve()
     completed=[]

@@ -139,7 +139,9 @@ class Validator:
             if len(answers)!=len(batch):raise RuntimeError('Missing validation answers')
             for (task,req),answer in zip(batch,answers):
                 bp.append(dict(answer,task=task,replica=0,request=req,score=reward(task,answer['completion'])))
-        if getattr(self,'calbench_development',False):
+        if getattr(self,'static_only',False):
+            games=[];calls=[];metrics=summarize_bp(bp)
+        elif getattr(self,'calbench_development',False):
             from training.social_mixed.calbench_validation import run
             games,calls,game_metrics,calbench_protocol=run(self.generate,self.seed)
             metrics=summarize_bp(bp)|game_metrics
@@ -164,6 +166,8 @@ class Validator:
             caveats='Development only. Team behavior, not fixed-opponent improvement. Terminal means are conditional on completion; report bounds alongside. No B→P composition claim. Infrastructure errors abort validation, never score zero.')
         if getattr(self,'calbench_development',False):
             protocol.update(calbench=calbench_protocol,reset_ids=[],sp_temperature=None)
+        if getattr(self,'static_only',False):
+            protocol.update(condition='static_obp',reset_ids=[],sp_temperature=None,interaction_enabled=False)
         return dict(protocol=protocol,metrics=metrics,bp_calls=bp,game_calls=calls,games=games)
 
 

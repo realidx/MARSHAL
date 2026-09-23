@@ -302,3 +302,29 @@ D采样状态升级为`d-coverage-fixed12-pcategories-v2`，旧v1状态不允许
 逐题核验497个train/validation P：合法动作数与三态评分数一致、后继转换数一致、状态标签合法；终局依据所有即时后继是否terminal。原始pool/history_planning仅留作来源，不当作当前无历史P能力标签。private_results仅作来源记录，不能称P在读取调查历史。relevant沿用原标记，不声称每题都迫使模型改变动作，也不声称完成了跨belief接受集合认证。直接终局合格P均为control，没有制造不存在的类别。多步P的固定continuation限制不变。
 
 逐题结果与汇总：new/p_categories_audit_20260923/tasks.jsonl、summary.json。任务、标签、资格、提示与奖励未改。12项测试覆盖实际题库的关系完整性、P资格、类别累计均衡、固定批次、恢复连续性与版本拒绝；未启动训练。
+
+## 2026-09-24：原题内难度与曝光修正
+
+当前采样版本为 `global-frontier-structural-v3`：普通题和关系题共用全局曝光记录，关系只在两端都轮到时进入；P不再按小类硬性等额重复。同曝光层采用结构难度代理排序，不新增辅助题、不改变B/O/P标签或P输入。D保持4O+4B+4P，O/C保留token更新边界。旧采样状态不能直接续训。详细回放和限制见 `new/dataset_redesign_20260924/IMPLEMENTATION_V3.md`；本文更早的固定关系槽位/类别等曝光描述已被此版本替代。
+
+## 2026-09-24：B宽容契约与母题难度梯度
+
+当前版本 `global-frontier-curriculum-btolerance-v4` 替代v3：B评分与prompt统一采用0.1近最高支持容差，支持集合仍须exact；训练/验证共用评分，另报strict_correct及favored_exact。没有直接揭露不等于没有行为证据，强制事件不作为偏好证据，无信息增量不自动重置为均匀分布。
+
+难度在既有认证母题内重组为基础97/中间75/组合复杂201，三个视图共享母题层级、保留原split。见 [难度课程](difficulty_curriculum/README.md)。这不是新生成的简化题，也没有新增辅助题。采样仍先保证全局覆盖再按难度排序。新契约不应与旧验证准确率直接拼接比较；旧采样状态拒绝静默续训。未改LR/KL/温度/任务权重，未启动训练。
+
+## 原生递进场景候选
+
+新增独立候选 `examples/social_mixed/progressive_bank_v1`：重新构造并求解的小型B/O/P场景，不是旧题分层；当前仅构造与评分验证通过，未实测可学习性、未替换本bank。仍有标签覆盖和复杂层不足，详见候选README。
+
+## 2026-09-24：训练入口收缩到200母题
+
+当前reasoning O/C/D不再直接训练本库全量题，而使用`../compact_bank_200`：149旧母题＋51新简单母题，共200母题/600视图，结构基础/中间/复杂为60/60/80。P资格整母题筛选，O/D母题一致；本库仍提供独立验证。D各类4组×8回答、损失1:1:1不变；200次更新的离线轮转保证每题每视图4次曝光。详见[固定池说明](../compact_bank_200/README.md)。没有新增学习探测、没有启动训练或变更max_steps。
+
+当前200题池已修订为compact-200-operations-v2：148旧＋52新母题，165母题具有关联端点；先验／调查结果单因素对照与同场景不同阶段联系分开记录。详见compact_bank_200说明，旧段落中的149＋51为上一版。
+
+## 最终训练内验证与保存
+
+reasoning O/C/D/SP只验证固定静态O/B/P面板，temperature=0。CalBench与self-play交互验证均关闭。保留step-0基线；此后每完成20次更新验证并保存checkpoint，正常结束时补一次最终验证/保存，提前停止保留恢复保存。目录沿用零基编号，例如20次更新对应checkpoint-19，验证为step-20.json。
+
+BEST按静态O的parent-macro正确率选择，同分保留较早结果；B/P为诊断指标，P仍报告masked覆盖。不会再读取CalBench分数选择checkpoint。checkpoint保留数量仍由原有keep-checkpoints控制（默认1，仅保留最新完整恢复点，不额外保留BEST权重），每20步保存不等于永久保留全部历史文件。旧验证选择版本不允许静默继承比较。

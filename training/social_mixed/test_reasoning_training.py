@@ -21,7 +21,7 @@ class ReasoningTests(unittest.TestCase):
 
     def run_batch(self,c,step,arm):
         with patch('training.social_mixed.paired_requests.request',side_effect=lambda *a,**k:{}),patch(
-            'training.b_sft.social_bp_training.reward',side_effect=lambda t,c:dict(reward=c['value'],status='ok')):
+            'training.social_mixed.reasoning_scoring.score',side_effect=lambda t,c:dict(reward=c['value'],correct=bool(c['value']),status='ok')):
             return c.collect(step,arm)
 
     def test_default_normalization_and_sp_parallelism_restored(self):

@@ -88,8 +88,19 @@ def audit(tokenizer=None):
         if not anchor_pairs:raise ValueError('Missing B-to-action validation')
         if any(not {r['left'],r['right']}<=chosen or not r['same_B_query'] or not r['semantic_B_changed'] for r in anchor_pairs):
             raise ValueError('Validation panel lost isolated B contrasts')
+    # Check the actual compact training pool too, including newly constructed scenes.
+    from training.social_mixed.compact_bank import load as compact_load
+    compact_tasks,_,compact_sha=compact_load()
+    for t in compact_tasks:
+        req=request(t,'action_tools',t.get('name_variant',0))
+        if tokenizer is not None:
+            ids=tokenizer.apply_chat_template(req['messages'],tools=req['tools'],tokenize=True,
+                add_generation_prompt=True,return_dict=True)['input_ids']
+            if not isinstance(ids,list) or not ids or any(not isinstance(x,int) for x in ids):
+                raise TypeError('Tokenizer must return one unbatched input_ids list')
+            lengths.append(dict(id=t['id'],pool='compact-200',tokens=len(ids)))
     failures=[r for r in lengths if r['tokens']>3072]
-    return dict(counts=counts,parent_split_disjoint=True,source_family_split_disjoint=True,
+    return dict(compact_training_views=len(compact_tasks),compact_bank_sha256=compact_sha,counts=counts,parent_split_disjoint=True,source_family_split_disjoint=True,
                 panel_cases=len({t['canonical_id'] for t in panel()}),
                 history_free_P_checked=p_count, identical_P_prompt_targets_consistent=True,
                 active_P_roles=dict(Counter(t['split']+':'+t.get('p_pool_status','legacy') for split in ('train','validation') for t in load(split) if t['paired_view']=='Pplus')),
