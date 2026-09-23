@@ -1,0 +1,117 @@
+{
+  "version": "shape-factory-lite-cooperation-incentive-v2",
+  "not_paper_or_frozen_benchmark": true,
+  "cases": [
+    {
+      "id": "lite-circle-square",
+      "specialties": {
+        "A": "circle",
+        "B": "square"
+      },
+      "orders": {
+        "A": [
+          "square"
+        ],
+        "B": [
+          "circle"
+        ]
+      }
+    },
+    {
+      "id": "lite-square-circle",
+      "specialties": {
+        "A": "square",
+        "B": "circle"
+      },
+      "orders": {
+        "A": [
+          "circle"
+        ],
+        "B": [
+          "square"
+        ]
+      }
+    }
+  ],
+  "cycles": 12,
+  "conditions": [
+    "private",
+    "dashboard"
+  ],
+  "rules": "Native economics/actions; two agents, one cross-specialty order each; cooperation incentivized but not required",
+  "references": {
+    "lite-circle-square": {
+      "mean_final_balance": 245.0,
+      "completed_fraction": 1.0,
+      "all_orders_completed": true,
+      "individual_balances": {
+        "A": 245.0,
+        "B": 245.0
+      },
+      "completed_items": 2,
+      "trades": 2,
+      "inventory": {
+        "A": [],
+        "B": []
+      },
+      "production": {
+        "A": 1,
+        "B": 1
+      },
+      "production_by_shape": {
+        "circle": 1,
+        "square": 1
+      },
+      "messages": 0,
+      "semantic_rejections": 0
+    },
+    "lite-square-circle": {
+      "mean_final_balance": 245.0,
+      "completed_fraction": 1.0,
+      "all_orders_completed": true,
+      "individual_balances": {
+        "A": 245.0,
+        "B": 245.0
+      },
+      "completed_items": 2,
+      "trades": 2,
+      "inventory": {
+        "A": [],
+        "B": []
+      },
+      "production": {
+        "A": 1,
+        "B": 1
+      },
+      "production_by_shape": {
+        "circle": 1,
+        "square": 1
+      },
+      "messages": 0,
+      "semantic_rejections": 0
+    }
+  },
+  "routes": {
+    "local_only": true,
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "timeout_seconds": 600,
+    "endpoints": {
+      "focal": {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:33228/v1"
+      },
+      "q0": {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:33228/v1"
+      }
+    },
+    "equivalent_replicas": [
+      {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:33228/v1"
+      }
+    ],
+    "execution_protocol": "reasoning-separated-v2-tokens-4096"
+  }
+}
