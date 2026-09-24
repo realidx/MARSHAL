@@ -1,0 +1,84 @@
+experiment:
+  id: native-lite-3p-reverse-private
+  seed: 42
+  duration_sec: 900
+prompts:
+  system: prompts/system_instructions.md
+  persona: prompts/persona_profile.md
+  task: prompts/task_shapefactory_instructions.md
+  protocol: prompts/protocol.md
+  action_space: prompts/action_space.md
+  return_format: prompts/return_format_shapefactory.md
+  action: prompts/action_prompt.md
+  probe: prompts/probe_prompt.md
+  persona_profiles: prompts/persona_profiles.json
+agents:
+- id: A
+  model:
+    provider: litellm
+    name: openai/collabsim-q0
+    temperature: 0.0
+    api_base: http://127.0.0.1:25899/v1
+- id: B
+  model:
+    provider: litellm
+    name: openai/collabsim-q0
+    temperature: 0.0
+    api_base: http://127.0.0.1:25899/v1
+- id: C
+  model:
+    provider: litellm
+    name: openai/collabsim-q0
+    temperature: 0.0
+    api_base: http://127.0.0.1:25899/v1
+action_space:
+  enabled:
+  - message
+  - produce_shape
+  - propose_trade_offer
+  - trade_response
+  - cancel_trade_offer
+  - fulfill_order
+  - do_nothing
+controls:
+  communication:
+    mode: direct
+task:
+  type: shapefactory
+  target_steps: 100000
+  starting_money: 200
+  regular_cost: 40
+  specialty_cost: 15
+  min_trade_price: 15
+  max_trade_price: 100
+  incentive_money: 60
+  max_production_num: 3
+  shapes_order: 1
+  shapes_types: 3
+  shape_options:
+  - triangle
+  - circle
+  - square
+  specialties:
+    A: circle
+    B: square
+    C: triangle
+protocol:
+  turn_taking: simultaneous
+  step_mode: time
+  agent_trigger_interval_sec: 10
+  produce_shape_delay_sec: 30
+  termination:
+    condition: time_elapsed
+    noop_consecutive_cycles: 3
+  max_concurrent_requests: 6
+probe:
+  cadence: per_agent_n_actions
+  every_n_actions: 5
+  templates:
+  - grounding_v1
+  questions_path: prompts/interview_questions_shape_factory_daytrader.json
+logging:
+  trace_schema_version: v0
+  output_dir: /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/collabsim_frozen/q0-v2-877899/results/shapefactory/native-lite-3p-reverse-private
+  observation_events: true

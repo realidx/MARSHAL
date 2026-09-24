@@ -1,0 +1,944 @@
+{
+  "event_id": "event_6",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:55:17.747853+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "Hey, I'm working on getting a square for my order. Since you're the expert at making squares, I was wondering if you'd be open to trading one of your specialty shapes for a bit of money? Maybe around $40? Let me know what you think.",
+        "content_type": "text",
+        "recipients": [
+          "B"
+        ]
+      },
+      "actor_id": "A",
+      "timestamp": 0
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_9",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:55:17.747926+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "Hey, I noticed you have the specialty triangle. Since I need a triangle to fulfill my order, I'm thinking of buying one. How about if I offer $40 for it? Let me know if that works for you.",
+        "content_type": "text",
+        "recipients": [
+          "C"
+        ]
+      },
+      "actor_id": "B",
+      "timestamp": 0
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_12",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:55:17.747987+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "Hey, I'm working on getting a circle for my order. Since you make circles, I was wondering if you'd be open to trading one of yours for a triangle? I can give you $20 for it.",
+        "content_type": "text",
+        "recipients": [
+          "A"
+        ]
+      },
+      "actor_id": "C",
+      "timestamp": 0
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_30",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:55:26.719768+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "I saw your offer for a triangle. I'm not in a position to trade right now, but I can help you if you need a circle. How about we meet in the middle? Maybe $30 for a circle?",
+        "content_type": "text",
+        "recipients": [
+          "C"
+        ]
+      },
+      "actor_id": "A",
+      "timestamp": 3
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_33",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:55:26.719843+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "buy",
+        "shape": "triangle",
+        "price_per_unit": 40,
+        "target_id": "C",
+        "quantity": 1
+      },
+      "actor_id": "B",
+      "timestamp": 3
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_36",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:55:26.719901+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_2_1",
+        "response_type": "accept"
+      },
+      "actor_id": "C",
+      "timestamp": 3
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_51",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:55:34.657627+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "sell",
+        "shape": "triangle",
+        "price_per_unit": 30,
+        "target_id": "A",
+        "quantity": 1
+      },
+      "actor_id": "C",
+      "timestamp": 6
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_58",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:55:42.558068+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "sell",
+        "shape": "circle",
+        "price_per_unit": 40.0,
+        "target_id": "B",
+        "quantity": 1
+      },
+      "actor_id": "A",
+      "timestamp": 7
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_65",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:55:50.647030+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_4_1",
+        "response_type": "accept"
+      },
+      "actor_id": "B",
+      "timestamp": 8
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_72",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:55:57.760580+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "Thanks for the offer on a circle. I'm still working on getting one, but I can offer you a triangle for $30. Let me know if that works for you.",
+        "content_type": "text",
+        "recipients": [
+          "A"
+        ]
+      },
+      "actor_id": "C",
+      "timestamp": 9
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_80",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:56:05.605128+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "I'm offering a circle for $40. If you take it, I'll have the square for your order. Let me know if that works for you.",
+        "content_type": "text",
+        "recipients": [
+          "B"
+        ]
+      },
+      "actor_id": "A",
+      "timestamp": 10
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_88",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:56:13.797766+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "I'm currently buying a triangle from C for $40. I'll have it soon and can fulfill my order. Thanks for the offer on the circle, but I'm not in a position to trade right now.",
+        "content_type": "text",
+        "recipients": [
+          "A"
+        ]
+      },
+      "actor_id": "B",
+      "timestamp": 11
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_96",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:56:20.907824+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "produce_shape",
+      "payload": {
+        "shape": "circle",
+        "quantity": 1
+      },
+      "actor_id": "A",
+      "timestamp": 12
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_104",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:56:28.319859+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "A",
+      "timestamp": 12
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_107",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:56:28.319887+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "fallback: missing_action"
+      },
+      "actor_id": "B",
+      "timestamp": 12
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_110",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:56:28.319912+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "produce_shape",
+      "payload": {
+        "shape": "triangle",
+        "quantity": 1
+      },
+      "actor_id": "C",
+      "timestamp": 12
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_119",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:56:36.924562+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "I see you're buying a triangle from B. I'm still waiting to get a square for my order. How about if I produce a circle and offer it to you for $30? You can then trade it to B if needed.",
+        "content_type": "text",
+        "recipients": [
+          "C"
+        ]
+      },
+      "actor_id": "A",
+      "timestamp": 14
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_122",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:56:36.924596+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "fallback: missing_action"
+      },
+      "actor_id": "B",
+      "timestamp": 14
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_125",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:56:36.924629+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "I'm still working on getting a circle. I have a triangle and was thinking of offering it to you for $40. Let me know if that's something you'd be interested in.",
+        "content_type": "text",
+        "recipients": [
+          "B"
+        ]
+      },
+      "actor_id": "C",
+      "timestamp": 14
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_138",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:56:45.904020+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_4_1",
+        "response_type": "accept"
+      },
+      "actor_id": "B",
+      "timestamp": 17
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_141",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:56:45.904051+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "produce_shape",
+      "payload": {
+        "shape": "triangle",
+        "quantity": 1
+      },
+      "actor_id": "C",
+      "timestamp": 17
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_151",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:56:54.273269+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "I see you're offering a circle for $30. I can produce one if needed, but I'm still working on getting a shape to fulfill my order. Let me know if you'd like to trade or if you need help with something else.",
+        "content_type": "text",
+        "recipients": [
+          "A"
+        ]
+      },
+      "actor_id": "C",
+      "timestamp": 18
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_160",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:57:03.601282+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "sell",
+        "shape": "circle",
+        "price_per_unit": 30.0,
+        "target_id": "C",
+        "quantity": 1
+      },
+      "actor_id": "A",
+      "timestamp": 20
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_169",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:57:11.949784+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_20_2",
+        "response_type": "accept"
+      },
+      "actor_id": "C",
+      "timestamp": 22
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_177",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:57:20.433462+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "produce_shape",
+      "payload": {
+        "shape": "circle",
+        "quantity": 1
+      },
+      "actor_id": "A",
+      "timestamp": 23
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_187",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:57:29.993118+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "A",
+      "timestamp": 24
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_190",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:57:29.993189+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "fulfill_order",
+      "payload": {
+        "order_indices": [
+          0
+        ]
+      },
+      "actor_id": "B",
+      "timestamp": 24
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_193",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:57:29.993252+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "fulfill_order",
+      "payload": {
+        "order_indices": [
+          0
+        ]
+      },
+      "actor_id": "C",
+      "timestamp": 24
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_206",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:57:40.650431+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "A",
+      "timestamp": 27
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_209",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:57:40.650462+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "fallback: missing_action"
+      },
+      "actor_id": "B",
+      "timestamp": 27
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_212",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:57:40.650491+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "produce_shape",
+      "payload": {
+        "shape": "triangle",
+        "quantity": 1
+      },
+      "actor_id": "C",
+      "timestamp": 27
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_221",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:57:50.770834+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "A",
+      "timestamp": 29
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_224",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:57:50.770897+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "fallback: missing_action"
+      },
+      "actor_id": "B",
+      "timestamp": 29
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_227",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:57:50.770970+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "I have a triangle and was thinking of offering it to you for $40. Let me know if that works for you.",
+        "content_type": "text",
+        "recipients": [
+          "B"
+        ]
+      },
+      "actor_id": "C",
+      "timestamp": 29
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_235",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:57:58.942791+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "fallback: missing_action"
+      },
+      "actor_id": "B",
+      "timestamp": 32
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_242",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:58:01.601671+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "A",
+      "timestamp": 34
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_245",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:58:01.601730+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "fallback: missing_action"
+      },
+      "actor_id": "B",
+      "timestamp": 34
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_248",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:58:01.601782+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "C",
+      "timestamp": 34
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_254",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:58:04.262954+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "A",
+      "timestamp": 37
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_257",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:58:04.263014+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "fallback: missing_action"
+      },
+      "actor_id": "B",
+      "timestamp": 37
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_260",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:58:04.263068+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "C",
+      "timestamp": 37
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_266",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:58:06.913603+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "A",
+      "timestamp": 40
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_269",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:58:06.913667+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "fallback: missing_action"
+      },
+      "actor_id": "B",
+      "timestamp": 40
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_272",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-24T13:58:06.913729+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "C",
+      "timestamp": 40
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}

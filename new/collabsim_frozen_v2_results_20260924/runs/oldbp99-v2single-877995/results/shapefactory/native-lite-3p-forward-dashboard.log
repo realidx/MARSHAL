@@ -1,0 +1,191 @@
+[92m22:10:32 - LiteLLM:WARNING[0m: common_utils.py:979 - litellm: could not pre-load bedrock-runtime response stream shape — Bedrock event-stream decoding will be unavailable. Error: No module named 'botocore'
+[92m22:10:33 - LiteLLM:WARNING[0m: common_utils.py:24 - litellm: could not pre-load sagemaker-runtime response stream shape — SageMaker event-stream decoding will be unavailable. Error: No module named 'botocore'
+[t=0ms] simulation started
+[step=1] starting
+[step=2] starting
+[step=3] starting
+[t=9851ms] starting
+[t=9851ms] starting
+[t=9851ms] starting
+[t=18598ms] starting
+[t=18598ms] starting
+[t=18598ms] starting
+[t=27645ms] starting
+[t=27645ms] starting
+[t=27645ms] starting
+[t=37871ms] starting
+[t=37871ms] starting
+[t=46020ms] starting
+[t=53971ms] starting
+[t=55897ms] starting
+[t=55897ms] starting
+[t=55897ms] starting
+[t=64901ms] starting
+[t=73934ms] starting
+[t=81529ms] starting
+[t=92502ms] starting
+[t=101445ms] starting
+[t=101445ms] starting
+[t=101445ms] starting
+[t=111679ms] starting
+[t=113786ms] starting
+[t=113786ms] starting
+[t=113786ms] starting
+[t=123869ms] starting
+[t=126033ms] starting
+[t=126033ms] starting
+[t=126033ms] starting
+[t=136404ms] starting
+[t=147813ms] starting
+[t=150289ms] starting
+[t=150289ms] starting
+[t=150289ms] starting
+[t=162407ms] starting
+[t=162407ms] starting
+[t=165233ms] starting
+[t=165233ms] starting
+[t=165233ms] starting
+[t=176140ms] starting
+[t=178799ms] starting
+[t=178799ms] starting
+[t=178799ms] starting
+[t=189868ms] starting
+[t=202057ms] starting
+[t=204800ms] starting
+[t=204800ms] starting
+[t=204800ms] starting
+[t=219323ms] starting
+[t=219323ms] starting
+[t=222616ms] starting
+[t=222616ms] starting
+[t=222616ms] starting
+[t=234393ms] starting
+[t=237476ms] starting
+[t=237476ms] starting
+[t=237476ms] starting
+[t=249521ms] starting
+[t=264860ms] starting
+[t=267865ms] starting
+[t=267865ms] starting
+[t=267865ms] starting
+[t=284337ms] starting
+[t=284337ms] starting
+[t=288126ms] starting
+[t=288126ms] starting
+[t=288126ms] starting
+[t=301110ms] starting
+[t=304678ms] starting
+[t=304678ms] starting
+[t=304678ms] starting
+[t=320285ms] starting
+[t=337701ms] starting
+[t=341201ms] starting
+[t=341201ms] starting
+[t=341201ms] starting
+[t=359673ms] starting
+[t=359673ms] starting
+[t=364034ms] starting
+[t=364034ms] starting
+[t=364034ms] starting
+[t=379231ms] starting
+[t=383279ms] starting
+[t=383279ms] starting
+[t=383279ms] starting
+[t=399439ms] starting
+[t=420214ms] starting
+[t=424040ms] starting
+[t=424040ms] starting
+[t=424040ms] starting
+[t=445444ms] starting
+[t=445444ms] starting
+[t=450448ms] starting
+[t=450448ms] starting
+[t=450448ms] starting
+[t=468202ms] starting
+[t=472818ms] starting
+[t=472818ms] starting
+[t=472818ms] starting
+[t=492220ms] starting
+[t=515494ms] starting
+[t=519643ms] starting
+[t=519643ms] starting
+[t=519643ms] starting
+[t=542554ms] starting
+[t=542554ms] starting
+[t=548095ms] starting
+[t=548095ms] starting
+[t=548095ms] starting
+Traceback (most recent call last):
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/litellm/llms/openai/openai.py", line 852, in completion
+    raise e
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/litellm/llms/openai/openai.py", line 780, in completion
+    ) = self.make_sync_openai_chat_completion_request(
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/litellm/litellm_core_utils/logging_utils.py", line 344, in sync_wrapper
+    result = func(*args, **kwargs)
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/litellm/llms/openai/openai.py", line 503, in make_sync_openai_chat_completion_request
+    raise e
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/litellm/llms/openai/openai.py", line 478, in make_sync_openai_chat_completion_request
+    raw_response = openai_client.chat.completions.with_raw_response.create(
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/openai/_legacy_response.py", line 369, in wrapped
+    return cast(LegacyAPIResponse[R], func(*args, **kwargs))
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/openai/_utils/_utils.py", line 298, in wrapper
+    return func(*args, **kwargs)
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/openai/resources/chat/completions/completions.py", line 1296, in create
+    return self._post(
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/openai/_base_client.py", line 1375, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/openai/_base_client.py", line 1148, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 98304 tokens. However, you requested 0 output tokens and your prompt contains at least 98305 input tokens, for a total of at least 98305 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=98305)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/litellm/main.py", line 2763, in completion
+    raise e
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/litellm/main.py", line 2735, in completion
+    response = openai_chat_completions.completion(
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/litellm/llms/openai/openai.py", line 863, in completion
+    raise OpenAIError(
+litellm.llms.openai.common_utils.OpenAIError: Error code: 400 - {'error': {'message': "This model's maximum context length is 98304 tokens. However, you requested 0 output tokens and your prompt contains at least 98305 input tokens, for a total of at least 98305 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=98305)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/third_party/CollabSim/src/cli.py", line 461, in <module>
+    raise SystemExit(main())
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/third_party/CollabSim/src/cli.py", line 184, in main
+    controller.run(max_steps=args.max_steps)
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/third_party/CollabSim/src/controller/controller.py", line 186, in run
+    self._run_time_mode(max_steps=max_steps)
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/third_party/CollabSim/src/controller/controller.py", line 418, in _run_time_mode
+    self._trigger_idle_agents_parallel(
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/third_party/CollabSim/src/controller/controller.py", line 512, in _trigger_idle_agents_parallel
+    return self._handle_agent_decide_batch_realtime(payloads, delayed_actions)
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/third_party/CollabSim/src/controller/controller.py", line 554, in _handle_agent_decide_batch_realtime
+    proposals[agent_id] = self._invoke_agent_context_update(agent_id, observation)
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/third_party/CollabSim/src/controller/controller.py", line 945, in _invoke_agent_context_update
+    proposal = agent.context_update(observation)
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/third_party/CollabSim/src/agents/litellm_agent.py", line 89, in context_update
+    text = self._call_litellm(messages)
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/third_party/CollabSim/src/agents/litellm_agent.py", line 199, in _call_litellm
+    response = litellm.completion(**kwargs)
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/litellm/utils.py", line 1774, in wrapper
+    raise e
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/litellm/utils.py", line 1595, in wrapper
+    result = original_function(*args, **kwargs)
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/litellm/main.py", line 4502, in completion
+    raise exception_type(
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 2466, in exception_type
+    raise e
+  File "/home/e/e1300530/tmp/collabsim-native-lite-venv/lib/python3.10/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 409, in exception_type
+    raise ContextWindowExceededError(
+litellm.exceptions.ContextWindowExceededError: litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: OpenAIException - This model's maximum context length is 98304 tokens. However, you requested 0 output tokens and your prompt contains at least 98305 input tokens, for a total of at least 98305 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=98305)
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+LiteLLM.Info: If you need to debug this error, use `litellm._turn_on_debug()'.
+

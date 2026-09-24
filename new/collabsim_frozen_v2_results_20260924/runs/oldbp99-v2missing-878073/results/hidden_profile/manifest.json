@@ -1,0 +1,91 @@
+{
+  "version": "hidden-profile-native-local-v1",
+  "upstream_commit": "08ed0ed1cefb2edf1ea389b20ba8355815a7c8d0",
+  "upstream_manifest_sha256": "3e5e035261ef6a0296493d0a8be0023fdc9f484706525b185aabfbca53bb5ff3",
+  "runner_sha256": "9bd44e1b4a6045d592662c0ca11d6e99ebc2f84e6822add671b419ada3b8037a",
+  "checkpoint_id": "aab6fdb53542132f3818909f533678b5d01d31ce984e53674ebf90e14b737ab9",
+  "checkpoint_identity_verified": false,
+  "all_seats_same_model": true,
+  "temperature": 0.2,
+  "seed": 42,
+  "native_rules_prompts_materials_roles_probes_unchanged": true,
+  "repetitions_are_not_independent_task_instances": true,
+  "jobs": [
+    {
+      "id": "hidden-profile-00",
+      "config": "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/collabsim_frozen/oldbp99-v2missing-878073/results/hidden_profile/hidden-profile-00.yml",
+      "output": "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/collabsim_frozen/oldbp99-v2missing-878073/results/hidden_profile/hidden-profile-00",
+      "changes": [
+        {
+          "path": "agents",
+          "before": [
+            {
+              "id": "A",
+              "role": "planner",
+              "model": {
+                "provider": "litellm",
+                "name": "gpt-4o",
+                "temperature": 0.2
+              }
+            },
+            {
+              "id": "B",
+              "role": "analyst",
+              "model": {
+                "provider": "litellm",
+                "name": "gpt-4o",
+                "temperature": 0.2
+              }
+            },
+            {
+              "id": "C",
+              "role": "planner",
+              "model": {
+                "provider": "litellm",
+                "name": "gpt-4o",
+                "temperature": 0.2
+              }
+            }
+          ],
+          "after": [
+            {
+              "id": "A",
+              "role": "planner",
+              "model": {
+                "provider": "litellm",
+                "name": "openai/collabsim-oldbp99",
+                "temperature": 0.2,
+                "api_base": "http://127.0.0.1:26073/v1"
+              }
+            },
+            {
+              "id": "B",
+              "role": "analyst",
+              "model": {
+                "provider": "litellm",
+                "name": "openai/collabsim-oldbp99",
+                "temperature": 0.2,
+                "api_base": "http://127.0.0.1:26073/v1"
+              }
+            },
+            {
+              "id": "C",
+              "role": "planner",
+              "model": {
+                "provider": "litellm",
+                "name": "openai/collabsim-oldbp99",
+                "temperature": 0.2,
+                "api_base": "http://127.0.0.1:26073/v1"
+              }
+            }
+          ]
+        },
+        {
+          "path": "logging.output_dir",
+          "before": "experiments/study_conditions/hidden_profile10/baseline",
+          "after": "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/collabsim_frozen/oldbp99-v2missing-878073/results/hidden_profile/hidden-profile-00"
+        }
+      ]
+    }
+  ]
+}
