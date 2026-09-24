@@ -16,8 +16,9 @@ by numerical ties.
 
 The queried uncertainty is one partner--goal preference in
 $\{\textsc{Want},\textsc{Neutral},\textsc{Avoid}\}$. The deployed inference
-interface returns the complete supported subset and either its uniquely
-favored member or \textsc{Undetermined}; it does not return probabilities.
+interface returns the complete positive-support subset. It marks a value as
+favored when its posterior mass exceeds the runner-up by more than $0.1$,
+and otherwise returns \textsc{Undetermined}; it does not return probabilities.
 Both the model and correct judgments use identical serialization. The inference
 prompt necessarily identifies whether an event was observed or imposed; the
 controlled planning prompt contains neither that evidence nor its provenance.
@@ -56,39 +57,40 @@ Selection and scoring use the fixed teacher only. In particular, changing a
 judgment never recomputes the partner continuation policy, and per-world
 payoffs respect the focal player's information set rather than optimizing a
 different continuation separately in each hidden world. The paired quantity
-$\Delta_{\mathrm{repair}}$ is therefore the effect of changing the semantic input to the same
+$\Delta_c$ is therefore the effect of changing the semantic input to the same
 model planner. It can have either sign and is not combined with planning
 regret as an additive error decomposition.
 Condition-specific regret means may have different valid subsets. We therefore
-also aggregate both regrets and $\Delta_{\mathrm{repair}}$ on the identical doubly valid
+also aggregate both regrets and $\Delta_c$ on the identical doubly valid
 case/replica pairs and identical structure weights, where the implementation
-checks $\Delta_{\mathrm{repair}}=
+checks $\Delta_c=
 \operatorname{Reg}_c(\widehat a(\widehat J))-
 \operatorname{Reg}_c(\widehat a(J^\star))$ row by row and after aggregation.
 
 \paragraph{Execution and determinism.}
-We evaluate Qwen3-4B-Instruct-2507 through vLLM and the Hermes tool-call
-parser, using greedy decoding ($T=0$, top-$p=1$, top-$k=-1$), a 4,096-token
-completion limit, and three replicas. The vLLM workers enable batch-invariant
-execution; repeated requests must agree even when production concurrency and
-chunked prefill are retained. We additionally require that whenever
-$\widehat J=J^\star$, the two controlled planning request bodies (including their
-seed) are identical and return the same action. Replicas are determinism
-checks, not independent statistical samples. Both checkpoint runs contain
-96/96 rows and 408/408 calls. All repeated outputs agree; all semantic
-certificates pass; and the paired-scoring identity has zero row failures
-(maximum residual $0$).
+We evaluate the unchanged Qwen3-4B-Instruct-2507 checkpoint through vLLM
+using greedy decoding ($T=0$, top-$p=1$, top-$k=-1$), a 4,096-token
+completion limit, and three replicas. The archive records 96/96 returned
+rows: 32 cases repeated three times. All three results for each case agree,
+so replicas check execution determinism rather than provide independent
+samples. The run records its checkpoint, suite manifest, and runtime hashes.
+Every semantic certificate passes; the paired-scoring identity has zero row
+failures.
 
 \paragraph{Aggregation.}
 We first collapse the identical replicas, average valid cases within each
-structure, then weight structures equally. The old and new runs have 16 and 24
-doubly valid paired cases spanning 11 and 14 structures. Their paired repair
-means use those respective subsets. For checkpoint comparison we additionally
-intersect validity masks: 14 paired cases across 10 structures yield repair
-$-0.158$ (old) and $-0.550$ (new); 24 correct-judgment cases across all 16 structures
-yield regret $0.802$ and $1.130$; and 28 end-to-end cases across 14 structures
-yield $0.690$ and $0.887$. No mean is reconstructed by subtracting metrics
-computed on different valid subsets.
+structure, then weight structures equally. Inference judgments are valid in
+all 32 cases. Correct-judgment planning is valid in all 32 cases; native
+history-to-action planning is valid in 30 cases across 15 structures. Both
+controlled planning calls are valid in 24 cases across 12 structures, which
+define the paired repair mean. Among these, replacing the judgment changes
+19 actions; utility rises in three cases, is unchanged in 14, and falls in
+seven. On this identical paired subset, model-judgment regret is $0.958$,
+correct-judgment regret is $1.174$, and their difference equals mean repair
+$-0.215$ up to rounding. The all-valid-cases correct-judgment regret of
+$1.151$ uses a different subset and is not subtracted from $0.958$.
+Qualitative reference-planner assistance changes no exact inference answer
+in the eight voluntary cases to which it is applied.
 
 The frozen v6 suite stores the model-facing cases, teacher-only certificates,
 selection record, and both clean controlled planning and native end-to-end

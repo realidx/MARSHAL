@@ -98,6 +98,10 @@ class SocialPipeline(BasePipeline):
                 data['bp_train'],bank_sha=interaction_load()
                 if bank_sha!=options['interaction_bank_sha256']:raise ValueError('Interaction bank differs from launch metadata')
                 collector_type=PipelineCollector
+        if options.get('micro_bank'):
+            from training.social_mixed.micro_training import PipelineCollector,identity
+            if identity()!=options['micro_bank_sha256']:raise ValueError('Micro bank changed after launch')
+            collector_type=PipelineCollector
         self.collector = collector_type(data, self.generate, seed=config.seed,
                                    concurrency=config.actor_infer.world_size*config.actor_infer.strategy_args.strategy_config['max_num_seqs'],
                                    protocol_coefficient=options.get('protocol_coefficient',0.2),**extra)
@@ -392,6 +396,6 @@ class SocialPipeline(BasePipeline):
         status='paused' if self.stop_requested else 'early_gate' if early_gate_reached else 'complete'
         result=dict(status=status,updates=self.state.step+1,
                     training_response_tokens=consumed,token_budget=self.options['total_tokens'])
-        if not self.stop_requested and not early_gate_reached and consumed<self.options['total_tokens']:
+        if not self.options.get('micro_bank') and not self.stop_requested and not early_gate_reached and consumed<self.options['total_tokens']:
             result['status']='step_limit_before_token_budget'
         (self.root/'RESULT.json').write_text(json.dumps(result,indent=2)+'\n')

@@ -61,6 +61,14 @@ class ContractTests(unittest.TestCase):
   for kind in ('O','B','Pplus'):
    self.assertAlmostEqual(sum(r['task_weight'] for r in rows if r['kind']==kind)/len(rows),1/3)
   self.assertEqual(collector.state['step'],1)
+  for arm,expected_units,shares in [('conditioned',96,{'O':2/3,'Pplus':1/3}),('outcome',32,{'O':1.})]:
+   collector=InteractionCollector(self.tasks,generate)
+   with patch('training.social_mixed.interaction_training.ShortInteraction',Window):
+    rows,units,_,metrics=collector.collect(arm)
+   self.assertEqual(len(units),expected_units)
+   self.assertEqual({r['kind'] for r in rows},set(shares))
+   for kind,share in shares.items():
+    self.assertAlmostEqual(sum(r['task_weight'] for r in rows if r['kind']==kind)/len(rows),share)
  def test_old_resume_rejected(self):
   c=InteractionCollector(self.tasks,lambda _:[])
   state=deepcopy(c.state);state['version']='interaction-v1'

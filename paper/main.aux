@@ -15,6 +15,7 @@
 \citation{light2023avalonbench}
 \citation{benac2026benchmark}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\citation{anthropic2026multiagent}
 \citation{gmytrasiewicz2005ipomdp}
 \citation{carmel1996opponent,huang2024hop,goel2026bayesian}
 \citation{sobotka2026strategic,jha2026modeling}
@@ -25,37 +26,42 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Negotiation with Private Preferences and Mixed Incentives}{2}{subsection.2.2}\protected@file@percent }
 \newlabel{sec:benac-i}{{2.2}{2}{Negotiation with Private Preferences and Mixed Incentives}{subsection.2.2}{}}
 \newlabel{eq:benac-i-game}{{1}{2}{Negotiation with Private Preferences and Mixed Incentives}{equation.1}{}}
-\newlabel{eq:benac-i-utility}{{2}{2}{Negotiation with Private Preferences and Mixed Incentives}{equation.2}{}}
+\citation{kuhn1953extensive}
+\citation{harsanyi1967games}
+\citation{nash1950equilibrium}
+\newlabel{eq:benac-i-utility}{{2}{3}{Negotiation with Private Preferences and Mixed Incentives}{equation.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Game Slices and Oracle Solver}{3}{subsection.2.3}\protected@file@percent }
 \newlabel{sec:game-slices}{{2.3}{3}{Game Slices and Oracle Solver}{subsection.2.3}{}}
 \newlabel{eq:oracle-iteration}{{3}{3}{Game Slices and Oracle Solver}{equation.3}{}}
 \newlabel{eq:oracle-update-main}{{4}{3}{Game Slices and Oracle Solver}{equation.4}{}}
-\newlabel{eq:oracle-targets}{{5}{3}{Game Slices and Oracle Solver}{equation.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Diagnose}{3}{section.3}\protected@file@percent }
-\newlabel{sec:diagnose}{{3}{3}{Diagnose}{section.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Matched semantic interventions}{4}{subsection.3.1}\protected@file@percent }
-\newlabel{eq:diagnose-regret}{{6}{4}{Matched semantic interventions}{equation.6}{}}
-\newlabel{eq:diagnose-repair}{{7}{4}{Matched semantic interventions}{equation.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Inference failure and clean planning intervention}{4}{subsection.3.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Native-semantic diagnosis on 16 matched structures (32 cases), all decision-sufficient. Regrets are structure means over each condition's valid outputs; repair uses only identical doubly valid pairs.}}{5}{table.1}\protected@file@percent }
-\newlabel{tab:diagnose-main}{{1}{5}{Native-semantic diagnosis on 16 matched structures (32 cases), all decision-sufficient. Regrets are structure means over each condition's valid outputs; repair uses only identical doubly valid pairs}{table.1}{}}
-\@writefile{toc}{\contentsline {paragraph}{Illustrative failure patterns.}{5}{section*.1}\protected@file@percent }
+\citation{qwen2025qwen3instruct}
+\newlabel{eq:oracle-targets}{{5}{4}{Game Slices and Oracle Solver}{equation.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Diagnose}{4}{section.3}\protected@file@percent }
+\newlabel{sec:diagnose}{{3}{4}{Diagnose}{section.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Matched decisions and oracle labels.}{4}{section*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Replacing the inferred judgment.}{4}{section*.2}\protected@file@percent }
+\newlabel{eq:diagnose-regret}{{6}{4}{Replacing the inferred judgment}{equation.6}{}}
+\@writefile{toc}{\contentsline {paragraph}{Base-model diagnosis.}{4}{section*.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Diagnosis of the unchanged Qwen3-4B-Instruct-2507 checkpoint on 16 matched structures (32 cases). Regret is measured in terminal-utility units and averaged across structures with valid actions; repair uses the 24 cases in which both controlled planning actions are valid. Three deterministic replicas gave identical results and are counted once.}}{5}{table.1}\protected@file@percent }
+\newlabel{tab:diagnose-main}{{1}{5}{Diagnosis of the unchanged Qwen3-4B-Instruct-2507 checkpoint on 16 matched structures (32 cases). Regret is measured in terminal-utility units and averaged across structures with valid actions; repair uses the 24 cases in which both controlled planning actions are valid. Three deterministic replicas gave identical results and are counted once}{table.1}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {4}Experiment}{5}{section.4}\protected@file@percent }
 \newlabel{sec:experiment}{{4}{5}{Experiment}{section.4}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Data and training}{5}{subsection.4.1}\protected@file@percent }
 \newlabel{sec:experiment-training}{{4.1}{5}{Data and training}{subsection.4.1}{}}
 \citation{zou2026calbench}
+\citation{chen2026collabsim}
+\citation{carmel1996opponent,gmytrasiewicz2005ipomdp,albrecht2013hba}
+\citation{macindoe2012pomcop,wu2021toomanycooks,foerster2019bad,huang2024hop}
+\citation{li2023theory,cross2025hypothetical,jha2026modeling,mu2026adaptive,zhou2026epistemic,feng2026sigmamem,goel2026bayesian,hwang2026infusing}
+\citation{riemer2025tom,sobotka2026strategic}
 \@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Post-training diagnosis on 16 matched structures (32 cases), strengthened v6 protocol. Planning regret uses the correct inference judgment. Regret and repair are structure means over valid outputs; their coverage may differ. Blank cells await a verified run under this protocol. BP-99 is a historical inference/planning-only reference, not one of the four main arms.}}{6}{table.2}\protected@file@percent }
 \newlabel{tab:experiment-diagnosis}{{2}{6}{Post-training diagnosis on 16 matched structures (32 cases), strengthened v6 protocol. Planning regret uses the correct inference judgment. Regret and repair are structure means over valid outputs; their coverage may differ. Blank cells await a verified run under this protocol. BP-99 is a historical inference/planning-only reference, not one of the four main arms}{table.2}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Historical fixed-partner adversarial games. Utility is conditional on normal completion; completion counts are out of 24 per split. The final common-protocol O/D comparison remains to be filled.}}{6}{table.3}\protected@file@percent }
 \newlabel{tab:experiment-adversarial}{{3}{6}{Historical fixed-partner adversarial games. Utility is conditional on normal completion; completion counts are out of 24 per split. The final common-protocol O/D comparison remains to be filled}{table.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.2}In-domain diagnosis and adversarial games}{6}{subsection.4.2}\protected@file@percent }
 \newlabel{sec:experiment-benac}{{4.2}{6}{In-domain diagnosis and adversarial games}{subsection.4.2}{}}
-\citation{chen2026collabsim}
-\citation{carmel1996opponent,gmytrasiewicz2005ipomdp,albrecht2013hba}
-\citation{macindoe2012pomcop,wu2021toomanycooks,foerster2019bad,huang2024hop}
-\citation{li2023theory,cross2025hypothetical,jha2026modeling,mu2026adaptive,zhou2026epistemic,feng2026sigmamem,goel2026bayesian,hwang2026infusing}
-\citation{riemer2025tom,sobotka2026strategic}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Transfer to CalBench and ShapeFactory}{6}{subsection.4.3}\protected@file@percent }
+\newlabel{sec:experiment-transfer}{{4.3}{6}{Transfer to CalBench and ShapeFactory}{subsection.4.3}{}}
 \citation{benac2026benchmark,wyse2026commitment,oneill2026cooperate}
 \citation{zou2026calbench,ys2026sotopiatom,avsian2026sneak}
 \citation{zhu2025multiagentbench,chen2026collabsim,li2026emergent,xuan2026socialveil}
@@ -68,10 +74,9 @@
 \citation{meulemans2026gametheory}
 \@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Available transfer observations. CalBench uses the 24-game sequential suite (three meetings per game). ShapeFactory values are from the earlier native v2 execution of the same four three-agent conditions; v3 results will replace these historical values. Checkpoints and training doses differ.}}{7}{table.4}\protected@file@percent }
 \newlabel{tab:experiment-transfer}{{4}{7}{Available transfer observations. CalBench uses the 24-game sequential suite (three meetings per game). ShapeFactory values are from the earlier native v2 execution of the same four three-agent conditions; v3 results will replace these historical values. Checkpoints and training doses differ}{table.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Transfer to CalBench and ShapeFactory}{7}{subsection.4.3}\protected@file@percent }
-\newlabel{sec:experiment-transfer}{{4.3}{7}{Transfer to CalBench and ShapeFactory}{subsection.4.3}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {5}Discussion}{7}{section.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {6}Related Works}{7}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{7}{section.7}\protected@file@percent }
 \bibdata{references}
 \bibcite{agashe2025llmcoordination}{{1}{2025}{{Agashe et~al.}}{{Agashe, Fan, Reyna, and Wang}}}
 \bibcite{albrecht2013hba}{{2}{2013}{{Albrecht \& Ramamoorthy}}{{Albrecht and Ramamoorthy}}}
@@ -80,7 +85,6 @@
 \bibcite{benac2026benchmark}{{5}{2026}{{Benac et~al.}}{{Benac, Raedler, Ma, and Doshi-Velez}}}
 \bibcite{carmel1996opponent}{{6}{1996}{{Carmel \& Markovitch}}{{Carmel and Markovitch}}}
 \bibcite{cemri2025multiagent}{{7}{2025}{{Cemri et~al.}}{{Cemri, Pan, Yang, Agrawal, Chopra, Tiwari, Keutzer, Parameswaran, Klein, Ramchandran, Zaharia, Gonzalez, and Stoica}}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{8}{section.7}\protected@file@percent }
 \bibcite{chen2026collabsim}{{8}{2026}{{Chen et~al.}}{{Chen, Sun, Lu, Wang, Wang, and Yao}}}
 \bibcite{chen2024subgame}{{9}{2024}{{Chen et~al.}}{{Chen, Xu, Li, Yu, Song, Yang, Fang, Wang, and Wu}}}
 \bibcite{cross2025hypothetical}{{10}{2025}{{Cross et~al.}}{{Cross, Xiang, Bhatia, Yamins, and Haber}}}
@@ -88,54 +92,60 @@
 \bibcite{foerster2019bad}{{12}{2019}{{Foerster et~al.}}{{Foerster, Song, Hughes, Burch, Dunning, Whiteson, Botvinick, and Bowling}}}
 \bibcite{gmytrasiewicz2005ipomdp}{{13}{2005}{{Gmytrasiewicz \& Doshi}}{{Gmytrasiewicz and Doshi}}}
 \bibcite{goel2026bayesian}{{14}{2026}{{Goel et~al.}}{{Goel, Ellendula, Tadiparthi, Pari, Mahjoub, and Chinchali}}}
-\bibcite{he2026socialgym}{{15}{2026{a}}{{He et~al.}}{{He, Zhou, and Sap}}}
-\bibcite{he2026stratreasoner}{{16}{2026{b}}{{He et~al.}}{{He, Lai, Yang, Gan, Wang, Cai, and Zhao}}}
-\bibcite{hu2020otherplay}{{17}{2020}{{Hu et~al.}}{{Hu, Lerer, Peysakhovich, and Foerster}}}
-\bibcite{hua2026socialrl}{{18}{2026}{{Hua et~al.}}{{Hua, Huang, Payne, Yousefi, Amershi, and Celikyilmaz}}}
-\bibcite{huang2024hop}{{19}{2024}{{Huang et~al.}}{{Huang, Liu, Kong, Yang, Zhu, and Feng}}}
-\bibcite{hwang2026infusing}{{20}{2026}{{Hwang et~al.}}{{Hwang, Yin, Carenini, West, and Shwartz}}}
-\bibcite{jha2025crossenvironment}{{21}{2025}{{Jha et~al.}}{{Jha, Carvalho, Liang, Du, Kleiman-Weiner, and Jaques}}}
-\bibcite{jha2026modeling}{{22}{2026}{{Jha et~al.}}{{Jha, Huang, Ye, Jaques, and Kleiman-Weiner}}}
-\bibcite{li2023theory}{{23}{2023}{{Li et~al.}}{{Li, Chong, Stepputtis, Campbell, Hughes, Lewis, and Sycara}}}
-\bibcite{li2026systematic}{{24}{2026{a}}{{Li et~al.}}{{Li, Naito, and Shirado}}}
-\bibcite{li2026emergent}{{25}{2026{b}}{{Li et~al.}}{{Li, Petersson, Acquisti, and Bakker}}}
-\bibcite{light2023avalonbench}{{26}{2023}{{Light et~al.}}{{Light, Cai, Shen, and Hu}}}
-\bibcite{liu2026spiral}{{27}{2026}{{Liu et~al.}}{{Liu, Guertler, Yu, Liu, Qi, Balcells, Liu, Tan, Shi, Lin, Lee, and Jaques}}}
-\bibcite{lyu2026gift}{{28}{2026}{{Lyu et~al.}}{{Lyu, Xu, Meng, Yuan, Zhang, Huang, Chua, and Shen}}}
-\bibcite{macindoe2012pomcop}{{29}{2012}{{Macindoe et~al.}}{{Macindoe, Kaelbling, and Lozano-P{\'e}rez}}}
-\bibcite{madmoun2026communication}{{30}{2026}{{Madmoun \& Lahlou}}{{Madmoun and Lahlou}}}
-\bibcite{meulemans2026gametheory}{{31}{2026}{{Meulemans et~al.}}{{Meulemans, Wo{\l }czyk, Weis, Nasser, Rocca, Kobayashi, Lajoie, Steger, Richards, Hutter, Manyika, Saurous, Sacramento, and Ag{\"u}era~y Arcas}}}
-\bibcite{mu2026adaptive}{{32}{2026}{{Mu et~al.}}{{Mu, Zeng, Zhang, Shao, Chu, Guo, Jia, Wang, and Hu}}}
-\bibcite{oneill2026cooperate}{{33}{2026}{{O'Neill et~al.}}{{O'Neill, Zhu, Miroyan, Norouzi, and Gonzalez}}}
-\bibcite{riemer2025tom}{{34}{2025}{{Riemer et~al.}}{{Riemer, Ashktorab, Bouneffouf, Das, Liu, Weisz, and Campbell}}}
-\bibcite{sobotka2026strategic}{{35}{2026}{{Sobotka et~al.}}{{Sobotka, Karabag, and Topcu}}}
-\bibcite{west2020improved}{{36}{2020}{{West et~al.}}{{West, Maire, Browne, and Denman}}}
-\bibcite{wu2026socialr1}{{37}{2026}{{Wu et~al.}}{{Wu, Lei, Lian, Huang, Zhou, Li, Xie, and Meng}}}
-\bibcite{wu2021toomanycooks}{{38}{2021}{{Wu et~al.}}{{Wu, Wang, Evans, Tenenbaum, Parkes, and Kleiman-Weiner}}}
-\bibcite{wyse2026commitment}{{39}{2026}{{Wyse et~al.}}{{Wyse, Bustos, Volkova, and Kleiman-Weiner}}}
-\bibcite{xuan2026socialveil}{{40}{2026}{{Xuan et~al.}}{{Xuan, Wang, Ye, Yu, August, and You}}}
-\bibcite{yao2026talk}{{41}{2026}{{Yao et~al.}}{{Yao, Zou, and Hawkins}}}
-\bibcite{ys2026sotopiatom}{{42}{2026}{{YS et~al.}}{{YS, Wang, Zeng, Zhou, Onoue, Varadarajan, and Sap}}}
-\bibcite{yuan2026marshal}{{43}{2026}{{Yuan et~al.}}{{Yuan, Xu, Tan, Yi, Guang, Long, Hui, Li, Chen, Zhao, Zhang, Yu, and Wang}}}
-\bibcite{zhang2026termsbench}{{44}{2026{a}}{{Zhang et~al.}}{{Zhang, Zhang, Pappu, El, Blanchet, Athey, Liu, and Zou}}}
-\bibcite{zhang2026silobench}{{45}{2026{b}}{{Zhang et~al.}}{{Zhang, Liu, Shan, Huang, Yang, Zhu, Cheng, Liu, Zeng, Zhang, and Jiang}}}
-\bibcite{zhou2026epistemic}{{46}{2026}{{Zhou et~al.}}{{Zhou, Song, Wu, Cheng, Yin, Xie, Hao, Hua, Pan, Poria, and Kan}}}
-\bibcite{zhu2025multiagentbench}{{47}{2025}{{Zhu et~al.}}{{Zhu, Du, Hong, Yang, Guo, Wang, Wang, Qian, Tang, Ji, and You}}}
-\bibcite{zou2026calbench}{{48}{2026}{{Zou et~al.}}{{Zou, Yao, She, Goodman, and Hawkins}}}
+\bibcite{harsanyi1967games}{{15}{1967}{{Harsanyi}}{{}}}
+\bibcite{he2026socialgym}{{16}{2026{a}}{{He et~al.}}{{He, Zhou, and Sap}}}
+\bibcite{he2026stratreasoner}{{17}{2026{b}}{{He et~al.}}{{He, Lai, Yang, Gan, Wang, Cai, and Zhao}}}
+\bibcite{hu2020otherplay}{{18}{2020}{{Hu et~al.}}{{Hu, Lerer, Peysakhovich, and Foerster}}}
+\bibcite{hua2026socialrl}{{19}{2026}{{Hua et~al.}}{{Hua, Huang, Payne, Yousefi, Amershi, and Celikyilmaz}}}
+\bibcite{huang2024hop}{{20}{2024}{{Huang et~al.}}{{Huang, Liu, Kong, Yang, Zhu, and Feng}}}
+\bibcite{hwang2026infusing}{{21}{2026}{{Hwang et~al.}}{{Hwang, Yin, Carenini, West, and Shwartz}}}
+\bibcite{jha2025crossenvironment}{{22}{2025}{{Jha et~al.}}{{Jha, Carvalho, Liang, Du, Kleiman-Weiner, and Jaques}}}
+\bibcite{jha2026modeling}{{23}{2026}{{Jha et~al.}}{{Jha, Huang, Ye, Jaques, and Kleiman-Weiner}}}
+\bibcite{kuhn1953extensive}{{24}{1953}{{Kuhn}}{{}}}
+\bibcite{li2023theory}{{25}{2023}{{Li et~al.}}{{Li, Chong, Stepputtis, Campbell, Hughes, Lewis, and Sycara}}}
+\bibcite{li2026systematic}{{26}{2026{a}}{{Li et~al.}}{{Li, Naito, and Shirado}}}
+\bibcite{li2026emergent}{{27}{2026{b}}{{Li et~al.}}{{Li, Petersson, Acquisti, and Bakker}}}
+\bibcite{light2023avalonbench}{{28}{2023}{{Light et~al.}}{{Light, Cai, Shen, and Hu}}}
+\bibcite{liu2026spiral}{{29}{2026}{{Liu et~al.}}{{Liu, Guertler, Yu, Liu, Qi, Balcells, Liu, Tan, Shi, Lin, Lee, and Jaques}}}
+\bibcite{lyu2026gift}{{30}{2026}{{Lyu et~al.}}{{Lyu, Xu, Meng, Yuan, Zhang, Huang, Chua, and Shen}}}
+\bibcite{macindoe2012pomcop}{{31}{2012}{{Macindoe et~al.}}{{Macindoe, Kaelbling, and Lozano-P{\'e}rez}}}
+\bibcite{madmoun2026communication}{{32}{2026}{{Madmoun \& Lahlou}}{{Madmoun and Lahlou}}}
+\bibcite{meulemans2026gametheory}{{33}{2026}{{Meulemans et~al.}}{{Meulemans, Wo{\l }czyk, Weis, Nasser, Rocca, Kobayashi, Lajoie, Steger, Richards, Hutter, Manyika, Saurous, Sacramento, and Ag{\"u}era~y Arcas}}}
+\bibcite{mu2026adaptive}{{34}{2026}{{Mu et~al.}}{{Mu, Zeng, Zhang, Shao, Chu, Guo, Jia, Wang, and Hu}}}
+\bibcite{nash1950equilibrium}{{35}{1950}{{Nash}}{{}}}
+\bibcite{oneill2026cooperate}{{36}{2026}{{O'Neill et~al.}}{{O'Neill, Zhu, Miroyan, Norouzi, and Gonzalez}}}
+\bibcite{qwen2025qwen3instruct}{{37}{2025}{{Qwen Team}}{{}}}
+\bibcite{riemer2025tom}{{38}{2025}{{Riemer et~al.}}{{Riemer, Ashktorab, Bouneffouf, Das, Liu, Weisz, and Campbell}}}
+\bibcite{sobotka2026strategic}{{39}{2026}{{Sobotka et~al.}}{{Sobotka, Karabag, and Topcu}}}
+\bibcite{west2020improved}{{40}{2020}{{West et~al.}}{{West, Maire, Browne, and Denman}}}
+\bibcite{wu2026socialr1}{{41}{2026}{{Wu et~al.}}{{Wu, Lei, Lian, Huang, Zhou, Li, Xie, and Meng}}}
+\bibcite{wu2021toomanycooks}{{42}{2021}{{Wu et~al.}}{{Wu, Wang, Evans, Tenenbaum, Parkes, and Kleiman-Weiner}}}
+\bibcite{wyse2026commitment}{{43}{2026}{{Wyse et~al.}}{{Wyse, Bustos, Volkova, and Kleiman-Weiner}}}
+\bibcite{xuan2026socialveil}{{44}{2026}{{Xuan et~al.}}{{Xuan, Wang, Ye, Yu, August, and You}}}
+\bibcite{yao2026talk}{{45}{2026}{{Yao et~al.}}{{Yao, Zou, and Hawkins}}}
+\bibcite{ys2026sotopiatom}{{46}{2026}{{YS et~al.}}{{YS, Wang, Zeng, Zhou, Onoue, Varadarajan, and Sap}}}
+\bibcite{yuan2026marshal}{{47}{2026}{{Yuan et~al.}}{{Yuan, Xu, Tan, Yi, Guang, Long, Hui, Li, Chen, Zhao, Zhang, Yu, and Wang}}}
+\bibcite{zhang2026termsbench}{{48}{2026{a}}{{Zhang et~al.}}{{Zhang, Zhang, Pappu, El, Blanchet, Athey, Liu, and Zou}}}
+\bibcite{zhang2026silobench}{{49}{2026{b}}{{Zhang et~al.}}{{Zhang, Liu, Shan, Huang, Yang, Zhu, Cheng, Liu, Zeng, Zhang, and Jiang}}}
+\bibcite{zhou2026epistemic}{{50}{2026}{{Zhou et~al.}}{{Zhou, Song, Wu, Cheng, Yin, Xie, Hao, Hua, Pan, Poria, and Kan}}}
+\bibcite{zhu2025multiagentbench}{{51}{2025}{{Zhu et~al.}}{{Zhu, Du, Hong, Yang, Guo, Wang, Wang, Qian, Tang, Ji, and You}}}
+\bibcite{zou2026calbench}{{52}{2026}{{Zou et~al.}}{{Zou, Yao, She, Goodman, and Hawkins}}}
 \bibstyle{iclr2027_conference}
 \@writefile{toc}{\contentsline {section}{\numberline {A}Game slices and oracle solver details}{11}{appendix.A}\protected@file@percent }
 \newlabel{app:oracle}{{A}{11}{Game slices and oracle solver details}{appendix.A}{}}
-\@writefile{toc}{\contentsline {paragraph}{Multi-decision slices and information.}{11}{section*.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Finite-tree policy selection.}{12}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Multi-decision slices and information.}{11}{section*.8}\protected@file@percent }
+\newlabel{eq:game-slice}{{7}{11}{Multi-decision slices and information}{equation.7}{}}
+\@writefile{toc}{\contentsline {paragraph}{Finite-tree policy selection.}{12}{section*.9}\protected@file@percent }
 \newlabel{eq:oracle-tree-recursion}{{8}{12}{Finite-tree policy selection}{equation.8}{}}
-\newlabel{eq:oracle-certificate}{{9}{12}{Finite-tree policy selection}{equation.9}{}}
-\@writefile{toc}{\contentsline {paragraph}{Belief filtering and action values.}{12}{section*.8}\protected@file@percent }
-\newlabel{eq:oracle-belief}{{10}{12}{Belief filtering and action values}{equation.10}{}}
-\newlabel{eq:oracle-action-value}{{11}{12}{Belief filtering and action values}{equation.11}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {B}Native-semantic diagnostic protocol}{12}{appendix.B}\protected@file@percent }
-\newlabel{app:diagnose}{{B}{12}{Native-semantic diagnostic protocol}{appendix.B}{}}
-\@writefile{toc}{\contentsline {paragraph}{Frozen matched structures.}{12}{section*.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Calls and interventions.}{13}{section*.10}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Execution and determinism.}{13}{section*.11}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Aggregation.}{13}{section*.12}\protected@file@percent }
+\newlabel{eq:oracle-reach}{{9}{12}{Finite-tree policy selection}{equation.9}{}}
+\newlabel{eq:oracle-certificate}{{10}{12}{Finite-tree policy selection}{equation.10}{}}
+\@writefile{toc}{\contentsline {paragraph}{Belief filtering and action values.}{12}{section*.10}\protected@file@percent }
+\newlabel{eq:oracle-belief}{{11}{12}{Belief filtering and action values}{equation.11}{}}
+\newlabel{eq:oracle-action-value}{{12}{12}{Belief filtering and action values}{equation.12}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {B}Native-semantic diagnostic protocol}{13}{appendix.B}\protected@file@percent }
+\newlabel{app:diagnose}{{B}{13}{Native-semantic diagnostic protocol}{appendix.B}{}}
+\@writefile{toc}{\contentsline {paragraph}{Frozen matched structures.}{13}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Calls and interventions.}{13}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Execution and determinism.}{13}{section*.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Aggregation.}{13}{section*.14}\protected@file@percent }
 \gdef \@abspage@last{14}

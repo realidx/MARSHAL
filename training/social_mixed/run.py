@@ -47,6 +47,10 @@ def configuration(arm, seed=42, resume=None):
         # optimizer batches retain the independent 4096-token sequence limit.
         if arm in ('selfplay','outcome','conditioned','decomposed'):
             value.actor_infer.strategy_args.strategy_config.max_model_len=32768
+        if os.environ.get('SOCIAL_MICRO_BANK','0')=='1':
+            value.max_steps=40
+            value.save_steps=10
+            value.eval_steps=10
         # SocialPipeline performs exactly one optimizer update per collected
         # batch. Generic RLVR derives steps from its fixed rollout_batch_size
         # (a placeholder here), which floors to zero for microbatch > 1.
@@ -97,6 +101,8 @@ def validate_resume(path, options, model):
     if options.get('recipe_version'):
         if old['options'].get('recipe_version')!=options['recipe_version'] or old['options'].get('total_tokens')!=options['total_tokens']:
             raise ValueError('Resume must preserve recipe and cosine token horizon; start a new stage')
+    if old['options'].get('micro_bank_sha256')!=options.get('micro_bank_sha256'):
+        raise ValueError('Micro bank changed')
     if old['options'].get('interaction_bank_sha256')!=options.get('interaction_bank_sha256'):
         raise ValueError('Interaction bank changed; start a new stage')
     if old['options'].get('compact_bank_sha256')!=options.get('compact_bank_sha256'):
@@ -147,7 +153,7 @@ def main():
     args.recipe=args.recipe or ('reasoning' if args.arm in ARMS else 'legacy')
     if args.recipe=='reasoning':
         if args.arm not in ARMS:raise ValueError('Reasoning recipe requires one of SP/O/C/D')
-        if args.arm!='decomposed' and (args.tokens_per_update<57344 or args.total_tokens%args.tokens_per_update):
+        if args.arm!='decomposed' and os.environ.get('SOCIAL_INTERACTION_BANK','0')!='1' and (args.tokens_per_update<57344 or args.total_tokens%args.tokens_per_update):
             raise ValueError('Reasoning uses complete nominal token blocks >=57344 tokens')
         if not (0<args.max_behavior_logprob_delta<1 and 0<args.max_behavior_clip_fraction<1):
             raise ValueError('Probability acceptance thresholds must be in (0,1)')
@@ -166,8 +172,16 @@ def main():
                              'Complete response_only_v1 migration and curriculum review before training.')
     options=vars(args).copy()
     options['interaction_bank']=os.environ.get('SOCIAL_INTERACTION_BANK','0')=='1'
+    options['micro_bank']=os.environ.get('SOCIAL_MICRO_BANK','0')=='1'
+    if options['micro_bank']:
+        if args.arm!='decomposed' or args.recipe!='reasoning' or options['interaction_bank']:
+            raise ValueError('Micro requires isolated reasoning decomposed launcher')
+        from training.social_mixed.micro_training import identity
+        options['micro_bank_sha256']=identity()
+        options['keep_checkpoints']=4
+
     if options['interaction_bank']:
-        if args.recipe!='reasoning' or args.arm not in ('outcome','decomposed'):raise ValueError('Interaction bank supports reasoning O/D only')
+        if args.recipe!='reasoning' or args.arm not in ('outcome','conditioned','decomposed'):raise ValueError('Interaction bank supports reasoning O/C/D only')
         if args.normalization!='standard_sequence' or args.protocol_coefficient!=.2:raise ValueError('Interaction recipe requires standard_sequence and protocol coefficient 0.2')
         from training.social_mixed.interaction_bank import load as interaction_load
         _,options['interaction_bank_sha256']=interaction_load()
@@ -187,7 +201,7 @@ def main():
         from training.social_mixed.interaction_training import VERSION as interaction_version
         options['recipe_version']=interaction_version
         options['training_pool']='interaction-o100-b-structure-v1'
-        options['candidate_groups_per_update']=({'O':4,'B':4,'Pplus':4} if args.arm=='decomposed' else {'O':4})
+        options['candidate_groups_per_update']={'decomposed':{'O':4,'B':4,'Pplus':4},'conditioned':{'O':8,'Pplus':4},'outcome':{'O':4}}[args.arm]
     if args.recipe=='reasoning' or args.arm in ('outcome','decomposed'):
         if args.recipe=='reasoning':
             from training.social_mixed.reasoning_bank import PATH,load
@@ -197,6 +211,10 @@ def main():
         load('validation')
         options['paired_bank_sha256']=__import__('hashlib').sha256((PATH/'manifest.json').read_bytes()).hexdigest()
     options['gpu_profile']=os.environ.get('SOCIAL_GPU_PROFILE','h100-96')
+    if options['micro_bank']:
+        from training.social_mixed.micro_training import VERSION
+        from examples.social_mixed.micro_learning_v1 import dataset as micro_dataset
+        options.update(recipe_version=VERSION,training_pool=micro_dataset.ROOT.name,candidate_groups_per_update={'all':len(micro_dataset.batch(0))//8})
     if args.total_tokens<1 or args.tokens_per_update<1:raise ValueError('Token budgets must be positive')
     if args.pause_after_updates is not None and args.pause_after_updates<1:
         raise ValueError('pause-after-updates must be positive')

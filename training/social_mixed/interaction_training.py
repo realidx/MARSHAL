@@ -40,10 +40,12 @@ class InteractionCollector:
   if state['version']!=VERSION or state['bank_sha256']!=self.sha:raise ValueError('Candidate/state mismatch')
   self.state=deepcopy(state)
  def collect(self,arm='decomposed'):
-  if arm not in ('decomposed','outcome'):raise ValueError('O or D only')
+  if arm not in ('decomposed','outcome','conditioned'):raise ValueError('O, C or D only')
   # Transactional bookkeeping: failed inference does not advance exposure.
   counts=deepcopy(self.state['counts']);plan=[];working=deepcopy(self.state);working['block']=self.state['step']
-  pools=[('O',2,'short_interaction'),('O',2,'static')]
+  o_groups=4 if arm=='conditioned' else 2
+  pools=[('O',o_groups,'short_interaction'),('O',o_groups,'static')]
+  if arm=='conditioned':pools += [('Pplus',4,None)]
   if arm=='decomposed':pools += [('B',4,None),('Pplus',4,None)]
   for kind,size,mode in pools:
    if kind=='Pplus':
@@ -108,7 +110,8 @@ class InteractionCollector:
        task_denominator=0.,selected_task_group=any(abs(v)>1e-12 for v in advantages)))
   n=len(rows);groups=Counter(self.tasks[tid]['paired_view'] for tid in plan);share=1/len(groups)
   for row in rows:
-   w=n*share/(groups[row['kind']]*8*row['trajectory_length'])
+   task_share=({'O':2/3,'Pplus':1/3}[row['kind']] if arm=='conditioned' else share)
+   w=n*task_share/(groups[row['kind']]*8*row['trajectory_length'])
    row.update(task_weight=w,protocol_weight=w,kl_weight=w,loss_weight=w,advantage=row['task_advantage']+row['protocol_advantage'])
   tokens=sum(len(r['response_ids']) for r in rows)
   working.update(counts=counts,step=step+1,consumed=self.state['consumed']+tokens)

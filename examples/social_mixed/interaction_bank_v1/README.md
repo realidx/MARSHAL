@@ -65,3 +65,21 @@ python -m unittest examples.social_mixed.interaction_bank_v1.test_candidate -v
 ```
 
 构建复用已验收且 input/teacher 完全相同的 O 回放缓存；改变输入或 teacher 后重新回放。
+
+## O / C 同步入口（2026-09-25）
+
+使用 `start_interaction_training.sh <GPU profile> outcome` 启动 O，使用
+`start_interaction_training.sh <GPU profile> conditioned` 启动 C。两者独立启动，
+共享 D 当前题库和 `interaction-v2-name-contract` 姓名映射修复。
+
+|臂|每次更新的候选题组（每组8条回答／轨迹）|任务损失权重|
+|---|---|---|
+|O|短交互O 2 + 静态O 2|O=1|
+|C|短交互O 4 + 静态O 4 + P 4|O=2/3，P=1/3|
+|D（未改）|短交互O 2 + 静态O 2 + B 4 + P 4|各1/3|
+
+C 用额外 O 替代 D 的 B 槽位，仍为96条候选回答／轨迹；O保留32条。
+多步轨迹会产生多次调用，不能将轨迹数当调用数或相同token剂量。
+沿用每20次更新静态O/B/P验证与checkpoint保存、只保留最新一个checkpoint；
+不加入CalBench或self-play验证。总预算仍按实际生成tokens停止。
+本次本地collector回归通过；未提交训练，未执行GPU验收。

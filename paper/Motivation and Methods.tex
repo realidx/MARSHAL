@@ -1,7 +1,13 @@
 \subsection{From Interactive Uncertainty to Two Capabilities}
 \label{sec:coordination-formulation}
 
-Coordination with private information is naturally an interactive partially
+Consider three coding agents working on the same Python backend. In an
+Anthropic experiment motivated by behavior observed in deployment, each was
+instructed to migrate it to a different language. The agents mistook the resulting interference for deliberate
+obstruction and escalated to repeatedly killing competing processes and, in
+some runs, revoking one another's access~\citep{anthropic2026multiagent}.
+They depended on a usable shared backend, yet pursued incompatible local
+objectives without knowing the others' instructions. Such coordination is naturally an interactive partially
 observable decision problem.  For agent $i$, an I-POMDP is $\mathcal I_i=\langle IS_i,A,T_i,\Omega_i,O_i,R_i\rangle, IS_i=S\times\prod_{j\neq i}M_j$
 where $S$ is the physical state, $M_j$ models agent $j$, $A$ is the joint
 action space, and $T_i,O_i,R_i$ specify transition, observation, and
@@ -86,19 +92,22 @@ accounting for goals on which preferences align or conflict.
 \subsection{Game Slices and Oracle Solver}
 \label{sec:game-slices}
 
-A \emph{game slice} contains one or more consecutive decision events from an
-instance $\mathcal E$. For decision indices $t<u$, write
-$\sigma_{t:u}=(\mathcal E,v,h_t,(a_s,o_{s+1})_{s=t}^{u-1})$: $v$ is the sampled
-joint preference assignment, $h_t$ the public history at the first decision,
-and $(a_s,o_{s+1})$ the subsequent action and observation records. The oracle
-has access to $v$, but at decision $s$ player $i$ sees only its
-\emph{information set} $I_s^i=(h_s,v_i,r_s^i)$: public history, its own
-preferences, and its private investigation answers. Thus the recorded path
-can pass through several decisions without revealing other players' private
-information. At each labeled decision, the oracle evaluates every legal
-continuation, not just the action recorded in the slice.
-
-The oracle first solves the finite tree of possible preferences and actions.
+A \emph{game slice} is a consecutive segment of play that begins at a chosen
+decision and may include later decisions. For example, it can contain an
+offer, the partner's response, and the next proposal. The slice records which
+actions occurred and what each player observed following the game rule.
+At decision $s$, the acting player $i$
+knows the public history $h_s$, its own preferences $v_i$, and its private
+answers $r_s^i$. We write this view as $I_s^i=(h_s,v_i,r_s^i)$, an
+\emph{information set} that identifies the game states the player cannot
+distinguish~\citep{kuhn1953extensive}. The observed sequence locates the
+decisions to be labeled. For each such decision, the oracle also evaluates
+actions that were not taken and their possible continuations; it does not
+give the acting player access to the partners' hidden preferences. A formal
+slice definition appears in Appendix~\ref{app:oracle}. Following the Bayesian
+representation of private types
+\citep{harsanyi1967games}, the oracle solves the finite tree over possible
+preferences and actions under the common prior $\mu_0$.
 A \emph{policy} $\pi_i(a\mid I)$ assigns a probability to each legal action
 $a\in\mathcal L(I)$ given what player $i$ can know. Let $\Pi_i$ contain all
 such policies, including plans for later decisions after each possible
@@ -115,15 +124,14 @@ actions, we update every player against the same previous policy profile:
  \pi_i^{(k+1)}=\operatorname{BR}_i(\pi_{-i}^{(k)}).
  \label{eq:oracle-iteration}
 \end{align}
-We retain a fixed profile $\pi^\star$ only after checking, for every player
-and initial private-information class, that changing its own complete plan
-while the others keep theirs cannot improve its expected utility. At
+We retain a fixed profile $\pi^\star$ only if it passes a
+no-profitable-unilateral-deviation check, following the stability criterion
+of \citet{nash1950equilibrium}: in every initial private-information class,
+no player can improve its expected utility by changing its complete plan
+while the others keep theirs. At
 \textsc{accept}/\textsc{reject} responses, expected utility to the other
 players breaks ties in the responder's own utility; remaining ties are mixed
-uniformly. This gives a reproducible reference policy, without assuming it
-is the game's unique solution.
-
-The reference policy also turns interaction into an inference target. Let
+uniformly. The reference policy also turns interaction into an inference target. Let
 $b_s^{i,\star}(v_{-i})=\Pr_{\mu_0,\pi^\star}(v_{-i}\mid I_s^i)$ be player $i$'s
 \emph{posterior}, its probability distribution over the others' hidden
 preferences. If partner $j$ autonomously chooses $a_s^j$, Bayes' rule gives
@@ -143,10 +151,7 @@ we instead ask what would happen if $i$ chose each legal action $a$ now:
  \label{eq:oracle-targets}
 \end{equation}
 The forced action is followed by the reference policy for the rest of the
-game. At each decision in a longer slice, the updated posterior informs the
-next set of action values. Inference labels report possible values of a
-partner's preference and its unique most likely value (or
-\textsc{Undetermined} in a tie); planning labels follow the best action
-values. The exact posterior and action values are oracle-only.
+game. Across a longer slice, each player's posterior is updated from the
+observations available to that player and informs its later decisions.
 Appendix~\ref{app:oracle} details the computation and validity checks;
 Section~\ref{sec:experiment-training} describes slice construction and sampling.
