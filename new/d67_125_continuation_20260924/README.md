@@ -20,16 +20,17 @@ This bundle archives the original output of Slurm job `876729`, resumed from
   `3cc339a3345b580bc26608c90837b877388759edb80191a9799328e54881b1b5`.
 
 The `calbench/` subdirectories preserve results and execution metadata for
-the frozen 24-game, batch-invariant profile at D-79, D-99, and D-119.
-All three have `EXIT_CODE=0` and 24/24 finished games:
+the frozen 24-game, batch-invariant profile at D-67, D-79, D-99, and D-119.
+All four have `EXIT_CODE=0` and 24/24 finished games:
 
 | Checkpoint | Coordinated | Successful and optimal | Mean headline | Untruncated | Strict envelope failures |
 | --- | ---: | ---: | ---: | ---: | ---: |
+| D-67 | 8/24 | 4/24 | 0.573506 | 22/24 | 3 |
 | D-79 | 4/24 | 3/24 | 0.435929 | 22/24 | 3 |
 | D-99 | 6/24 | 5/24 | 0.555818 | 20/24 | 6 |
 | D-119 | 6/24 | 3/24 | 0.527802 | 21/24 | 7 |
 
 These checkpoints show no monotonic CalBench improvement. D-119 ties D-99
 on coordinated success but has fewer optimal games and a lower mean score.
-The D-67 comparison is in `new/d67_training_20260924` and its separate
-CalBench evidence; do not interpret the counts as a smooth learning curve.
+The D-67 training logs are in `new/d67_training_20260924`; do not interpret
+the CalBench counts as a smooth learning curve.
