@@ -53,7 +53,8 @@ class TriStateTests(unittest.TestCase):
         with patch('training.social_mixed.paired_requests.request',return_value={}),patch('training.social_mixed.reasoning_scoring.score',return_value=dict(reward=1.,correct=True,status='ok')),patch('training.social_mixed.reasoning_scoring.decision_metrics',return_value={}):
             collected,_,_,_=c.collect(0,'decomposed')
         self.assertTrue(all(r['canonical_id'] in eligible for r in collected if r['kind']=='Pplus'))
-        self.assertEqual({r['canonical_id'] for r in collected if r['kind']=='B' and r['exposure_slot']=='paired-5'},{c.schedule[0]})
+        # Current global coverage uses four distinct B groups, not the retired paired-5 slot.
+        self.assertEqual(len({r['canonical_id'] for r in collected if r['kind']=='B'}),4)
 
     def test_masked_validation_is_not_forgetting_or_incorrect(self):
         task=dict(id='p',paired_view='Pplus',canonical_id='c',package_id='pkg')

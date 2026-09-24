@@ -15,12 +15,12 @@ terminal-utility units (mean 0.67), ruling out nominal differences caused only
 by numerical ties.
 
 The queried uncertainty is one partner--goal preference in
-$\{\textsc{Want},\textsc{Neutral},\textsc{Avoid}\}$. The deployed $B$
+$\{\textsc{Want},\textsc{Neutral},\textsc{Avoid}\}$. The deployed inference
 interface returns the complete supported subset and either its uniquely
 favored member or \textsc{Undetermined}; it does not return probabilities.
-Both the model and correct judgments use identical serialization. The $B$
+Both the model and correct judgments use identical serialization. The inference
 prompt necessarily identifies whether an event was observed or imposed; the
-controlled $P$ prompt contains neither that evidence nor its provenance.
+controlled planning prompt contains neither that evidence nor its provenance.
 Condition names, case identifiers, correctness claims, posterior
 probabilities, and payoff values are absent from model prompts. Exact
 posteriors remain in the scorer and are used with the common per-world payoff
@@ -37,18 +37,18 @@ this proves invariance over every compatible posterior; all 32 retained cases
 pass. The invariant voluntary and preset sets must additionally be disjoint.
 
 \paragraph{Calls and interventions.}
-For each case we obtain: (i) a native semantic $B$ judgment; (ii) a fresh $P$
-call supplied with that judgment; (iii) a fresh $P$ call supplied with
-$B^\star$; and (iv) a native history-to-action call with no explicit judgment.
-The two controlled $P$ calls include the current binding state, remaining
+For each case we obtain: (i) a native semantic inference judgment; (ii) a fresh planning
+call supplied with that judgment; (iii) a fresh planning call supplied with
+$J^\star$; and (iv) a native history-to-action call with no explicit judgment.
+The two controlled planning calls include the current binding state, remaining
 turns, investigation quota, known preferences, legal actions, and fixed
 partner policy, but exclude the behavioral chronology and its
 voluntary/preset provenance. Their tools, sampling parameters, and request
 seed are identical; only the serialized judgment may differ. Moreover, after
-removing that judgment, the controlled-$P$ request is byte-identical across
+removing that judgment, the controlled planning request is byte-identical across
 the two cases in each matched structure. If the model judgment is invalid, its
 composition cell is missing rather than replaced by a default action. On eight
-voluntary cases, a fifth call supplies $B$ with the reference planner's
+voluntary cases, a fifth call supplies inference with the reference planner's
 qualitative likelihood ordering while still withholding all numeric
 probabilities.
 
@@ -56,14 +56,15 @@ Selection and scoring use the fixed teacher only. In particular, changing a
 judgment never recomputes the partner continuation policy, and per-world
 payoffs respect the focal player's information set rather than optimizing a
 different continuation separately in each hidden world. The paired quantity
-$\Delta_B$ is therefore the effect of changing the semantic input to the same
+$\Delta_{\mathrm{repair}}$ is therefore the effect of changing the semantic input to the same
 model planner. It can have either sign and is not combined with planning
 regret as an additive error decomposition.
 Condition-specific regret means may have different valid subsets. We therefore
-also aggregate both regrets and $\Delta_B$ on the identical doubly valid
+also aggregate both regrets and $\Delta_{\mathrm{repair}}$ on the identical doubly valid
 case/replica pairs and identical structure weights, where the implementation
-checks $\Delta_B=\operatorname{Reg}(\widehat B)-
-\operatorname{Reg}(B^\star)$ row by row and after aggregation.
+checks $\Delta_{\mathrm{repair}}=
+\operatorname{Reg}_c(\widehat a(\widehat J))-
+\operatorname{Reg}_c(\widehat a(J^\star))$ row by row and after aggregation.
 
 \paragraph{Execution and determinism.}
 We evaluate Qwen3-4B-Instruct-2507 through vLLM and the Hermes tool-call
@@ -71,7 +72,7 @@ parser, using greedy decoding ($T=0$, top-$p=1$, top-$k=-1$), a 4,096-token
 completion limit, and three replicas. The vLLM workers enable batch-invariant
 execution; repeated requests must agree even when production concurrency and
 chunked prefill are retained. We additionally require that whenever
-$\widehat B=B^\star$, the two controlled-$P$ request bodies (including their
+$\widehat J=J^\star$, the two controlled planning request bodies (including their
 seed) are identical and return the same action. Replicas are determinism
 checks, not independent statistical samples. Both checkpoint runs contain
 96/96 rows and 408/408 calls. All repeated outputs agree; all semantic
@@ -84,13 +85,13 @@ structure, then weight structures equally. The old and new runs have 16 and 24
 doubly valid paired cases spanning 11 and 14 structures. Their paired repair
 means use those respective subsets. For checkpoint comparison we additionally
 intersect validity masks: 14 paired cases across 10 structures yield repair
-$-0.158$ (old) and $-0.550$ (new); 24 correct-$B$ cases across all 16 structures
+$-0.158$ (old) and $-0.550$ (new); 24 correct-judgment cases across all 16 structures
 yield regret $0.802$ and $1.130$; and 28 end-to-end cases across 14 structures
 yield $0.690$ and $0.887$. No mean is reconstructed by subtracting metrics
 computed on different valid subsets.
 
 The frozen v6 suite stores the model-facing cases, teacher-only certificates,
-selection record, and both clean controlled-$P$ and native end-to-end
+selection record, and both clean controlled planning and native end-to-end
 requests. CPU checks reject any controlled planning prompt containing a
 behavioral chronology or provenance marker and verify byte identity across
 each matched pair before judgment insertion. Hashes in the suite manifest

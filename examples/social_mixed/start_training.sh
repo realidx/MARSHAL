@@ -34,6 +34,7 @@ if [[ "$ARM" == sp_o ]]; then
   python -m training.social_mixed.sp_o_preflight --tokenizer "$SOCIAL_MODEL" --output "$SOCIAL_SUBMISSION_DIR/sp-o-preflight.json"
 fi
 if [[ "${SOCIAL_INTERACTION_BANK:-0}" == 1 ]]; then
+  python -m unittest training.social_mixed.test_interaction_contract training.social_mixed.test_interaction_entry -q
   python -m training.social_mixed.interaction_preflight --tokenizer "$SOCIAL_MODEL" --output "$SOCIAL_SUBMISSION_DIR/interaction-preflight.json"
 fi
 echo 'Binary/linear-only data verified; checking hardware profiles and training configurations'

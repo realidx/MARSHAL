@@ -1,3 +1,5 @@
+> 当前正式入口已切换为 `python -m examples.final_evaluation.collabsim_frozen_v3`，仅运行三人 ShapeFactory 四局，不运行 Hidden Profile。见 [v3 协议](collabsim_frozen_v3/PROTOCOL.md)。以下两人配置与结果保留为历史诊断记录。
+
 # ShapeFactory Lite：原生运行器，小规模配置
 
 官方仓库完整源码保存在 `third_party/CollabSim`，固定 commit：

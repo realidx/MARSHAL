@@ -184,7 +184,8 @@ def main():
         _, _, options['compact_bank_sha256'] = compact_load()
         options['training_pool']='compact-200-operations-v2'
     if options['interaction_bank']:
-        options['recipe_version']='interaction-v1'
+        from training.social_mixed.interaction_training import VERSION as interaction_version
+        options['recipe_version']=interaction_version
         options['training_pool']='interaction-o100-b-structure-v1'
         options['candidate_groups_per_update']=({'O':4,'B':4,'Pplus':4} if args.arm=='decomposed' else {'O':4})
     if args.recipe=='reasoning' or args.arm in ('outcome','decomposed'):

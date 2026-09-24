@@ -14,17 +14,30 @@ from training.social_mixed.reasoning_scoring import score
 from training.social_mixed.reasoning_training import group_advantages
 from training.social_mixed.short_interaction import ShortInteraction,decision_request,decode_action
 
+VERSION = 'interaction-v2-name-contract'
+
+def static_request(task):
+ """Use precisely the name mapping consumed by the static scorer."""
+ variant=task.get('name_variant',0)
+ payload=request(task,variant=variant)
+ from training.b_sft import social_named_probe as named
+ expected=(named.request(task,'action_tools',variant)['tools'] if task['task']=='B'
+           else named.action_tools(named.present(task,variant)))
+ if payload['tools']!=expected:
+  raise ValueError('Request/scorer tool contract mismatch: '+task['id'])
+ return payload
+
 class InteractionCollector:
  def __init__(self,tasks,generate,seed=42):
   self.tasks={t['id']:t for t in tasks};self.generate=generate;self.seed=seed;self.envs={}
   self.sha=hashlib.sha256(json.dumps(tasks,sort_keys=True).encode()).hexdigest()
-  self.state=dict(version='interaction-v1',bank_sha256=self.sha,step=0,counts={},consumed=0)
+  self.state=dict(version=VERSION,bank_sha256=self.sha,step=0,counts={},consumed=0)
   root=Path(__file__).resolve().parents[2]/'examples/social_mixed/compact_bank_200'
   self.p_reference=list(map(json.loads,(root/'tasks.jsonl').read_text().splitlines()))
   self.p_categories=json.loads((root/'metadata.json').read_text())['categories']
   if {t['id']:t for t in tasks if t['paired_view']=='Pplus'}!={t['id']:t for t in self.p_reference if t['paired_view']=='Pplus'}:raise ValueError('P reference changed')
  def restore(self,state):
-  if state['version']!='interaction-v1' or state['bank_sha256']!=self.sha:raise ValueError('Candidate/state mismatch')
+  if state['version']!=VERSION or state['bank_sha256']!=self.sha:raise ValueError('Candidate/state mismatch')
   self.state=deepcopy(state)
  def collect(self,arm='decomposed'):
   if arm not in ('decomposed','outcome'):raise ValueError('O or D only')
@@ -49,14 +62,18 @@ class InteractionCollector:
    if not short:
     payloads=[]
     for replica in range(8):
-     payload=request(task);payload['seed']=int(hashlib.sha256(f'{self.seed}:{group}:{replica}:0'.encode()).hexdigest()[:8],16);payloads.append(payload)
+     payload=static_request(task);payload['seed']=int(hashlib.sha256(f'{self.seed}:{group}:{replica}:0'.encode()).hexdigest()[:8],16);payloads.append(payload)
     pending=self.generate(payloads)
     if len(pending)!=8:raise ValueError('Missing static rollout outputs')
    for replica in range(8):
     calls=[]
     def run(payload):
      payload=deepcopy(payload);payload['seed']=int(hashlib.sha256(f'{self.seed}:{group}:{replica}:{len(calls)}'.encode()).hexdigest()[:8],16)
-     output=self.generate([payload])[0] if short else pending[replica]
+     if short:
+      generated=self.generate([payload])
+      if len(generated)!=1:raise ValueError('Missing short rollout output')
+      output=generated[0]
+     else:output=pending[replica]
      if output['completion'].get('status')=='infrastructure_failure':raise ValueError('Infrastructure failure')
      if not output.get('response_ids') or not output.get('behavior_log_probs'):raise ValueError('Missing behavior tokens/probabilities')
      if len(output['behavior_log_probs'])!=len(output['response_ids']):raise ValueError('Behavior probability/token mismatch')
@@ -71,7 +88,7 @@ class InteractionCollector:
      ok=result['status']=='terminal';value=result['terminal_utility']
      scores=[dict(status='ok' if ok else 'format_failure',reward=value,correct=None)]*len(calls)
     else:
-     completion=run(request(task));s=score(task,completion);scores=[s]
+     completion=run(static_request(task));s=score(task,completion);scores=[s]
      if s.get('reward') is None:raise ValueError('Unscorable response')
      ok=s['status']!='format_failure' and completion.get('finish_reason')!='length'
      value=s['reward']
@@ -86,7 +103,7 @@ class InteractionCollector:
     for decision,(output,s) in enumerate(zip(tr['calls'],tr['scores'])):
      invalid=not tr['ok'] and decision==len(tr['calls'])-1
      rows.append(dict(output,kind=kind,task_id=tid,canonical_id=task['canonical_id'],group=group,unit=unit,replica=replica,
-       decision=decision,trajectory_length=len(tr['calls']),training_mode='short_interaction' if short else 'static',score=s,
+       name_variant=0 if short else task.get('name_variant',0),decision=decision,trajectory_length=len(tr['calls']),training_mode='short_interaction' if short else 'static',score=s,
        task_advantage=float(a),protocol_advantage=-.2 if invalid else 0.,protocol_failure=('truncated' if output['completion'].get('finish_reason')=='length' else 'invalid_action') if invalid else None,
        task_denominator=0.,selected_task_group=any(abs(v)>1e-12 for v in advantages)))
   n=len(rows);groups=Counter(self.tasks[tid]['paired_view'] for tid in plan);share=1/len(groups)
@@ -96,5 +113,13 @@ class InteractionCollector:
   tokens=sum(len(r['response_ids']) for r in rows)
   working.update(counts=counts,step=step+1,consumed=self.state['consumed']+tokens)
   self.state=working
-  return rows,units,[],dict(rows=n,generated_tokens=tokens,candidate_groups=len(plan),skip_optimizer=False,
+  metrics={}
+  for kind in groups:
+   for mode in ('static','short_interaction'):
+    selected=[r for r in rows if r['kind']==kind and r['training_mode']==mode]
+    if not selected:continue
+    prefix=f'signal/{kind}/{mode}/'
+    grouped={r['group'] for r in selected}
+    metrics.update({prefix+'groups':len(grouped),prefix+'active_groups':len({r['group'] for r in selected if abs(r['task_advantage'])>1e-12}),prefix+'positive_units':len({r['unit'] for r in selected if r['task_advantage']>1e-12}),prefix+'truncations':sum(r['protocol_failure']=='truncated' for r in selected),prefix+'invalid_actions':sum(r['protocol_failure']=='invalid_action' for r in selected),prefix+'masked_calls':sum(r['score'].get('semantic_outcome')=='masked' for r in selected)})
+  return rows,units,[],dict(metrics,rows=n,generated_tokens=tokens,candidate_groups=len(plan),skip_optimizer=False,
       short_groups=sum(self.tasks[k].get('training_mode')=='short_interaction' for k in plan))

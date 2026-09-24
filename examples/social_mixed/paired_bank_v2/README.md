@@ -328,3 +328,13 @@ D采样状态升级为`d-coverage-fixed12-pcategories-v2`，旧v1状态不允许
 reasoning O/C/D/SP只验证固定静态O/B/P面板，temperature=0。CalBench与self-play交互验证均关闭。保留step-0基线；此后每完成20次更新验证并保存checkpoint，正常结束时补一次最终验证/保存，提前停止保留恢复保存。目录沿用零基编号，例如20次更新对应checkpoint-19，验证为step-20.json。
 
 BEST按静态O的parent-macro正确率选择，同分保留较早结果；B/P为诊断指标，P仍报告masked覆盖。不会再读取CalBench分数选择checkpoint。checkpoint保留数量仍由原有keep-checkpoints控制（默认1，仅保留最新完整恢复点，不额外保留BEST权重），每20步保存不等于永久保留全部历史文件。旧验证选择版本不允许静默继承比较。
+
+### 2026-09-25：短交互 pipeline 评分修复
+
+当前入口仍为 `examples/social_mixed/start_interaction_training.sh`，collector/recipe 版本更新为 `interaction-v2-name-contract`。静态 O/B/P 请求显式传入题目的 `name_variant`，并在生成前核对请求与评分器的工具 schema；每条 call 记录实际变体。短交互继续使用同一 variant=0 生成和解码。
+
+启动器增加全500条静态题的工具→评分回归检查，以及恢复边界和collector权重测试。新版拒绝直接恢复 interaction-v1 的状态；旧D25/D52不能当作干净修复起点。该变更不调整题库、O/B/P比例、学习率、截断奖励、P masked规则或组内归一化。
+
+新增 `signal/{O,B,Pplus}/{static,short_interaction}/` 指标，记录题组数、非零任务信号组数、正advantage轨迹数、截断、非法动作和masked调用。短交互返回数量不匹配立即报错，不允许静默丢失回答。调用失败不提交collector曝光状态。
+
+CPU校验不替代真实tokenizer长度验收与GPU训练验收；启动时仍执行真实tokenizer preflight。短交互隐藏世界随机性、B截断和稀疏复习仍是实验设计/学习问题，不在此次bug修复中擅自改动。

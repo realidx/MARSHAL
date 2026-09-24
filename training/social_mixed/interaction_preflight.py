@@ -2,7 +2,7 @@
 import argparse,json,random
 from pathlib import Path
 from training.social_mixed.interaction_bank import load
-from training.social_mixed.paired_requests import request
+from training.social_mixed.interaction_training import static_request
 from training.social_mixed.short_interaction import ShortInteraction,decision_request
 
 def main():
@@ -17,7 +17,8 @@ def main():
    ids=tok.apply_chat_template(req['messages'],tools=req['tools'],tokenize=True,add_generation_prompt=True)
    lengths.append(len(ids))
    if len(ids)+1024>4096:raise ValueError(f'Actual interaction prompt exceeds training context: {len(ids)}+1024 > 4096')
- for task in tasks:check(request(task))
+ for task in tasks:
+  if task.get('training_mode')!='short_interaction':check(static_request(task))
  decisions=0
  for task in tasks:
   if task.get('training_mode')!='short_interaction':continue

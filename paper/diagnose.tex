@@ -1,8 +1,8 @@
 \label{sec:diagnose}
 
-We next test whether an LLM can recover the partner state needed for a
-decision ($B$), choose an effective interaction when that state is supplied
-($P$), and compose the two. Final game reward alone cannot distinguish these
+We next test whether an LLM can infer the partner state needed for a
+decision, plan an effective interaction when that state is supplied,
+and compose the two. Final game reward alone cannot distinguish these
 failures: a poor action may follow either a wrong judgment or poor use of a
 correct one, while two errors may occasionally cancel.
 
@@ -24,27 +24,28 @@ disjoint. Thus the deployed judgment is sufficient for the decision while the
 inference difference remains decision-relevant.
 
 The model-facing interface is the one used by our agent. For the single
-unknown partner--goal preference, $B$ returns (i) the complete subset of
+unknown partner--goal preference, inference returns (i) the complete subset of
 \textsc{Want}, \textsc{Neutral}, and \textsc{Avoid} that remains possible and
 (ii) the uniquely most supported value, or \textsc{Undetermined}. It never
-returns probabilities. We then query fresh planning contexts with either the
-model judgment $\widehat B$ or the correct semantic judgment $B^\star$. These
+returns probabilities. Let $J$ denote this semantic judgment. We then query
+fresh planning contexts with either the
+model judgment $\widehat J$ or the correct semantic judgment $J^\star$. These
 controlled planning prompts retain the complete current decision state---the
 binding commitments, remaining turns, investigation quota, legal actions, and
 fixed continuation policy---but remove the behavioral chronology from which
-$B$ was inferred. Before inserting the judgment, the voluntary and preset
+the judgment was inferred. Before inserting the judgment, the voluntary and preset
 planning requests are byte-identical. Thus the supplied judgment is the only
-route by which their evidential distinction reaches $P$. A third condition
+route by which their evidential distinction reaches planning. A third condition
 asks for a native history-to-action decision without an explicit judgment.
 Exact posteriors and per-world payoffs remain in the backend and are used only
-for scoring. Importantly, $B^\star$ denotes the correct deployed semantic
+for scoring. Here $J^\star$ denotes the correct deployed semantic
 summary, not the full posterior. We certify its decision sufficiency by
 decomposing the compatible posterior region into convex polytopes and exactly
 enumerating their rational vertices. Since action values are affine in the
 posterior, an identical optimal-action set at every vertex proves invariance
 throughout the region. We conservatively include the closure of strict support
 and favored-margin constraints. In an auxiliary condition on eight voluntary
-structures, $B$ additionally receives a qualitative reference-planner
+structures, the inference task additionally receives a qualitative reference-planner
 statement---e.g., that the observed sequence is impossible, more likely, or
 less likely under each preference---but still receives no numerical belief.
 This tests whether failures arise from modeling the partner's plan or from
@@ -61,19 +62,19 @@ and let $b_c^\star$ be the backend posterior. We score every action using
 Thus an action prompted by an incorrect judgment is still evaluated in the
 correct world distribution. We also measure the paired judgment-repair effect
 \begin{equation}
- \Delta_B=V_c\!\left(\widehat a(B^\star)\right)
-          -V_c\!\left(\widehat a(\widehat B)\right),
- \label{eq:diagnose-b-repair}
+ \Delta_{\mathrm{repair}}=V_c\!\left(\widehat a(J^\star)\right)
+          -V_c\!\left(\widehat a(\widehat J)\right),
+ \label{eq:diagnose-repair}
 \end{equation}
 using deterministic decoding so that the two calls differ only in the supplied
-judgment. A positive value means that repairing $B$ improves this planner; it
-is not an additive estimate of a standalone ``B error.'' Invalid tool outputs
+judgment. A positive value means that repairing inference improves this planner; it
+is not an additive estimate of a standalone inference error. Invalid tool outputs
 are missing rather than replaced with a default action.
 
 \subsection{Inference failure and clean planning intervention}
 
-Table~\ref{tab:diagnose-main} compares two BP checkpoints on the same frozen
-suite. Exact $B$ requires both the complete possible set and the correct
+Table~\ref{tab:diagnose-main} compares two historical inference/planning checkpoints on the same frozen
+suite. Exact inference requires both the complete possible set and the correct
 favored field. All 408 calls per checkpoint completed, and the three replicas
 were identical; replicas are therefore collapsed rather than treated as
 independent samples.
@@ -89,20 +90,20 @@ outputs; repair uses only identical doubly valid pairs.}
 \hline
 Quantity & Old BP-99 & New BP-99 \\
 \hline
-Semantic $B$ exact & $15.6\%$ & $15.6\%$ \\
-Voluntary-case $B$ exact & $0/16$ & $0/16$ \\
+Semantic inference exact & $15.6\%$ & $15.6\%$ \\
+Voluntary-case inference exact & $0/16$ & $0/16$ \\
 Possible-set exact & $43.8\%$ & $50.0\%$ \\
-Correct-$B$ $P$ valid & $25/32$ & $29/32$ \\
-Correct-$B$ $P$ regret & $0.828$ & $1.135$ \\
-Model-$B$ $P$ valid & $20/32$ & $27/32$ \\
-Model-$B$ $P$ regret & $0.568$ & $0.845$ \\
+Correct-judgment planning valid & $25/32$ & $29/32$ \\
+Correct-judgment planning regret & $0.828$ & $1.135$ \\
+Model-judgment planning valid & $20/32$ & $27/32$ \\
+Model-judgment planning regret & $0.568$ & $0.845$ \\
 Native end-to-end valid & $28/32$ & $32/32$ \\
 Native end-to-end regret & $0.690$ & $0.854$ \\
 Paired cases (structures) & $16\ (11)$ & $24\ (14)$ \\
 Action changed under repair & $7/16$ & $16/24$ \\
 Repair negative / zero / positive & $3/13/0$ & $6/18/0$ \\
-Mean paired repair $\Delta_B$ & $-0.144$ & $-0.310$ \\
-Qualitative-plan $B$ exact gain & $0$ pp & $0$ pp \\
+Mean paired repair $\Delta_{\mathrm{repair}}$ & $-0.144$ & $-0.310$ \\
+Inference gain with plan hint & $0$ pp & $0$ pp \\
 \hline
 \end{tabular}
 \end{table}
@@ -114,30 +115,30 @@ the preset half. The new model's possible-set gain also comes from preset cases
 Qualitative descriptions of the reference plan change no exact judgment.
 
 Planning remains defective after inference is fixed. With the correct,
-decision-sufficient $B^\star$, regret is positive on $19/25$ valid old-model
+decision-sufficient $J^\star$, regret is positive on $19/25$ valid old-model
 cases and $27/29$ new-model cases. Hence this failure cannot be attributed to
 missing posterior magnitudes. The new model produces valid actions more often,
-yet has higher regret. On the common valid subsets, correct-$B$ regret is
+yet has higher regret. On the common valid subsets, correct-judgment regret is
 $0.802$ versus $1.130$ over 24 cases spanning all 16 structures, while
 end-to-end regret is $0.690$ versus $0.887$ over 28 cases and 14 structures.
 Thus improved protocol compliance does not translate into better decisions.
 
 Repair exposes the coupling between the two capabilities. Changing only the
 semantic judgment changes the action in $7/16$ and $16/24$ paired cases, so the
-planner does respond to $B$; however, no repair improves utility. Three old and
+planner does respond to inference; however, no repair improves utility. Three old and
 six new cases become worse, while the rest are utility-equivalent. On the 14
 cases (10 structures) valid for both checkpoints, mean repair is $-0.158$ and
 $-0.550$, respectively. We interpret this as a misaligned belief-to-action
 interface and error cancellation, not as evidence that the planner ignores
-$B$ or as an additive decomposition of error.
+inference or as an additive decomposition of error.
 
 \paragraph{Illustrative failure patterns.}
 In \texttt{binary-20796:preset}, the new model conflates a goal's required
 action with preference, calling Blair's Library preference ``publicly known''
-and favoring \textsc{Want}; this wrong $B$ nevertheless elicits the certified
+and favoring \textsc{Want}; this wrong inference nevertheless elicits the certified
 optimal offer. Replacing it with the correct \textsc{Undetermined} judgment
 makes the same planner choose \textsc{Investigate}, despite stating that the
 game ends after this turn, increasing regret from $0$ to $2$. This is a
-recurrent opportunity-cost failure: under correct $B$, all 7 old-model and all
+recurrent opportunity-cost failure: under correct inference, all 7 old-model and all
 14 new-model investigations have positive regret. The trace makes the negative
 repair concrete: an inference error and a planning error can cancel.

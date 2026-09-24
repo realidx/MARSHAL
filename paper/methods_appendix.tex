@@ -1,0 +1,108 @@
+\section{Game slices and oracle solver details}
+\label{app:oracle}
+
+\paragraph{Multi-decision slices and information.}
+Let $\mathcal W=\prod_{i\in\mathcal N}\Theta_i$ be the finite set of joint
+preference assignments, with prior $\mu_0$ from
+Eq.~\ref{eq:benac-i-game}. A slice for focal player $i$ can be written
+$\sigma_{t:u}^i=(\mathcal E,I_t^i,e_t^i,\ldots,e_{u-1}^i)$, where $t\leq u$,
+$I_t^i=(h_t,v_i,r_t^i)$, and $e_s^i$ is the public action and observation
+received by $i$ at step $s$, including any new private investigation answer.
+Thus $t=u$ gives a single decision, while a longer interval carries beliefs
+through consecutive interactions. The focal player may act at several
+positions, with partner actions in between. The public history determines the
+current commitments, pending offer, proposer schedule, and remaining
+investigation budgets; each player additionally knows only its own type and
+private answers. When relevant, the record distinguishes an actor's chosen
+action from an externally imposed move. The observed sequence is one path
+through the slice; oracle values retain the full terminal continuation from
+each selected decision.
+
+\paragraph{Finite-tree policy selection.}
+A policy must assign the same action probabilities in any two worlds that a
+player cannot distinguish. We expand the public action tree for every
+$v\in\mathcal W$, retaining world-dependent private investigation answers.
+For a policy profile $\pi$, its terminal utility is
+$V_i^\pi(n,v)=U_i(C_T(n);v_i)$. At a nonterminal node $n$ whose actor is $j$,
+the continuation values satisfy
+\begin{equation}
+ V_i^\pi(n,v)=
+ \sum_{a\in\mathcal L(n)}
+ \pi_j(a\mid I^j(n,v))\,V_i^\pi(n[a,v],v),
+ \label{eq:oracle-tree-recursion}
+\end{equation}
+where $n[a,v]$ is the successor after action $a$ in world $v$. The private
+answer to an investigation affects the investigator's later information set,
+not the public information available to everyone else. Here
+$\mathcal L(n)$ denotes the legal actions at node $n$.
+
+In Eq.~\ref{eq:oracle-iteration}, $\operatorname{BR}_i$ is a best response
+over $i$'s \emph{complete contingent policy}: it can revise later decisions
+after every possible observation, not merely the next action. We compute it
+by backward induction while keeping the other players' policies fixed.
+Worlds in each information set are weighted by the root prior and by the
+likelihoods of other players' autonomous past actions. The reach calculation
+omits $i$'s own past action probabilities, so an alternative plan remains
+evaluable even when it differs from $i$'s current plan. At a zero-reach
+information set, we use the root prior restricted to $i$'s own type and
+private investigation answers. We first maximize expected own terminal
+utility. Only at an \textsc{accept}/\textsc{reject} response do own-utility
+ties favor the action with greater expected total utility to others.
+Residual ties receive equal probability.
+
+The updates for all players read the same previous profile and are applied
+simultaneously. A fixed profile is accepted only if, for every player and
+root private-information class,
+\begin{equation}
+ \max_{\widetilde\pi_i\in\Pi_i}
+ \mathbb E_{(\widetilde\pi_i,\pi_{-i}^\star)}
+ [U_i(C_T;v_i)\mid I_{\mathrm{root}}^i]
+ -
+ \mathbb E_{\pi^\star}
+ [U_i(C_T;v_i)\mid I_{\mathrm{root}}^i]
+ \leq\varepsilon ,
+ \label{eq:oracle-certificate}
+\end{equation}
+where $\Pi_i$ contains legal information-respecting contingent policies and
+$\varepsilon$ is the numerical tolerance. The check evaluates a full
+unilateral deviation, rather than only a one-step alternative. We discard
+cycles, timeouts, and profiles that fail the check. The resulting
+$\pi^\star$ is a selected reference profile, with no claim of uniqueness or
+of describing arbitrary human or LLM partners.
+
+\paragraph{Belief filtering and action values.}
+Let $b_s^{i,\star}(v_{-i})$ be the joint posterior over all other players'
+types at one decision in the slice. If player $j\ne i$ autonomously takes
+public action $a_s^j$, define
+$\ell_s^\star(v_{-i})=
+\pi_j^\star(a_s^j\mid I_s^j(v_i,v_{-i}))$.
+The candidate world determines what $j$ privately knows, including answers
+to its own investigations. The exact update is
+\begin{equation}
+ b_{s+1}^{i,\star}(v_{-i})=
+ \frac{b_s^{i,\star}(v_{-i})\ell_s^\star(v_{-i})}
+ {\sum_{\widetilde v_{-i}}
+ b_s^{i,\star}(\widetilde v_{-i})\ell_s^\star(\widetilde v_{-i})}.
+ \label{eq:oracle-belief}
+\end{equation}
+An action by $i$ or an imposed move changes the game state but contributes no
+likelihood about another player's type. A privately received investigation
+answer instead removes worlds inconsistent with that answer. We exclude
+observed actions whose total likelihood is zero. For every legal action at a
+selected decision, we force that action once and then follow the fixed
+reference profile:
+\begin{equation}
+ Q_i^\star(I_s^i,a)=
+ \sum_{v_{-i}}b_s^{i,\star}(v_{-i})
+ V_i^{\pi^\star}(n_s[a,(v_i,v_{-i})],(v_i,v_{-i})).
+ \label{eq:oracle-action-value}
+\end{equation}
+For a queried partner--goal preference $v_{jg}$, the inference target is the
+positive-support set and unique mode of
+$p_{jg}(z)=\sum_{v_{-i}:v_{jg}=z}b_s^{i,\star}(v_{-i})$; a tied mode is
+\textsc{Undetermined}. Planning actions are evaluated using $Q_i^\star$,
+including ties among optimal actions. The student sees neither the exact
+posterior nor action values. We use the same selected policy and carry the
+posterior forward across decisions within a slice. The stronger guarantee
+that a qualitative judgment alone determines the best action is certified
+separately for the matched diagnostic in Appendix~\ref{app:diagnose}.

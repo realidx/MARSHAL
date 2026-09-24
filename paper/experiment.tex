@@ -1,0 +1,153 @@
+\label{sec:experiment}
+
+We evaluate whether training improves partner inference, action selection, and
+their composition in \textsc{BENAC-I}, and whether any gains transfer to other
+multi-agent tasks. We report the checkpoint and evaluation protocol with every
+result; update counts alone do not imply equal training-token budgets.
+
+\subsection{Data and training}
+\label{sec:experiment-training}
+
+We construct training items from slices of the finite \textsc{BENAC-I} game in
+Section~\ref{sec:benac-i}. Instances vary goal dependencies, binary versus
+linear satisfaction, private preferences, commitment states, and interaction
+histories. We use the certified reference policy of
+Section~\ref{sec:game-slices} to obtain behavioral likelihoods for
+partner-state judgments and action values for legal decisions. We retain a
+supervised item only when its reference computation succeeds, and check
+generated transitions with the native game rules. Complete-game resets provide
+a separate source of interactive experience. The final dataset
+version, counts of distinct source structures and rendered training items, and
+the exact structural separation from each test suite are to be inserted here.
+% TODO: Insert the final dataset manifest, train/validation counts, and split audit.
+
+All arms initialize from Qwen3-4B-Instruct-2507. The \emph{baseline} is the
+unchanged model. \emph{SP} trains on complete self-play games using each
+player's own terminal utility. \emph{O} trains on history-to-action decision
+items, scored against the reference action values without a supplied partner
+judgment. \emph{D} jointly trains O, partner inference, and planning given a
+correct qualitative partner judgment. In the planning task, the model sees the
+current decision state but not the behavioral history; the supplied judgment
+uses the same possible-set/favored interface as the inference task. These are
+alternative training objectives, not separate networks or an enforced
+inference-to-planning pipeline at inference time.
+
+We use grouped policy optimization with eight responses per decision item;
+SP groups complete-game rollouts by reset and player. Training uses BF16,
+a 4096-token sequence limit, at most 1024 generated tokens per call, sampling
+temperature 1, and a KL penalty toward the frozen base model. The intended
+response-token budget is 6,553,600 per arm, with actual consumed tokens and
+checkpoint selection reported alongside each result. D collects four
+candidate groups from each of the history-to-action, inference, and planning
+tasks per update. Other optimization
+settings, including each arm's learning-rate schedule and realized training
+dose, will be taken from the archived run configurations.
+% TODO: Insert one final configuration table from the selected checkpoints.
+
+\subsection{In-domain diagnosis and adversarial games}
+\label{sec:experiment-benac}
+
+After training, we apply the matched, decision-sufficient diagnostic of
+Section~\ref{sec:diagnose} to each arm. We report exact semantic inference judgments,
+planning regret when the correct judgment is supplied, native history-to-action
+regret, and the paired judgment-repair effect. Regret is lower-is-better;
+repair is computed only where both paired actions are valid. The three
+deterministic repetitions of a structure are not independent test cases.
+
+\begin{table}[t]
+\caption{Post-training diagnosis on 16 matched structures (32 cases),
+strengthened v6 protocol. Planning regret uses the correct inference judgment.
+Regret and repair are structure means over valid outputs; their coverage may
+differ. Blank cells await a verified run under this protocol. BP-99 is a
+historical inference/planning-only reference, not one of the four main
+arms.}
+\label{tab:experiment-diagnosis}
+\centering\small
+\begin{tabular}{lrrrr}
+\hline
+Model & Inference exact & Planning regret & Native regret & Repair $\Delta_{\mathrm{repair}}$ \\
+\hline
+Baseline (Q0) & 9.4\% & 1.151 & 1.128 & $-0.215$ \\
+SP & -- & -- & -- & -- \\
+O & -- & -- & -- & -- \\
+D-72 & 15.6\% & 0.685 & 0.786 & $-0.046$ \\
+D-148 & 9.4\% & 0.786 & 0.849 & $+0.128$ \\
+BP-99 (historical) & 15.6\% & 0.828 & 0.690 & $-0.144$ \\
+\hline
+\end{tabular}
+\end{table}
+
+We also test full \textsc{BENAC-I} games with one focal model and two frozen
+baseline partners. Initial worlds are partitioned into seen dependency
+structures with new preference assignments (ID) and structurally held-out
+dependencies (OOD); focal seats are rotated. We report completed episodes
+and focal terminal utility conditional on completion separately, because an
+invalid or truncated game has no terminal utility. The currently archived
+comparison below is an earlier 48-episode, one-sample-per-scenario-seat
+evaluation and does not cover the selected O and D checkpoints.
+
+\begin{table}[t]
+\caption{Historical fixed-partner adversarial games. Utility is conditional
+on normal completion; completion counts are out of 24 per split. The final
+common-protocol O/D comparison remains to be filled.}
+\label{tab:experiment-adversarial}
+\centering\small
+\begin{tabular}{lrrrr}
+\hline
+Model & ID complete & ID utility & OOD complete & OOD utility \\
+\hline
+Baseline (Q0) & 22/24 & 0.288 & 22/24 & 0.068 \\
+SP-69 & 20/24 & 0.525 & 18/24 & $-0.019$ \\
+O & -- & -- & -- & -- \\
+D & -- & -- & -- & -- \\
+BP-139 (historical) & 19/24 & 0.254 & 21/24 & 0.333 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Transfer to CalBench and ShapeFactory}
+\label{sec:experiment-transfer}
+
+CalBench~\citep{zou2026calbench} asks privately informed agents to coordinate
+calendar meetings while managing individual scheduling costs. Our sequential
+transfer suite runs four homogeneous agents through three meetings in each of
+24 frozen games. We measure full-stream completion and the number of meetings
+jointly scheduled; cost is interpreted only for successfully completed games.
+This small-model adaptation is distinct from the original benchmark aggregate
+score and from our fixed-partner \textsc{BENAC-I} test.
+
+ShapeFactory in CollabSim~\citep{chen2026collabsim} tests coordination through
+production, trade, and fulfillment of private orders. Our native three-agent
+setting uses three product specializations and one non-specialty order per
+agent. The same checkpoint controls all seats across two supply-cycle
+directions and private versus shared-dashboard visibility, for four games per
+model. We report fulfilled agent orders out of 12, games in which all three
+agents fulfill their orders, and final balance. The current v3 protocol retains
+these four ShapeFactory conditions; verified v3 model results are pending.
+
+\begin{table}[t]
+\caption{Available transfer observations. CalBench uses the 24-game
+sequential suite (three meetings per game). ShapeFactory values are from the
+earlier native v2 execution of the same four three-agent conditions; v3 results
+will replace these historical values. Checkpoints and training doses differ.}
+\label{tab:experiment-transfer}
+\centering\small
+\begin{tabular}{lrrrr}
+\hline
+Model & CalBench complete & Meetings & ShapeFactory orders & All fulfill \\
+\hline
+Baseline (Q0) & 5/24 & 37/72 & 1/12 & 0/4 \\
+SP-19 / SP-41 & 4/24 & 38/72 & 2/12 & 0/4 \\
+O-99 & 8/24 & 38/72 & 2/12 & 0/4 \\
+D-72 & 6/24 & 40/72 & -- & -- \\
+BP-99 (historical) & 10/24 & 44/72 & 1/12 & 0/4 \\
+\hline
+\end{tabular}
+\end{table}
+
+The transfer table is descriptive: the archived SP CalBench and ShapeFactory
+results use different checkpoints, and ShapeFactory's four conditions are too
+few to support a broad generalization claim. The final comparison will use
+the same checkpoint, serving profile, output budget, and protocol for each
+model, and add per-condition outcomes and final balances.
+% TODO: Replace historical ShapeFactory v2 values with verified v3 results.

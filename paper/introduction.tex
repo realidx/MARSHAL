@@ -1,61 +1,62 @@
-Large language models (LLMs) are increasingly deployed as interacting agents that exchange 
-information, negotiate decisions, and coordinate their actions over multiple turns. 
-Such multi-agent systems (MAS) promise to combine information and capabilities distributed
-across multiple agents, yet recent work has exposed substantial failures that arise 
-specifically through interaction. Agents fail to proactively acquire information that 
-is available only to others \citep{li2026systematic}, communicate actively without 
-converting those exchanges into effective distributed reasoning \citep{zhang2026silobench}, 
-and remain unable to coordinate effectively even when relevant information is made 
-transparent \citep{yao2026talk}. Broader analyses similarly identify inter-agent failures 
-as a distinct source of error beyond mistakes made by individual agents in isolation 
-\citep{cemri2025multiagent,anthropic2026multiagent}. These findings raise a basic question: 
-what capabilities are missing when individually capable agents fail to interact effectively?
+Large language models (LLMs) increasingly operate in multi-agent systems
+that distribute work and coordinate decisions through interaction
+\citep{zhu2025multiagentbench,chen2026collabsim}. Yet interaction can fail at
+several distinct points. In tasks with distributed information, agents leave
+partners' private evidence unexplored \citep{li2026systematic}; in distributed
+computation, they exchange messages without turning them into effective joint
+reasoning \citep{zhang2026silobench}; and in negotiation, sharing the relevant
+information does not by itself ensure a coordinated plan \citep{yao2026talk}.
+A broader analysis likewise identifies inter-agent misalignment as a distinct
+failure class \citep{cemri2025multiagent}. These findings raise a basic
+question: what capabilities are missing for individually capable agents to continuesly fail in interaction?
 
-Classical models of interactive decision making provide a principled way to make this question 
-more precise. In an interactive POMDP, an agent maintains uncertainty not only over the 
-physical environment, but also over models of other agents, and plans its own actions 
-with respect to this interactive state \citep{gmytrasiewicz2005ipomdp}. Related work 
-on opponent modeling similarly couples inference about another agent with planning a 
-response to the inferred model \citep{huang2024hop}. Viewed through this lens, 
-effective interaction requires at least two computations: \textbf{interactive-state inference}, 
-which construct belief of other agents relevant information, and \textbf{interaction planning}, 
-which uses that belief to evaluate what to do next. Importantly, these computations are 
-coupled over time. An inferred state changes the value of a interaction action; 
-the selected interaction then changes how other agents respond and therefore what 
-evidence becomes available for subsequent inference. Established models of multi-agent 
-decision making identify these two computations as fundamental components of interaction, 
-motivating us to ask whether current LLM agents can reliably perform them together \citep{riemer2025tom}.
+Interactive decision theory gives this question a precise form. An interactive
+POMDP represents uncertainty over both the physical environment and models of
+other agents, and selects actions on the basis of beliefs about both
+\citep{gmytrasiewicz2005ipomdp}. Opponent-modeling work similarly links
+inferences about others' goals or policies to the planning of a response
+\citep{carmel1996opponent,huang2024hop}. We therefore distinguish two capabilities:
+\textbf{interactive-state inference}, which estimates other agents'
+task-relevant latent states from their behavior, and \textbf{interaction
+planning}, which uses those estimates to choose an action. We refer to them
+as \emph{inference} and \emph{planning} below. These two capabilities form a feedback loop in interaction:
+inference informs the next action, while that action changes how others respond
+and what can be inferred thereafter. Evidence from LLM agents suggests that
+representing or predicting another agent's state need not translate into an
+effective response \citep{riemer2025tom,sobotka2026strategic}. This gap
+motivates examining inference and planning both separately and together.
 
-How can these capabilities be diagnosed and trained in a controlled way? 
-Games provide a natural substrate because their information structure, utilities, legal 
-actions, and strategic consequences can be specified and verified exactly. 
-Recent work has accordingly used multi-agent games and self-play to train strategic 
-or transferable reasoning in LLMs \citep{yuan2026marshal,liu2026spiral,lyu2026gift,he2026stratreasoner}. 
-However, these environments are primarily designed around game-level performance rather than 
-separate supervision of interactive-state inference and the planning that follows from it. 
-Compact self-play games make scalable training possible but often abstract away the 
-combination of latent information and heterogeneous incentives, whereas richer social games 
-can entangle deduction, communication, deception, commitment and execution within the same 
-trajectory \citep{light2023avalonbench}. To obtain precise supervision for the interaction 
-structure above, we instead extend an existing commitment-based multi-party negotiation 
-game \citep{benac2026benchmark}, which makes the environment becomes incomplete information and mixed incentives. 
-Incomplete information makes relevant properties of other agents latent and therefore creates an inference problem, 
-while mixed incentives make those inferred properties consequential for planning because the value of an interaction depends on what the other agents know, prefer, or are likely to do. 
-Their combination captures an important class of real interactions in which agents act 
-on behalf of different principals---for example, coordinating around private scheduling 
-constraints \citep{zou2026calbench}, negotiating under asymmetric private objectives \citep{oneill2026cooperate}, 
-or interacting repeatedly on behalf of distinct economic interests \citep{li2026emergent}.
+Realistic multi-agent interactions are difficult to diagnose because
+information, objectives, and decisions are distributed across agents and time.
+Coordination around private calendars, negotiation over asymmetric goals, and
+commerce on behalf of separate principals illustrate this complexity
+\citep{zou2026calbench,oneill2026cooperate,li2026emergent}. Games offer a
+controlled setting: their information structure, utilities, legal actions,
+and strategic consequences can be specified and verified. Recent work has
+used multi-agent games and self-play to train strategic or transferable
+reasoning in LLMs
+\citep{yuan2026marshal,liu2026spiral,lyu2026gift,he2026stratreasoner}.
+Yet a game-level outcome alone does not reveal whether an agent misread a
+partner or failed to act on a correct inference. Compact games can simplify
+away private information or mixed incentives, while richer social games may
+entangle deduction, communication, deception, commitment, and execution in a
+single trajectory \citep{light2023avalonbench}. To retain both capabilities
+while making them separately measurable, we extend the commitment-based
+multi-party negotiation game \citep{benac2026benchmark} with private
+preferences and costly investigation action. Incomplete information makes relevant
+partner states latent, creating an inference problem; mixed incentives make
+those states consequential for planning.
 
-Using this controlled setting, we separately diagnose failures in interactive-state inference 
-and interaction planning, then construct strategic game slices that provide oracle 
-supervision for both. We train on these slices and evaluate whether the resulting 
-improvements generalize to unseen strategic configurations and transfer to external 
-multi-agent environments. 
-
-Our contributions are threefold:
-
-\begin{itemize}
-    \item \textbf{A controlled diagnosis of interactive reasoning in LLM-based MAS.} Grounded in classical interactive decision making, we study interactive-state inference and interaction planning in incomplete-information, mixed-incentive coordination, and separately measure failures in the two while retaining their sequential dependence.
-    \item \textbf{A compact game construction for verifiable social-reasoning supervision.} We show how private preferences, consequential commitments, and information-revealing actions can instantiate a practically relevant interactive-decision problem while providing exact latent-state targets and counterfactual action values.
-    \item \textbf{Targeted game supervision and transfer.} We construct strategic game slices around diagnosed interaction decisions, use their oracle structure to supervise inference and planning, and test whether the resulting capabilities generalize to unseen strategic configurations and external multi-agent environments.
-\end{itemize}
+Using this controlled setting, we make the two capabilities separately
+testable and trainable in LLM-agent interaction. We first construct matched decision
+problems showing that inference and planning are separated capabilities that will affect the interaction,
+and they take effect dependently in an long horizon case (Section~\ref{sec:diagnose}).
+We then build \emph{game slices} from deliberately structured small games:
+contiguous stretches of interaction containing one or more decisions, for
+which the reference policy provides verifiable partner-state labels and
+counterfactual action values. These slices provide
+targeted training signals for decisions that terminal game reward alone cannot
+disentangle. Finally, we compare game-slice training with complete-game
+self-play in terms of training-token efficiency, evaluate generalization to
+held-out game structures, and test transfer to more complex multi-agent coordination environment
+(Section~\ref{sec:experiment}). 
