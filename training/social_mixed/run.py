@@ -97,6 +97,8 @@ def validate_resume(path, options, model):
     if options.get('recipe_version'):
         if old['options'].get('recipe_version')!=options['recipe_version'] or old['options'].get('total_tokens')!=options['total_tokens']:
             raise ValueError('Resume must preserve recipe and cosine token horizon; start a new stage')
+    if old['options'].get('interaction_bank_sha256')!=options.get('interaction_bank_sha256'):
+        raise ValueError('Interaction bank changed; start a new stage')
     if old['options'].get('compact_bank_sha256')!=options.get('compact_bank_sha256'):
         raise ValueError('Training pool changed on resume')
     if old['options'].get('paired_bank_sha256')!=options.get('paired_bank_sha256'):
@@ -163,6 +165,12 @@ def main():
             raise ValueError('B/P data is not approved under the active label contract. '
                              'Complete response_only_v1 migration and curriculum review before training.')
     options=vars(args).copy()
+    options['interaction_bank']=os.environ.get('SOCIAL_INTERACTION_BANK','0')=='1'
+    if options['interaction_bank']:
+        if args.recipe!='reasoning' or args.arm not in ('outcome','decomposed'):raise ValueError('Interaction bank supports reasoning O/D only')
+        if args.normalization!='standard_sequence' or args.protocol_coefficient!=.2:raise ValueError('Interaction recipe requires standard_sequence and protocol coefficient 0.2')
+        from training.social_mixed.interaction_bank import load as interaction_load
+        _,options['interaction_bank_sha256']=interaction_load()
     from training.social_mixed.stabilization import VERSION as recipe_version
     if args.recipe=='reasoning':
         from training.social_mixed.reasoning_training import VERSION as recipe_version
@@ -175,6 +183,10 @@ def main():
         from training.social_mixed.compact_bank import load as compact_load
         _, _, options['compact_bank_sha256'] = compact_load()
         options['training_pool']='compact-200-operations-v2'
+    if options['interaction_bank']:
+        options['recipe_version']='interaction-v1'
+        options['training_pool']='interaction-o100-b-structure-v1'
+        options['candidate_groups_per_update']=({'O':4,'B':4,'Pplus':4} if args.arm=='decomposed' else {'O':4})
     if args.recipe=='reasoning' or args.arm in ('outcome','decomposed'):
         if args.recipe=='reasoning':
             from training.social_mixed.reasoning_bank import PATH,load

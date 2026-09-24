@@ -81,6 +81,8 @@ def main():
             result=subprocess.run([sys.executable,'-m','src.cli',job['config'],'--run-id',job['id'],
                 '--output-dir',job['output']],cwd=UPSTREAM,env=env,stdout=log,stderr=subprocess.STDOUT)
         (a.output/(job['id']+'.exit_code')).write_text(str(result.returncode)+'\n')
+        from examples.final_evaluation.shapefactory_native_summary import summarize
+        (a.output/'evaluation_summary.json').write_text(json.dumps(summarize(a.output),indent=2)+'\n')
         if result.returncode:raise SystemExit(result.returncode)
     (a.output/'COMPLETE').write_text('ok\n')
 

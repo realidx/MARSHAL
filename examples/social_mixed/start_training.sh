@@ -33,6 +33,9 @@ fi
 if [[ "$ARM" == sp_o ]]; then
   python -m training.social_mixed.sp_o_preflight --tokenizer "$SOCIAL_MODEL" --output "$SOCIAL_SUBMISSION_DIR/sp-o-preflight.json"
 fi
+if [[ "${SOCIAL_INTERACTION_BANK:-0}" == 1 ]]; then
+  python -m training.social_mixed.interaction_preflight --tokenizer "$SOCIAL_MODEL" --output "$SOCIAL_SUBMISSION_DIR/interaction-preflight.json"
+fi
 echo 'Binary/linear-only data verified; checking hardware profiles and training configurations'
 if ! python -m unittest training.social_mixed.test_configuration -q > "$SOCIAL_SUBMISSION_DIR/configuration.log" 2>&1; then
   cat "$SOCIAL_SUBMISSION_DIR/configuration.log"
@@ -68,6 +71,9 @@ record=dict(job_id=job,arm=arm,runtime=os.getcwd(),profile=os.environ['SOCIAL_GP
 if arm in ('selfplay','outcome','conditioned','decomposed') and os.environ.get('SOCIAL_RECIPE','reasoning')=='reasoning':
     from training.social_mixed.reasoning_bank import PATH,sha
     record.update(recipe='reasoning',normalization=os.environ.get('SOCIAL_NORMALIZATION','standard_sequence'),paired_bank_sha256=sha((PATH/'manifest.json').read_bytes()))
+if os.environ.get('SOCIAL_INTERACTION_BANK')=='1':
+    from training.social_mixed.interaction_bank import load as interaction_load
+    record.update(interaction_bank=True,interaction_bank_sha256=interaction_load()[1])
 (Path(folder)/(arm+'.json')).write_text(json.dumps(record,indent=2)+'\n')
 PYRECEIPT
   printf 'SUBMITTED arm=%s job=%s receipt=%s\n' "$SOCIAL_SELECTED_ARM" "$SOCIAL_JOB_ID" "$SOCIAL_SUBMISSION_DIR/$SOCIAL_SELECTED_ARM.json"

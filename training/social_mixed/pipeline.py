@@ -93,6 +93,11 @@ class SocialPipeline(BasePipeline):
                 if data['compact_bank_sha256'] != options.get('compact_bank_sha256'):
                     raise ValueError('Compact bank differs from launch metadata')
             extra['normalization']=options['normalization']
+            if options.get('interaction_bank'):
+                from training.social_mixed.interaction_bank import PipelineCollector,load as interaction_load
+                data['bp_train'],bank_sha=interaction_load()
+                if bank_sha!=options['interaction_bank_sha256']:raise ValueError('Interaction bank differs from launch metadata')
+                collector_type=PipelineCollector
         self.collector = collector_type(data, self.generate, seed=config.seed,
                                    concurrency=config.actor_infer.world_size*config.actor_infer.strategy_args.strategy_config['max_num_seqs'],
                                    protocol_coefficient=options.get('protocol_coefficient',0.2),**extra)
