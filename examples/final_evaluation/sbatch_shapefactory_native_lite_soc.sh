@@ -32,4 +32,4 @@ exec python -u -m examples.final_evaluation.launch_calbench_local \
   --model "$SHAPEFACTORY_MODEL" --runner-python "$runner" \
   --ports "$port" --parallel-games 1 --max-num-seqs 32 \
   --disable-chunked-prefill --disable-cascade-attn \
-  --max-tokens 4096 --output "$out"
+  --max-tokens 4096 --max-model-len "${SHAPEFACTORY_MAX_MODEL_LEN:-32768}" --output "$out"

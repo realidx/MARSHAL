@@ -64,7 +64,8 @@ def main():
         (out/'thinking_template_check.json').write_text(json.dumps(dict(enabled_suffix=on[-200:],disabled_suffix=off[-200:]),indent=2)+'\n')
     routes=out/'routes.json';routes.write_text(json.dumps(config,indent=2)+'\n')
     if args.suite in ('formal','stream','shapefactory','shapefactory_native_lite'):
-        if args.max_model_len!=32768: raise ValueError('Formal context budget is frozen at 32768')
+        if args.max_model_len!=32768 and not (args.suite=='shapefactory_native_lite' and args.max_model_len==98304):
+            raise ValueError('Context budget is frozen at 32768 except 98304 for ShapeFactory native Lite')
         files={}
         for path in sorted(args.model.rglob('*')):
             if path.is_file() and (path.suffix in ('.json','.safetensors','.jinja') or path.name=='merges.txt'):
