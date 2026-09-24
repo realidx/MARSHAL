@@ -1,0 +1,41 @@
+SLURM_JOB_ID=877247
+SLURM_NODELIST=xgpi13
+CUDA_VISIBLE_DEVICES(before)=0,1,2
+GPU 0: NVIDIA H100 NVL (UUID: GPU-a148e266-a8ba-05de-c7f3-5875c534d4ea)
+  MIG 3g.47gb     Device  0: (UUID: MIG-1fc0b39c-0e5c-5293-8e69-8691be8eb41b)
+GPU 1: NVIDIA H100 NVL (UUID: GPU-81b07e0f-c85d-cc9d-082d-be967154a6a3)
+  MIG 3g.47gb     Device  0: (UUID: MIG-15b492c7-a2d8-539b-9a68-80f83e4cd8f2)
+  MIG 3g.47gb     Device  1: (UUID: MIG-4dafa48d-ea0e-5f28-904e-e3538fa0d235)
+SELECTED_CUDA_VISIBLE_DEVICES=MIG-1fc0b39c-0e5c-5293-8e69-8691be8eb41b,MIG-15b492c7-a2d8-539b-9a68-80f83e4cd8f2
+SELECTED_PARENT_ROW=GPU 0: NVIDIA H100 NVL (UUID: GPU-a148e266-a8ba-05de-c7f3-5875c534d4ea)	MIG-1fc0b39c-0e5c-5293-8e69-8691be8eb41b
+SELECTED_PARENT_ROW=GPU 1: NVIDIA H100 NVL (UUID: GPU-81b07e0f-c85d-cc9d-082d-be967154a6a3)	MIG-15b492c7-a2d8-539b-9a68-80f83e4cd8f2
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/threading.py", line 953 in run
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/threading.py", line 1016 in _bootstrap_inner
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/threading.py", line 973 in _bootstrap
+
+Thread 0x0000722ece3e8740 (most recent call first):
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/ray/_private/worker.py", line 904 in get_objects
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/ray/_private/worker.py", line 2822 in get
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/ray/_private/client_mode_hook.py", line 103 in wrapper
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/ray/_private/auto_init_hook.py", line 21 in auto_init_wrapper
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/roll/distributed/scheduler/protocol.py", line 736 in materialize_concat
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/roll/pipeline/base_pipeline.py", line 83 in do_checkpoint
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/training/social_mixed/pipeline.py", line 208 in save
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/training/social_mixed/pipeline.py", line 381 in run
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 124 in decorate_context
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/training/social_mixed/run.py", line 253 in main
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/training/social_mixed/run.py", line 260 in <module>
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/runpy.py", line 86 in _run_code
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/runpy.py", line 196 in _run_module_as_main
+[36m(SocialWorker(actor_train-0) pid=4044406)[0m [2026-09-24 17:30:43] [upload_utils.py (32)] [INFO] [actor_train-0 0 / 2][PID 4044406] /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-877247/actor_train-0/checkpoint-25 save to /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-877247/checkpoints/checkpoint-25, wait...
+[36m(SocialWorker(actor_train-1) pid=4044594)[0m [2026-09-24 17:29:49,586] [INFO] [mcore_adapter.models.model_factory]: Saving model checkpoint to /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-877247/actor_train-1/checkpoint-25/iter_0000001/mp_rank_01/model_optim_rng.pt
+[36m(SocialWorker(actor_train-0) pid=4044406)[0m [2026-09-24 17:30:43] [upload_utils.py (35)] [INFO] [actor_train-0 0 / 2][PID 4044406] /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-877247/actor_train-0/checkpoint-25 save to /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-877247/checkpoints/checkpoint-25, done...
+[36m(SocialWorker(actor_train-0) pid=4044406)[0m Elapsed time: 68.0410 seconds
+[2026-09-24 17:30:44] [upload_utils.py (32)] [INFO] [DRIVER 0 / 1][PID 4042089] /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-877247/pipeline/checkpoint-25 save to /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-877247/checkpoints/checkpoint-25, wait...
+[2026-09-24 17:30:44] [upload_utils.py (35)] [INFO] [DRIVER 0 / 1][PID 4042089] /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-877247/pipeline/checkpoint-25 save to /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-877247/checkpoints/checkpoint-25, done...
+{"phase": "checkpoint", "event": "end", "utc": 1790242245.0363793, "seconds": 69.3894221931696}
+{"event": "driver_alive", "utc": 1790242248.9446714, "pid": 4042089}
+[36m(SocialWorker(actor_train-1) pid=4044594)[0m [2026-09-24 17:30:43] [upload_utils.py (32)] [INFO] [actor_train-1 1 / 2][PID 4044594] /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-877247/actor_train-1/checkpoint-25 save to /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-877247/checkpoints/checkpoint-25, wait...
+[36m(SocialWorker(actor_train-1) pid=4044594)[0m [2026-09-24 17:30:43] [upload_utils.py (35)] [INFO] [actor_train-1 1 / 2][PID 4044594] /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-877247/actor_train-1/checkpoint-25 save to /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-877247/checkpoints/checkpoint-25, done...
+[36m(SocialWorker(actor_train-1) pid=4044594)[0m Elapsed time: 68.0059 seconds
+[36m(SocialWorker(actor_train-1) pid=4044594)[0m [rank1]:[W924 17:29:31.653673757 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 748683264 bytes (free: 744423424, total: 49794777088).
