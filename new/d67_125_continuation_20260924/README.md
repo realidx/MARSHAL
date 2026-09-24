@@ -21,6 +21,11 @@ This bundle archives the original output of Slurm job `876729`, resumed from
 
 The `calbench/` subdirectories preserve results and execution metadata for
 the frozen 24-game, batch-invariant profile at D-67, D-79, D-99, and D-119.
+Each run also contains all 24 per-game directories with `trace.json`,
+`events.jsonl`, four `transport-agent-*.jsonl` files, the case scenario,
+reference, manifest, and result. Top-level `server-0.log`, `servers.json`,
+and `routes.json` preserve service and routing records. These were copied
+byte-for-byte from the original run directories and are not score summaries.
 All four have `EXIT_CODE=0` and 24/24 finished games:
 
 | Checkpoint | Coordinated | Successful and optimal | Mean headline | Untruncated | Strict envelope failures |
