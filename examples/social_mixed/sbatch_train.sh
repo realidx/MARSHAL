@@ -47,10 +47,12 @@ export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$CONDA_PREFIX/targets/x86_64-linux/lib
 # Transformer Engine uses CUDA 13 while vLLM also installs a CUDA 12 runtime.
 # Keep cuDNN frontend from selecting the incompatible libcudart.so.12.
 export CUDNN_FRONTEND_CUDART_LIB_NAME=libcudart.so.13
-export ROLL_OUTPUT_DIR="$PWD/runs/social_mixed/${SOCIAL_ARM}-seed${SOCIAL_SEED}-${SLURM_JOB_ID}"
+SOCIAL_OUTPUT_TAG="${SOCIAL_RUN_TAG:-${SOCIAL_ARM}}"
+[[ "$SOCIAL_OUTPUT_TAG" =~ ^[a-zA-Z0-9_-]+$ ]] || { echo 'Invalid SOCIAL_RUN_TAG' >&2; exit 2; }
+export ROLL_OUTPUT_DIR="$PWD/runs/social_mixed/${SOCIAL_OUTPUT_TAG}-seed${SOCIAL_SEED}-${SLURM_JOB_ID}"
 export ROLL_LOG_DIR="$ROLL_OUTPUT_DIR/logs" BP_DIAGNOSTICS_DIR="$ROLL_OUTPUT_DIR"
 mkdir -p "$ROLL_LOG_DIR"
-printf '%s\n' "$ROLL_OUTPUT_DIR" > "runs/social_mixed/${SOCIAL_ARM}_latest.txt"
+printf '%s\n' "$ROLL_OUTPUT_DIR" > "runs/social_mixed/${SOCIAL_OUTPUT_TAG}_latest.txt"
 args=(--arm "$SOCIAL_ARM" --seed "$SOCIAL_SEED" --total-tokens "${SOCIAL_TOTAL_TOKENS:-6553600}")
 if [[ -n "${SOCIAL_RECIPE:-}" ]]; then args+=(--recipe "$SOCIAL_RECIPE"); fi
 args+=(--normalization "${SOCIAL_NORMALIZATION:-standard_sequence}")

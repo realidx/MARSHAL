@@ -178,7 +178,7 @@ def main():
             raise ValueError('Micro requires isolated reasoning decomposed launcher')
         from training.social_mixed.micro_training import identity
         options['micro_bank_sha256']=identity()
-        options['keep_checkpoints']=4
+        options['keep_checkpoints']=args.keep_checkpoints
 
     if options['interaction_bank']:
         if args.recipe!='reasoning' or args.arm not in ('outcome','conditioned','decomposed'):raise ValueError('Interaction bank supports reasoning O/C/D only')
