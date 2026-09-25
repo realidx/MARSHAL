@@ -29,14 +29,16 @@ motivates examining inference and planning both separately and together.
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures/overview.pdf}
-\caption{Overview of the interaction and training design. (A) An agent
-observes partners' behavior, infers their preferences, and acts; subsequent
-behavior supplies new evidence. (B) Complete-game self-play (SP) begins at
-the root and learns from terminal outcomes. The alternative O and D arms
-train on selected, oracle-labeled game slices that can span multiple
-decisions. All arms start from the same base checkpoint and are trained
-separately. (C) We evaluate transfer to a more complex coordination task,
-illustrated by private calendars in CalBench.}
+\caption{From interaction to targeted training and transfer. (A) Partner A
+offers B a contribution toward goal $g$ while the model M observes. M infers
+that A may value $g$, considers its own stake in the same goal, and proposes
+collaboration to A; the response informs the next decision. (B) Self-play
+(SP) runs from the root to a terminal outcome, whereas the colored game
+slices select one or more consecutive decisions, possibly below the root.
+(C) The oracle supplies three training tasks: choose from history, infer from
+history, and choose given the correct inference judgment. The resulting
+items train a model with GRPO. (D) In the CalBench transfer setting, an agent
+uses its own private calendar and partners' replies to coordinate a meeting.}
 \label{fig:overview}
 \end{figure}
 
