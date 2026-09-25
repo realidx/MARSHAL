@@ -1,0 +1,1293 @@
+{
+  "event_id": "event_6",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:49:29.212883+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "Hi, I need a triangle. Can you sell it for $30?",
+        "content_type": "text",
+        "recipients": [
+          "C"
+        ]
+      },
+      "actor_id": "A",
+      "timestamp": 0
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_9",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:49:29.212945+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "Hi A, I need a circle for my order. How much would you sell it for?",
+        "content_type": "text",
+        "recipients": [
+          "A"
+        ]
+      },
+      "actor_id": "B",
+      "timestamp": 0
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_12",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:49:29.213009+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "Hey B, I need a square to fulfill my order. Since you're the specialist, would you mind selling me one? I'm willing to pay a fair price.",
+        "content_type": "text",
+        "recipients": [
+          "B"
+        ]
+      },
+      "actor_id": "C",
+      "timestamp": 0
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_30",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:50:04.512782+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "sell",
+        "shape": "triangle",
+        "price_per_unit": 30,
+        "target_id": "C",
+        "quantity": 1
+      },
+      "actor_id": "A",
+      "timestamp": 3
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_33",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:50:04.512806+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "sell",
+        "shape": "square",
+        "price_per_unit": 30,
+        "target_id": "C",
+        "quantity": 1
+      },
+      "actor_id": "B",
+      "timestamp": 3
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_36",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:50:04.512824+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "buy",
+        "shape": "square",
+        "price_per_unit": 50,
+        "target_id": "B",
+        "quantity": 1
+      },
+      "actor_id": "C",
+      "timestamp": 3
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_51",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:50:40.688381+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_5_1",
+        "response_type": "accept"
+      },
+      "actor_id": "B",
+      "timestamp": 6
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_54",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:50:40.688438+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_5_1",
+        "response_type": "accept"
+      },
+      "actor_id": "C",
+      "timestamp": 6
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_62",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:51:13.534585+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "Hi A, I need a circle for my order. What's your price?",
+        "content_type": "text",
+        "recipients": [
+          "A"
+        ]
+      },
+      "actor_id": "B",
+      "timestamp": 8
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_65",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:51:13.534644+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "fulfill_order",
+      "payload": {
+        "order_indices": [
+          0
+        ]
+      },
+      "actor_id": "C",
+      "timestamp": 8
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_73",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:51:55.321463+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "Hi C, I'm interested in buying your triangle for $30. Let me know if that works.",
+        "content_type": "text",
+        "recipients": [
+          "C"
+        ]
+      },
+      "actor_id": "A",
+      "timestamp": 10
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_81",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:52:38.972112+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "produce_shape",
+      "payload": {
+        "shape": "triangle",
+        "quantity": 1
+      },
+      "actor_id": "C",
+      "timestamp": 11
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_89",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:53:14.638454+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Waiting for C to confirm the triangle trade before proceeding."
+      },
+      "actor_id": "A",
+      "timestamp": 11
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_92",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:53:14.638524+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "buy",
+        "shape": "circle",
+        "price_per_unit": 40,
+        "target_id": "A",
+        "quantity": 1
+      },
+      "actor_id": "B",
+      "timestamp": 11
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_95",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:53:14.638575+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "produce_shape",
+      "payload": {
+        "shape": "triangle",
+        "quantity": 1
+      },
+      "actor_id": "C",
+      "timestamp": 11
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_107",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:53:57.203669+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Waiting for C to confirm the triangle trade before proceeding."
+      },
+      "actor_id": "A",
+      "timestamp": 14
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_113",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:54:28.850703+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_5_1",
+        "response_type": "accept"
+      },
+      "actor_id": "A",
+      "timestamp": 15
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_116",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:54:28.850767+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_12_2",
+        "response_type": "accept"
+      },
+      "actor_id": "B",
+      "timestamp": 15
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_119",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:54:28.850815+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "sell",
+        "shape": "triangle",
+        "price_per_unit": 30,
+        "target_id": "A",
+        "quantity": 1
+      },
+      "actor_id": "C",
+      "timestamp": 15
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_135",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:55:08.330828+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "fulfill_order",
+      "payload": {
+        "order_indices": [
+          0
+        ]
+      },
+      "actor_id": "A",
+      "timestamp": 19
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_138",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:55:08.330851+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "The square trade offer is still pending, and no immediate high-value action is available."
+      },
+      "actor_id": "C",
+      "timestamp": 19
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_147",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:55:44.542172+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_17_3",
+        "response_type": "accept"
+      },
+      "actor_id": "A",
+      "timestamp": 21
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_150",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:55:44.542197+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "fulfill_order",
+      "payload": {
+        "order_indices": [
+          0
+        ]
+      },
+      "actor_id": "B",
+      "timestamp": 21
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_153",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:55:44.542218+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Waiting for B to respond to the square trade offer before taking further actions."
+      },
+      "actor_id": "C",
+      "timestamp": 21
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_164",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:56:25.663702+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Waiting for B to respond to the square trade offer before taking further actions."
+      },
+      "actor_id": "C",
+      "timestamp": 24
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_170",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:56:46.665679+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "fulfill_order",
+      "payload": {
+        "order_indices": [
+          0
+        ]
+      },
+      "actor_id": "A",
+      "timestamp": 25
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_173",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:56:46.665733+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Order fulfilled successfully. No further actions needed as task is complete."
+      },
+      "actor_id": "B",
+      "timestamp": 25
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_176",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:56:46.665779+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Waiting for B to respond to the square trade offer before taking further actions."
+      },
+      "actor_id": "C",
+      "timestamp": 25
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_186",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:57:24.477702+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Order for triangle is already fulfilled. No further actions required."
+      },
+      "actor_id": "A",
+      "timestamp": 28
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_189",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:57:24.477726+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Order fulfilled successfully. No further actions needed as task is complete."
+      },
+      "actor_id": "B",
+      "timestamp": 28
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_192",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:57:24.477744+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Waiting for B to respond to the square trade offer before taking further actions."
+      },
+      "actor_id": "C",
+      "timestamp": 28
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_198",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:57:43.825718+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "All tasks are completed. No further actions required."
+      },
+      "actor_id": "A",
+      "timestamp": 31
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_201",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:57:43.825741+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Order fulfilled successfully. No further actions needed as task is complete."
+      },
+      "actor_id": "B",
+      "timestamp": 31
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_204",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:57:43.825765+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "produce_shape",
+      "payload": {
+        "shape": "square",
+        "quantity": 1
+      },
+      "actor_id": "C",
+      "timestamp": 31
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_213",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:58:21.568995+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "All tasks are completed. No further actions required."
+      },
+      "actor_id": "A",
+      "timestamp": 33
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_216",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:58:21.569050+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Order fulfilled successfully. No further actions needed as task is complete."
+      },
+      "actor_id": "B",
+      "timestamp": 33
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_219",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:58:21.569100+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "produce_shape",
+      "payload": {
+        "shape": "square",
+        "quantity": 1
+      },
+      "actor_id": "C",
+      "timestamp": 33
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_229",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:58:59.223643+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "All tasks are completed. No further actions required."
+      },
+      "actor_id": "A",
+      "timestamp": 36
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_232",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:58:59.223707+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Order fulfilled successfully. No further actions needed as task is complete."
+      },
+      "actor_id": "B",
+      "timestamp": 36
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_235",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:58:59.223760+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "fulfill_order",
+      "payload": {
+        "order_indices": [
+          0
+        ]
+      },
+      "actor_id": "C",
+      "timestamp": 36
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_246",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:59:36.697559+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "All tasks are completed. No further actions required."
+      },
+      "actor_id": "A",
+      "timestamp": 40
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_249",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:59:36.697604+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Order fulfilled successfully. No further actions needed as task is complete."
+      },
+      "actor_id": "B",
+      "timestamp": 40
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_252",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T15:59:36.697645+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "sell",
+        "shape": "triangle",
+        "price_per_unit": 30,
+        "target_id": "B",
+        "quantity": 1
+      },
+      "actor_id": "C",
+      "timestamp": 40
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_260",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:00:14.069221+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Order fulfilled successfully. No further actions needed as task is complete."
+      },
+      "actor_id": "B",
+      "timestamp": 43
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_266",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:00:31.930223+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "All tasks are completed. No further actions required."
+      },
+      "actor_id": "A",
+      "timestamp": 44
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_269",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:00:31.930278+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Order fulfilled successfully. No further actions needed as task is complete."
+      },
+      "actor_id": "B",
+      "timestamp": 44
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_272",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:00:31.930326+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_42_4",
+        "response_type": "accept"
+      },
+      "actor_id": "C",
+      "timestamp": 44
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_279",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:01:11.387782+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Order fulfilled successfully. No further actions needed as task is complete."
+      },
+      "actor_id": "B",
+      "timestamp": 47
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_285",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:01:33.400466+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "All tasks are completed. No further actions required."
+      },
+      "actor_id": "A",
+      "timestamp": 48
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_288",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:01:33.400520+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Order fulfilled successfully. No further actions needed as task is complete."
+      },
+      "actor_id": "B",
+      "timestamp": 48
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_291",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:01:33.400560+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Order fully completed and production cap reached; no further actions needed."
+      },
+      "actor_id": "C",
+      "timestamp": 48
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_297",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:01:50.240070+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "All tasks are completed. No further actions required."
+      },
+      "actor_id": "A",
+      "timestamp": 51
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_300",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:01:50.240123+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Order fulfilled successfully. No further actions needed as task is complete."
+      },
+      "actor_id": "B",
+      "timestamp": 51
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_303",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:01:50.240174+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_42_4",
+        "response_type": "accept"
+      },
+      "actor_id": "C",
+      "timestamp": 51
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_310",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:02:46.660185+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "fulfill_order",
+      "payload": {
+        "order_indices": [
+          0
+        ]
+      },
+      "actor_id": "B",
+      "timestamp": 54
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_319",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:03:30.194989+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "All tasks are completed. No further actions required."
+      },
+      "actor_id": "A",
+      "timestamp": 55
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_322",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:03:30.195042+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Order fulfilled successfully. No further actions needed as task is complete."
+      },
+      "actor_id": "B",
+      "timestamp": 55
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_325",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:03:30.195085+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "All tasks completed, production cap reached, and trades finalized. No additional steps required."
+      },
+      "actor_id": "C",
+      "timestamp": 55
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_331",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:03:50.436004+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "All tasks are completed. No further actions required."
+      },
+      "actor_id": "A",
+      "timestamp": 58
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_334",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:03:50.436060+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {
+        "reason": "Order fulfilled successfully. No further actions needed as task is complete."
+      },
+      "actor_id": "B",
+      "timestamp": 58
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_337",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:03:50.436110+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_42_4",
+        "response_type": "accept"
+      },
+      "actor_id": "C",
+      "timestamp": 58
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}

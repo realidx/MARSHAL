@@ -1,0 +1,803 @@
+{
+  "probe_id": "probe_0_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "A",
+  "answer": "I need to buy a square from B, as they have the specialty shape at a lower cost than producing it myself.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:19:34.671503+00:00"
+}
+{
+  "probe_id": "probe_0_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "A",
+  "answer": "B will sell their square, and C may trade triangle but it's not needed for my order.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:19:34.676467+00:00"
+}
+{
+  "probe_id": "probe_0_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "A",
+  "answer": "I will message B to negotiate the $15 square trade.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:19:34.678678+00:00"
+}
+{
+  "probe_id": "probe_0_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "All participants start with $200. I need to acquire a triangle (only available from C) through trade. My specialty square can be sold if needed, but priority is securing the triangle for my order.",
+  "confidence": 0.9,
+  "structured_fields": {
+    "key_resources": "C's triangle, A's circle",
+    "money": 200.0,
+    "production_cap": 3
+  },
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:19:34.683498+00:00"
+}
+{
+  "probe_id": "probe_0_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "A may hold onto circle for potential trade, C will sell triangle to fulfill their own order, and B is focused on acquiring triangle through negotiation.",
+  "confidence": 0.8,
+  "structured_fields": {
+    "A_intent": "Sell circle",
+    "C_intent": "Sell triangle",
+    "B_intent": "Buy triangle"
+  },
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:19:34.685317+00:00"
+}
+{
+  "probe_id": "probe_0_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "Initiate direct trade with C to purchase triangle. If negotiation fails, consider selling squares at 15$ each to generate funds.",
+  "confidence": 0.9,
+  "structured_fields": {
+    "next_action": "Trade triangle with C",
+    "backup_plan": "Sell squares for money"
+  },
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:19:34.687002+00:00"
+}
+{
+  "probe_id": "probe_0_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "The game is starting, and I need to secure a circle for my order. Participant A has the specialty circle, so I should focus on buying it from them.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:19:34.690579+00:00"
+}
+{
+  "probe_id": "probe_0_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "Participant A is likely to sell their circle, and Participant B may sell their square. Others might focus on producing their specialty shapes.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:19:34.692190+00:00"
+}
+{
+  "probe_id": "probe_0_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "I will reach out to Participant A to negotiate buying the circle at a fair price.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:19:34.693796+00:00"
+}
+{
+  "probe_id": "probe_3_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "A",
+  "answer": "The current situation requires me to acquire a square from participant B, as they are the only one with the specialty shape. I have initiated a trade offer at the specialty price of $15, but no transaction has occurred yet.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:20:17.263044+00:00"
+}
+{
+  "probe_id": "probe_3_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "A",
+  "answer": "Participant B is likely waiting for me to complete the trade for their square, while participant C may be holding their triangle but has no immediate need for it.",
+  "confidence": 0.8,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:20:17.266208+00:00"
+}
+{
+  "probe_id": "probe_3_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "A",
+  "answer": "I will wait for participant B to accept the trade offer for the square, then complete my order by purchasing it.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:20:17.268552+00:00"
+}
+{
+  "probe_id": "probe_3_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "I need to secure a triangle from C, who has the specialty. A is asking for a square, but I focus on fulfilling my order. Pending trade with C at $50.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:20:17.273727+00:00"
+}
+{
+  "probe_id": "probe_3_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "A is likely seeking a square for their order, while C aims to sell their triangle. Both may prioritize their own tasks over negotiation.",
+  "confidence": 0.7,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:20:17.275637+00:00"
+}
+{
+  "probe_id": "probe_3_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "I will wait for C's response to my $50 offer for the triangle, then proceed to buy it if accepted.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:20:17.277586+00:00"
+}
+{
+  "probe_id": "probe_3_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "The game is in step 3 with 40.765s elapsed. I have $200, no inventory, and need to fulfill my circle order. My specialty (triangle) can be traded to others, but I need to first produce it to build value.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:20:17.281438+00:00"
+}
+{
+  "probe_id": "probe_3_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "A is likely trying to sell their circle specialty, while B is seeking to buy triangles from me. Both are actively engaged in trade negotiations.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:20:17.283344+00:00"
+}
+{
+  "probe_id": "probe_3_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "I will produce a triangle to sell to B, as it builds inventory value and supports fulfilling my circle order through trade.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:20:17.285116+00:00"
+}
+{
+  "probe_id": "probe_5_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "I need to secure a triangle from C to fulfill my order. A has offered to buy a square, but I don't need that. I have $200 to spend and can afford $50 for the triangle.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:20:58.434248+00:00"
+}
+{
+  "probe_id": "probe_5_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "A is trying to buy a square from me, but I don't need it. C is likely waiting for my trade offer for the triangle.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:20:58.437757+00:00"
+}
+{
+  "probe_id": "probe_5_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "I will finalize the triangle trade with C at $50 to complete my order.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:20:58.439935+00:00"
+}
+{
+  "probe_id": "probe_5_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "I need to produce a triangle to sell to B, as I have no inventory and must secure the shape needed for my order. A's pending square buy offer and B's triangle request indicate collaboration opportunities.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:20:58.443828+00:00"
+}
+{
+  "probe_id": "probe_5_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "A is trying to buy B's square at $15, while B is seeking my triangle at $50. Both are leveraging specialty shapes to fulfill their orders.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:20:58.446158+00:00"
+}
+{
+  "probe_id": "probe_5_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "I will produce a triangle to sell to B, securing the shape needed for my order while maintaining financial viability.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:20:58.448431+00:00"
+}
+{
+  "probe_id": "probe_8_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "I have the triangle from earlier and just produced a circle to fulfill my order. My money is $185, and I need to complete the order immediately.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:21:40.948285+00:00"
+}
+{
+  "probe_id": "probe_8_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "A is trying to buy a square from B, while B is still negotiating for the triangle. A is actively seeking resources, and B is focused on securing the triangle.",
+  "confidence": 0.9,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:21:40.951413+00:00"
+}
+{
+  "probe_id": "probe_8_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "I will use the produced circle to fulfill my order immediately, as it’s the only shape needed and I have sufficient funds.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:21:40.953195+00:00"
+}
+{
+  "probe_id": "probe_9_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "Current situation: Need to secure triangle from C before time runs out. A has offered to buy square at $15, but my order requires triangle. Only C has triangle, and they haven't sold yet.",
+  "confidence": 0.95,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:22:25.572450+00:00"
+}
+{
+  "probe_id": "probe_9_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "A is trying to negotiate square trade, but I don't need it. C is holding out for better price for triangle, which is essential for my order.",
+  "confidence": 0.9,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:22:25.576069+00:00"
+}
+{
+  "probe_id": "probe_9_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "Plan to finalize triangle trade with C at $50 before production slots are used. Will send final confirmation message.",
+  "confidence": 0.85,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:22:25.578381+00:00"
+}
+{
+  "probe_id": "probe_9_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "My order for the circle is fulfilled, earning $60. I have a triangle in inventory and $185 left. A is trying to buy a square from B, and B is still interested in purchasing my triangle. The game is ongoing, and I need to manage remaining resources.",
+  "confidence": 0.95,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:22:25.582520+00:00"
+}
+{
+  "probe_id": "probe_9_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "A is attempting to buy a square from B at $15 each, while B is actively seeking to purchase my triangle. Both are focused on fulfilling their own orders through trading or production.",
+  "confidence": 0.9,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:22:25.584339+00:00"
+}
+{
+  "probe_id": "probe_9_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "I will hold onto my $185 and wait for the time limit to end, as my order is complete. I may trade the triangle if needed, but priority is maximizing earned money.",
+  "confidence": 0.85,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:22:25.586558+00:00"
+}
+{
+  "probe_id": "probe_14_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "The game is ongoing, and I still need to acquire a triangle from C. A has offered to buy a square at $15, but I am focused on securing the triangle for my order.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:23:28.126308+00:00"
+}
+{
+  "probe_id": "probe_14_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "A is attempting to purchase a square from me, but I am prioritizing the triangle from C. C is likely to sell their triangle as it is their specialty and they need to fulfill their own orders.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:23:28.129517+00:00"
+}
+{
+  "probe_id": "probe_14_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "I will finalize the triangle trade with C at $50 to ensure I complete my order. I will not respond to A's square offer as it is not relevant to my task.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:23:28.131512+00:00"
+}
+{
+  "probe_id": "probe_18_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "The game is in its later stages with 10 minutes remaining. I need to secure the triangle from C before production slots are exhausted. A has offered to buy a square at $15, but my priority is obtaining the triangle.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:24:26.884805+00:00"
+}
+{
+  "probe_id": "probe_18_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "A is attempting to purchase a square at $15, while C is likely trying to sell the triangle I need. Both are focused on their own orders, but I am the key intermediary for the triangle.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:24:26.888872+00:00"
+}
+{
+  "probe_id": "probe_18_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "I will finalize the triangle trade with C at $50. If accepted, I will buy it, fulfill my order, and use remaining funds for other potential trades or production.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:24:26.891240+00:00"
+}
+{
+  "probe_id": "probe_22_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "The game is ongoing with 9 minutes remaining. I need to secure a triangle from C before production slots are exhausted. A's pending square offer is irrelevant to my task.",
+  "confidence": 0.9,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:25:29.096664+00:00"
+}
+{
+  "probe_id": "probe_22_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "A is trying to buy a square at $15, while C is holding the triangle I need. A's offer is a distraction, and C is likely waiting for a favorable price.",
+  "confidence": 0.7,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:25:29.100632+00:00"
+}
+{
+  "probe_id": "probe_22_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "I will finalize the triangle trade with C at $50 or produce it myself (cost $15) to fulfill my order before time runs out.",
+  "confidence": 0.8,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:25:29.102672+00:00"
+}
+{
+  "probe_id": "probe_26_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "The game is ongoing with 8 minutes remaining. I need to secure a triangle from C at $50 before time expires, as my inventory is empty and I cannot produce it myself.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:26:31.289767+00:00"
+}
+{
+  "probe_id": "probe_26_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "A is attempting to negotiate a square trade, but I am focused on securing the triangle from C. C is likely waiting for a final confirmation to sell.",
+  "confidence": 0.9,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:26:31.293529+00:00"
+}
+{
+  "probe_id": "probe_26_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "I will accept C's triangle offer at $50 to fulfill my order, as production slots are limited and time is critical.",
+  "confidence": 0.8,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:26:31.295392+00:00"
+}
+{
+  "probe_id": "probe_29_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "I have the circle in inventory to complete my order. Time is limited, so I will finalize the order immediately.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:27:06.436621+00:00"
+}
+{
+  "probe_id": "probe_29_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "A is attempting to buy a square from B, while B is persistently negotiating for the triangle at $50. Both are focused on completing their tasks.",
+  "confidence": 0.95,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:27:06.439761+00:00"
+}
+{
+  "probe_id": "probe_29_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "C",
+  "answer": "I will fulfill my order for the circle using the shape in inventory and wait for the timer to complete.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:27:06.441575+00:00"
+}
+{
+  "probe_id": "probe_30_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "The game is still active with 6m 47s remaining. I need to secure a triangle from C, while A is offering a square at $15. My inventory is empty, and I have $200. Production slots are limited to 3, so I must prioritize trading over producing.",
+  "confidence": 0.95,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:27:50.172598+00:00"
+}
+{
+  "probe_id": "probe_30_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "A is attempting to buy a square at $15, but I don't need it. C is the only source for the triangle and is likely waiting for a trade offer. A may be trying to divert attention from their own order.",
+  "confidence": 0.85,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:27:50.176349+00:00"
+}
+{
+  "probe_id": "probe_30_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "I will send one last message to C to confirm the $50 triangle trade. If rejected, I may produce a square to sell, but my priority remains fulfilling the triangle order.",
+  "confidence": 0.9,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:27:50.178659+00:00"
+}
+{
+  "probe_id": "probe_34_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "The game is still active with 5m 47s remaining. I need to secure a triangle from C at $50 before time expires and production limits force a decision.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:28:54.211740+00:00"
+}
+{
+  "probe_id": "probe_34_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "A is attempting to negotiate a square trade, but C is the only viable source for the triangle. A's offer is irrelevant to my goal.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:28:54.215242+00:00"
+}
+{
+  "probe_id": "probe_34_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "Finalize the triangle trade with C at $50 immediately to meet order requirements before time runs out.",
+  "confidence": 0.95,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:28:54.217213+00:00"
+}
+{
+  "probe_id": "probe_38_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "The game is still active with 4m44s remaining. I need to secure a triangle from C at $50 before production limits and time constraints force a decision. A's pending square offer is irrelevant to my task.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:29:56.937668+00:00"
+}
+{
+  "probe_id": "probe_38_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "A is trying to buy a square at $15, but I'm focused on obtaining a triangle from C. C is the only source for the triangle, and A's offer doesn't impact my priority.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:29:56.940681+00:00"
+}
+{
+  "probe_id": "probe_38_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "Finalize the $50 triangle trade with C. If accepted, buy the shape, fulfill the order, and earn $60. No other options remain due to production limits and time.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:29:56.942919+00:00"
+}
+{
+  "probe_id": "probe_42_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "The game is ongoing with 3m39s remaining. I need to secure a triangle from C, but my production limit and time constraints force a decision. A's pending offer for a square is irrelevant to my task.",
+  "confidence": 0.95,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:31:03.081787+00:00"
+}
+{
+  "probe_id": "probe_42_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "A is attempting to trade a square at $15, but this is unrelated to my triangle order. C is actively negotiating the triangle price, likely trying to finalize the deal before time expires.",
+  "confidence": 0.9,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:31:03.085314+00:00"
+}
+{
+  "probe_id": "probe_42_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "I will finalize the triangle trade at $50 with C immediately, as production slots are limited and time is critical. If rejected, I may produce a square to trade, but this is a last-resort plan.",
+  "confidence": 0.85,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:31:03.087215+00:00"
+}
+{
+  "probe_id": "probe_46_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "A",
+  "answer": "The trade offer for a square from B is pending. I need to wait for confirmation to fulfill my order.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:32:21.763294+00:00"
+}
+{
+  "probe_id": "probe_46_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "A",
+  "answer": "B is trying to sell their square specialty, while C is seeking a circle from me. B's offer is the only path to my order.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:32:21.765941+00:00"
+}
+{
+  "probe_id": "probe_46_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "A",
+  "answer": "Wait for B to accept the trade offer, then buy the square to fulfill my order.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:32:21.767773+00:00"
+}
+{
+  "probe_id": "probe_46_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "The game is ongoing with 2m28s remaining. I need to secure a triangle from C, but negotiations are stalled. A has offered to buy a square at $15, but that's irrelevant to my order. Time is critical, and I must finalize the triangle trade before production slots are locked.",
+  "confidence": 0.95,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:32:21.771088+00:00"
+}
+{
+  "probe_id": "probe_46_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "A is trying to divert attention by offering a square trade, while C is hesitant to sell the triangle. A's offer is a distraction, and C is likely waiting for the optimal price. Both are strategic, but C's reluctance indicates they may not accept $50 without confirmation.",
+  "confidence": 0.85,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:32:21.772574+00:00"
+}
+{
+  "probe_id": "probe_46_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "I will send one last direct message to C to confirm the $50 triangle sale, then proceed to fulfill the order. If rejected, I will produce a triangle myself (costing $15) to meet the deadline, despite the risk of exceeding production limits.",
+  "confidence": 0.8,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:32:21.774044+00:00"
+}
+{
+  "probe_id": "probe_49_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "We have secured the triangle from C via trade, fulfilling our order requirement. Inventory now includes the triangle, and the order progress is updated.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:33:04.170133+00:00"
+}
+{
+  "probe_id": "probe_49_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "A is attempting to buy a square at $15, while C cooperated on the triangle trade. A may be preparing to fulfill their own order once the square is produced.",
+  "confidence": 0.8,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:33:04.172769+00:00"
+}
+{
+  "probe_id": "probe_49_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "Fulfill the triangle order using the acquired shape to earn $60, then focus on completing the task to achieve the goal.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:33:04.174800+00:00"
+}
+{
+  "probe_id": "probe_52_1",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "My order for the triangle has been fulfilled via trade with C. The task is complete, and I have no further actions needed.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, how do you assess the current situation?",
+  "timestamp": "2026-09-25T15:34:01.599724+00:00"
+}
+{
+  "probe_id": "probe_52_2",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "A is attempting to buy a square at $15, while C focused on completing their own order. A's offer is unrelated to my completed task.",
+  "confidence": 0.95,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you think the other participants are trying to do?",
+  "timestamp": "2026-09-25T15:34:01.601975+00:00"
+}
+{
+  "probe_id": "probe_52_3",
+  "template_id": "grounding_v1",
+  "construct": "grounding",
+  "actor_id": "B",
+  "answer": "I will conclude the session as my order is fully completed. No further production or trading is required.",
+  "confidence": 1.0,
+  "structured_fields": {},
+  "prompt": "At this moment, what do you plan to do?",
+  "timestamp": "2026-09-25T15:34:01.603733+00:00"
+}
