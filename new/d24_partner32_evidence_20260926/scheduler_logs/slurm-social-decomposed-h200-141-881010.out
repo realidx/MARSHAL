@@ -1,0 +1,31 @@
+bash: /home/e/e1300530/tmp/marshal-vllm09/lib/libtinfo.so.6: no version information available (required by bash)
+
+Thread 0x000073cce8070740 (most recent call first):
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/ray/_private/worker.py", line 904 in get_objects
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/ray/_private/worker.py", line 2822 in get
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/ray/_private/client_mode_hook.py", line 103 in wrapper
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/ray/_private/auto_init_hook.py", line 21 in auto_init_wrapper
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/roll/distributed/scheduler/protocol.py", line 736 in materialize_concat
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/roll/pipeline/base_pipeline.py", line 83 in do_checkpoint
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/training/social_mixed/pipeline.py", line 212 in save
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/training/social_mixed/pipeline.py", line 270 in validate
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 124 in decorate_context
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/training/social_mixed/pipeline.py", line 388 in run
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 124 in decorate_context
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/training/social_mixed/run.py", line 275 in main
+  File "/home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/training/social_mixed/run.py", line 282 in <module>
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/runpy.py", line 86 in _run_code
+  File "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/runpy.py", line 196 in _run_module_as_main
+{"event": "driver_alive", "utc": 1790354369.2577815, "pid": 2586291}
+[36m(SocialWorker(actor_train-0) pid=2588575)[0m [2026-09-26 00:39:35,499] [INFO] [mcore_adapter.models.model_factory]: Saving model checkpoint to /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-881010/actor_train-0/checkpoint-39/iter_0000001/mp_rank_00/model_optim_rng.pt
+[36m(SocialWorker(actor_train-0) pid=2588575)[0m Elapsed time: 1.0652 seconds
+{"event": "driver_alive", "utc": 1790354399.258012, "pid": 2586291}
+{"event": "driver_alive", "utc": 1790354429.2582335, "pid": 2586291}
+[36m(SocialWorker(actor_train-0) pid=2588575)[0m [2026-09-26 00:40:30] [upload_utils.py (32)] [INFO] [actor_train-0 0 / 1][PID 2588575] /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-881010/actor_train-0/checkpoint-39 save to /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-881010/checkpoints/checkpoint-39, wait...
+[36m(SocialWorker(actor_train-0) pid=2588575)[0m [2026-09-26 00:40:30] [upload_utils.py (35)] [INFO] [actor_train-0 0 / 1][PID 2588575] /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-881010/actor_train-0/checkpoint-39 save to /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-881010/checkpoints/checkpoint-39, done...
+[36m(SocialWorker(actor_train-0) pid=2588575)[0m Elapsed time: 69.1571 seconds
+[2026-09-26 00:40:31] [upload_utils.py (32)] [INFO] [DRIVER 0 / 1][PID 2586291] /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-881010/pipeline/checkpoint-39 save to /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-881010/checkpoints/checkpoint-39, wait...
+[2026-09-26 00:40:31] [upload_utils.py (35)] [INFO] [DRIVER 0 / 1][PID 2586291] /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-881010/pipeline/checkpoint-39 save to /home/e/e1300530/tmp/MARSHAL-d-results-archive-20260924/runs/social_mixed/decomposed-seed42-881010/checkpoints/checkpoint-39, done...
+{"phase": "checkpoint", "event": "end", "utc": 1790354431.4851894, "seconds": 69.84153800387867}
+{"phase": "validation", "event": "end", "utc": 1790354436.0028644, "seconds": 102.0799204420764}
+[36m(SocialWorker(actor_infer-0) pid=2588809)[0m INFO 09-26 00:40:35 [block_pool.py:793] Successfully reset prefix cache

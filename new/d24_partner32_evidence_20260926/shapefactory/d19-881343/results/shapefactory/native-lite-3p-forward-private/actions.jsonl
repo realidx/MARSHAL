@@ -1,0 +1,1175 @@
+{
+  "event_id": "event_6",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:22:20.519062+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "Hey, I'm working on getting a square for my order. Since you're the expert at making squares, I was wondering if you'd be open to trading one of your specialty squares for a circle? Maybe around $20 or so?",
+        "content_type": "text",
+        "recipients": [
+          "B"
+        ]
+      },
+      "actor_id": "A",
+      "timestamp": 0
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_9",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:22:20.519092+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "Hey, I'm working on getting a triangle for my order. Since you have the specialty triangle, I was wondering if you'd be open to trading one for a square? I can give you $25 for it.",
+        "content_type": "text",
+        "recipients": [
+          "C"
+        ]
+      },
+      "actor_id": "B",
+      "timestamp": 0
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_12",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:22:20.519116+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "Hey, I'm working on getting circles for my order. Since you make circles, I was wondering if you'd be open to trading a triangle for one? I can make a few if you need them.",
+        "content_type": "text",
+        "recipients": [
+          "A"
+        ]
+      },
+      "actor_id": "C",
+      "timestamp": 0
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_30",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:22:30.523768+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "I saw your message about trading a triangle for a circle. I'm not in a position to trade right now, but I can make a circle if you need one. How about we meet in the middle — maybe $25 for a circle?",
+        "content_type": "text",
+        "recipients": [
+          "B"
+        ]
+      },
+      "actor_id": "A",
+      "timestamp": 3
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_33",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:22:30.523796+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "I saw your message about trading a triangle. I'm still looking for one to fulfill my order. How about $25 for a triangle? I can give you a square in return.",
+        "content_type": "text",
+        "recipients": [
+          "C"
+        ]
+      },
+      "actor_id": "B",
+      "timestamp": 3
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_36",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:22:30.523823+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "I see you're offering a square for $25. I can give you a triangle for that, but I'm still looking for a circle to finish my order. Maybe we can work something out together?",
+        "content_type": "text",
+        "recipients": [
+          "B"
+        ]
+      },
+      "actor_id": "C",
+      "timestamp": 3
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_53",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:22:39.273451+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "buy",
+        "shape": "triangle",
+        "price_per_unit": 25,
+        "target_id": "C",
+        "quantity": 1
+      },
+      "actor_id": "B",
+      "timestamp": 6
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_56",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:22:39.273510+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "sell",
+        "shape": "triangle",
+        "price_per_unit": 25,
+        "target_id": "B",
+        "quantity": 1
+      },
+      "actor_id": "C",
+      "timestamp": 6
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_68",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:22:48.942770+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_6_1",
+        "response_type": "accept"
+      },
+      "actor_id": "B",
+      "timestamp": 8
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_71",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:22:48.942820+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_6_1",
+        "response_type": "accept"
+      },
+      "actor_id": "C",
+      "timestamp": 8
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_82",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:22:59.293968+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "B",
+      "timestamp": 10
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_85",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:22:59.294030+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "Hi, I just traded a triangle for a square. I'm still missing a circle for my order—do you have one you can share? I'm happy to trade or pay if needed.",
+        "content_type": "text",
+        "recipients": [
+          "A"
+        ]
+      },
+      "actor_id": "C",
+      "timestamp": 10
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_93",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:23:09.950135+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "sell",
+        "shape": "circle",
+        "price_per_unit": 25.0,
+        "target_id": "C",
+        "quantity": 1
+      },
+      "actor_id": "A",
+      "timestamp": 12
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_100",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:23:18.850174+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "C",
+      "timestamp": 13
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_106",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:23:22.530848+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "produce_shape",
+      "payload": {
+        "shape": "circle",
+        "quantity": 1
+      },
+      "actor_id": "A",
+      "timestamp": 14
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_109",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:23:22.530957+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "B",
+      "timestamp": 14
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_112",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:23:22.531025+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "Hi, I'm still waiting to get a circle for my order. I traded a triangle for a square earlier. Do you have one you can share? I'm happy to trade or pay if needed.",
+        "content_type": "text",
+        "recipients": [
+          "A"
+        ]
+      },
+      "actor_id": "C",
+      "timestamp": 14
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_123",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:23:33.722119+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "I just produced a circle. I'm happy to trade it for a triangle or pay $25 if you'd like. Let me know what works best for you.",
+        "content_type": "text",
+        "recipients": [
+          "C"
+        ]
+      },
+      "actor_id": "A",
+      "timestamp": 16
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_131",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:23:44.054374+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "sell",
+        "shape": "triangle",
+        "price_per_unit": 25,
+        "target_id": "A",
+        "quantity": 1
+      },
+      "actor_id": "C",
+      "timestamp": 17
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_138",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:23:53.980389+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "A",
+      "timestamp": 18
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_144",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:23:57.091318+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "produce_shape",
+      "payload": {
+        "shape": "circle",
+        "quantity": 1
+      },
+      "actor_id": "A",
+      "timestamp": 19
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_147",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:23:57.091372+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "B",
+      "timestamp": 19
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_150",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:23:57.091420+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_6_1",
+        "response_type": "accept"
+      },
+      "actor_id": "C",
+      "timestamp": 19
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_161",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:24:07.583797+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "B",
+      "timestamp": 22
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_167",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:24:11.766044+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "I just made a circle and have one in inventory. Since you're the expert at making squares, I was wondering if you'd be open to trading one of your squares for my circle? Maybe $25?",
+        "content_type": "text",
+        "recipients": [
+          "B"
+        ]
+      },
+      "actor_id": "A",
+      "timestamp": 23
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_170",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:24:11.766102+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "B",
+      "timestamp": 23
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_173",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:24:11.766155+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "sell",
+        "shape": "triangle",
+        "price_per_unit": 25,
+        "target_id": "A",
+        "quantity": 1
+      },
+      "actor_id": "C",
+      "timestamp": 23
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_185",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:24:24.011834+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "produce_shape",
+      "payload": {
+        "shape": "circle",
+        "quantity": 1
+      },
+      "actor_id": "A",
+      "timestamp": 26
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_188",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:24:24.011860+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "sell",
+        "shape": "square",
+        "price_per_unit": 25,
+        "target_id": "A",
+        "quantity": 1
+      },
+      "actor_id": "B",
+      "timestamp": 26
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_198",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:24:35.093376+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "I have two circles now and am ready to trade one for a square. How about $25? I can make more if you need them.",
+        "content_type": "text",
+        "recipients": [
+          "B"
+        ]
+      },
+      "actor_id": "A",
+      "timestamp": 27
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_207",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:24:46.151795+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_6_1",
+        "response_type": "accept"
+      },
+      "actor_id": "B",
+      "timestamp": 29
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_214",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:24:58.664568+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_6_1",
+        "response_type": "accept"
+      },
+      "actor_id": "C",
+      "timestamp": 30
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_222",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:25:10.333906+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "B",
+      "timestamp": 32
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_228",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:25:14.130303+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "propose_trade_offer",
+      "payload": {
+        "offer_type": "sell",
+        "shape": "circle",
+        "price_per_unit": 25.0,
+        "target_id": "B",
+        "quantity": 1
+      },
+      "actor_id": "A",
+      "timestamp": 33
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_231",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:25:14.130361+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "B",
+      "timestamp": 33
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_234",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:25:14.130408+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "C",
+      "timestamp": 33
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_242",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:25:24.577276+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_6_1",
+        "response_type": "accept"
+      },
+      "actor_id": "B",
+      "timestamp": 36
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_249",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:25:37.402196+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "message",
+      "payload": {
+        "channel": "direct",
+        "content": "Hey, I'm still waiting to get a circle. I saw you offered one for $25 — would you be open to trading it for a triangle? I can give you the triangle right away.",
+        "content_type": "text",
+        "recipients": [
+          "A"
+        ]
+      },
+      "actor_id": "C",
+      "timestamp": 37
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_257",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:25:49.096247+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_33_2",
+        "response_type": "accept"
+      },
+      "actor_id": "A",
+      "timestamp": 38
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_264",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:25:59.563199+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "B",
+      "timestamp": 39
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_270",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:03.168713+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "fulfill_order",
+      "payload": {
+        "order_indices": [
+          0
+        ]
+      },
+      "actor_id": "A",
+      "timestamp": 40
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_273",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:03.168771+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "B",
+      "timestamp": 40
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_276",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:03.168818+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "trade_response",
+      "payload": {
+        "transaction_id": "offer_33_2",
+        "response_type": "accept"
+      },
+      "actor_id": "C",
+      "timestamp": 40
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_286",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:13.647601+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "A",
+      "timestamp": 43
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_292",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:17.189075+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "A",
+      "timestamp": 44
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_295",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:17.189130+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "B",
+      "timestamp": 44
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_298",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:17.189182+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "fulfill_order",
+      "payload": {
+        "order_indices": [
+          0
+        ]
+      },
+      "actor_id": "C",
+      "timestamp": 44
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_307",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:29.781415+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "A",
+      "timestamp": 47
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_310",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:29.781440+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "B",
+      "timestamp": 47
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_313",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:29.781460+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "C",
+      "timestamp": 47
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_319",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:32.979016+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "A",
+      "timestamp": 50
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_322",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:32.979070+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "B",
+      "timestamp": 50
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_325",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:32.979111+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "C",
+      "timestamp": 50
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_331",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:36.196751+00:00",
+  "actor_id": "A",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "A",
+      "timestamp": 53
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_334",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:36.196808+00:00",
+  "actor_id": "B",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "B",
+      "timestamp": 53
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}
+{
+  "event_id": "event_337",
+  "event_type": "action_validated",
+  "timestamp": "2026-09-25T16:26:36.196855+00:00",
+  "actor_id": "C",
+  "visibility": "system",
+  "payload": {
+    "action": {
+      "type": "do_nothing",
+      "payload": {},
+      "actor_id": "C",
+      "timestamp": 53
+    },
+    "checks_passed": [
+      "schema"
+    ]
+  }
+}

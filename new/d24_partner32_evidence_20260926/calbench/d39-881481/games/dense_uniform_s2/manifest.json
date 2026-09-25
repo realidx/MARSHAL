@@ -1,0 +1,73 @@
+{
+  "stage": "formal",
+  "formal_test": true,
+  "source_hash": "dfbbc7633a27d7326b8fab322fe8c3699ca4f5b6997f980c00e981ae99da823f",
+  "config": {
+    "game_name": "calendar",
+    "seed": 2026091902,
+    "num_agents": 4,
+    "num_slots": 8,
+    "num_meetings": 3,
+    "num_participants": 3,
+    "density": 0.5,
+    "pref_level": 3,
+    "errand_cost_level": 3,
+    "meeting_cost_level": 1,
+    "max_turns_per_round": 4,
+    "decision_retries": 1,
+    "enable_fallback": false,
+    "enable_reflection": false,
+    "communication_protocol": "dm",
+    "agents": [
+      {
+        "type": "llm",
+        "model": "q0",
+        "agent_id": 0
+      },
+      {
+        "type": "llm",
+        "model": "q0",
+        "agent_id": 1
+      },
+      {
+        "type": "llm",
+        "model": "q0",
+        "agent_id": 2
+      },
+      {
+        "type": "llm",
+        "model": "q0",
+        "agent_id": 3
+      }
+    ]
+  },
+  "routes": {
+    "local_only": true,
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "timeout_seconds": 600,
+    "endpoints": {
+      "focal": {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:21481/v1"
+      },
+      "q0": {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:21481/v1"
+      }
+    },
+    "equivalent_replicas": [
+      {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:21481/v1"
+      }
+    ],
+    "execution_protocol": "reasoning-separated-v2-tokens-4096"
+  },
+  "job": {
+    "game_id": "dense_uniform_s2",
+    "seed": 2026091902,
+    "focal_seat": 7,
+    "stream_case": "dense_uniform_s2"
+  }
+}

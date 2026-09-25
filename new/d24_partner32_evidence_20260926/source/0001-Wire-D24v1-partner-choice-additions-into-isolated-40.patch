@@ -1,0 +1,227 @@
+From b69f2c1c5aeb6323b508875ba93bcd8e39c9a989 Mon Sep 17 00:00:00 2001
+From: LI DAOXIN <e1300530@xcnc15.comp.nus.edu.sg>
+Date: Fri, 25 Sep 2026 22:14:37 +0800
+Subject: [PATCH 1/2] Wire D24v1 partner-choice additions into isolated 40-step
+ training
+
+---
+ .../micro24_v1_partner_choice_v1/README.md    |  8 ++-
+ .../training_manifest.json                    | 16 ++++++
+ .../social_mixed/micro_learning_v1/dataset.py | 18 ++++---
+ .../start_micro24_v1_partner_training.sh      |  5 ++
+ examples/social_mixed/start_micro_training.sh |  3 +-
+ training/social_mixed/micro_training.py       |  2 +-
+ training/social_mixed/test_micro_training.py  | 54 ++++++++++++++++++-
+ 7 files changed, 95 insertions(+), 11 deletions(-)
+ create mode 100644 examples/social_mixed/micro24_v1_partner_choice_v1/training_manifest.json
+ create mode 100644 examples/social_mixed/start_micro24_v1_partner_training.sh
+
+diff --git a/examples/social_mixed/micro24_v1_partner_choice_v1/README.md b/examples/social_mixed/micro24_v1_partner_choice_v1/README.md
+index c138987..1a47672 100644
+--- a/examples/social_mixed/micro24_v1_partner_choice_v1/README.md
++++ b/examples/social_mixed/micro24_v1_partner_choice_v1/README.md
+@@ -1,6 +1,6 @@
+ # D24-v1三人伙伴选择增补
+ 
+-原24题保持原样。新增8个O/P视图，来自4个场景、2种物理结构；不是8个独立结构。不修改现有O/C启动入口，尚未提交训练。
++原24题保持原样。新增8个O/P视图，来自4个场景、2种物理结构；不是8个独立结构。不修改现有O/C启动入口。
+ 
+ ## 场景
+ 
+@@ -33,4 +33,8 @@ P只给当前状态、自己偏好、规则和伙伴定性belief（单值set/fav
+ 
+ augmented_tasks.jsonl保留原24条并追加8条。proposed_schedule.jsonl在原每步12组外再加4组，新题各20次曝光、原题各20次，仍40步。每步128回答，生成成本增加。要保持旧题系数1/96，按回答均值的task/protocol/KL权重需设128/96；LR仍应冻结原D逐步序列。
+ 
+-这里只输出可审查草案，没有接入训练；原启动器不读取此目录。新题没有历史calls，不伪造examples或历史学习证据。新增8视图不包括B，目的是补伙伴选择而非同时重做B。
++训练接线使用独立的 `24v1_partner` variant、`training_manifest.json` 和入口
++`bash examples/social_mixed/start_micro24_v1_partner_training.sh h200-141`。
++它读取 `augmented_tasks.jsonl` 与 `proposed_schedule.jsonl`，原24题及其逐步曝光顺序不变；每步128回答，task/protocol/KL每行权重为4/3，沿用原D逐步学习率。40步响应-token上限为5,242,880，仅作安全上限，实际剂量另记。默认保存规则每10步一次；实验提交时显式设 `SOCIAL_KEEP_CHECKPOINTS=1`。
++
++新题没有历史calls，不伪造examples或历史学习证据。新增8视图不包括B，目的是补伙伴选择而非同时重做B。CPU回归只验证原生奖励和接线，不证明Q0会产生有效advantage；正式实验仍需观察首次更新及验证。
+diff --git a/examples/social_mixed/micro24_v1_partner_choice_v1/training_manifest.json b/examples/social_mixed/micro24_v1_partner_choice_v1/training_manifest.json
+new file mode 100644
+index 0000000..6bbf87e
+--- /dev/null
++++ b/examples/social_mixed/micro24_v1_partner_choice_v1/training_manifest.json
+@@ -0,0 +1,16 @@
++{
++  "version": "micro24-v1-partner-choice-training-v1",
++  "base_tasks": 24,
++  "additional_tasks": 8,
++  "updates": 40,
++  "replicas": 8,
++  "answers_per_update": 128,
++  "row_weight": 1.3333333333333333,
++  "sha256": {
++    "../micro_learning_24_v1_matched/tasks.jsonl": "4807718a66fca83c8fe972273f84e29818afdf90828d291c188154757aa30a0c",
++    "../micro_learning_24_v1_matched/schedule.jsonl": "37cfa2b454f6df26d30033ac5b4169c53f50398491e92a945a50ba52ace9f9db",
++    "tasks.jsonl": "6d07a2a301120b1c3337785fd8912208697097223fc62b3ddde631a214d79799",
++    "augmented_tasks.jsonl": "1d0d112e2c6d05e4f535305a5f246a2fa7fb310a6d756dda6fc58c42bec368c8",
++    "proposed_schedule.jsonl": "6db8605708b0cdf78c7dac5e911b96f8c2bb1064901ee980a037477260e9c837"
++  }
++}
+diff --git a/examples/social_mixed/micro_learning_v1/dataset.py b/examples/social_mixed/micro_learning_v1/dataset.py
+index 27c7e57..a8f4e8b 100644
+--- a/examples/social_mixed/micro_learning_v1/dataset.py
++++ b/examples/social_mixed/micro_learning_v1/dataset.py
+@@ -3,32 +3,38 @@ import hashlib,json,os
+ from copy import deepcopy
+ from pathlib import Path
+ NAME=os.environ.get('SOCIAL_MICRO_VARIANT','13')
+-if NAME not in ('13','24','24v2','24v2_no_b','24v1_o','24v1_c','24v1_d'):raise ValueError('Unknown micro variant')
++if NAME not in ('13','24','24v2','24v2_no_b','24v1_o','24v1_c','24v1_d','24v1_partner'):raise ValueError('Unknown micro variant')
+ ROOT=Path(__file__).parent if NAME=='13' else Path(__file__).parent.parent/('micro_learning_24_v2' if NAME.startswith('24v2') else 'micro_learning_24_v1')
+ if NAME.startswith('24v1_'):ROOT=Path(__file__).parent.parent/'micro_learning_24_v1_matched'
++if NAME=='24v1_partner':ROOT=Path(__file__).parent.parent/'micro24_v1_partner_choice_v1'
+ KINDS={'24v1_o':('O',),'24v1_c':('O','P')}.get(NAME,('O','P','B') if NAME!='24v2_no_b' else ('O','P'))
+ NO_B='B' not in KINDS
+ FROZEN_LR=NAME.startswith(('24v1_','24v2'))
+ 
+ def row_weight():
+  # The objective averages rows: (2/3)/64 == 1/96 for shared O/P.
++ if NAME=='24v1_partner':return 4/3
+  return len(KINDS)/3
+ 
+ def scheduled_learning_rate(update):
+  if not FROZEN_LR:return None
+- return json.loads((ROOT/'schedule.jsonl').read_text().splitlines()[update])['learning_rate']
++ schedule=ROOT.parent/'micro_learning_24_v1_matched'/'schedule.jsonl' if NAME=='24v1_partner' else ROOT/'schedule.jsonl'
++ return json.loads(schedule.read_text().splitlines()[update])['learning_rate']
+ 
+ def load():
+- manifest=json.loads((ROOT/'manifest.json').read_text())
++ manifest=json.loads((ROOT/('training_manifest.json' if NAME=='24v1_partner' else 'manifest.json')).read_text())
+  for name,digest in manifest['sha256'].items():
+   if hashlib.sha256((ROOT/name).read_bytes()).hexdigest()!=digest:raise ValueError('Micro dataset hash mismatch: '+name)
+- return [json.loads(l) for l in (ROOT/'tasks.jsonl').read_text().splitlines()]
++ tasks='augmented_tasks.jsonl' if NAME=='24v1_partner' else 'tasks.jsonl'
++ return [json.loads(l) for l in (ROOT/tasks).read_text().splitlines()]
+ 
+ def batch(update,seed=42):
+  if not 0<=update<40:raise ValueError('Micro pilot supports updates 0..39')
+  by_id={r['id']:r for r in load()}
+- plan=json.loads((ROOT/'schedule.jsonl').read_text().splitlines()[update])
+- rows=[by_id[tid] for tid in plan['task_ids'] if by_id[tid]['evidence']['kind'] in KINDS];result=[]
++ schedule='proposed_schedule.jsonl' if NAME=='24v1_partner' else 'schedule.jsonl'
++ plan=json.loads((ROOT/schedule).read_text().splitlines()[update])
++ ids=plan['original_task_ids']+plan['additional_task_ids'] if NAME=='24v1_partner' else plan['task_ids']
++ rows=[by_id[tid] for tid in ids if by_id[tid]['evidence']['kind'] in KINDS];result=[]
+  for row in rows:
+   for replica in range(8):
+    request=deepcopy(row['request'])
+diff --git a/examples/social_mixed/start_micro24_v1_partner_training.sh b/examples/social_mixed/start_micro24_v1_partner_training.sh
+new file mode 100644
+index 0000000..958a4af
+--- /dev/null
++++ b/examples/social_mixed/start_micro24_v1_partner_training.sh
+@@ -0,0 +1,5 @@
++#!/usr/bin/env bash
++set -euo pipefail
++cd "$(dirname "$0")/../.."
++export SOCIAL_MICRO_VARIANT=24v1_partner
++exec bash examples/social_mixed/start_micro_training.sh "${1:-h200-141}"
+diff --git a/examples/social_mixed/start_micro_training.sh b/examples/social_mixed/start_micro_training.sh
+index 4dea6af..c933db0 100644
+--- a/examples/social_mixed/start_micro_training.sh
++++ b/examples/social_mixed/start_micro_training.sh
+@@ -3,11 +3,12 @@ set -euo pipefail
+ cd "$(dirname "$0")/../.."
+ export SOCIAL_MICRO_BANK=1 SOCIAL_INTERACTION_BANK=0 SOCIAL_RECIPE=reasoning
+ export SOCIAL_NORMALIZATION=standard_sequence SOCIAL_KEEP_CHECKPOINTS="${SOCIAL_KEEP_CHECKPOINTS:-4}"
+-# 40 * 104 * 1024 is the maximum response-token consumption.
++# Per-variant response-token caps are safety upper bounds, not target doses.
+ export SOCIAL_MICRO_VARIANT="${SOCIAL_MICRO_VARIANT:-13}"
+ case "$SOCIAL_MICRO_VARIANT" in
+   13) export SOCIAL_TOTAL_TOKENS=4259840;;
+   24|24v2|24v1_d) export SOCIAL_TOTAL_TOKENS=3932160;;
++  24v1_partner) export SOCIAL_TOTAL_TOKENS=5242880;;
+   24v2_no_b|24v1_c) export SOCIAL_TOTAL_TOKENS=2621440;;
+   24v1_o) export SOCIAL_TOTAL_TOKENS=1310720;;
+   *) echo 'Unknown micro variant' >&2; exit 2;;
+diff --git a/training/social_mixed/micro_training.py b/training/social_mixed/micro_training.py
+index 66f97ef..3e7a23c 100644
+--- a/training/social_mixed/micro_training.py
++++ b/training/social_mixed/micro_training.py
+@@ -7,7 +7,7 @@ from training.social_mixed.reasoning_training import group_advantages
+ VERSION='micro-learning-frozen-v1'
+ def identity():
+  dataset.load()
+- raw=(dataset.ROOT/'manifest.json').read_bytes()
++ raw=(dataset.ROOT/('training_manifest.json' if dataset.NAME=='24v1_partner' else 'manifest.json')).read_bytes()
+  if dataset.FROZEN_LR:raw+=dataset.NAME.encode()
+  return hashlib.sha256(raw).hexdigest()
+ class PipelineCollector:
+diff --git a/training/social_mixed/test_micro_training.py b/training/social_mixed/test_micro_training.py
+index e7ad900..d583da7 100644
+--- a/training/social_mixed/test_micro_training.py
++++ b/training/social_mixed/test_micro_training.py
+@@ -6,9 +6,11 @@ class MicroTests(unittest.TestCase):
+   from collections import Counter
+   c=Counter()
+   for step in range(40):
+-   b=dataset.batch(step);self.assertEqual(len(b),104 if dataset.NAME=='13' else 32*len(dataset.KINDS));c.update(set(r['task_id'] for r in b))
++   expected=128 if dataset.NAME=='24v1_partner' else (104 if dataset.NAME=='13' else 32*len(dataset.KINDS))
++   b=dataset.batch(step);self.assertEqual(len(b),expected);c.update(set(r['task_id'] for r in b))
+   self.assertEqual(set(c.values()),{40 if dataset.NAME=='13' else 20})
+  def test_collection(self):
++  if dataset.NAME=='24v1_partner':self.skipTest('New partner-choice tasks have no historical model completions; tested below with native gold calls')
+   examples=[json.loads(l) for l in (dataset.ROOT/'examples.jsonl').read_text().splitlines()]
+   gold={r['task_id']:r['completion'] for r in examples if r['score']['correct']}
+   specs=dataset.batch(0)
+@@ -93,3 +95,53 @@ class OriginalBankAblationTests(unittest.TestCase):
+    self.assertEqual((dataset.ROOT/'tasks.jsonl').read_bytes(),(source/'tasks.jsonl').read_bytes())
+   finally:
+    with patch.dict(os.environ,{'SOCIAL_MICRO_VARIANT':original}):importlib.reload(dataset)
++
++class PartnerChoiceTrainingTests(unittest.TestCase):
++ def test_frozen_32_task_schedule_and_collector(self):
++  import os,importlib
++  from collections import Counter
++  from unittest.mock import patch
++  from training.social_mixed.micro_training import identity
++  from training.b_sft.social_named_probe import present,action_call
++  original=dataset.NAME
++  try:
++   with patch.dict(os.environ,{'SOCIAL_MICRO_VARIANT':'24v1_partner'}):importlib.reload(dataset)
++   root=dataset.ROOT;old=root.parent/'micro_learning_24_v1_matched'
++   assert (root/'augmented_tasks.jsonl').read_bytes().startswith((old/'tasks.jsonl').read_bytes())
++   records=dataset.load();self.assertEqual(len(records),32)
++   self.assertEqual(len({r['id'] for r in records}),32)
++   by_id={r['id']:r for r in records};counts=Counter()
++   old_schedule=[json.loads(line) for line in (old/'schedule.jsonl').read_text().splitlines()]
++   proposed=[json.loads(line) for line in (root/'proposed_schedule.jsonl').read_text().splitlines()]
++   self.assertEqual(len(proposed),40)
++   for step,plan in enumerate(proposed):
++    self.assertEqual(plan['original_task_ids'],old_schedule[step]['task_ids'])
++    self.assertEqual(len(plan['additional_task_ids']),4)
++    batch=dataset.batch(step);self.assertEqual(len(batch),128)
++    counts.update(r['task_id'] for r in batch if r['replica']==0)
++    self.assertEqual(dataset.scheduled_learning_rate(step),old_schedule[step]['learning_rate'])
++   self.assertEqual(set(counts.values()),{20})
++   self.assertAlmostEqual(dataset.row_weight()/128,1/96)
++   self.assertNotEqual(identity(),'')
++   old_examples=[json.loads(line) for line in (old/'examples.jsonl').read_text().splitlines()]
++   gold={r['task_id']:r['completion'] for r in old_examples if r['score']['correct']}
++   for row in records[24:]:
++    task=row['task'];shown=present(task,task.get('name_variant',0))['legal_actions']
++    accepted=task['teacher']['acceptable_actions']
++    native=task['input']['legal_actions']
++    choice=next(view for action,view in zip(native,shown) if action in accepted)
++    name,args=action_call(choice)
++    completion=dict(raw_message=dict(content='Native gold regression call.',tool_calls=[dict(function=dict(name=name,arguments=json.dumps(args)))]),finish_reason='stop')
++    self.assertTrue(dataset.score(row['id'],completion)['correct'])
++    gold[row['id']]=completion
++   specs=dataset.batch(0)
++   def generate(requests):
++    self.assertEqual(len(requests),128)
++    return [dict(completion=gold[s['task_id']],response_ids=[1,2],behavior_log_probs=[-.1,-.2]) for s in specs]
++   collector=PipelineCollector({},generate)
++   rows,units,_,_=collector.collect(0,'decomposed')
++   self.assertEqual(len(rows),128)
++   self.assertTrue(all(r['score']['correct'] for r in rows))
++   self.assertTrue(all(r['task_advantage']==0 for r in rows))
++  finally:
++   with patch.dict(os.environ,{'SOCIAL_MICRO_VARIANT':original}):importlib.reload(dataset)
+-- 
+2.43.0
+

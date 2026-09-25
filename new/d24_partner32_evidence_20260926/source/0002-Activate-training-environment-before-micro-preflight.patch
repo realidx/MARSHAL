@@ -1,0 +1,26 @@
+From b9b99397294bf3cffa8f6a4fa82c07c729c5adb6 Mon Sep 17 00:00:00 2001
+From: LI DAOXIN <e1300530@xcnc15.comp.nus.edu.sg>
+Date: Fri, 25 Sep 2026 22:15:27 +0800
+Subject: [PATCH 2/2] Activate training environment before micro preflight
+
+---
+ examples/social_mixed/start_micro_training.sh | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/examples/social_mixed/start_micro_training.sh b/examples/social_mixed/start_micro_training.sh
+index c933db0..3da876c 100644
+--- a/examples/social_mixed/start_micro_training.sh
++++ b/examples/social_mixed/start_micro_training.sh
+@@ -1,6 +1,9 @@
+ #!/usr/bin/env bash
+ set -euo pipefail
+ cd "$(dirname "$0")/../.."
++source "${CONDA_HOME:-/home/e/e1300530/miniconda3}/etc/profile.d/conda.sh"
++conda activate "${CONDA_ENV:-/home/e/e1300530/tmp/marshal-vllm09}"
++export PYTHONPATH="$PWD:$PWD/mcore_adapter/src:$PWD/third_party/negotiation_benchmark/src:${PYTHONPATH:-}"
+ export SOCIAL_MICRO_BANK=1 SOCIAL_INTERACTION_BANK=0 SOCIAL_RECIPE=reasoning
+ export SOCIAL_NORMALIZATION=standard_sequence SOCIAL_KEEP_CHECKPOINTS="${SOCIAL_KEEP_CHECKPOINTS:-4}"
+ # Per-variant response-token caps are safety upper bounds, not target doses.
+-- 
+2.43.0
+
