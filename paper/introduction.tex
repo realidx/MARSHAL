@@ -26,6 +26,20 @@ representing or predicting another agent's state need not translate into an
 effective response \citep{riemer2025tom,sobotka2026strategic}. This gap
 motivates examining inference and planning both separately and together.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/overview.pdf}
+\caption{Overview of the interaction and training design. (A) An agent
+observes partners' behavior, infers their preferences, and acts; subsequent
+behavior supplies new evidence. (B) Complete-game self-play (SP) begins at
+the root and learns from terminal outcomes. The alternative O and D arms
+train on selected, oracle-labeled game slices that can span multiple
+decisions. All arms start from the same base checkpoint and are trained
+separately. (C) We evaluate transfer to a more complex coordination task,
+illustrated by private calendars in CalBench.}
+\label{fig:overview}
+\end{figure}
+
 Realistic multi-agent interactions are difficult to diagnose because
 information, objectives, and decisions are distributed across agents and time.
 Coordination around private calendars, negotiation over asymmetric goals, and
@@ -48,7 +62,8 @@ partner states latent, creating an inference problem; mixed incentives make
 those states consequential for planning.
 
 Using this controlled setting, we make the two capabilities separately
-testable and trainable in LLM-agent interaction. We first construct diagnostic decision
+testable and trainable in LLM-agent interaction (Figure~\ref{fig:overview}).
+We first construct diagnostic decision
 problems showing that inference and planning are separated capabilities that will affect the interaction,
 and they take effect dependently in an long horizon case (Section~\ref{sec:diagnose}).
 We then build \emph{game slices} from deliberately structured small games:

@@ -90,9 +90,13 @@ def history(inp, names):
     """Replay display facts only, preserving event ownership and intervention status."""
     setup = inp['imposed_setup']
     events = setup + inp['voluntary_history']
-    vectors = [[0]*n for n in inp['game']['n_actions_per_player']]
+    counts = inp['game']['n_actions_per_player']
+    starting = inp.get('initial_commitments', [[0]*n for n in counts])
+    if len(starting) != len(counts) or any(len(row) != n or any(bit not in (0, 1) for bit in row) for row, n in zip(starting, counts)):
+        raise ValueError('Invalid initial commitments for history rendering')
+    vectors = [list(row) for row in starting]
     schedule = inp['game']['round_robin']
-    turn = 0
+    turn = inp.get('initial_turn_index', 0)
     pending = None
     out = []
     boundary = len(events)-len(inp.get('new_history', []))

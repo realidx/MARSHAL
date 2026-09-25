@@ -1,0 +1,52 @@
+{
+  "status": "DESIGN_ONLY_NOT_FROZEN_NOT_RUNNABLE",
+  "source": "examples/social_mixed/paired_bank_v2/tasks.jsonl",
+  "source_sha256": "c7e0467de120148b3e21f1785d09755d9d043076cea53577217b6d50e0522e8a",
+  "validation_parents": 124,
+  "counts": {
+    "disposition": {
+      "requires_history_reconstruction": 122,
+      "candidate_requires_teacher_and_cross_bank_audit": 2
+    },
+    "support": {
+      "want|neutral|avoid": 65,
+      "neutral": 6,
+      "avoid": 6,
+      "neutral|avoid": 12,
+      "want|neutral": 9,
+      "want": 21,
+      "want|avoid": 5
+    },
+    "favored": {
+      "avoid": 25,
+      "neutral": 18,
+      "undetermined": 41,
+      "want": 40
+    },
+    "players": {
+      "2": 84,
+      "3": 40
+    },
+    "queried_preference_privately_observed": {
+      "False": 118,
+      "True": 6
+    },
+    "queried_preference_public": {
+      "False": 97,
+      "True": 27
+    },
+    "same_bank_train_overlap": {
+      "False": 124
+    },
+    "p_eligible": {
+      "True": 106,
+      "False": 18
+    }
+  },
+  "limitations": [
+    "Validation has been used for monitoring; it is not an untouched test.",
+    "No full teacher replay or cross-bank training leakage audit performed.",
+    "A private result may concern a different preference from the B query.",
+    "Existing P eligibility does not establish the full B-to-P mediation contract."
+  ]
+}
