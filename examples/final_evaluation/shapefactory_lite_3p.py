@@ -31,7 +31,7 @@ def config(condition,swapped,model,base_url):
     out['experiment']['id']='native-lite-3p-'+('reverse' if swapped else 'forward')+'-'+condition
     out['agents']=out['agents'][:3]
     for a in out['agents']:
-        a['model'].update(provider='litellm',name=model if model.startswith('openai/') else 'openai/'+model,api_base=base_url)
+        a['model'].update(provider='litellm',name=model if model.startswith('openai/') else 'openai/'+model,api_base=base_url,max_tokens=4096)
     out['task'].update(shapes_order=1,shapes_types=3,
         shape_options=['triangle','circle','square'] if swapped else ['square','triangle','circle'],
         specialties={'A':'circle','B':'square','C':'triangle'})

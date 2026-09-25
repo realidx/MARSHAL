@@ -1,6 +1,6 @@
 # D24-v1三人伙伴选择增补
 
-原24题保持原样。新增8个O/P视图，来自4个场景、2种物理结构；不是8个独立结构。不修改现有O/C启动入口，尚未提交训练。
+原24题保持原样。新增8个O/P视图，来自4个场景、2种物理结构；不是8个独立结构。不修改现有O/C启动入口。
 
 ## 场景
 
@@ -33,4 +33,8 @@ P只给当前状态、自己偏好、规则和伙伴定性belief（单值set/fav
 
 augmented_tasks.jsonl保留原24条并追加8条。proposed_schedule.jsonl在原每步12组外再加4组，新题各20次曝光、原题各20次，仍40步。每步128回答，生成成本增加。要保持旧题系数1/96，按回答均值的task/protocol/KL权重需设128/96；LR仍应冻结原D逐步序列。
 
-这里只输出可审查草案，没有接入训练；原启动器不读取此目录。新题没有历史calls，不伪造examples或历史学习证据。新增8视图不包括B，目的是补伙伴选择而非同时重做B。
+训练接线使用独立的 `24v1_partner` variant、`training_manifest.json` 和入口
+`bash examples/social_mixed/start_micro24_v1_partner_training.sh h200-141`。
+它读取 `augmented_tasks.jsonl` 与 `proposed_schedule.jsonl`，原24题及其逐步曝光顺序不变；每步128回答，task/protocol/KL每行权重为4/3，沿用原D逐步学习率。40步响应-token上限为5,242,880，仅作安全上限，实际剂量另记。默认保存规则每10步一次；实验提交时显式设 `SOCIAL_KEEP_CHECKPOINTS=1`。
+
+新题没有历史calls，不伪造examples或历史学习证据。新增8视图不包括B，目的是补伙伴选择而非同时重做B。CPU回归只验证原生奖励和接线，不证明Q0会产生有效advantage；正式实验仍需观察首次更新及验证。

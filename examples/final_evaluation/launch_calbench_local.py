@@ -32,6 +32,8 @@ def main():
     args=parser.parse_args()
     if args.max_tokens is None:
         args.max_tokens = 4096 if args.suite in ('stream','shapefactory','shapefactory_native_lite') else 768
+    if args.suite=='shapefactory_native_lite' and (args.max_tokens!=4096 or args.max_model_len!=98304 or args.disable_thinking):
+        parser.error('Frozen ShapeFactory requires 4096 output tokens, 98304 context, and the native chat template')
     if args.parallel_games<1 or args.max_num_seqs<1:parser.error('--parallel-games and --max-num-seqs must be positive')
     gpus=os.environ.get('CUDA_VISIBLE_DEVICES','').split(',')
     allowed=(1,2) if args.runtime=='soc' else (2,)
@@ -143,9 +145,10 @@ def main():
                     raise RuntimeError('Non-thinking probe emitted think tags or truncated; inspect thinking_probe before proceeding')
             print('Non-thinking template and server probes passed',flush=True)
         if args.suite=='shapefactory_native_lite':
-            runner_module='examples.final_evaluation.shapefactory_lite'
+            runner_module='examples.final_evaluation.collabsim_frozen_v3'
             runner_args=['--model',config['equivalent_replicas'][0]['model'],
                          '--base-url',config['equivalent_replicas'][0]['base_url'],
+                         '--checkpoint-id',str(args.model.resolve()),
                          '--output',str(out/'games'),'--run']
         else:
             runner_module='examples.final_evaluation.shapefactory_local' if args.suite=='shapefactory' else 'examples.final_evaluation.calbench_local'

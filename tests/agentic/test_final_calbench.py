@@ -98,7 +98,7 @@ def test_unfinished_reasoning_never_becomes_an_action():
 
 
 @pytest.mark.parametrize('gpu_count',[1,2])
-@pytest.mark.parametrize('suite',['formal','stream'])
+@pytest.mark.parametrize('suite',['formal','stream','shapefactory_native_lite'])
 def test_soc_launcher_uses_slurm_devices_and_v1_flags(tmp_path,monkeypatch,gpu_count,suite):
     import sys
     from examples.final_evaluation import launch_calbench_local as launcher
@@ -129,7 +129,9 @@ def test_soc_launcher_uses_slurm_devices_and_v1_flags(tmp_path,monkeypatch,gpu_c
     monkeypatch.setattr(launcher.os,'killpg',lambda *a:None)
     monkeypatch.setattr(launcher.signal,'signal',lambda *a:None)
     monkeypatch.setattr(sys,'argv',['launcher','--runtime','soc','--model',str(model),'--output',str(output),
-                                  '--suite',suite,'--max-tokens','4096','--ports']+[str(27101+i) for i in range(gpu_count)])
+                                  '--suite',suite,'--max-tokens','4096',
+                                  '--max-model-len','98304' if suite=='shapefactory_native_lite' else '32768',
+                                  '--ports']+[str(27101+i) for i in range(gpu_count)])
     launcher.main()
     assert len(commands)==gpu_count
     for i,(cmd,env) in enumerate(commands):
@@ -142,6 +144,9 @@ def test_soc_launcher_uses_slurm_devices_and_v1_flags(tmp_path,monkeypatch,gpu_c
     assert len(config['equivalent_replicas'])==gpu_count
     assert config['max_tokens']==4096 and config['timeout_seconds']==600
     assert runner and (output/'EXIT_CODE').read_text()=='0\n'
+    if suite=='shapefactory_native_lite':
+        assert 'examples.final_evaluation.collabsim_frozen_v3' in runner[0]
+        assert '--checkpoint-id' in runner[0]
 
 
 def test_stream_suite_native_replays_and_seed_coverage():
@@ -203,6 +208,8 @@ def test_stream_runner_uses_homogeneous_team_and_three_meeting_reference(tmp_pat
     assert not result['coordinated_success']
     assert result['verified_reference_excess_cost'] is None
     assert result['meeting_completion_rate'] == 1/3
+    assert result['paper_metrics']['native_round_meetings_scheduled'] == 3
+    assert result['paper_metrics']['privacy_vps'] is None
 
 
 def test_stream_diagnostics_replan_and_final_consistency():

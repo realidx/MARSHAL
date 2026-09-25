@@ -7,7 +7,7 @@ from training.social_mixed.reasoning_training import group_advantages
 VERSION='micro-learning-frozen-v1'
 def identity():
  dataset.load()
- raw=(dataset.ROOT/'manifest.json').read_bytes()
+ raw=(dataset.ROOT/('training_manifest.json' if dataset.NAME.startswith('24v1_partner') else 'manifest.json')).read_bytes()
  if dataset.FROZEN_LR:raw+=dataset.NAME.encode()
  return hashlib.sha256(raw).hexdigest()
 class PipelineCollector:

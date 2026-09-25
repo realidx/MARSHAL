@@ -200,9 +200,10 @@ def run_one(job, routes, output):
                           successful_and_optimal=succeeded and trace.metrics['realized_cost']==case['reference']['minimum_team_cost'])
         if job.get('stream_case'):
             n = len(scenario['meetings'])
-            from examples.final_evaluation.calbench_stream_metrics import diagnose
+            from examples.final_evaluation.calbench_stream_metrics import diagnose, paper_metrics
             diagnostics = diagnose(json.loads(trace.model_dump_json()),scenario,calls,case['family']=='replan')
             result['diagnostics'] = diagnostics
+            result['paper_metrics'] = paper_metrics(json.loads(trace.model_dump_json()), scenario)
             complete = diagnostics['full_stream_completion']
             result['verified_reference_excess_cost'] = (trace.metrics['realized_cost']-case['reference']['minimum_team_cost'] if complete else None)
             result.update(formal_test=True, suite='calbench_stream_v1', family=case['family'],

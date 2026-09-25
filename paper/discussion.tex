@@ -1,0 +1,51 @@
+The game that we modified makes the connection between inference and planning measurable through
+explicit information sets and verified action values. We want to discuss three thought.
+
+\paragraph{Richer partner states.}
+Our diagnosis concentrates uncertainty on a partner's preferences. In less
+constrained interactions, an agent must also infer what its partner has
+observed, what it believes others know, and which
+behavioral rule it follows. The same refusal, for example, could express an
+unfavorable preference or uncertainty about information unavailable to the
+partner. Recent work on multi-agent theory of mind examines private knowledge,
+adaptive reasoning about another agent's mental state, and hypotheses about
+partner strategies \citep{ys2026sotopiatom,mu2026adaptive,cross2025hypothetical}.
+These are extensions of \emph{inference} as defined here: each concerns a
+latent state needed to predict a partner's response and plan one's own action.
+Extending game slices to such states would test whether the separation between
+inference and planning remains useful when beliefs themselves have structure.
+
+\paragraph{Strategic coverage.}
+The appeal of game slices lies in control over which decisions become training
+examples. Complete-game self-play generates coherent trajectories with the
+learner's current partners, but its training distribution is the set of nodes
+those policies actually reach. A rarely visited offer, rejection, or
+information-gathering decision may therefore receive little training signal
+even when it is strategically decisive. We instead construct and sample
+slices around specified interaction patterns, retaining cases for which the
+reference computation supplies verified inference and action-value targets.
+Work on subgame curricula likewise shows that changing the distribution of
+starting states can accelerate multi-agent learning \citep{chen2024subgame}.
+This offers a possible explanation for the efficiency of targeted slices,
+though our comparison does not isolate state selection from denser
+supervision. The complementary strengths suggest a concrete hybrid: use
+complete games to discover consequential failures, solve and train on slices
+around those decisions, then return to full interactions to test whether the
+learned behavior survives its wider context.
+
+\paragraph{Robustness across partner policies.}
+Our reference labels assume one selected partner policy, while self-play
+primarily exposes the learner to copies of its evolving policy. This matters
+for inference as well as action selection: an offer that is impossible under
+one reference policy may be ordinary for a partner with a different planning
+horizon, tie rule, or degree of noise. Evidence that self-play agents can
+learn conventions that fail with unfamiliar partners, and that diverse
+training partners can improve cross-partner coordination motivates testing
+policy variation directly
+\citep{hu2020otherplay,strouse2021collaborating}. One direction is to train
+against a population of partner policies and generate slice labels under
+each policy, including controlled deviations from the reference solver.
+Belief targets could then marginalize over uncertainty about both preferences
+and behavioral policies, while evaluation holds out entire policy families.
+Such tests would distinguish strategic behaviors that transfer across
+partners from responses tailored to the particular oracle used here.

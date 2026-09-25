@@ -35,15 +35,6 @@ def main():
   args=[sys.executable,'-m','examples.final_evaluation.'+module,'--model',a.model,'--base-url',a.base_url,'--output',str(a.output/name),*extra]
   if a.run:args.append('--run')
   subprocess.run(args,cwd=ROOT,check=True)
- if a.run:
-  summary_path=a.output/'shapefactory/evaluation_summary.json'
-  summary=json.loads(summary_path.read_text())
-  for row in summary['games']:
-   events=json.loads((a.output/'shapefactory'/row['id']/'events.jsonl').read_text())
-   row['resolved_offers_native']=row.pop('completed_trades',None)
-   row['successful_trades']=sum(e.get('event_type')=='trade_offer_responded' and e.get('payload',{}).get('response_type')=='accept' for e in events)
-  summary['version']='native-lite-summary-v3'
-  summary_path.write_text(json.dumps(summary,indent=2)+'\n')
  if a.run:(a.output/'COMPLETE').write_text('Native CLI runs completed; not a task success or transport health certificate.\n')
  else:(a.output/'PREPARED').write_text('Four ShapeFactory runs configured and schema-validated; no model calls.\n')
 if __name__=='__main__':main()

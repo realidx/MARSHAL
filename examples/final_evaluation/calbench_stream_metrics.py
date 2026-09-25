@@ -2,6 +2,24 @@
 from collections import Counter
 
 
+def paper_metrics(trace, scenario):
+    """Report native round-success metrics separately from final-state retention."""
+    m = trace['metrics']
+    n = len(scenario['calendars'])
+    scheduled = set(m['scheduled_meeting_ids'])
+    ratios = [sum(x['id'] in scheduled for x in scenario['meetings'] if a in x['participants']) /
+              max(1, sum(a in x['participants'] for x in scenario['meetings'])) for a in range(n)]
+    mean = lambda values: sum(values) / len(values)
+    return dict(native_round_meetings_scheduled=m['meetings_scheduled'],
+        native_agent_mean_task_success=mean(ratios),
+        native_agent_mean_excess_cost=mean(m['per_agent_coordination_cost']),
+        native_agent_mean_messages_per_scheduled_meeting=mean(m['per_agent_communication_efficiency']),
+        native_agent_mean_fairness_cost=mean(m['per_agent_fairness_cost']),
+        privacy_vps=None, privacy_status='not_measured',
+        cost_scope='native scheduled-round subset oracle; local scenario cost scale',
+        success_scope='native round resolutions, not final-state retained meetings')
+
+
 def diagnose(trace, scenario, calls=(), replan=False):
     events = trace['events']
     resolutions = [e['data'] for e in events if e['type']=='resolution']
@@ -76,6 +94,7 @@ def summarize_run(root):
             trace=json.loads(trace_path.read_text())
             calls=[json.loads(line) for p in folder.glob('transport-*.jsonl') for line in p.read_text().splitlines()]
             row.update(diagnose(trace,case['scenario'],calls,case['family']=='replan'))
+            row['paper_metrics'] = paper_metrics(trace, case['scenario'])
             row['realized_cost']=trace['metrics']['realized_cost']
             row['verified_excess_cost']=(row['realized_cost']-case['reference']['minimum_team_cost'] if row['full_stream_completion'] else None)
             row['truncated_calls']=sum(c['status']=='truncated' for c in calls)

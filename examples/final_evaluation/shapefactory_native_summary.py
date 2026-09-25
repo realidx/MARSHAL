@@ -6,6 +6,23 @@ from pathlib import Path
 import yaml
 
 
+def event_metrics(path):
+    """Native delivered/executed events, not attempted or merely validated actions."""
+    if not path.exists():
+        return dict(event_metrics_available=False)
+    text = path.read_text().strip()
+    events = json.loads(text) if text.startswith('[') else [json.loads(line) for line in text.splitlines() if line.strip()]
+    offers = sum(e.get('event_type') == 'trade_offer_created' for e in events)
+    accepts = sum(e.get('event_type') == 'trade_offer_responded' and
+                  e.get('payload', {}).get('response_type') == 'accept' for e in events)
+    messages = sum(e.get('event_type') == 'message_delivered' for e in events)
+    return dict(event_metrics_available=True, trade_offers_created=offers,
+                successful_trades=accepts, messages_sent=messages,
+                trade_accept_rate=accepts / offers if offers else 0.0,
+                trade_accept_rate_denominator_zero=offers == 0,
+                messages_per_successful_trade=messages / accepts if accepts else None)
+
+
 def summarize(root):
     root = Path(root)
     manifest = json.loads((root / 'manifest.json').read_text())
@@ -20,8 +37,11 @@ def summarize(root):
         agents = summary.get('per_agent', {})
         exit_path = root / (name + '.exit_code')
         exit_code = int(exit_path.read_text()) if exit_path.exists() else None
-        observed = all(a in agents for a in expected)
+        observed = bool(expected) and all(a in agents and
+            isinstance(agents[a].get('final_balance'), (int, float)) and
+            isinstance(agents[a].get('order_progress'), int) for a in expected)
         fulfilled = sum(min(orders, agents.get(a, {}).get('order_progress', 0)) for a in expected)
+        full_agents = sum(agents.get(a, {}).get('order_progress', 0) >= orders for a in expected)
         rows.append(dict(
             id=name, process_exit_code=exit_code,
             result_available=observed,
@@ -31,12 +51,16 @@ def summarize(root):
             total_order_items=orders * len(expected),
             all_orders_fulfilled=fulfilled == orders * len(expected) if observed else None,
             mean_final_balance=sum(agents[a]['final_balance'] for a in expected) / len(expected) if observed else None,
-            completed_trades=summary.get('task_summary', {}).get('completed_trades'),
+            resolved_offers_native=summary.get('task_summary', {}).get('completed_trades'),
+            agents_fully_fulfilled=full_agents if observed else None,
+            total_agents=len(expected),
+            order_fulfillment_rate=full_agents / len(expected) if observed else None,
+            **event_metrics(root / name / 'events.jsonl'),
             per_agent={a: {k: v for k, v in data.items() if k != 'probe_responses'} for a, data in agents.items()},
         ))
     # Partial/failed runs remain explicit; do not silently average only survivors.
     valid = all(r['infrastructure_valid'] for r in rows) and bool(rows)
-    result = dict(version='native-lite-summary-v1', games=rows, all_runs_valid=valid,
+    result = dict(version='native-lite-summary-v4', games=rows, all_runs_valid=valid,
                   note='Infrastructure validity here checks exit and summary presence only; inspect service/probe errors separately.')
     if valid:
         result['aggregate'] = dict(
@@ -45,6 +69,9 @@ def summarize(root):
             all_orders_fulfilled_games=sum(r['all_orders_fulfilled'] for r in rows),
             games=len(rows),
             mean_final_balance=sum(r['mean_final_balance'] for r in rows) / len(rows),
+            agents_fully_fulfilled=sum(r['agents_fully_fulfilled'] for r in rows),
+            total_agents=sum(r['total_agents'] for r in rows),
+            order_fulfillment_rate=sum(r['agents_fully_fulfilled'] for r in rows) / sum(r['total_agents'] for r in rows),
         )
     return result
 
