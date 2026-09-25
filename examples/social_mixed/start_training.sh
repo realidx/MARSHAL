@@ -36,12 +36,14 @@ fi
 if [[ "${SOCIAL_MICRO_BANK:-0}" == 1 ]]; then
   python - "$SOCIAL_MODEL" <<'MICRO_PY'
 import sys
+from collections.abc import Mapping
 from transformers import AutoTokenizer
 from examples.social_mixed.micro_learning_v1.dataset import load
 tok=AutoTokenizer.from_pretrained(sys.argv[1],local_files_only=True)
 for row in load():
     q=row['request']
     ids=tok.apply_chat_template(q['messages'],tools=q['tools'],tokenize=True,add_generation_prompt=True)
+    if isinstance(ids,Mapping):ids=ids['input_ids']
     if len(ids)+1024>4096:raise ValueError('Micro prompt too long: '+row['id'])
 print('All frozen micro prompts passed tokenizer length checks')
 MICRO_PY
@@ -51,7 +53,7 @@ if [[ "${SOCIAL_INTERACTION_BANK:-0}" == 1 ]]; then
   python -m training.social_mixed.interaction_preflight --tokenizer "$SOCIAL_MODEL" --output "$SOCIAL_SUBMISSION_DIR/interaction-preflight.json"
 fi
 echo 'Binary/linear-only data verified; checking hardware profiles and training configurations'
-if ! python -m unittest training.social_mixed.test_configuration -q > "$SOCIAL_SUBMISSION_DIR/configuration.log" 2>&1; then
+if ! env -u SOCIAL_MICRO_BANK python -m unittest training.social_mixed.test_configuration -q > "$SOCIAL_SUBMISSION_DIR/configuration.log" 2>&1; then
   cat "$SOCIAL_SUBMISSION_DIR/configuration.log"
   exit 1
 fi

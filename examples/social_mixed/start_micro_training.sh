@@ -2,7 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 export SOCIAL_MICRO_BANK=1 SOCIAL_INTERACTION_BANK=0 SOCIAL_RECIPE=reasoning
-export SOCIAL_NORMALIZATION=standard_sequence SOCIAL_KEEP_CHECKPOINTS=4
+export SOCIAL_NORMALIZATION=standard_sequence SOCIAL_KEEP_CHECKPOINTS="${SOCIAL_KEEP_CHECKPOINTS:-4}"
 # 40 * 104 * 1024 is the maximum response-token consumption.
 export SOCIAL_MICRO_VARIANT="${SOCIAL_MICRO_VARIANT:-13}"
 case "$SOCIAL_MICRO_VARIANT" in
