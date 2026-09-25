@@ -47,7 +47,7 @@ dose, will be taken from the archived run configurations.
 \subsection{In-domain diagnosis and adversarial games}
 \label{sec:experiment-benac}
 
-After training, we apply the matched, decision-sufficient diagnostic of
+After training, we apply the partner-history, decision-sufficient diagnostic of
 Section~\ref{sec:diagnose} to each arm. We report exact semantic inference judgments,
 planning regret when the correct judgment is supplied, native history-to-action
 regret, and the paired judgment-repair effect. Regret is lower-is-better;
@@ -55,24 +55,25 @@ repair is computed only where both paired actions are valid. The three
 deterministic repetitions of a structure are not independent test cases.
 
 \begin{table}[t]
-\caption{Post-training diagnosis on 16 matched structures (32 cases),
-strengthened v6 protocol. Planning regret uses the correct inference judgment.
-Regret and repair are structure means over valid outputs; their coverage may
-differ. Blank cells await a verified run under this protocol. BP-99 is a
-historical inference/planning-only reference, not one of the four main
-arms.}
+\caption{Post-training diagnosis on 16 partner-generated histories, one per
+held-out structure. Planning regret uses the correct inference judgment.
+Regret and repair are means over valid outputs; their coverage may differ.
+Blank cells await a verified run under this protocol. BP-99 is a historical
+inference/planning-only reference, not one of the four main arms. Valid
+planning/native/repair counts are Q0 $16/15/12$, D-72 $13/16/9$,
+D-148 $14/16/11$, and BP-99 $11/14/6$.}
 \label{tab:experiment-diagnosis}
 \centering\small
 \begin{tabular}{lrrrr}
 \hline
 Model & Inference exact & Planning regret & Native regret & Repair $\Delta_{\mathrm{repair}}$ \\
 \hline
-Baseline (Q0) & 9.4\% & 1.151 & 1.128 & $-0.215$ \\
+Baseline (Q0) & 0\% & 0.844 & 0.933 & $-0.042$ \\
 SP & -- & -- & -- & -- \\
 O & -- & -- & -- & -- \\
-D-72 & 15.6\% & 0.685 & 0.786 & $-0.046$ \\
-D-148 & 9.4\% & 0.786 & 0.849 & $+0.128$ \\
-BP-99 (historical) & 15.6\% & 0.828 & 0.690 & $-0.144$ \\
+D-72 & 0\% & 0.769 & 0.750 & $+0.111$ \\
+D-148 & 0\% & 0.821 & 0.469 & $0.000$ \\
+BP-99 (historical) & 0\% & 0.773 & 0.679 & $0.000$ \\
 \hline
 \end{tabular}
 \end{table}

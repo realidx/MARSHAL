@@ -6,7 +6,7 @@ class MicroTests(unittest.TestCase):
   from collections import Counter
   c=Counter()
   for step in range(40):
-   b=dataset.batch(step);self.assertEqual(len(b),64 if dataset.NO_B else 104 if dataset.NAME=='13' else 96);c.update(set(r['task_id'] for r in b))
+   b=dataset.batch(step);self.assertEqual(len(b),104 if dataset.NAME=='13' else 32*len(dataset.KINDS));c.update(set(r['task_id'] for r in b))
   self.assertEqual(set(c.values()),{40 if dataset.NAME=='13' else 20})
  def test_collection(self):
   examples=[json.loads(l) for l in (dataset.ROOT/'examples.jsonl').read_text().splitlines()]
@@ -15,7 +15,7 @@ class MicroTests(unittest.TestCase):
   def generate(requests):
    return [dict(completion=gold[s['task_id']],response_ids=[1,2],behavior_log_probs=[-.1,-.2]) for s in specs]
   c=PipelineCollector({},generate);rows,units,_,m=c.collect(0,'decomposed')
-  self.assertEqual(len(rows),64 if dataset.NO_B else 104 if dataset.NAME=='13' else 96);self.assertTrue(all(r['score']['correct'] for r in rows));self.assertTrue(all(r['task_advantage']==0 for r in rows))
+  self.assertEqual(len(rows),104 if dataset.NAME=='13' else 32*len(dataset.KINDS));self.assertTrue(all(r['score']['correct'] for r in rows));self.assertTrue(all(r['task_advantage']==0 for r in rows))
   self.assertEqual(c.state['step'],1)
   with self.assertRaises(ValueError):c.restore(dict(c.state,version='other'))
 
@@ -65,3 +65,31 @@ class MatchedMicroTests(unittest.TestCase):
   for k in ('task_weight','protocol_weight','kl_weight'):reduced[k].fill_(2/3)
   loss,_=stable_objective(y,old[:64],ref[:64],mask[:64],reduced,.2,.01);loss.backward()
   torch.testing.assert_close(y.grad,expected)
+
+class OriginalBankAblationTests(unittest.TestCase):
+ def test_shared_exposures_and_weights(self):
+  import os,importlib
+  from unittest.mock import patch
+  from training.social_mixed.micro_training import identity
+  from collections import Counter
+  original=dataset.NAME;plans={};rates={};identities=set()
+  try:
+   for arm in ('d','c','o'):
+    with patch.dict(os.environ,{'SOCIAL_MICRO_VARIANT':'24v1_'+arm}):importlib.reload(dataset)
+    plans[arm]=[dataset.batch(i) for i in range(40)]
+    rates[arm]=[dataset.scheduled_learning_rate(i) for i in range(40)]
+    identities.add(identity())
+    n={'d':96,'c':64,'o':32}[arm]
+    self.assertTrue(all(len(b)==n for b in plans[arm]))
+    self.assertAlmostEqual(dataset.row_weight()/n,1/96)
+    self.assertEqual(set(Counter(r['task_id'] for b in plans[arm] for r in b if r['replica']==0).values()),{20})
+   self.assertEqual(len(identities),3)
+   kinds={r['id']:r['evidence']['kind'] for r in dataset.load()}
+   for arm,keep in [('c',{'O','P'}),('o',{'O'})]:
+    self.assertEqual(rates[arm],rates['d'])
+    for full,part in zip(plans['d'],plans[arm]):self.assertEqual([r for r in full if kinds[r['task_id']] in keep],part)
+   from pathlib import Path
+   source=dataset.ROOT.parent/'micro_learning_24_v1'
+   self.assertEqual((dataset.ROOT/'tasks.jsonl').read_bytes(),(source/'tasks.jsonl').read_bytes())
+  finally:
+   with patch.dict(os.environ,{'SOCIAL_MICRO_VARIANT':original}):importlib.reload(dataset)

@@ -1,100 +1,98 @@
-\section{Native-semantic diagnostic protocol}
+\section{Partner-history diagnostic protocol}
 \label{app:diagnose}
 
-\paragraph{Frozen matched structures.}
-The diagnostic contains 16 held-out structures, eight with binary goals and
-eight with linear goals. Each structure contributes a voluntary and a preset
-case. The two cases have byte-identical current physical states, legal-action
-sets, per-world payoff tables, and fixed continuation policies. They differ
-only in whether the displayed prefix was chosen by the reference partner or
-externally imposed. Model outputs were not used for selection. CPU
-certificates verify that the two cases have different correct semantic
-judgments and disjoint invariant optimal-action sets. The exact-posterior gap
-between the best and best non-optimal action ranges from 0.33 to 1.00
-terminal-utility units (mean 0.67), ruling out nominal differences caused only
-by numerical ties.
+\paragraph{Selected histories and labels.}
+This analysis uses 16 held-out two-player structures, eight with binary goals
+and eight with linear goals. Each contributes one history containing a
+reference-policy-consistent partner offer and a subsequent focal-player
+response. The selected histories have positive probability under the fixed
+reference policy, change the partner-preference posterior by at least $0.15$
+in total variation from the prior, and change the exact optimal-action set
+relative to the prior. Model outputs were not used for selection. The
+exact-posterior gap between the best and best non-optimal action ranges from
+$0.5$ to $1.0$ terminal-utility units (mean $0.781$).
 
 The queried uncertainty is one partner--goal preference in
-$\{\textsc{Want},\textsc{Neutral},\textsc{Avoid}\}$. The deployed inference
+$\{\textsc{Want},\textsc{Neutral},\textsc{Avoid}\}$. For a visible partner
+choice $a_s$, the oracle multiplies each candidate preference's prior weight
+by the fixed reference policy's probability of $a_s$ at that history, then
+normalizes. The focal player's own response updates the physical state but
+does not supply another partner-action likelihood. The deployed inference
 interface returns the complete positive-support subset. It marks a value as
 favored when its posterior mass exceeds the runner-up by more than $0.1$,
 and otherwise returns \textsc{Undetermined}; it does not return probabilities.
-Both the model and correct judgments use identical serialization. The inference
-prompt necessarily identifies whether an event was observed or imposed; the
-controlled planning prompt contains neither that evidence nor its provenance.
+Both the model and correct judgments use identical serialization. The
+inference prompt identifies the partner's offer as an observed choice.
 Condition names, case identifiers, correctness claims, posterior
 probabilities, and payoff values are absent from model prompts. Exact
-posteriors remain in the scorer and are used with the common per-world payoff
-table to compute Eq.~\ref{eq:diagnose-regret}.
+posteriors remain in the scorer and are used with the per-world payoff table
+to compute Eq.~\ref{eq:diagnose-regret}.
 
 The correct semantic judgment is not a complete posterior, so selection
 explicitly certifies that the omitted magnitudes are decision-irrelevant. For
 each case, we express its support and favored-margin semantics as a finite
-union of rational convex polytopes and enumerate every vertex exactly. We also
-include zero-mass and threshold boundaries, obtaining a conservative superset
-of the strict semantic region. All vertices must induce the same exact
-optimal-action set. Since expected action value is affine in the posterior,
-this proves invariance over every compatible posterior; all 32 retained cases
-pass. The invariant voluntary and preset sets must additionally be disjoint.
+union of rational convex polytopes and enumerate every vertex exactly. We
+also include zero-mass and threshold boundaries, obtaining a conservative
+superset of the strict semantic region. All vertices must induce the same
+exact optimal-action set. Since expected action value is affine in the
+posterior, this proves invariance over every compatible posterior; all 16
+reported cases pass. Under this fixed policy, all 16 judgments have
+$\{\textsc{Avoid}\}$ as their support. The suite therefore does not measure
+inference across all preference labels. In particular, the zero likelihood
+of an observed choice under some candidate preferences is a consequence of
+the selected policy, not an assertion that real partners never deviate from
+that policy.
 
-\paragraph{Calls and interventions.}
-For each case we obtain: (i) a native semantic inference judgment; (ii) a fresh planning
-call supplied with that judgment; (iii) a fresh planning call supplied with
-$J^\star$; and (iv) a native history-to-action call with no explicit judgment.
-The two controlled planning calls include the current binding state, remaining
-turns, investigation quota, known preferences, legal actions, and fixed
-partner policy, but exclude the behavioral chronology and its
-voluntary/preset provenance. Their tools, sampling parameters, and request
-seed are identical; only the serialized judgment may differ. Moreover, after
-removing that judgment, the controlled planning request is byte-identical across
-the two cases in each matched structure. If the model judgment is invalid, its
-composition cell is missing rather than replaced by a default action. On eight
-voluntary cases, a fifth call supplies inference with the reference planner's
+\paragraph{Calls and intervention.}
+For each case we obtain: (i) a native semantic inference judgment; (ii) a
+fresh planning call supplied with that judgment; (iii) a fresh planning call
+supplied with $J^\star$; and (iv) a native history-to-action call with no
+explicit judgment. The two controlled planning calls include the current
+binding state, remaining turns, investigation quota, known preferences,
+legal actions, and fixed partner policy, but exclude the behavioral
+chronology. Their tools, sampling parameters, and request seed are identical;
+only the serialized judgment may differ. If the model judgment is invalid,
+its composition cell is missing rather than replaced by a default action.
+On eight cases, a fifth call supplies inference with the reference planner's
 qualitative likelihood ordering while still withholding all numeric
 probabilities.
 
-Selection and scoring use the fixed teacher only. In particular, changing a
-judgment never recomputes the partner continuation policy, and per-world
-payoffs respect the focal player's information set rather than optimizing a
-different continuation separately in each hidden world. The paired quantity
-$\Delta_c$ is therefore the effect of changing the semantic input to the same
-model planner. It can have either sign and is not combined with planning
-regret as an additive error decomposition.
-Condition-specific regret means may have different valid subsets. We therefore
-also aggregate both regrets and $\Delta_c$ on the identical doubly valid
-case/replica pairs and identical structure weights, where the implementation
-checks $\Delta_c=
-\operatorname{Reg}_c(\widehat a(\widehat J))-
-\operatorname{Reg}_c(\widehat a(J^\star))$ row by row and after aggregation.
+Selection and scoring use the fixed teacher only. Changing a judgment never
+recomputes the partner continuation policy, and per-world payoffs respect the
+focal player's information set rather than optimizing a different
+continuation separately in each hidden world. The paired quantity
+$\Delta_c$ is therefore the effect of changing the semantic input to the
+same model planner. It can have either sign and is not combined with planning
+regret as an additive error decomposition. Condition-specific regret means
+may have different valid subsets. On identical doubly valid cases the
+implementation checks
+$\Delta_c=\operatorname{Reg}_c(\widehat a(\widehat J_c))-
+\operatorname{Reg}_c(\widehat a(J_c^\star))$ row by row and after aggregation.
 
-\paragraph{Execution and determinism.}
+\paragraph{Execution and aggregation.}
 We evaluate the unchanged Qwen3-4B-Instruct-2507 checkpoint through vLLM
 using greedy decoding ($T=0$, top-$p=1$, top-$k=-1$), a 4,096-token
-completion limit, and three replicas. The archive records 96/96 returned
-rows: 32 cases repeated three times. All three results for each case agree,
-so replicas check execution determinism rather than provide independent
-samples. The run records its checkpoint, suite manifest, and runtime hashes.
-Every semantic certificate passes; the paired-scoring identity has zero row
-failures.
+completion limit, and three replicas. The frozen archive contains 96
+returned rows; this analysis uses the 48 rows from partner-generated
+histories, representing 16 distinct decisions repeated three times. The
+replicas agree for every case, so they check execution determinism rather
+than provide independent samples. The run records its checkpoint, suite
+manifest, and runtime hashes. Every reported semantic certificate passes;
+the paired-scoring identity has zero row failures.
 
-\paragraph{Aggregation.}
-We first collapse the identical replicas, average valid cases within each
-structure, then weight structures equally. Inference judgments are valid in
-all 32 cases. Correct-judgment planning is valid in all 32 cases; native
-history-to-action planning is valid in 30 cases across 15 structures. Both
-controlled planning calls are valid in 24 cases across 12 structures, which
-define the paired repair mean. Among these, replacing the judgment changes
-19 actions; utility rises in three cases, is unchanged in 14, and falls in
-seven. On this identical paired subset, model-judgment regret is $0.958$,
-correct-judgment regret is $1.174$, and their difference equals mean repair
-$-0.215$ up to rounding. The all-valid-cases correct-judgment regret of
-$1.151$ uses a different subset and is not subtracted from $0.958$.
-Qualitative reference-planner assistance changes no exact inference answer
-in the eight voluntary cases to which it is applied.
+We collapse identical replicas and weight the 16 structures equally.
+Inference judgments and correct-judgment planning actions are valid in all
+16 cases. Native history-to-action planning is valid in 15 cases. Both
+controlled planning calls are valid in 12 cases, which define the paired
+repair mean. Among these, replacing the judgment changes 11 actions;
+utility rises in one case, is unchanged in nine, and falls in two. On this
+identical paired subset, model-judgment regret is $0.833$, correct-judgment
+regret is $0.875$, and their difference equals mean repair $-0.042$ up to
+rounding. Correct-judgment regret over all 16 cases is $0.844$ and uses a
+different subset. Qualitative reference-planner assistance changes no
+exact inference answer in the eight cases to which it is applied.
 
-The frozen v6 suite stores the model-facing cases, teacher-only certificates,
+The frozen suite stores the model-facing cases, teacher-only certificates,
 selection record, and both clean controlled planning and native end-to-end
-requests. CPU checks reject any controlled planning prompt containing a
-behavioral chronology or provenance marker and verify byte identity across
-each matched pair before judgment insertion. Hashes in the suite manifest
-detect changes to frozen cases and label dependencies before inference.
+requests. Hashes in the suite manifest detect changes to frozen cases and
+label dependencies before inference.

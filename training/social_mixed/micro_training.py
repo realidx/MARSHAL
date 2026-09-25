@@ -8,7 +8,7 @@ VERSION='micro-learning-frozen-v1'
 def identity():
  dataset.load()
  raw=(dataset.ROOT/'manifest.json').read_bytes()
- if dataset.NAME.startswith('24v2'):raw+=dataset.NAME.encode()
+ if dataset.FROZEN_LR:raw+=dataset.NAME.encode()
  return hashlib.sha256(raw).hexdigest()
 class PipelineCollector:
  def __init__(self,data,generate,seed=42,concurrency=8,protocol_coefficient=.2,normalization='standard_sequence'):
