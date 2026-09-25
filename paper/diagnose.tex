@@ -1,105 +1,97 @@
 \label{sec:diagnose}
 
-Before training, we ask whether Qwen3-4B-Instruct-2507
-\citep{qwen2025qwen3instruct} can infer a partner's
-preference from interaction and use that inference to choose a valuable
-action. A terminal outcome alone cannot locate a failure: the agent may
-misread the partner, choose poorly despite a correct reading, or make errors
-at both steps. Our diagnostic therefore measures inference and planning at
-the same decision, then intervenes on the information passed between them.
+We ask whether  Qwen3-4B-Instruct-2507 \citep{qwen2025qwen3instruct} can infer a partner's preference 
+from interaction and use that inference to choose a valuable action. 
+A poor final decision could
+arise because the model misreads its partner, because it chooses poorly even
+given a correct reading, or because both steps fail. We therefore examine
+the two capabilities at the same decision, and replace the model's
+explicit inference answer to test whether its choice depends on that answer.
 
-\paragraph{Matched decisions and oracle labels.}
-We select 16 two-player game structures, eight with binary goals and eight
-with linear goals. Each yields two cases with the same displayed partner
-actions, current commitments, legal actions, and payoff for every possible
-partner preference. In one case the partner chose those actions under the
-reference policy; in the other they were externally imposed. Only voluntary
-actions are evidence about preference. The oracle thus assigns different
-posteriors to the two cases although their current decision problems have
-identical physical states.
+\paragraph{When an action is evidence.}
 
-For the queried partner--goal preference $v_{jg}$, we marginalize the oracle
-posterior at the acting player's information set $I_c$ to obtain
-$p_c(z)=\Pr(v_{jg}=z\mid I_c)$ for
-$z\in\{\textsc{Want},\textsc{Neutral},\textsc{Avoid}\}$. The inference label
-$J_c^\star$ contains every value with $p_c(z)>0$ and a favored value only
-when its probability exceeds the runner-up by more than $0.1$; otherwise
-the favored field is \textsc{Undetermined}. This is the qualitative judgment
-the model is asked to produce and the only judgment supplied to controlled
-planning; the numerical posterior stays in the scorer. For each legal action
-$a$, the oracle separately computes its expected terminal utility
-$V_c(a)=Q_i^\star(I_c,a)$ and the optimal-action set
-$A_c^\star=\arg\max_a V_c(a)$. We retain a pair only when its two inference
-labels differ and, for each label, every compatible posterior gives the same
-optimal-action set; the two sets must be disjoint. Consequently, the evidence
-distinction is consequential for choosing a high-value action, and the
-qualitative label is sufficient to identify the optimal set under the fixed
-reference continuation. Appendix~\ref{app:diagnose} gives the exact
-certification procedure.
+We construct 16 such matched two-player structures, eight with binary goals
+and eight with linear goals. Within each pair, the current commitments, legal
+actions, and payoff of each action under every partner preference are
+identical; only the provenance of the displayed behavior changes. The oracle
+filters the partner-preference posterior from each history and reports a
+qualitative judgment $J_c^\star$: the preferences still possible and, when
+one has a sufficiently clear posterior lead, the favored preference. It also
+computes the expected terminal value $V_c(a)=Q_i^\star(I_c,a)$ of every
+legal action under the fixed reference continuation. We retain only pairs
+whose judgments differ, whose optimal-action sets are disjoint, and for
+which each qualitative judgment alone determines its optimal-action set.
+Thus the information removed from the judgment, cannot explain a planning error on these cases. The label
+rule and sufficiency certificate are in Appendix~\ref{app:diagnose}.
 
-\paragraph{Replacing the inferred judgment.}
-For each case, we first ask the base model to infer $\widehat J_c$ from the
-visible history. We then ask it to choose an action in a fresh planning
-context with either $\widehat J_c$ or the oracle label $J_c^\star$. The two
-planning requests have identical rules, current state, legal actions, and
-decoding settings; they contain no behavioral history, and differ only in
-the supplied judgment. A separate native request asks for an action directly
-from the history without an explicit judgment. We score every chosen action
-against the same oracle posterior, using
+\paragraph{Intervening on the judgment.}
+For each case $c$, we first ask the model to infer a judgment $\widehat J_c$
+from the visible history. We then present the current decision in two fresh
+planning calls: one supplies $\widehat J_c$, and the other supplies the
+oracle judgment $J_c^\star$. Both calls omit the behavioral history and have everything else unchanged. A
+separate call asks the model to choose directly from the history.
+We measure decision quality by oracle regret and the paired change in value:
 \begin{equation}
  \operatorname{Reg}_c(a)=\max_{a'}V_c(a')-V_c(a),\qquad
  \Delta_c=V_c\!\left(\widehat a(J_c^\star)\right)
           -V_c\!\left(\widehat a(\widehat J_c)\right).
  \label{eq:diagnose-regret}
 \end{equation}
-Thus $\Delta_c$ is the paired effect of replacing the explicit inference
-answer for this model planner; $\Delta_{\mathrm{repair}}$ denotes its mean
-over valid pairs. It need not be positive: a planner can misuse
-a correct judgment, and an inference error can accidentally offset a planning
-error.
+Here a positive $\Delta_c$ means that supplying the correct judgment
+improves the model's chosen action. Both actions in the comparison are
+scored under the same true posterior.
 
-\paragraph{Base-model diagnosis.}
-Table~\ref{tab:diagnose-main} reports the unchanged instruction-tuned
-checkpoint. Exact inference
-requires both the complete possible set and the favored field. The model
-gets only $3/32$ judgments right, all in the imposed-action cases; it gets
-none of the 16 voluntary cases right. Supplying the correct judgment does
-not resolve action selection: only $2/32$ actions are optimal, with mean
-regret $1.151$. The native history-to-action condition produces only two
-optimal actions among 30 valid responses. These are failures of the evaluated interfaces
-on selected diagnostic cases, rather than estimates of error rates over all
-games.
+\paragraph{Two failures and their interface.}
+Table~\ref{tab:diagnose-main} reports the results. The model produces the
+exact qualitative judgment in only $3/32$ cases,
+with none correct among the 16 voluntary histories. Giving it the correct
+judgment still yields an optimal action in only $2/32$ cases (mean regret
+$1.151$). Direct choice from the full history yields $2/30$ optimal actions
+among valid responses. These results show failures in both evaluated
+interfaces on the selected cases.
 
 \begin{table}[t]
-\caption{Diagnosis of the unchanged Qwen3-4B-Instruct-2507 checkpoint on 16 matched
-structures (32 cases). Regret is measured in terminal-utility units and
-averaged across structures with valid actions; repair uses the 24 cases in
-which both controlled planning actions are valid. Three deterministic
-replicas gave identical results and are counted once.}
+\caption{A $2\times2$ view of the base-model diagnosis. Entries are mean
+terminal-utility regret on the same 24 cases (12 structures) with valid
+model actions under both judgments; lower is better. The oracle/oracle cell
+is the reference optimum. The model/oracle cell is not evaluated because
+a model-produced qualitative judgment need not specify a unique
+oracle-optimal action.}
 \label{tab:diagnose-main}
 \centering\small
-\begin{tabular}{lr}
+\begin{tabular}{lcc}
 \hline
-Measurement & Result \\
+& \multicolumn{2}{c}{Action selected by} \\
+Judgment supplied by & Model & Oracle \\
 \hline
-Inference judgment exact & $3/32$ \\
-Planning with oracle judgment: optimal / valid & $2/32$ \\
-Planning with oracle judgment: mean regret & $1.151$ \\
-Native history-to-action: optimal / valid & $2/30$ \\
-Native history-to-action: mean regret & $1.128$ \\
-Action changed after judgment replacement & $19/24$ \\
-Repair improved / unchanged / worsened utility & $3/14/7$ \\
-Mean paired repair $\Delta_{\mathrm{repair}}$ & $-0.215$ \\
+Model & $0.958$ & --- \\
+Oracle & $1.174$ & $0$ \\
 \hline
 \end{tabular}
 \end{table}
 
-The replacement nevertheless changes the model's action in $19/24$ valid
-pairs: its choice depends on the supplied inference. Yet only three changes
-improve utility, seven worsen it, and the average repair effect is negative.
-Together with the certified change in optimal actions across matched cases,
-this separates two claims: partner inference matters to the decision, but
-correcting the explicit inference answer is insufficient when the model also
-fails to plan from it. The intervention establishes dependence at the
-judgment-to-action interface; it does not identify separate internal modules
-or guarantee that inference repair alone improves end-to-end play.
+Replacing the judgment changes the model's action in $19/24$ valid paired
+comparisons, so its choice responds to the inference input. Yet only three
+replacements improve value, and the mean paired change is $-0.215$. The
+matched cases establish that partner inference can
+change which action is optimal, while the intervention shows that this model
+does not reliably turn a correct judgment into a better choice. This
+motivates training the inference-to-planning interface alongside the two
+capabilities themselves. The intervention concerns an explicit judgment
+passed between calls; it makes no claim about separable internal modules.
+
+\paragraph{An illustrative failure.}
+In one retained binary-goal pair (structure \texttt{binary-20358}), the
+partner makes an offer that the acting player accepts. The partner's
+preference for one goal is hidden. Under the reference policy, the likelihood
+of that offer is $0$, $0$, and $0.2$ if the partner respectively
+\textsc{Want}s, is \textsc{Neutral} toward, or \textsc{Avoid}s the goal.
+Thus a voluntary offer identifies \textsc{Avoid}; when the identical offer
+is imposed by the setup, it leaves the uniform prior unchanged. The model
+nevertheless reports all three preferences as possible, with none favored,
+in the voluntary case. Given its own judgment, it selects a new offer worth
+$2$, which is optimal under the true posterior. Replacing the judgment
+with the oracle's \textsc{Avoid} makes the same model planner \textsc{pass},
+worth only $1$. The correction changes the action but worsens it: the model
+both misses the behavioral evidence and fails to use the correct inference
+reliably when it is supplied.

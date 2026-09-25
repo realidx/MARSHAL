@@ -15,3 +15,7 @@ bash examples/social_mixed/start_micro24_training.sh h200-141
 共享微型实验collector，通过SOCIAL_MICRO_VARIANT=24选择冻结数据包，数据哈希阻止跨包恢复。40更新上限、每10步静态验证与保存、保留4个checkpoint；不改变现有正式O/C/D入口。启动前真实tokenizer检查；本地不提交GPU任务。
 
 与13题版的区别不仅是曝光减半：题量、任务配比、题目内容也改变，不能当作纯曝光次数消融。每步回答104→96，token与cosine进度也不保证相等，应记录实际剂量。筛选基于历史表现，属于探索性学习复现实验，不保证40步学会或外部泛化提高。
+
+## 后续对照（独立版本）
+
+[Micro24 v2](../micro_learning_24_v2/README.md) 保留P8、替换O4和B6，增加去B的OP16匹配入口；原v1数据、调度和入口保持不变。v2逐题历史证据和局限见其 REVIEW.md，不能把新题选择视为已证明提升。

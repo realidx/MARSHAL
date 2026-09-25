@@ -214,7 +214,10 @@ def main():
     if options['micro_bank']:
         from training.social_mixed.micro_training import VERSION
         from examples.social_mixed.micro_learning_v1 import dataset as micro_dataset
-        options.update(recipe_version=VERSION,training_pool=micro_dataset.ROOT.name,candidate_groups_per_update={'all':len(micro_dataset.batch(0))//8})
+        options.update(recipe_version=VERSION,training_pool=micro_dataset.ROOT.name, micro_variant=micro_dataset.NAME,
+                       micro_no_b=micro_dataset.NO_B, micro_row_weight=micro_dataset.row_weight(),
+                       micro_lr_policy='frozen-by-update' if micro_dataset.NAME.startswith('24v2') else 'response-token-cosine',
+                       candidate_groups_per_update={'all':len(micro_dataset.batch(0))//8})
     if args.total_tokens<1 or args.tokens_per_update<1:raise ValueError('Token budgets must be positive')
     if args.pause_after_updates is not None and args.pause_after_updates<1:
         raise ValueError('pause-after-updates must be positive')

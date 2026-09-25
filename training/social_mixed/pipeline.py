@@ -328,6 +328,10 @@ class SocialPipeline(BasePipeline):
             batch=make_batch(sorted(rows,key=lambda r:len(r['prompt_ids'])+len(r['response_ids'])),self.tokenizer.pad_token_id,tp_multiple=self.pipeline_config.actor_train.strategy_args.strategy_config['tensor_model_parallel_size'])
             batch.meta_info['global_step']=step
             batch.meta_info['social_lr']=learning_rate(consumed,self.options['total_tokens'])
+            if self.options.get('micro_bank'):
+                from examples.social_mixed.micro_learning_v1.dataset import scheduled_learning_rate
+                fixed_lr=scheduled_learning_rate(step)
+                if fixed_lr is not None:batch.meta_info['social_lr']=fixed_lr
             with self.phase('reference_log_probs'):
                 self.log_probs(self.reference,batch,'ref_log_probs')
             with self.phase('actor_log_probs'):

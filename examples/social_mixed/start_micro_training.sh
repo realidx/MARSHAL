@@ -7,8 +7,9 @@ export SOCIAL_NORMALIZATION=standard_sequence SOCIAL_KEEP_CHECKPOINTS=4
 export SOCIAL_MICRO_VARIANT="${SOCIAL_MICRO_VARIANT:-13}"
 case "$SOCIAL_MICRO_VARIANT" in
   13) export SOCIAL_TOTAL_TOKENS=4259840;;
-  24) export SOCIAL_TOTAL_TOKENS=3932160;;
-  *) echo 'Micro variant must be 13 or 24' >&2; exit 2;;
+  24|24v2) export SOCIAL_TOTAL_TOKENS=3932160;;
+  24v2_no_b) export SOCIAL_TOTAL_TOKENS=2621440;;
+  *) echo 'Micro variant must be 13, 24, 24v2 or 24v2_no_b' >&2; exit 2;;
 esac
 unset SOCIAL_PAUSE_AFTER_UPDATES
 python -m unittest training.social_mixed.test_micro_training -q
