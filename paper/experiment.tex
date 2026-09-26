@@ -21,7 +21,7 @@ version, counts of distinct source structures and rendered training items, and
 the exact structural separation from each test suite are to be inserted here.
 % TODO: Insert the final dataset manifest, train/validation counts, and split audit.
 
-All arms initialize from Qwen3-4B-Instruct-2507. The \emph{baseline} is the
+All arms initialize from Qwen3-4B-Instruct-2507~\citep{yang2025qwen3}. The \emph{baseline} is the
 unchanged model. \emph{SP} trains on complete self-play games using each
 player's own terminal utility. \emph{O} trains on history-to-action decision
 items, scored against the reference action values without a supplied partner
@@ -106,49 +106,93 @@ BP-139 (historical) & 19/24 & 0.254 & 21/24 & 0.333 \\
 \end{tabular}
 \end{table}
 
-\subsection{Transfer to CalBench and ShapeFactory}
+\subsection{Transfer to Complex Scenario}
 \label{sec:experiment-transfer}
 
-CalBench~\citep{zou2026calbench} asks privately informed agents to coordinate
-calendar meetings while managing individual scheduling costs. Our sequential
-transfer suite runs four homogeneous agents through three meetings in each of
-24 frozen games. We measure full-stream completion and the number of meetings
-jointly scheduled; cost is interpreted only for successfully completed games.
-This small-model adaptation is distinct from the original benchmark aggregate
-score and from our fixed-partner \textsc{BENAC-I} test.
+\paragraph{CalBench setting.}
+CalBench~\citep{zou2026calbench} studies decentralized meeting scheduling:
+agents see their own calendars and displacement costs, exchange messages with
+other participants, and decide whether to move private errands or existing
+meetings to agree on a common slot. We evaluate homogeneous teams, with the
+same checkpoint controlling all four agents. Each game has eight calendar
+slots and three meetings that arrive sequentially, so an early commitment can
+constrain a later decision. Our frozen 24-game suite crosses four conditions
+(loose availability, dense calendars, blocked errands, and a replanning
+control), two errand-cost regimes (uniform or varied), and three scenario
+seeds. The replanning control can require contacting a participant in an
+earlier meeting who is absent from the new one. This is a small-model
+sequential adaptation of CalBench, not its original aggregate benchmark score.
 
-ShapeFactory in CollabSim~\citep{chen2026collabsim} tests coordination through
-production, trade, and fulfillment of private orders. Our native three-agent
-setting uses three product specializations and one non-specialty order per
-agent. The same checkpoint controls all seats across two supply-cycle
-directions and private versus shared-dashboard visibility, for four games per
-model. We report fulfilled agent orders out of 12, games in which all three
-agents fulfill their orders, and final balance. The current v3 protocol retains
-these four ShapeFactory conditions; verified v3 model results are pending.
+All models use the same cases, direct messages only, temperature zero, a
+4,096-token output limit, and a 32,768-token context limit. Each meeting
+allows four communication turns per participant and one decision retry; we
+disable fallback and reflection. The cases have private calendar occupancy
+and costs, but no future meeting or evaluator reference appears in an agent's
+observation. The Qwen3-4B thinking model, MARSHAL
+Generalist~\citep{yuan2026marshal}, and Social-R1-4B~\citep{wu2026socialr1}
+form a separate comparison group because they use thinking-mode checkpoints;
+the baseline and our trained models use Qwen3-4B-Instruct-2507.
+We call the slice-trained variants \textsc{GameSlice-A} (history-to-action;
+O-99), \textsc{GameSlice-IP} (inference and conditional planning; BP-99),
+and \textsc{GameSlice-Joint} (all three objectives; micro24-39). The names
+identify their training signals; the checkpoints also differ in exposure.
+
+\paragraph{Evaluation.}
+In our sequential suite, we count a meeting only if it remains in one common
+slot for all participants in the final calendars, and count a complete game
+only if all three meetings
+remain valid and blocked items are preserved. Thus the first two columns of
+Table~\ref{tab:experiment-calbench} have denominators 72 and 24. For a
+completed game $g$, per-agent excess cost is
+$(C_g-C_g^\star)/4$, where $C_g$ is realized team rescheduling cost and
+$C_g^\star$ is the minimum feasible cost certified by a sequential replay;
+we average this quantity over completed games only. The reference has access
+to the full scenario after the fact and is not an online policy. Communication
+is the native per-agent count of direct messages divided by the number of
+meetings that agent helped schedule averaged
+over four agents and 24 games. Burden imbalance is the native mean absolute
+deviation of agents' excess burdens from their game-level mean, averaged over
+the 24 games.
 
 \begin{table}[t]
-\caption{Available transfer observations. CalBench uses the 24-game
-sequential suite (three meetings per game). ShapeFactory values are from the
-earlier native v2 execution of the same four three-agent conditions; v3 results
-will replace these historical values. Checkpoints and training doses differ.}
-\label{tab:experiment-transfer}
+\caption{CalBench transfer on 24 frozen sequential games. Meetings count
+final retained meetings; excess cost is per agent and conditional on full-game
+success. Communication and imbalance average native per-agent values over all
+games. Best value in each column is bold.}
+\label{tab:experiment-calbench}
 \centering\small
-\begin{tabular}{lrrrr}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccc}
 \hline
-Model & CalBench complete & Meetings & ShapeFactory orders & All fulfill \\
+Model & Meetings $\uparrow$ & Full games $\uparrow$ & Cost $\downarrow$ & Comm. $\downarrow$ & Imbalance $\downarrow$ \\
 \hline
-Baseline (Q0) & 5/24 & 37/72 & 1/12 & 0/4 \\
-SP-19 / SP-41 & 4/24 & 38/72 & 2/12 & 0/4 \\
-O-99 & 8/24 & 38/72 & 2/12 & 0/4 \\
-D-72 & 6/24 & 40/72 & -- & -- \\
-BP-99 (historical) & 10/24 & 44/72 & 1/12 & 0/4 \\
+Baseline & 37 & 5 & 0.100 & 5.663 & 0.443 \\
+Self-play & 37 & 6 & 0.625 & 5.181 & 0.755 \\
+\textsc{GameSlice-A} & 38 & 8 & 0.688 & 5.003 & 0.490 \\
+\textsc{GameSlice-IP} & 44 & \textbf{10} & \textbf{0.075} & 4.760 & 0.432 \\
+\textsc{GameSlice-Joint} & \textbf{47} & 9 & 0.194 & 4.714 & \textbf{0.292} \\
+\hline
+Qwen3-4B (thinking) & 42 & 7 & 0.571 & 4.828 & 0.557 \\
+MARSHAL Generalist & 37 & 6 & 1.333 & \textbf{4.429} & 0.875 \\
+Social-R1-4B & 39 & 5 & 1.100 & 4.554 & 0.901 \\
 \hline
 \end{tabular}
 \end{table}
 
-The transfer table is descriptive: the archived SP CalBench and ShapeFactory
-results use different checkpoints, and ShapeFactory's four conditions are too
-few to support a broad generalization claim. The final comparison will use
-the same checkpoint, serving profile, output budget, and protocol for each
-model, and add per-condition outcomes and final balances.
-% TODO: Replace historical ShapeFactory v2 values with verified v3 results.
+\textsc{GameSlice-Joint} retains the most meetings, while
+\textsc{GameSlice-IP} completes the most full games. Their strengths also
+differ by condition: \textsc{GameSlice-Joint} retains 17 of 18 meetings in
+the loose cases and 15 of 18 in the replanning cases, compared with 14 and
+10 for the unchanged baseline; \textsc{GameSlice-IP} retains 10 of 18 in
+the blocked cases, compared with 6 for the baseline and 5 for
+\textsc{GameSlice-Joint}. A matched initial scenario illustrates the
+coordination behind the former result. In \texttt{replan\_varied\_s1},
+\textsc{GameSlice-Joint} initially proposes slot 2, learns that it is blocked
+for one partner, checks that the proposed alternative (slot 1) works for the
+other, and all three participants schedule the first meeting at slot 1. When
+slot 0 is later proposed for the third meeting, two participants identify its
+conflict with the second meeting and the team converges on slot 2. All three
+meetings remain valid. Under the same initial calendars, the baseline and
+self-play teams each retain only the first meeting: in the second round a
+participant reports that slot 1 is blocked, yet the submitted slots diverge.
+
