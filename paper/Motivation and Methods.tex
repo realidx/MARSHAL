@@ -19,7 +19,7 @@ links nevertheless remain fragile for LLM agents
 \citep{sobotka2026strategic,jha2026modeling}. 
 Let $b_t^i\in\Delta(IS_i)$ be agent $i$'s belief after public history $h_t$.
 An observation updates it as $b_{t+1}^i=\tau_i(b_t^i,a_t^i,o_{t+1}^i)$, while
-an action is selected by belief-conditioned planning, $a_t^{i,*}\in\arg\max_{a\in A_i}\mathbb E\!\left[\sum_{k=t}^{T}\gamma^{k-t}R_i(x_k,a_k)\mid b_t^i,a_t^i=a,\pi_{-i}\right]$
+an action is selected by belief-conditioned planning: $a_t^{i,*}\in\arg\max_{a\in A_i}\mathbb E\!\left[\sum_{k=t}^{T}\gamma^{k-t}R_i(x_k,a_k)\mid b_t^i,a_t^i=a,\pi_{-i}\right]$.
 We call these computations \emph{inference}, which maintains the
 part of $b_t^i$ predictive of others, and \emph{planning}, which evaluates
 actions under that belief. They form a loop: inference informs an action,

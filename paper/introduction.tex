@@ -8,42 +8,46 @@ reasoning \citep{zhang2026silobench}; and in negotiation, sharing the relevant
 information does not by itself ensure a coordinated plan \citep{yao2026talk}.
 A broader analysis likewise identifies inter-agent misalignment as a distinct
 failure class \citep{cemri2025multiagent}. These findings raise a basic
-question: what capabilities are missing for individually capable agents to continuesly fail in interaction?
+question: what prevents individually capable agents from coordinating
+effectively?
 
-Interactive decision theory gives this question a precise form. An interactive
-POMDP represents uncertainty over both the physical environment and models of
-other agents, and selects actions on the basis of beliefs about both
+Interactive decision theory provides a starting point. In an interactive
+partially observable Markov decision process (I-POMDP), an agent maintains
+beliefs about both the physical environment and other agents, and uses those
+beliefs to choose actions
 \citep{gmytrasiewicz2005ipomdp}. Opponent-modeling work similarly links
 inferences about others' goals or policies to the planning of a response
-\citep{carmel1996opponent,huang2024hop}. We therefore distinguish two capabilities:
-\textbf{interactive-state inference}, which estimates other agents'
-task-relevant latent states from their behavior, and \textbf{interaction
-planning}, which uses those estimates to choose an action. We refer to them
-as \emph{inference} and \emph{planning} below. These two capabilities form a feedback loop in interaction:
-inference informs the next action, while that action changes how others respond
-and what can be inferred thereafter. Evidence from LLM agents suggests that
-representing or predicting another agent's state need not translate into an
-effective response \citep{riemer2025tom,sobotka2026strategic}. This gap
-motivates examining inference and planning both separately and together.
+\citep{carmel1996opponent,huang2024hop}. Building on this distinction, we focus
+on two capabilities: \emph{interactive-state inference}, which estimates
+partners' task-relevant hidden states from the available evidence, and
+\emph{interaction planning}, which uses those estimates to evaluate and
+select actions. We refer to them as \emph{inference} and \emph{planning}.
+They form a feedback loop: an inference informs an action, which shapes
+partners' responses and the evidence available for subsequent decisions.
+Studies of LLM agents find that accurately predicting another agent's state
+or behavior need not lead to an effective response
+\citep{riemer2025tom,sobotka2026strategic}. This gap motivates evaluating both
+the inference itself and the decisions made from it.
 
-\begin{figure}[H]
+% Let the overview float so it does not force stretched whitespace on page 1.
+\begin{figure}[!t]
 \centering
-\includegraphics[width=\textwidth]{figures/overview.pdf}
-\caption{From interaction to targeted training and transfer. Top: A asks B to
-help repair a bridge while M observes; M infers A's preference, considers its
-own, and proposes collaboration to A. Bottom left: colored nodes and paths
-select game slices, which the oracle solves. Bottom center: direct
-current-state-to-action supervision (O) is augmented with separately generated
-inference and planning labels (D) for GRPO training. Bottom right: in the
-CalBench transfer setting, M coordinates a meeting using its private calendar
-and partners' replies.}
+% Remove only the exported figure's empty top and bottom canvas margins.
+\includegraphics[width=\textwidth,trim=0 14bp 0 9bp,clip]{figures/overview.pdf}
+\caption{From interaction to targeted training and transfer. Agent M observes
+its partners, infers their preferences, plans a response, and acts to create
+new observations. We select game slices (colored nodes and paths) and solve
+them with an oracle to supervise action selection, inference, and planning
+given a correct inference. These objectives train a shared model with GRPO.
+We then evaluate transfer to meeting coordination, where agents use private
+calendars and exchanged messages to agree on meeting times.}
 \label{fig:overview}
 \end{figure}
 
-Realistic multi-agent interactions are difficult to diagnose because
+Diagnosing these capabilities in realistic interactions is difficult because
 information, objectives, and decisions are distributed across agents and time.
-Coordination around private calendars, negotiation over asymmetric goals, and
-commerce on behalf of separate principals illustrate this complexity
+Coordination with private calendars, strategic coalition formation, and
+commerce on behalf of different principals illustrate this complexity
 \citep{zou2026calbench,oneill2026cooperate,li2026emergent}. Games offer a
 controlled setting: their information structure, utilities, legal actions,
 and strategic consequences can be specified and verified. Recent work has
@@ -51,27 +55,31 @@ used multi-agent games and self-play to train strategic or transferable
 reasoning in LLMs
 \citep{yuan2026marshal,liu2026spiral,lyu2026gift,he2026stratreasoner}.
 Yet a game-level outcome alone does not reveal whether an agent misread a
-partner or failed to act on a correct inference. Compact games can simplify
-away private information or mixed incentives, while richer social games may
-entangle deduction, deception, commitment, and execution in a
-single trajectory \citep{light2023avalonbench}. To retain both capabilities
-while making them separately measurable, we extend the commitment-based
-multi-party negotiation game \citep{benac2026benchmark} with private
-preferences and costly investigation action. Incomplete information makes relevant
-partner states latent, creating an inference problem; mixed incentives make
-those states consequential for planning.
+partner or failed to act on a correct belief. In social deduction games, for
+example, a single trajectory combines inference, deception, and collective
+decision-making \citep{light2023avalonbench}. We seek a setting that retains
+strategic uncertainty while allowing beliefs and actions to be evaluated
+separately. To this end, we extend the commitment-based multi-party negotiation
+game of \citet{benac2026benchmark} with private preferences and investigation
+actions that consume a decision opportunity. Hidden preferences create an
+inference problem; their alignment or conflict determines the value of
+possible plans.
 
-Using this controlled setting, we make the two capabilities separately
-testable and trainable in LLM-agent interaction (Figure~\ref{fig:overview}).
-We first construct diagnostic decision
-problems showing that inference and planning are separated capabilities that will affect the interaction,
-and they take effect dependently in an long horizon case (Section~\ref{sec:diagnose}).
-We then build \emph{game slices} from deliberately structured small games:
-contiguous stretches of interaction containing one or more decisions, for
-which the reference policy provides verifiable partner-state labels and
-counterfactual action values. These slices provide
-targeted training signals for decisions that terminal game reward alone cannot
-disentangle. Finally, we compare game-slice training with complete-game
-self-play in terms of training-token efficiency, evaluate generalization to
-held-out game structures, and test transfer to more complex multi-agent coordination environment
-(Section~\ref{sec:experiment}). 
+This setting connects diagnosis, targeted training, and transfer
+(Figure~\ref{fig:overview}). We first diagnose Qwen3-4B-Instruct-2507 by
+evaluating inference and planning at the same decision and replacing the
+model's explicit inference with an oracle judgment
+(Section~\ref{sec:diagnose}). Its choices depend on the supplied judgment,
+but correcting that judgment does not reliably resolve planning errors.
+We then construct \emph{game slices}: contiguous segments of one or more
+decisions from deliberately structured small games. An oracle supplies
+partner-preference judgments and counterfactual action values under a fixed
+reference policy, providing targeted supervision for action selection,
+inference, and conditional planning. We compare slice training with
+complete-game self-play in terms of training-token efficiency, generalization
+to held-out game structures, and transfer to coordination with private
+calendars (Section~\ref{sec:experiment}). In our sequential CalBench
+evaluation, the jointly trained model retains more meetings than either
+the baseline or self-play, providing evidence that strategic behaviors
+learned in small games can transfer to more complex interactions.
+% The final matched-token comparison is needed before claiming an efficiency gain.

@@ -24,6 +24,7 @@ LINE = "#CCD3E5"
 PANEL = "#FBFAFD"
 # Blue and violet palette; darker accents keep labels legible.
 MID, LAVENDER = "#8B8FCA", "#B7AED9"
+LAVENDER_TINT = "#E8E4F2"
 BLUE, BLUE_BG = "#4C65A4", "#EEF1F9"
 TEAL, TEAL_BG = "#6474AB", "#EEF0F8"
 PURPLE, PURPLE_BG = "#7066A2", "#F1EEF8"
@@ -167,7 +168,7 @@ avatar(x + 125, 251, "M", BLUE, BLUE_BG)
 x = 910
 line([(x + 55, 214), (x + 195, 214)], color=BLUE, lw=1.8, head=True)
 line([(x + 125, 186), (x + 125, 214)], color=BLUE, lw=1.8)
-thought_bubble(x + 125, 145, "I can help repair\nthe bridge. Shall\nwe team up?", BLUE, LAVENDER)
+thought_bubble(x + 125, 145, "I can help repair\nthe bridge. Shall\nwe team up?", BLUE, LAVENDER_TINT)
 avatar(x + 40, 214, "M", BLUE, BLUE_BG)
 avatar(x + 210, 214, "A", PURPLE, PURPLE_BG)
 avatar(x + 125, 251, "B", TEAL, TEAL_BG, pale=True)
@@ -196,22 +197,22 @@ edges = [
 ]
 slices = {
     ("a", "ab"): TEAL, ("ab", "abb"): TEAL,
-    ("b", "bb"): BLUE, ("bb", "bbb"): BLUE,
+    ("b", "ba"): BLUE,
 }
 for src, dst in edges:
     color = slices.get((src, dst), "#BCC8D4")
     line([node[src], node[dst]], color=color, lw=4.0 if (src, dst) in slices else 1.8)
-selected_nodes = {"aa": PURPLE, "a": TEAL, "ab": TEAL, "abb": TEAL, "b": BLUE, "bb": BLUE, "bbb": BLUE}
+selected_nodes = {"aa": PURPLE, "a": TEAL, "ab": TEAL, "abb": TEAL, "b": BLUE, "ba": BLUE}
 for name, (x, y) in node.items():
     accent = selected_nodes.get(name)
     radius = 9 if name == "aa" else 7 if name not in {"aaa", "aab", "aba", "abb", "baa", "bab", "bba", "bbb"} else 5.3
     disk(x, y, radius, fill=accent or "white", stroke=accent or "#9EAFBE", lw=1.5)
-for x, y, label, color, bg in [(50, 605, "slice 1", PURPLE, PURPLE_BG), (201, 605, "slice 2", TEAL, TEAL_BG), (414, 605, "slice 3", BLUE, LAVENDER)]:
+for x, y, label, color, bg in [(50, 605, "slice 1", PURPLE, PURPLE_BG), (201, 605, "slice 2", TEAL, TEAL_BG), (350, 605, "slice 3", BLUE, LAVENDER_TINT)]:
     rect(x - 31, y - 15, 84, 30, fill=bg, stroke=color, radius=9, lw=1.3)
     txt(x + 11, y, label, size=13, color=color, bold=True)
-for x in (61, 212, 425):
+for x in (61, 212, 361):
     line([(x, 620), (x, 631)], color=PURPLE, lw=1.2)
-line([(61, 631), (425, 631)], color=PURPLE, lw=1.2)
+line([(61, 631), (361, 631)], color=PURPLE, lw=1.2)
 line([(258, 631), (258, 641)], color=PURPLE, lw=1.5, head=True)
 rect(109, 642, 302, 67, fill="white", stroke=PURPLE, radius=12, lw=1.5)
 disk(146, 675, 20, fill=PURPLE_BG, stroke=PURPLE, lw=1.3)
@@ -265,10 +266,10 @@ for idx, x in enumerate(calendar_x):
         txt(x + 40, 450, "?", size=30, color="#A8B5C2", bold=True)
         txt(x + 40, 531, "private", size=12, color=MUTED)
     else:
-        rect(x + 12, 402, 57, 15, fill="#DDEAF5", stroke="none", radius=3)
-        rect(x + 12, 436, 57, 15, fill=MID, stroke="none", radius=3)
-        rect(x + 12, 470, 57, 15, fill=LAVENDER, stroke=GREEN, radius=3, lw=1.2)
-        txt(x + 40, 477, "free at 2", size=9, color=INK)
+        rect(x + 7, 402, 67, 15, fill="#DDEAF5", stroke="none", radius=3)
+        rect(x + 7, 436, 67, 15, fill=MID, stroke="none", radius=3)
+        rect(x + 7, 470, 67, 15, fill=LAVENDER_TINT, stroke=GREEN, radius=3, lw=1.2)
+        txt(x + 40.5, 477.5, "free at 2", size=8.5, color=INK)
 txt(1022, 611, "How can I coordinate with A and B\nmore efficiently?", size=12, color=INK)
 line([(829, 682), (881, 682)], color=GREEN, lw=2.5, head=True)
 rect(886, 650, 272, 65, fill=GREEN_BG, stroke=GREEN, radius=11, lw=1.6)

@@ -4,10 +4,11 @@
 % Optional math commands from https://github.com/goodfeli/dlbook_notation.
 \input{math_commands.tex}
 
-\usepackage{hyperref}
-\usepackage{url}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{url}
+% Load hyperref after float so caption anchors do not create an empty line.
+\usepackage{hyperref}
 
 \title{Formatting Instructions for ICLR 2027 \\ Conference Submissions}
 
@@ -21,26 +22,32 @@
 %\iclrfinalcopy % Uncomment for camera-ready version, but NOT for submission.
 \begin{document}
 
+% Keep natural vertical spacing on pages with large figures; leave spare
+% space at the page bottom instead of stretching headings and float gaps.
+\raggedbottom
+
 \maketitle
 
 \begin{abstract}
-Successful multi-agent interaction requires an agent to infer what its
-partners know and want, then choose actions in light of those inferences.
-Terminal success alone obscures which step fails. We study these coupled
-capabilities---interactive-state inference and interaction planning---in
-\textsc{BENAC-I}, a finite negotiation game with private preferences, mixed
-incentives, and costly investigation. Its explicit information structure
-supports a verified reference policy from which we compute beliefs over
-partner preferences and counterfactual action values. We use this oracle to
-construct diagnostic cases from observed partner choices and evaluate
-inference and planning at the resulting decisions. The diagnostic
-reveals failures at both stages: agents can misread behavioral evidence and
-make suboptimal decisions even when given the correct partner-state judgment;
-correcting that judgment can therefore fail to improve the chosen action.
-We then construct \emph{game slices}, contiguous stretches of one or more
-decisions, to supervise inference and planning directly. We compare slice
-training with complete-game self-play on held-out negotiation structures and
-test transfer to CalBench.
+Effective multi-agent interaction requires agents to infer their partners'
+preferences and plan actions in light of those inferences. Terminal outcomes,
+however, reveal little about where either capability fails. We study inference
+and planning in a finite negotiation game with private preferences and mixed
+incentives. An oracle computes beliefs and action values under a fixed
+reference policy, allowing us to evaluate the two capabilities at the same
+decision. Qwen3-4B-Instruct-2507 misreads partner behavior and often chooses
+suboptimal actions even when given the correct inference. Replacing its
+inference with an oracle judgment changes its choices but does not reliably
+improve their value. We then construct \emph{game
+slices}, contiguous segments of one or more decisions drawn from deliberately
+structured games, and use oracle labels to train action selection, inference,
+and planning conditioned on a correct inference. We compare this targeted
+training with complete-game self-play and evaluate transfer to meeting
+coordination with private calendars. On a 24-game sequential adaptation of
+CalBench, joint slice training retains 47 of 72 meetings, compared with 37
+for both the unchanged baseline and the self-play model. These results
+support controlled games as a means of diagnosing interaction failures and
+training capabilities that transfer to more complex coordination.
 \end{abstract}
 
 \section{Introduction}
