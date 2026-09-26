@@ -1,98 +1,249 @@
-\section{Partner-history diagnostic protocol}
+\section{Diagnostic protocol and detailed results}
 \label{app:diagnose}
 
-\paragraph{Selected histories and labels.}
-This analysis uses 16 held-out two-player structures, eight with binary goals
-and eight with linear goals. Each contributes one history containing a
-reference-policy-consistent partner offer and a subsequent focal-player
-response. The selected histories have positive probability under the fixed
-reference policy, change the partner-preference posterior by at least $0.15$
-in total variation from the prior, and change the exact optimal-action set
-relative to the prior. Model outputs were not used for selection. The
-exact-posterior gap between the best and best non-optimal action ranges from
-$0.5$ to $1.0$ terminal-utility units (mean $0.781$).
+\paragraph{Cases and evidence.}
+The main diagnostic uses the frozen v9 suite of 22 two-player cases spanning
+seven distinct game geometries. Its 12 basic cases comprise six direct
+feedback, three single-choice elimination, and three ambiguous single-choice
+cases, with two or three binary goals per basic case. Ten challenge cases
+comprise three additional elimination cases, three additional ambiguous
+cases, and four multi-step updates. Cases sharing a geometry are related
+probes rather than independent draws from a task population. The structures
+were reused during diagnostic development; this is not an untouched transfer
+benchmark. The v9 selection procedure uses structural and oracle criteria,
+not model success on the selected cases.
 
-The queried uncertainty is one partner--goal preference in
-$\{\textsc{Want},\textsc{Neutral},\textsc{Avoid}\}$. For a visible partner
-choice $a_s$, the oracle multiplies each candidate preference's prior weight
-by the fixed reference policy's probability of $a_s$ at that history, then
-normalizes. The focal player's own response updates the physical state but
-does not supply another partner-action likelihood. The deployed inference
-interface returns the complete positive-support subset. It marks a value as
-favored when its posterior mass exceeds the runner-up by more than $0.1$,
-and otherwise returns \textsc{Undetermined}; it does not return probabilities.
-Both the model and correct judgments use identical serialization. The
-inference prompt identifies the partner's offer as an observed choice.
-Condition names, case identifiers, correctness claims, posterior
-probabilities, and payoff values are absent from model prompts. Exact
-posteriors remain in the scorer and are used with the per-world payoff table
-to compute Eq.~\ref{eq:diagnose-regret}.
+Initial commitments are declared starting conditions, not fictitious partner
+choices. Direct feedback comes from a legal focal-player investigation with
+a truthful private answer. That query is an intervention and need not be
+optimal; it does not supply behavioral evidence about the partner. Other
+cases use observed choices with positive probability under the specified
+partner policy. Labels condition on public facts, own preferences, private
+observations, and the relevant behavioral evidence.
 
-The correct semantic judgment is not a complete posterior, so selection
-explicitly certifies that the omitted magnitudes are decision-irrelevant. For
-each case, we express its support and favored-margin semantics as a finite
-union of rational convex polytopes and enumerate every vertex exactly. We
-also include zero-mass and threshold boundaries, obtaining a conservative
-superset of the strict semantic region. All vertices must induce the same
-exact optimal-action set. Since expected action value is affine in the
-posterior, this proves invariance over every compatible posterior; all 16
-reported cases pass. Under this fixed policy, all 16 judgments have
-$\{\textsc{Avoid}\}$ as their support. The suite therefore does not measure
-inference across all preference labels. In particular, the zero likelihood
-of an observed choice under some candidate preferences is a consequence of
-the selected policy, not an assertion that real partners never deviate from
-that policy.
+\paragraph{Judgments and planning sufficiency.}
+Each case queries exactly one unknown partner--goal preference, with
+candidate values \textsc{Want}, \textsc{Neutral}, and \textsc{Avoid}.
+The oracle judgment contains its positive-probability support and the most
+likely preference. We report the latter only when its posterior probability
+exceeds the runner-up by more than $0.1$; otherwise, we report
+\textsc{Undetermined}. This label does not imply equal posterior probabilities.
+We report joint correctness,
+requiring both components to match the oracle label. All labels are relative to the public
+prior and specified reference policy.
 
-\paragraph{Calls and intervention.}
-For each case we obtain: (i) a native semantic inference judgment; (ii) a
-fresh planning call supplied with that judgment; (iii) a fresh planning call
-supplied with $J^\star$; and (iv) a native history-to-action call with no
-explicit judgment. The two controlled planning calls include the current
-binding state, remaining turns, investigation quota, known preferences,
-legal actions, and fixed partner policy, but exclude the behavioral
-chronology. Their tools, sampling parameters, and request seed are identical;
-only the serialized judgment may differ. If the model judgment is invalid,
-its composition cell is missing rather than replaced by a default action.
-On eight cases, a fifth call supplies inference with the reference planner's
-qualitative likelihood ordering while still withholding all numeric
-probabilities.
+Planning uses the standard history-free training renderer, including tables
+of goal requirements and preferences and qualitative supplied beliefs.
+Behavioral history and numerical posterior probabilities are omitted.
+For each oracle judgment, exact rational polytope-vertex checks verify that
+all compatible posteriors induce the same optimal-action set. The admission
+checks also verify the scorer's tolerance-based acceptable-action set and
+recompute continuation payoffs from the current state without the removed
+history. Every retained case passes these checks. Correctness follows the
+certified acceptable-action set; regret uses the exact expected-utility gap.
+The scorer allows an own-utility gap of at most $0.1$ from the best action.
+At offer responses, it additionally allows a gap of at most $0.1$ in the
+other players' total utility relative to actions tied in own utility.
+The oracle policy itself uses exact utility maximization and the response
+tie rule; these scoring tolerances do not alter that policy.
 
-Selection and scoring use the fixed teacher only. Changing a judgment never
-recomputes the partner continuation policy, and per-world payoffs respect the
-focal player's information set rather than optimizing a different
-continuation separately in each hidden world. The paired quantity
-$\Delta_c$ is therefore the effect of changing the semantic input to the
-same model planner. It can have either sign and is not combined with planning
-regret as an additive error decomposition. Condition-specific regret means
-may have different valid subsets. On identical doubly valid cases the
-implementation checks
-$\Delta_c=\operatorname{Reg}_c(\widehat a(\widehat J_c))-
-\operatorname{Reg}_c(\widehat a(J_c^\star))$ row by row and after aggregation.
+For each possible partner preference, the qualification procedure computes
+the acceptable-action set under the same per-world payoff table. A case is
+repair-sensitive if at least one such set is disjoint from the set accepted
+under the oracle judgment. This is a structural criterion involving an
+alternative preference, not a guarantee that the model's actual judgment
+error requires a different action. The remaining cases are labeled action
+controls in the archive. This label denotes the complement of the
+repair-sensitive group, not a negative control for the model's response to
+its input. There are nine repair-sensitive cases and thirteen controls.
+All four multi-step cases are controls and each admits an acceptable action
+shared across all three preferences; they therefore do not require a
+belief-dependent change of action.
 
-\paragraph{Execution and aggregation.}
-We evaluate the unchanged Qwen3-4B-Instruct-2507 checkpoint through vLLM
-using greedy decoding ($T=0$, top-$p=1$, top-$k=-1$), a 4,096-token
-completion limit, and three replicas. The frozen archive contains 96
-returned rows; this analysis uses the 48 rows from partner-generated
-histories, representing 16 distinct decisions repeated three times. The
-replicas agree for every case, so they check execution determinism rather
-than provide independent samples. The run records its checkpoint, suite
-manifest, and runtime hashes. Every reported semantic certificate passes;
-the paired-scoring identity has zero row failures.
+\paragraph{Requests and execution.}
+Every case has four calls: inference, direct action selection,
+$\mathrm{Plan}_{\mathrm{oracle}}$, and $\mathrm{Plan}_{\mathrm{model}}$. The archive denotes the first two by
+$B$ and $O$, respectively.
+The two planning requests share the current state, tools, decoding settings,
+and request seed; only the supplied judgment differs. Inference requests require a
+brief explanation followed by one belief-submission tool call, with explicit
+set semantics. Action calls use the native action tools. The intervention
+changes an explicit input between fresh calls rather than manipulating an
+internal model representation.
 
-We collapse identical replicas and weight the 16 structures equally.
-Inference judgments and correct-judgment planning actions are valid in all
-16 cases. Native history-to-action planning is valid in 15 cases. Both
-controlled planning calls are valid in 12 cases, which define the paired
-repair mean. Among these, replacing the judgment changes 11 actions;
-utility rises in one case, is unchanged in nine, and falls in two. On this
-identical paired subset, model-judgment regret is $0.833$, correct-judgment
-regret is $0.875$, and their difference equals mean repair $-0.042$ up to
-rounding. Correct-judgment regret over all 16 cases is $0.844$ and uses a
-different subset. Qualitative reference-planner assistance changes no
-exact inference answer in the eight cases to which it is applied.
+The reported run evaluates Qwen3-4B-Instruct-2507 once per case, at temperature
+zero, top-$p=1$, top-$k=-1$, and a 4,096-token completion limit. The service
+uses vLLM 0.28.0, BF16, one H100 GPU, batch-invariant mode, prefix caching,
+and eager execution; chunked prefill and cascade attention are disabled.
+Runner concurrency is four and the run seed is 42. All 88 calls returned,
+with no truncation or infrastructure failure. One $\mathrm{Plan}_{\mathrm{model}}$ call has a
+format failure. It counts as incorrect for accuracy and is excluded from
+paired utility comparisons, leaving 21 valid pairs. No repeated-run
+uncertainty estimate is claimed.
 
-The frozen suite stores the model-facing cases, teacher-only certificates,
-selection record, and both clean controlled planning and native end-to-end
-requests. Hashes in the suite manifest detect changes to frozen cases and
-label dependencies before inference.
+\paragraph{Aggregation and intervention accounting.}
+The repair-sensitive and control panels are reported separately. Overall
+counts are descriptive: joint inference correctness is $11/22$;
+direct action selection, $\mathrm{Plan}_{\mathrm{oracle}}$, and
+$\mathrm{Plan}_{\mathrm{model}}$ are each correct in $11/22$. Basic-case joint inference and $\mathrm{Plan}_{\mathrm{oracle}}$ correctness
+are $9/12$ and $7/12$, versus $2/10$ and $4/10$ on challenge cases.
+
+Across 21 valid pairs, three replacements increase utility, seventeen leave
+it unchanged, and one reduces it. Among the ten pairs with a changed
+judgment, these counts are three, six, and one, respectively. There are nine
+action changes, including five that preserve utility. All eleven pairs with
+unchanged judgments reproduce the same action. Mean paired regret falls
+from $0.684$ to $0.541$, a value gain of $0.143$. The all-case
+$\mathrm{Plan}_{\mathrm{oracle}}$ mean regret is $0.567$ and uses a different denominator.
+For each pair, the value gain equals model-judgment regret minus
+oracle-judgment regret under the same scoring posterior. These effects can
+have either sign and are not an additive decomposition of the direct
+action-selection error.
+
+The repair-sensitive panel has one positive and seven zero gains among its
+eight valid pairs. The control panel has two positive, ten zero, and one
+negative gain among thirteen pairs. In the single-choice elimination layer,
+mean repair gain is $0.667$ across six cases, but two of its three positive
+gains occur in controls. This distinction prevents improvements in controls
+from being presented as evidence that the task requires preference-dependent
+action selection.
+Of the eight valid repair-sensitive pairs, five already have the correct
+judgment. Among the three with an incorrect judgment, two actions change;
+one gains $1$ in utility and two have zero gain. The mean gain is therefore
+$0.333$ over corrected judgments and $0.125$ over all valid pairs in this
+group. In the control group, seven judgments are incorrect; all seven
+actions change, with two gains, four ties, and one loss. The corresponding
+means are $0.286$ and $0.154$ over corrected judgments and all thirteen
+valid pairs, respectively.
+
+\begin{table}[t]
+\caption{Diagnostic subgroups defined by the oracle action sets.
+Entries are correct responses out of all cases; invalid outputs count as
+incorrect. The groups partition the same 22 cases as
+Table~\ref{tab:diagnose-main}.}
+\label{tab:diagnose-subgroups}
+\centering\small
+\begin{tabular}{lrrrr}
+\hline
+ & Inference & \multicolumn{3}{c}{Action} \\
+Case group & Joint & Direct & $\mathrm{Plan}_{\mathrm{model}}$ & $\mathrm{Plan}_{\mathrm{oracle}}$ \\
+\hline
+Repair-sensitive & 5/9 & 3/9 & 3/9 & 3/9 \\
+Action control & 6/13 & 8/13 & 8/13 & 8/13 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Two-goal example: ruling out an avoided goal}
+\label{app:diagnose-simple}
+
+Table~\ref{tab:diagnose-example} uses the archived case
+\texttt{layer-19646c73e0c97ae729}. Starting with no commitments, Blair acts
+first and Alex acts last; neither has an investigation use remaining.
+The prior over Blair's Orchard preference is uniform. Recomputing the
+reference policy gives likelihoods $(1/6,1/9,0)$ for the observed offer
+under \textsc{Want}, \textsc{Neutral}, and \textsc{Avoid}. Alex accepts
+with probability one, so the posterior is $(0.6,0.4,0)$ and the oracle
+judgment is Want or Neutral, with Want most likely. Excluding Avoid has the
+simple payoff argument given in the main text; the unequal weights on the
+two remaining preferences follow from the reference policy's uniform
+mixing over tied actions.
+
+The model instead states, ``Blair's behavior (not adding Cedar) suggests
+they do not want Orchard,'' and submits only \texttt{avoid}. Its planning
+call requests \texttt{self\_commitments=[]} and
+\texttt{partner\_commitments=[Maple]}, completing no goal regardless of
+Blair's response. With the oracle judgment, the call requests
+\texttt{self\_commitments=[Maple]} and
+\texttt{partner\_commitments=[Cedar]}. Blair accepts, completing both goals
+and giving Alex $2$. The archived action indices are 2 and 4, respectively,
+with regrets $2$ and $0$ and intervention gain $2$.
+The latter offer is also acceptable if Blair avoids Orchard: its own
+utility then ties rejection at $0$, and the response tie rule favors
+Alex's gain. This explains the case's action-control classification and
+limits the conclusion to the observed benefit of correcting the model's
+supplied judgment.
+
+\subsection{A policy-dependent example of partial correction}
+
+\label{app:diagnose-example}
+
+This additional example is archived as
+\texttt{interaction-0524ffa3f232ff556a}. Its two proposal opportunities are
+Blair followed by Alex, starting with no binding commitments. Each offer can
+add at most one commitment per player, and commitments cannot be removed.
+All four goals are binary, with requirements and preferences as follows.
+Only Blair's preference for Orchard is hidden; its prior is uniform over
+\textsc{Want}, \textsc{Neutral}, and \textsc{Avoid}.
+\begin{center}
+\small
+\begin{tabular}{lllll}
+\hline
+Goal & Alex must add & Blair must add & Alex's preference & Blair's preference \\
+\hline
+Orchard & Maple & Maple & Want & Hidden \\
+Harbor & Cedar & Maple & Want & Want \\
+Library & Maple & Maple & Neutral & Avoid \\
+Garden & Cedar & Cedar & Avoid & Avoid \\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{Observed history and oracle inference.}
+Blair proposes no commitment for itself and Cedar for Alex; Alex accepts.
+To evaluate this choice as evidence, the oracle compares its continuation
+value with the other actions Blair could have taken. Under the selected
+reference policy, Alex's subsequent proposal adds Maple for both players.
+If Blair wants Orchard, accepting completes Orchard, Harbor, and Library,
+giving Blair $1+1-1=1$. If it is neutral, accepting gives $0+1-1=0$;
+rejection also gives $0$, so the response tie rule favors acceptance for
+Alex's benefit. If Blair avoids Orchard, accepting gives $-1+1-1=-1$,
+so it rejects and receives $0$.
+
+Blair has an alternative first offer: add Maple for itself and Cedar for
+Alex. Alex accepts, immediately completing Harbor. On Alex's last turn,
+adding its Maple would also complete Orchard and Library. Blair accepts
+this addition if it wants Orchard and otherwise rejects it. Thus the
+alternative secures Blair terminal utility $1$ under every preference.
+The observed offer is optimal only under \textsc{Want}, where all thirteen
+legal first actions tie and the reference policy mixes uniformly. Its
+likelihoods are therefore
+\begin{equation}
+ \begin{aligned}
+ \Pr(\text{observed offer}\mid\textsc{Want})&=\tfrac1{13},\\
+ \Pr(\text{observed offer}\mid\textsc{Neutral})
+ =\Pr(\text{observed offer}\mid\textsc{Avoid})&=0.
+ \end{aligned}
+\end{equation}
+Alex accepts the observed offer with probability one. Bayes' rule maps the
+prior $(1/3,1/3,1/3)$ to posterior $(1,0,0)$, yielding support
+$\{\textsc{Want}\}$ and most likely preference \textsc{Want}. This inference follows
+from the stated reference policy and continuation, rather than from a
+general assumption that any offer reveals a unique preference.
+
+\paragraph{Recorded model responses and their consequences.}
+The model's inference response instead states, ``There is no evidence
+suggesting Blair wants or avoids Orchard,'' and submits all three values
+with the most likely preference reported as \textsc{Undetermined}. With that judgment, its planning
+tool call requests
+\texttt{self\_commitments=[Maple], partner\_commitments=[Cedar]}.
+Accepting would complete Garden, giving Blair $-1$, so Blair rejects;
+Alex's terminal utility is $0$.
+With the oracle judgment, the tool call changes to
+\texttt{self\_commitments=[], partner\_commitments=[Maple]}.
+Blair accepts because Harbor gives it $1$; Alex also receives $1$.
+The optimal call would add Maple for both players, completing Orchard,
+Harbor, and Library. Its utilities are $1+1+0=2$ for Alex and
+$1+1-1=1$ for Blair, so Blair accepts. The three oracle action values are
+therefore $0$, $1$, and $2$, respectively. The two recorded planning calls
+have regrets $2$ and $1$, giving intervention gain $\Delta_c=1$.
+These actions correspond to indices 4, 2, and 5 in the archived legal-action
+list. Recomputing the reference policy reproduces the archived policy hash,
+posterior, and action values.
+
+\paragraph{Provenance.}
+The reported archive is \texttt{diagnostic\_v9\_results\_20260926}, run
+\texttt{q0-882149}. Its frozen manifest and checkpoint hashes are preserved in the run protocol.
+The machine-readable manuscript results and source inventory identify the
+archive members, per-case scores, and the worked example used in the main
+text. Older v6 diagnostic results are not pooled with this run.

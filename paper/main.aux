@@ -32,47 +32,55 @@
 \citation{kuhn1953extensive}
 \citation{harsanyi1967games}
 \citation{nash1950equilibrium}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces An illustrative three-player negotiation with private preferences and two linearly scored goals. \emph  {Repair bridge} requires distinct bridge actions from A, B, and C; \emph  {Deliver supplies} requires distinct supply actions from A and C. A filled letter indicates that player's commitment to that particular goal, and the fractions show goal progress. B first offers bridge actions to C, who rejects: accepting would leave the bridge at $2/3$ and give C $-2/3$ from a goal it dislikes if play stopped then. A investigates C's supply preference and privately learns that C wants supplies. After C passes, B investigates A's bridge preference and privately learns that A wants the bridge. A then offers to deliver supplies with C, who accepts, completing that goal. C passes again before B offers bridge actions to A, who accepts, bringing bridge progress to $2/3$; C does not join it. The game ends after this final offer. Proposer turns follow the fixed round-robin order B--A--C throughout. This adapted legal sequence illustrates the rules and hidden preferences, without asserting optimal play.}}{4}{figure.2}\protected@file@percent }
-\newlabel{fig:game-flow}{{2}{4}{An illustrative three-player negotiation with private preferences and two linearly scored goals. \emph {Repair bridge} requires distinct bridge actions from A, B, and C; \emph {Deliver supplies} requires distinct supply actions from A and C. A filled letter indicates that player's commitment to that particular goal, and the fractions show goal progress. B first offers bridge actions to C, who rejects: accepting would leave the bridge at $2/3$ and give C $-2/3$ from a goal it dislikes if play stopped then. A investigates C's supply preference and privately learns that C wants supplies. After C passes, B investigates A's bridge preference and privately learns that A wants the bridge. A then offers to deliver supplies with C, who accepts, completing that goal. C passes again before B offers bridge actions to A, who accepts, bringing bridge progress to $2/3$; C does not join it. The game ends after this final offer. Proposer turns follow the fixed round-robin order B--A--C throughout. This adapted legal sequence illustrates the rules and hidden preferences, without asserting optimal play}{figure.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces An illustrative three-player negotiation with private preferences and two linearly scored goals. \emph  {Repair bridge} requires distinct bridge actions from A, B, and C; \emph  {Deliver supplies} requires distinct supply actions from A and C. A filled letter indicates that player's commitment to that particular goal, and the fractions show goal progress. B first offers bridge actions to C, who rejects: accepting would leave the bridge at $2/3$ and give C $-2/3$ from a goal it dislikes if play stopped then. A investigates C's supply preference and privately learns that C wants supplies. After C passes, B investigates A's bridge preference and privately learns that A wants the bridge. A then offers to deliver supplies with C, who accepts, completing that goal. C passes again before B offers bridge actions to A, who accepts, bringing bridge progress to $2/3$; C does not join it. The game ends after this final offer. Proposer turns follow the fixed round-robin order B--A--C throughout.}}{4}{figure.2}\protected@file@percent }
+\newlabel{fig:game-flow}{{2}{4}{An illustrative three-player negotiation with private preferences and two linearly scored goals. \emph {Repair bridge} requires distinct bridge actions from A, B, and C; \emph {Deliver supplies} requires distinct supply actions from A and C. A filled letter indicates that player's commitment to that particular goal, and the fractions show goal progress. B first offers bridge actions to C, who rejects: accepting would leave the bridge at $2/3$ and give C $-2/3$ from a goal it dislikes if play stopped then. A investigates C's supply preference and privately learns that C wants supplies. After C passes, B investigates A's bridge preference and privately learns that A wants the bridge. A then offers to deliver supplies with C, who accepts, completing that goal. C passes again before B offers bridge actions to A, who accepts, bringing bridge progress to $2/3$; C does not join it. The game ends after this final offer. Proposer turns follow the fixed round-robin order B--A--C throughout}{figure.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Game Slices and Oracle Solver}{4}{subsection.2.3}\protected@file@percent }
 \newlabel{sec:game-slices}{{2.3}{4}{Game Slices and Oracle Solver}{subsection.2.3}{}}
 \newlabel{eq:oracle-iteration}{{3}{4}{Game Slices and Oracle Solver}{equation.3}{}}
 \citation{yang2025qwen3}
 \newlabel{eq:oracle-update-main}{{4}{5}{Game Slices and Oracle Solver}{equation.4}{}}
 \newlabel{eq:oracle-targets}{{5}{5}{Game Slices and Oracle Solver}{equation.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Diagnose}{5}{section.3}\protected@file@percent }
-\newlabel{sec:diagnose}{{3}{5}{Diagnose}{section.3}{}}
-\@writefile{toc}{\contentsline {paragraph}{Inferring from partner behavior.}{5}{section*.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Intervening on the judgment.}{5}{section*.2}\protected@file@percent }
-\newlabel{eq:diagnose-regret}{{6}{5}{Intervening on the judgment}{equation.6}{}}
-\@writefile{toc}{\contentsline {paragraph}{Two failures and their interface.}{5}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Diagnosis}{5}{section.3}\protected@file@percent }
+\newlabel{sec:diagnose}{{3}{5}{Diagnosis}{section.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Intervening on the inference supplied to planning.}{5}{section*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Evidence and oracle labels.}{5}{section*.2}\protected@file@percent }
+\newlabel{eq:diagnose-regret}{{6}{5}{Evidence and oracle labels}{equation.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Diagnosis of the unchanged Qwen3-4B-Instruct-2507 model. \textbf  {Top:} correct responses out of all cases. Joint inference requires both the support and most likely preference to be correct; Direct selects an action from the original state. \textbf  {Bottom:} paired intervention results, grouped by whether the model's initial judgment was correct. One invalid $\mathrm  {Plan}_{\mathrm  {model}}$ response counts as incorrect above and is excluded below. Equal action accuracy can conceal changes in action value.}}{6}{table.1}\protected@file@percent }
+\newlabel{tab:diagnose-main}{{1}{6}{Diagnosis of the unchanged Qwen3-4B-Instruct-2507 model. \textbf {Top:} correct responses out of all cases. Joint inference requires both the support and most likely preference to be correct; Direct selects an action from the original state. \textbf {Bottom:} paired intervention results, grouped by whether the model's initial judgment was correct. One invalid $\mathrm {Plan}_{\mathrm {model}}$ response counts as incorrect above and is excluded below. Equal action accuracy can conceal changes in action value}{table.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces A two-goal inference error and its correction. Both goals are binary and require both listed commitments. Alex wants both goals; only Blair's Orchard preference is hidden. The two planning calls use the same model and state, with different supplied judgments. Utilities are evaluated under the oracle posterior and reference policy.}}{6}{table.2}\protected@file@percent }
+\newlabel{tab:diagnose-example}{{2}{6}{A two-goal inference error and its correction. Both goals are binary and require both listed commitments. Alex wants both goals; only Blair's Orchard preference is hidden. The two planning calls use the same model and state, with different supplied judgments. Utilities are evaluated under the oracle posterior and reference policy}{table.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Inference and planning failures.}{6}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{An illustrative intervention.}{6}{section*.4}\protected@file@percent }
 \citation{yang2025qwen3}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Base-model diagnosis on 16 partner-generated histories, one per held-out structure. Regret is in terminal-utility units. Paired results use the 12 cases with valid actions under both supplied judgments.}}{6}{table.1}\protected@file@percent }
-\newlabel{tab:diagnose-main}{{1}{6}{Base-model diagnosis on 16 partner-generated histories, one per held-out structure. Regret is in terminal-utility units. Paired results use the 12 cases with valid actions under both supplied judgments}{table.1}{}}
-\@writefile{toc}{\contentsline {paragraph}{An illustrative interaction.}{6}{section*.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Experiment}{6}{section.4}\protected@file@percent }
-\newlabel{sec:experiment}{{4}{6}{Experiment}{section.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Data and training}{6}{subsection.4.1}\protected@file@percent }
-\newlabel{sec:experiment-training}{{4.1}{6}{Data and training}{subsection.4.1}{}}
 \citation{zou2026calbench}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Post-training diagnosis on 16 partner-generated histories, one per held-out structure. Planning regret uses the correct inference judgment. Regret and repair are means over valid outputs; their coverage may differ. Blank cells await a verified run under this protocol. BP-99 is a historical inference/planning-only reference, not one of the four main arms. Valid planning/native/repair counts are Q0 $16/15/12$, D-72 $13/16/9$, D-148 $14/16/11$, and BP-99 $11/14/6$.}}{7}{table.2}\protected@file@percent }
-\newlabel{tab:experiment-diagnosis}{{2}{7}{Post-training diagnosis on 16 partner-generated histories, one per held-out structure. Planning regret uses the correct inference judgment. Regret and repair are means over valid outputs; their coverage may differ. Blank cells await a verified run under this protocol. BP-99 is a historical inference/planning-only reference, not one of the four main arms. Valid planning/native/repair counts are Q0 $16/15/12$, D-72 $13/16/9$, D-148 $14/16/11$, and BP-99 $11/14/6$}{table.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Historical fixed-partner adversarial games. Utility is conditional on normal completion; completion counts are out of 24 per split. The final common-protocol O/D comparison remains to be filled.}}{7}{table.3}\protected@file@percent }
-\newlabel{tab:experiment-adversarial}{{3}{7}{Historical fixed-partner adversarial games. Utility is conditional on normal completion; completion counts are out of 24 per split. The final common-protocol O/D comparison remains to be filled}{table.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Experiment}{7}{section.4}\protected@file@percent }
+\newlabel{sec:experiment}{{4}{7}{Experiment}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Data and training}{7}{subsection.4.1}\protected@file@percent }
+\newlabel{sec:experiment-training}{{4.1}{7}{Data and training}{subsection.4.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Constructing games and histories.}{7}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Generating supervision.}{7}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Training.}{7}{section*.7}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.2}In-domain diagnosis and adversarial games}{7}{subsection.4.2}\protected@file@percent }
 \newlabel{sec:experiment-benac}{{4.2}{7}{In-domain diagnosis and adversarial games}{subsection.4.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Transfer to Complex Scenario}{7}{subsection.4.3}\protected@file@percent }
 \newlabel{sec:experiment-transfer}{{4.3}{7}{Transfer to Complex Scenario}{subsection.4.3}{}}
-\@writefile{toc}{\contentsline {paragraph}{CalBench setting.}{7}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{CalBench setting.}{7}{section*.8}\protected@file@percent }
 \citation{yuan2026marshal}
 \citation{wu2026socialr1}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Historical post-training diagnosis under the earlier v6 protocol: 16 partner-generated histories, one per held-out structure. These are different cases from the v9 diagnostic in Section~\ref {sec:diagnose}. Planning regret uses the correct inference judgment. Regret and repair are means over valid outputs; their coverage may differ. Blank cells await a verified run under this protocol. BP-99 is a historical inference/planning-only reference, not one of the four main arms. Valid planning/native/repair counts are Q0 $16/15/12$, D-72 $13/16/9$, D-148 $14/16/11$, and BP-99 $11/14/6$.}}{8}{table.3}\protected@file@percent }
+\newlabel{tab:experiment-diagnosis}{{3}{8}{Historical post-training diagnosis under the earlier v6 protocol: 16 partner-generated histories, one per held-out structure. These are different cases from the v9 diagnostic in Section~\ref {sec:diagnose}. Planning regret uses the correct inference judgment. Regret and repair are means over valid outputs; their coverage may differ. Blank cells await a verified run under this protocol. BP-99 is a historical inference/planning-only reference, not one of the four main arms. Valid planning/native/repair counts are Q0 $16/15/12$, D-72 $13/16/9$, D-148 $14/16/11$, and BP-99 $11/14/6$}{table.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Historical fixed-partner adversarial games. Utility is conditional on normal completion; completion counts are out of 24 per split. The final common-protocol O/D comparison remains to be filled.}}{8}{table.4}\protected@file@percent }
+\newlabel{tab:experiment-adversarial}{{4}{8}{Historical fixed-partner adversarial games. Utility is conditional on normal completion; completion counts are out of 24 per split. The final common-protocol O/D comparison remains to be filled}{table.4}{}}
+\@writefile{toc}{\contentsline {paragraph}{Evaluation.}{8}{section*.9}\protected@file@percent }
 \citation{ys2026sotopiatom,mu2026adaptive,cross2025hypothetical}
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces CalBench transfer on 24 frozen sequential games. Meetings count final retained meetings; excess cost is per agent and conditional on full-game success. Communication and imbalance average native per-agent values over all games. Best value in each column is bold.}}{8}{table.4}\protected@file@percent }
-\newlabel{tab:experiment-calbench}{{4}{8}{CalBench transfer on 24 frozen sequential games. Meetings count final retained meetings; excess cost is per agent and conditional on full-game success. Communication and imbalance average native per-agent values over all games. Best value in each column is bold}{table.4}{}}
-\@writefile{toc}{\contentsline {paragraph}{Evaluation.}{8}{section*.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5}Discussion}{8}{section.5}\protected@file@percent }
 \citation{chen2024subgame}
 \citation{hu2020otherplay,strouse2021collaborating}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces CalBench transfer on 24 frozen sequential games. Meetings count final retained meetings; excess cost is per agent and conditional on full-game success. Communication and imbalance average native per-agent values over all games. Best value in each column is bold.}}{9}{table.5}\protected@file@percent }
+\newlabel{tab:experiment-calbench}{{5}{9}{CalBench transfer on 24 frozen sequential games. Meetings count final retained meetings; excess cost is per agent and conditional on full-game success. Communication and imbalance average native per-agent values over all games. Best value in each column is bold}{table.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Discussion}{9}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Richer partner states.}{9}{section*.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Strategic coverage.}{9}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Robustness across partner policies.}{9}{section*.12}\protected@file@percent }
 \citation{carmel1996opponent,gmytrasiewicz2005ipomdp,albrecht2013hba}
 \citation{macindoe2012pomcop,wu2021toomanycooks,foerster2019bad,huang2024hop}
 \citation{li2023theory,cross2025hypothetical,jha2026modeling,mu2026adaptive,zhou2026epistemic,feng2026sigmamem,goel2026bayesian,hwang2026infusing}
@@ -82,15 +90,13 @@
 \citation{zhu2025multiagentbench,chen2026collabsim,li2026emergent,xuan2026socialveil}
 \citation{li2026systematic,zhang2026silobench,yao2026talk,zhang2026termsbench,agashe2025llmcoordination}
 \citation{cemri2025multiagent,anthropic2026multiagent}
-\@writefile{toc}{\contentsline {paragraph}{Richer partner states.}{9}{section*.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Strategic coverage.}{9}{section*.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Robustness across partner policies.}{9}{section*.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6}Related Works}{9}{section.6}\protected@file@percent }
 \citation{yuan2026marshal,liu2026spiral,lyu2026gift,he2026stratreasoner,hua2026socialrl,he2026socialgym,wu2026socialr1}
 \citation{jha2025crossenvironment,hu2020otherplay}
 \citation{west2020improved,chen2024subgame}
 \citation{madmoun2026communication}
 \citation{meulemans2026gametheory}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Related Works}{10}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{10}{section.7}\protected@file@percent }
 \bibdata{references}
 \bibcite{agashe2025llmcoordination}{{1}{2025}{{Agashe et~al.}}{{Agashe, Fan, Reyna, and Wang}}}
 \bibcite{albrecht2013hba}{{2}{2013}{{Albrecht \& Ramamoorthy}}{{Albrecht and Ramamoorthy}}}
@@ -98,7 +104,6 @@
 \bibcite{avsian2026sneak}{{4}{2026}{{Avsian \& Heck}}{{Avsian and Heck}}}
 \bibcite{benac2026benchmark}{{5}{2026}{{Benac et~al.}}{{Benac, Raedler, Ma, and Doshi-Velez}}}
 \bibcite{carmel1996opponent}{{6}{1996}{{Carmel \& Markovitch}}{{Carmel and Markovitch}}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{10}{section.7}\protected@file@percent }
 \bibcite{cemri2025multiagent}{{7}{2025}{{Cemri et~al.}}{{Cemri, Pan, Yang, Agrawal, Chopra, Tiwari, Keutzer, Parameswaran, Klein, Ramchandran, Zaharia, Gonzalez, and Stoica}}}
 \bibcite{chen2026collabsim}{{8}{2026}{{Chen et~al.}}{{Chen, Sun, Lu, Wang, Wang, and Yao}}}
 \bibcite{chen2024subgame}{{9}{2024}{{Chen et~al.}}{{Chen, Xu, Li, Yu, Song, Yang, Fang, Wang, and Wu}}}
@@ -147,25 +152,58 @@
 \bibcite{zhu2025multiagentbench}{{52}{2025}{{Zhu et~al.}}{{Zhu, Du, Hong, Yang, Guo, Wang, Wang, Qian, Tang, Ji, and You}}}
 \bibcite{zou2026calbench}{{53}{2026}{{Zou et~al.}}{{Zou, Yao, She, Goodman, and Hawkins}}}
 \bibstyle{iclr2027_conference}
-\@writefile{toc}{\contentsline {section}{\numberline {A}Game slices and oracle solver details}{14}{appendix.A}\protected@file@percent }
-\newlabel{app:oracle}{{A}{14}{Game slices and oracle solver details}{appendix.A}{}}
-\@writefile{toc}{\contentsline {paragraph}{Multi-decision slices and information.}{14}{section*.14}\protected@file@percent }
-\newlabel{eq:game-slice}{{7}{14}{Multi-decision slices and information}{equation.7}{}}
-\@writefile{toc}{\contentsline {paragraph}{Finite-tree policy selection.}{14}{section*.15}\protected@file@percent }
-\newlabel{eq:oracle-tree-recursion}{{8}{14}{Finite-tree policy selection}{equation.8}{}}
-\newlabel{eq:oracle-reach}{{9}{14}{Finite-tree policy selection}{equation.9}{}}
-\newlabel{eq:oracle-certificate}{{10}{15}{Finite-tree policy selection}{equation.10}{}}
-\@writefile{toc}{\contentsline {paragraph}{Belief filtering and action values.}{15}{section*.16}\protected@file@percent }
-\newlabel{eq:oracle-belief}{{11}{15}{Belief filtering and action values}{equation.11}{}}
-\newlabel{eq:oracle-action-value}{{12}{15}{Belief filtering and action values}{equation.12}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {B}Partner-history diagnostic protocol}{15}{appendix.B}\protected@file@percent }
-\newlabel{app:diagnose}{{B}{15}{Partner-history diagnostic protocol}{appendix.B}{}}
-\@writefile{toc}{\contentsline {paragraph}{Selected histories and labels.}{15}{section*.17}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Calls and intervention.}{16}{section*.18}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Execution and aggregation.}{16}{section*.19}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {C}CalBench rollout excerpts}{16}{appendix.C}\protected@file@percent }
-\newlabel{app:calbench-rollout}{{C}{16}{CalBench rollout excerpts}{appendix.C}{}}
-\@writefile{toc}{\contentsline {paragraph}{Negotiating the first meeting.}{17}{section*.20}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{A disagreement in the other runs.}{17}{section*.21}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Preserving a shared commitment.}{17}{section*.22}\protected@file@percent }
-\gdef \@abspage@last{17}
+\citation{benac2026benchmark}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Formal game specification}{14}{appendix.A}\protected@file@percent }
+\newlabel{app:game}{{A}{14}{Formal game specification}{appendix.A}{}}
+\@writefile{toc}{\contentsline {paragraph}{Public instance and private types.}{14}{section*.17}\protected@file@percent }
+\newlabel{eq:game-prior}{{7}{15}{Public instance and private types}{equation.7}{}}
+\@writefile{toc}{\contentsline {paragraph}{State and decision phases.}{15}{section*.18}\protected@file@percent }
+\newlabel{eq:game-full-state}{{8}{15}{State and decision phases}{equation.8}{}}
+\@writefile{toc}{\contentsline {paragraph}{Legal offers.}{15}{section*.19}\protected@file@percent }
+\newlabel{eq:game-offer-legality}{{9}{15}{Legal offers}{equation.9}{}}
+\@writefile{toc}{\contentsline {paragraph}{Transitions.}{15}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Observations and information sets.}{15}{section*.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Termination and incentives.}{16}{section*.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Starting a slice.}{16}{section*.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {B}Game slices and oracle solver details}{16}{appendix.B}\protected@file@percent }
+\newlabel{app:oracle}{{B}{16}{Game slices and oracle solver details}{appendix.B}{}}
+\@writefile{toc}{\contentsline {paragraph}{Multi-decision slices and information.}{16}{section*.24}\protected@file@percent }
+\newlabel{eq:game-slice}{{10}{16}{Multi-decision slices and information}{equation.10}{}}
+\@writefile{toc}{\contentsline {paragraph}{Finite-tree policy selection.}{16}{section*.25}\protected@file@percent }
+\newlabel{eq:oracle-tree-recursion}{{11}{16}{Finite-tree policy selection}{equation.11}{}}
+\newlabel{eq:oracle-reach}{{12}{16}{Finite-tree policy selection}{equation.12}{}}
+\newlabel{eq:oracle-certificate}{{13}{17}{Finite-tree policy selection}{equation.13}{}}
+\@writefile{toc}{\contentsline {paragraph}{Belief filtering and action values.}{17}{section*.26}\protected@file@percent }
+\newlabel{eq:oracle-belief}{{14}{17}{Belief filtering and action values}{equation.14}{}}
+\newlabel{eq:oracle-action-value}{{15}{17}{Belief filtering and action values}{equation.15}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {C}Diagnostic protocol and detailed results}{17}{appendix.C}\protected@file@percent }
+\newlabel{app:diagnose}{{C}{17}{Diagnostic protocol and detailed results}{appendix.C}{}}
+\@writefile{toc}{\contentsline {paragraph}{Cases and evidence.}{17}{section*.27}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Judgments and planning sufficiency.}{18}{section*.28}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Requests and execution.}{18}{section*.29}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Aggregation and intervention accounting.}{18}{section*.30}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Diagnostic subgroups defined by the oracle action sets. Entries are correct responses out of all cases; invalid outputs count as incorrect. The groups partition the same 22 cases as Table~\ref {tab:diagnose-main}.}}{19}{table.6}\protected@file@percent }
+\newlabel{tab:diagnose-subgroups}{{6}{19}{Diagnostic subgroups defined by the oracle action sets. Entries are correct responses out of all cases; invalid outputs count as incorrect. The groups partition the same 22 cases as Table~\ref {tab:diagnose-main}}{table.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.1}Two-goal example: ruling out an avoided goal}{19}{subsection.C.1}\protected@file@percent }
+\newlabel{app:diagnose-simple}{{C.1}{19}{Two-goal example: ruling out an avoided goal}{subsection.C.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.2}A policy-dependent example of partial correction}{19}{subsection.C.2}\protected@file@percent }
+\newlabel{app:diagnose-example}{{C.2}{19}{A policy-dependent example of partial correction}{subsection.C.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Observed history and oracle inference.}{19}{section*.31}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Recorded model responses and their consequences.}{20}{section*.32}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Provenance.}{20}{section*.33}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {D}Training data and configuration}{20}{appendix.D}\protected@file@percent }
+\newlabel{app:training}{{D}{20}{Training data and configuration}{appendix.D}{}}
+\@writefile{toc}{\contentsline {paragraph}{Data construction and splitting.}{20}{section*.34}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Planning labels and dataset versions.}{20}{section*.35}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Selecting the compact joint dataset.}{20}{section*.36}\protected@file@percent }
+\gdef \LT@i {\LT@entry 
+    {1}{140.14343pt}\LT@entry 
+    {1}{251.43874pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{Data and training settings. Shared optimizer and decoding settings are verified in the archived configurations for the selected \textsc  {GameSlice-A}, \textsc  {GameSlice-IP}, and \textsc  {GameSlice-Joint} checkpoints. Recipe-specific rows distinguish nominal budgets from consumed response tokens. A dash denotes a quantity not yet verified for the selected checkpoint.}}{21}{table.7}\protected@file@percent }
+\newlabel{tab:training-configuration}{{7}{21}{Data and training settings. Shared optimizer and decoding settings are verified in the archived configurations for the selected \textsc {GameSlice-A}, \textsc {GameSlice-IP}, and \textsc {GameSlice-Joint} checkpoints. Recipe-specific rows distinguish nominal budgets from consumed response tokens. A dash denotes a quantity not yet verified for the selected checkpoint}{table.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {E}CalBench rollout excerpts}{22}{appendix.E}\protected@file@percent }
+\newlabel{app:calbench-rollout}{{E}{22}{CalBench rollout excerpts}{appendix.E}{}}
+\@writefile{toc}{\contentsline {paragraph}{Negotiating the first meeting.}{22}{section*.37}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{A disagreement in the other runs.}{22}{section*.38}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Preserving a shared commitment.}{23}{section*.39}\protected@file@percent }
+\gdef \@abspage@last{23}

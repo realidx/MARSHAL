@@ -1,110 +1,167 @@
 \label{sec:diagnose}
 
-We ask whether Qwen3-4B-Instruct-2507 \citep{yang2025qwen3} can infer a partner's preference
-from interaction and use that inference to choose a valuable action.
-A poor final decision could arise because the model misreads its partner,
-because it chooses poorly even given a correct reading, or because both steps
-fail. We therefore examine the two capabilities at the same decision, and
-replace the model's explicit inference answer to test whether its choice
-depends on that answer.
+An unsuccessful interaction does not reveal whether an agent misread its
+partner or chose poorly despite an adequate understanding. We diagnose these
+two sources of error in the
+Qwen3-4B-Instruct-2507 model~\citep{yang2025qwen3}. At matched decision points,
+we ask whether the model can infer a partner's preference from available
+evidence, choose a good action given a correct inference, and improve its
+choice when an incorrect inference is replaced by an oracle judgment.
 
-\paragraph{Inferring from partner behavior.}
-We evaluate 16 held-out two-player structures, eight with binary goals and
-eight with linear goals. Each case contains a partner offer chosen under the
-fixed reference policy, followed by the focal player's response. The partner's
-offer is evidence about its private preference: the oracle weights each
-candidate preference by the probability of that offer under the reference
-policy and updates the prior accordingly. The focal player's own response
-changes the current commitments. The oracle reports a qualitative judgment
-$J_c^\star$ which means the preferences still possible and, when one has a sufficiently
-clear posterior lead, the favored preference. It also computes the expected
-terminal value $V_c(a)=Q_i^\star(I_c,a)$ of every legal action under the fixed
-reference continuation. For every retained case, a certificate verifies that
-all posteriors compatible with $J_c^\star$ have the same optimal-action set.
-Thus omitted posterior magnitudes cannot explain a planning error when the
-correct judgment is supplied. The label rule and certificate are described
-in Appendix~\ref{app:diagnose}.
+\paragraph{Intervening on the inference supplied to planning.}
+Each case elicits four responses. The model first reports a preference
+judgment $\widehat J_c$ from the history and available private information.
+Two separate planning calls then receive the same current state, with either
+that judgment ($\mathrm{Plan}_{\mathrm{model}}$) or the oracle judgment $J_c^\star$
+($\mathrm{Plan}_{\mathrm{oracle}}$). We also evaluate \emph{direct action selection} from the
+original state, without a supplied judgment. The paired planning calls
+share their tools, decoding settings, and seed. We remove the behavioral history from both calls so that planning
+uses the supplied inference rather than reconstructing it from the original
+evidence. To ensure that this removal does not make the task underspecified,
+we retain only cases in which the oracle judgment determines the optimal
+action set and removing history preserves the continuation payoff table.
 
-\paragraph{Intervening on the judgment.}
-For each case $c$, we first ask the model to infer a judgment $\widehat J_c$
-from the visible history. We then present the current decision in two fresh
-planning calls: one supplies $\widehat J_c$, and the other supplies the
-oracle judgment $J_c^\star$. Both calls omit the behavioral history and have
-everything else unchanged. A separate call asks the model to choose directly
-from the history. We measure decision quality by oracle regret and the paired
-change in value:
+\paragraph{Evidence and oracle labels.}
+The suite contains 22 two-player cases spanning seven game structures.
+Six test use of a preference revealed by investigation; six require ruling
+out preferences after one observed partner choice; six retain uncertainty
+after one choice; and four require combining successive observations.
+Each case has one unknown partner--goal preference, taking values
+\textsc{Want}, \textsc{Neutral}, or \textsc{Avoid}. The oracle conditions on
+all available evidence under the public prior and reference policy of
+Section~\ref{sec:game-slices}. Its label specifies the \emph{support}, the
+preferences with positive posterior probability, and the \emph{most likely
+preference}. We report the latter only when its posterior probability
+exceeds the next highest by more than $0.1$; otherwise, we report
+\textsc{Undetermined}. These labels describe what the evidence
+supports and we verify
+that all posteriors compatible with each oracle label yield the same optimal
+action set. Appendix~\ref{app:diagnose} details these constructions.
+
+We report joint inference correctness: a judgment is correct only when both
+its support and most likely preference match the oracle label. Action
+correctness uses the oracle's acceptable-action set, with the utility
+tolerance specified in Appendix~\ref{app:diagnose}. To measure the cost of
+an error and the effect of replacing a judgment, let
+$V_c(a)=Q_i^\star(I_c,a)$ be the expected terminal utility of action $a$
+under the oracle posterior and reference continuation. We report
 \begin{equation}
- \operatorname{Reg}_c(a)=\max_{a'}V_c(a')-V_c(a),\qquad
- \Delta_c=V_c\!\left(\widehat a(J_c^\star)\right)
-          -V_c\!\left(\widehat a(\widehat J_c)\right).
+ \operatorname{Reg}_c(a)=\max_{a'\in\mathcal L(I_c)}V_c(a')-V_c(a),\qquad
+ \Delta_c=V_c\!\left(\widehat a_c(J_c^\star)\right)
+          -V_c\!\left(\widehat a_c(\widehat J_c)\right),
  \label{eq:diagnose-regret}
 \end{equation}
-Here a positive $\Delta_c$ means that supplying the correct judgment
-improves the model's chosen action. Both actions in the comparison are
-scored under the same oracle posterior.
+where $\widehat a_c(J)$ is the model's planning response to judgment $J$.
+Both actions are scored under the same posterior and continuation,
+$\Delta_c>0$ means that replacing the judgment improves the selected action's
+value.
 
 \begin{table}[t]
-\caption{Base-model diagnosis on 16 partner-generated histories, one per
-held-out structure. Regret is in terminal-utility units. Paired results use
-the 12 cases with valid actions under both supplied judgments.}
+\caption{Diagnosis of the unchanged Qwen3-4B-Instruct-2507 model.
+\textbf{Top:} correct responses out of all cases. Joint inference requires
+both the support and most likely preference to be correct; Direct selects an action
+from the original state. \textbf{Bottom:} paired intervention results,
+grouped by whether the model's initial judgment was correct. One invalid
+$\mathrm{Plan}_{\mathrm{model}}$ response counts as incorrect above and is excluded below.
+Equal action accuracy can conceal changes in action value.}
 \label{tab:diagnose-main}
 \centering\small
-\begin{tabular}{lr}
+\begin{tabular}{lrrrr}
 \hline
-Measurement & Result \\
+ & Inference & \multicolumn{3}{c}{Action} \\
+Evidence & Joint & Direct & $\mathrm{Plan}_{\mathrm{model}}$ & $\mathrm{Plan}_{\mathrm{oracle}}$ \\
 \hline
-Exact inference judgment & $0/16$ \\
-Optimal action with oracle judgment & $1/16$ \\
-Mean regret with oracle judgment & $0.844$ \\
-Optimal native history-to-action choice & $1/15$ \\
-Action changed by judgment replacement & $11/12$ \\
-Mean paired change $\overline{\Delta}$ & $-0.042$ \\
+Direct feedback & 6/6 & 2/6 & 3/6 & 3/6 \\
+Single-choice elimination & 0/6 & 3/6 & 2/6 & 3/6 \\
+Ambiguous single choice & 5/6 & 2/6 & 2/6 & 2/6 \\
+Multi-step update & 0/4 & 4/4 & 4/4 & 3/4 \\
+\hline
+All cases & 11/22 & 11/22 & 11/22 & 11/22 \\
+\hline
+\end{tabular}
+\par\smallskip
+\begin{tabular}{lrrrrrr}
+\hline
+Initial judgment & Pairs & Action changes & $\Delta>0$ & $\Delta=0$ & $\Delta<0$ & Mean $\Delta$ \\
+\hline
+Incorrect & 10 & 9 & 3 & 6 & 1 & $0.300$ \\
+Correct & 11 & 0 & 0 & 11 & 0 & $0.000$ \\
+\hline
+All valid pairs & 21 & 9 & 3 & 17 & 1 & $0.143$ \\
 \hline
 \end{tabular}
 \end{table}
 
-\paragraph{Two failures and their interface.}
-Table~\ref{tab:diagnose-main} reports the results on the 16 histories. The
-model never produces the exact qualitative inference judgment. Even when
-given the oracle judgment, it chooses an optimal action in only $1/16$ cases
-(mean regret $0.844$). Direct choice from the full history is optimal in
-$1/15$ cases with a valid action. These observations identify failures in
-both evaluated interfaces under the fixed reference policy. Replacing the judgment changes the model's action in $11/12$ valid paired
-comparisons, so the explicit inference input affects its choice. The
-replacement improves value in only one case and has a mean paired change of
-$-0.042$. Thus a correct judgment does not reliably repair this model's
-planning on the selected histories. The intervention concerns a judgment
-passed between calls; it makes no claim about separable internal modules.
+\paragraph{Inference and planning failures.}
+The model recovers all six directly revealed preferences but fails all ten
+single-choice elimination and multi-step judgments
+(Table~\ref{tab:diagnose-main}). Even with oracle inference, planning succeeds
+in only $11/22$ cases, with mean regret $0.567$. Correcting an incorrect
+judgment changes the action in nine of ten valid pairs: three pairs improve
+in value, six preserve it, and one worsens. Across all 21 valid pairs, mean
+regret falls from $0.684$ to $0.541$ despite unchanged aggregate action
+accuracy. Thus both behavioral inference and action selection exhibit
+failures; correcting the supplied inference can improve choices but does
+not reliably resolve planning errors. Appendix~\ref{app:diagnose} provides
+the breakdown by sensitivity to partner preferences.
 
-\paragraph{An illustrative interaction.}
-Consider a linear-goal case (\texttt{linear-12231}) in which Blair's
-preference for \textsc{Orchard} is hidden. Orchard scores the average
-completion of Alex's Cedar and Blair's Cedar commitments. Blair also wants
-\textsc{Garden}, which depends on Alex's Cedar and Blair's Maple. Blair's known
-preference for \textsc{Harbor} and aversion to \textsc{Workshop} cancel because
-those goals have identical requirements; it is neutral toward the remaining
-goal. Blair voluntarily offers to commit its own Maple without asking Alex
-to commit anything, and Alex accepts. Under the fixed reference continuation,
-that offer gives Blair expected terminal utility $0.5$ for each possible
-Orchard preference. An offer that also asks Alex to commit Cedar or Maple
-would instead give Blair utilities $2$, $1$, and $0.5$ when Blair respectively
-\textsc{Want}s, is \textsc{Neutral} toward, or \textsc{Avoid}s Orchard. Thus
-the observed offer is suboptimal for \textsc{Want} and \textsc{Neutral}, but
-one of three tied optimal offers for \textsc{Avoid}. Its reference-policy
-likelihoods are consequently $(0,0,1/3)$; updating the uniform prior leaves
-only \textsc{Avoid} possible.
+\paragraph{An illustrative intervention.}
+In Table~\ref{tab:diagnose-example}, Blair asks Alex for a commitment that
+makes completing Harbor also complete Orchard. Since Blair could instead
+secure Harbor alone, this choice rules out \textsc{Avoid} for Orchard under
+the reference policy. The model infers the opposite from Blair's lack of
+its own commitment. Replacing that judgment changes its offer from
+completing neither goal to completing both, raising utility from $0$ to $2$.
+Appendix~\ref{app:diagnose-simple} gives the derivation and recorded outputs;
+Appendix~\ref{app:diagnose-example} provides a case where correction leaves
+a planning error.
 
-Alex now has the final proposal turn. Offering to add its own Maple while
-Blair retains its existing Maple raises Alex's terminal utility from $0$ to
-$1.5$: three goals Alex wants each become half complete. Blair's gain from
-\textsc{Harbor} cancels its loss from \textsc{Workshop}, so it accepts this
-offer on an own-utility tie. Investigating Blair's Orchard preference instead
-consumes the last proposal turn and leaves Alex at $0$. The base model
-reports all three preferences as possible and none as favored. With that
-judgment supplied to a fresh planning call, it investigates; when the same
-planner receives the oracle's \textsc{Avoid} judgment, it makes the
-$1.5$-utility offer. Asked to act directly from the history, the model
-instead proposes that both players add Cedar. An \textsc{Avoid} Blair rejects:
-accepting would lower its utility from $0.5$ to $0$, leaving Alex at $0$.
-This case exhibits an inference error that the judgment intervention does
-repair, although such repair is uncommon across the suite.
+\begin{table}[t]
+\caption{A two-goal inference error and its correction. Both goals are
+binary and require both listed commitments. Alex wants both goals; only
+Blair's Orchard preference is hidden. The two planning calls use the same
+model and state, with different supplied judgments. Utilities are evaluated
+under the oracle posterior and reference policy.}
+\label{tab:diagnose-example}
+\centering\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lllll}
+\hline
+\multicolumn{5}{l}{\textbf{(a) Goals and preferences}} \\
+ & \multicolumn{2}{c}{Required commitments} & \multicolumn{2}{c}{Preferences} \\
+Goal & Alex & Blair & Alex & Blair \\
+\hline
+Orchard & Cedar & Cedar & Want & Hidden \\
+Harbor & Maple & Cedar & Want & Want \\
+\hline
+\end{tabular}
+\par\smallskip
+\begin{tabular}{@{}p{0.21\linewidth}p{0.75\linewidth}@{}}
+\textbf{History} & Blair offers to add nothing
+and asks Alex to add Cedar; Alex accepts. \\
+\textbf{Current decision} & Alex has Cedar; Blair has none. Alex has the final proposal turn. \\
+\textbf{Key implication} & After Alex adds Cedar, any completion of Harbor
+also completes Orchard. A Blair that avoids Orchard could instead have
+secured Harbor alone. \\
+\textbf{Model judgment} & Possible preferences: Avoid only; most likely: Avoid. \\
+\textbf{Oracle judgment} & Possible preferences: Want or Neutral; most likely: Want. \\
+\end{tabular}
+\par\smallskip
+\begin{tabular}{lcccr}
+\hline
+\multicolumn{5}{l}{\textbf{(b) Final offers and outcomes}} \\
+Action source & Alex adds & Blair adds & Goals completed & $U_{\rm Alex}$ \\
+\hline
+$\mathrm{Plan}_{\mathrm{model}}$ & None & Maple & None & $0$ \\
+$\mathrm{Plan}_{\mathrm{oracle}}$ & Maple & Cedar & Orchard and Harbor & $2$ \\
+\hline
+\end{tabular}
+\end{table}
+
+
+Together, these probes reveal failures in extracting preference information
+and in using sufficient information to choose an action. The intervention
+connects the two at the explicit judgment--action interface. These findings motivate
+training both capabilities alongside direct action selection; the effects
+of training and transfer are evaluated separately below.
+\par

@@ -1,3 +1,5 @@
+\input{game_appendix}
+
 \section{Game slices and oracle solver details}
 \label{app:oracle}
 
@@ -123,8 +125,9 @@ reference profile:
 For a queried partner--goal preference $v_{jg}$, the inference target is the
 positive-support set of
 $p_{jg}(z)=\sum_{v_{-i}:v_{jg}=z}b_s^{i,\star}(v_{-i})$.
-The favored value is its mode only when that value exceeds the runner-up by
-more than $0.1$; otherwise it is \textsc{Undetermined}. Planning actions are
+We report the mode as the most likely preference only when its posterior
+probability exceeds the runner-up by more than $0.1$; otherwise, we report
+\textsc{Undetermined}. Planning actions are
 evaluated using $Q_i^\star$,
 including ties among optimal actions. The student sees neither the exact
 posterior nor action values. We use the same selected policy throughout a

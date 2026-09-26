@@ -1,0 +1,132 @@
+\section{Formal game specification}
+\label{app:game}
+
+This section completes the game definition in Section~\ref{sec:benac-i}.
+The commitment representation, goal satisfaction functions, and terminal
+utility follow the action-level negotiation framework of
+\citet{benac2026benchmark}. We specify the information available to each
+player and the transition rules used in our private-preference setting.
+
+\paragraph{Public instance and private types.}
+The public instance specifies the players, commitment coordinates, goal
+requirements, scoring modes, proposer schedule, and legal-action rules in
+Eq.~\ref{eq:benac-i-game}. A commitment coordinate belongs to a player;
+it is not a goal, an item transferred to another player, or an exclusive
+choice among alternatives. Different goals may depend on the same
+coordinate. Once that coordinate becomes binding, it contributes to every
+goal that requires it. A goal's requirements do not indicate which players
+want that goal: requirements and preferences are separate parts of the
+instance.
+
+The preference assignment $v$ is sampled once and remains fixed throughout
+play. Each player observes its own complete vector $v_i$. Any publicly
+specified preferences are common knowledge as well. Write
+$F=\{(i,g,z)\}$ for these fixed facts and
+$\mathcal W=\operatorname{supp}(\mu_0)$ for the admissible joint assignments.
+In instances generated from public categorical weights $w_z$, the prior is
+obtained by conditioning independent draws of the unfixed entries on the
+stated generation constraints:
+\begin{equation}
+ \mu_0(v)=\frac{1}{Z}
+ \mathbf 1[v\text{ agrees with }F]\,
+ \mathbf 1[v\text{ satisfies the generation constraints}]
+ \prod_{(i,g)\notin\operatorname{dom}(F)} w_{v_{ig}}.
+ \label{eq:game-prior}
+\end{equation}
+Here $Z$ normalizes the distribution. The constraints used in these
+instances require each player to want at least one goal and each goal to
+have at least one non-neutral player. The weights and fixed facts are
+provided with the instance; they are not inferred from the realized world.
+Conditioning on these constraints can create dependence between preferences,
+so independent background draws do not imply independent posterior beliefs.
+
+\paragraph{State and decision phases.}
+A full environment state can be written as
+\begin{equation}
+ x=(t,C,p,\mathbf q,v,\mathbf r,h),
+ \label{eq:game-full-state}
+\end{equation}
+where $t$ indexes proposal opportunities, $C$ is the binding commitment
+matrix, $p$ is either an unresolved offer or $\emptyset$, $\mathbf q$
+contains remaining investigation budgets, $\mathbf r=(r^i)_i$ contains
+private investigation records, and $h$ is the public event history.
+This full state is available to the environment, not to every player.
+When $p=\emptyset$ and $t<T$, the actor is $\rho_t$. When an offer is
+pending, its recipient acts instead. The index $t$ does not advance until
+that offer is accepted or rejected. Thus a proposal and its response count
+as two decisions but only one proposal opportunity.
+
+\paragraph{Legal offers.}
+At an opportunity of player $i$, an offer is
+$o=(j,D_i,D_j)$, where $j\ne i$ and $D_i,D_j$ are sets of new commitment
+coordinates owned by the two participants. Let $m$ denote the per-player,
+per-offer addition limit specified by $\mathcal L$. Legality requires
+\begin{equation}
+ D_\ell\subseteq\{k:c_{\ell k}=0\},\qquad
+ |D_\ell|\leq m\quad(\ell\in\{i,j\}),\qquad
+ |D_i|+|D_j|>0.
+ \label{eq:game-offer-legality}
+\end{equation}
+Any additional forbidden coordinates specified by the instance are excluded.
+One participant's addition set may be empty. The limit applies separately
+to each participant in this offer; it is not a lifetime commitment limit.
+Previously binding coordinates cannot be removed or submitted as new
+additions. The native state representation retains those coordinates when
+constructing the resulting commitment vectors. The game uses bilateral
+offers, not menus of alternative offers.
+
+\paragraph{Transitions.}
+When no offer is pending, the scheduled proposer may take one of the
+following actions:
+\begin{itemize}
+ \item \textsc{Pass}: append the public action to $h$, leave $C$ unchanged,
+ and advance $t$ by one.
+ \item \textsc{Offer}$(j,D_i,D_j)$: append the offer to $h$ and set $p=o$.
+ No commitment binds yet and $t$ is unchanged. The recipient must then
+ choose \textsc{Accept} or \textsc{Reject}. Acceptance sets
+ $c_{\ell k}=1$ for $k\in D_\ell$, $\ell\in\{i,j\}$; rejection leaves
+ $C$ unchanged. Either response is public, clears $p$, and advances $t$.
+ \item \textsc{Investigate}$(j,g)$: legal only if $j\ne i$ and $q_i>0$.
+ The environment appends the public query $(i,j,g)$ to $h$, privately
+ appends $(j,g,v_{jg})$ to $r^i$, reduces $q_i$ by one, and advances $t$.
+ Commitments are unchanged. Other players' private records are unchanged.
+\end{itemize}
+Investigation is allowed even when the queried preference is already known
+or does not affect the current decision. Its cost is the consumed proposal
+opportunity and budget, not a separate utility penalty. It is unavailable
+during a pending response. Responses do not consume investigation budgets.
+
+\paragraph{Observations and information sets.}
+All players observe the public rules, fixed preference facts, commitments,
+proposer schedule, remaining budgets, offers, responses, passes, and query
+identities. An investigation answer is revealed only to its investigator.
+Player $i$'s view is $I_s^i=(h_s,v_i,r_s^i)$, with the public instance
+understood as fixed context. Two histories in the full game belong to the
+same information set for $i$ when these views agree. In particular, two
+worlds may lead to the same public query while giving its investigator
+different private answers. The other players do not receive those answers.
+
+\paragraph{Termination and incentives.}
+A full game starts with $C_0=0$, no pending offer, no private query records,
+and $q_{i,0}=1$. It ends when all $T$ proposal opportunities have been used,
+including the response to an offer made at the final opportunity. Utilities
+are then evaluated by Eq.~\ref{eq:benac-i-utility}; there are no intermediate
+payoffs. For a binary goal, partial completion yields zero. For a linear
+goal, each required coordinate contributes an equal fraction of completion.
+An unachieved goal contributes zero even if it is wanted or avoided.
+Each player sums its own signed contributions across all goals. Utilities
+need not sum to zero, and one player's improvement need not imply either
+an improvement or a loss for the others.
+
+\paragraph{Starting a slice.}
+A slice records its starting commitments, schedule position, pending offer
+if any, remaining budgets, and the observations available at that position.
+A state reached by a legal prefix retains the corresponding public history
+and each player's own private observations. An explicitly exogenous initial
+state is instead a declared starting condition: it does not assert that a
+partner previously selected those commitments. Only actual observed choices
+provide behavioral evidence under the reference policy. A self-action
+specified as an intervention changes the physical state and may deliver a
+private answer, but is not itself evidence about a partner's preference.
+The reference-policy computation and conditioning conventions are specified
+in Appendix~\ref{app:oracle}.

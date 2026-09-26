@@ -1,31 +1,145 @@
-# 三人同模型 BENAC 完整局
-
-16个固定初始局，每局只跑一次；三名玩家共享同一checkpoint，各自保持原生私人观察与历史。temperature=0，top_p=1，输出上限4096，一次原生重试。启动服务必须开启VLLM_BATCH_INVARIANT=1；客户端不能远程开启此设置。没有额外focal座位轮换。
+# Same-checkpoint BENAC teams and reference opponents
 
 4096预算重跑与此前1024预算结果分开保存，不合并比较；场景、奖励和行动规则不变。
 
-## 核对结果
+## Ready: same-checkpoint teams
 
-`team_benac_v1/overlap_audit.json`保存44份本地训练/验证文件的哈希和逐场景匹配。历史8个ID在扫描库中有结构匹配，8个OOD均无匹配。但micro_learning_24_v1和micro24_v1_partner_choice_v1均无这16局的结构匹配；不能对当前micro模型继续称前8局为ID。正式输出使用seen_in_audited_banks/unseen_in_audited_banks，表示扫描库并集，不表示每个checkpoint的训练分布。也分别报告binary/linear。
+Each seat is an independent agent with its own private information. All seats
+use the same checkpoint. One rollout per frozen instance, temperature 0,
+batch-invariant serving required, 4096 output tokens, at most one protocol
+retry. No change to native rules or prompts.
 
-依赖结构匹配允许玩家/承诺重命名；没有根据被测模型成绩换题。场景继承原adversarial_v2，不改变规则、偏好世界或提示词。不能把16局称作16个独立结构，独立性仍取决于结构复用。
+| Players | Frozen suite | Games | Goals | Commitments per player | Proposal opportunities per player |
+|---|---|---:|---:|---:|---|
+| 2 | `team_benac_2p_v1` | 16 | 3 | 2 | 2 or 4 |
+| 3 | `team_benac_v1` (unchanged) | 16 | 3 | 2 | 2 or 4 |
+| 4 | `team_benac_4p_v1` | 16 | 3 | 2 | 2 or 4 |
 
-## 执行
+New size suites cross binary/linear × 2/4 rounds × balanced/avoid-heavy priors
+× two instances. Prior weights (want, neutral, avoid) are (1,1,1)/(1,1,2).
+Native connected goal structures involve all players; two-player goals use
+arity 2, four-player goals use arity 2 or 3. Frozen instances are not selected
+by model output, utility or teacher solvability. Geometry overlap is audited
+against the original suite's historical bank inventory. Seen/unseen counts
+are observations of this audit, not forced balanced strata or per-model IDs.
+Different size suites are not identical-difficulty paired environments.
+Report each size separately, including completion, conditional team/per-player
+utility, full-cohort failure bounds, invalid calls and truncation.
 
-在已开启batch-invariant的模型服务上，逐模型运行：
+Run from the repository root against an existing service:
 
 ```bash
-bash examples/final_evaluation/run_team_benac.sh \
-  http://localhost:8000/v1 SERVED_MODEL VERIFIED_CHECKPOINT_HASH \
-  runs/team_benac/MODEL_LABEL
+TEAM_SUITE=examples/final_evaluation/team_benac_2p_v1 \
+  bash examples/final_evaluation/run_team_benac.sh BASE_URL MODEL HASH runs/team2-MODEL
+
+# Default is the unchanged three-player suite.
+bash examples/final_evaluation/run_team_benac.sh BASE_URL MODEL HASH runs/team3-MODEL
+
+TEAM_SUITE=examples/final_evaluation/team_benac_4p_v1 \
+  bash examples/final_evaluation/run_team_benac.sh BASE_URL MODEL HASH runs/team4-MODEL
 ```
 
-脚本里的确认标记表示操作者已确认服务设置，不会自动配置服务。无需加载Q0伙伴或第二个模型。不得将不同checkpoint导向同一错误的served model别名。
+The new 2/4-player suites passed all 32 native random-action rollouts locally;
+the 16 original 3-player smoke rollouts also pass. These are implementation
+checks, not LLM performance results. Four-player prior enumeration is larger;
+start with `TEAM_PARALLEL_GAMES=1` if host memory is constrained.
 
-结果以16局为单位，报告完整结束率、完成局团队总收益、三名玩家收益、全样本团队收益保守界限、非法和截断次数。未完成不填零；基础设施错误停止后续批次。原生调用轨迹全部保留。内部复用共享轨迹执行器，底层目录的shared-q0和role=q0是历史实现名称，实际三人都调用传入的唯一route；顶层protocol明确记录homogeneous_team和checkpoint身份。
+## Implemented but not ready: two-player reference opponent
+
+One LLM faces one fixed same-information reference player, rotating both
+focal seats: 16 instances × 2 seats = 32 games/model. The reference policy
+maximizes its own utility with the private teacher's response tie convention;
+it is not a team-optimal or omniscient upper bound. All models share the
+same compiled policy. The model is not told the partner's hidden type.
+
+The compiler enumerates the complete public action tree using the full public
+prior before any model run. Its information-set audit requires identical
+policy probabilities for worlds sharing the player's own preferences and
+received private answers. Runtime lookup uses only those facts. All legal
+LLM actions advance the precompiled tree, even if assigned zero probability
+by the reference; off-path beliefs follow the teacher's prior conditioned on
+own type and private answers. No re-solving against a particular tested model.
+Reference ties use a fixed seeded draw keyed by case, focal seat and tree node.
+
+**Local preflight:** all 16 standard two-player instances exceed 10,000 nodes
+(with a 10-second per-case budget). See `oracle_preflight_2p_v1.json`.
+A small one-round fixture passes native integration, information-set checks,
+and legal off-policy traversal, but this does not certify the full suite.
+Do not launch the reference evaluation until the entire chosen suite passes.
+The runner rejects incomplete, failed or hash-mismatched policy bundles; it
+never silently substitutes a heuristic or excludes hard instances.
 
 ```bash
-python -m unittest examples.final_evaluation.test_team_benac
+# CPU-only compilation. This currently fails on the full standard suite at
+# the stated budget. Larger budgets may require substantial time and memory.
+python -m examples.final_evaluation.team_oracle \
+  --suite examples/final_evaluation/team_benac_2p_v1 \
+  --output runs/reference-policies-2p --seconds 30 --max-nodes 10000
+
+# Only after every instance has a certified policy:
+python -m examples.final_evaluation.run_team_oracle \
+  --suite examples/final_evaluation/team_benac_2p_v1 \
+  --policies runs/reference-policies-2p \
+  --base-url BASE_URL --model MODEL --checkpoint-hash HASH \
+  --output runs/reference-2p-MODEL --batch-invariant-confirmed
 ```
 
-本地16/16脚本策略回放已通过，仅验证接口、路由、终局和汇总；没有运行GPU/LLM，也不代表任何模型测试成绩。温度0且单次运行不提供采样方差估计。
+The reference group reports focal utility as well as team utility, failures
+and full-cohort bounds. A shorter, separately frozen oracle suite or a scalable
+solver is needed if the full suite remains infeasible; neither is silently
+substituted for this experiment.
+
+## Ready: bounded-depth reference
+
+Use `--reference bounded` to bypass full-terminal compilation explicitly. This
+is a **bounded-depth reference player**, not an exact oracle. The full game,
+16 instances, two focal seat assignments (32 games/model), LLM prompt, output
+budget and decoding settings remain unchanged.
+
+```bash
+python -m examples.final_evaluation.run_team_oracle \
+  --reference bounded \
+  --suite examples/final_evaluation/team_benac_2p_v1 \
+  --base-url BASE_URL --model MODEL --checkpoint-hash HASH \
+  --output runs/bounded2-MODEL --batch-invariant-confirmed
+```
+
+The fixed reference configuration is:
+
+- Replan at each reference decision over two completed proposal opportunities.
+  A pending offer's response is resolved before advancing the counter; no
+  unresolved offer is evaluated at a cutoff. The horizon shrinks at game end.
+- At the cutoff use native current commitment utility (binary/linear and signed
+  preferences). This is a terminal-value approximation, not added game reward.
+- Predict the focal player with a fixed one-proposal myopic policy. Offers are
+  valued using predicted immediate accept/reject responses. Each predicted
+  actor maximizes expected own utility conditioned on its own type and private
+  query answers; response ties prefer others' utility. A fixed 0.05 uniform
+  tremble assigns positive probability to every legal action. Investigation
+  has no immediate information bonus in this predictor.
+- Bayesian likelihoods for actual focal actions use that same predictor.
+  Reference actions are interventions, not evidence about the other player.
+  Truthful query answers condition the receiver's information set only. No
+  realized hidden opponent preference is passed to action selection.
+- Inside a hypothetical window, the predictor conditions on the window-start
+  filtered prior, own preferences, and simulated private query answers; it does
+  not infer additional information from hypothetical public actions. The
+  reference best response does account for the fixed predictor's action
+  likelihoods and chooses contingent actions by information set.
+- The reference computes an information-set best response to this predictor,
+  rather than iterating both players to an equilibrium. Remaining reference
+  ties use a seeded uniform draw, fixed across tested checkpoints.
+
+The epsilon, horizon, belief convention, tie rules and implementation hash
+are recorded in the output protocol. Node counts and root action probabilities
+are recorded per reference action. Resource failures stop evaluation; there is
+no implicit fallback to a shallower search. As with every short-horizon
+baseline, delayed binary goals and information gathering can be undervalued.
+Report this condition separately from homogeneous teams and exact reference
+policies; do not describe it as an optimal-performance bound.
+
+Validation: all 16 two-player instances × both focal seats completed with a
+scripted random legal-action focal player (32 full games, no LLM calls).
+Hidden-world invariance, positive predictive likelihoods, own-action belief
+invariance and proposal-depth boundaries passed. These are implementation
+checks, not empirical evidence of opponent strength.

@@ -39,12 +39,12 @@ def audit():
  manifest=dict(version='team-benac-v1',players=3,games=16,repeats=1,temperature=0,max_tokens=MAX_TOKENS,retries=1,original_manifest_sha256=digest(source/'manifest.json'),files={n:digest(FREEZE/n) for n in ('resets.jsonl','overlap_audit.json')})
  (FREEZE/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n');return report
 
-def load():
- m=json.loads((FREEZE/'manifest.json').read_text())
+def load(folder=FREEZE):
+ m=json.loads((folder/'manifest.json').read_text())
  if m['max_tokens']!=MAX_TOKENS:raise ValueError('Manifest and request output budgets differ')
  for n,h in m['files'].items():
-  if digest(FREEZE/n)!=h:raise ValueError('Changed frozen file: '+n)
- return m,[json.loads(l) for l in (FREEZE/'resets.jsonl').read_text().splitlines()]
+  if digest(folder/n)!=h:raise ValueError('Changed frozen file: '+n)
+ return m,[json.loads(l) for l in (folder/'resets.jsonl').read_text().splitlines()]
 
 def complete(route,request):
  body=dict(request,model=route['model'],temperature=0,top_p=1,top_k=-1,max_tokens=MAX_TOKENS,repetition_penalty=1,tool_choice='auto',parallel_tool_calls=False)
@@ -69,14 +69,14 @@ def summarize(rows):
    rr=[r for r in rows if (split=='all' or r['split']==split) and (mode=='all' or r['mode']==mode)]
    if not rr:continue
    done=[r for r in rr if r['status']=='terminal']
-   result[split+'/'+mode]=dict(games=len(rr),complete=len(done),conditional_team_utility=sum(r['total_utility'] for r in done)/len(done) if done else None,conditional_per_player=[sum(r['utilities'][i] for r in done)/len(done) for i in range(3)] if done else None,full_cohort_team_bounds=[sum(r['team_bounds'][i] for r in rr)/len(rr) for i in (0,1)] if all(r['team_bounds'] is not None for r in rr) else None,invalid_calls=sum(r['invalid_calls'] for r in rr),truncated_calls=sum(r['truncated_calls'] for r in rr))
+   result[split+'/'+mode]=dict(games=len(rr),complete=len(done),conditional_team_utility=sum(r['total_utility'] for r in done)/len(done) if done else None,conditional_per_player=[sum(r['utilities'][i] for r in done)/len(done) for i in range(len(done[0]['utilities']))] if done else None,full_cohort_team_bounds=[sum(r['team_bounds'][i] for r in rr)/len(rr) for i in (0,1)] if all(r['team_bounds'] is not None for r in rr) else None,invalid_calls=sum(r['invalid_calls'] for r in rr),truncated_calls=sum(r['truncated_calls'] for r in rr))
  return result
 
 def main():
- p=argparse.ArgumentParser();p.add_argument('--audit',action='store_true');p.add_argument('--base-url');p.add_argument('--model');p.add_argument('--checkpoint-hash');p.add_argument('--output',type=Path);p.add_argument('--parallel-games',type=int,default=4);p.add_argument('--batch-invariant-confirmed',action='store_true');a=p.parse_args()
+ p=argparse.ArgumentParser();p.add_argument('--suite',type=Path,default=FREEZE);p.add_argument('--audit',action='store_true');p.add_argument('--base-url');p.add_argument('--model');p.add_argument('--checkpoint-hash');p.add_argument('--output',type=Path);p.add_argument('--parallel-games',type=int,default=4);p.add_argument('--batch-invariant-confirmed',action='store_true');a=p.parse_args()
  if a.audit:print(json.dumps(audit()['split_counts']));return
  if not all((a.base_url,a.model,a.checkpoint_hash,a.output,a.batch_invariant_confirmed)) or a.parallel_games<1:p.error('Require endpoint, model, checkpoint hash, output and confirmed batch-invariant service')
- m,resets=load();a.output.mkdir(parents=True,exist_ok=False);route=dict(base_url=a.base_url,model=a.model)
+ m,resets=load(a.suite);a.output.mkdir(parents=True,exist_ok=False);route=dict(base_url=a.base_url,model=a.model)
  (a.output/'protocol.json').write_text(json.dumps(dict(suite=m,route=route,checkpoint_hash=a.checkpoint_hash,homogeneous_team=True,batch_invariant_operator_confirmed=True,temperature=0,replicas=1,source_sha256=digest(Path(__file__))),indent=2))
  rows=[]
  with ThreadPoolExecutor(max_workers=a.parallel_games) as pool:
