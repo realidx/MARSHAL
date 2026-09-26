@@ -22,12 +22,11 @@ INK = "#2D3552"
 MUTED = "#65708A"
 LINE = "#CCD3E5"
 PANEL = "#FBFAFD"
-# Cool blue, lavender, and rose palette; dark accents keep labels legible.
-MID, LAVENDER, ROSE = "#8B8FCA", "#B7AED9", "#E8C1CC"
+# Blue and violet palette; darker accents keep labels legible.
+MID, LAVENDER = "#8B8FCA", "#B7AED9"
 BLUE, BLUE_BG = "#4C65A4", "#EEF1F9"
 TEAL, TEAL_BG = "#6474AB", "#EEF0F8"
 PURPLE, PURPLE_BG = "#7066A2", "#F1EEF8"
-ROSE_DARK, ROSE_BG = "#925873", ROSE
 GREEN, GREEN_BG = BLUE, "#F0F1F9"
 Y_SHIFT = 0
 LOWER_SCALE = 0.90
@@ -131,7 +130,7 @@ def thought_bubble(cx: float, cy: float, label: str, color: str, bg: str) -> Non
 
 
 scene_cards = [(40, "Observe", BLUE, BLUE_BG), (330, "Infer", PURPLE, LAVENDER),
-               (620, "Plan", TEAL, MID), (910, "Act", ROSE_DARK, ROSE)]
+               (620, "Plan", TEAL, MID), (910, "Act", BLUE, LAVENDER)]
 for idx, (x, title, color, bg) in enumerate(scene_cards, 1):
     rect(x, 39, 250, 244, fill="white", stroke="#C9D5E8", radius=13)
     disk(x + 27, 66, 13, fill=bg, stroke=color, lw=1.3)
@@ -166,9 +165,9 @@ avatar(x + 125, 251, "M", BLUE, BLUE_BG)
 
 # 4. M proposes collaboration to A, creating the next observation.
 x = 910
-line([(x + 55, 214), (x + 195, 214)], color=ROSE_DARK, lw=1.8, head=True)
-line([(x + 125, 186), (x + 125, 214)], color=ROSE_DARK, lw=1.8)
-thought_bubble(x + 125, 145, "I can help repair\nthe bridge. Shall\nwe team up?", ROSE_DARK, ROSE_BG)
+line([(x + 55, 214), (x + 195, 214)], color=BLUE, lw=1.8, head=True)
+line([(x + 125, 186), (x + 125, 214)], color=BLUE, lw=1.8)
+thought_bubble(x + 125, 145, "I can help repair\nthe bridge. Shall\nwe team up?", BLUE, LAVENDER)
 avatar(x + 40, 214, "M", BLUE, BLUE_BG)
 avatar(x + 210, 214, "A", PURPLE, PURPLE_BG)
 avatar(x + 125, 251, "B", TEAL, TEAL_BG, pale=True)
@@ -197,17 +196,17 @@ edges = [
 ]
 slices = {
     ("a", "ab"): TEAL, ("ab", "abb"): TEAL,
-    ("b", "bb"): ROSE_DARK, ("bb", "bbb"): ROSE_DARK,
+    ("b", "bb"): BLUE, ("bb", "bbb"): BLUE,
 }
 for src, dst in edges:
     color = slices.get((src, dst), "#BCC8D4")
     line([node[src], node[dst]], color=color, lw=4.0 if (src, dst) in slices else 1.8)
-selected_nodes = {"aa": PURPLE, "a": TEAL, "ab": TEAL, "abb": TEAL, "b": ROSE_DARK, "bb": ROSE_DARK, "bbb": ROSE_DARK}
+selected_nodes = {"aa": PURPLE, "a": TEAL, "ab": TEAL, "abb": TEAL, "b": BLUE, "bb": BLUE, "bbb": BLUE}
 for name, (x, y) in node.items():
     accent = selected_nodes.get(name)
     radius = 9 if name == "aa" else 7 if name not in {"aaa", "aab", "aba", "abb", "baa", "bab", "bba", "bbb"} else 5.3
     disk(x, y, radius, fill=accent or "white", stroke=accent or "#9EAFBE", lw=1.5)
-for x, y, label, color, bg in [(50, 605, "slice 1", PURPLE, PURPLE_BG), (201, 605, "slice 2", TEAL, TEAL_BG), (414, 605, "slice 3", ROSE_DARK, ROSE_BG)]:
+for x, y, label, color, bg in [(50, 605, "slice 1", PURPLE, PURPLE_BG), (201, 605, "slice 2", TEAL, TEAL_BG), (414, 605, "slice 3", BLUE, LAVENDER)]:
     rect(x - 31, y - 15, 84, 30, fill=bg, stroke=color, radius=9, lw=1.3)
     txt(x + 11, y, label, size=13, color=color, bold=True)
 for x in (61, 212, 425):
@@ -240,7 +239,7 @@ rect(546, 475, 52, 42, fill=LAVENDER, stroke="none", radius=8)
 txt(572, 496, "Infer", size=12, color=INK, bold=True)
 txt(711, 496, "What can you infer\nfrom the current\nstate?", size=14, color=INK)
 rect(536, 547, 286, 64, fill="white", stroke=PURPLE, radius=10, lw=1.5)
-rect(546, 558, 52, 42, fill=ROSE, stroke="none", radius=8)
+rect(546, 558, 52, 42, fill=MID, stroke="none", radius=8)
 txt(572, 579, "Plan", size=12, color=INK, bold=True)
 txt(711, 579, "What to do given\nthe true inference?", size=15, color=INK)
 line([(496, 437), (527, 437)], color=PURPLE, lw=2.3, head=True)
@@ -267,7 +266,7 @@ for idx, x in enumerate(calendar_x):
         txt(x + 40, 531, "private", size=12, color=MUTED)
     else:
         rect(x + 12, 402, 57, 15, fill="#DDEAF5", stroke="none", radius=3)
-        rect(x + 12, 436, 57, 15, fill=ROSE, stroke="none", radius=3)
+        rect(x + 12, 436, 57, 15, fill=MID, stroke="none", radius=3)
         rect(x + 12, 470, 57, 15, fill=LAVENDER, stroke=GREEN, radius=3, lw=1.2)
         txt(x + 40, 477, "free at 2", size=9, color=INK)
 txt(1022, 611, "How can I coordinate with A and B\nmore efficiently?", size=12, color=INK)

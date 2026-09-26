@@ -4,11 +4,12 @@ This is an adapted legal trajectory, not a recorded model or oracle rollout.
 Each goal uses separate action coordinates: A and C have one bridge action
 and one supply action; B has one bridge action. The preference world and
 action path were chosen to explain the mechanics.
-The public proposer schedule is B, A, C, A, B, C. Actions are:
+The public proposer schedule is B, A, C, B, A, C, B. Actions are:
 B offers bridge actions (B=1,C=1), C rejects; A investigates C's supply
-preference; C passes; A offers supply actions (A=1,C=1), C accepts;
-B offers bridge actions (B=1,A=1), A accepts;
-C passes. The native offer/state rules validate the sequence.
+preference; C passes; B investigates A's bridge preference; A offers supply
+actions (A=1,C=1), C accepts;
+C passes; B offers bridge actions (B=1,A=1), A accepts.
+The native offer/state rules validate the sequence.
 Run with an environment containing matplotlib:
     python paper/figures/make_game_flow.py
 """
@@ -140,33 +141,40 @@ def goal_status(x, bridge_committed=(), supplies_committed=()):
 # The same three players remain visible in every scene. Preference cards in
 # scene 1 depict the illustrative world for the reader; each card is private.
 X1, X2, X3 = 20, 515, 1010
-panel(X1, 1, "An offer is rejected", "Bridge and supply use separate actions", PANEL_FILLS[0], ROSE)
+panel(X1, 1, "Offer and investigate", "C's rejection prompts A to probe supplies", PANEL_FILLS[0], ROSE)
+txt(X1+31, 112, "Round robin: B → A → C, repeated", size=11, color=MUTED, ha="left")
 player(X1+86, 157, "A", ROSE, ROSE_DARK, "Bridge: want\nSupplies: want")
 player(X1+235, 157, "B", APRICOT, APRICOT_DARK, "Bridge: want\nSupplies: neutral")
 player(X1+384, 157, "C", CORAL, CORAL_DARK, "Bridge: avoid\nSupplies: want")
-txt(X1+235, 310, "B offers: B and C repair the bridge", size=15, bold=True)
-arrow([(X1+252, 347), (X1+367, 347)], APRICOT_DARK, 2.5)
-badge(X1+375, 388, "C rejects", "white", CORAL_DARK, CORAL_DARK, 126)
+txt(X1+235, 292, "B offers: B and C take bridge actions", size=15, bold=True)
+arrow([(X1+252, 315), (X1+367, 315)], APRICOT_DARK, 2.5)
+badge(X1+375, 337, "C rejects", "white", CORAL_DARK, CORAL_DARK, 126)
+txt(X1+235, 369, "A investigates C's supply preference", size=14, bold=True)
+arrow([(X1+102, 393), (X1+367, 393)], ROSE_DARK, 2.0, dashed=True)
+rect(X1+269, 402, 180, 22, fill="white", stroke=CORAL_DARK, radius=8, lw=1.1, dashed=True)
+txt(X1+359, 413, "Only A learns: want", size=11, color=CORAL_DARK, bold=True)
 goal_status(X1)
 
-panel(X2, 2, "Investigate and revise", "A tests whether a different offer could work", PANEL_FILLS[1], APRICOT)
+panel(X2, 2, "Investigate and revise", "B learns A wants the bridge; A secures supplies", PANEL_FILLS[1], APRICOT)
 player(X2+86, 157, "A", ROSE, ROSE_DARK)
 player(X2+235, 157, "B", APRICOT, APRICOT_DARK)
 player(X2+384, 157, "C", CORAL, CORAL_DARK)
-txt(X2+235, 228, "A investigates C's supply preference", size=14, bold=True)
-arrow([(X2+102, 255), (X2+367, 255)], ROSE_DARK, 2.0, dashed=True)
-rect(X2+269, 271, 180, 30, fill="white", stroke=CORAL_DARK, radius=9, lw=1.1, dashed=True)
-txt(X2+359, 286, "Only A learns: want", size=11, color=CORAL_DARK, bold=True)
-txt(X2+235, 342, "A offers: A and C deliver supplies", size=15, bold=True)
-arrow([(X2+102, 369), (X2+367, 369)], ROSE_DARK, 2.5)
-badge(X2+376, 406, "C accepts", "white", CORAL_DARK, CORAL_DARK, 126)
+badge(X2+384, 233, "C passes", "white", CORAL_DARK, CORAL_DARK, 118)
+txt(X2+235, 269, "B investigates A's bridge preference", size=14, bold=True)
+arrow([(X2+219, 292), (X2+102, 292)], APRICOT_DARK, 2.0, dashed=True)
+rect(X2+35, 306, 180, 25, fill="white", stroke=ROSE_DARK, radius=8, lw=1.1, dashed=True)
+txt(X2+125, 318.5, "Only B learns: want", size=11, color=ROSE_DARK, bold=True)
+txt(X2+235, 359, "A offers: A and C deliver supplies", size=15, bold=True)
+arrow([(X2+102, 382), (X2+367, 382)], ROSE_DARK, 2.5)
+badge(X2+376, 407, "C accepts", "white", CORAL_DARK, CORAL_DARK, 126)
 goal_status(X2, supplies_committed=("A", "C"))
 
-panel(X3, 3, "Repairing the bridge", "B and A take the bridge actions", PANEL_FILLS[2], CORAL)
+panel(X3, 3, "Final bridge offer", "B gains A's support; bridge reaches 2/3", PANEL_FILLS[2], CORAL)
 player(X3+86, 157, "A", ROSE, ROSE_DARK)
 player(X3+235, 157, "B", APRICOT, APRICOT_DARK)
 player(X3+384, 157, "C", CORAL, CORAL_DARK)
-txt(X3+235, 310, "B offers: B and A repair the bridge", size=15, bold=True)
+badge(X3+384, 255, "C passes", "white", CORAL_DARK, CORAL_DARK, 118)
+txt(X3+235, 310, "B offers: B and A take bridge actions", size=15, bold=True)
 arrow([(X3+220, 347), (X3+102, 347)], APRICOT_DARK, 2.5)
 badge(X3+96, 388, "A accepts", "white", ROSE_DARK, ROSE_DARK, 126)
 goal_status(X3, bridge_committed=("A", "B"), supplies_committed=("A", "C"))
