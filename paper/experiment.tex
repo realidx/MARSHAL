@@ -1,62 +1,71 @@
 \label{sec:experiment}
 
-We evaluate whether training improves partner inference, action selection, and
-their composition in \textsc{BENAC-I}, and whether any gains transfer to other
-multi-agent tasks. We report the checkpoint and evaluation protocol with every
-result; update counts alone do not imply equal training-token budgets.
-
 \subsection{Data and training}
 \label{sec:experiment-training}
 
-We construct training items from slices of the finite \textsc{BENAC-I} game in
-Section~\ref{sec:benac-i}. Instances vary goal dependencies, binary versus
-linear satisfaction, private preferences, commitment states, and interaction
-histories. We use the certified reference policy of
-Section~\ref{sec:game-slices} to obtain behavioral likelihoods for
-partner-state judgments and action values for legal decisions. We retain a
-supervised item only when its reference computation succeeds, and check
-generated transitions with the native game rules. Complete-game resets provide
-a separate source of interactive experience. The final dataset
-version, counts of distinct source structures and rendered training items, and
-the exact structural separation from each test suite are to be inserted here.
-% TODO: Insert the final dataset manifest, train/validation counts, and split audit.
+\paragraph{Constructing games and histories.}
+We build training data from the finite \textsc{BENAC-I} games in
+Section~\ref{sec:benac-i}, varying goal dependencies, binary or linear
+satisfaction, private preferences, and public priors. From these games, we
+construct legal interaction histories and extract decision points together
+with the information available to the acting player. We also branch on
+investigation outcomes to obtain related decisions in which newly revealed
+preferences can change the appropriate action. Each history is replayed
+under the native game rules to verify its transitions. This construction
+provides targeted examples of interpreting behavior, incorporating new
+evidence, and choosing actions under different preference alignments.
 
-All arms initialize from Qwen3-4B-Instruct-2507~\citep{yang2025qwen3}. The \emph{baseline} is the
-unchanged model. \emph{SP} trains on complete self-play games using each
-player's own terminal utility. \emph{O} trains on history-to-action decision
-items, scored against the reference action values without a supplied partner
-judgment. \emph{D} jointly trains O, partner inference, and planning given a
-correct qualitative partner judgment. In the planning task, the model sees the
-current decision state but not the behavioral history; the supplied judgment
-uses the same possible-set/favored interface as the inference task. These are
-alternative training objectives, not separate networks or an enforced
-inference-to-planning pipeline at inference time.
+\paragraph{Generating supervision.}
+At each selected decision, the oracle in Section~\ref{sec:game-slices}
+conditions on the player's observations and computes expected terminal
+utilities for legal actions under the reference continuation. These
+computations yield three training tasks: direct action selection from the
+observed state and history; inference of a partner's possible and most likely
+preferences; and planning given an oracle inference. Action labels retain
+the acceptable actions rather than imposing a single answer when actions
+tie. We exclude failed reference computations and mask planning labels that
+remain ambiguous under the supplied qualitative judgment. In the paired
+bank, related views and histories from the same source family share a split,
+yielding 373 training and 124 validation cases. The reported checkpoints
+also include an earlier inference--planning dataset and a compact joint
+training set of 24 items selected using prior training performance.
+Appendix~\ref{app:training} records these dataset variants and their selection
+procedures.
 
-We use grouped policy optimization with eight responses per decision item;
-SP groups complete-game rollouts by reset and player. Training uses BF16,
-a 4096-token sequence limit, at most 1024 generated tokens per call, sampling
-temperature 1, and a KL penalty toward the frozen base model. The intended
-response-token budget is 6,553,600 per arm, with actual consumed tokens and
-checkpoint selection reported alongside each result. D collects four
-candidate groups from each of the history-to-action, inference, and planning
-tasks per update. Other optimization
-settings, including each arm's learning-rate schedule and realized training
-dose, will be taken from the archived run configurations.
-% TODO: Insert one final configuration table from the selected checkpoints.
+\paragraph{Training.}
+All trained variants start from Qwen3-4B-Instruct-2507~\citep{yang2025qwen3}.
+The unchanged model provides the baseline. Self-play (SP) learns from each
+player's terminal utility in complete games. Slice training instead uses
+oracle-scored responses: \textsc{GameSlice-A} trains direct action selection,
+\textsc{GameSlice-IP} trains inference and conditional planning, and
+\textsc{GameSlice-Joint} combines all three tasks. These objectives update
+a single model without imposing an inference-to-planning pipeline at test
+time. Slice training uses grouped policy optimization with eight responses
+per item and a KL penalty toward the frozen base model. We use BF16 and an
+initial learning rate of $10^{-6}$. Table~\ref{tab:training-configuration}
+provides the remaining settings and the realized training dose for each
+verified checkpoint; the reported variants differ in both data and training
+budget.
 
 \subsection{In-domain diagnosis and adversarial games}
 \label{sec:experiment-benac}
 
-After training, we apply the partner-history, decision-sufficient diagnostic of
-Section~\ref{sec:diagnose} to each arm. We report exact semantic inference judgments,
+The archived post-training runs use an earlier 16-case diagnostic (v6),
+distinct from the 22-case base-model diagnostic (v9) in
+Section~\ref{sec:diagnose}. Table~\ref{tab:experiment-diagnosis} compares
+checkpoints within that earlier protocol; its baseline scores are not
+directly comparable to Table~\ref{tab:diagnose-main}.
+We report exact semantic inference judgments,
 planning regret when the correct judgment is supplied, native history-to-action
 regret, and the paired judgment-repair effect. Regret is lower-is-better;
 repair is computed only where both paired actions are valid. The three
 deterministic repetitions of a structure are not independent test cases.
 
 \begin{table}[t]
-\caption{Post-training diagnosis on 16 partner-generated histories, one per
-held-out structure. Planning regret uses the correct inference judgment.
+\caption{Historical post-training diagnosis under the earlier v6 protocol:
+16 partner-generated histories, one per held-out structure. These are
+different cases from the v9 diagnostic in Section~\ref{sec:diagnose}.
+Planning regret uses the correct inference judgment.
 Regret and repair are means over valid outputs; their coverage may differ.
 Blank cells await a verified run under this protocol. BP-99 is a historical
 inference/planning-only reference, not one of the four main arms. Valid

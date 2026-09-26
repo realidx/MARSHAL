@@ -41,7 +41,7 @@ def failures(calls):
         else:counts['state_or_action']+=1
     return dict(counts)
 
-def play(reset,seat,replica,routes,output,generate,shared=False):
+def play(reset,seat,replica,routes,output,generate,shared=False,oracle=None):
     ep=Episode(reset,reset['id'],replica,SEED)
     tid=f"{reset['id']}-r{replica}-"+('shared-q0' if shared else f'seat{seat}')
     folder=Path(output)/tid;folder.mkdir()
@@ -50,14 +50,16 @@ def play(reset,seat,replica,routes,output,generate,shared=False):
         while ep.status=='running':
             actor=ep.rules.actor(ep.node);role='q0' if shared or actor!=seat else 'focal'
             request=ep.request()
-            try:response=generate(routes[role],request)
+            try:
+                response=oracle.choose(ep) if oracle is not None and actor!=seat else generate(routes[role],request)
             except Exception as exc:
                 ep.status='infrastructure_failure';error=repr(exc)
                 log.write(json.dumps(dict(status=ep.status,error=error,request=request,actor=actor))+'\n');break
-            response['role']=role;ep.accept(response)
+            response['role']='oracle' if oracle is not None and actor!=seat else role;ep.accept(response)
+            if oracle is not None and ep.calls[-1]['valid']:oracle.observe(ep.calls[-1]['action'])
             log.write(json.dumps(ep.calls[-1])+'\n');log.flush()
     scores=[]
-    for focal in range(3) if shared else (seat,):
+    for focal in range(ep.rules.spec.n_players) if shared else (seat,):
         bounds=prefix_bounds(reset['raw']['game'],ep.node.state.snapshot_commitments(),ep.world[focal])
         if ep.terminal is not None:bounds.update(lower=ep.terminal[focal],upper=ep.terminal[focal])
         calls=[c for c in ep.calls if c['player']==focal]

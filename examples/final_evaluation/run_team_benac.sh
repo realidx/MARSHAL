@@ -7,4 +7,5 @@ python -m examples.final_evaluation.team_benac \
   --model "${2:?served model name}" \
   --checkpoint-hash "${3:?verified checkpoint hash}" \
   --output "${4:?new output directory}" \
+  --suite "${TEAM_SUITE:-examples/final_evaluation/team_benac_v1}" \
   --parallel-games "${TEAM_PARALLEL_GAMES:-4}" --batch-invariant-confirmed

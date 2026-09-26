@@ -17,7 +17,8 @@ underlies opponent modelling and belief-space coordination
 \citep{carmel1996opponent,huang2024hop,goel2026bayesian}; the observation--belief--action
 links nevertheless remain fragile for LLM agents
 \citep{sobotka2026strategic,jha2026modeling}. 
-Let $b_t^i\in\Delta(IS_i)$ be agent $i$'s belief after public history $h_t$.
+Let $b_t^i\in\Delta(IS_i)$ be agent $i$'s belief conditioned on public history
+$h_t$, its own preferences $v_i$, and its private observations $r_t^i$.
 An observation updates it as $b_{t+1}^i=\tau_i(b_t^i,a_t^i,o_{t+1}^i)$, while
 an action is selected by belief-conditioned planning: $a_t^{i,*}\in\arg\max_{a\in A_i}\mathbb E\!\left[\sum_{k=t}^{T}\gamma^{k-t}R_i(x_k,a_k)\mid b_t^i,a_t^i=a,\pi_{-i}\right]$.
 We call these computations \emph{inference}, which maintains the
@@ -71,7 +72,7 @@ are
  \label{eq:benac-i-utility}
 \end{equation}
 At initialization, the goals, prior, legal-action rules, and proposer schedule are
-public, while each player sees only its own sampled preferences; every player
+public, while some of the preferences are hidden; every player
 starts with one investigation opportunity ($q_{i,0}=1$). Play follows $\rho$.
 At each proposal opportunity, the scheduled player may \textsc{pass}, make a
 bilateral \textsc{offer} to a chosen partner, or, if $q_{i,t}>0$, use
@@ -80,17 +81,15 @@ unchanged. Investigation also leaves them unchanged, uses that proposal
 opportunity and one unit of budget, and reveals the answer only to the
 investigator; the query target is public. An offer specifies new commitments
 for the proposer, the partner, or both. The partner immediately chooses
-\textsc{accept} or \textsc{reject}: acceptance makes all proposed additions
+\textsc{accept} or \textsc{reject}, acceptance makes all proposed additions
 binding and irreversible, whereas rejection changes no commitments. The
 response does not use another proposal opportunity. Play then proceeds to the
 next scheduled proposer and ends after the final opportunity, when each
 player receives $U_i(C_T;v_i)$. To improve its utility, a player infers
 partners' preferences from offers, responses, and any private investigation
 answers, then plans whom to approach, what to offer, and whether to accept,
-accounting for goals on which preferences align or conflict.
-
-Figure~\ref{fig:game-flow} illustrates these transitions in a
-three-player game.
+accounting for goals on which preferences align or conflict. Figure~\ref{fig:game-flow} illustrates these transitions in a
+three-player game. Appendix~\ref{app:game} provides the full formal specification.
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figures/game_flow.pdf}
@@ -107,9 +106,7 @@ wants the bridge. A then offers to deliver supplies with C, who accepts,
 completing that goal. C passes again before B offers bridge actions to A,
 who accepts, bringing bridge progress to $2/3$; C does not join it. The
 game ends after this final offer. Proposer turns follow the fixed round-robin
-order B--A--C throughout. This adapted legal sequence
-illustrates the rules and hidden preferences, without asserting optimal
-play.}
+order B--A--C throughout.}
 \label{fig:game-flow}
 \end{figure}
 
@@ -120,6 +117,9 @@ A \emph{game slice} is a consecutive segment of play that begins at a chosen
 decision and may include later decisions. For example, it can contain an
 offer, the partner's response, and the next proposal. The slice records which
 actions occurred and what each player observed following the game rule.
+Whereas a full game starts with zero commitments, a slice may start from a
+legal history prefix or an explicitly specified exogenous state, with its
+current commitments and remaining investigation budgets recorded.
 At decision $s$, the acting player $i$
 knows the public history $h_s$, its own preferences $v_i$, and its private
 answers $r_s^i$. We write this view as $I_s^i=(h_s,v_i,r_s^i)$, an
@@ -132,6 +132,8 @@ slice definition appears in Appendix~\ref{app:oracle}. Following the Bayesian
 representation of private types
 \citep{harsanyi1967games}, the oracle solves the finite tree over possible
 preferences and actions under the common prior $\mu_0$.
+The oracle labels are exact relative to the public prior, the specified
+partner policies, and the fixed continuation policy.
 A \emph{policy} $\pi_i(a\mid I)$ assigns a probability to each legal action
 $a\in\mathcal L(I)$ given what player $i$ can know. Let $\Pi_i$ contain all
 such policies, including plans for later decisions after each possible

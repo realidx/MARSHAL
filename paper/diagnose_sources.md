@@ -1,91 +1,25 @@
-# Diagnose: native results and provenance
+# Current manuscript diagnosis: v9 Q0
 
-Main source: `runs/benac_native_endgame/functional-dependency-retry3-20260908-064709`.
-Frozen suite: `functional-dependency-v1`; prompt: `native-endgame-diagnose-v5-role-context`;
-model: `Qwen/Qwen3-4B-Instruct-2507`, temperature zero. Ten positions from ten
-source games; each six-game cohort includes three games from each retained
-source partition. Two positions belong to both directions. Selection did not
-inspect model answers. The partitions were reused during development and are
-not untouched confirmation sets.
+This inventory supersedes the previous v6 and native-endgame manuscript sources.
 
-The main text reports both partitions together **within each cohort**, rather
-than presenting one reused partition as a held-out test. The appendix retains
-all four split-by-cohort cells. `diagnose_results.json` records the aggregated
-values, source hashes, coverage, controls and six paired action indices.
-Aggregation uses `benac_p.diagnose_suite.cluster_summary`, 2000 game-bootstrap
-resamples, RNG seed 0. No cross-cohort pooling is used.
+- Archive: `new/diagnostic_v9_results_20260926/raw_runs.tar.gz`
+- Members: `runs/diagnostic_v9/q0-882149/structure_v9/`
+- Model: unchanged Qwen3-4B-Instruct-2507; one repeat, 22 cases, 88 calls.
+- Cases and certificates: `new/diagnostic_v9/cases.json`.
+- Scoring and aggregation: `new/diagnostic_v9/experiment.py`.
+- Qualification: `new/diagnostic_v7/build.py:qualify`, reused by v9.
+- Machine-readable numbers, raw-member hashes and protocol: `paper/diagnose_results.json`.
 
-| Manuscript item | Source |
-|---|---|
-| Table 1A: B→P 6/6 certified cases | `certificates.json`: B→P members, `functional.belief_to_planning`; action optimal under left singleton has positive regret under right singleton |
-| Table 1A: P→B 6/6 certified cases | `certificates.json`: P→B members, `functional.planning_to_belief`; positive exact information gap |
-| Table 1A: entropy 1.585 / 0.667 | `scores.json / active`: `forced_low_posterior_entropy`, `forced_high_posterior_entropy` |
-| B exact, P regret, B repair | `scores.json / cases`: cohort roots; `belief_exact`, `OL`, `belief_repair` |
-| Changed actions: 3/6 | `answers.json`: root `plan_model` versus `plan_oracle`, B→P cohort |
-| Forced evidence gap | `scores.json / active / forced_information_gap` |
-| Forced-arm exactness | `forced_low_belief_exact`, `forced_high_belief_exact` |
-| Paired exactness difference | `forced_belief_exact_delta`, scaled to percentage points |
-| Paired utility contrasts | `forced_reference_utility_delta`, `forced_model_second_decision_then_reference_delta` |
-| Per-partition appendix table | `summary.json / conditions` |
-| 127 tasks, 230.8 tokens, no truncation | `protocol_summary.json` |
-| 3/4 semantic controls and cached resume | `belief_preflight_*`, `preflight_policy_change.json` |
+## Manuscript mapping
 
-Independent replay rebuilt all 127 task payload hashes, oracle labels,
-intervention branches and scores exactly. The first-pass system/tool hashes
-also match the manifest. One secondary counterfactual root reference score is
-undefined for an impossible type/history combination; direct model-regret
-comparisons remain valid. Ten auxiliary J tables are complete, but all their
-updater-repair values are zero. They are not presented as evidence of positive
-information-mediated utility.
+- Main table: `summary.json` panels `repair_sensitive`, `action_control`, and four evidence layers. Denominators include invalid outputs.
+- Inference failures: per-case B support and favored fields; direct feedback 6/6 joint, elimination 0/6, multi-update 0/4.
+- Planning failure: P_gold 11/22; exact mean regret 0.5665558019216556.
+- Intervention: 21 valid pairs, 10 changed judgments, 9 changed actions. Gains: 3 positive, 17 zero, 1 negative overall; among changed judgments: 3 positive, 6 zero, 1 negative. Mean gain 1/7 overall, 0.3 on changed judgments.
+- Repair-sensitive: eight valid pairs, two action changes, one positive gain of 1, mean 0.125. Controls: thirteen pairs, two positive gains (2 and 1), one negative (-1), mean 2/13.
+- Appendix-only partial-repair example: `interaction-0524ffa3f232ff556a`. P_model action index 4, value 0; P_gold index 2, value 1; optimal index 5, value 2. Checked against raw tool calls and case action table. This illustrates partial repair, not a fully successful plan.
+- Worked-example audit: recomputing `InitialEpisode(raw, initial_state)` reproduces policy hash `4376ca0e49ce1bbd012a97742650cee326157d51e8a42b41430124cd9ca47baa`. The observed initial offer (Blair adds nothing, Alex adds Cedar) has likelihoods `(1/13, 0, 0)` under Want/Neutral/Avoid and Blair continuation values `(1, 0, 0)`. The alternative initial offer (Blair adds Maple, Alex adds Cedar) yields Blair `(1, 1, 1)`. Alex accepts either offer with probability one. These quantities support the posterior and payoff explanation in `diagnose_appendix.tex`.
 
-The B→P intervention changes actions on seeds 30005, 30016 and 30018. Two changes
-preserve utility; seed 30018 increases regret by 2/3. Thus behavioral coupling
-and beneficial repair are different empirical statements. P→B is established
-at the action-to-evidence interface through exact branch enumeration, not by
-assuming that changed oracle supports imply changed internal LLM beliefs.
+The paired regret/value identity and equality of the two planner requests' seeds and tools were checked for all cases. The single P_model format failure is excluded only from paired utility statistics. The diagnostic covers seven reused geometries; cases are not independent transfer samples. Action controls are not guaranteed model-invariance controls. Do not pool these results with old 16-case v6 voluntary histories or claim uniformly beneficial repair.
 
-Table 1 now separates oracle-certified task dependencies (panel A) from model
-error measurements (panel B). The 6/6 entries are selection properties, never
-model success rates or prevalence estimates. B→P singleton type probes are
-internal oracle calculations; model P receives the evidence-supported judgment,
-which can remain uncertain. Action changes, signed repair, and the paired B
-accuracy difference remain reported as supplementary joint-response observations.
-The claim is model errors at two interfaces within tasks that couple their
-computations, not causal amplification between internal model weaknesses.
-
-Preceding native baseline: `runs/benac_native_endgame/full-history-role-context`.
-Its 36 positions, full labels and scores were independently rebuilt and matched.
-The appendix quotes its six confirmation unknown/relevant primary cases only:
-B exact 1/6, reference-judgment P regret 2/3. It is not pooled with the latest
-run. Nine frozen positions are reused; the tenth is a new query/history from
-source game 30040, already represented in the baseline. The previous semantic
-three-stage experiment is historical and supplies no current manuscript result.
-
-Updated files:
-
-- `diagnose.tex`: native methodology, capability errors, functional dependencies,
-  signed interventions and implications for targeted training.
-- `diagnose_appendix.tex`: all position IDs, exact procedures, controls,
-  aggregation, per-partition values and secondary score limits.
-- `preliminaries.tex`: replaces the obsolete passive snapshot-response oracle
-  and automatic-approval recursion with the implemented active history-aware
-  terminal best response and native ego-decision-window solver.
-
-Scope: these data support task-level B/P errors and functional dependencies
-among explicit judgments, actions and evidence. They do not establish separate
-internal neural modules, universally beneficial repair, end-to-end long-horizon
-LLM competence, or transfer. The failed known-copy control limits attribution of
-belief errors exclusively to strategic inference. A causal effect of changing
-an explicit input or action is not identification of an internal cognitive
-mechanism.
-
-Worked example: `native-30040-g6-d2`, one of the existing six P→B cases.
-Root state/history/goals/preferences are taken from its `root/plan_oracle`
-task. The two arms are `low_information` (ordinary offer, action index 7)
-and `high_information` (menu, index 11). The menu CHOOSE_1 case is
-`after_655f72f82fc2/1`: oracle support AVOID, model answer WANT/NEUTRAL.
-The CHOOSE_2 case is `/0`: oracle support WANT/NEUTRAL. Subsequent ego
-REJECT/ACCEPT values are [0,0] and [1,2], respectively, from saved labels.
-The appendix response-value rows [1,1,2], [0,1,1], [0,1,0] for P2 were separately
-recomputed with the existing RationalPartner search at the pending menu under
-its fixed reference continuation. No new model requests or game rules were used.
+- Main-text two-goal example: `layer-19646c73e0c97ae729` (action control). Recomputed observed-offer likelihoods are `(1/6, 1/9, 0)`, giving posterior `(0.6, 0.4, 0)` from a uniform prior. Raw inference says Avoid only. P_model requests no own addition and Blair Maple (index 2, utility 0); P_gold requests Alex Maple and Blair Cedar (index 4, utility 2, optimal). The gain demonstrates a beneficial input intervention, not that correct inference is necessary to choose the optimal action.
