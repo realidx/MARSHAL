@@ -1,0 +1,62 @@
+\section{CalBench rollout excerpts}
+\label{app:calbench-rollout}
+
+The following excerpts come from the frozen \texttt{replan\_varied\_s1}
+scenario. Q0 (run 868929), self-play SP-41 (run 874283), and
+\textsc{GameSlice-Joint} (run 879033) received identical initial calendars.
+Quoted text is verbatim \texttt{dm} content from each run's
+\texttt{games/replan\_varied\_s1/trace.json}; intervening messages are
+omitted. Slot tuples below come from the environment's round resolutions,
+ordered by the meeting's participants, rather than from model explanations.
+
+\paragraph{Negotiating the first meeting.}
+\textsc{GameSlice-Joint}'s agent 0 first proposed slot 2. Agent 1 replied:
+\begin{quote}\small
+``Hi, slot 2 is blocked for me, so I can't use it. Slot 1 is free for me and
+would be a good alternative. Would that work for you?''
+\end{quote}
+Agent 0 then asked agent 2:
+\begin{quote}\small
+``Hi, Agent 1 suggested slot 1. Is that free for you? I'm open to slot 1 if it
+works for both of you.''
+\end{quote}
+Agent 2 confirmed slot 1, and the three agents' scheduling actions all chose
+slot 1; the resolution tuple was $(1,1,1)$.
+
+\paragraph{A disagreement in the other runs.}
+Q0 and SP-41 both placed the first meeting at slot 0. During negotiation for
+the second meeting, Q0's agent 3 reported to agent 1:
+\begin{quote}\small
+``Slot 1 is blocked for me, so I can't use it. How about slot 2? It's free and
+doesn't conflict with my schedule. Would that work for you?''
+\end{quote}
+Q0's agent 1 later responded:
+\begin{quote}\small
+``I see slot 1 is blocked for you, but it's free for me. I don't have any other
+free slots available. Could you please confirm if you're able to adjust your
+schedule to slot 1? I'm happy to help coordinate if needed, but we need a
+shared free slot.''
+\end{quote}
+SP-41's agent 1 made the corresponding request to agent 3:
+\begin{quote}\small
+``I see you're suggesting slot 2, but it's blocked for me and cannot be used.
+Slot 1 is free and available for me without any conflict. Would you be able to
+join us there? If not, let me know what alternative works best for you.''
+\end{quote}
+In both runs, the second
+meeting's resolution tuple was $(1,2,2)$, so no common slot was established.
+Q0's agent 1 actually returned an empty action list at this decision; its
+resolution entry should not be read as an intentional slot-1 commitment.
+
+\paragraph{Preserving a shared commitment.}
+In the \textsc{GameSlice-Joint} run, the second meeting was placed at slot 0
+by all three participants. When agent 0 proposed slot 0 for the third
+meeting, agent 2 replied:
+\begin{quote}\small
+``Slot 0 is taken by another meeting. I suggest slot 2 instead, which is free
+and doesn't conflict with any of my commitments. Would that work for you?''
+\end{quote}
+Agent 3 also identified the prior meeting at slot 0. The final resolution
+tuple was $(2,2,2)$, and all three meetings remained valid. This trajectory
+shows coordination around an existing commitment; it contains no action that
+reschedules an earlier meeting.
