@@ -26,6 +26,7 @@ def witnesses(reset):
 
 def failures(calls):
     from collections import Counter
+    from jsonschema.exceptions import ValidationError
     from training.b_sft.social_named_probe import validate
     counts=Counter()
     for c in calls:
@@ -37,7 +38,7 @@ def failures(calls):
             f=tools[0]['function'];args=json.loads(f['arguments'])
             schemas={t['function']['name']:t['function']['parameters'] for t in sp_prompt.tools_for(c['observation'])}
             validate(args,schemas[f['name']])
-        except (KeyError,ValueError,TypeError):counts['format_or_schema']+=1
+        except (KeyError,ValueError,TypeError,ValidationError):counts['format_or_schema']+=1
         else:counts['state_or_action']+=1
     return dict(counts)
 

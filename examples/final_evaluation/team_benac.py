@@ -8,6 +8,7 @@ from examples.final_evaluation.adversarial_runtime import play
 from training.social_mixed.structure_coverage import geometry_id
 ROOT=Path(__file__).resolve().parents[2]
 FREEZE=Path(__file__).with_name('team_benac_v1')
+MAX_TOKENS=4096
 def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def audit():
  source=Path(__file__).with_name('adversarial_v2')
@@ -35,17 +36,18 @@ def audit():
  (FREEZE/'resets.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in rows))
  report=dict(scope='Union of listed local training/validation banks; per-model ID is not implied. Includes historical banks.',source_hashes=hashes,matches=matches,split_counts=dict(Counter(r['evaluation_split'] for r in rows)))
  (FREEZE/'overlap_audit.json').write_text(json.dumps(report,indent=2)+'\n')
- manifest=dict(version='team-benac-v1',players=3,games=16,repeats=1,temperature=0,max_tokens=1024,retries=1,original_manifest_sha256=digest(source/'manifest.json'),files={n:digest(FREEZE/n) for n in ('resets.jsonl','overlap_audit.json')})
+ manifest=dict(version='team-benac-v1',players=3,games=16,repeats=1,temperature=0,max_tokens=MAX_TOKENS,retries=1,original_manifest_sha256=digest(source/'manifest.json'),files={n:digest(FREEZE/n) for n in ('resets.jsonl','overlap_audit.json')})
  (FREEZE/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n');return report
 
 def load():
  m=json.loads((FREEZE/'manifest.json').read_text())
+ if m['max_tokens']!=MAX_TOKENS:raise ValueError('Manifest and request output budgets differ')
  for n,h in m['files'].items():
   if digest(FREEZE/n)!=h:raise ValueError('Changed frozen file: '+n)
  return m,[json.loads(l) for l in (FREEZE/'resets.jsonl').read_text().splitlines()]
 
 def complete(route,request):
- body=dict(request,model=route['model'],temperature=0,top_p=1,top_k=-1,max_tokens=1024,repetition_penalty=1,tool_choice='auto',parallel_tool_calls=False)
+ body=dict(request,model=route['model'],temperature=0,top_p=1,top_k=-1,max_tokens=MAX_TOKENS,repetition_penalty=1,tool_choice='auto',parallel_tool_calls=False)
  # Episode requests contain only native chat fields and seed.
  body={k:v for k,v in body.items() if k in ('messages','tools','model','temperature','top_p','top_k','max_tokens','repetition_penalty','tool_choice','parallel_tool_calls','seed')}
  req=Request(route['base_url'].rstrip('/')+'/chat/completions',data=json.dumps(body).encode(),headers={'Content-Type':'application/json','Authorization':'Bearer EMPTY'})
