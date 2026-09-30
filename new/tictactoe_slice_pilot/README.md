@@ -70,10 +70,10 @@ prompt, temperature, and sample count across the panel; otherwise the
 estimated decision distributions are not directly comparable. With finite
 samples, close ranks have sampling uncertainty.
 
-No model weights or Tic-Tac-Toe rollout responses are available locally in
-this workspace, so `pilot_data/summary.json` deliberately says
-`model_scored: false`. The current outputs establish the oracle side and the
-fixed probe panel; a real-model C × D ranking requires those responses.
+The frozen oracle build in `pilot_data/summary.json` retains
+`model_scored: false`: it describes enumeration, not a model run. Actual
+Qwen3-4B-Instruct-2507 measurements at 600 and 1024 output tokens are now
+summarized in [RESULTS.md](RESULTS.md). Raw run evidence remains local.
 
 ## SoC cluster probe
 
@@ -125,3 +125,25 @@ on valid legal-action completions; invalid and truncated outputs are counted
 separately. The base Qwen checkpoint is the initial-model measurement. A
 later trained checkpoint can be passed as `MODEL_DIR` to measure how the
 ranking changes during learning.
+
+## Validated H100-47 run and 1024-token repeat
+
+The `game-slice` branch includes the SoC fixes and both completed model runs.
+The launcher locates pilot files from `REPO_DIR`, since Slurm copies the batch
+script to its spool directory. The analyzer supports the actual Python 3.10
+runtime. `PILOT_MAX_TOKENS` controls the output budget (default: 600).
+
+From the repository root, submit a full 1024-token run to a single H100-47:
+
+```sh
+sbatch --partition=gpu --gres=gpu:h100-47:1 \
+  --export=ALL,PILOT_LIMIT=0,PILOT_REPLICAS=16,PILOT_MIN_VALID_SAMPLES=8,PILOT_MAX_TOKENS=1024 \
+  new/tictactoe_slice_pilot/sbatch_probe.sh \
+  "$PWD" \
+  /home/e/e1300530/models/Qwen3-4B-Instruct-2507 \
+  /absolute/path/to/a/new-output-directory
+```
+
+Set `PILOT_MAX_TOKENS=600` for the original condition. Keep the model, fixed
+panel, prompt, seeds, and remaining decoding settings unchanged when comparing
+budgets. Existing output directories are rejected.

@@ -136,8 +136,9 @@ def request_for(row):
     board = row["board"]
     rows = [f"{r} {' '.join(board[3*r:3*r+3])}" for r in range(3)]
     legal_moves = ", ".join(a["move"] for a in row["actions"])
+    board_rows = "\n".join(rows)
     turn = (f"\n\nYou are player {row['player']}.\n\n"
-            f"Board:\n  0 1 2\n{'\n'.join(rows)}\n\n"
+            f"Board:\n  0 1 2\n{board_rows}\n\n"
             f"Legal moves:\n{legal_moves}")
     instruction = (
         "Choose exactly one legal move that maximizes your final game outcome:\n"

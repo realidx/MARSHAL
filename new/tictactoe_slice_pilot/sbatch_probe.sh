@@ -17,7 +17,7 @@ fi
 repo=$(readlink -f "$1")
 model_dir=$(readlink -f "$2")
 out=$(readlink -m "$3")
-pilot_dir=$(cd "$(dirname "$0")" && pwd)
+pilot_dir="$repo/new/tictactoe_slice_pilot"
 
 [[ -f "$repo/roll/agentic/env/tictactoe/minimax.py" ]]
 [[ -f "$repo/roll/agentic/tictactoe_protocol.py" ]]
@@ -64,6 +64,7 @@ replicas=${PILOT_REPLICAS:-16}
 limit=${PILOT_LIMIT:-0}
 concurrency=${PILOT_CONCURRENCY:-16}
 min_valid=${PILOT_MIN_VALID_SAMPLES:-8}
+max_tokens=${PILOT_MAX_TOKENS:-600}
 
 checkpoint_hash=$(python - "$model_dir" <<'PY'
 import hashlib, sys
@@ -148,7 +149,7 @@ python -u "$pilot_dir/probe.py" \
   --output "$out/probe" --base-url "http://127.0.0.1:$port/v1" \
   --model "$served_model" --checkpoint-hash "$checkpoint_hash" \
   --replicas "$replicas" --limit "$limit" --concurrency "$concurrency" \
-  --temperature 0.7 --top-p 0.8 --top-k 20 --max-tokens 600
+  --temperature 0.7 --top-p 0.8 --top-k 20 --max-tokens "$max_tokens"
 
 python "$pilot_dir/analyze.py" score \
   --oracle-dir "$pilot_dir/pilot_data" \
