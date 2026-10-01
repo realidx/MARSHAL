@@ -1,0 +1,51 @@
+{
+  "accepted": 1,
+  "accepted_roots": [
+    {
+      "expanded_worlds": 2,
+      "family": "ddc4c9e5d7b59d0f",
+      "id": "dfb3492e585c359f9a81-O",
+      "input_sha256": "dfb3492e585c359f9a81e53d8bdc123fbbfaade908bf07cd5ff58537a853d715",
+      "max_ego_decisions": 3,
+      "policy_sha256": "30b2961f2cd2ec6edbef3f7bd29a7259831175228c624dbe4c726fbafa6d2123",
+      "seed": 501,
+      "tree_nodes": 7120,
+      "worlds": 2
+    }
+  ],
+  "attempted": 18,
+  "criteria": "n=2, public generator support, finite selected-policy oracle, two or three ego decisions, unique entrance observation; no C/S or model-label filtering",
+  "excluded": 17,
+  "exclusion_reasons": {
+    "Synchronous terminal policy iteration cycled; no label": 11,
+    "not_two_player": 6
+  },
+  "existing_bank": "examples/social_mixed/interaction_bank_v1/tasks.jsonl",
+  "existing_bank_sha256": "37063c55133f6b3b1c159a77a271886e9d5daafb22711935baa684241f033dd1",
+  "generation_design": {
+    "fixed_round_robin": [
+      1,
+      0,
+      0,
+      1
+    ],
+    "game_rules": "native two-player private-investigation BENAC; MENU disabled by raw_fixture",
+    "imposed_setup": [
+      {
+        "action": "PASS"
+      }
+    ],
+    "public_prior": "balanced (want/neutral/avoid weights 1/1/1)",
+    "seed_rule": "raw_fixture(seed), retain n_players=2 only",
+    "support": "expand_support restores the stated public generator support"
+  },
+  "generator": "build_bp_pilot.raw_fixture",
+  "limitations": "Development seed sample; native generator uses binary goals and the selected-policy reference, and failed oracle seeds are reported rather than scored.",
+  "max_roots": 4,
+  "seed_count": 18,
+  "seed_start": 501,
+  "source": "new/benac_slice_pilot/pilot_data_fresh/source_tasks.jsonl",
+  "source_sha256": "a3c58b041e50e817068d70bd4abdc259d29bd31f1e105142c6ba3ff9a165f507",
+  "stop_condition": "first max_roots admissible roots or exhausted seed range",
+  "version": "fresh-seeded-native-2p-v1"
+}
