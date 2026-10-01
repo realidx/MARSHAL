@@ -76,10 +76,12 @@ selected roots, source hash, thresholds, and the reference policy hash. The
 full scan certified all 100 existing short-interaction roots; 95 had root
 `C_max > 0.1`. Four of the five remaining roots have zero root regret but a
 later uniform-probe regret increment above `0.05`; these would be lost by a
-single-point C filter. Among 38 roots with legal investigations, 14 had a
-selected answer with `S > 0.05` at the longest window. These are counts
-**within the preselected source bank**, not game-population rates. The eight
-selected examples include:
+single-point C filter. Thus **99 of 100 pass the consequence screen**. The
+eight selected roots are an intentionally capped diagnostic panel (two per
+category), not the total number of eligible slices. Among 38 roots with legal
+investigations, 14 had a selected answer with `S > 0.05` at the longest window.
+These counts apply only to the preselected source bank; they are not
+game-population rates. The eight selected examples include:
 
 | Root | Role | Root `C_max` | Selected `k` | Information value |
 | --- | --- | ---: | ---: | ---: |
