@@ -1,12 +1,210 @@
-\section{CalBench rollout excerpts}
+\section{Same-model negotiation evaluation}
+\label{app:team-benac}
+
+\paragraph{Instances and execution.}
+Each team size has 16 frozen instances. The two- and four-player suites cross
+binary/linear scoring, two/four proposal opportunities per player, and
+balanced/avoid-heavy priors, with two instances per combination. Prior
+weights for \textsc{Want}, \textsc{Neutral}, and \textsc{Avoid} are
+$(1,1,1)$ and $(1,1,2)$, conditioned on the native generation constraints.
+The three-player suite retains its existing 16 instances. All games have
+three goals and two commitment coordinates per player.
+
+\paragraph{Metrics and incomplete games.}
+Team utility is $\sum_i U_i(C_T;v_i)$, averaged over the full suite.
+For \textsc{GameSlice-A}'s sole incomplete three-player rollout,
+Table~\ref{tab:experiment-team} uses a conservative team-utility lower bound
+of $0.5$ derived from its last valid state's irreversible commitments,
+retaining all 16 games in the denominator and yielding a lower-bound mean
+of $0.911$.
+Negative-outcome counts below use completed games only and explicitly show
+their player-level denominators. They measure negative terminal utility. A legal terminal state is not a cooperation-success
+criterion, and completing more goals need not improve signed utility.
+
+\begin{table}[h]
+\caption{Negative-utility players among completed games. Counts expose
+individual costs that can be obscured by aggregate team utility.}
+\label{tab:team-negative}
+\centering\small
+\begin{tabular}{lccc}
+\hline
+Model & Two players & Three players & Four players \\
+\hline
+Baseline & 5/32 & 5/48 & 11/64 \\
+Self-play & 3/32 & 5/48 & 11/64 \\
+\textsc{GameSlice-A} & 2/32 & 15/45 & 14/64 \\
+\textsc{GameSlice-AP} & 4/32 & 8/48 & 12/64 \\
+\textsc{GameSlice-Joint} & 2/32 & 3/48 & 10/64 \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{CalBench evaluation and rollout comparison}
+\label{app:calbench}
+
+\subsection{Environment and evaluation settings}
+\label{app:calbench-setting}
+
+\paragraph{Task and private information.}
+CalBench~\citep{zou2026calbench} models personal assistants coordinating a
+stream of meeting requests on behalf of different users. Each agent controls
+one private calendar with discrete time slots. A slot can be free, contain a
+movable errand or a previously scheduled meeting, or be blocked and therefore
+unavailable for either scheduling or rescheduling. The agent sees its own
+calendar, item-specific displacement costs, the current meeting request, and
+messages delivered to it; it cannot inspect another agent's calendar.
+Agents are instructed to minimize their own user's cumulative displacement
+cost while coordinating feasible meetings and avoiding disclosure of exact
+costs or unnecessary private details. Thus a mutually feasible slot may
+require one user to move an errand or several users to move a shared meeting,
+creating a need to negotiate who accommodates whom. Scheduling a new meeting
+itself incurs no displacement cost; moving an existing item does.
+
+\paragraph{One meeting round.}
+Each incoming request identifies a meeting and its participants. The calendar
+state persists across rounds, and a verbal agreement alone does not change
+it. Our evaluation retains the native four-phase interaction:
+\begin{enumerate}
+\item \textbf{Communication.} Agents exchange private direct messages to
+propose slots, explain constraints, and negotiate calendar changes. A
+participant may also contact an agent outside the current meeting when an
+earlier shared commitment needs to move.
+\item \textbf{Voluntary rescheduling.} A non-participant who received a
+message during the round can submit changes to its own calendar. This phase
+allows an earlier meeting's participants to help relocate it even when they
+are absent from the new meeting.
+\item \textbf{Independent decisions.} Each current participant submits a
+batch of \texttt{schedule} and \texttt{reschedule} actions for its own calendar.
+A reschedule identifies the item, its source and destination slots, and a
+justification. The batch is validated as a whole: the new meeting must occupy
+a free slot after the proposed moves, and blocked items cannot be moved or
+overwritten. No agent can directly edit a partner's calendar.
+\item \textbf{Resolution.} The environment validates the submitted actions
+and checks agreement across calendars. All participants must place the new
+meeting in the same slot, and any relocated meeting must remain consistent
+across its original participants. Agreement in messages is therefore
+insufficient if the agents submit incompatible calendar actions.
+\end{enumerate}
+
+\paragraph{Our sequential evaluation suite.}
+We evaluate homogeneous teams: the same model controls all four agents in a
+game. Each game has eight slots and three single-slot meetings, with
+participant sets $\{0,1,2\}$, $\{1,2,3\}$, and $\{0,2,3\}$ in that order.
+There are no preloaded meetings; shared commitments arise from the agents'
+own earlier decisions. Future requests and evaluator reference solutions
+are withheld from agents. The frozen suite crosses four conditions with two
+errand-cost regimes and three scenario seeds, giving $4\times2\times3=24$
+games:
+\begin{itemize}
+\item \textbf{Loose availability:} generator density $0.6$, with movable
+errands and no blocked items, tests scheduling with spare calendar capacity.
+\item \textbf{Dense calendars:} generator density $1.0$, with no blocked
+items, increases the need to accommodate existing commitments. Density is
+applied to residual capacity after reserved slots, rather than to the raw
+fraction of occupied slots.
+\item \textbf{Blocked errands:} density $1.0$ and two immovable items per
+agent combine hard availability constraints with movable errands.
+\item \textbf{Replanning control:} an authored calendar configuration makes
+an earlier meeting's placement consequential for a later request. Placing
+the first meeting at slot 0 requires moving it to slot 1 when the second
+request arrives, including contacting agent 0, who is absent from that
+request. Placing it at slot 1 initially avoids this branch; successful
+completion does not by itself demonstrate replanning.
+\end{itemize}
+Movable errands cost 1 to relocate in the uniform regime and have integer
+costs from 1 to 8 in the varied regime. Moving an existing meeting costs 1
+per participant. The three scenario seeds change private occupancy and
+costs, rather than merely repeating stochastic model decoding. The
+replanning controls admit a zero-cost solution in both cost regimes.
+All cases are verified as feasible by reference schedules and native
+sequential replay. This suite is a small-model adaptation of CalBench; we
+report coordination outcomes rather than reproduce its original aggregate
+benchmark score. Although the native prompts retain privacy instructions,
+we do not measure privacy leakage, and message volume is used only as a
+communication metric.
+
+\paragraph{Inference settings and comparison models.}
+All models use the same cases, direct messages only, temperature zero, a
+4,096-token output limit, and a 32,768-token context limit. Each meeting
+allows four communication turns per participant and one decision retry;
+fallback and reflection are disabled. The Qwen3-4B thinking model, MARSHAL
+Generalist~\citep{yuan2026marshal}, and Social-R1-4B~\citep{wu2026socialr1}
+form a separate comparison group because they use thinking-mode checkpoints;
+\emph{Baseline} denotes the unchanged Qwen3-4B-Instruct-2507 model, and
+\emph{Self-play} denotes its complete-game self-play-trained counterpart.
+The slice-trained variants are \textsc{GameSlice-A} (direct action selection),
+\textsc{GameSlice-AP} (direct action selection and conditional planning), and
+\textsc{GameSlice-Joint} (all three objectives), initialized from the same
+instruct model. These names match Table~\ref{tab:experiment-calbench}.
+
+\paragraph{Metric definitions.}
+A meeting is retained only if it remains in one common slot for all
+participants in the final calendars. A game is successful only if all three
+meetings remain valid and blocked items are preserved. These counts have
+maxima of 72 meetings and 24 games. For a successful game $g$, per-agent
+excess cost is $(C_g-C_g^\star)/4$, where $C_g$ is the realized team
+rescheduling cost and $C_g^\star$ is the minimum full-stream cost, established
+by the lower-bound and attainability argument below. We average this quantity over successful games only, so
+models may be evaluated on different subsets of games. The cost reference
+has access to the full scenario after the fact and is not an online policy.
+
+\paragraph{Minimum-cost reference.}
+Every pair of meetings shares a participant, so their final slots must be
+distinct. We enumerate all $8\cdot7\cdot6=336$ assignments of the three
+meetings to distinct slots, excluding assignments that occupy a participant's
+blocked slot. For each remaining assignment, the sum of the displacement
+costs of initial errands occupying its meeting slots is a lower bound:
+each such errand must move at least once. Minimizing over these assignments
+therefore gives a lower bound on every successful execution. For every
+evaluation scenario, a native sequential execution attains this bound,
+establishing $C_g^\star$. Replay proves attainability; enumeration supplies
+the lower bound needed for optimality. This reference uses all three
+requests in hindsight, whereas agents receive them sequentially.
+
+\paragraph{Communication overhead.}
+Let $M_{ig}$ be the number of direct messages sent by agent $i$ throughout
+game $g$, including messages during unsuccessful rounds and messages sent
+as a non-participant. Received messages are not counted. Let $R_{ig}$ be
+the number of meeting rounds in which $i$ participates and the round
+resolution declares the meeting successfully coordinated. These are
+round-level successes, not finally retained meetings: a later inconsistency
+does not remove an earlier success from this denominator. We report
+\begin{equation}
+ \mathrm{Comm}=\frac{1}{24}\sum_{g=1}^{24}\frac{1}{4}
+ \sum_{i=1}^{4}\frac{M_{ig}}{\max(R_{ig},1)}.
+\end{equation}
+When $R_{ig}=0$, the agent contributes its full sent-message count, including
+zero if it sent nothing. All games enter this average, regardless of final
+success.
+
+\paragraph{Burden imbalance.}
+Let $S_g$ contain meetings declared coordinated at their respective round
+resolutions, and let $c_{ig}$ be agent $i$'s total realized displacement cost
+over the entire game, including costs incurred during unsuccessful rounds.
+The native assignment solver is run on the initial calendars for $S_g$.
+Its selected reference assignment is replayed in request order to obtain
+per-agent reference costs $r_{ig}(S_g)$. This is the cost allocation of the
+selected team-cost reference, not each agent's independently minimized cost
+or an equal share of the team cost. Define
+\begin{equation}
+ b_{ig}=c_{ig}-r_{ig}(S_g),\qquad
+ \bar b_g=\frac14\sum_{i=1}^{4}b_{ig},\qquad
+ \mathrm{Imbalance}=\frac1{24}\sum_{g=1}^{24}\frac14
+ \sum_{i=1}^{4}|b_{ig}-\bar b_g|.
+\end{equation}
+Individual excess burdens may be negative and are not clipped. Failed games
+remain in the average with their realized costs and their own $S_g$;
+if $S_g$ is empty, all reference costs are zero. The implementation also
+uses zero reference costs if the selected assignment cannot be replayed.
+Thus imbalance uses a round-success-subset reference, whereas the reported
+excess-cost column uses the full-stream reference and successful games only.
+
+\subsection{Rollout comparison with verbatim model outputs}
 \label{app:calbench-rollout}
 
 The following excerpts come from the frozen \texttt{replan\_varied\_s1}
-scenario. Q0 (run 868929), self-play SP-41 (run 874283), and
-\textsc{GameSlice-Joint} (run 879033) received identical initial calendars.
-Quoted text is verbatim \texttt{dm} content from each run's
-\texttt{games/replan\_varied\_s1/trace.json}; intervening messages are
-omitted. Slot tuples below come from the environment's round resolutions,
+scenario. Baseline, Self-play, and \textsc{GameSlice-Joint} received
+identical initial calendars. Slot tuples below come from the environment's round resolutions,
 ordered by the meeting's participants, rather than from model explanations.
 
 \paragraph{Negotiating the first meeting.}
@@ -24,20 +222,20 @@ Agent 2 confirmed slot 1, and the three agents' scheduling actions all chose
 slot 1; the resolution tuple was $(1,1,1)$.
 
 \paragraph{A disagreement in the other runs.}
-Q0 and SP-41 both placed the first meeting at slot 0. During negotiation for
-the second meeting, Q0's agent 3 reported to agent 1:
+Baseline and Self-play both placed the first meeting at slot 0. During negotiation for
+the second meeting, Baseline's agent 3 reported to agent 1:
 \begin{quote}\small
 ``Slot 1 is blocked for me, so I can't use it. How about slot 2? It's free and
 doesn't conflict with my schedule. Would that work for you?''
 \end{quote}
-Q0's agent 1 later responded:
+Baseline's agent 1 later responded:
 \begin{quote}\small
 ``I see slot 1 is blocked for you, but it's free for me. I don't have any other
 free slots available. Could you please confirm if you're able to adjust your
 schedule to slot 1? I'm happy to help coordinate if needed, but we need a
 shared free slot.''
 \end{quote}
-SP-41's agent 1 made the corresponding request to agent 3:
+Self-play's agent 1 made the corresponding request to agent 3:
 \begin{quote}\small
 ``I see you're suggesting slot 2, but it's blocked for me and cannot be used.
 Slot 1 is free and available for me without any conflict. Would you be able to
@@ -45,7 +243,7 @@ join us there? If not, let me know what alternative works best for you.''
 \end{quote}
 In both runs, the second
 meeting's resolution tuple was $(1,2,2)$, so no common slot was established.
-Q0's agent 1 actually returned an empty action list at this decision; its
+Baseline's agent 1 actually returned an empty action list at this decision; its
 resolution entry should not be read as an intentional slot-1 commitment.
 
 \paragraph{Preserving a shared commitment.}

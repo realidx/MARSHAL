@@ -1,0 +1,164 @@
+{
+  "raw": {
+    "background_prior": {
+      "name": "want_heavy",
+      "version": "public-prior-margin-v1",
+      "weights": {
+        "avoid": 1,
+        "neutral": 1,
+        "want": 2
+      }
+    },
+    "ego": 0,
+    "game": {
+      "forbidden_actions": null,
+      "goals": [
+        {
+          "binary": false,
+          "goal_id": 0,
+          "required_actions": [
+            {
+              "action_id": 0,
+              "player_id": 0
+            },
+            {
+              "action_id": 1,
+              "player_id": 1
+            }
+          ]
+        },
+        {
+          "binary": false,
+          "goal_id": 1,
+          "required_actions": [
+            {
+              "action_id": 0,
+              "player_id": 0
+            },
+            {
+              "action_id": 0,
+              "player_id": 1
+            }
+          ]
+        },
+        {
+          "binary": false,
+          "goal_id": 2,
+          "required_actions": [
+            {
+              "action_id": 1,
+              "player_id": 0
+            },
+            {
+              "action_id": 0,
+              "player_id": 1
+            }
+          ]
+        },
+        {
+          "binary": false,
+          "goal_id": 3,
+          "required_actions": [
+            {
+              "action_id": 1,
+              "player_id": 0
+            },
+            {
+              "action_id": 1,
+              "player_id": 1
+            }
+          ]
+        },
+        {
+          "binary": false,
+          "goal_id": 4,
+          "required_actions": [
+            {
+              "action_id": 0,
+              "player_id": 0
+            },
+            {
+              "action_id": 1,
+              "player_id": 0
+            },
+            {
+              "action_id": 1,
+              "player_id": 1
+            }
+          ]
+        }
+      ],
+      "investigate": {
+        "action_visibility": "Query actor and target are public",
+        "budget": 1,
+        "budget_scope": "per player per game",
+        "cost": "Consumes the current proposal turn; commitments do not change",
+        "result_visibility": "Only the investigator receives the true preference",
+        "targets": "Any goal preference of another player, including already known or irrelevant preferences"
+      },
+      "max_changes": 1,
+      "menu_enabled": false,
+      "n_actions_per_player": [
+        2,
+        2
+      ],
+      "n_players": 2,
+      "round_robin": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "seed": 0,
+      "variant": "social-private-investigate-per-player-v1"
+    },
+    "history": [],
+    "own_preferences": [
+      1,
+      1,
+      -1,
+      0,
+      0
+    ],
+    "type_catalogues": {
+      "0": [
+        [
+          1,
+          1,
+          -1,
+          0,
+          0
+        ]
+      ],
+      "1": [
+        [
+          1,
+          0,
+          0,
+          1,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          1,
+          1
+        ],
+        [
+          -1,
+          0,
+          0,
+          1,
+          1
+        ]
+      ]
+    }
+  },
+  "history": [
+    0
+  ],
+  "source_task": "ce6be97d6feb071f00f2-O",
+  "lookahead_rr": 2,
+  "description": "Source-derived native information-acquisition fixture; re-solve and audit under current bounded contract, no inherited labels."
+}

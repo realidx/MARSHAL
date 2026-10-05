@@ -3,6 +3,7 @@
 
 % Optional math commands from https://github.com/goodfeli/dlbook_notation.
 \input{math_commands.tex}
+\usepackage{amssymb}
 
 \usepackage{graphicx}
 \usepackage{float}
@@ -11,7 +12,7 @@
 % Load hyperref after float so caption anchors do not create an empty line.
 \usepackage{hyperref}
 
-\title{Formatting Instructions for ICLR 2027 \\ Conference Submissions}
+\title{Learning to Coordinate through Strategic Game Slices}
 
 % Keep this anonymous for double-blind submission. Add author information only
 % for the camera-ready version, together with \iclrfinalcopy.
@@ -30,25 +31,15 @@
 \maketitle
 
 \begin{abstract}
-Effective multi-agent interaction requires agents to infer their partners'
-preferences and plan actions in light of those inferences. Terminal outcomes,
-however, reveal little about where either capability fails. We study inference
-and planning in a finite negotiation game with private preferences and mixed
-incentives. An oracle computes beliefs and action values under a fixed
-reference policy, allowing us to evaluate the two capabilities at the same
-decision. Qwen3-4B-Instruct-2507 misreads partner behavior and often chooses
-suboptimal actions even when given the correct inference. Replacing its
-inference with an oracle judgment changes its choices but does not reliably
-improve their value. We then construct \emph{game
-slices}, contiguous segments of one or more decisions drawn from deliberately
-structured games, and use oracle labels to train action selection, inference,
-and planning conditioned on a correct inference. We compare this targeted
-training with complete-game self-play and evaluate transfer to meeting
-coordination with private calendars. On a 24-game sequential adaptation of
-CalBench, joint slice training retains 47 of 72 meetings, compared with 37
-for both the unchanged baseline and the self-play model. These results
-support controlled games as a means of diagnosing interaction failures and
-training capabilities that transfer to more complex coordination.
+Coordination under private information requires agents to infer partners’ 
+preferences and select actions using those inferences. We study these capabilities 
+in a finite negotiation game with private preferences and mixed incentives. 
+A reference-policy oracle supplies posterior judgments and counterfactual action values, 
+enabling matched diagnostic interventions. For Qwen3-4B-Instruct-2507, these probes 
+reveal errors in both preference inference and action selection: supplying an oracle 
+judgment does not reliably eliminate action errors. We use the same oracle to construct
+game slices and train a shared model on direct action selection, preference inference, 
+and planning. With approximately 6M generated response tokens, joint slice training retains 47 of 72 meetings in a 24-game, four-agent sequential calendar suite adapted from CalBench, compared with 37 for both the unchanged model and complete-game self-play. These results provide initial evidence that targeted supervision from controlled strategic games can improve coordination in an environment with different interaction mechanics.
 \end{abstract}
 
 \section{Introduction}
@@ -60,34 +51,43 @@ training capabilities that transfer to more complex coordination.
 \section{Diagnosis}
 \input{diagnose}
 
-\section{Experiment}
+\section{Experiments}
 \input{experiment}
 
 \section{Discussion}
 \input{discussion}
 
-\section{Related Works}
+\section{Related Work}
 \input{related_works}
 
 \section{Conclusion}
 
+We study inference and planning as distinct but coupled capabilities in
+multi-agent interaction. A controlled negotiation game makes both measurable,
+revealing that supplying the oracle judgment alone does not reliably resolve
+planning errors. Oracle-supervised game slices turn these capabilities into targeted
+training objectives and improve transfer to an external environment over
+complete-game self-play under the same response-token budget. These results
+suggest that deliberately structured games can serve as both diagnostic tools
+and sources of supervision for more complex multi-agent interaction.
 
-
+\clearpage
 \subsection*{AI use statement}
 
-We used generative AI tools to assist with literature discovery, reference formatting, and drafting and editing portions of this manuscript. All AI-assisted text and bibliographic metadata were reviewed by the authors. The authors take responsibility for the final content of the paper, including its claims, experimental artifacts, and citations.
-
-\subsection*{Ethics statement}
-
-This work studies LLM-agent interaction in a synthetic, simulated negotiation environment and does not involve human participants or personal data. The environment includes mixed incentives and strategic information disclosure, which can surface behaviors such as manipulation or unhelpful information sharing. We use these behaviors only for controlled evaluation and training of coordination capabilities. We document the game rules, oracle policies, and limitations so that the resulting methods are not interpreted as deployment policies for real-world autonomous agents.
-
-\subsection*{Reproducibility statement}
-
-The main text and appendix specify the game rules, information structure, oracle belief filtering, and reference planning procedure. The appendix reports the diagnostic positions, prompts, evaluated model version, decoding configuration, aggregation procedure, random seed, and provenance information used for the reported results. These details are intended to make the diagnostic suite and its measurements reproducible.
+We used generative AI tools to assist with literature discovery, reference
+formatting, manuscript drafting and revision, and the creation and editing of
+scientific figures. We also used these tools to discuss and refine aspects of
+the methodological presentation and experimental design, and to assist in
+interpreting diagnostic results and comparing interaction trajectories. The
+authors reviewed the resulting text and figures, checked cited sources, and
+verified reported findings against experimental records. The authors take
+responsibility for the final content of this work, including its methods,
+claims, results, and artifacts.
 
 \bibliography{references}
 \bibliographystyle{iclr2027_conference}
 
+\clearpage
 \appendix
 \input{methods_appendix}
 \input{diagnose_appendix}

@@ -15,7 +15,7 @@ it is not a goal, an item transferred to another player, or an exclusive
 choice among alternatives. Different goals may depend on the same
 coordinate. Once that coordinate becomes binding, it contributes to every
 goal that requires it. A goal's requirements do not indicate which players
-want that goal: requirements and preferences are separate parts of the
+want that goal, the requirements and preferences are separate parts of the
 instance.
 
 The preference assignment $v$ is sampled once and remains fixed throughout
@@ -69,11 +69,11 @@ per-offer addition limit specified by $\mathcal L$. Legality requires
 \end{equation}
 Any additional forbidden coordinates specified by the instance are excluded.
 One participant's addition set may be empty. The limit applies separately
-to each participant in this offer; it is not a lifetime commitment limit.
+to each participant in this offer.
 Previously binding coordinates cannot be removed or submitted as new
 additions. The native state representation retains those coordinates when
 constructing the resulting commitment vectors. The game uses bilateral
-offers, not menus of alternative offers.
+offers.
 
 \paragraph{Transitions.}
 When no offer is pending, the scheduled proposer may take one of the
@@ -93,8 +93,7 @@ following actions:
 \end{itemize}
 Investigation is allowed even when the queried preference is already known
 or does not affect the current decision. Its cost is the consumed proposal
-opportunity and budget, not a separate utility penalty. It is unavailable
-during a pending response. Responses do not consume investigation budgets.
+opportunity and budget. Responses do not consume investigation budgets.
 
 \paragraph{Observations and information sets.}
 All players observe the public rules, fixed preference facts, commitments,
@@ -102,9 +101,7 @@ proposer schedule, remaining budgets, offers, responses, passes, and query
 identities. An investigation answer is revealed only to its investigator.
 Player $i$'s view is $I_s^i=(h_s,v_i,r_s^i)$, with the public instance
 understood as fixed context. Two histories in the full game belong to the
-same information set for $i$ when these views agree. In particular, two
-worlds may lead to the same public query while giving its investigator
-different private answers. The other players do not receive those answers.
+same information set for $i$ when these views agree.
 
 \paragraph{Termination and incentives.}
 A full game starts with $C_0=0$, no pending offer, no private query records,
@@ -122,11 +119,6 @@ an improvement or a loss for the others.
 A slice records its starting commitments, schedule position, pending offer
 if any, remaining budgets, and the observations available at that position.
 A state reached by a legal prefix retains the corresponding public history
-and each player's own private observations. An explicitly exogenous initial
-state is instead a declared starting condition: it does not assert that a
-partner previously selected those commitments. Only actual observed choices
-provide behavioral evidence under the reference policy. A self-action
-specified as an intervention changes the physical state and may deliver a
-private answer, but is not itself evidence about a partner's preference.
-The reference-policy computation and conditioning conventions are specified
+and each player's own private observations. Only actual observed choices
+provide behavioral evidence under the reference policy. The reference-policy computation and conditioning conventions are specified
 in Appendix~\ref{app:oracle}.

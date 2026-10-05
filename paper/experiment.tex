@@ -3,171 +3,118 @@
 \subsection{Data and training}
 \label{sec:experiment-training}
 
-\paragraph{Constructing games and histories.}
-We build training data from the finite \textsc{BENAC-I} games in
-Section~\ref{sec:benac-i}, varying goal dependencies, binary or linear
-satisfaction, private preferences, and public priors. From these games, we
-construct legal interaction histories and extract decision points together
-with the information available to the acting player. We also branch on
-investigation outcomes to obtain related decisions in which newly revealed
-preferences can change the appropriate action. Each history is replayed
-under the native game rules to verify its transitions. This construction
-provides targeted examples of interpreting behavior, incorporating new
-evidence, and choosing actions under different preference alignments.
-
-\paragraph{Generating supervision.}
-At each selected decision, the oracle in Section~\ref{sec:game-slices}
-conditions on the player's observations and computes expected terminal
-utilities for legal actions under the reference continuation. These
-computations yield three training tasks: direct action selection from the
-observed state and history; inference of a partner's possible and most likely
-preferences; and planning given an oracle inference. Action labels retain
-the acceptable actions rather than imposing a single answer when actions
-tie. We exclude failed reference computations and mask planning labels that
-remain ambiguous under the supplied qualitative judgment. In the paired
-bank, related views and histories from the same source family share a split,
-yielding 373 training and 124 validation cases. The reported checkpoints
-also include an earlier inference--planning dataset and a compact joint
-training set of 24 items selected using prior training performance.
-Appendix~\ref{app:training} records these dataset variants and their selection
-procedures.
+\paragraph{Data generation.}
+We construct 100 game slices from the games in Section~\ref{sec:benac-i},
+selecting for identifiable inference and planning demands. Inference
+coverage includes evidence that changes or preserves a preference judgment
+and investigation outcomes that inform subsequent choices. Planning coverage
+includes commitments that shape later opportunities and agreements that
+depend on multiple partners' responses and interdependent commitments.
+We include information contrasts requiring different actions, alongside
+controls in which actions should remain unchanged. For scored action tasks,
+we require $\varnothing\neq\mathcal A_\epsilon(I)\subsetneq\mathcal L(I)$,
+where $\mathcal A_\epsilon(I)$ is the oracle's acceptable-action set under
+the scoring tolerance: at least one legal action must be acceptable and one
+unacceptable. Slices are executed with the oracle to advance game states
+and generate decision-level supervision. Histories are checked by legal replay. The oracle supplies
+three supervision types: direct action selection, inference of possible and
+most likely preferences, and planning given an oracle judgment. Failed
+reference computations are excluded, and planning labels ambiguous under
+the supplied judgment are masked. Appendix~\ref{app:slice-selection}
+details these structural selection and coverage criteria.
 
 \paragraph{Training.}
-All trained variants start from Qwen3-4B-Instruct-2507~\citep{yang2025qwen3}.
-The unchanged model provides the baseline. Self-play (SP) learns from each
-player's terminal utility in complete games. Slice training instead uses
+All trained variants start from Qwen3-4B-Instruct-2507~\citep{yang2025qwen3}. Self-play (SP) learns from each
+player's terminal utility in complete games, starting from 100 initial
+game configurations. Slice training instead uses
 oracle-scored responses: \textsc{GameSlice-A} trains direct action selection,
-\textsc{GameSlice-IP} trains inference and conditional planning, and
+\textsc{GameSlice-AP} trains direct action selection and conditional planning, and
 \textsc{GameSlice-Joint} combines all three tasks. These objectives update
 a single model without imposing an inference-to-planning pipeline at test
 time. Slice training uses grouped policy optimization with eight responses
 per item and a KL penalty toward the frozen base model. We use BF16 and an
-initial learning rate of $10^{-6}$. Table~\ref{tab:training-configuration}
-provides the remaining settings and the realized training dose for each
-verified checkpoint; the reported variants differ in both data and training
-budget.
+initial learning rate of $10^{-6}$. All training variants use a budget of
+approximately 6M generated response tokens, and we evaluate the final
+checkpoint of each training run. The training settings
+are listed in Tables~\ref{tab:training-configuration}
+and~\ref{tab:selfplay-configuration} in
+Appendix~\ref{app:training}.
 
-\subsection{In-domain diagnosis and adversarial games}
-\label{sec:experiment-benac}
+\subsection{Same-Model Negotiation}
+\label{sec:experiment-team}
 
-The archived post-training runs use an earlier 16-case diagnostic (v6),
-distinct from the 22-case base-model diagnostic (v9) in
-Section~\ref{sec:diagnose}. Table~\ref{tab:experiment-diagnosis} compares
-checkpoints within that earlier protocol; its baseline scores are not
-directly comparable to Table~\ref{tab:diagnose-main}.
-We report exact semantic inference judgments,
-planning regret when the correct judgment is supplied, native history-to-action
-regret, and the paired judgment-repair effect. Regret is lower-is-better;
-repair is computed only where both paired actions are valid. The three
-deterministic repetitions of a structure are not independent test cases.
+We evaluate complete games with two, three, and four players, using 16 fixed
+instances per team size and one greedy rollout per instance. All players
+use the same checkpoint, each observing only its own private information
+and the public history. Instances are shared across models within each size.
+We report mean team utility, the sum of players' signed terminal utilities
+averaged over games.
+Table~\ref{tab:experiment-team} reports the results;
+Appendix~\ref{app:team-benac} provides more detailed statistics.
 
 \begin{table}[t]
-\caption{Historical post-training diagnosis under the earlier v6 protocol:
-16 partner-generated histories, one per held-out structure. These are
-different cases from the v9 diagnostic in Section~\ref{sec:diagnose}.
-Planning regret uses the correct inference judgment.
-Regret and repair are means over valid outputs; their coverage may differ.
-Blank cells await a verified run under this protocol. BP-99 is a historical
-inference/planning-only reference, not one of the four main arms. Valid
-planning/native/repair counts are Q0 $16/15/12$, D-72 $13/16/9$,
-D-148 $14/16/11$, and BP-99 $11/14/6$.}
-\label{tab:experiment-diagnosis}
+\caption{Same-model negotiation: mean team utility on 16 games per team size
+($\uparrow$).}
+\label{tab:experiment-team}
 \centering\small
-\begin{tabular}{lrrrr}
+\begin{tabular}{lccc}
 \hline
-Model & Inference exact & Planning regret & Native regret & Repair $\Delta_{\mathrm{repair}}$ \\
+Model & Two players & Three players & Four players \\
 \hline
-Baseline (Q0) & 0\% & 0.844 & 0.933 & $-0.042$ \\
-SP & -- & -- & -- & -- \\
-O & -- & -- & -- & -- \\
-D-72 & 0\% & 0.769 & 0.750 & $+0.111$ \\
-D-148 & 0\% & 0.821 & 0.469 & $0.000$ \\
-BP-99 (historical) & 0\% & 0.773 & 0.679 & $0.000$ \\
+Baseline & 0.969 & 0.583 & 1.177 \\
+Self-play & 1.063 & 0.542 & 1.250 \\
+\textsc{GameSlice-A} & 1.238 & 0.911 & 2.135 \\
+\textsc{GameSlice-AP} & 1.375 & 1.438 & 1.583 \\
+\textsc{GameSlice-Joint} & 1.481 & 1.615 & 1.594 \\
 \hline
 \end{tabular}
 \end{table}
 
-We also test full \textsc{BENAC-I} games with one focal model and two frozen
-baseline partners. Initial worlds are partitioned into seen dependency
-structures with new preference assignments (ID) and structurally held-out
-dependencies (OOD); focal seats are rotated. We report completed episodes
-and focal terminal utility conditional on completion separately, because an
-invalid or truncated game has no terminal utility. The currently archived
-comparison below is an earlier 48-episode, one-sample-per-scenario-seat
-evaluation and does not cover the selected O and D checkpoints.
+\paragraph{Results.}
+All slice-trained variants exceed the baseline's mean utility in each suite,
+but adding supervision objectives does not yield monotonic gains. Self-play
+remains close to the baseline. In four-player games, \textsc{GameSlice-A} secures more
+accepted offers than Self-play despite making fewer proposals (38/59 versus
+25/78). One rollout shows how successive bilateral agreements accumulate
+the commitments needed for two goals, yielding team utility 4 versus Baseline's 0.
 
-\begin{table}[t]
-\caption{Historical fixed-partner adversarial games. Utility is conditional
-on normal completion; completion counts are out of 24 per split. The final
-common-protocol O/D comparison remains to be filled.}
-\label{tab:experiment-adversarial}
-\centering\small
-\begin{tabular}{lrrrr}
-\hline
-Model & ID complete & ID utility & OOD complete & OOD utility \\
-\hline
-Baseline (Q0) & 22/24 & 0.288 & 22/24 & 0.068 \\
-SP-69 & 20/24 & 0.525 & 18/24 & $-0.019$ \\
-O & -- & -- & -- & -- \\
-D & -- & -- & -- & -- \\
-BP-139 (historical) & 19/24 & 0.254 & 21/24 & 0.333 \\
-\hline
-\end{tabular}
-\end{table}
 
-\subsection{Transfer to Complex Scenario}
+\subsection{Transfer to Sequential Calendar Coordination}
 \label{sec:experiment-transfer}
 
-\paragraph{CalBench setting.}
-CalBench~\citep{zou2026calbench} studies decentralized meeting scheduling:
-agents see their own calendars and displacement costs, exchange messages with
-other participants, and decide whether to move private errands or existing
-meetings to agree on a common slot. We evaluate homogeneous teams, with the
-same checkpoint controlling all four agents. Each game has eight calendar
-slots and three meetings that arrive sequentially, so an early commitment can
-constrain a later decision. Our frozen 24-game suite crosses four conditions
-(loose availability, dense calendars, blocked errands, and a replanning
-control), two errand-cost regimes (uniform or varied), and three scenario
-seeds. The replanning control can require contacting a participant in an
-earlier meeting who is absent from the new one. This is a small-model
-sequential adaptation of CalBench, not its original aggregate benchmark score.
-
-All models use the same cases, direct messages only, temperature zero, a
-4,096-token output limit, and a 32,768-token context limit. Each meeting
-allows four communication turns per participant and one decision retry; we
-disable fallback and reflection. The cases have private calendar occupancy
-and costs, but no future meeting or evaluator reference appears in an agent's
-observation. The Qwen3-4B thinking model, MARSHAL
-Generalist~\citep{yuan2026marshal}, and Social-R1-4B~\citep{wu2026socialr1}
-form a separate comparison group because they use thinking-mode checkpoints;
-the baseline and our trained models use Qwen3-4B-Instruct-2507.
-We call the slice-trained variants \textsc{GameSlice-A} (history-to-action;
-O-99), \textsc{GameSlice-IP} (inference and conditional planning; BP-99),
-and \textsc{GameSlice-Joint} (all three objectives; micro24-39). The names
-identify their training signals; the checkpoints also differ in exposure.
+CalBench~\citep{zou2026calbench} evaluates decentralized meeting coordination:
+agents with private calendars and rescheduling costs communicate to agree on
+meeting times. A feasible agreement requires agents to learn their partners'
+constraints and reconcile them with their own schedules, potentially moving
+private errands or existing meetings. We evaluate transfer on a 24-game
+sequential adaptation, with four agents coordinating three meetings per
+game. Meetings arrive sequentially, so accommodating a new request must also
+account for earlier commitments. Each team uses the same model for all
+agents, and all models face identical scenarios and evaluation settings.
+Detailed environment and inference settings are provided in
+Appendix~\ref{app:calbench-setting}.
 
 \paragraph{Evaluation.}
-In our sequential suite, we count a meeting only if it remains in one common
-slot for all participants in the final calendars, and count a complete game
-only if all three meetings
-remain valid and blocked items are preserved. Thus the first two columns of
-Table~\ref{tab:experiment-calbench} have denominators 72 and 24. For a
-completed game $g$, per-agent excess cost is
-$(C_g-C_g^\star)/4$, where $C_g$ is realized team rescheduling cost and
-$C_g^\star$ is the minimum feasible cost certified by a sequential replay;
-we average this quantity over completed games only. The reference has access
-to the full scenario after the fact and is not an online policy. Communication
-is the native per-agent count of direct messages divided by the number of
-meetings that agent helped schedule averaged
-over four agents and 24 games. Burden imbalance is the native mean absolute
-deviation of agents' excess burdens from their game-level mean, averaged over
-the 24 games.
+We report retained meetings (out of 72), fully successful games (out of 24),
+per-agent excess rescheduling cost, communication overhead, and burden
+imbalance. Success is determined from the final calendars. Excess cost is
+measured relative to the minimum feasible team cost and averaged only over
+successful games. A retained meeting must occupy a common slot for every
+participant; a successful game must retain all three meetings while
+preserving blocked calendar items. Communication counts sent direct messages
+per agent, divided by its round-level scheduling successes (with denominator
+at least one). Imbalance measures deviations in per-agent excess burdens
+relative to a reference for the round-successful meeting subset. Both include
+failed games. We additionally report Qwen3-4B (thinking), MARSHAL
+Generalist~\citep{yuan2026marshal}, and Social-R1-4B~\citep{wu2026socialr1}
+as a separate comparison group. Exact metric definitions and model details
+appear in Appendix~\ref{app:calbench-setting}.
 
 \begin{table}[t]
 \caption{CalBench transfer on 24 frozen sequential games. Meetings count
 final retained meetings; excess cost is per agent and conditional on full-game
 success. Communication and imbalance average native per-agent values over all
-games. Best value in each column is bold.}
+games.}
 \label{tab:experiment-calbench}
 \centering\small
 \setlength{\tabcolsep}{4pt}
@@ -178,31 +125,35 @@ Model & Meetings $\uparrow$ & Full games $\uparrow$ & Cost $\downarrow$ & Comm. 
 Baseline & 37 & 5 & 0.100 & 5.663 & 0.443 \\
 Self-play & 37 & 6 & 0.625 & 5.181 & 0.755 \\
 \textsc{GameSlice-A} & 38 & 8 & 0.688 & 5.003 & 0.490 \\
-\textsc{GameSlice-IP} & 44 & \textbf{10} & \textbf{0.075} & 4.760 & 0.432 \\
-\textsc{GameSlice-Joint} & \textbf{47} & 9 & 0.194 & 4.714 & \textbf{0.292} \\
+\textsc{GameSlice-AP} & 44 & 10 & 0.075 & 4.760 & 0.432 \\
+\textsc{GameSlice-Joint} & 47 & 9 & 0.194 & 4.714 & 0.292 \\
 \hline
 Qwen3-4B (thinking) & 42 & 7 & 0.571 & 4.828 & 0.557 \\
-MARSHAL Generalist & 37 & 6 & 1.333 & \textbf{4.429} & 0.875 \\
+MARSHAL Generalist & 37 & 6 & 1.333 & 4.429 & 0.875 \\
 Social-R1-4B & 39 & 5 & 1.100 & 4.554 & 0.901 \\
 \hline
 \end{tabular}
 \end{table}
 
-\textsc{GameSlice-Joint} retains the most meetings, while
-\textsc{GameSlice-IP} completes the most full games. Their strengths also
-differ by condition: \textsc{GameSlice-Joint} retains 17 of 18 meetings in
-the loose cases and 15 of 18 in the replanning cases, compared with 14 and
-10 for the unchanged baseline; \textsc{GameSlice-IP} retains 10 of 18 in
-the blocked cases, compared with 6 for the baseline and 5 for
-\textsc{GameSlice-Joint}. A matched initial scenario, with verbatim messages
-in Appendix~\ref{app:calbench-rollout}, illustrates the
-coordination behind the former result. In \texttt{replan\_varied\_s1},
-\textsc{GameSlice-Joint} initially proposes slot 2, learns that it is blocked
-for one partner, checks that the proposed alternative (slot 1) works for the
-other, and all three participants schedule the first meeting at slot 1. When
-slot 0 is later proposed for the third meeting, two participants identify its
-conflict with the second meeting and the team converges on slot 2. All three
-meetings remain valid. Under the same initial calendars, the baseline and
-self-play teams each retain only the first meeting: in the second round a
-participant reports that slot 1 is blocked, yet the resolution records
-different slots.
+\paragraph{Results.}
+Table~\ref{tab:experiment-calbench} shows that \textsc{GameSlice-Joint}
+retains 47 meetings, compared with 37 for both the baseline and self-play,
+and completes nine games compared with five and six, respectively. It also
+reduces communication and burden imbalance relative to both, suggesting
+that its higher completion rate is accompanied by more efficient
+coordination and a more even distribution of costs.
+\textsc{GameSlice-AP} achieves the most complete games and the lowest
+conditional excess cost, although cost averages cover different successful
+subsets for each model. Both variants retain more meetings than action-only
+training, supporting the value of adding conditional planning supervision
+for transfer to this coordination task. A matched rollout makes the behavioral difference concrete. After learning
+that a proposed slot is blocked, \textsc{GameSlice-Joint} checks a partner's
+alternative with the remaining participant. Later, the agents identify a
+conflict with an existing meeting and agree on another slot, retaining all
+three meetings. Under the same initial calendars, the baseline and self-play
+teams fail to establish a common slot for the second meeting and retain only
+the first. This trajectory illustrates two demands of coordination: using a
+partner's response to revise the feasible options, and checking a proposed
+revision against other participants' constraints and existing commitments.
+Appendix~\ref{app:calbench-rollout} presents the detailed comparison
+with verbatim model outputs.

@@ -5,7 +5,7 @@ partner or chose poorly despite an adequate understanding. We diagnose these
 two sources of error in the
 Qwen3-4B-Instruct-2507 model~\citep{yang2025qwen3}. At matched decision points,
 we ask whether the model can infer a partner's preference from available
-evidence, choose a good action given a correct inference, and improve its
+evidence, choose a good action given an oracle judgment, and improve its
 choice when an incorrect inference is replaced by an oracle judgment.
 
 \paragraph{Intervening on the inference supplied to planning.}
@@ -57,10 +57,10 @@ $\Delta_c>0$ means that replacing the judgment improves the selected action's
 value.
 
 \begin{table}[t]
-\caption{Diagnosis of the unchanged Qwen3-4B-Instruct-2507 model.
-\textbf{Top:} correct responses out of all cases. Joint inference requires
+\caption{Diagnosis of the Qwen3-4B-Instruct-2507 model.
+Top: correct responses out of all cases. Joint inference requires
 both the support and most likely preference to be correct; Direct selects an action
-from the original state. \textbf{Bottom:} paired intervention results,
+from the original state. Bottom: paired intervention results,
 grouped by whether the model's initial judgment was correct. One invalid
 $\mathrm{Plan}_{\mathrm{model}}$ response counts as incorrect above and is excluded below.
 Equal action accuracy can conceal changes in action value.}
@@ -95,14 +95,15 @@ All valid pairs & 21 & 9 & 3 & 17 & 1 & $0.143$ \\
 \paragraph{Inference and planning failures.}
 The model recovers all six directly revealed preferences but fails all ten
 single-choice elimination and multi-step judgments
-(Table~\ref{tab:diagnose-main}). Even with oracle inference, planning succeeds
-in only $11/22$ cases, with mean regret $0.567$. Correcting an incorrect
-judgment changes the action in nine of ten valid pairs: three pairs improve
-in value, six preserve it, and one worsens. Across all 21 valid pairs, mean
+(Table~\ref{tab:diagnose-main}). Even with the oracle judgment, planning succeeds
+in only $11/22$ cases, with mean regret $0.567$. Among the ten valid pairs
+with an incorrect initial judgment, oracle replacement changes the selected
+action in nine. Across all ten pairs, three replacements improve utility,
+six leave it unchanged, and one reduces it. Across all 21 valid pairs, mean
 regret falls from $0.684$ to $0.541$ despite unchanged aggregate action
 accuracy. Thus both behavioral inference and action selection exhibit
-failures; correcting the supplied inference can improve choices but does
-not reliably resolve planning errors. Appendix~\ref{app:diagnose} provides
+failures; replacing the supplied inference with the oracle judgment can
+improve choices but does not reliably resolve planning errors. Appendix~\ref{app:diagnose} provides
 the breakdown by sensitivity to partner preferences.
 
 \paragraph{An illustrative intervention.}
@@ -112,7 +113,8 @@ secure Harbor alone, this choice rules out \textsc{Avoid} for Orchard under
 the reference policy. The model infers the opposite from Blair's lack of
 its own commitment. Replacing that judgment changes its offer from
 completing neither goal to completing both, raising utility from $0$ to $2$.
-Appendix~\ref{app:diagnose-simple} gives the derivation and recorded outputs;
+The improved offer is also optimal under the model's original judgment, revealing a planning error alongside the inference error.
+Appendix~\ref{app:diagnose-simple} gives the derivation and outputs;
 Appendix~\ref{app:diagnose-example} provides a case where correction leaves
 a planning error.
 
@@ -127,7 +129,7 @@ under the oracle posterior and reference policy.}
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{lllll}
 \hline
-\multicolumn{5}{l}{\textbf{(a) Goals and preferences}} \\
+\multicolumn{5}{l}{(a) Goals and preferences} \\
  & \multicolumn{2}{c}{Required commitments} & \multicolumn{2}{c}{Preferences} \\
 Goal & Alex & Blair & Alex & Blair \\
 \hline
@@ -137,19 +139,19 @@ Harbor & Maple & Cedar & Want & Want \\
 \end{tabular}
 \par\smallskip
 \begin{tabular}{@{}p{0.21\linewidth}p{0.75\linewidth}@{}}
-\textbf{History} & Blair offers to add nothing
+History & Blair offers to add nothing
 and asks Alex to add Cedar; Alex accepts. \\
-\textbf{Current decision} & Alex has Cedar; Blair has none. Alex has the final proposal turn. \\
-\textbf{Key implication} & After Alex adds Cedar, any completion of Harbor
+Current decision & Alex has Cedar; Blair has none. Alex has the final proposal turn. \\
+Key implication & After Alex adds Cedar, any completion of Harbor
 also completes Orchard. A Blair that avoids Orchard could instead have
 secured Harbor alone. \\
-\textbf{Model judgment} & Possible preferences: Avoid only; most likely: Avoid. \\
-\textbf{Oracle judgment} & Possible preferences: Want or Neutral; most likely: Want. \\
+Model judgment & Possible preferences: Avoid only; most likely: Avoid. \\
+Oracle judgment & Possible preferences: Want or Neutral; most likely: Want. \\
 \end{tabular}
 \par\smallskip
 \begin{tabular}{lcccr}
 \hline
-\multicolumn{5}{l}{\textbf{(b) Final offers and outcomes}} \\
+\multicolumn{5}{l}{(b) Final offers and outcomes} \\
 Action source & Alex adds & Blair adds & Goals completed & $U_{\rm Alex}$ \\
 \hline
 $\mathrm{Plan}_{\mathrm{model}}$ & None & Maple & None & $0$ \\

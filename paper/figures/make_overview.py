@@ -17,7 +17,8 @@ from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch
 
 
 OUT = Path(__file__).resolve().parent
-WIDTH, HEIGHT = 1200, 816
+VERTICAL_SCALE = 0.92
+WIDTH, HEIGHT = 1200, 816 * VERTICAL_SCALE
 INK = "#2D3552"
 MUTED = "#65708A"
 LINE = "#CCD3E5"
@@ -33,7 +34,7 @@ Y_SHIFT = 0
 LOWER_SCALE = 0.90
 LOWER_ANCHOR = 247
 
-fig = plt.figure(figsize=(12, 8.16), dpi=160)
+fig = plt.figure(figsize=(WIDTH / 100, HEIGHT / 100), dpi=160)
 ax = fig.add_axes([0, 0, 1, 1])
 ax.set_xlim(0, WIDTH)
 ax.set_ylim(HEIGHT, 0)
@@ -63,15 +64,16 @@ def vertex(x: float, y: float, w: float, h: float, style: str, value: str = "") 
 
 
 def mapped_y(y: float) -> float:
-    if not Y_SHIFT:
-        return y
-    return LOWER_ANCHOR + Y_SHIFT + LOWER_SCALE * (y - LOWER_ANCHOR)
+    if Y_SHIFT:
+        y = LOWER_ANCHOR + Y_SHIFT + LOWER_SCALE * (y - LOWER_ANCHOR)
+    return y * VERTICAL_SCALE
 
 
 def rect(x: float, y: float, w: float, h: float, *, fill: str = "white", stroke: str = LINE, radius: float = 12, lw: float = 1.5, dash: bool = False, zorder: float = 1) -> None:
     y = mapped_y(y)
     if Y_SHIFT:
         h *= LOWER_SCALE
+    h *= VERTICAL_SCALE
     ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle=f"round,pad=0,rounding_size={radius}", facecolor=fill, edgecolor=stroke, linewidth=lw, linestyle="--" if dash else "-", zorder=zorder))
     arc = max(3, int(100 * radius / max(1, min(w, h))))
     vertex(x, y, w, h, f"rounded=1;arcSize={arc};whiteSpace=wrap;html=0;fillColor={fill};strokeColor={stroke};strokeWidth={lw};dashed={int(dash)};")
@@ -196,18 +198,18 @@ edges = [
     ("ba", "baa"), ("ba", "bab"), ("bb", "bba"), ("bb", "bbb"),
 ]
 slices = {
-    ("a", "ab"): TEAL, ("ab", "abb"): TEAL,
+    ("a", "ab"): BLUE, ("ab", "abb"): BLUE,
     ("b", "ba"): BLUE,
 }
 for src, dst in edges:
     color = slices.get((src, dst), "#BCC8D4")
     line([node[src], node[dst]], color=color, lw=4.0 if (src, dst) in slices else 1.8)
-selected_nodes = {"aa": PURPLE, "a": TEAL, "ab": TEAL, "abb": TEAL, "b": BLUE, "ba": BLUE}
+selected_nodes = {name: BLUE for name in ("aa", "a", "ab", "abb", "b", "ba")}
 for name, (x, y) in node.items():
     accent = selected_nodes.get(name)
     radius = 9 if name == "aa" else 7 if name not in {"aaa", "aab", "aba", "abb", "baa", "bab", "bba", "bbb"} else 5.3
     disk(x, y, radius, fill=accent or "white", stroke=accent or "#9EAFBE", lw=1.5)
-for x, y, label, color, bg in [(50, 605, "slice 1", PURPLE, PURPLE_BG), (201, 605, "slice 2", TEAL, TEAL_BG), (350, 605, "slice 3", BLUE, LAVENDER_TINT)]:
+for x, y, label, color, bg in [(50, 605, "slice 1", BLUE, BLUE_BG), (201, 605, "slice 2", BLUE, BLUE_BG), (350, 605, "slice 3", BLUE, BLUE_BG)]:
     rect(x - 31, y - 15, 84, 30, fill=bg, stroke=color, radius=9, lw=1.3)
     txt(x + 11, y, label, size=13, color=color, bold=True)
 for x in (61, 212, 361):
@@ -234,7 +236,7 @@ txt(567, 365, "O", size=17, color=BLUE, bold=True)
 txt(710, 365, "What to do given\nthe current state?", size=16, color=INK)
 
 rect(524, 419, 310, 207, fill="#F8F6FC", stroke=MID, radius=13, lw=1.4)
-txt(679, 437, "D adds separate labels", size=13, color=PURPLE, bold=True)
+txt(679, 437, "Additional inference and planning labels", size=9, color=PURPLE, bold=True)
 rect(536, 455, 286, 82, fill="white", stroke=TEAL, radius=10, lw=1.5)
 rect(546, 475, 52, 42, fill=LAVENDER, stroke="none", radius=8)
 txt(572, 496, "Infer", size=12, color=INK, bold=True)
@@ -242,7 +244,7 @@ txt(711, 496, "What can you infer\nfrom the current\nstate?", size=14, color=INK
 rect(536, 547, 286, 64, fill="white", stroke=PURPLE, radius=10, lw=1.5)
 rect(546, 558, 52, 42, fill=MID, stroke="none", radius=8)
 txt(572, 579, "Plan", size=12, color=INK, bold=True)
-txt(711, 579, "What to do given\nthe true inference?", size=15, color=INK)
+txt(711, 579, "What to do given\nthe oracle judgment?", size=14, color=INK)
 line([(496, 437), (527, 437)], color=PURPLE, lw=2.3, head=True)
 line([(679, 626), (679, 641)], color=PURPLE, lw=2.2, head=True)
 rect(530, 648, 299, 68, fill=PURPLE_BG, stroke=PURPLE, radius=12, lw=1.8)

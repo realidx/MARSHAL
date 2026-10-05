@@ -1,60 +1,19 @@
 \section{Training data and configuration}
 \label{app:training}
 
-\paragraph{Data construction and splitting.}
-The generators construct game states and legal histories, replay observations,
-and solve the resulting decisions without using an LLM to supply labels.
-Initial commitments specify the starting state; voluntary partner actions
-provide behavioral evidence under the reference policy. Investigation
-branches expose truthful preference feedback and the subsequent legal
-decisions. The paired bank renders each canonical decision as direct action
-selection, inference, and conditional planning. Its split groups source
-families, including all views of a decision and related histories. This is a
-split within the constructed bank: some families from earlier development
-validation sets were reassigned to training, so it does not establish
-separation from every historical evaluation suite.
-
-\paragraph{Planning labels and dataset versions.}
-For the paired bank, planning prompts supply the current state and a
-qualitative oracle judgment while omitting behavioral history. The label
-audit distinguishes actions that are acceptable, unacceptable, or ambiguous
-given that judgment; ambiguous labels receive no task supervision. Of the
-373 training cases, 314 support planning training, 29 have no negative
-planning label and are reserved for evaluation, and 30 are quarantined.
-The corresponding validation counts are 106, 4, and 14. The historical
-\textsc{GameSlice-IP} checkpoint uses an earlier dataset with 294 inference
-and 300 planning items. These earlier planning prompts use a mixture of
-interfaces, as do the planning items retained for compact joint training;
-they should not be identified with the uniform intervention interface in
-Section~\ref{sec:diagnose}.
-
-\paragraph{Selecting the compact joint dataset.}
-The 24-item joint set contains eight examples per objective, selected from
-training data using archived learning histories. For direct action selection
-and inference, the main selection rule requires at least four prior
-exposures, two groups with nonzero task advantages, mean accuracy of at least
-$50\%$ over the final two exposures, and an improvement of at least
-$12.5$ percentage points over the first two. One inference item has only
-three prior exposures and is retained as a documented exception. The eight
-planning items come from an earlier compact selection. Original prompts
-and teachers are preserved. Neither CalBench results nor validation
-performance enters item selection. The resulting set is frozen before
-training: two deterministic halves alternate across 40 updates, giving
-each item 20 groups of eight responses. Because selection uses prior
-learning performance, this run measures training on a targeted subset,
-rather than an isolated change in objective or exposure count.
+Slice training uses 100 game slices, and self-play starts from 100 initial
+game configurations. All training variants use a budget of approximately 6M
+generated response tokens, and we evaluate the final checkpoint of each
+training run. Tables~\ref{tab:training-configuration}
+and~\ref{tab:selfplay-configuration} report the settings for slice training
+and self-play, respectively.
 
 \begingroup
 \small
 \renewcommand{\arraystretch}{1.12}
 \setlength{\tabcolsep}{5pt}
 \begin{longtable}{@{}p{0.34\textwidth}p{0.62\textwidth}@{}}
-\caption{Data and training settings. Shared optimizer and decoding settings
-are verified in the archived configurations for the selected
-\textsc{GameSlice-A}, \textsc{GameSlice-IP}, and \textsc{GameSlice-Joint}
-checkpoints. Recipe-specific rows distinguish nominal budgets from consumed
-response tokens. A dash denotes a quantity not yet verified for the selected
-checkpoint.}
+\caption{Optimization and decoding settings for slice training.}
 \label{tab:training-configuration}\\
 \hline
 Parameter & Setting \\
@@ -70,13 +29,12 @@ Parameter & Setting \\
 \endfoot
 \hline
 \endlastfoot
-\multicolumn{2}{l}{\textbf{Shared slice-training configuration}}\\
+\multicolumn{2}{l}{Shared slice-training configuration}\\
 Initial model / KL reference & Qwen3-4B-Instruct-2507 / frozen initial model \\
 Precision & BF16; gradient accumulation and reduction in FP32 \\
 Optimizer & Adam, Megatron backend \\
 Initial learning rate & $10^{-6}$ \\
 Adam coefficients; weight decay & $(0.9,0.95)$; $0$ \\
-Warmup & $0$ steps \\
 Policy updates per rollout batch & $1$ epoch \\
 Policy-ratio clipping & $0.2$ \\
 KL loss coefficient & $0.01$ \\
@@ -88,45 +46,214 @@ Repetition penalty & $1$ \\
 Responses per question group & $8$ \\
 Invalid or truncated output & Independent negative advantage, coefficient $0.2$ \\
 Random seed & $42$ \\
-Training hardware layout & One node, two GPUs; tensor parallelism $2$, pipeline parallelism $1$ \\
-Microbatch size & $1$ per device \\
-Memory settings & Sequence parallelism; full activation recomputation \\
-Generation backend & vLLM; tensor parallelism $1$ per replica \\
-Validation / checkpoint interval & Every $10$ updates \\
-\hline
-\multicolumn{2}{l}{\textbf{Datasets}}\\
-Paired bank & $497$ canonical cases: $373$ training, $124$ validation; $175$ parent packages \\
-Paired views & One direct-action, inference, and planning view per case; planning eligibility audited separately \\
-Planning-eligible cases & $314$ training; $106$ validation \\
-Historical inference--planning set & $594$ training items: $294$ inference, $300$ planning; $495$ validation items \\
-Compact joint set & $24$ training items: $8$ direct-action, $8$ inference, $8$ planning \\
-\hline
-\multicolumn{2}{l}{\textbf{Selected checkpoints and realized training dose}}\\
-\textsc{GameSlice-A} & O-99; $100$ updates on paired-bank direct-action items \\
-Action-only budget / consumed & $6{,}553{,}600$ / $6{,}554{,}714$ response tokens \\
-Action-only collection target & $65{,}536$ response tokens per update; complete groups at the boundary \\
-\textsc{GameSlice-IP} & BP-99; $100$ updates on the historical inference--planning set \\
-Inference--planning objective weights & $1/2$ inference, $1/2$ planning \\
-Inference--planning budget / consumed & $6{,}553{,}600$ / $2{,}516{,}803$ response tokens at the selected checkpoint \\
-Inference--planning learning rate & Configured constant rate of $10^{-6}$ \\
-\textsc{GameSlice-Joint} & micro24-39; $40$ updates on the compact joint set \\
-Joint batch composition & $4$ groups per objective; $12\times8=96$ responses per update \\
-Joint objective weights & $1/3$ per objective \\
-Joint exposure per item & $20$ groups; $160$ responses \\
-Joint token cap / consumed & $3{,}932{,}160$ / $1{,}782{,}494$ response tokens \\
-Action-only / joint learning rate & Token-based cosine decay from $10^{-6}$ toward $10^{-7}$, parameterized by each run's token budget \\
-SP checkpoint & SP-41; complete-game self-play with own terminal utility \\
-SP-41 cumulative training dose & -- \\
 \end{longtable}
 \endgroup
 
-The response-token count measures generated tokens entering training,
-including retries; it is distinct from the number of unique examples or
-updates. The compact run terminates at its update limit before reaching its
-token cap. Its count follows the completed checkpoint lineage and excludes
-discarded work after an interrupted save. The selected SP-41 evaluation
-artifact identifies the model export, but its cumulative training dose
-remains to be linked to the training archive. Earlier SP configurations are
-therefore not substituted for that checkpoint. The O and D labels in the
-historical diagnosis tables denote action-only and joint training,
-respectively; those earlier D checkpoints are distinct from micro24-39.
+\paragraph{Self-play training.}
+All players act using the current policy, with each receiving only its own
+observation and available interaction history. Training collects complete
+games and assigns each player's terminal utility to that player's decisions.
+The environment supplies the reward; oracle judgments and action labels are
+not used. Four stochastic trajectories are collected for each sampled initial
+game, with returns associated with the same initial game and player seat.
+The number of decisions varies across trajectories, so collection is governed
+by generated response tokens rather than a fixed number of decision items.
+
+\begin{table}[H]
+\centering\small
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{5pt}
+\caption{Self-play training settings. Each rollout covers a complete game;
+all player roles share the current policy.}
+\label{tab:selfplay-configuration}
+\begin{tabular}{@{}p{0.34\textwidth}p{0.62\textwidth}@{}}
+\hline
+Parameter & Setting \\
+\hline
+Initial model / KL reference & Qwen3-4B-Instruct-2507 / frozen initial model \\
+Trajectories per sampled initial game & $4$ \\
+Task reward & Each player's own terminal utility \\
+Precision & BF16; gradient accumulation and reduction in FP32 \\
+Optimizer & Adam, Megatron backend \\
+Initial learning rate & $10^{-6}$ \\
+Adam coefficients; weight decay & $(0.9,0.95)$; $0$ \\
+Policy updates per rollout batch & $1$ epoch \\
+Policy-ratio clipping & $0.2$ \\
+KL loss coefficient & $0.01$ \\
+Sequence / prompt limit & $4096$ / $3072$ tokens \\
+Maximum generated response & $1024$ tokens per decision call \\
+Sampling & Temperature $1$; top-$p=1$; top-$k$ disabled \\
+Repetition penalty & $1$ \\
+Invalid or truncated output & One retry; independent negative advantage with coefficient $0.2$ \\
+Random seed & $42$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Structural criteria for slice selection}
+\label{app:slice-selection}
+
+Strategic coverage concerns the relationship between available evidence,
+partner responses, and the consequences of a decision. We distinguish
+eligibility checks, verified relations between candidate decisions, and
+structural coverage dimensions (Table~\ref{tab:slice-selection}). These
+criteria describe candidate construction and coverage; they are not an
+exhaustive specification of subsequent training-pool selection. Coverage is
+defined across the collection, rather than requiring every slice to exhibit
+every property.
+
+For a decision information set $I$, let $\mathcal A_\epsilon(I)$ denote the
+legal actions accepted by the oracle scorer, retaining all actions within
+the utility tolerance $\epsilon=0.1$ and applying the stated response
+tie-breaking rule. Action-supervision eligibility requires
+$\varnothing\neq\mathcal A_\epsilon(I)\subsetneq\mathcal L(I)$.
+This excludes decisions with no reliable acceptable action or with no
+distinction between acceptable and unacceptable choices. It does not require
+a unique best action, and it is not a filter on inference-only questions.
+
+\begin{table}[htbp]
+\centering\small
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{5pt}
+\caption{Structural selection criteria and coverage dimensions. Verified
+contrasts are defined under the reference policy; planning coverage describes
+dependencies in the game structure.}
+\label{tab:slice-selection}
+\begin{tabular}{@{}p{0.26\textwidth}p{0.70\textwidth}@{}}
+\hline
+Criterion & Check or coverage target \\
+\hline
+
+Decision validity & Replay the history under the native rules, verify the
+current state and legal actions, and retain the acting player's available
+information. \\
+Action discrimination & Require a nonempty acceptable-action set that is a
+proper subset of the legal actions for scored action tasks. \\
+Judgment update or preservation & Compare oracle judgments at linked
+histories. Include both informative observations that change the judgment
+and observations for which it remains unchanged. Attribute private feedback
+to the corresponding investigation. \\
+Information--action dependence & Include controlled information contrasts
+with different acceptable actions, as well as action-invariant controls.
+For certified must-change pairs, the acceptable-action sets are disjoint
+while continuation payoffs are held fixed. \\
+Cross-turn planning & Cover decisions where irreversible commitments or
+spending an opportunity on investigation affect later feasible choices.
+Evaluate actions through their reference-policy continuation to terminal
+utility. \\
+Multi-party planning & Cover goal and commitment dependencies across
+players, including agreements whose consequences depend on several
+partners' responses. Players still pursue their own utility. \\
+Label reliability & Exclude failed reference computations. For planning
+with a qualitative judgment, retain reliable action supervision and mask
+labels that remain ambiguous under the supplied information. \\
+Coverage sampling & Favor underrepresented combinations of evidence type,
+proposal/response/investigation decisions, remaining decision stages, and
+preference-sensitive or insensitive cases. \\
+\hline
+\end{tabular}
+\end{table}
+
+For an information contrast $(I,I')$, disjoint acceptable-action sets,
+$\mathcal A_\epsilon(I)\cap\mathcal A_\epsilon(I')=\varnothing$, certify
+that no single action is acceptable in both conditions. Such contrasts need
+not be consecutive decisions: a contiguous slice follows one legal
+trajectory, whereas counterfactual branches provide related supervision
+items. Cross-turn and multi-party coverage are structural descriptions;
+neither a longer remaining horizon nor a larger player count alone certifies
+that short-horizon or single-partner reasoning would fail. We do not impose
+such an ablation-based requirement on every selected slice.
+
+\subsection{Illustrative training prompts}
+\label{app:training-prompts}
+
+The templates below summarize the instructions and information supplied to
+the model. They are explanatory renderings of the training prompts, with
+instance-specific content replaced by bracketed placeholders. We use the
+paper's terminology for preference judgments rather than implementation
+field names. Slices are executed with the oracle, which advances the game
+and updates each player's information along the trajectory. The resulting
+decision points supply the model's supervision requests. The three templates
+describe supervision views of those decisions; a model-generated inference
+response is not automatically passed to the planning view, which receives
+the oracle judgment.
+
+\paragraph{Shared context and response format.}
+Each slice prompt specifies the acting player, game rules, goal requirements,
+own preferences, binding commitments, pending offer (if any), remaining
+proposal order, and investigation budget. Goal requirements describe the
+commitments needed for completion, not players' preferences. The prompt
+also states the reference partner policy, including its response tie-breaking
+rule. Legal actions and their arguments are supplied through tool schemas.
+The shared system instruction is:
+\begin{quote}\small
+You are answering a reasoning question about a negotiation game. Use the
+stated rules and visible information. Briefly explain your answer, then
+make exactly one requested tool call.
+\end{quote}
+
+\paragraph{Direct action selection.}
+The model receives the public history and its own private observations,
+together with the public preference prior. No oracle judgment is supplied.
+\begin{quote}\small
+\textbf{Context:} [Game rules, goals, own preferences, public prior, partner
+policy, visible interaction history, private investigation answers, and
+current decision state.]\\[2pt]
+\textbf{Task:} Choose your next action. Pursue the goals you want and avoid
+bringing about goals you dislike. When accepting and rejecting are equally
+good for you, choose the response that helps the other players more.\\[2pt]
+\textbf{Response:} Briefly explain your decision, then make exactly one legal
+game-action tool call. Keep the explanation outside the tool arguments.
+\end{quote}
+
+\paragraph{Inference.}
+This request uses the available evidence to query a particular partner's
+preference for a particular goal. Its output is a judgment, not a game action.
+\begin{quote}\small
+\textbf{Context:} [Game and decision information, public prior, partner
+policy, visible history, and private observations.]\\[2pt]
+\textbf{Task:} Assess [partner]'s preference for [goal]. Use the observed
+behavior and revealed information under the stated partner policy. Report
+every preference still possible, including unlikely ones, and the most likely
+preference, or \texttt{undetermined} when no preference is clearly better
+supported under the specified reporting rule.\\[2pt]
+\textbf{Response:} Briefly explain, then make exactly one
+\texttt{SUBMIT\_BELIEFS} call containing the requested judgment.
+\end{quote}
+
+\paragraph{Planning given an oracle judgment.}
+Here, the oracle judgment is an input; the model must choose an action
+conditioned on that judgment. The template shows the planning view that
+supplies the current decision state and qualitative judgments directly,
+without requiring reconstruction of the evidence history.
+\begin{quote}\small
+\textbf{Context:} [Game rules, goals, own preferences, partner policy, current
+decision state, and legal actions.]\\[2pt]
+\textbf{Supplied oracle judgment:} [For each specified partner--goal pair:
+possible preferences and most likely preference, or \texttt{undetermined}.]\\[2pt]
+\textbf{Task:} Use the supplied judgment directly to choose your next action.
+Pursue your own goals under the stated continuation policy, including its
+response tie-breaking rule.\\[2pt]
+\textbf{Response:} Briefly explain your decision, then make exactly one legal
+game-action tool call.
+\end{quote}
+Both action tasks also state the scoring tolerance: an action may lose at
+most $0.1$ utility relative to the best action; for responses tied in own
+utility, the corresponding allowance in other players' total utility is
+$0.1$. The acceptable-action labels remain with the scorer and are not
+included in the model's input.
+
+\paragraph{Self-play.}
+At each decision in a complete game, the acting player receives the game
+rules, its own preferences and private observations, the public history,
+and the current state and legal tools. Its instruction is summarized below.
+\begin{quote}\small
+Your objective is to maximize your own expected final score. Other players'
+preferences may differ from yours. Briefly explain your decision using the
+information available to you, then make exactly one legal game-action tool
+call. Your explanation is private and is not shown to other players.
+\end{quote}
+The selected action advances the game, and the next player receives its own
+observation. Unlike the slice tasks, these requests contain no supplied
+oracle judgment or reference-policy action target; training feedback comes
+from the player's terminal utility.

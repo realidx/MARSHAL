@@ -2,6 +2,7 @@
 
 ## 当前工作
 
+- [直接行动 slices–SP 与当前 oracle 试验](../examples/strategic_slices/README.md)：`bounded-next-own-v1` 已冻结 100/20/40 个共享父游戏、659/128/248 个 slices，58 个 family 分离，正 S 父游戏 12/2/4。首版三人支持固定为 3 个世界，双人最多 27 个世界；训练入口与 CPU/mock 验收通过，真实模型信号和 GPU 更新待执行。
 - [Strategic game slices checkpoint](strategic_game_slices_checkpoint_20261001.md)：当前讨论的定义、pilot 证据与下一步实验提案；新对话从这里开始。
 - [双人 BENAC slice pilot](benac_slice_pilot/README.md)：C/S 计算、连续窗口与模型 D 探测流程。
 - [井字棋 slice pilot](tictactoe_slice_pilot/README.md)：早期概念与初始模型诊断，不是最终游戏。

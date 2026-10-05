@@ -78,6 +78,9 @@ class SocialPipeline(BasePipeline):
                 getattr(self,role).initialize(pipeline_config=cfg, blocking=True)
         self.set_model_update_pair(self.actor_train,self.actor_infer,frequency=1)
         self.set_checkpoint_clusters(self.actor_train)
+        self.configure_collection(config, options)
+
+    def configure_collection(self, config, options):
         data=load_data()
         reasoning=options.get('recipe')=='reasoning'
         collector_type=Collector
@@ -319,7 +322,10 @@ class SocialPipeline(BasePipeline):
                 self.actor_train.offload_states(blocking=True)
                 self.model_update(step)
             with self.phase('rollout'):
-                rows,units,games,metrics=self.collector.collect(step,self.options['arm'],self.options['tokens_per_update'])
+                token_target = self.options['tokens_per_update']
+                if self.options.get('recipe') == 'strategic_slices':
+                    token_target = min(token_target, self.options['total_tokens'] - consumed)
+                rows,units,games,metrics=self.collector.collect(step,self.options['arm'],token_target)
                 for name, records in (('calls',rows),('units',units),('games',games)):
                     folder=self.root/name;folder.mkdir(exist_ok=True)
                     with (folder/f'step-{step}.jsonl').open('w') as f:
@@ -341,7 +347,7 @@ class SocialPipeline(BasePipeline):
             difference=(audit.batch['audit_log_probs']-audit.batch['behavior_log_probs'])[mask].abs()
             metrics['behavior_actor_logprob_abs_mean']=difference.mean().item()
             metrics['behavior_actor_logprob_abs_max']=difference.max().item()
-            if self.options.get('recipe')=='reasoning':
+            if self.options.get('recipe') in ('reasoning', 'strategic_slices'):
                 ratios=(audit.batch['audit_log_probs']-audit.batch['behavior_log_probs'])[mask].exp()
                 fraction=((ratios<.8)|(ratios>1.2)).float().mean().item()
                 metrics['behavior_preupdate_clip_fraction']=fraction
