@@ -104,16 +104,22 @@ python -m training.strategic_slices.terminal_d --mock \
 Omit `--limit-parents` for a full CPU mock of all 6,400 trajectories. Mock reports
 are labeled throughout and do not provide model D or training-signal evidence.
 
-The candidate dataset lives under ignored `new/local_data`; a Git pull alone
-does not transfer it. Create a standalone archive containing the current Python
-sources, launchers, configuration, candidate data and reference evidence:
+The unpacked candidate dataset lives under ignored `new/local_data`. The standalone
+archive and its checksum sidecar are stored at Git-trackable paths:
+`examples/strategic_slices/strategic-slices-terminal-D.tar.gz` and
+`examples/strategic_slices/strategic-slices-terminal-D.tar.gz.json`.
+Commit both files to transfer the packaged data through Git. The archive contains
+the current Python sources, launchers, configuration, candidate data and reference
+evidence. Its generation command is:
 
 ```bash
 python -m examples.strategic_slices.prepare_terminal_d_bundle \
-  --output /tmp/strategic-slices-terminal-D.tar.gz
+  --output examples/strategic_slices/strategic-slices-terminal-D.tar.gz
 ```
 
-Transfer this archive yourself and extract into a **new directory** on SoC. Its
+The script defaults to that path and refuses to overwrite an existing archive;
+use a fresh `--output` path when rebuilding for review. After committing/pulling
+the archive or transferring it yourself, extract into a **new directory** on SoC. Its
 adjacent JSON records the archive SHA-256. `TERMINAL_D_BUNDLE.json` inside the
 archive lists every included file hash. No model weights are included. For a
 standalone extracted bundle, inspect/check checksums from that directory:

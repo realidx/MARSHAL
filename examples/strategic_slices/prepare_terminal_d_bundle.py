@@ -12,7 +12,8 @@ from training.strategic_slices.terminal_d import ROOT, load_config, load_dataset
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--output', type=Path,
+                        default=ROOT/'examples/strategic_slices/strategic-slices-terminal-D.tar.gz')
     args = parser.parse_args()
     cfg = load_config()
     data = ROOT/cfg['data']
@@ -20,7 +21,8 @@ def main():
     files = set(source_identity()) | {'training/__init__.py'}
     files.update(str(p.relative_to(ROOT)) for p in data.rglob('*') if p.is_file())
     files.update(str(p.relative_to(ROOT)) for p in (ROOT/'examples/strategic_slices').glob('*')
-                 if p.is_file() and p.suffix in ('.py','.sh','.json','.md'))
+                 if p.is_file() and p.suffix in ('.py','.sh','.json','.md')
+                 and not p.name.endswith('.tar.gz.json'))
     files.update(str(p.relative_to(ROOT)) for p in (ROOT/'examples/strategic_slices/fixtures').rglob('*') if p.is_file())
     files.update(cfg['historical_sources'])
     manifest = dict(files={name:file_hash(ROOT/name) for name in sorted(files)},
