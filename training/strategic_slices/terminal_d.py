@@ -4,8 +4,8 @@ Environment truth and oracle scores remain in local evidence, never in requests.
 Interrupted runs resume at atomic parent records; HTTP failures abort the run.
 """
 import argparse
-from collections import Counter, defaultdict
-from concurrent.futures import ThreadPoolExecutor
+from collections import Counter, defaultdict, deque
+from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 import json
 from pathlib import Path
 import shutil
@@ -136,25 +136,24 @@ class HTTPGenerator:
         self.url, self.model, self.cfg, self.tokenizer = url.rstrip('/'), model, cfg, tokenizer
         self.evidence = Path(evidence)
         self.lock = threading.Lock()
+        self.tokenizer_lock = threading.Lock()
 
     def log(self, row):
         with self.lock, self.evidence.open('a') as handle:
             handle.write(stable(row)+'\n')
 
-    def __call__(self, requests):
-        # Tokenize serially before HTTP dispatch: check every dynamic prompt,
+    def one(self, req):
+        # Check every dynamic prompt before its HTTP dispatch,
         # including response nodes and private investigation answers.
-        lengths = []
-        for req in requests:
+        with self.tokenizer_lock:
             encoded = self.tokenizer.apply_chat_template(req['messages'], tools=req['tools'],
                 tokenize=True, add_generation_prompt=True, return_dict=True, truncation=False)
-            ids = encoded['input_ids']
-            if not isinstance(ids, list) or not ids or not all(type(i) is int for i in ids):
-                raise ValueError('Expected flat token IDs')
-            lengths.append(len(ids))
-            if len(ids)+req['max_tokens'] > self.cfg['context']:
-                raise ValueError('Prompt exceeds context; truncation is forbidden')
-
+        ids = encoded['input_ids']
+        if not isinstance(ids, list) or not ids or not all(type(i) is int for i in ids):
+            raise ValueError('Expected flat token IDs')
+        length = len(ids)
+        if len(ids)+req['max_tokens'] > self.cfg['context']:
+            raise ValueError('Prompt exceeds context; truncation is forbidden')
         def complete(item):
             req, length = item
             body = dict(req, model=self.model)
@@ -180,8 +179,11 @@ class HTTPGenerator:
             except Exception as exc:
                 self.log(dict(status='infrastructure_failure', request=body, error=repr(exc)))
                 raise
+        return complete((req, length))
+
+    def __call__(self, requests):
         with ThreadPoolExecutor(max_workers=self.cfg['workers']) as pool:
-            return list(pool.map(complete, zip(requests, lengths)))
+            return list(pool.map(self.one, requests))
 
 
 def mock_generate(requests):
@@ -240,16 +242,39 @@ def summarize_slice(row, games, seed):
         distinct_model_trajectories=len({tuple((c['prompt_sha256'], c['action_index']) for c in g['calls']) for g in games}))
 
 
-def run_evaluation(dataset, cfg, output, generate, identity, *, parent_limit=None, resume=False):
-    output = Path(output)
-    parent_ids = sorted(dataset.parents)[:parent_limit]
-    protocol = dict(version='terminal-D-eight-independent-v1', dataset_sha256=file_hash(dataset.root/'manifest.json'),
+
+def run_refill(jobs, cfg, generate):
+    """Keep up to workers requests in flight, with one per trajectory."""
+    ready = deque(j for j in jobs if j.status == 'running')
+    pending = {}
+    one = generate.one if hasattr(generate, 'one') else lambda req: generate([req])[0]
+    with ThreadPoolExecutor(max_workers=cfg['workers']) as pool:
+        while ready or pending:
+            while ready and len(pending) < cfg['workers']:
+                job = ready.popleft()
+                req = job.request(cfg)
+                pending[pool.submit(one, req)] = (job, req)
+            done, _ = wait(pending, return_when=FIRST_COMPLETED)
+            for future in done:
+                job, req = pending.pop(future)
+                job.accept(future.result(), req)
+                if job.status == 'running':
+                    ready.append(job)
+
+
+def make_protocol(dataset, cfg, identity, parent_ids):
+    return dict(version='terminal-D-eight-independent-v1', dataset_sha256=file_hash(dataset.root/'manifest.json'),
         config=cfg, model_identity=identity, parent_ids=parent_ids, source_identity=source_identity(),
         reset='Independent joint entrance/world draw per replica; independent model and oracle RNG streams.',
         D='V_star minus mean native-terminal utility; no clipping; primary D null on incomplete samples.',
         selection='No final selection. Held-out metrics are diagnostic only; training shortlist must use train.',
         signal='Reward variation includes environment noise. Root-Q contrast uses identical visible prompts, '
                'optimal continuation within remaining window, and is not full-trajectory success or proof of learnability.')
+
+def run_evaluation(dataset, cfg, output, generate, identity, *, parent_limit=None, resume=False):
+    output = Path(output)
+    parent_ids = sorted(dataset.parents)[:parent_limit]
+    protocol = make_protocol(dataset, cfg, identity, parent_ids)
     if output.exists():
         if not resume:
             raise FileExistsError('Use a fresh output directory or explicit resume')
@@ -266,6 +291,34 @@ def run_evaluation(dataset, cfg, output, generate, identity, *, parent_limit=Non
     for name, checksum in protocol['source_identity'].items():
         if file_hash(output/'source'/name) != checksum:
             raise ValueError('Saved source snapshot mismatch')
+    migration_path = output/'EXECUTION_MIGRATION.json'
+    if migration_path.exists():
+        migration = json.loads(migration_path.read_text())
+        previous = migration['old_protocol']
+        if (digest(previous) != migration['old_protocol_sha256']
+                or digest(protocol) != migration['new_protocol_sha256']):
+            raise ValueError('Execution migration protocol hash mismatch')
+        unchanged = lambda p: {k:v for k,v in p.items() if k not in ('config','source_identity')}
+        if unchanged(previous) != unchanged(protocol):
+            raise ValueError('Execution migration changed statistical identity')
+        old_cfg = {k:v for k,v in previous['config'].items() if k != 'workers'}
+        new_cfg = {k:v for k,v in protocol['config'].items() if k not in ('workers','scheduler')}
+        if (old_cfg != new_cfg or previous['config']['workers'] != 16
+                or protocol['config']['workers'] != 32
+                or protocol['config'].get('scheduler') != 'completion-refill-v1'):
+            raise ValueError('Execution migration changed sampling protocol')
+        if set(previous['source_identity']) != set(protocol['source_identity']):
+            raise ValueError('Execution migration changed source set')
+        changed = [k for k in previous['source_identity']
+                   if previous['source_identity'][k] != protocol['source_identity'][k]]
+        if any(k != 'training/strategic_slices/terminal_d.py' for k in changed):
+            raise ValueError('Execution migration changed non-scheduler sources')
+        for name, checksum in previous['source_identity'].items():
+            if file_hash(output/'legacy_source'/name) != checksum:
+                raise ValueError('Legacy source snapshot mismatch')
+        for name, checksum in migration['inherited_parents'].items():
+            if Path(name).name != name or file_hash(output/'parents'/name) != checksum:
+                raise ValueError('Inherited parent file changed')
     all_results = []
     try:
         for number, pid in enumerate(parent_ids):
@@ -276,21 +329,33 @@ def run_evaluation(dataset, cfg, output, generate, identity, *, parent_limit=Non
                 if saved['sha256'] != digest(saved['result']):
                     raise ValueError('Saved parent result changed')
                 result = saved['result']
-                if result['protocol_sha256'] != digest(protocol) or result['parent_id'] != pid:
-                    raise ValueError('Saved parent protocol mismatch')
+                if result['parent_id'] != pid:
+                    raise ValueError('Saved parent identity mismatch')
+                if result['protocol_sha256'] != digest(protocol):
+                    migration_path = output/'EXECUTION_MIGRATION.json'
+                    if not migration_path.exists():
+                        raise ValueError('Saved parent protocol mismatch')
+                    migration = json.loads(migration_path.read_text())
+                    if (migration['new_protocol_sha256'] != digest(protocol)
+                            or result['protocol_sha256'] != migration['old_protocol_sha256']
+                            or migration['inherited_parents'].get(path.name) != file_hash(path)):
+                        raise ValueError('Inherited parent migration mismatch')
             else:
                 tree = dataset.reference(rows[0])
                 jobs = [TerminalRollout(tree, row, replica, cfg['seed']) for row in rows for replica in range(cfg['replicas'])]
-                while any(j.status == 'running' for j in jobs):
-                    active = [j for j in jobs if j.status == 'running']
-                    for offset in range(0, len(active), cfg['workers']):
-                        batch = active[offset:offset+cfg['workers']]
-                        requests = [j.request(cfg) for j in batch]
-                        answers = generate(requests)
-                        if len(answers) != len(batch):
-                            raise ValueError('Missing generation results')
-                        for job, req, answer in zip(batch, requests, answers):
-                            job.accept(answer, req)
+                if cfg.get('scheduler') == 'completion-refill-v1':
+                    run_refill(jobs, cfg, generate)
+                else:
+                    while any(j.status == 'running' for j in jobs):
+                        active = [j for j in jobs if j.status == 'running']
+                        for offset in range(0, len(active), cfg['workers']):
+                            batch = active[offset:offset+cfg['workers']]
+                            requests = [j.request(cfg) for j in batch]
+                            answers = generate(requests)
+                            if len(answers) != len(batch):
+                                raise ValueError('Missing generation results')
+                            for job, req, answer in zip(batch, requests, answers):
+                                job.accept(answer, req)
                 games = [j.record() for j in jobs]
                 slices = [summarize_slice(row, [g for g in games if g['slice_id']==row['id']], cfg['seed']) for row in rows]
                 result = dict(parent_id=pid, protocol_sha256=digest(protocol), games=games, slices=slices)
@@ -331,6 +396,8 @@ def run_evaluation(dataset, cfg, output, generate, identity, *, parent_limit=Non
             call_statuses=dict(Counter(c['protocol_status'] for c in calls)), splits=summaries, strata=strata,
             train_at_least_100_complete_root_value_contrast_slices=summaries['train']['complete_root_value_contrast_slices']>=100,
             interpretation=protocol['signal'], uncertainty='Eight samples give coarse estimates; bootstrap intervals are descriptive. Missing-outcome bounds are not confidence intervals.')
+        if (output/'EXECUTION_MIGRATION.json').exists():
+            summary['execution_migration'] = json.loads((output/'EXECUTION_MIGRATION.json').read_text())
         if source_identity() != protocol['source_identity']:
             raise ValueError('Source changed during evaluation')
         write_rows(output/'slices.jsonl', rows)
@@ -344,6 +411,8 @@ def run_evaluation(dataset, cfg, output, generate, identity, *, parent_limit=Non
                 f"| {s} | {v['slices']} | {v['complete_slices']} | {v['sampled_reward_contrast_slices']} | {v['root_value_contrast_slices']} | {v['root_mixed_optimal_suboptimal_slices']} |\n" for s,v in summaries.items())+
             '\n'+protocol['signal']+'\n\nNo training or final 100-slice selection. Per-slice D, uncertainty, failures and signal diagnostics are in `slices.jsonl`.\n')
         proof = {str(p.relative_to(output)):file_hash(p) for p in [output/'protocol.json', output/'summary.json', output/'slices.jsonl', output/'train_signal_candidates.jsonl', output/'REPORT.md', *sorted((output/'parents').glob('*.json'))]}
+        if (output/'EXECUTION_MIGRATION.json').exists():
+            proof['EXECUTION_MIGRATION.json'] = file_hash(output/'EXECUTION_MIGRATION.json')
         atomic_json(output/'COMPLETE.json', dict(files=proof, mock=identity['mock']))
         if (output/'FAILED.json').exists():
             (output/'FAILED.json').replace(output/'RECOVERED_FAILURE.json')

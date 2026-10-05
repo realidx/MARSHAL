@@ -1,15 +1,17 @@
 # Terminal candidate D evaluation on SoC
 
-This pipeline is prepared locally; no Slurm job has been submitted and no real
-model evaluation has been run. It evaluates the current **800 candidates from
-100 parents, eight independent trajectories each**. It does not train weights
-or select the final 100 slices.
+The real Qwen3-4B-Instruct-2507 evaluation completed on SoC on 2026-10-05:
+**800 candidates from 100 parents, eight independent trajectories each**.
+Original job 910916 supplied 58 completed parents; 32-worker completion-refill
+job 911072 reused them and finished the other 42. Full evidence is in
+[`new/strategic_slices_terminal_d_20261005`](../../new/strategic_slices_terminal_d_20261005/README.md).
+It does not train weights or select the final 100 slices.
 
 Local validation completed: 22 tests; full 6,400-trajectory CPU mock and independent
 native replay; complete-run resume without further generation; standalone archive
 checksum and offline-entry checks. Mock uses a legal random actor, not Qwen.
 The full mock used the earlier 4-worker/1,024-output-token profile. The current
-user-requested profile uses 16 workers and 4,096 output tokens; local regression
+user-requested profile uses 32 workers, completion-driven refill, and 4,096 output tokens; local regression
 and configuration checks cover this update, without a real GPU run.
 
 ## Runtime configuration
@@ -22,9 +24,9 @@ past working configurations, not confirmation that those remote paths still exis
 | --- | --- |
 | Model | `/home/e/e1300530/models/Qwen3-4B-Instruct-2507` |
 | Python | `/home/e/e1300530/tmp/marshal-vllm09/bin/python` |
-| Slurm | `gpu`, `gpu:h100-47:1`, 8 CPUs, 64 GB RAM, 4-hour limit |
+| Slurm | `gpu`, `gpu:h100-47:1`, 8 CPUs, 64 GB RAM, 3-hour limit |
 | vLLM | BF16, TP=1, Hermes parser, localhost port 18083 |
-| Concurrency / GPU memory fraction | 16 / 0.40 |
+| Concurrency / GPU memory fraction | 32 / 0.40 |
 | Sampling | temperature 0.8, top_p 1, top_k -1, repetition_penalty 1 |
 | Context / output budget | 16,384 / 4,096 tokens |
 | Repeats / seed | 8 / 42 |
@@ -32,8 +34,8 @@ past working configurations, not confirmation that those remote paths still exis
 Job 846913 recorded vLLM 0.28.0, Transformers 5.16.1 and Torch 2.13.0.
 The launcher records actual versions and hashes the local model weights,
 tokenizer and configuration. It installs nothing. Context 16,384 follows the
-small-probe profile; the earlier pilot used 5,120. The four-hour walltime and
-64 GB CPU RAM are this run's resource choices, not measured runtime requirements.
+small-probe profile; the earlier pilot used 5,120. The three-hour walltime and
+64 GB CPU RAM are the allocation settings; continuation job 911072 completed in 27m55s.
 At most **11,128 model calls** are possible (6,400 trajectories times their k);
 early terminal branches can use fewer. The GPU visibility assigned by Slurm is
 preserved, including MIG UUIDs. The launcher stops only its own server group.
@@ -166,3 +168,35 @@ resume. A completed run resumes without further model calls.
 - `evaluation/COMPLETE.json`: output hashes, not a learning-success certificate.
   `FAILED.json` records interrupted evaluations; successful recovery moves it to
   `RECOVERED_FAILURE.json`.
+
+## SoC completion-refill continuation (2026-10-05)
+
+The optimized launcher uses `workers=32` and
+`scheduler=completion-refill-v1`. Each completed HTTP request immediately frees
+a slot for another ready trajectory; at most one call per trajectory is in
+flight. Parent records remain atomic and independently seeded. The tokenizer
+is protected against concurrent state mutation.
+
+The original 16-worker job 910916 was cancelled only after CPU checks and
+legacy-result validation passed. Its 58 complete parents (3712 trajectories)
+were copied byte-for-byte to the continuation, with original protocol hashes
+retained. Job 911072 continues the other 42 parents. Model, sampling settings,
+4096-token cap, reset streams, and scoring are unchanged; batch scheduling can
+change numerical generations. `EXECUTION_MIGRATION.json` records both identities
+and all inherited parent hashes. Inherited and new parents form a mixed execution
+measurement, not a token-identical rerun.
+
+`migrate_terminal_d_execution.py --old OLD_EVALUATION --new NEW_EVALUATION`
+validates without modifying either output; add `--apply` to create a new
+continuation directory. It permits only the recorded 16-to-32/refill change
+and terminal_d scheduler source change, preserving model/data/prompt sources,
+all other configuration, and full replica coverage. Never modify a live run's
+source or output to migrate. Submit the new directory using `--resume`.
+
+Validation: eight original CPU tests, two refill/trajectory/recovery tests,
+and the HTTP context/transport regression passed in Python 3.10. The refill
+test blocks one request and verifies that a later request starts before that
+request is released; the recovery test forbids any new generation for a copied
+complete parent. Continuation job 911072 completed successfully in 27m55s. The full results
+and original/continuation evidence are archived in
+[`new/strategic_slices_terminal_d_20261005`](../../new/strategic_slices_terminal_d_20261005/README.md).
