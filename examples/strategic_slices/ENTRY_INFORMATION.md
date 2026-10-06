@@ -138,3 +138,101 @@ and response-only social-tie checks at the existing tolerances. The selected
 profile may mix nonuniformly among remaining admissible ties. Its declared
 off-path convention is not a formal sequential-equilibrium guarantee. No
 alternate local equilibrium is silently substituted at an entrance.
+
+## Existing private answers: one-decision entry contrasts (2026-10-05)
+
+The original capped entrance sampler can omit useful decisions *after* an
+investigation. `query_answer` measures the value of a future answer from a
+pre-query entrance, whereas `entry_private_answer` measures using an answer
+already available. The latter conditions on the historical investigation having
+occurred; it does not establish that buying that investigation was optimal or
+strictly better than acting immediately.
+
+For one reachable public history h, focal type, selected observed query slot,
+and values of all other observed slots, retain every positive-reach answer z.
+The distribution p(z,w | h, own, other answers) comes from the original initial
+oracle's full prefix likelihood. No uniform-answer resampling or prior reset
+is allowed. All answers share the same legal action menu and per-world
+continuation payoff table: choose the first action a, then use the frozen oracle
+for everyone through native terminal. For k=1, write its conditional value as
+Q(z,a). Then
+
+`S_entry_answer = sum_z p(z) max_a Q(z,a) - max_a sum_z p(z) Q(z,a)`.
+
+The restricted decision retains the complete public history (including the
+focal's past actions), own preferences, and all other private answers. Only
+the selected answer is unavailable to this one decision. The frozen
+continuation can use that answer again after the decision, just as the existing
+window S convention allows information use after k. This is a conditional
+entrance-information comparison, not an alternate full-game equilibrium or
+a policy that never received the answer throughout the past.
+
+An epsilon=.1 `must-change` certificate additionally requires two answer
+conditions to have disjoint own-utility acceptable-action sets. These are
+conservative sets including all own-utility ties; response social tie-breaking
+can only narrow them. S is computed with exact maximizing values, not by
+summing acceptable-action gaps. Both the S>.05 and member C>.1 thresholds are
+unchanged.
+
+`audit_entry_answers.py` scans all reachable answer groups in the same 1–3
+remaining-proposal neighborhood, bypassing the old 24-entry preselection.
+`retain_entry_answer_contrasts.py` keeps one complete strong group per eligible
+parent, ranking by original reach probability times S, then S and stable ID.
+It retains all answer members, minimizes replacements, and preserves existing
+player/k/decision-kind coverage and collective controls within the eight-question
+cap. New singleton C values and posteriors are checked independently; a masked
+dynamic program checks each selected group's S.
+
+Each answer condition remains a separate, fixed-information question with its
+own visible private answer. The relation's S is stored once in
+`entry_answer_relations.jsonl`; it is never copied into member S fields. The
+loader rejects incomplete relations or values inconsistent with their members.
+This preserves the distinction between 800 questions and a smaller number of
+collective information contrasts. The historical paper-bank calibration uses
+balanced condition pairs only as a diagnostic: it cannot supply native reach
+weights and is not counted as new oracle-consistent data.
+
+## Early-round investigation audit
+
+`audit_early_investigation.py` checks each player's first proposal in every
+saved parent. It includes all positive-reach public histories and own-type
+information cells (mass threshold 1e-10), even when more than three proposal
+turns remain. It uses no C threshold, 24-entrance cap, or model outcomes.
+Earlier responses by that player remain part of the public history.
+
+Partners retain the original certified initial profile. The focal player
+optimizes every remaining proposal and response to native terminal via a
+complete best-response dynamic program, with counterfactual own reach and
+the native information partitions. Two distinct quantities are recorded:
+
+* `delta_investigate = max Q(INVESTIGATE) - max Q(non-INVESTIGATE)`. After the
+  first action, the focal can optimize freely, including investigating later.
+* `query_access_value = V_full - V_no_own_queries`. The second strategy class
+  prohibits the focal from investigating at **all** future decisions. It still
+  observes offers/responses and retains all other native observations. Partners
+  can investigate and follow their unchanged reference policies.
+
+Both comparisons change action availability, so a positive value can include
+effects of the visible investigation event on partner continuation. It does
+not by itself certify private-answer value. A positive case must also be checked
+by preserving the query action/cost/public event and masking only the selected
+answer through terminal, using `masked_answer_value`. Record both its optimized
+S and the full-versus-masked value with that query action forced.
+
+Neither metric is the already-known-answer S, nor does either change the
+dataset's existing S labels. Query-access value zero means that some contingent
+strategy without any own investigation attains the same expected utility
+against this fixed partner profile. It does not mean every non-query action is
+optimal, that the focal needs no inference, or that investigation is useless in
+other parents or under other partner profiles.
+
+The audit verifies that first-proposal cell masses sum to one per parent/player
+and that full best-response values match the certified reference at reachable
+entrances. It separately reports how much action Q changes from reoptimizing
+the continuation. Analytic tests cover genuinely beneficial investigation and
+prevent hidden-world clairvoyance; a native fixture checks the full-tree dynamic
+program against independent entrance-wise terminal best responses.
+
+```sh
+python -m examples.strategic_slices.audit_early_investigation --output NEW_AUDIT_DIRECTORY
+```

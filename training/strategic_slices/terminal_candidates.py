@@ -14,6 +14,8 @@ from .common import file_hash, replay_node, stable
 from .values import window_values
 
 VERSION = 'terminal-candidate-distributions-v1'
+LEGACY_ENTRANCE_CONTRACT = 'terminal-neighborhood-three-proposals-v1'
+LOCAL_DECISION_ENTRANCE_CONTRACT = 'initial-terminal-local-decisions-v2'
 
 
 def restore_reference(raw, record, path):
@@ -50,6 +52,11 @@ def restore_reference(raw, record, path):
 
 
 def validate_distribution(row):
+    contract = row.get('entrance_contract', LEGACY_ENTRANCE_CONTRACT)
+    if contract not in (LEGACY_ENTRANCE_CONTRACT, LOCAL_DECISION_ENTRANCE_CONTRACT):
+        raise ValueError('Unknown entrance contract')
+    if contract == LOCAL_DECISION_ENTRANCE_CONTRACT and (type(row.get('k')) is not int or not 1 <= row['k'] <= 3):
+        raise ValueError('Expanded entrance requires k=1/2/3')
     members = row['members']
     if not members:
         raise ValueError('Empty entrance distribution')
@@ -64,7 +71,8 @@ def validate_distribution(row):
             raise ValueError('Member probability differs from joint mass')
         if not np.allclose(masses/probability, m['world_weights'], atol=1e-9, rtol=0):
             raise ValueError('Member posterior differs from joint mass')
-        if not 1 <= m['remaining_proposals'] <= 3:
+        remaining = m['remaining_proposals']
+        if type(remaining) is not int or remaining < 1 or (contract == LEGACY_ENTRANCE_CONTRACT and remaining > 3):
             raise ValueError('Entrance outside terminal neighborhood')
     for key in ('V_star', 'V_min', 'C_span'):
         expected = sum(m['probability']*m[key] for m in members)
@@ -122,10 +130,54 @@ class TerminalCandidates:
             if previous != p['split']:
                 raise ValueError('Structural family crosses splits')
         for r in self.candidates:
+            manifest_contract = self.manifest.get('entrance_contract', LEGACY_ENTRANCE_CONTRACT)
+            contract = r.get('entrance_contract', LEGACY_ENTRANCE_CONTRACT)
+            allowed = ((LEGACY_ENTRANCE_CONTRACT, LOCAL_DECISION_ENTRANCE_CONTRACT)
+                       if manifest_contract == LOCAL_DECISION_ENTRANCE_CONTRACT else (manifest_contract,))
+            if contract not in allowed:
+                raise ValueError('Candidate entrance contract differs from manifest')
             validate_distribution(r)
             p = self.parents[r['parent_id']]; ref = self.references[r['reference_id']]
+            if contract == LOCAL_DECISION_ENTRANCE_CONTRACT:
+                certificate = ref['certificate']
+                if (ref['history'] or not certificate.get('verified') or certificate.get('cutoff_leaves') != 0
+                        or not certificate.get('remaining_game_terminal_scope')
+                        or self.manifest.get('oracle_contract') != 'initial-terminal-oracle-consistent-v1'):
+                    raise ValueError('Expanded candidate requires an initial terminal reference')
+                if any(m['remaining_proposals'] > len(p['raw']['game']['round_robin']) for m in r['members']):
+                    raise ValueError('Entrance extends beyond parent schedule')
             if r['split'] != p['split'] or r['family'] != p['family'] or ref['parent_id'] != p['id']:
                 raise ValueError('Candidate parent/reference mismatch')
+        self.entry_answer_relations = []
+        if (self.root/'entry_answer_relations.jsonl').exists():
+            from .entry_answers import action_information_value
+            self.entry_answer_relations = self._rows('entry_answer_relations.jsonl')
+            candidates = {r['id']: r for r in self.candidates}
+            for group in self.entry_answer_relations:
+                ids = group['candidate_ids']
+                if len(set(ids)) != len(ids) or len(ids) != len(group['members']) or len(ids) < 2:
+                    raise ValueError('Invalid entry-answer relation members')
+                if not set(ids) <= candidates.keys():
+                    raise ValueError('Entry-answer contrast lost a member')
+                for cid, member in zip(ids, group['members']):
+                    row = candidates[cid]
+                    if (member['candidate_id'] != cid or row['parent_id'] != group['parent_id']
+                            or row['reference_id'] != group['reference_id'] or row['split'] != group['split']
+                            or row['ego'] != group['ego'] or row['k'] != 1 or len(row['members']) != 1):
+                        raise ValueError('Entry-answer relation crosses reference or information scope')
+                    actual = row['members'][0]
+                    if (actual['root_index'] != group['root_index']
+                            or stable(actual['history']) != stable(member['history'])
+                            or not np.allclose(actual['world_weights'], member['world_weights'], atol=1e-9, rtol=0)
+                            or not np.allclose(actual['root_Q'], member['root_Q'], atol=1e-8, rtol=0)
+                            or not np.allclose(member['joint_world_masses'], np.asarray(member['world_weights'])*member['probability'], atol=1e-9, rtol=0)):
+                        raise ValueError('Entry-answer relation disagrees with singleton question')
+                metric = action_information_value([m['root_Q'] for m in group['members']],
+                    [m['probability'] for m in group['members']], group['epsilon'])
+                if any(abs(metric[key]-group[key]) > 1e-8 for key in ('V_full', 'V_masked', 'S')):
+                    raise ValueError('Entry-answer information value mismatch')
+                if metric['must_change_pairs'] != group['must_change_pairs']:
+                    raise ValueError('Entry-answer must-change certificate mismatch')
 
     def _rows(self,name):
         return [json.loads(line) for line in (self.root/name).read_text().splitlines()]

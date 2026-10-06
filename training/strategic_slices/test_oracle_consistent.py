@@ -27,6 +27,26 @@ class OracleConsistentTests(unittest.TestCase):
         renamed['background_prior']['weights']['want']+=2
         self.assertNotEqual(canonical_parent(original),canonical_parent(renamed))
 
+    def test_four_proposal_entrance_needs_complete_initial_tree(self):
+        from copy import copy
+        from training.b_sft.social_private_teacher import PrivateInvestigationRules
+        from training.b_sft.preference_contract import profile
+        from .bounded import BoundedPrivateWindow
+        raw=dict(game=dict(n_players=2,n_actions_per_player=[1,1],round_robin=[0,1,0,1],max_changes=1,
+            goals=[dict(goal_id=0,binary=True,required_actions=[dict(player_id=0,action_id=0),dict(player_id=1,action_id=0)])]),
+            ego=0,own_preferences=[1],type_catalogues={'0':[[1]],'1':[[1]]},background_prior=profile('balanced'))
+        rules=PrivateInvestigationRules(raw)
+        full=BoundedPrivateWindow(rules,rules.initial(),rules.worlds,lookahead_rr=2,seconds=20).solve()
+        self.assertFalse(any(e['root_index']==0 for e in entrance_pool(full)))
+        self.assertTrue(any(e['root_index']==0 and e['remaining_proposals']==4
+                            for e in entrance_pool(full,max_remaining_proposals=None)))
+        missing=copy(full);missing.certificate=None
+        with self.assertRaisesRegex(ValueError,'certified initial terminal'):
+            entrance_pool(missing,max_remaining_proposals=4)
+        truncated=BoundedPrivateWindow(rules,rules.initial(),rules.worlds,lookahead_rr=1,horizon_mode='rr',seconds=20).solve()
+        with self.assertRaisesRegex(ValueError,'certified initial terminal'):
+            entrance_pool(truncated,max_remaining_proposals=None)
+
     def test_all_selected_posteriors_follow_independent_path_likelihood(self):
         tree=self.tree
         for entrance in stratified_entrances(entrance_pool(tree)):

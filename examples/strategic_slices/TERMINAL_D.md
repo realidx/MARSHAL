@@ -7,6 +7,112 @@ job 911072 reused them and finished the other 42. Full evidence is in
 [`new/strategic_slices_terminal_d_20261005`](../../new/strategic_slices_terminal_d_20261005/README.md).
 It does not train weights or select the final 100 slices.
 
+## Current v4 delta launcher (2026-10-06)
+
+Use `terminal_d_soc_v4_delta.json` for the next run. It pins the verified v4
+manifest and selects `D_reuse.json` automatically: **78 questions, 16 parents,
+624 trajectories, at most 768 model calls**. The serving/sampling profile is
+identical to the current SoC configuration: **32 concurrent requests,
+`completion-refill-v1`, 4096 output tokens, eight replicas, seed 42**.
+A completed request immediately admits another ready trajectory; each trajectory
+has at most one request in flight. Parents are processed in sequence, so a
+parent with fewer than 32 ready trajectories naturally uses fewer slots.
+
+Offline check (no GPU, model calls or submission):
+
+```bash
+python -m examples.strategic_slices.run_terminal_d \
+  --config examples/strategic_slices/terminal_d_soc_v4_delta.json --check
+```
+
+Manual submission from the extracted bundle/repository root, when ready:
+
+```bash
+sbatch examples/strategic_slices/sbatch_terminal_d.sh \
+  --config examples/strategic_slices/terminal_d_soc_v4_delta.json \
+  --output /home/e/e1300530/tmp/strategic-slices-D-v4-delta-qwen3-4b-r8
+```
+
+To continue an interrupted delta run, repeat that command with `--resume`.
+Completed parent records are reused; only unfinished parents are replayed with
+the same seeds. Use a fresh output path for this revision; do not point it at the
+old v2 evaluation or a run made with older pipeline sources. The remaining 722
+questions are reuse-eligible; this delta job does not automatically merge their
+historical results or claim to have evaluated all 800 questions.
+
+The Git-trackable transfer package for this launcher is
+`strategic-slices-terminal-D-v4-refill32.tar.gz` with its adjacent `.json`
+checksum sidecar. Build it once at a fresh path:
+
+```bash
+python -m examples.strategic_slices.prepare_terminal_d_bundle \
+  --config examples/strategic_slices/terminal_d_soc_v4_delta.json \
+  --output examples/strategic_slices/strategic-slices-terminal-D-v4-refill32.tar.gz
+```
+
+The bundle's `TERMINAL_D_BUNDLE.json` records the resolved profile, selected IDs,
+file hashes and exact offline check command. Both older archives remain unchanged.
+`terminal_d_soc.json` still targets the original v2 full run for reproducibility;
+always pass the v4 config for the new delta job. No job was submitted by this update.
+
+## v4 acquisition revision and pending D
+
+The separate `new/local_data/strategic_slices_oracle_consistent_candidates_v4`
+pool retains 100 parents x 8 questions, adds six audited acquisition families
+and preserves the prior entry-answer controls. Twelve new k=2/3 windows have
+S>.05. Two allow a four-proposal initial entrance under the explicit certified
+terminal contract; k still counts at most three focal decisions.
+
+Of the v4 questions, 722 have identical question and reference records to the
+actual v2 run; 78 require new D, including v3's 30 changed questions. Reuse also
+requires matching model/checkpoint, sampling settings and per-question seeds.
+No actual D results have been merged or relabeled. The candidate-list option
+records subset IDs in the protocol and rejects resume with another subset:
+
+```bash
+python -m examples.strategic_slices.run_terminal_d --check \
+  --data new/local_data/strategic_slices_oracle_consistent_candidates_v4 \
+  --candidate-ids new/local_data/strategic_slices_oracle_consistent_candidates_v4/D_reuse.json
+```
+
+This check reports 16 parents, 78 questions, 624 trajectories and at most 768
+model calls; it starts no GPU or server. To evaluate later inside an authorized
+GPU allocation, use the same data/subset arguments with a fresh `--output`
+directory and omit `--check`. Never resume the v2 output directory. The model,
+32-worker/4096-output-token configuration and eight samples per question remain
+unchanged; the default config still points at v2, so use the dedicated v4 config above
+or both explicit data/subset arguments below. The original v2 transfer archive is preserved.
+
+The earlier v4 bundle was built with explicit data/subset arguments (historical;
+use the config-based refill32 bundle above for the next run):
+
+```bash
+python -m examples.strategic_slices.prepare_terminal_d_bundle \
+  --data new/local_data/strategic_slices_oracle_consistent_candidates_v4 \
+  --candidate-ids new/local_data/strategic_slices_oracle_consistent_candidates_v4/D_reuse.json \
+  --output examples/strategic_slices/strategic-slices-terminal-D-v4.tar.gz
+```
+
+Its `TERMINAL_D_BUNDLE.json` gives the explicit v4 subset check command.
+Packing or checking the bundle does not submit a job or measure real D.
+Local v4 validation: 44 tests; all 624 delta mock trajectories reached native
+terminal, completed-run resume made no generation calls, and all 48 new
+questions also passed a separate native rollout/handoff check. See
+[`runtime.json`](../../new/local_data/strategic_slices_acquisition_v4_validation/runtime.json)
+for manifest/source-snapshot lineage. Mock results are not Qwen measurements.
+
+## Historical v3 revision
+
+Dataset revision note: entry-answer contrast optimization preserves the v2
+questions/results and writes a separate v3 candidate pool. Its `D_reuse.json`
+lists unchanged question IDs and questions requiring new evaluation. This is a
+question-level analysis mapping, **not** permission to resume a v2 output folder
+against v3: the runtime correctly checks the dataset manifest identity. The
+existing transfer archive/config still targets v2; no new GPU job is submitted.
+Collective entry-answer S is stored in `entry_answer_relations.jsonl`, separately
+from singleton question C/D. A positive contrast requires different *visible
+private answers*; it does not give different action labels to identical prompts.
+
 Local validation completed: 22 tests; full 6,400-trajectory CPU mock and independent
 native replay; complete-run resume without further generation; standalone archive
 checksum and offline-entry checks. Mock uses a legal random actor, not Qwen.
@@ -148,7 +254,8 @@ This command is documentation only; the pipeline never invokes `sbatch` itself.
 Overrides: `SLICES_D_PYTHON` for Python, `--model`, `--data`, `--port`, or a complete
 `--config` JSON. Use a fresh output directory for a different protocol.
 
-Each parent is committed atomically after its 64 trajectories. On interruption,
+Each parent is committed atomically after all its selected trajectories
+(64 for the full pool, eight per selected question for a delta run). On interruption,
 resubmit manually with the **same settings and output path**, adding `--resume`.
 Completed parents are reused; only an unfinished parent is replayed, with the
 same seeds. Its previous partial HTTP evidence remains in the old attempt

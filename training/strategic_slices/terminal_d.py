@@ -6,6 +6,7 @@ Interrupted runs resume at atomic parent records; HTTP failures abort the run.
 import argparse
 from collections import Counter, defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
+from copy import copy
 import json
 from pathlib import Path
 import shutil
@@ -33,6 +34,8 @@ def load_config(path=DEFAULT_CONFIG):
         raise ValueError('Invalid sampling/memory settings')
     if cfg['tensor_parallel_size'] != 1 or cfg['tool_call_parser'] != 'hermes':
         raise ValueError('Expected the single-GPU Hermes serving profile')
+    if cfg.get('scheduler') not in (None, 'completion-refill-v1'):
+        raise ValueError('Unknown scheduler; refusing silent fallback to batch scheduling')
     return cfg
 
 
@@ -44,6 +47,46 @@ def load_dataset(path):
     counts = Counter(r['parent_id'] for r in dataset.candidates)
     if len(dataset.parents) != 100 or len(dataset.candidates) != 800 or set(counts.values()) != {8}:
         raise ValueError('Expected frozen 100-parent, 800-candidate balanced pool')
+    return dataset
+
+
+def candidate_subset(dataset, ids):
+    """Select questions after verifying the full frozen pool; preserve IDs/seeds.
+
+    Protocol identity includes the subset, so a partial run cannot masquerade
+    as a full run or resume with a different question list in the same folder.
+    """
+    ids=list(ids)
+    if not ids or len(set(ids))!=len(ids):
+        raise ValueError('Candidate subset must be nonempty and unique')
+    known={r['id'] for r in dataset.candidates}
+    if not set(ids)<=known:
+        raise ValueError('Unknown candidate in requested subset')
+    selected=copy(dataset)
+    selected.candidates=[r for r in dataset.candidates if r['id'] in set(ids)]
+    parents={r['parent_id'] for r in selected.candidates}
+    selected.parents={pid:p for pid,p in dataset.parents.items() if pid in parents}
+    selected.selected_candidate_ids=sorted(ids)
+    return selected
+
+
+def load_candidate_subset(dataset, path):
+    value=json.loads(Path(path).read_text())
+    ids=value.get('requires_new_D') if isinstance(value,dict) else value
+    if not isinstance(ids,list):
+        raise ValueError('Expected an ID list or a D_reuse record with requires_new_D')
+    return candidate_subset(dataset,ids)
+
+
+def load_configured_dataset(cfg, data=None, candidate_ids=None):
+    """Resolve one dataset/subset consistently for check, mock, GPU and packing."""
+    dataset = load_dataset(data or ROOT/cfg['data'])
+    expected = cfg.get('dataset_sha256')
+    if expected is not None and file_hash(dataset.root/'manifest.json') != expected:
+        raise ValueError('Dataset manifest differs from the pinned run configuration')
+    subset_path = candidate_ids or cfg.get('candidate_ids')
+    if subset_path is not None:
+        dataset = load_candidate_subset(dataset, ROOT/Path(subset_path))
     return dataset
 
 
@@ -263,13 +306,17 @@ def run_refill(jobs, cfg, generate):
 
 
 def make_protocol(dataset, cfg, identity, parent_ids):
-    return dict(version='terminal-D-eight-independent-v1', dataset_sha256=file_hash(dataset.root/'manifest.json'),
+    protocol = dict(version='terminal-D-eight-independent-v1', dataset_sha256=file_hash(dataset.root/'manifest.json'),
         config=cfg, model_identity=identity, parent_ids=parent_ids, source_identity=source_identity(),
         reset='Independent joint entrance/world draw per replica; independent model and oracle RNG streams.',
         D='V_star minus mean native-terminal utility; no clipping; primary D null on incomplete samples.',
         selection='No final selection. Held-out metrics are diagnostic only; training shortlist must use train.',
         signal='Reward variation includes environment noise. Root-Q contrast uses identical visible prompts, '
                'optimal continuation within remaining window, and is not full-trajectory success or proof of learnability.')
+    if hasattr(dataset,'selected_candidate_ids'):
+        protocol['candidate_subset_ids']=sorted(r['id'] for r in dataset.candidates if r['parent_id'] in parent_ids)
+        protocol['evaluation_scope']='Explicit question subset; not the complete 800-question D result'
+    return protocol
 
 def run_evaluation(dataset, cfg, output, generate, identity, *, parent_limit=None, resume=False):
     output = Path(output)
@@ -432,11 +479,12 @@ def main():
     parser.add_argument('--mock', action='store_true')
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--limit-parents', type=int)
+    parser.add_argument('--candidate-ids',type=Path,help='JSON ID list or D_reuse.json; evaluate only these questions')
     args = parser.parse_args()
     cfg = load_config(args.config)
-    dataset = load_dataset(args.data or ROOT/cfg['data'])
+    dataset = load_configured_dataset(cfg, args.data, args.candidate_ids)
     if args.check:
-        print(stable(dict(parents=100, slices=800, trajectories=6400,
+        print(stable(dict(parents=len(dataset.parents), slices=len(dataset.candidates), trajectories=8*len(dataset.candidates),
                          max_model_calls=sum(r['k']*8 for r in dataset.candidates),
                          dataset_sha256=file_hash(dataset.root/'manifest.json'), gpu_started=False)))
         return

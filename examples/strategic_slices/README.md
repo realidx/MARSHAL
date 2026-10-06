@@ -8,21 +8,225 @@ from Qwen3-4B-Instruct-2507 and use the same native `act` tool interface,
 optimizer, four replicas per group, and generated-response-token budget.
 There is no separate inference or conditional-planning supervision.
 
-## 当前研究方向（2026-10-04）
+## 当前研究方向（2026-10-05）
 
 **正在推进的新目标与可复现 checkpoint 见 [PROGRESS.md](PROGRESS.md)。**
-当前任务是整理多轮 parent 与多个一致的 slice 候选，不运行 D；下方各阶段报告均
+当前任务是改进入口采样与信息依赖覆盖；下方各阶段报告均
 保留原始口径，不能将历史条目直接相加作为当前进度。
 
-**下一步 D pipeline 已准备，尚未提交或运行真实模型任务。**
-按当前要求，用 **Qwen3-4B-Instruct-2507 对 800 个 slices 各独立采样 8 次**，
-输出 terminal D、D/C、失败率与训练信号诊断。SoC 历史配置、离线打包、手动运行和
+**v2 的真实 D 结果已由用户提供：800 题，每题 8 次，共 6,400 条轨迹。**
+模型为 **Qwen3-4B-Instruct-2507**，结果在
+[2026-10-05 SoC 记录](../../new/strategic_slices_terminal_d_20261005/README.md)。
+SoC 历史配置、离线打包、手动运行和
 断点恢复见 [TERMINAL_D.md](TERMINAL_D.md)，配置在 `terminal_d_soc.json`。
-当前 D 默认配置按用户要求改为 **16 并发、4096 输出 tokens**，每题仍采样 8 次。
+原任务采用 16 并发，后续 completion-refill 使用 32 并发；输出上限 4096 tokens。
 入口 `run_terminal_d.sh --check` 只做离线校验；`sbatch_terminal_d.sh` 留给用户手动提交。
 候选生成阶段“不跑 D”的历史约束已转为“准备 D pipeline，但不自行提交任务”。
 
-**2026-10-05：当前候选池已按要求缩减为每个 parent 恰好 8 个。**
+**2026-10-06 D 补跑入口更新：**使用 `terminal_d_soc_v4_delta.json`，自动锁定
+v4 manifest 和 78 道待测题，保留 **32 并发、completion-refill-v1、4096 输出 tokens**。
+`run_terminal_d.sh --config examples/strategic_slices/terminal_d_soc_v4_delta.json --check`
+会报告 624 条轨迹；新传输包是 `strategic-slices-terminal-D-v4-refill32.tar.gz`。
+旧默认配置仍对应 v2；完整手动提交与续跑命令见 [TERMINAL_D.md](TERMINAL_D.md)。
+
+**2026-10-05 最新候选 v4：6 个强主动调查 family，仍为 100×8。**
+[v4 审核](../../new/local_data/strategic_slices_oracle_consistent_candidates_v4/audit.json)
+保留 100 个 parent、800 个 slices；用 6 个已独立复核的 acquisition parent 替换
+6 个没有受保护信息案例的训练 parent，新增 48 题，其余 752 题与 v3 完全一致。
+替换优先减少重复 family，并严格保持 player×proposal-count×split 配额：双人/三人
+仍为 50/50，双人双轮 30、双人单轮 20、三人单轮 50；train/validation/test 不变。
+原 10 组 entry-answer contrasts、4 个 collective controls 全部保留。
+
+扩展实验在两个既有原型基础上，对三人原型的真实 goal requirements、goal mode
+及合法 schedule 作结构变体。先按 player/action/goal 重命名去重，25 个 family
+候选中 24 个认证成功、1 个超时，找到 4 个新强 acquisition family。加上两个原型
+共 **6 个不同结构（5 个三人、1 个双人）**，均重载同一保存的 policy、重新认证并用
+独立 scalar BR 复核 S。它们围绕两个基础机制，不应声称覆盖六种独立战略机制。
+没有靠改 prior、添加 dummy goal 或 utility scaling 凑 family 数。
+
+每个新 parent 保留 k=2/3 的两个主动调查窗口，共 **12 个 S>.05 的问题**，
+S=.08333–.21429，均有 C>.1。其余六题按原始 oracle reach、未覆盖 actor/decision kind
+和不同入口选择 k=1 问题。新题的 future-public-history channel 尚未测量，保持 null；
+不会将已有答案 contrast 的集体 S 复制到 singleton。所有新增 family 因经过机制
+校准只进入 train；新的强 acquisition held-out 覆盖仍待独立建设。
+
+入口合同新增 `initial-terminal-local-decisions-v2`：在已完整认证的初态 terminal
+tree 上允许更早入口，k 仍限 1/2/3；未展开的树或外生 prefix 不能使用此合同。
+默认旧入口 API 仍为末 3 次 proposal，旧题记录不改。v4 的双人正例新增两个剩余
+4 次 proposal 的入口窗口；放宽范围没有新增 equilibrium 求解，只重新度量入口。
+
+相对真实 D 所用 v2，**722 题及 reference 完全一致、78 题需要补测**（v3 的 30 题
+加本轮 48 题）。`D_reuse.json` 是可复用身份清单，没有伪造或合并模型结果。
+补跑 CLI 支持 `--candidate-ids <D_reuse.json>`，恰好 78×8=624 条轨迹；subset IDs
+进入 protocol identity，改变题目集合不能续跑旧目录。见 [D 补跑说明](TERMINAL_D.md)。
+旧 v2/v3、真实 D 和原传输包保留。最终 100 个训练 slices 尚未按新 D 选定。
+本轮 44 项测试通过；48 道新增题的 384 条 native mock rollout、全部 78 道待测题的
+624 条 pipeline mock 均到达 terminal，完成后 resume 没有新增调用。
+[校验记录](../../new/local_data/strategic_slices_acquisition_v4_validation/runtime.json)
+同时记录 source snapshot 补充前后的 manifest identity 与完全相同的 runtime inputs。
+这些是本地工程校验，不是模型 D 或训练效果证据。
+
+**2026-10-05 前序改进：可选 generator 扩展与成对校准。**
+`sample_parent(..., goal_structure='multi_action')` 现在可给一个 goal 增加同一玩家的
+第二个 action requirement；默认仍为 `legacy`，旧 seed 的原始 parent identity 不变。
+`training.strategic_slices.build` 的 config 可显式设置 `goal_structure`；现有 terminal
+candidate pipeline 仍调用默认模式，已有冻结任务与数据不会因此被重写。
+这个模式仅扩展 requirement 结构，不改变 preferences、type catalogue、prior、
+回合顺序、binary/linear 类型或规则。没有合法扩展位置时返回相同 parent，不能算新样本。
+
+[8 组 paired pilot](../../new/local_data/strategic_slices_goal_structure_calibration_v1/summary.json)
+在求解前按结构可扩展性选定 seed，每个 arm 都从初态展开 native terminal tree。
+旧模式和新模式各 8 个，分别 4 个通过认证；仅 **3 组双方都通过认证**。
+已认证游戏中没有新的强主动调查案例。其余失败不能当作 S=0，更不能据此估计
+可靠的产出率提升。这一结果说明扩展结构并不自动产生调查价值；payoff 冲突、
+未知偏好与后续可行动机会仍需要共同校准。
+
+本轮 40 项测试通过，包含旧 seed identity、成对修改范围、原生合法性和失败比较的
+null 语义。正式 100-parent / 800-slice 数据和已有 D 未改动。
+建议下一阶段先形成 5–10 个不同结构的强信息获取 parent family，逐一检查实际
+answer-dependent action gap，再扩大候选池。对于已经完整求解的 parent，还应单独
+评估是否将“剩余 proposal≤3”由硬门槛改为采样层：k≤3 的局部控制长度可以保持，
+但允许双人四次 proposal 初态；这不会新增该 parent 的 equilibrium 求解，仍会增加
+入口度量成本。当前入口合同尚未变更。
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 new/local_data/solver_benchmark_env/bin/python \
+  -m examples.strategic_slices.calibrate_goal_structure \
+  --pairs 8 --seconds 45 --workers 2 \
+  --output new/local_data/goal_structure_paired_reproduction
+```
+
+**2026-10-05 前序 native acquisition 小实验：两个完整初态正例。**
+[搜索汇总](../../new/local_data/strategic_slices_native_acquisition_review_v1/summary.json)
+记录 130 次尝试：15 个早期草案未通过 native 规则校验，已修正生成代码；其余
+115 个合法游戏中 94 个通过完整树认证，21 个求解失败，失败者没有 oracle label。
+这是定向搜索，不是对正式 generator 产出率的无偏估计。找到两个不同结构的正例：
+
+| Native fixture | 完整节点数 | 入口剩余 proposal | k=2 C | k=2 S | full-terminal S |
+|---|---:|---:|---:|---:|---:|
+| [三人单轮](fixtures/native_acquisition_three_player.json) | 18,799 | 3 | .45581 | .08333 | .08333 |
+| [双人双轮](fixtures/native_acquisition_two_player.json) | 143,014 | 4 | .37500 | .10714 | .21429 |
+
+两者均从 native initial state 展开所有 action/response 分支，`cutoff_leaves=0`；
+没有外生 prefix、叶子估值或事后删除 world。保存的同一 oracle 在初态以概率 1
+选择调查，入口 reach 为 1。重载 reference 后完整 contingent deviation/local support/
+response tie checks 再次通过；独立 scalar BR 复核 full/masked/no-query values。
+这不是唯一 equilibrium 的证明。双人例的初态**不满足现行末 3 次 proposal 入口限制**，
+故仅作机制原型，不能直接计入现行候选；三人例的 k=2/3 同时通过 C>.1、S>.05。
+
+三人例调查 player 2 的 goal 1 后，player 1 提出同一份 offer；下一步的选择为：
+
+| 私有答案 | Q(REJECT) | Q(ACCEPT) | 唯一最优 response |
+|---|---:|---:|---|
+| AVOID | -.08333 | -.33333 | REJECT |
+| NEUTRAL | -.66667 | -.33333 | ACCEPT |
+| WANT | -.66667 | -.33333 | ACCEPT |
+
+三个答案各占 1/3，full value=-.25；遮住答案但保留调查动作、成本及 partner policy，
+最佳 value=-1/3，因此 S=1/12。这里是减少损失的决策；不是要求 terminal utility 为正。
+k=1 的 S=0，因为该窗口尚未包含使用答案的 response；k=2 已保留全部信息增益。
+
+[六个控制实验](../../new/local_data/strategic_slices_native_acquisition_controls_v1/summary.json)
+全部从初态重新求解并通过认证：三种非均匀 prior 的 S 为 .0625/.0625/.125；
+把关键 binary goal 对 focal 两个动作的联合要求缩成一个动作，S=0；将该 goal
+改成 linear，S=.02778；给原来只有 AVOID 的 goal 补上公开 WANT，S 仍为 .08333。
+这些是所选 certified profiles 下的对照，包含重新求解带来的 equilibrium-selection 变化。
+prior 变体不作为不同结构的 parent 凑数。
+
+**生成器的具体缺口**：`sample_parent` 每个 goal 从每位参与者只取一个 action，
+而原生规则允许同一 goal 要求同一玩家的多个 action；两个正例都包含这种结构。
+三人例的局部消融支持保留这种联合要求，但不能推出它是所有正例的必要条件。
+公开 WANT 本身并没有在这个控制中消灭信息价值；不能把它定为统一原因。
+该轮实验未修改正式 generator、100 个 parent、800 个候选、D 结果或 transfer bundle；
+后续的可选 generator 扩展见上方，默认行为和冻结数据仍保持原样。
+36 项测试通过，包括从初态重新求解三人正例的 regression test。
+
+复现工具：`search_native_acquisition.py`（记录所有成功和失败），
+`verify_native_acquisition.py`（重载已保存 reference 独立复核），
+`ablate_native_acquisition.py`（六个原生控制）。例如：
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 new/local_data/solver_benchmark_env/bin/python \
+  -m examples.strategic_slices.search_native_acquisition \
+  --geometry three_targeted --seed 15 --count 1 --workers 1 --seconds 60 \
+  --output new/local_data/native_acquisition_reproduction
+```
+
+**2026-10-05 前序 game-mechanism 诊断：不能只归因于调查占用一回合。**
+[诊断记录](../../new/local_data/strategic_slices_mechanism_diagnostic_v1/conclusions.json)
+选取五个已有 entry-answer 正值的双人 parent，以及 early audit 的唯一弱正值三人 parent。
+保持 partner profile 不变，在每位玩家首次 proposal 免费提供一个真实偏好：249 个
+入口×slot 比较中仅 3 个正值，最大 .03661，均在该三人 parent。再免费提供所有
+partner 的完整偏好，五个双人 parent 的所有早期入口仍无增益，三人 parent 最大 .09117。
+这是信息干预诊断，不是重求免费调查规则下的 equilibrium，也不是随机 parent 产出率。
+
+规则检查确认：100 个 parent 均允许初态单边增加 commitment 的 offer；REJECT 同样
+消耗 proposal turn，但不产生 commitment 或额外拒绝罚分。只有每笔新增承诺上限，
+没有行动互斥或总承诺预算。37 个纯 linear parent 的效用可精确展开为各 commitment
+的固定加权和（19,992 个 payoff 对照，最大误差约 2.22e-16）；另有 42 个 binary、
+21 个 mixed parent。generator 还保护每个 goal/每个 player 的部分公开 WANT，
+并重复同一轮换顺序；这些结构没有保证未知信息会改变最优策略。
+以上规则特征是候选解释，尚未通过逐项干预量化各自的因果贡献。
+
+旧调查 fixture 在外生 PASS 后重求仍有 S=.25；完整初态两次搜索均未通过认证，
+因此其正值入口的完整 oracle reach 仍未知。合法的轮换顺序对照中，固定交替版本
+通过完整 terminal 认证且无调查严格优势；另一侧未认证，不能声称回合顺序的因果
+效应已证实。更短但不满足每轮每人一次 proposal 的尝试被原生校验拒绝，未计作游戏。
+实验脚本：`investigate_game_mechanics.py`、`investigate_schedule_controls.py`。
+34 项相关测试通过；正式游戏规则、候选、reference 和 D 均保持不变。
+
+**2026-10-05 early-round 调查检查已完成。**
+[完整结果](../../new/local_data/strategic_slices_early_investigation_v1/summary.json)
+覆盖原 100 个 parent、250 个 parent/player 组合的首次 proposal，共 8,357 个可达
+information sets，包含旧三次 proposal 邻域排除的 88 个初始信息集。没有入口 cap
+或 C 过滤；focal 对所有剩余 proposal/response 优化到 native terminal，partner
+保留原 reference。与冻结 focal continuation 的 Q 最大差异仅约 1.78e-15。
+
+最佳调查相对最佳非调查行动：2,573 个信息集打平，5,783 个较差，仅 1 个小正值
+（.0138533），没有 >.05 的案例。按原始 reach 加权并等权汇总 parent/player，
+约 40.36% 打平、59.50% 较差、0.13% 为小正值；不能把信息集数量当成采样频率。
+禁止 focal **后续所有调查**后，8,356 个信息集的最佳价值不变；同一个小正值案例
+下降 .0138533。其中 528 个入口同时满足仍有未知偏好、调查后还有一次自身 proposal，
+仍全部没有严格调查优势。
+
+唯一小正值来自三人单轮开局，value 从 .03410494 到 .04795821；独立删除调查分支
+重算得到相同结果。但保留该 INVESTIGATE 动作并遮住其答案直到终局，value 仍为
+.04795821，**S=0，强制同一 query 后的 full/masked value 也相同**。
+它证明的是调查动作引起的交互/continuation 差异，不是利用私有答案的收益。
+检查见 [answer masking](../../new/local_data/strategic_slices_early_investigation_v1/positive_answer_mask_check.json)。
+因此当前 parent 集合尚未提供强的主动信息获取案例；补入已有答案对照并未解决此问题。
+这不是“看得不够深”的测量结论，也不推广到其他 parent 或其他 equilibrium profile。
+本次没有修改数据集、游戏、oracle 或模型任务；31 项相关测试与独立子树检查通过。
+复现入口及指标定义见 [early-round audit](ENTRY_INFORMATION.md#early-round-investigation-audit)。
+
+**2026-10-05 新候选 v3：补入已有 private answer 的信息—行动对照。**
+[v3 审核记录](../../new/local_data/strategic_slices_oracle_consistent_candidates_v3/audit.json)
+仍是 **100 个原 parent，每个 8 题，共 800 题**；parent、reference、prior 和 split 均不变。
+对原 100 份 oracle 的全部可达末段入口扫描，测得 9,209 个已有答案对照组，其中
+220 组 S_entry_answer>.05，分布于 10 个 parent；原 800 题没有保留这些正值组的成员。
+每个符合条件的 parent 保留一个完整对照组，最终为 **10 组、30 个单独题目**，
+其中 train 9 组、test 1 组，validation 尚无这类强正值覆盖。
+保留组的条件性 S 为 **.05357–.31884**；全扫描最大 .44444，未按最大条件 S 单独挑选。
+先按原始 reach×S 排序，再保留全部答案分支并尽量少替换旧题。
+
+这是入口已知答案的价值，不是主动调查的收益；同组题面的 private answer 不同。
+集体 S 只写入 `entry_answer_relations.jsonl`，不复制成每个 singleton 的 S。
+原 C>.1、S>.05 门槛不变；独立 masked DP、member C 与 prefix posterior 复核通过。
+**770 题内容完全不变，30 题替换为新入口并待测 D**；对应关系见 v3 的 `D_reuse.json`。
+原 v2、其 D 结果及传输包保留，未提交新任务。k=1/2/3 变为 383/263/154，
+proposal/response 为 411/389；双人席位仍各 200，三人席位分布不变，四个 collective
+public-history controls 全部保留。定义和局限见
+[entry-answer channel](ENTRY_INFORMATION.md#existing-private-answers-one-decision-entry-contrasts-2026-10-05)。
+
+复现（使用带 NumPy/SciPy 的 Python；输出新目录）：
+
+```sh
+python -m examples.strategic_slices.audit_entry_answers --output NEW_AUDIT_DIRECTORY
+python -m examples.strategic_slices.retain_entry_answer_contrasts \
+  --audit NEW_AUDIT_DIRECTORY --output NEW_CANDIDATE_DIRECTORY
+```
+
+**历史 checkpoint v2（2026-10-05）：每个 parent 恰好 8 个。**
 [oracle-consistent candidates v2](../../new/local_data/strategic_slices_oracle_consistent_candidates_v2/REPORT.md)
 包含 **100 个不同 parent、62 个 structural families、800 个候选窗口**。
 其中 30 个双人两轮、20 个双人单轮、50 个三人单轮；parent 与 split 保持不变。
@@ -45,7 +249,7 @@ baseline，不代表其 cutoff C/S 已被认可为 terminal C/S 的替代。
 
 **当前生效的目标与约束：** 先收集 **100 个不同 parent game**，每个保留多个有代表性的
 slice 入口和 k 窗口；未来计算 D 后才确定最终 100 个 strategic game slices。
-当前只准备 D pipeline，不自行提交任务，也不提前压成每个 parent 一个 slice。
+当前改进候选覆盖，不自行提交新的 D 任务，也不提前压成每个 parent 一个 slice。
 
 所有候选必须共享同一种 terminal oracle 的行为逻辑：每个 parent 只使用一份从初态
 完整展开至 native terminal 并认证的 profile。入口必须在这份 profile 下具有正概率；

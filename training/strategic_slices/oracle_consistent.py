@@ -48,14 +48,27 @@ def oracle_reach(tree):
     return reach,histories
 
 
-def entrance_pool(tree, threshold=1e-10):
+def entrance_pool(tree, threshold=1e-10, *, max_remaining_proposals=3):
+    """Enumerate same-profile entrances; an expanded range needs an initial terminal oracle.
+
+    The historical default remains three proposals. None includes all reachable
+    entrances of an already certified complete parent; it never extends a tree
+    or substitutes a cutoff value. Local controlled decision counts stay k=1/2/3.
+    """
+    if max_remaining_proposals is not None and (type(max_remaining_proposals) is not int or max_remaining_proposals < 1):
+        raise ValueError('Positive proposal bound or None required')
+    if max_remaining_proposals is None or max_remaining_proposals > 3:
+        if (not tree.certificate or not tree.certificate.get('verified')
+                or tree.entries[0].node.state.turn_index != 0
+                or any(not e.node.state.is_terminal for e in tree.entries if e.actor is None)):
+            raise ValueError('Expanded entrances require a certified initial terminal tree')
     reach,histories=oracle_reach(tree);pool=[]
     total=len(tree.rules.spec.round_robin)
     for i,masses in reach.items():
         e=tree.entries[i]
         if e.actor is None:continue
         remaining=total-e.node.state.turn_index
-        if not 1<=remaining<=3:continue
+        if remaining < 1 or (max_remaining_proposals is not None and remaining > max_remaining_proposals):continue
         ego=e.actor;future=list(tree.rules.spec.round_robin[e.node.state.turn_index:])
         positions=[j for j,p in enumerate(future) if p==ego]
         for ids in tree.information_groups[i]:

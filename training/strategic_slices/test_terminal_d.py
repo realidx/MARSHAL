@@ -155,6 +155,62 @@ class TerminalDTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'Resume protocol'):
                 run_evaluation(data, dict(self.cfg, seed=99), output, forbidden, identity, resume=True)
 
+    def test_subset_preserves_seeds_and_rejects_different_subset_on_resume(self):
+        from .terminal_d import candidate_subset
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);write_json(root/'manifest.json',{'fixture':True})
+            rows=[dict(self.rows[0],id='first',parent_id='p'),dict(self.rows[0],id='second',parent_id='p')]
+            data=SimpleNamespace(root=root,parents={'p':{}},candidates=rows,reference=lambda _:self.tree)
+            subset=candidate_subset(data,['first'])
+            self.assertEqual(len(data.candidates),2)
+            self.assertEqual(TerminalRollout(self.tree,rows[0],0,42).seed,
+                             TerminalRollout(self.tree,subset.candidates[0],0,42).seed)
+            identity=dict(mock=True,model=None)
+            summary=run_evaluation(subset,self.cfg,root/'result',mock_generate,identity)
+            self.assertEqual(summary['trajectories'],8)
+            protocol=json.loads((root/'result/protocol.json').read_text())
+            self.assertEqual(protocol['candidate_subset_ids'],['first'])
+            other=candidate_subset(data,['second'])
+            with self.assertRaisesRegex(ValueError,'Resume protocol'):
+                run_evaluation(other,self.cfg,root/'result',mock_generate,identity,resume=True)
+            with self.assertRaisesRegex(ValueError,'Unknown candidate'):
+                candidate_subset(data,['absent'])
+            with self.assertRaisesRegex(ValueError,'unique'):
+                candidate_subset(data,['first','first'])
+
+    def test_configured_subset_and_manifest_pin(self):
+        from .terminal_d import load_configured_dataset
+        from .common import file_hash
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            write_json(root/'manifest.json', {'fixture': True})
+            write_json(root/'subset.json', {'requires_new_D': ['first']})
+            write_json(root/'override.json', ['second'])
+            data = SimpleNamespace(root=root, parents={'p': {}}, candidates=[
+                {'id': 'first', 'parent_id': 'p'}, {'id': 'second', 'parent_id': 'p'}])
+            cfg = dict(self.cfg, data=str(root), candidate_ids=str(root/'subset.json'),
+                       dataset_sha256=file_hash(root/'manifest.json'))
+            with patch('training.strategic_slices.terminal_d.load_dataset', return_value=data):
+                self.assertEqual(load_configured_dataset(cfg).selected_candidate_ids, ['first'])
+                self.assertEqual(load_configured_dataset(cfg, candidate_ids=root/'override.json').selected_candidate_ids, ['second'])
+                with self.assertRaisesRegex(ValueError, 'manifest differs'):
+                    load_configured_dataset(dict(cfg, dataset_sha256='wrong'))
+            self.assertEqual(len(data.candidates), 2)
+
+    def test_v4_serving_profile_keeps_refill_and_sampling(self):
+        from .terminal_d import ROOT
+        cfg = load_config(ROOT/'examples/strategic_slices/terminal_d_soc_v4_delta.json')
+        self.assertEqual(cfg['workers'], 32)
+        self.assertEqual(cfg['scheduler'], 'completion-refill-v1')
+        self.assertEqual(cfg['max_tokens'], 4096)
+        self.assertEqual({k:v for k,v in cfg.items() if k not in ('data','candidate_ids','dataset_sha256')},
+                         {k:v for k,v in self.cfg.items() if k != 'data'})
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp)/'config.json'
+            write_json(path, dict(cfg, scheduler='refill-typo'))
+            with self.assertRaisesRegex(ValueError, 'Unknown scheduler'):
+                load_config(path)
+
     def test_http_payload_context_and_transport_errors(self):
         with tempfile.TemporaryDirectory() as temp:
             cfg = dict(self.cfg, context=self.cfg['max_tokens']+1024, workers=1)

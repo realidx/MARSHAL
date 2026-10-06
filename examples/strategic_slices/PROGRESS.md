@@ -1,6 +1,142 @@
 # Active checkpoint — 2026-10-04; continuation — 2026-10-05
 
-## Prepared next step: base-model D pipeline
+2026-10-06 launcher update: the dedicated `terminal_d_soc_v4_delta.json` pins
+the v4 manifest and automatically selects 78 pending questions (624 trajectories).
+It preserves the user's 32-worker completion-refill scheduler and 4096-token
+output budget. The original v2 default config and archives remain unchanged;
+use the new `strategic-slices-terminal-D-v4-refill32.tar.gz` transfer bundle and
+the manual commands in [TERMINAL_D.md](TERMINAL_D.md). No job is submitted.
+
+## Current work: game mechanism and information acquisition
+
+The user supplied the completed v2 Qwen D results on 2026-10-05: 800 questions,
+eight trajectories per question. Evidence is in
+[`new/strategic_slices_terminal_d_20261005`](../../new/strategic_slices_terminal_d_20261005/README.md).
+The current task improves information-dependent entrance coverage using the
+paper-era training bank as a calibration, preserving the v2 checkpoint and its D.
+The sections below record earlier milestones; their statements that D was not
+run apply to those historical stages. No new remote jobs are authorized here.
+
+The [v4 integration](../../new/local_data/strategic_slices_oracle_consistent_candidates_v4/audit.json)
+now keeps 100 parents x 8 questions while adding six distinct certified active
+acquisition structural families (five 3p, one 2p). Twenty-five canonical native
+neighbors were attempted, 24 certified and one timed out; four positive families
+join the two earlier witnesses. These are variations around two base mechanisms,
+not six independently invented mechanisms. All six references were reloaded and
+independently re-certified, with scalar-BR full/masked checks.
+
+Six unprotected, redundant training parents were replaced, preserving exact
+player/round/split quotas and all ten entry-answer groups plus four collective
+controls. The 48 new questions protect 12 k=2/3 acquisition windows with S>.05
+and C>.1. The other 752 v3 question records are byte-identical. New public-history
+channels are unmeasured/null, and new calibrated families remain train-only.
+The opt-in initial-terminal-local-decisions-v2 contract permits the certified
+2p four-proposal initial entrance, with k<=3 unchanged and full-terminal guards.
+The historical default three-proposal API and old records remain intact.
+
+Against the actual v2 model run, 722 question/reference identities are reusable
+and 78 need new D (30 from v3 plus 48 new). The explicit subset CLI prepares
+624 trajectories, recording exact subset IDs in its resume identity. This is a
+reuse plan, not an automatic merge of prior model results. No real model call or
+Slurm submission has been made, and no final 100 training slices are selected.
+Forty-four tests pass. All 624 delta-run mock trajectories reached native
+terminal; completed-run resume generated nothing. A separate 384-trajectory
+check covers all 48 new questions and verifies controlled-k handoff. The final
+source-snapshot metadata update preserves every runtime input; its manifest
+lineage and checksums are recorded in
+[`runtime.json`](../../new/local_data/strategic_slices_acquisition_v4_validation/runtime.json).
+
+The optional `goal_structure='multi_action'` mode is now available in
+`sample_parent` and the generic build config; default `legacy` identities are
+preserved. The frozen terminal candidate pipeline still uses its original mode.
+One same-player requirement is added with a separate RNG, keeping catalogues,
+priors, schedules, goal modes and all rules identical within each pair. A game
+with no eligible addition is unchanged and cannot count as a distinct parent.
+
+The [paired calibration](../../new/local_data/strategic_slices_goal_structure_calibration_v1/summary.json)
+completed 8 pairs at a 45-second solver budget per arm: 4/8 old and 4/8 expanded
+parents certified, only 3 pairs certified on both sides, no strong first-proposal
+acquisition witness among the certified parents. Failed sides have unavailable
+values, not zero S. This pilot does not establish a population yield effect;
+structure expansion alone is not sufficient. Forty tests pass, including legacy
+seed identities and the paired intervention contract. Next recommended milestone:
+5–10 distinct positive information-acquisition structural families, then candidate
+integration and D on changed questions. The three-proposal entrance limit merits
+a separate review for already-certified parents; it has not been changed.
+No frozen candidates, references, D records or transfer bundle were modified.
+
+The [native acquisition search](../../new/local_data/strategic_slices_native_acquisition_review_v1/summary.json)
+now supplies two independently re-certified initial-state witnesses. Of 130
+attempts, 15 initial drafts failed native validation (generator corrected), 94
+complete trees were certified, and 21 valid games failed solver certification.
+The three-player witness has 18,799 nodes, entrance mass/query probability 1,
+k=2 C=.45581 and S=.08333. Its answer changes the next response from REJECT
+(AVOID) to ACCEPT (NEUTRAL/WANT), with strict conditional action gaps. The
+two-player witness has 143,014 nodes, k=2 C=.375 and S=.10714; full-terminal
+S=.21429. It starts four proposals before terminal and is therefore only a
+mechanism prototype under the present three-proposal entrance rule. Both saved
+profiles were reloaded, re-certified and checked with an independent scalar BR.
+
+Six three-player controls all certify: prior changes retain S=.0625–.125;
+removing the second focal action from the bonus goal yields S=0; making that
+goal linear gives S=.02778; adding a public WANT to the avoid-only goal leaves
+S=.08333. These findings concern selected profiles and include equilibrium
+selection changes. The generator currently excludes multiple requirements from
+the same player within one goal, despite their legality in the native game.
+Both witnesses include that missing structure. This is a concrete calibration
+direction, not a claim that public-WANT anchors universally suppress information.
+Fixtures and diagnostic generation/verification/control scripts are preserved;
+36 tests passed at that stage, without changing production rules, generator,
+candidates, references, or D. The subsequent opt-in generator extension is
+recorded above. The two base structures and their prior variants are not a new corpus.
+
+The [mechanism diagnostic](../../new/local_data/strategic_slices_mechanism_diagnostic_v1/conclusions.json)
+adds six convenience parents with fixed partner profiles: 249 free single-slot
+information comparisons yield only three positive gains (max .03661), all in
+one three-player parent. Free revelation of every partner type has zero early
+gain in the five selected two-player parents and up to .09117 in the three-player
+case. Removing the opportunity cost alone is therefore not a sufficient
+explanation for this sample. These are information interventions, not modified
+game equilibria. Legal unilateral offers, rejection without extra penalties,
+linear payoff separability (37 parents), public-WANT anchors and repeated turn
+order are structural hypotheses; their individual causal effects remain open.
+The old external-PASS fixture retains S=.25, but its full initial reference
+failed certification twice. The native schedule comparison is incomplete and
+does not establish a schedule effect. Production artifacts are unchanged;
+34 regression tests and independent signal-conditioned BR checks passed.
+
+The [early-investigation audit](../../new/local_data/strategic_slices_early_investigation_v1/summary.json)
+is complete: all 100 parents, 250 parent/player pairs, and 8,357 reachable first
+proposal information cells, including 88 excluded by the three-proposal entrance
+neighborhood. Full-terminal focal best responses show 2,573 query/non-query ties,
+5,783 query-inferior cells, and just one strict advantage of .0138533; none exceed
+.05. Prohibiting all future focal investigations preserves optimum value in all
+but that same cell. Even its gain survives masking the selected private answer
+through terminal (S=0), so it is an action/continuation advantage, not evidence of
+positive private-answer value. Partners remain on the same saved oracle profile.
+528 cells have both an unknown query answer and a subsequent focal proposal;
+none have strict acquisition-action advantage. The active-acquisition coverage
+gap is therefore still open after restoring early entrances and full lookahead.
+No dataset, game, reference, or model job was changed by this audit. 31 tests and
+independent native subtree/action-removal checks passed.
+
+The [v3 candidate revision](../../new/local_data/strategic_slices_oracle_consistent_candidates_v3/audit.json)
+keeps all 100 original parents/references/splits and exactly eight questions each.
+An exhaustive reachable-entrance scan found 220 strong existing-answer contrasts
+in ten parents, among 9,209 measured groups. None of their members occurred in
+the original 800-question subset. The revision retains ten complete must-change
+groups (30 fixed-information questions; train 9 groups, test 1, validation 0).
+Selected conditional entry-answer S ranges from .05357 to .31884. Query-acquisition
+S is unchanged. A group S is not a singleton label and is not counted 30 times.
+
+770 questions are unchanged; 30 require new D. `D_reuse.json` records this mapping,
+but the existing v2 run cannot be resumed directly against a changed manifest.
+The revision independently checks selected S through masked dynamic programming
+and verifies new member C/posteriors against the saved oracle. No new equilibrium
+solves, model calls, training, or final 100-question selection were performed.
+See [definitions and selection](ENTRY_INFORMATION.md#existing-private-answers-one-decision-entry-contrasts-2026-10-05).
+
+## Historical milestone: prepared base-model D pipeline
 
 The user requested a complete SoC pipeline using Qwen3-4B-Instruct, with **no
 automatic job submission**. [TERMINAL_D.md](TERMINAL_D.md) documents the launcher,

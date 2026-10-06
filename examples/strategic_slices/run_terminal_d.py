@@ -16,7 +16,7 @@ from urllib.request import urlopen
 
 from training.strategic_slices.common import digest, file_hash, write_json
 from training.strategic_slices.terminal_d import (
-    DEFAULT_CONFIG, ROOT, HTTPGenerator, load_config, load_dataset, run_evaluation)
+    DEFAULT_CONFIG, ROOT, HTTPGenerator, load_config, load_configured_dataset, run_evaluation)
 
 
 def model_identity(model):
@@ -72,17 +72,20 @@ def main():
     cli.add_argument('--port', type=int)
     cli.add_argument('--resume', action='store_true')
     cli.add_argument('--check', action='store_true')
+    cli.add_argument('--candidate-ids',type=Path,help='JSON ID list or D_reuse.json; restrict this run to changed questions')
     args = cli.parse_args()
     cfg = load_config(args.config)
     if args.port is not None:
         cfg['port'] = args.port
     model = args.model or Path(cfg['model'])
     cfg['model'] = str(model)
-    dataset = load_dataset(args.data or ROOT/cfg['data'])
+    dataset = load_configured_dataset(cfg, args.data, args.candidate_ids)
     if args.check:
         print(json.dumps(dict(config=cfg, dataset_verified=True, parents=len(dataset.parents),
             candidates=len(dataset.candidates), trajectories=len(dataset.candidates)*cfg['replicas'],
             max_model_calls=sum(r['k']*8 for r in dataset.candidates),
+            dataset_path=str(dataset.root), dataset_sha256=file_hash(dataset.root/'manifest.json'),
+            candidate_subset_ids=getattr(dataset, 'selected_candidate_ids', None),
             model_path_checked=False, gpu_started=False, submitted=False), indent=2))
         return
     if args.output is None:

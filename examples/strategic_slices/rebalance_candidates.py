@@ -43,8 +43,10 @@ def features(row):
     }
 
 
-def select_parent(rows, players, totals):
+def select_parent(rows, players, totals, *, required_ids=(), existing_ids=None):
     rows = sorted(rows, key=lambda r: r['id'])
+    if not set(required_ids) <= {r['id'] for r in rows}:
+        raise ValueError('Required contrast member missing from candidate pool')
     if len(rows) < 8:
         raise ValueError('Parent has fewer than eight existing candidates')
     subsets = np.asarray(list(combinations(range(len(rows)), 8)), dtype=int)
@@ -60,12 +62,18 @@ def select_parent(rows, players, totals):
         valid &= (counts[key] > 0).all(axis=1)
     valid &= (counts['history'] > 0).sum(axis=1) >= 2
     for i, row in enumerate(rows):
-        if row['entry_kind'] == 'oracle-reach-collective' or row['detectable_information_value']:
+        if (row['id'] in required_ids or row['entry_kind'] == 'oracle-reach-collective'
+                or row['detectable_information_value']):
             valid &= (subsets == i).any(axis=1)
     choices = np.flatnonzero(valid)
     if not len(choices):
         raise ValueError('Eight-row subset cannot preserve required coverage')
     scores = [(counts[key] ** 2).sum(axis=1) for key in ('ego', 'k', 'kind')]
+    if existing_ids is not None:
+        # A measured D checkpoint can be reused only for unchanged records.
+        # First minimize replacements subject to complete contrast retention.
+        additions = np.array([r['id'] not in existing_ids for r in rows], dtype=int)
+        scores.insert(0, additions[subsets].sum(axis=1))
     scores += [-(counts[key] > 0).sum(axis=1) for key in ('pair', 'remaining', 'entrance', 'history')]
     for key in ('ego', 'k', 'kind'):
         counter = totals[('ego', players)] if key == 'ego' else totals[key]

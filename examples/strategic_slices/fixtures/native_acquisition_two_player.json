@@ -1,0 +1,264 @@
+{
+  "raw": {
+    "background_prior": {
+      "name": "want_heavy",
+      "version": "public-prior-margin-v1",
+      "weights": {
+        "avoid": 1,
+        "neutral": 1,
+        "want": 2
+      }
+    },
+    "ego": 0,
+    "game": {
+      "forbidden_actions": null,
+      "goals": [
+        {
+          "binary": false,
+          "goal_id": 0,
+          "required_actions": [
+            {
+              "action_id": 0,
+              "player_id": 0
+            },
+            {
+              "action_id": 1,
+              "player_id": 1
+            }
+          ]
+        },
+        {
+          "binary": false,
+          "goal_id": 1,
+          "required_actions": [
+            {
+              "action_id": 0,
+              "player_id": 0
+            },
+            {
+              "action_id": 0,
+              "player_id": 1
+            }
+          ]
+        },
+        {
+          "binary": false,
+          "goal_id": 2,
+          "required_actions": [
+            {
+              "action_id": 1,
+              "player_id": 0
+            },
+            {
+              "action_id": 0,
+              "player_id": 1
+            }
+          ]
+        },
+        {
+          "binary": false,
+          "goal_id": 3,
+          "required_actions": [
+            {
+              "action_id": 1,
+              "player_id": 0
+            },
+            {
+              "action_id": 1,
+              "player_id": 1
+            }
+          ]
+        },
+        {
+          "binary": false,
+          "goal_id": 4,
+          "required_actions": [
+            {
+              "action_id": 0,
+              "player_id": 0
+            },
+            {
+              "action_id": 1,
+              "player_id": 0
+            },
+            {
+              "action_id": 1,
+              "player_id": 1
+            }
+          ]
+        }
+      ],
+      "investigate": {
+        "action_visibility": "Query actor and target are public",
+        "budget": 1,
+        "budget_scope": "per player per game",
+        "cost": "Consumes the current proposal turn; commitments do not change",
+        "result_visibility": "Only the investigator receives the true preference",
+        "targets": "Any goal preference of another player, including already known or irrelevant preferences"
+      },
+      "max_changes": 1,
+      "menu_enabled": false,
+      "n_actions_per_player": [
+        2,
+        2
+      ],
+      "n_players": 2,
+      "round_robin": [
+        0,
+        1,
+        0,
+        1
+      ],
+      "seed": 0,
+      "variant": "social-private-investigate-per-player-v1"
+    },
+    "history": [],
+    "own_preferences": [
+      1,
+      1,
+      -1,
+      0,
+      0
+    ],
+    "type_catalogues": {
+      "0": [
+        [
+          1,
+          1,
+          -1,
+          0,
+          0
+        ]
+      ],
+      "1": [
+        [
+          1,
+          0,
+          0,
+          1,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          1,
+          1
+        ],
+        [
+          -1,
+          0,
+          0,
+          1,
+          1
+        ]
+      ]
+    }
+  },
+  "history": [],
+  "description": "Native initial-state terminal acquisition witness; re-solve and certify, never inherit labels from this fixture.",
+  "source": "new/local_data/strategic_slices_native_acquisition_search_v6",
+  "source_name": "historical_00000",
+  "expected_selected_reference_policy_sha256": "64947e4adc15088ca0ff886a07e9db44f7f90e1c9d35083421ab87ae5b71c03a",
+  "diagnostic_witnesses": [
+    {
+      "entrance_id": "2691fc0ff3ec92adc27be95e",
+      "root_index": 0,
+      "ego": 0,
+      "own": [
+        1,
+        1,
+        -1,
+        0,
+        0
+      ],
+      "world_weights": [
+        0.5,
+        0.25,
+        0.25
+      ],
+      "history": [],
+      "slot": [
+        1,
+        0
+      ],
+      "V_full": 1.0,
+      "V_mask": 0.7857142857142856,
+      "S": 0.2142857142857144,
+      "delta_investigate": 0.25,
+      "oracle_information_set_mass": 1.0,
+      "length_curve": [
+        {
+          "k": 1,
+          "V_star": 1.0,
+          "V_min": 0.75,
+          "C_span": 0.25,
+          "root_Q": [
+            0.7500000000000002,
+            0.7500000000000002,
+            0.7500000000000002,
+            0.75,
+            0.75,
+            0.7500000000000002,
+            0.7500000000000002,
+            0.7500000000000002,
+            0.7500000000000002,
+            1.0,
+            0.75,
+            0.75,
+            0.75,
+            0.75
+          ],
+          "S": 0.0
+        },
+        {
+          "k": 2,
+          "V_star": 1.0,
+          "V_min": 0.625,
+          "C_span": 0.375,
+          "root_Q": [
+            0.7500000000000002,
+            0.7500000000000002,
+            0.7500000000000002,
+            0.75,
+            0.75,
+            0.7500000000000002,
+            0.7500000000000002,
+            0.7500000000000002,
+            0.7500000000000002,
+            1.0,
+            0.75,
+            0.75,
+            0.75,
+            0.75
+          ],
+          "S": 0.10714285714285732
+        },
+        {
+          "k": 3,
+          "V_star": 1.0,
+          "V_min": 0.007142857142857159,
+          "C_span": 0.9928571428571429,
+          "root_Q": [
+            0.75,
+            0.75,
+            0.75,
+            0.75,
+            0.75,
+            0.75,
+            0.75,
+            0.75,
+            0.75,
+            1.0,
+            0.75,
+            0.75,
+            0.75,
+            0.75
+          ],
+          "S": 0.2142857142857144
+        }
+      ]
+    }
+  ],
+  "current_three_proposal_entrance_eligible": false
+}

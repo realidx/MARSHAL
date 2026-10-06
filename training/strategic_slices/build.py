@@ -1,6 +1,7 @@
 """Freeze structurally disjoint shared-parent train/dev/test game pools."""
 import argparse
 from collections import Counter
+from copy import deepcopy
 from itertools import combinations, permutations, product
 import time
 
@@ -8,7 +9,7 @@ import numpy as np
 from training.b_sft.preference_contract import profile, world_weights
 from training.b_sft.social_private_teacher import PrivateEpisode, PrivateWindow, PrivateInvestigationRules, observed_slots, audit_native
 from training.b_sft.shared_teacher import SearchLimit
-from .common import VERSION, digest, stable, write_json, write_rows, file_hash, save_reference
+from .common import VERSION, digest, stable, write_json, write_rows, file_hash, save_reference, seed_for
 from .values import window_values, masked_answer_value
 
 
@@ -28,7 +29,35 @@ def structural_family(game):
     return digest(min(representations))[:20]
 
 
-def sample_parent(seed, players, rounds=None):
+def with_multi_action_goal(raw, seed):
+    """Add one native same-player requirement; preserve every other game field.
+
+    This paired intervention uses a separate RNG, so preferences, support,
+    prior, turn order, coordinates and binary/linear modes cannot drift with
+    the topology change. Return a null change when no such addition is legal.
+    It broadens structural coverage, not a guarantee of positive information.
+    """
+    result = deepcopy(raw)
+    eligible = []
+    for gi, goal in enumerate(raw['game']['goals']):
+        occupied = {(a['player_id'], a['action_id']) for a in goal['required_actions']}
+        for player in sorted({p for p, _ in occupied}):
+            for action in range(raw['game']['n_actions_per_player'][player]):
+                if (player, action) not in occupied:
+                    eligible.append((gi, player, action))
+    if not eligible:
+        return result, None
+    rng = np.random.default_rng(seed_for('multi-action-goal-v1', seed))
+    gi, player, action = eligible[int(rng.integers(len(eligible)))]
+    result['game']['goals'][gi]['required_actions'].append(dict(player_id=player, action_id=action))
+    result['game']['goals'][gi]['required_actions'].sort(key=lambda a: (a['player_id'], a['action_id']))
+    return result, dict(goal_id=raw['game']['goals'][gi]['goal_id'],
+                        added_requirement=dict(player_id=player, action_id=action))
+
+
+def sample_parent(seed, players, rounds=None, *, goal_structure='legacy'):
+    if goal_structure not in ('legacy', 'multi_action'):
+        raise ValueError('Unknown goal_structure')
     rng = np.random.default_rng(seed)
     coordinates = [2, 2] if players == 2 else [1, 1, 1]
     if players == 3 and rng.random() < .6:
@@ -67,8 +96,9 @@ def sample_parent(seed, players, rounds=None):
     order = list(map(int, rng.permutation(players)))
     game = dict(n_players=players, n_actions_per_player=coordinates, goals=goals,
                 round_robin=order * rounds, max_changes=1, menu_enabled=False)
-    return dict(game=game, ego=0, own_preferences=types['0'][0], type_catalogues=types,
-                background_prior=profile(['balanced', 'want_heavy', 'neutral_heavy', 'avoid_heavy'][seed % 4]))
+    raw = dict(game=game, ego=0, own_preferences=types['0'][0], type_catalogues=types,
+               background_prior=profile(['balanced', 'want_heavy', 'neutral_heavy', 'avoid_heavy'][seed % 4]))
+    return with_multi_action_goal(raw, seed)[0] if goal_structure == 'multi_action' else raw
 
 
 def entrances(tree, seed, trajectories=12, epsilon=.25):
@@ -254,7 +284,8 @@ def build(output, config, reuse=None):
             record = __import__('json').loads(line)
             if record['status'] == 'accepted':
                 raw = sample_parent(record['seed'], record['players'],
-                                    config.get('three_player_rounds', 1) if record['players'] == 3 else None)
+                                    config.get('three_player_rounds', 1) if record['players'] == 3 else None,
+                                    goal_structure=config.get('goal_structure', 'legacy'))
                 if digest(raw)[:24] == record['parent_id']:
                     cached[digest(raw)] = reuse / 'references' / (record['parent_id'] + '.npz')
     started = time.monotonic()
@@ -276,7 +307,8 @@ def build(output, config, reuse=None):
             else:
                 n = min((n for n in (2, 3) if any(counts[s][n] < targets[s][n] for s in parents)),
                         key=lambda n: sum(counts[s][n] for s in parents) / max(1, sum(targets[s][n] for s in parents)))
-                raw = sample_parent(seed, n, config.get('three_player_rounds', 1) if n == 3 else config.get('two_player_rounds'))
+                raw = sample_parent(seed, n, config.get('three_player_rounds', 1) if n == 3 else config.get('two_player_rounds'),
+                                    goal_structure=config.get('goal_structure', 'legacy'))
             family = structural_family(raw['game'])
             # Freeze a whole family in the most underfilled player-count split.
             # Assignment uses only structural eligibility/quotas, never an LLM result.
