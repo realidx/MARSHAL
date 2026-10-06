@@ -45,11 +45,12 @@ class SocialWorker(ActorWorker):
     @torch.no_grad()
     def generate_native(self, data):
         from vllm import SamplingParams
+        from training.social_mixed.native_limits import output_limit
         requests = data.non_tensor_batch['requests'].tolist()
         if self.worker_config.strategy_args.strategy_name != 'vllm':
             raise ValueError('Native generation requires vLLM')
         params = [SamplingParams(n=1, temperature=float(r.get("temperature",1.0)), top_p=1.0, top_k=-1,
-                                 repetition_penalty=1.0, max_tokens=1024, logprobs=0,
+                                 repetition_penalty=1.0, max_tokens=output_limit(r), logprobs=0,
                                  seed=int(r['seed']), stop_token_ids=[self.tokenizer.eos_token_id])
                   for r in requests]
         metrics = {}
@@ -64,7 +65,7 @@ class SocialWorker(ActorWorker):
                 raise RuntimeError('Native generation prompt/replica mismatch')
             sample = output.outputs[0]
             ids = list(sample.token_ids)
-            if sample.finish_reason not in ('stop','length') or not 0<len(ids)<=1024:
+            if sample.finish_reason not in ('stop','length') or not 0<len(ids)<=output_limit(request):
                 raise RuntimeError(f'Unscorable native generation: {sample.finish_reason}')
             if sample.logprobs is None or len(sample.logprobs)!=len(ids):
                 raise RuntimeError('Missing behavior token log probabilities')

@@ -10,6 +10,29 @@ There is no separate inference or conditional-planning supervision.
 
 ## 当前研究方向（2026-10-05）
 
+**2026-10-06 训练衔接：**采用逐步 oracle-correctness binary reward，同组共享
+hidden world，8 replicas、32 并发容量、1024 输出 tokens；失败调用额外 −0.2
+protocol advantage，保留之前的有效步骤得分。新入口直接读取
+selected v4 的 100 道题，复用已有 ROLL optimizer/checkpoint。训练 contract、
+本地检查与手动 GPU smoke 见 [TERMINAL_TRAINING.md](TERMINAL_TRAINING.md)。
+尚未提交任务或开始真实训练；下方四 replicas 等描述属于历史实验。
+总训练预算已统一为 6,000,000 response tokens；正常完成后自动用 final
+checkpoint 测试 200 道 test slices 和 25 个完整 parent games（默认 8 repeats）。
+每 update 已改为固定 4 道题 × 8 trajectories；测试 tokens 另计。
+best 按 validation 整段 slice 成功率选择，最终保留 best + final；final
+最好或并列最好时只保留一份。默认每 10 updates 和结束时评估。
+
+**2026-10-06 最新进度：v4 的 D 已汇总，100 题首版选集已生成。**
+722 道复用题 + 78 道新增题共有 6,400 条真实轨迹；逐步 native replay 全部通过。
+train 中 139 题有任意 decision 的同题面 value contrast，比仅看首步多 23 题。
+首版选集为 100 道 train 题，来自 56 个 parent、37 个 structural family；保留
+12 道 strong acquisition 和 9 组完整 entry-answer 对照（27 题）。88 题观察到
+决策损失或完成状态差异，另 12 题为完整信息对照保留，不宣称都已观察到分离度。
+候选池仍为 100 个 parent、800 题；最终选集不要求每个 parent 各取一题。
+见 [完整审核与选择依据](TERMINAL_D_V4_ANALYSIS.md)。以下历史阶段的“待跑 D / 尚未选定”
+描述保留当时口径；目前尚未开始训练或生成 supervision traces。
+
+
 **正在推进的新目标与可复现 checkpoint 见 [PROGRESS.md](PROGRESS.md)。**
 当前任务是改进入口采样与信息依赖覆盖；下方各阶段报告均
 保留原始口径，不能将历史条目直接相加作为当前进度。

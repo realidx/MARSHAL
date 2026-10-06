@@ -1,5 +1,71 @@
 # Active checkpoint — 2026-10-04; continuation — 2026-10-05
 
+## 2026-10-06: accepted binary training pipeline
+
+The selected 100 windows now have a dedicated online training collector:
+shared entrance/world/focal per eight replicas, local 0/1 oracle correctness,
+other-replica baseline, retained correct prefixes on later failure, and the
+same frozen terminal continuation. The v2 training contract restores the old
+-0.2 protocol advantage only on failed calls. Native capacity is 32, output
+1024/context 16384. The previous ROLL optimizer/sync/checkpoint loop is reused. CPU checks
+and manual GPU smoke/resume commands are in [TERMINAL_TRAINING.md](TERMINAL_TRAINING.md).
+No GPU task is submitted; hardware memory and actual optimizer resume remain
+unverified for this new configuration. Older reward proposals are superseded.
+Prior v1 local evidence (4096 output, no extra penalty): 29 related checks passed; the full synthetic sweep covered
+100 selected questions / 800 trajectories / 1,248 calls, with an exact repeated
+next-collection resume check. Two validation questions and full-game team/focal
+modes also ran under the mock generator. These are CPU plumbing results, not
+model performance or GPU optimizer evidence; local Hydra is unavailable.
+
+Final-test follow-up: training budget now exactly targets 6,000,000 response
+tokens (complete-update overshoot permitted). The current v3 contract uses
+four questions × eight trajectories per optimizer update; the earlier
+65,536-token batch rule is superseded. Normal
+budget completion saves the final checkpoint, syncs final weights and evaluates
+all 200 test slices / 25 test parents, default eight fixed-seed instances. Test
+tokens are separate; no checkpoint selection uses test. Pauses, early gates and
+incomplete budgets skip test. Interrupted test retains the completed training
+checkpoint for resume without additional optimizer updates. Fifteen focused
+training/final-test checks passed; no GPU run was launched.
+
+Checkpoint follow-up: user chose validation full-window success rate to select
+best. Ties prefer the later evaluated checkpoint, including final. During
+training retain best plus latest recovery point; after normal completion retain
+best plus final, deduplicated to one if identical. Test remains final-only and
+never selects checkpoints. Earlier-run artifacts are not automatically deleted.
+Current v3 checks: 29 relevant tests passed; one stale generic retention test
+now requests two slots when expecting two checkpoints (prune implementation
+unchanged). Real-data mock produced exactly four questions / 32 trajectories /
+60 controlled calls in one update and exact subsequent collector resume.
+No native GPU optimizer/checkpoint smoke was submitted.
+
+## 2026-10-06: v4 D complete, first train selection frozen
+
+Real delta results are in `new/strategic_slices_terminal_d_v4_20261006`.
+The offline union contains 800 questions / 6,400 original trajectories; 6,200
+reach terminal. All trajectories and every controlled call were independently
+replayed against the frozen native reference. Initial oracle policies were not
+re-solved. Full-window analysis finds 139 train questions with same-prompt action
+value contrast (116 at the root), plus separately recorded mixed completion.
+
+The first selection has 100 train windows from 56 parents / 37 structural
+families, with k counts 52/29/19 and 2p/3p and proposal/response both 54/46.
+Twelve strong acquisition windows and all nine train entry-answer groups are
+retained. Eighty-eight selected questions show decision-gap/completion contrast;
+twelve preserve the complete answer groups without observed within-question
+contrast. No test/validation outcomes drive selection. The original 100-parent
+pool remains unchanged. Training and supervision export have not begun.
+
+Acquisition diagnosis: 80 investigations across 96 strong-S trajectories, only
+nine optimal query choices; 24 of 93 subsequent valid actions are suboptimal.
+Only six visited decisions have a certified answer-dependent change in the
+optimal action set (five valid, two optimal, one failed). This is evidence of
+training opportunity, not evidence that answer-use competence has been learned.
+See [TERMINAL_D_V4_ANALYSIS.md](TERMINAL_D_V4_ANALYSIS.md) for exact definitions,
+checksums, selection exceptions and reproducible commands. All older sections
+below are historical checkpoints.
+
+
 2026-10-06 launcher update: the dedicated `terminal_d_soc_v4_delta.json` pins
 the v4 manifest and automatically selects 78 pending questions (624 trajectories).
 It preserves the user's 32-worker completion-refill scheduler and 4096-token

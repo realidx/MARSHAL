@@ -31,7 +31,8 @@ class NextTrainingTests(unittest.TestCase):
             for n in (9,19,29):
                 p=root/'checkpoints'/f'checkpoint-{n}';p.mkdir(parents=True);(p/'COMPLETE.json').write_text('{}')
             (root/'BEST_CHECKPOINT').write_text(str(root/'checkpoints/checkpoint-9'))
-            self.assertEqual(prune(root,1),[19])
+            # Distinct best/latest need two slots under the current keep cap.
+            self.assertEqual(prune(root,2),[19])
             self.assertTrue((root/'checkpoints/checkpoint-9').exists())
             (root/'BEST_CHECKPOINT').write_text(str(root/'checkpoints/checkpoint-29'))
             self.assertEqual(prune(root,1),[9])

@@ -153,6 +153,7 @@ class SocialPipeline(BasePipeline):
 
     def generate(self, requests):
         from training.b_sft.social_b_grpo import parse_completion
+        from training.social_mixed.native_limits import check_context
         original = len(requests)
         if original==0:return []
         encoded=[]
@@ -167,9 +168,8 @@ class SocialPipeline(BasePipeline):
             # Only CalBench raw-text requests use the larger inference context.
             limit=(self.pipeline_config.actor_infer.strategy_args.strategy_config['max_model_len']
                    if req.get('raw_text') else self.pipeline_config.sequence_length)
-            if len(ids)+1024>limit:
-                raise ValueError(f'Prompt has {len(ids)} tokens, limit={limit}; refusing to truncate private/public state')
-            encoded.append(dict(prompt_ids=ids,seed=req['seed'],temperature=req.get('temperature',1.0)))
+            max_tokens=check_context(len(ids),req,limit)
+            encoded.append(dict(prompt_ids=ids,seed=req['seed'],temperature=req.get('temperature',1.0),max_tokens=max_tokens))
         # Replica dispatch requires divisibility. Dummy padding is never scored or
         # trained, and uses a separate request seed.
         replicas=self.pipeline_config.actor_infer.world_size
@@ -322,7 +322,8 @@ class SocialPipeline(BasePipeline):
                 self.actor_train.offload_states(blocking=True)
                 self.model_update(step)
             with self.phase('rollout'):
-                token_target = self.options['tokens_per_update']
+                # Fixed-question collectors do not use a token batch target.
+                token_target = self.options.get('tokens_per_update',1)
                 if self.options.get('recipe') == 'strategic_slices':
                     token_target = min(token_target, self.options['total_tokens'] - consumed)
                 rows,units,games,metrics=self.collector.collect(step,self.options['arm'],token_target)

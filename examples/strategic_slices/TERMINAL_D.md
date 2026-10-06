@@ -1,5 +1,48 @@
 # Terminal candidate D evaluation on SoC
 
+Training transition: [TERMINAL_TRAINING.md](TERMINAL_TRAINING.md) implements the
+accepted per-decision binary oracle reward, shared-world groups and k-step
+rollouts. Training uses 1024 output tokens and an extra -0.2 protocol advantage
+on truncated/invalid calls; historical D remains at 4096. Includes local checks
+and manual GPU smoke/resume commands. No GPU
+training task has been submitted; the earlier draft is historical.
+Training now targets 6,000,000 response tokens and automatically evaluates the
+final checkpoint on the full test split after normal budget completion. See the
+training document for test repeats, outputs and interruption recovery.
+Updates now use four questions × eight trajectories. Checkpoint retention is
+validation-best plus final, with one copy when final is also best; validation
+full-window success rate is the selection metric and ties favor later updates.
+
+## Current result: v4 merged D and selected 100 (2026-10-06)
+
+The delta results from job 915300 are now merged analytically with the 722
+unchanged v2 questions: **800 questions, 6,400 trajectories, 6,200 terminal
+outcomes**. Original archive/member/protocol identities remain attached to each
+question; source results and frozen datasets are unchanged. All 6,400 native
+trajectories were replayed, including every controlled decision after the first.
+
+The first **100 train slices** are selected from 56 parents / 37 structural
+families. They preserve all 12 strong acquisition windows and nine complete train
+entry-answer groups (27 questions). k=1/2/3 counts are 52/29/19; 2p/3p and
+proposal/response are both 54/46. Eighty-eight questions have observed decision-gap
+or completion contrast; twelve additional questions preserve complete entry-answer
+controls despite no observed within-question contrast in these eight samples.
+No validation/test outcomes were used for selection. This is a selected candidate
+artifact, not a supervision-trace export or a training run.
+
+See [full-window audit and selection report](TERMINAL_D_V4_ANALYSIS.md).
+Artifacts: `new/local_data/strategic_slices_terminal_d_v4_analysis`,
+`new/local_data/strategic_slices_terminal_selected_v4`, and
+`new/local_data/strategic_slices_terminal_d_v4_review`.
+The versioned Git-trackable data bundle is
+`strategic-slices-terminal-selected-v4.tar.gz` with its SHA256 JSON sidecar.
+It includes the frozen v4 pool, selected questions and offline analysis evidence;
+it does not include or alter model weights or raw result archives.
+
+The delta launcher sections below describe the completed run and remain for
+reproduction; these 78 questions no longer need a first D measurement.
+
+
 The real Qwen3-4B-Instruct-2507 evaluation completed on SoC on 2026-10-05:
 **800 candidates from 100 parents, eight independent trajectories each**.
 Original job 910916 supplied 58 completed parents; 32-worker completion-refill
