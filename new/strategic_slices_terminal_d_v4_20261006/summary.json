@@ -1,0 +1,146 @@
+{
+  "mock": false,
+  "actual_model_actions": true,
+  "model_learning_validated": false,
+  "final_100_selected": false,
+  "parents": 16,
+  "slices": 78,
+  "trajectories": 624,
+  "completed": 595,
+  "decision_calls": 731,
+  "statuses": {
+    "terminal": 595,
+    "truncated": 28,
+    "invalid_action": 1
+  },
+  "response_tokens": 416950,
+  "call_statuses": {
+    "ok": 702,
+    "truncated": 28,
+    "invalid_action": 1
+  },
+  "splits": {
+    "train": {
+      "slices": 75,
+      "complete_slices": 53,
+      "mean_D_complete_slices": 0.40543215955951795,
+      "sampled_reward_contrast_slices": 27,
+      "root_value_contrast_slices": 31,
+      "root_mixed_optimal_suboptimal_slices": 20,
+      "complete_root_value_contrast_slices": 22
+    },
+    "validation": {
+      "slices": 0,
+      "complete_slices": 0,
+      "mean_D_complete_slices": null,
+      "sampled_reward_contrast_slices": 0,
+      "root_value_contrast_slices": 0,
+      "root_mixed_optimal_suboptimal_slices": 0,
+      "complete_root_value_contrast_slices": 0
+    },
+    "test": {
+      "slices": 3,
+      "complete_slices": 3,
+      "mean_D_complete_slices": 0.6666666666666666,
+      "sampled_reward_contrast_slices": 0,
+      "root_value_contrast_slices": 0,
+      "root_mixed_optimal_suboptimal_slices": 0,
+      "complete_root_value_contrast_slices": 0
+    }
+  },
+  "strata": [
+    {
+      "split": "test",
+      "dimension": "k",
+      "value": "1",
+      "slices": 3,
+      "complete_slices": 3,
+      "mean_D_complete_slices": 0.6666666666666666,
+      "root_value_contrast_slices": 0
+    },
+    {
+      "split": "train",
+      "dimension": "k",
+      "value": "1",
+      "slices": 63,
+      "complete_slices": 49,
+      "mean_D_complete_slices": 0.4218053063716329,
+      "root_value_contrast_slices": 25
+    },
+    {
+      "split": "train",
+      "dimension": "k",
+      "value": "2",
+      "slices": 6,
+      "complete_slices": 2,
+      "mean_D_complete_slices": 0.11111111111111109,
+      "root_value_contrast_slices": 3
+    },
+    {
+      "split": "train",
+      "dimension": "k",
+      "value": "3",
+      "slices": 6,
+      "complete_slices": 2,
+      "mean_D_complete_slices": 0.2986111111111111,
+      "root_value_contrast_slices": 3
+    },
+    {
+      "split": "test",
+      "dimension": "decision_kind",
+      "value": "proposal",
+      "slices": 3,
+      "complete_slices": 3,
+      "mean_D_complete_slices": 0.6666666666666666,
+      "root_value_contrast_slices": 0
+    },
+    {
+      "split": "train",
+      "dimension": "decision_kind",
+      "value": "proposal",
+      "slices": 55,
+      "complete_slices": 38,
+      "mean_D_complete_slices": 0.49419924008739796,
+      "root_value_contrast_slices": 24
+    },
+    {
+      "split": "train",
+      "dimension": "decision_kind",
+      "value": "response",
+      "slices": 20,
+      "complete_slices": 15,
+      "mean_D_complete_slices": 0.18055555555555552,
+      "root_value_contrast_slices": 7
+    },
+    {
+      "split": "test",
+      "dimension": "players",
+      "value": "2",
+      "slices": 3,
+      "complete_slices": 3,
+      "mean_D_complete_slices": 0.6666666666666666,
+      "root_value_contrast_slices": 0
+    },
+    {
+      "split": "train",
+      "dimension": "players",
+      "value": "2",
+      "slices": 35,
+      "complete_slices": 28,
+      "mean_D_complete_slices": 0.5701285321821036,
+      "root_value_contrast_slices": 19
+    },
+    {
+      "split": "train",
+      "dimension": "players",
+      "value": "3",
+      "slices": 40,
+      "complete_slices": 25,
+      "mean_D_complete_slices": 0.22097222222222218,
+      "root_value_contrast_slices": 12
+    }
+  ],
+  "train_at_least_100_complete_root_value_contrast_slices": false,
+  "interpretation": "Reward variation includes environment noise. Root-Q contrast uses identical visible prompts, optimal continuation within remaining window, and is not full-trajectory success or proof of learnability.",
+  "uncertainty": "Eight samples give coarse estimates; bootstrap intervals are descriptive. Missing-outcome bounds are not confidence intervals."
+}
