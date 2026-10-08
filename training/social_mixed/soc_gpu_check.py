@@ -28,7 +28,7 @@ def main():
  if count!=gpu_count():raise RuntimeError('Each rank must enumerate all assigned GPUs; inspect allocation/MIG topology')
  torch.cuda.set_device(rank);p=torch.cuda.get_device_properties(rank)
  profile=os.environ.get('SOCIAL_GPU_PROFILE','h100-96')
- minimum={'h100-47':42,'h100-96':85,'h200-141':125}[profile]
+ minimum={'h100-47':42,'h100-96':85,'h100-96-single':85,'h200-141':125}[profile]
  if p.total_memory<minimum*1024**3:raise RuntimeError(f'{profile} profile requires at least {minimum} GiB per visible device')
  print(json.dumps(dict(rank=rank,name=p.name,memory=p.total_memory,uuid=str(getattr(p,'uuid',None)))),flush=True)
  dist.init_process_group('nccl',timeout=datetime.timedelta(seconds=30))

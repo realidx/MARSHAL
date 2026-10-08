@@ -50,7 +50,7 @@ def main():
     cli.add_argument('--selection',type=Path,default=ROOT/'new/local_data/strategic_slices_terminal_selected_v4')
     cli.add_argument('--model',type=Path,default=Path('/home/e/e1300530/models/Qwen3-4B-Instruct-2507'))
     cli.add_argument('--output',type=Path)
-    cli.add_argument('--profile',choices=('h100-47','h100-96','h200-141'),default='h100-47')
+    cli.add_argument('--profile',choices=('h100-47','h100-96','h100-96-single','h200-141'),default='h100-47')
     cli.add_argument('--seed',type=int,default=42)
     cli.add_argument('--replicas',type=int,default=8)
     cli.add_argument('--concurrency',type=int,default=32)

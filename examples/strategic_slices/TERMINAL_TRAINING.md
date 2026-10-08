@@ -248,3 +248,24 @@ v3 检查：29 项相关测试通过，包含固定题数与 token target/并发
 已有生产流程证据见 [历史 BP/SP 链路](../../new/training_chain_evidence_20260921/README.md)
 和 [D24](../../new/d24_partner32_evidence_20260926/README.md)。这些支持复用
 optimizer/sync/checkpoint 基础设施，不替代本次新配置的 GPU smoke。
+
+## Single H100-96 SoC smoke
+
+`h100-96-single` is a separate execution profile: one GPU, TP=1, train/reference
+microbatch=1, full recompute, both train and reference state offload, vLLM memory
+fraction 0.40. The existing two-GPU `h100-96` profile is preserved. Override both
+Slurm resources and the profile; the script's defaults are still two H100-47 GPUs.
+
+```bash
+SOCIAL_GPU_PROFILE=h100-96-single TERMINAL_MAX_STEPS=3 \
+TERMINAL_EVAL_EVERY=1 TERMINAL_VALIDATION_LIMIT=2 \
+TERMINAL_PAUSE_AFTER_UPDATES=1 \
+sbatch --partition=gpu --gres=gpu:h100-96:1 \
+  examples/strategic_slices/sbatch_terminal_train.sh
+```
+
+For a resume smoke, keep these settings, set `TERMINAL_RESUME` to the complete
+checkpoint and `TERMINAL_PAUSE_AFTER_UPDATES=2`, and use a fresh output directory.
+This smoke does not establish full validation performance or a completed 6M-token run.
+
+2026-10-06 SoC smoke executed: jobs 915648 and 915674 both exit 0; native checkpoint resume and two optimizer updates passed. [Measurements and limitations](../../new/terminal_training_single_h10096_smoke_20261006/README.md). Subsequent full-target run 915731 was paused after 550 updates and 3,500,783 response tokens (the 6M target was not reached). Both retained checkpoints were exported and evaluated; see [raw results and audit](../../new/terminal_hf_test_calbench_20261008/README.md).

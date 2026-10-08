@@ -1,0 +1,39 @@
+{
+  "exports": {
+    "best": 919151,
+    "latest": 919152
+  },
+  "evaluation_jobs": {
+    "best": 919181,
+    "latest": 919182
+  },
+  "execution": "One GPU/server per model; terminal and CalBench concurrently share server, user QOS limit two GPUs",
+  "terminal": {
+    "test_slices": 200,
+    "repeats": 8,
+    "slice_trajectories": 1600,
+    "full_games": 696,
+    "response_limit": 1024,
+    "request_context_limit": 16384,
+    "workers": 64,
+    "scheduler": "completion-refill-global-v1"
+  },
+  "calbench": {
+    "suite": "stream",
+    "games": 24,
+    "parallel_games": 24,
+    "response_limit": 4096,
+    "context": 32768,
+    "primary_case_ids": "All 24 frozen stream cases. This terminal training did not use CalBench development validation; s2/s3 subset is auxiliary, not the primary test denominator."
+  },
+  "shared_server": {
+    "context": 32768,
+    "max_num_seqs": 64,
+    "batch_invariant": true,
+    "prefix_cache": true,
+    "chunked_prefill": false,
+    "cascade_attention": false,
+    "gpu_memory_utilization": 0.8
+  },
+  "mock_equivalence": "terminal-hf-refill-mock-v2-20261008: slice/game/call/metric exact match with original Validator"
+}

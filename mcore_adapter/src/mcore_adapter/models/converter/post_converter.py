@@ -112,13 +112,20 @@ def convert_checkpoint_to_hf(model_name_or_path: str, save_directory: str, torch
     if has_remote_code:
         class_ref = hf_config.auto_map["AutoModelForCausalLM"]
         model_class = get_class_from_dynamic_module(class_ref, mca_config.name_or_path)
-    model = model_class.from_pretrained(
-        None,
+    dtype = torch_dtype if torch_dtype is not None else mca_config.params_dtype
+    model = model_class.from_config(
         config=hf_config,
-        state_dict=hf_state_dict,
-        torch_dtype=torch_dtype if torch_dtype is not None else mca_config.params_dtype,
+        torch_dtype=dtype,
         trust_remote_code=True,
     )
+    incompatible = model.load_state_dict(hf_state_dict, strict=False)
+    allowed_missing = {"lm_head.weight"} if getattr(hf_config, "tie_word_embeddings", False) else set()
+    missing = set(incompatible.missing_keys) - allowed_missing
+    if missing or incompatible.unexpected_keys:
+        raise RuntimeError(
+            f"Incomplete HF state dict: missing={sorted(missing)}, "
+            f"unexpected={sorted(incompatible.unexpected_keys)}"
+        )
     model.save_pretrained(save_directory)
     mca_config.save_hf_auto_map_files(save_directory)
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=True)
