@@ -51,7 +51,8 @@ class TerminalPipeline(SocialPipeline):
         ensure(data.sha==options['dataset_sha256'],'Training data changed after launch')
         self.collector=Collector(data,self.generate,seed=options['seed'],replicas=options['replicas'],
             concurrency=options['concurrency'],max_tokens=options['max_tokens'],context=options['context'],
-            node_groups_per_update=options['node_groups_per_update'])
+            node_groups_per_update=options['node_groups_per_update'],
+            stream_factory=lambda n:self.native_stream(n))
         saved=self.state.kv.get('stable_recipe')
         if saved:self.collector.restore(saved)
         else:ensure(self.state.step<0,'Cannot resume another collector')
@@ -60,6 +61,10 @@ class TerminalPipeline(SocialPipeline):
             ensure(best['selection_version']==SELECTION['version'],'Checkpoint selection rule changed')
             ensure((Path(best['checkpoint'])/'COMPLETE.json').is_file(),'Missing inherited best checkpoint')
         self.validator=Validator(data,self.generate,self.collector.cfg,repeats=options['validation_repeats'],limit=options['validation_limit'])
+
+    def native_stream(self,concurrency):
+        from training.social_mixed.native_stream import NativeStream
+        return NativeStream(self,concurrency)
 
     @torch.no_grad()
     def validate(self,step,consumed,selection_candidate=True):

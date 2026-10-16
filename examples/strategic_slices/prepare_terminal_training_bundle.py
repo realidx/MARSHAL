@@ -22,9 +22,10 @@ def main():
     files.update(str(p.relative_to(ROOT)) for p in folder.iterdir()
         if p.is_file() and p.suffix in ('.py','.sh','.json','.md'))
     files.update(str(p.relative_to(ROOT)) for p in (folder/'fixtures').rglob('*') if p.is_file())
-    evidence=ROOT/'new/terminal_node_grpo_readiness_20261016'
-    files.update(str(p.relative_to(ROOT)) for p in evidence.glob('*')
-        if p.is_file() and p.suffix in ('.md','.json','.log') and p.name!='source_bundle.json')
+    for name in ('terminal_node_grpo_readiness_20261016','terminal_refill_readiness_20261016'):
+        evidence=ROOT/'new'/name
+        files.update(str(p.relative_to(ROOT)) for p in evidence.glob('*')
+            if p.is_file() and p.suffix in ('.md','.json','.log','.txt') and p.name!='source_bundle.json')
     manifest=dict(kind='terminal-training-source-overlay-v1',recipe=VERSION,contract=CONTRACT,
         requires_existing_marshal_checkout=True,dataset_sha256=data.sha,
         data_included=False,model_weights_included=False,dependencies_included=False,submitted=False,

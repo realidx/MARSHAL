@@ -1,9 +1,9 @@
-# Terminal slices v5：同节点连续奖励 GRPO
+# Terminal slices v6：同节点连续奖励 GRPO
 
-2026-10-16：已实现已确认的协议 `terminal-node-regret-grpo-v5`。冻结的 v4 数据、
+2026-10-16：已实现已确认的协议 `terminal-node-regret-grpo-refill-v6`。冻结的 v4 数据、
 Qwen3-4B-Instruct-2507 和初态完整终局 reference 不变；需要从 base 开新 run。
-CPU 验收与遗漏清单见[本轮记录](../../new/terminal_node_grpo_readiness_20261016/README.md)。
-**本轮没有提交 GPU 任务。旧 GPU smoke/resume 属于旧协议，不能替代 v5 验收。**
+CPU 验收与遗漏清单见[本轮记录](../../new/terminal_refill_readiness_20261016/README.md)。
+**本轮没有提交 GPU 任务。旧 GPU smoke/resume 属于旧协议，不能替代 v6 验收。**
 [旧 v4 文档](TERMINAL_TRAINING_LEGACY_V4.md)完整保留历史合同、命令和结果。
 研究仍是 slices/SP 效率；只采用这一种已定 credit，不增加方法对照。
 
@@ -18,7 +18,9 @@ CPU 验收与遗漏清单见[本轮记录](../../new/terminal_node_grpo_readines
    组内 reward range ≤ Oracle 数值容差1e-7时 task A=0，不放大求解噪声。
    该容差不是允许次优损失的语义阈值。失败另有独立 protocol A=−0.2，
    不进入 task reward 的均值/std。
-5. 从8个**原始样本**均匀抽1个执行，重复动作不去重，不看分数。
+5. 生成前从8个**原始样本的位置**均匀抽定1个，重复动作不去重，不看分数。
+   选定回答完成即可执行并准备下一节点，其他兄弟回答仍继续生成；它们全部收齐后
+   才计算本节点组内优势。评分保留原节点的actions/Q/posterior快照，不受链推进影响。
    未选回答只评分，不展开其后缀。抽中失败则终止，无重抽/补答/Oracle修复。
    reference 推进后到下个 focal 节点再采8个，最多 k=1/2/3，提前终局不补齐。
 6. 所有回答训练，各节点组等权、组内8回答等权、回答内 token 平均。
@@ -36,7 +38,10 @@ CPU 验收与遗漏清单见[本轮记录](../../new/terminal_node_grpo_readines
   是**实际节点组数目标**，不是入口题数，也不是非零优势组数。约160个回答。
   已开始的链采完再更新；用剩余 k 预留名额，默认最多超2组，即160–176回答。
   输出长度和提前终止影响入口数；不能再宣称每5 updates遍历100题。
-- 并发32，与节点预算独立；较低并发也能把一个8回答组分批生成后统一评分。
+- 并发32是全局未完成回答上限，采用 `completion-refill-v1`，不再是整批barrier。
+  某个回答完成就释放名额，优先填已准备的节点回答；有预算时再接新入口。
+  不等最初32个全完，也不只允许4个入口链。已提交但未完成的长回答始终保留。
+  较低并发也能把一个8回答组分批生成后统一评分。
   不筛零方差组、不补采、无自适应 G。所有回答及失败 tokens 都计入预算。
 - 训练6M response tokens，完成当前批次后停止，允许超出一批。输出1024 /
   context16384、temperature=1、top_p=1、top_k=−1。context 超限报错不裁剪。
@@ -50,13 +55,23 @@ CPU 验收与遗漏清单见[本轮记录](../../new/terminal_node_grpo_readines
   task/protocol活跃状态；`games/`：每入口**一条实际推进链**，含所选节点引用。
 - `metrics.jsonl`：实际组/入口/回答数、超额、task零信号组、单动作/平坦Q组、
   root与信息题严格正确数、连续regret、失败和completion；另记 collection、
-  action-value查询、生成耗时。reference恢复/构建等耗时包含在collection剩余部分。
+  action-value查询、等待生成回收耗时。记录`scheduler_peak_inflight`和
+  `scheduler_native_ticks`；reference恢复/构建等耗时包含在collection剩余部分。
   `collector.exposure`分开记录每题entries/node_groups/responses/completed。
 
 基础设施、Oracle 或 behavior tokens/logprobs 错误中止 collection，不提交 cursor。
 恢复仍从最近完整 optimizer checkpoint 开始；数据/版本/种子/采样/预算/source
 合同严格一致。旧二分/local-LOO checkpoint不兼容，不能直接续跑旧job915731。
 旧 `--questions-per-update` 已移除，旧环境变量显式报错，防止静默更改含义。
+v6记录新的调度合同；v5 checkpoint/source也不能静默续跑，reward和loss没有变。
+
+底层复用现有vLLM adapter的`add_requests/fetch_output`，独立request ID匹配
+原生tokens/logprobs。每个worker最多一个RPC在操作engine；有完成就返回，
+没有完成也最多16次engine step即交还控制，driver用`ray.wait(...,num_returns=1)`
+回收任一worker，不等所有replicas。同组请求不做DP虚拟padding。收集失败先abort/
+flush engine，再离开session；所有候选排空后才允许optimizer、offload或权重同步。
+GPU始终有工作还取决于CPU能否准备新节点、剩余预算和链依赖；不是32条永远满载
+的保证。本轮只替换训练采样路径，低频validation/test暂沿用原同步生成路径。
 
 ## 本地验收与源代码同步
 
@@ -64,16 +79,17 @@ CPU 验收与遗漏清单见[本轮记录](../../new/terminal_node_grpo_readines
 
 ```bash
 python -m training.strategic_slices.train_terminal --check-only
-python -m unittest training.strategic_slices.test_terminal_training training.strategic_slices.test_terminal_schedule training.strategic_slices.test_terminal_final_test training.strategic_slices.test_terminal_checkpoints training.strategic_slices.test_terminal_analysis training.strategic_slices.test_terminal_d training.social_mixed.test_native_limits training.social_mixed.test_probability_diagnostic training.social_mixed.test_efficiency.EfficiencyTests.test_padding_preserves_weighted_gradient_for_all_profiles
+python -m unittest training.strategic_slices.test_terminal_training training.strategic_slices.test_terminal_schedule training.strategic_slices.test_terminal_final_test training.strategic_slices.test_terminal_checkpoints training.strategic_slices.test_terminal_analysis training.strategic_slices.test_terminal_d training.social_mixed.test_native_limits training.social_mixed.test_probability_diagnostic training.social_mixed.test_efficiency.EfficiencyTests.test_padding_preserves_weighted_gradient_for_all_profiles training.social_mixed.test_native_stream training.strategic_slices.test_terminal_refill
 python -m training.strategic_slices.train_terminal --mock --mock-updates 2 --output /tmp/terminal-node-mock
 ```
 
+`--mock`使用同步adapter，只验证协议/数据/恢复；长短交错补位由上述stream测试验证。
 mock 使用真实冻结题/Oracle和合成模型回答、tokens/logprobs，验证下一批精确恢复。
 它不是实际模型信号、真实 tokenizer、GPU optimizer 或收敛证据。reference树恢复
 有CPU成本，mock也可能需数分钟。`--check-only`只核验数据和配置，不检查本地权重/GPU。
 已有 selected-v4 数据包仍可使用；**只复制其中 `new/local_data/` 数据到当前 repo**，
-不要用包里的旧 source 覆盖 v5。新 source overlay 可由
-`python -m examples.strategic_slices.prepare_terminal_training_bundle --output /tmp/terminal-node-v5.tar.gz`
+不要用包里的旧 source 覆盖 v6。新 source overlay 可由
+`python -m examples.strategic_slices.prepare_terminal_training_bundle --output /tmp/terminal-node-v6.tar.gz`
 生成，用于已有完整 MARSHAL checkout/环境；不含数据、权重或依赖。
 
 ## GPU smoke 与正式启动（供手动执行）

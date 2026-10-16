@@ -1,5 +1,15 @@
 # Strategic slices：当前进度与历史 checkpoint
 
+## 2026-10-16：v6训练完成即补位
+
+已移除训练的wave barrier和底层整批generate barrier。全局32个未完成回答，
+vLLM增量提交、原生ID/token/logprob回收；driver不等全部worker。预选均匀样本
+一完成即可推进，剩余兄弟保留原评分快照并继续生成；8齐才算优势，整批排空才
+更新。20节点预算预留、奖励/loss和恢复语义保留；旧source/checkpoint拒绝混续。
+59项CPU回归通过，包含长短交错、跨worker回收、失败abort/flush、完成顺序
+不改变采样/奖励/批次/恢复；GPU吞吐和显存待smoke。validation/test本轮未改调度。
+详细记录和新source overlay见[补位验收](../../new/terminal_refill_readiness_20261016/README.md)。
+
 ## 2026-10-16：v5实现与训练准备
 
 已将训练入口替换为同节点8回答、负regret、节点内mean/std GRPO、随机推进1条。

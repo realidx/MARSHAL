@@ -11,7 +11,12 @@ older four-replica and terminal-reward arm descriptions below are historical.
 应固定有明确出处的成熟训练实现并在两臂保持一致；不因文献里存在改版就默认
 引入Dr. GRPO、DAPO、GiGPO或混合新loss。算法变更需有本项目充分、具体的动机。
 
-**2026-10-16 新训练方案已接入 v5：**每个相同决策上下文采8个
+**2026-10-16 采样调度已修复：**训练32并发改为完成即补位，底层原生vLLM逐请求
+回收，不再等待整批最长回答。随机推进位置在生成前选定，它完成即可准备下一
+节点；8回答收齐后算本节点优势，所有长回答排空后才更新。reward/loss不变。
+59项相关CPU检查通过，新路径GPU性能待smoke；见[验收记录](../../new/terminal_refill_readiness_20261016/README.md)。
+
+**2026-10-16 新训练方案已接入 v6：**每个相同决策上下文采8个
 回答，用连续oracle Q/负regret计算节点内标准GRPO优势；均匀随机抽1个原始回答执行，
 到下一决策再开8个，最多k=1/2/3个focal节点。所有回答参与本节点训练，采样
 期间固定权重。只采用这一种credit方案，不额外做整轨迹credit方法对照；原
@@ -24,9 +29,9 @@ slices/SP效率比较保留。完整已定协议与依据见
 目标20个实际节点组×8回答，已开始的链采完再更新、允许略超，准确记录数量，
 同批只训练一遍。失败task reward取该节点最差合法动作的负regret，另保留
 独立−0.2协议惩罚。新协议需验收连续价值差异、动作重复和严格正确率。
-当前入口为 `terminal-node-regret-grpo-v5`，旧二分/local-LOO checkpoint拒绝续跑。
+当前入口为 `terminal-node-regret-grpo-refill-v6`，旧二分/local-LOO checkpoint拒绝续跑。
 模型、数据、oracle、输出/预算及低频验证保存沿用。CPU验收及遗漏见
-[准备检查](../../new/terminal_node_grpo_readiness_20261016/README.md)，启动命令见
+[准备检查](../../new/terminal_refill_readiness_20261016/README.md)，启动命令见
 [训练入口](TERMINAL_TRAINING.md)。新协议GPU smoke尚未执行，本轮未提交任务。
 下方文献候选和10月8日配置属于历史讨论。
 

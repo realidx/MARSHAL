@@ -5,6 +5,8 @@ Only a uniformly selected original candidate advances the native environment.
 """
 from copy import deepcopy
 import json
+from collections import deque
+from dataclasses import dataclass
 import math
 import time
 from pathlib import Path
@@ -16,11 +18,12 @@ from .terminal_candidates import sample_member_world
 from .terminal_d import TerminalRollout, load_dataset
 from .values import extreme_value
 
-VERSION='terminal-node-regret-grpo-v5'
+VERSION='terminal-node-regret-grpo-refill-v6'
 PROTOCOL_PENALTY=0.2
 ORACLE_EPSILON=1e-7
 STD_EPSILON=1e-8
 CONTRACT=dict(version=VERSION,
+    scheduler='completion-refill-v1: preselect a uniform original candidate; advance when it finishes, normalize only after all 8; no length-based filtering.',
     reward='Legal Q-max(Q); invalid/truncated min(Q)-max(Q), over ALL legal actions, native utility scale.',
     epsilon=ORACLE_EPSILON,std_epsilon=STD_EPSILON,std_correction=1,
     baseline='Within the SAME actual node: (reward-mean)/(sample_std+1e-8); range <= oracle epsilon has zero task advantage.',
@@ -119,17 +122,33 @@ def check_output(out,cfg):
         and len(ids)<=cfg['max_tokens'] and all(math.isfinite(p) for p in logps),'Missing/invalid behavior token evidence')
 
 
+@dataclass
+class ScoreContext:
+    """Small immutable scoring snapshot; discarded siblings retain no full tree."""
+    actions: list
+    node: int
+    first: bool
+    root_Q: list
+    V_star: float
+
+    @classmethod
+    def capture(cls,job):
+        return cls(list(job.tree.rules.actions(job.node)),job.index,not job.calls,
+            job.member['root_Q'],job.member['V_star'])
+
+
 def score_response(job,out,req,q,posterior):
     """Score without executing, changing posterior, or sampling a continuation."""
     check_output(out,dict(max_tokens=req['max_tokens']))
-    ai,status=decode(out,job.tree.rules.actions(job.node))
+    context=job if isinstance(job,ScoreContext) else ScoreContext.capture(job)
+    ai,status=decode(out,context.actions)
     valid=status=='ok';gap=float(q.max()-q[ai]) if valid else None
     reward=float(q[ai]-q.max()) if valid else float(q.min()-q.max())
     detail=dict(reward=int(valid and gap<=ORACLE_EPSILON),gap=gap,Q=q.tolist(),posterior=posterior.tolist(),
         optimal_indices=np.flatnonzero(q.max()-q<=ORACLE_EPSILON).tolist())
-    return dict(out,request=req,node=job.index,action_index=ai,protocol_status=status,
+    return dict(out,request=req,node=context.node,action_index=ai,protocol_status=status,
         prompt_sha256=digest({k:req[k] for k in ('messages','tools')}),
-        first_action_oracle_gap=float(job.member['V_star']-job.member['root_Q'][ai]) if not job.calls and valid else None,
+        first_action_oracle_gap=float(context.V_star-context.root_Q[ai]) if context.first and valid else None,
         binary_reward=detail['reward'],
         oracle_step=detail,task_reward=reward,valid=valid,protocol_failure=None if valid else status)
 
@@ -149,11 +168,12 @@ def execute(jobs,generate,cfg,concurrency):
 
 
 class Collector:
-    def __init__(self,data,generate,seed=42,replicas=8,concurrency=32,max_tokens=1024,context=16384,node_groups_per_update=20):
+    def __init__(self,data,generate,seed=42,replicas=8,concurrency=32,max_tokens=1024,context=16384,node_groups_per_update=20,stream_factory=None):
         ensure(replicas>=2 and concurrency>=1 and 0<max_tokens<context,'Invalid training limits')
         ensure(type(node_groups_per_update) is int and node_groups_per_update>=1,'Invalid node groups per update')
         self.node_groups_per_update=node_groups_per_update
         self.dataset,self.generate=data,generate
+        self.stream_factory=stream_factory
         self.replicas,self.concurrency=replicas,concurrency
         self.cfg=dict(seed=seed,replicas=replicas,workers=concurrency,max_tokens=max_tokens,context=context,
             temperature=1.,top_p=1.,top_k=-1,repetition_penalty=1.)
@@ -167,75 +187,93 @@ class Collector:
     def collect(self,step,arm,token_target=1,validation=False):
         ensure(arm=='slices' and not validation and token_target>0 and step==self.state['step'],'Invalid terminal collection request')
         started=time.perf_counter();oracle_seconds=generation_seconds=0.
-        working=deepcopy(self.state);rows=[];units=[];games=[];active=[]
-        # Reserve every admitted chain's remaining k. Even if all survive, total
-        # groups overshoot by at most max(k)-1, independently of concurrency.
-        capacity=max(1,self.concurrency//self.replicas)
-        while len(units)<self.node_groups_per_update or active:
-            reserved=len(units)+sum(j.row['k']-j.controlled for _,j,_,_ in active)
-            while len(active)<capacity and reserved<self.node_groups_per_update:
-                cursor=working['cursor'];cycle,offset=divmod(cursor,len(self.dataset.train))
-                order=np.random.default_rng(seed_for(self.cfg['seed'],'terminal-train-order',cycle)).permutation(len(self.dataset.train))
-                row=self.dataset.train[int(order[offset])];tree,cache=self.dataset.reference(row)
-                reset_seed=seed_for(self.cfg['seed'],'terminal-train-reset',cursor)
-                reset=sample_member_world(row,np.random.default_rng(reset_seed))
-                job=StepRollout(tree,row,0,seed_for(self.cfg['seed'],'terminal-train-chain',cursor),reset,cache=cache)
-                active.append((cursor,job,reset_seed,[]));working['cursor']+=1;reserved+=row['k']
-            requests=[];contexts=[]
-            for cursor,job,reset_seed,history in active:
-                depth=len(job.calls);before=time.perf_counter();q,posterior=job.action_values()
-                oracle_seconds+=time.perf_counter()-before
-                ensure(len(q)>0 and np.isfinite(q).all(),'Invalid oracle action values')
-                group=f'node:{cursor}:{job.row["id"]}:{depth}'
-                req=job.request(self.cfg)
-                candidates=[dict(req,seed=seed_for(self.cfg['seed'],'terminal-train-candidate',cursor,depth,r)) for r in range(self.replicas)]
-                contexts.append((cursor,job,reset_seed,history,group,q,posterior,candidates))
-                requests.extend(candidates)
-            outputs=[]
-            for offset in range(0,len(requests),self.concurrency):
-                chunk=requests[offset:offset+self.concurrency];before=time.perf_counter();received=self.generate(chunk)
-                generation_seconds+=time.perf_counter()-before
-                ensure(len(received)==len(chunk),'Missing native generation output')
-                for out in received:check_output(out,self.cfg)
-                outputs.extend(received)
-            still_active=[]
-            for index,(cursor,job,reset_seed,history,group,q,posterior,candidates) in enumerate(contexts):
-                row=job.row;depth=len(job.calls);chain=f'chain:{cursor}:{row["id"]}'
-                outs=outputs[index*self.replicas:(index+1)*self.replicas]
-                calls=[score_response(job,out,req,q,posterior) for out,req in zip(outs,candidates)]
-                ensure(len({c['prompt_sha256'] for c in calls})==1,'Node candidates have different prompts')
-                ensure(all(c['prompt_ids']==calls[0]['prompt_ids'] for c in calls),'Node candidate prompt tokens differ')
-                advs,mean,std=group_advantages([c['task_reward'] for c in calls])
-                # A separate, deterministic RNG, independent of rewards and model
-                # sampling: duplicates have their original sampling multiplicity.
-                chosen=int(np.random.default_rng(seed_for(self.cfg['seed'],'terminal-train-advance',cursor,depth)).integers(self.replicas))
-                scoring_sha=digest(dict(prompt=calls[0]['prompt_sha256'],reference_id=row['reference_id'],
-                    node=job.index,player=job.ego,remaining_k=row['k']-depth,posterior=posterior.tolist(),Q=q.tolist()))
-                for replica,(call,adv) in enumerate(zip(calls,advs)):
-                    protocol=0. if call['valid'] else -PROTOCOL_PENALTY
-                    call.update(kind='slices',task_id=row['id'],parent_id=row['parent_id'],group=group,chain=chain,
-                        cursor=cursor,unit=f'{group}:r{replica}',replica=replica,player=row['ego'],decision_index=depth,
-                        remaining_k=row['k']-depth,scoring_sha256=scoring_sha,selected_for_continuation=replica==chosen,
-                        reward_mean=mean,reward_std=std,task_advantage=adv,protocol_advantage=protocol,advantage=adv+protocol,
-                        task_denominator=0.,loss_weight=1.,task_weight=1.,protocol_weight=1.,kl_weight=1.)
-                    rows.append(call)
-                units.append(dict(group=group,chain=chain,cursor=cursor,decision_index=depth,slice_id=row['id'],parent_id=row['parent_id'],
-                    remaining_k=row['k']-depth,selected_replica=chosen,prompt_sha256=calls[0]['prompt_sha256'],scoring_sha256=scoring_sha,
-                    task_rewards=[c['task_reward'] for c in calls],reward_mean=mean,reward_std=std,
-                    task_active=any(a!=0 for a in advs),protocol_active=any(not c['valid'] for c in calls),
-                    binary_correct=sum(c['binary_reward'] for c in calls),
-                    unique_legal_actions=len({c['action_index'] for c in calls if c['valid']}),
-                    sampled_reward_range=float(np.ptp([c['task_reward'] for c in calls])),oracle_value_span=float(np.ptp(q))))
-                history.append(dict(group=group,replica=chosen,task_reward=calls[chosen]['task_reward']))
-                job.accept(outs[chosen],candidates[chosen])
-                exposure=working['exposure'].setdefault(row['id'],dict(entries=0,node_groups=0,responses=0,completed=0))
-                exposure['node_groups']+=1;exposure['responses']+=self.replicas
-                if job.status=='running':still_active.append((cursor,job,reset_seed,history))
-                else:
-                    record=job.record();record.pop('calls')
-                    record.update(chain=chain,group=chain,cursor=cursor,reset_seed=reset_seed,selected_nodes=history,step_rewards=job.step_rewards)
-                    games.append(record);exposure['entries']+=1;exposure['completed']+=int(job.status=='terminal')
-            active=still_active
+        from training.social_mixed.native_stream import BatchStream
+        working=deepcopy(self.state);rows=[];units=[];games=[]
+        chains={};contexts={};ready=deque();inflight={};created=0;peak=0
+
+        def create_node(chain):
+            nonlocal oracle_seconds,created
+            cursor,job=chain['cursor'],chain['job'];row=job.row;depth=len(job.calls)
+            before=time.perf_counter();q,posterior=job.action_values();oracle_seconds+=time.perf_counter()-before
+            ensure(len(q)>0 and np.isfinite(q).all(),'Invalid oracle action values')
+            group=f'node:{cursor}:{row["id"]}:{depth}';req=job.request(self.cfg)
+            candidates=[dict(req,seed=seed_for(self.cfg['seed'],'terminal-train-candidate',cursor,depth,r)) for r in range(self.replicas)]
+            chosen=int(np.random.default_rng(seed_for(self.cfg['seed'],'terminal-train-advance',cursor,depth)).integers(self.replicas))
+            context=dict(cursor=cursor,row=row,depth=depth,group=group,q=q,posterior=posterior,candidates=candidates,
+                scoring=ScoreContext.capture(job),chosen=chosen,calls=[None]*self.replicas,received=0,
+                chain=f'chain:{cursor}:{row["id"]}')
+            contexts[group]=context;chain['waiting']=True;created+=1
+            ready.extend((group,r) for r in range(self.replicas))
+
+        def admit():
+            cursor=working['cursor'];cycle,offset=divmod(cursor,len(self.dataset.train))
+            order=np.random.default_rng(seed_for(self.cfg['seed'],'terminal-train-order',cycle)).permutation(len(self.dataset.train))
+            row=self.dataset.train[int(order[offset])];tree,cache=self.dataset.reference(row)
+            reset_seed=seed_for(self.cfg['seed'],'terminal-train-reset',cursor)
+            reset=sample_member_world(row,np.random.default_rng(reset_seed))
+            job=StepRollout(tree,row,0,seed_for(self.cfg['seed'],'terminal-train-chain',cursor),reset,cache=cache)
+            chain=dict(cursor=cursor,job=job,reset_seed=reset_seed,history=[],waiting=False)
+            chains[cursor]=chain;working['cursor']+=1;create_node(chain)
+
+        factory=self.stream_factory or (lambda n:BatchStream(self.generate,n))
+        with factory(self.concurrency) as stream:
+            while ready or inflight or chains or created<self.node_groups_per_update:
+                while len(inflight)<self.concurrency:
+                    if not ready:
+                        # Created groups already reserve their pending siblings.
+                        # Reserve only NOT-YET-created future nodes of live chains.
+                        reserved=created+sum(c['job'].row['k']-c['job'].controlled-int(c['waiting']) for c in chains.values())
+                        if reserved>=self.node_groups_per_update:break
+                        admit()
+                    group,replica=ready.popleft();key=f'{group}:r{replica}'
+                    stream.submit(key,contexts[group]['candidates'][replica]);inflight[key]=(group,replica)
+                    peak=max(peak,len(inflight))
+                ensure(bool(inflight),'No runnable request before collection completed')
+                before=time.perf_counter();events=stream.poll();generation_seconds+=time.perf_counter()-before
+                for key,out in events:
+                    ensure(key in inflight,'Unknown/duplicate streaming completion')
+                    group,replica=inflight.pop(key);ctx=contexts[group]
+                    cursor,row,depth=ctx['cursor'],ctx['row'],ctx['depth'];req=ctx['candidates'][replica]
+                    call=score_response(ctx['scoring'],out,req,ctx['q'],ctx['posterior'])
+                    ctx['calls'][replica]=call;ctx['received']+=1
+                    if replica==ctx['chosen']:
+                        chain=chains[cursor];job=chain['job'];chain['waiting']=False
+                        chain['history'].append(dict(group=group,replica=replica,task_reward=call['task_reward']))
+                        job.accept(out,req)
+                        if job.status=='running':create_node(chain)
+                        else:
+                            record=job.record();record.pop('calls')
+                            record.update(chain=ctx['chain'],group=ctx['chain'],cursor=cursor,reset_seed=chain['reset_seed'],
+                                selected_nodes=chain['history'],step_rewards=job.step_rewards)
+                            games.append(record);del chains[cursor]
+                            exposure=working['exposure'].setdefault(row['id'],dict(entries=0,node_groups=0,responses=0,completed=0))
+                            exposure['entries']+=1;exposure['completed']+=int(job.status=='terminal')
+                    if ctx['received']!=self.replicas:continue
+                    calls=ctx['calls'];q,posterior=ctx['q'],ctx['posterior']
+                    ensure(len({c['prompt_sha256'] for c in calls})==1,'Node candidates have different prompts')
+                    ensure(all(c['prompt_ids']==calls[0]['prompt_ids'] for c in calls),'Node candidate prompt tokens differ')
+                    advs,mean,std=group_advantages([c['task_reward'] for c in calls])
+                    scoring_sha=digest(dict(prompt=calls[0]['prompt_sha256'],reference_id=row['reference_id'],
+                        node=ctx['scoring'].node,player=row['ego'],remaining_k=row['k']-depth,posterior=posterior.tolist(),Q=q.tolist()))
+                    for r,(c,adv) in enumerate(zip(calls,advs)):
+                        protocol=0. if c['valid'] else -PROTOCOL_PENALTY
+                        c.update(kind='slices',task_id=row['id'],parent_id=row['parent_id'],group=group,chain=ctx['chain'],
+                            cursor=cursor,unit=f'{group}:r{r}',replica=r,player=row['ego'],decision_index=depth,
+                            remaining_k=row['k']-depth,scoring_sha256=scoring_sha,selected_for_continuation=r==ctx['chosen'],
+                            reward_mean=mean,reward_std=std,task_advantage=adv,protocol_advantage=protocol,advantage=adv+protocol,
+                            task_denominator=0.,loss_weight=1.,task_weight=1.,protocol_weight=1.,kl_weight=1.)
+                        rows.append(c)
+                    units.append(dict(group=group,chain=ctx['chain'],cursor=cursor,decision_index=depth,slice_id=row['id'],parent_id=row['parent_id'],
+                        remaining_k=row['k']-depth,selected_replica=ctx['chosen'],prompt_sha256=calls[0]['prompt_sha256'],scoring_sha256=scoring_sha,
+                        task_rewards=[c['task_reward'] for c in calls],reward_mean=mean,reward_std=std,
+                        task_active=any(a!=0 for a in advs),protocol_active=any(not c['valid'] for c in calls),
+                        binary_correct=sum(c['binary_reward'] for c in calls),
+                        unique_legal_actions=len({c['action_index'] for c in calls if c['valid']}),
+                        sampled_reward_range=float(np.ptp([c['task_reward'] for c in calls])),oracle_value_span=float(np.ptp(q))))
+                    exposure=working['exposure'].setdefault(row['id'],dict(entries=0,node_groups=0,responses=0,completed=0))
+                    exposure['node_groups']+=1;exposure['responses']+=self.replicas
+                    del contexts[group]
+            ensure(not contexts and len(units)==created,'Unfinished node groups at optimizer boundary')
         rows.sort(key=lambda r:(r['cursor'],r['decision_index'],r['replica']))
         units.sort(key=lambda u:(u['cursor'],u['decision_index']));games.sort(key=lambda g:g['cursor'])
         tokens=sum(len(r['response_ids']) for r in rows)
@@ -247,7 +285,8 @@ class Collector:
         # Diagnostic wall times are deliberately outside deterministic sampler
         # state/results, so they cannot affect resume or candidate selection.
         self.last_timing=dict(collection_seconds=time.perf_counter()-started,
-            oracle_action_value_seconds=oracle_seconds,generation_seconds=generation_seconds)
+            oracle_action_value_seconds=oracle_seconds,generation_seconds=generation_seconds,
+            scheduler_peak_inflight=peak,scheduler_native_ticks=getattr(stream,'ticks',0))
         return rows,units,games,dict(generated_tokens=tokens,rows=len(rows),groups=len(units),entry_chains=len(games),
             target_node_groups=self.node_groups_per_update,node_group_overshoot=len(units)-self.node_groups_per_update,
             active_groups=sum(u['task_active'] or u['protocol_active'] for u in units),

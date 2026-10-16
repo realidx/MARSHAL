@@ -80,6 +80,53 @@ class SocialWorker(ActorWorker):
         return DataProto.from_dict(tensors={'index':torch.arange(len(records))},
                                    non_tensors={'records':object_array(records)}, meta_info={'metrics':metrics})
 
+    @register(dispatch_mode=Dispatch.ONE_TO_ALL, clear_cache=False)
+    @torch.no_grad()
+    def native_stream_tick(self, payload):
+        from vllm import SamplingParams
+        from training.social_mixed.native_limits import output_limit
+        from training.social_mixed.native_stream import native_record
+        if self.worker_config.strategy_args.strategy_name!='vllm':
+            raise ValueError('Native streaming requires vLLM')
+        model=self.strategy.model
+        if not all(callable(getattr(model,k,None)) for k in ('add_requests','fetch_output','abort_request','clear_unfinished_requests')):
+            raise RuntimeError('This vLLM adapter does not support incremental native generation')
+        state=getattr(self,'_native_stream_state',None)
+        if state is None:
+            self.strategy.load_states()
+            state=self._native_stream_state=dict(session=payload['session'],pending={})
+        if state['session']!=payload['session']:raise RuntimeError('Another native stream is still active')
+        pending=state['pending'];requests=payload['requests']
+        if len(pending)+len(requests)>payload['capacity']:raise ValueError('Native stream capacity exceeded')
+        for req in requests:
+            key=req['request_id']
+            if key in pending:raise ValueError('Duplicate native stream request')
+            params=SamplingParams(n=1,temperature=float(req.get('temperature',1.)),top_p=1.,top_k=-1,
+                repetition_penalty=1.,max_tokens=output_limit(req),logprobs=0,
+                seed=int(req['seed']),stop_token_ids=[self.tokenizer.eos_token_id])
+            pending[key]=req
+            model.add_requests(prompt_token_ids=[req['prompt_ids']],request_ids=[key],sampling_params=params,multi_modal_data=None)
+        records=[]
+        for _ in range(payload['max_steps']):
+            if not pending:break
+            for output in model.fetch_output():
+                key=str(output.request_id)
+                if key not in pending:raise RuntimeError('Unknown native engine request identity')
+                records.append(dict(native_record(pending[key],output,self.tokenizer),request_id=key))
+                del pending[key]
+            if records:break
+        return dict(records=records,pending=len(pending))
+
+    @register(dispatch_mode=Dispatch.ONE_TO_ALL, clear_cache=False)
+    def native_stream_close(self, session):
+        state=getattr(self,'_native_stream_state',None)
+        if state is None:return
+        if state['session']!=session:raise RuntimeError('Native stream close identity differs')
+        if state['pending']:
+            self.strategy.model.abort_request(list(state['pending']))
+            self.strategy.model.clear_unfinished_requests()
+        self._native_stream_state=None
+
     @register(dispatch_mode=Dispatch.DP_MP_COMPUTE, clear_cache=False)
     @torch.no_grad()
     def diagnostic_prompt_log_probs(self, data):

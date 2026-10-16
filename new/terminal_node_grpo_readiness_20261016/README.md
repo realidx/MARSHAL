@@ -1,3 +1,5 @@
+> 后续调度已更新为[v6完成即补位](../terminal_refill_readiness_20261016/README.md)。本页保留v5验收身份，原source包不是当前启动包。
+
 # 2026-10-16：Terminal node GRPO v5 训练准备
 
 已将用户确定的协议接入现有 ROLL 训练、验证、checkpoint 和 final-test。
