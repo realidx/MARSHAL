@@ -61,13 +61,17 @@ def summarize(jobs):
 
 
 class Evaluator:
-    def __init__(self, dataset, generate, split='validation', repeats=1, modes=('team', 'focal_reference'), seed=42, concurrency=32):
+    def __init__(self, dataset, generate, split='validation', repeats=1, modes=('team', 'focal_reference'), seed=42, concurrency=32,
+                 stream_factory=None,request_options=None,stop_check=None):
         if split not in ('validation', 'test') or repeats < 1:
             raise ValueError('Use frozen validation/test games and positive repeats')
         self.dataset, self.generate, self.split = dataset, generate, split
         self.repeats, self.modes, self.seed, self.concurrency = repeats, modes, seed, concurrency
+        self.stream_factory,self.request_options,self.stop_check=stream_factory,request_options or {},stop_check
+        self.last_execution={}
 
     def run(self):
+        if self.stream_factory is not None:return self.run_refill()
         reports, games, calls = {}, [], []
         for mode in self.modes:
             if mode not in ('team', 'focal_reference', 'slices'):
@@ -103,6 +107,50 @@ class Evaluator:
                                   repeats=self.repeats, modes=self.modes, temperature=0., max_tokens=1024,
                                   primary='Final checkpoint, complete-game utility and legal completion; failed utilities remain null.'),
                     metrics=reports, games=games, calls=calls)
+
+    def run_refill(self):
+        from .evaluation_refill import execute as refill
+        from .terminal_training import check_output
+        if len(set(self.modes))!=len(self.modes) or any(m not in ('team','focal_reference','slices') for m in self.modes):
+            raise ValueError('Unknown/repeated evaluation mode')
+        cohorts={mode:[] for mode in self.modes};results={}
+        def specifications():
+            for mode in self.modes:
+                number=0
+                for parent in self.dataset.parents[self.split]:
+                    items=([None] if mode=='team' else list(range(parent['players'])) if mode=='focal_reference'
+                        else [s for s in self.dataset.slices[self.split] if s['parent_id']==parent['id']])
+                    for item in items:
+                        for replica in range(self.repeats):
+                            yield mode,number,parent,item,replica;number+=1
+        def make(spec):
+            mode,number,parent,item,replica=spec
+            key=item['id'] if isinstance(item,dict) else item
+            seed=seed_for(self.seed,'evaluation',parent['id'],mode,key,replica)
+            weights=item['entry_world_weights'] if mode=='slices' else parent['world_weights']
+            wi=int(np.random.default_rng(seed).choice(len(weights),p=weights))
+            return Rollout(self.dataset,parent,seed,wi,slice_record=item if mode=='slices' else None,
+                focal=item if mode=='focal_reference' else None)
+        def accept(job,out,req):
+            check_output(out,dict(max_tokens=req.get('max_tokens',1024)));job.accept(out)
+        def finish(index,spec,job):
+            mode,number,_,_,_=spec
+            job.tree=job.rules=job.node=job.reference=None
+            if job.rolling:job.rolling.cache=None
+            results[index]=(mode,number,job)
+        self.last_execution=refill(specifications(),make,
+            lambda job:dict(job.request(0.),**self.request_options),accept,finish,self.stream_factory,
+            self.concurrency,'full-'+self.split,stop_check=self.stop_check)
+        games=[];calls=[]
+        for index in sorted(results):
+            mode,number,job=results[index];cohorts[mode].append(job)
+            record=dict(job.summary(),mode=mode,evaluation_id=f'{mode}:{number}',seed=job.seed,world=[list(r) for r in job.world])
+            games.append(record)
+            calls.extend(dict(c,mode=mode,parent_id=job.parent['id'],evaluation_id=record['evaluation_id']) for c in job.calls)
+        return dict(protocol=dict(version=VERSION,split=self.split,dataset_sha256=self.dataset.sha,
+            repeats=self.repeats,modes=self.modes,temperature=0.,max_tokens=self.request_options.get('max_tokens',1024),
+            primary='Final checkpoint, complete-game utility and legal completion; failed utilities remain null.'),
+            metrics={mode:summarize(cohorts[mode]) for mode in self.modes},games=games,calls=calls)
 
 
 class HTTPGenerator:

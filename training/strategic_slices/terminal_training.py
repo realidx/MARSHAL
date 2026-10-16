@@ -16,7 +16,8 @@ from .common import decode, digest, file_hash, seed_for
 from .terminal_analysis import visible_posterior
 from .terminal_candidates import sample_member_world
 from .terminal_d import TerminalRollout, load_dataset
-from .values import extreme_value
+from .values import cached_extreme_value
+from training.social_mixed.cache import ByteLRU,CacheNamespace
 
 VERSION='terminal-node-regret-grpo-refill-v6'
 PROTOCOL_PENALTY=0.2
@@ -42,7 +43,7 @@ def ensure(ok,message):
 
 
 class TrainingData:
-    def __init__(self,pool,selection):
+    def __init__(self,pool,selection,tree_cache_mb=512,oracle_cache_mb=128):
         self.pool=load_dataset(pool);self.selection=Path(selection)
         complete=json.loads((self.selection/'COMPLETE.json').read_text())
         for name,sha in complete['files'].items():
@@ -57,12 +58,24 @@ class TrainingData:
         self.test=[r for r in self.pool.candidates if r['split']=='test']
         self.parents=self.pool.parents
         self.sha=digest(dict(pool=file_hash(self.pool.root/'manifest.json'),selection=file_hash(self.selection/'COMPLETE.json')))
-        self.cache={}
+        ensure(tree_cache_mb>=0 and oracle_cache_mb>=0,'Cache budgets must be nonnegative')
+        self.tree_cache=ByteLRU(int(tree_cache_mb*1024**2));self.oracle_cache=ByteLRU(int(oracle_cache_mb*1024**2))
+        self.reference_restore_seconds=0.
     def reference(self,row):
-        tree=self.pool.reference(row)
-        # Q tables are only useful while their corresponding reference is cached.
-        self.cache={key:value for key,value in self.cache.items() if key in self.pool.cache}
-        return tree,self.cache.setdefault(row['reference_id'],{})
+        rid=row['reference_id'];tree=self.tree_cache.get(rid)
+        if tree is None:
+            before=time.perf_counter();tree=self.pool.reference(row)
+            self.reference_restore_seconds+=time.perf_counter()-before
+            self.tree_cache.put(rid,tree)
+            # The training adapter owns retention; remove the loader's separate
+            # two-entry LRU so its copies do not bypass the byte budget.
+            self.pool.cache.clear()
+        return tree,CacheNamespace(self.oracle_cache,rid)
+    def cache_metrics(self):
+        metrics=dict(reference_restore_seconds_total=self.reference_restore_seconds)
+        for name,cache in (('tree_cache',self.tree_cache),('oracle_cache',self.oracle_cache)):
+            metrics.update({name+'_'+k:v for k,v in cache.stats().items()})
+        return metrics
 
 
 class StepRollout(TerminalRollout):
@@ -88,7 +101,7 @@ class StepRollout(TerminalRollout):
         remaining=self.row['k']-self.controlled
         key=(self.ego,self.index,remaining,tuple(weights))
         if key not in self.q_cache:
-            self.q_cache[key]=extreme_value(self.tree,self.ego,self.index,weights,remaining)['root_Q']
+            self.q_cache[key]=cached_extreme_value(self.tree,self.ego,self.index,weights,remaining,cache=self.q_cache)['root_Q']
         return np.asarray(self.q_cache[key]),weights
 
     def accept(self,output,req):
@@ -286,7 +299,10 @@ class Collector:
         # state/results, so they cannot affect resume or candidate selection.
         self.last_timing=dict(collection_seconds=time.perf_counter()-started,
             oracle_action_value_seconds=oracle_seconds,generation_seconds=generation_seconds,
-            scheduler_peak_inflight=peak,scheduler_native_ticks=getattr(stream,'ticks',0))
+            scheduler_peak_inflight=peak,scheduler_native_ticks=getattr(stream,'ticks',0),
+            scheduler_prompt_tokenizations=getattr(stream,'tokenizations',0),
+            scheduler_prompt_cache_hits=getattr(getattr(stream,'prompt_cache',None),'hits',0))
+        if hasattr(self.dataset,'cache_metrics'):self.last_timing.update(self.dataset.cache_metrics())
         return rows,units,games,dict(generated_tokens=tokens,rows=len(rows),groups=len(units),entry_chains=len(games),
             target_node_groups=self.node_groups_per_update,node_group_overshoot=len(units)-self.node_groups_per_update,
             active_groups=sum(u['task_active'] or u['protocol_active'] for u in units),

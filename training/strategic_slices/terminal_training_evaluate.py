@@ -26,11 +26,13 @@ class FullGameView:
 
 
 class Validator:
-    def __init__(self,data,generate,cfg,repeats=1,limit=None,split='validation'):
+    def __init__(self,data,generate,cfg,repeats=1,limit=None,split='validation',stream_factory=None,stop_check=None):
         if split not in ('validation','test') or repeats<1 or (limit is not None and limit<1):
             raise ValueError('Expected held-out split and positive evaluation limits')
         self.data,self.generate,self.cfg=data,generate,cfg
         self.repeats,self.limit,self.split=repeats,limit,split
+        self.stream_factory,self.stop_check=stream_factory,stop_check
+        self.last_execution={}
     def run(self):
         cfg=dict(self.cfg,temperature=0.)
         selected=sorted(getattr(self.data,self.split),key=lambda r:r['id'])
@@ -38,25 +40,48 @@ class Validator:
         by_parent=defaultdict(list)
         for row in selected:by_parent[row['parent_id']].append(row)
         records=[];calls=[]
-        for pid,rows in sorted(by_parent.items()):
-            jobs=[]
-            for row in rows:
-                tree,cache=self.data.reference(row)
-                for replica in range(self.repeats):
-                    seed=seed_for(cfg['seed'],'terminal-'+self.split,row['id'],replica)
-                    reset=sample_member_world(row,np.random.default_rng(seed))
-                    jobs.append(StepRollout(tree,row,replica,seed,reset,cache=cache))
-            execute(jobs,self.generate,cfg,cfg['workers'])
-            for job in jobs:
-                record=job.record();record.pop('calls')
-                record.update(step_rewards=job.step_rewards)
-                records.append(record)
-                calls.extend(dict(c,oracle_step=d,slice_id=job.row['id'],replica=job.replica,decision_index=i)
-                    for i,(c,d) in enumerate(zip(job.calls,job.step_details)))
+        def specifications():
+            for _,rows in sorted(by_parent.items()):
+                for row in rows:
+                    for replica in range(self.repeats):yield row,replica
+        def make(spec):
+            row,replica=spec;tree,cache=self.data.reference(row)
+            seed=seed_for(cfg['seed'],'terminal-'+self.split,row['id'],replica)
+            reset=sample_member_world(row,np.random.default_rng(seed))
+            return StepRollout(tree,row,replica,seed,reset,cache=cache)
+        def finish(index,spec,job):
+            record=job.record();record.pop('calls');record.update(step_rewards=job.step_rewards)
+            cs=[dict(c,oracle_step=d,slice_id=job.row['id'],replica=job.replica,decision_index=i)
+                for i,(c,d) in enumerate(zip(job.calls,job.step_details))]
+            # Release native trees as soon as this episode finishes. Report
+            # ordering is reconstructed from the fixed cohort, not arrival time.
+            job.tree=job.node=job.q_cache=None
+            results[index]=(record,cs)
+        results={}
+        if self.stream_factory is not None:
+            from .evaluation_refill import execute as refill
+            from .terminal_training import check_output
+            def accept(job,out,req):check_output(out,cfg);job.accept(out,req)
+            self.last_execution['slices']=refill(specifications(),make,lambda j:j.request(cfg),accept,finish,
+                self.stream_factory,cfg['workers'],'terminal-'+self.split,stop_check=self.stop_check)
+        else:
+            # Retain the old wave implementation as the independent CPU/report
+            # reference and for standalone callers without a native engine.
+            index=0
+            for _,rows in sorted(by_parent.items()):
+                specs=[(row,r) for row in rows for r in range(self.repeats)]
+                jobs=[make(spec) for spec in specs];execute(jobs,self.generate,cfg,cfg['workers'])
+                for spec,job in zip(specs,jobs):finish(index,spec,job);index+=1
+        for index in sorted(results):
+            record,cs=results[index];records.append(record);calls.extend(cs)
         def generate_full(requests):
             return self.generate([dict(r,max_tokens=cfg['max_tokens'],top_p=1.,top_k=-1,repetition_penalty=1.) for r in requests])
-        full=Evaluator(FullGameView(self.data,set(by_parent),self.split),generate_full,
-            split=self.split,repeats=self.repeats,seed=cfg['seed'],concurrency=cfg['workers']).run()
+        evaluator=Evaluator(FullGameView(self.data,set(by_parent),self.split),generate_full,
+            split=self.split,repeats=self.repeats,seed=cfg['seed'],concurrency=cfg['workers'],
+            stream_factory=self.stream_factory,request_options=dict(max_tokens=cfg['max_tokens'],top_p=1.,top_k=-1,repetition_penalty=1.),
+            stop_check=self.stop_check)
+        full=evaluator.run()
+        if self.stream_factory is not None:self.last_execution['full_games']=evaluator.last_execution
         # The legacy evaluator describes its old 1024 default; this wrapper
         # supplies the explicit native output budget on every actual request.
         full['protocol']['max_tokens']=cfg['max_tokens']

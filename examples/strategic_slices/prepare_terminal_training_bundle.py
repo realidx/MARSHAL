@@ -22,7 +22,7 @@ def main():
     files.update(str(p.relative_to(ROOT)) for p in folder.iterdir()
         if p.is_file() and p.suffix in ('.py','.sh','.json','.md'))
     files.update(str(p.relative_to(ROOT)) for p in (folder/'fixtures').rglob('*') if p.is_file())
-    for name in ('terminal_node_grpo_readiness_20261016','terminal_refill_readiness_20261016'):
+    for name in ('terminal_node_grpo_readiness_20261016','terminal_refill_readiness_20261016','terminal_cpu_reuse_20261016','terminal_evaluation_refill_20261016'):
         evidence=ROOT/'new'/name
         files.update(str(p.relative_to(ROOT)) for p in evidence.glob('*')
             if p.is_file() and p.suffix in ('.md','.json','.log','.txt') and p.name!='source_bundle.json')

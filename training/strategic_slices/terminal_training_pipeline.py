@@ -47,7 +47,8 @@ class TerminalPipeline(SocialPipeline):
         retain_checkpoints(self)
 
     def configure_collection(self,config,options):
-        data=TrainingData(options['pool'],options['selection'])
+        data=TrainingData(options['pool'],options['selection'],
+            tree_cache_mb=options.get('tree_cache_mb',512),oracle_cache_mb=options.get('oracle_cache_mb',128))
         ensure(data.sha==options['dataset_sha256'],'Training data changed after launch')
         self.collector=Collector(data,self.generate,seed=options['seed'],replicas=options['replicas'],
             concurrency=options['concurrency'],max_tokens=options['max_tokens'],context=options['context'],
@@ -60,7 +61,8 @@ class TerminalPipeline(SocialPipeline):
         if best:
             ensure(best['selection_version']==SELECTION['version'],'Checkpoint selection rule changed')
             ensure((Path(best['checkpoint'])/'COMPLETE.json').is_file(),'Missing inherited best checkpoint')
-        self.validator=Validator(data,self.generate,self.collector.cfg,repeats=options['validation_repeats'],limit=options['validation_limit'])
+        self.validator=Validator(data,self.generate,self.collector.cfg,repeats=options['validation_repeats'],
+            limit=options['validation_limit'],stream_factory=lambda n:self.native_stream(n))
 
     def native_stream(self,concurrency):
         from training.social_mixed.native_stream import NativeStream
@@ -71,6 +73,7 @@ class TerminalPipeline(SocialPipeline):
         with self.phase('terminal_validation'):
             try:
                 report=self.validator.run()
+                report['execution']=self.validator.last_execution
                 report['protocol'].update(selection_candidate=bool(step>=0 and selection_candidate),checkpoint_selection=SELECTION)
                 report.update(optimizer_step=step,completed_updates=step+1,training_response_tokens=consumed)
                 folder=self.root/'validation';folder.mkdir(exist_ok=True)
@@ -79,6 +82,9 @@ class TerminalPipeline(SocialPipeline):
                     'eval/slice_completion':report['slices']['completion_rate'],
                     'eval/window_success':report['slices']['full_window_success_rate'],
                     'training_response_tokens':consumed,'system/step':step}
+                for phase,values in self.validator.last_execution.items():
+                    for name,value in values.items():
+                        if isinstance(value,(int,float)):metrics[f'eval_execution/{phase}/{name}']=value
                 for stratum,values in report['slices']['decision_metrics'].items():
                     for name,value in values.items():
                         if value is not None:metrics[f'eval/{stratum}/{name}']=value

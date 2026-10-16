@@ -117,6 +117,24 @@ class NativeStreamTests(unittest.TestCase):
                 stream.submit('long',dict(messages=[1],tools=[],seed=100,max_tokens=1024));stream.poll()
                 raise RuntimeError('collection failed')
         self.assertEqual(workers[0].engine.aborted,['long']);self.assertTrue(all(getattr(w,'_native_stream_state',None) is None for w in workers))
+    def test_prompt_encoded_once_with_independent_seeds_and_limit_checks(self):
+        stream,workers,ray=self.bridge();encoded=[]
+        def tokenizer(messages,**kwargs):encoded.append((messages,kwargs['tools']));return dict(input_ids=[1,2])
+        stream.pipeline.tokenizer.apply_chat_template=tokenizer
+        with stream:
+            for i in range(8):
+                stream.submit(str(i),dict(messages=[dict(content='same')],tools=[],seed=i+1,max_tokens=1024))
+                while stream.requests:stream.poll()
+            self.assertEqual(stream.tokenizations,1);self.assertEqual(len(encoded),1)
+            self.assertEqual(stream.prompt_cache.hits,7)
+            # A cached prompt still checks each request's output/context budget.
+            with self.assertRaisesRegex(ValueError,'refusing truncation'):
+                stream.submit('too-long',dict(messages=[dict(content='same')],tools=[],seed=1,max_tokens=16383))
+            stream.submit('changed',dict(messages=[dict(content='different')],tools=[],seed=1,max_tokens=1024))
+            while stream.requests:stream.poll()
+            self.assertEqual(stream.tokenizations,2)
+        seeds=[p.seed for w in workers for _,p in w.engine.added]
+        self.assertEqual(sorted(seeds),[1,1,2,3,4,5,6,7,8])
 
 
 if __name__=='__main__':unittest.main()

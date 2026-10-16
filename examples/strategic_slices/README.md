@@ -11,10 +11,20 @@ older four-replica and terminal-reward arm descriptions below are historical.
 应固定有明确出处的成熟训练实现并在两臂保持一致；不因文献里存在改版就默认
 引入Dr. GRPO、DAPO、GiGPO或混合新loss。算法变更需有本项目充分、具体的动机。
 
+**2026-10-16 验证/测试也已完成即补位：**slice跨parent补位，完整team与
+focal-reference跨parent/模式共用有界并发池；固定题目、seed、greedy、指标和
+best规则不变，报告按原顺序汇总。中断不写完成标记。72项相关CPU回归通过；
+见[评测补位验收](../../new/terminal_evaluation_refill_20261016/README.md)。
+
+**2026-10-16 无独立GPU smoke约束：**训练准备改用CPU验收，未来由同一个正式
+任务前几步记录GPU运行指标，不要求另开smoke。新增按预算保留树/Q、精确
+reference延续值复用、同节点prompt一次编码；reward、数据、20×8和预算不变。
+见[CPU复用验收](../../new/terminal_cpu_reuse_20261016/README.md)。
+
 **2026-10-16 采样调度已修复：**训练32并发改为完成即补位，底层原生vLLM逐请求
 回收，不再等待整批最长回答。随机推进位置在生成前选定，它完成即可准备下一
 节点；8回答收齐后算本节点优势，所有长回答排空后才更新。reward/loss不变。
-59项相关CPU检查通过，新路径GPU性能待smoke；见[验收记录](../../new/terminal_refill_readiness_20261016/README.md)。
+59项相关CPU检查通过，新路径GPU性能未验证，待正式任务观察；见[验收记录](../../new/terminal_refill_readiness_20261016/README.md)。
 
 **2026-10-16 新训练方案已接入 v6：**每个相同决策上下文采8个
 回答，用连续oracle Q/负regret计算节点内标准GRPO优势；均匀随机抽1个原始回答执行，
@@ -32,7 +42,7 @@ slices/SP效率比较保留。完整已定协议与依据见
 当前入口为 `terminal-node-regret-grpo-refill-v6`，旧二分/local-LOO checkpoint拒绝续跑。
 模型、数据、oracle、输出/预算及低频验证保存沿用。CPU验收及遗漏见
 [准备检查](../../new/terminal_refill_readiness_20261016/README.md)，启动命令见
-[训练入口](TERMINAL_TRAINING.md)。新协议GPU smoke尚未执行，本轮未提交任务。
+[训练入口](TERMINAL_TRAINING.md)。不要求独立GPU smoke，本轮未提交任务；GPU性质保留未验证。
 下方文献候选和10月8日配置属于历史讨论。
 
 **2026-10-16：先核定训练protocol。**已按原论文核对RLOO、Dr. GRPO、DAPO、

@@ -2,6 +2,10 @@
 
 ## 当前工作
 
+- [2026-10-16验证/测试完成即补位](terminal_evaluation_refill_20261016/README.md)：跨parent及完整游戏模式填充并发，固定报告/指标不变，CPU一致性及中断验收。
+
+- [2026-10-16 CPU复用优化](terminal_cpu_reuse_20261016/README.md)：独立树/Q内存预算、精确终局延续值与prompt编码复用；按用户约束不依赖独立GPU smoke。
+
 - [2026-10-16 v6完成即补位](terminal_refill_readiness_20261016/README.md)：训练32并发改为逐回答回收/补位，原生token/logprob保留，59项CPU检查通过，GPU待验收。
 
 - [2026-10-16 v5训练准备与遗漏](terminal_node_grpo_readiness_20261016/README.md)：同节点8采样、连续regret、节点GRPO已实现；CPU验收，GPU smoke待执行。当前启动命令见[训练入口](../examples/strategic_slices/TERMINAL_TRAINING.md)。

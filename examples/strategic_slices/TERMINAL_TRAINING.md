@@ -3,7 +3,9 @@
 2026-10-16：已实现已确认的协议 `terminal-node-regret-grpo-refill-v6`。冻结的 v4 数据、
 Qwen3-4B-Instruct-2507 和初态完整终局 reference 不变；需要从 base 开新 run。
 CPU 验收与遗漏清单见[本轮记录](../../new/terminal_refill_readiness_20261016/README.md)。
-**本轮没有提交 GPU 任务。旧 GPU smoke/resume 属于旧协议，不能替代 v6 验收。**
+**用户当前无法运行独立GPU smoke：不将其作为训练准备的前置条件。**
+本轮采用CPU一致性/性能验收；GPU吞吐、显存和实际恢复明确保留未验证状态，
+未来在同一个正式任务的前几步观察，不要求另开smoke任务。
 [旧 v4 文档](TERMINAL_TRAINING_LEGACY_V4.md)完整保留历史合同、命令和结果。
 研究仍是 slices/SP 效率；只采用这一种已定 credit，不增加方法对照。
 
@@ -71,7 +73,51 @@ v6记录新的调度合同；v5 checkpoint/source也不能静默续跑，reward�
 回收任一worker，不等所有replicas。同组请求不做DP虚拟padding。收集失败先abort/
 flush engine，再离开session；所有候选排空后才允许optimizer、offload或权重同步。
 GPU始终有工作还取决于CPU能否准备新节点、剩余预算和链依赖；不是32条永远满载
-的保证。本轮只替换训练采样路径，低频validation/test暂沿用原同步生成路径。
+的保证。训练、validation和final-test现在均已接入native完成即补位。
+
+## 验证/测试完成即补位
+
+- Slice评测不再按parent逐个等待：按原固定题目/replica顺序懒加载，跨parent
+  共享并发名额；每条评测链同时只有一个待生成回答，完成即可推进/补位。
+- 完整游戏将team与focal-vs-reference、不同parent和固定repeats放入同一个
+  有界池，不再逐parent或逐mode等待最长轨迹。默认最多32个活跃episode/回答，
+  episode完成立即释放树引用；不会一次性构建全部test repeats。
+- 两个阶段（slice cohort、完整游戏cohort）依次执行，均使用训练已有NativeStream，
+  temperature=0、1024上限、原seed/reset/Oracle和题目范围不变。不丢弃长回答
+  或失败样本，不过滤困难题；最终报告仍按原固定顺序汇总，保留原parent macro统计。
+- `validation/step-N.json`和`test/report.json`增加`execution`，分别记录slice/
+  full-game的jobs、calls、response tokens、peak_inflight、seconds、native ticks
+  和prompt tokenizations；metrics中用`eval_execution/...`单独记录验证执行成本。
+  这些执行字段不进入best排序，验证/测试token不消耗6M训练预算。
+- final-test使用新执行身份`terminal-final-test-v3-eval-refill`，完整cohort排空
+  后才写COMPLETE。中断/基础设施失败会abort/flush，保留原checkpoint，不能写成
+  完成测试；已完成同身份报告复用，不重复评分。旧source不能混续。
+- 旧同步实现保留作CPU报告对照及独立调用兼容；正式TerminalPipeline的validation
+  和final-test明确绑定native stream。独立HTTP评测CLI不自动获得此项改动。
+
+[评测补位验收](../../new/terminal_evaluation_refill_20261016/README.md)包含长短交错、
+不同完成顺序的新旧报告一致性、native桥接CPU替身及中断/重试检查。仍不要求
+独立GPU smoke，不将CPU结果写成真实GPU吞吐或显存验收。
+
+## CPU可验收的复用优化
+
+- Reference树从固定2棵LRU改为估算字节预算：`--tree-cache-mb`默认512，
+  `--oracle-cache-mb`默认128，分别对应`TERMINAL_TREE_CACHE_MB`、
+  `TERMINAL_ORACLE_CACHE_MB`。Q/延续值缓存独立，树淘汰不再清掉它们。
+  超预算单项不保留，0可关闭保留；预算不是进程RSS上限，活跃rollout还会持有树。
+  缓存仅在内存，不存入checkpoint，恢复重建不改变采样/Oracle定义。
+- 控制窗口外查同一frozen profile的精确终局延续值，按需计算并跨posterior/k
+  复用，控制窗口内仍完整枚举。不是截断utility或改变对手策略。旧完整遍历
+  `extreme_value`保留用于独立CPU审核；新求值器`cached_extreme_value`用于训练
+  和slice validation后续决策，冻结的root_Q和数据文件不改。
+- 同stream的相同messages/tools只编码一次，prompt编码缓存预算16MiB。8个
+  回答各自seed/输出上限不变，每次仍独立检查context，新增tokenization/hit日志。
+- `metrics.jsonl`新增tree/oracle cache的bytes/预算/hit/miss/eviction、累计
+  reference恢复时间；与已有collection墙钟和生成回收等待同看。缓存身份
+  限定当前冻结dataset/reference，Q key继续包含player/node/remaining k/posterior。
+
+[CPU验收与实测](../../new/terminal_cpu_reuse_20261016/README.md)记录新旧Q/策略
+一致性与CPU求值时间，不把CPU加速写成GPU或端到端训练提速。
 
 ## 本地验收与源代码同步
 
@@ -79,7 +125,7 @@ GPU始终有工作还取决于CPU能否准备新节点、剩余预算和链依�
 
 ```bash
 python -m training.strategic_slices.train_terminal --check-only
-python -m unittest training.strategic_slices.test_terminal_training training.strategic_slices.test_terminal_schedule training.strategic_slices.test_terminal_final_test training.strategic_slices.test_terminal_checkpoints training.strategic_slices.test_terminal_analysis training.strategic_slices.test_terminal_d training.social_mixed.test_native_limits training.social_mixed.test_probability_diagnostic training.social_mixed.test_efficiency.EfficiencyTests.test_padding_preserves_weighted_gradient_for_all_profiles training.social_mixed.test_native_stream training.strategic_slices.test_terminal_refill
+python -m unittest training.strategic_slices.test_terminal_training training.strategic_slices.test_terminal_schedule training.strategic_slices.test_terminal_final_test training.strategic_slices.test_terminal_checkpoints training.strategic_slices.test_terminal_analysis training.strategic_slices.test_terminal_d training.social_mixed.test_native_limits training.social_mixed.test_probability_diagnostic training.social_mixed.test_efficiency.EfficiencyTests.test_padding_preserves_weighted_gradient_for_all_profiles training.social_mixed.test_native_stream training.strategic_slices.test_terminal_refill training.strategic_slices.test_cpu_reuse training.strategic_slices.test_evaluation_refill
 python -m training.strategic_slices.train_terminal --mock --mock-updates 2 --output /tmp/terminal-node-mock
 ```
 
@@ -92,42 +138,30 @@ mock 使用真实冻结题/Oracle和合成模型回答、tokens/logprobs，验�
 `python -m examples.strategic_slices.prepare_terminal_training_bundle --output /tmp/terminal-node-v6.tar.gz`
 生成，用于已有完整 MARSHAL checkout/环境；不含数据、权重或依赖。
 
-## GPU smoke 与正式启动（供手动执行）
+## 正式任务启动（无独立GPU smoke）
 
-沿用 SoC 已有 conda/CUDA/ROLL 环境和本地权重。默认2×H100-47；之前验证过的
-单H100-96需同时设置 `SOCIAL_GPU_PROFILE=h100-96-single` 并覆盖 Slurm gres。
-脚本不安装/下载，不自动选择硬件。保持正式32并发、20节点预算、16K/1024，
-先完成一次更新、保存并暂停（验证限制2题仅用于 smoke）：
+沿用SoC已有conda/CUDA/ROLL环境和本地权重。默认2×H100-47；如果实际分配单
+H100-96，同时设置`SOCIAL_GPU_PROFILE=h100-96-single`并覆盖Slurm gres。
+脚本不安装/下载，不自动选择硬件。当前没有提交任何任务。
 
-```bash
-export TERMINAL_NODE_GROUPS_PER_UPDATE=20 TERMINAL_TOTAL_TOKENS=6000000
-export TERMINAL_MAX_STEPS=3 TERMINAL_EVAL_EVERY=1 TERMINAL_VALIDATION_LIMIT=2
-export TERMINAL_PAUSE_AFTER_UPDATES=1
-sbatch examples/strategic_slices/sbatch_terminal_train.sh
-```
-
-保持同样配置和 source，恢复至新的 output（不要更改节点预算/profile/max_steps）：
-
-```bash
-export TERMINAL_RESUME=/absolute/path/to/first-run/checkpoints/checkpoint-0
-export TERMINAL_PAUSE_AFTER_UPDATES=2
-sbatch examples/strategic_slices/sbatch_terminal_train.sh
-```
-
-检查 COMPLETE、RESULT、LAST_CHECKPOINT、cursor/曝光递增、实际节点组数和生成token
-对应；optimizer每批只更新1次、norm参数确实变化；task/protocol/KL梯度有限。
-核对 `behavior_probability_warning` 和 `probability_warnings.jsonl`：继承的概率检查
-对有限偏差只报警，不自动停止。新sampler在真实模型下的task_active、重复动作、
-信息入口命中率、输出/截断、CPU/GPU耗时和显存需实测；16K最长序列尚未验收。
-CPU精确恢复不等于GPU逐位浮点复现。
-
-正式6M运行清除 smoke/resume设置，从 base 新开：
+正式6M从base新开，清除此前smoke/resume限制，只需一个正式任务：
 
 ```bash
 unset TERMINAL_QUESTIONS_PER_UPDATE TERMINAL_NODE_GROUPS_PER_UPDATE TERMINAL_TOTAL_TOKENS TERMINAL_MAX_STEPS
 unset TERMINAL_EVAL_EVERY TERMINAL_SAVE_EVERY TERMINAL_VALIDATION_LIMIT TERMINAL_PAUSE_AFTER_UPDATES TERMINAL_RESUME
 sbatch examples/strategic_slices/sbatch_terminal_train.sh
 ```
+
+独立GPU smoke不是前置步骤。正式任务自带初始validation、第一步norm参数变化
+记录、behavior/actor概率对照、有限loss/梯度相关诊断、阶段耗时、显存记录和
+原生checkpoint。出现基础设施/Oracle/非有限数值错误会中止；有限概率偏差
+仍沿用warning机制，不自动停止。需查看`metrics.jsonl`、`phases.jsonl`和
+`probability_warnings.jsonl`；日志存在不代表所有GPU性质已在CPU上验证。
+保留正常500K验证/1M恢复保存，不为前几步额外提高验证或checkpoint频率。
+CPU精确恢复不等于GPU逐位浮点复现；16K最长序列显存、实际速度和GPU恢复仍未知。
+
+普通恢复从最近完整checkpoint开始，保持代码、数据、profile、预算、采样及缓存
+配置一致，使用新output目录并设置`TERMINAL_RESUME`；v5或修改前source不能混续。
 
 正式validation覆盖96 slices /12 parents，另做完整team SP和focal-vs-reference。
 严格最优率接受所有1e-7内并列动作，并报告合法regret、失败按最差动作计regret、
@@ -142,4 +176,4 @@ best只按validation整段成功率，并列选较晚checkpoint；base不参与b
 旧通用SP模块还有label-review prompt哈希不匹配，不能据此宣称两臂已可直接开跑。
 训练选题不保证每次8采样都有价值差异；重复同一错误动作仍可能没有task信号。
 强信息 acquisition 的独立held-out family不足；test曾用于base D分析，并非从未
-查看过的盲测。这些限制不阻止本轮slice smoke，但影响论文的泛化/效率结论。
+查看过的盲测。这些限制影响论文的泛化/效率结论；本轮仅完成CPU验收。

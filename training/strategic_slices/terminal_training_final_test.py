@@ -5,6 +5,7 @@ from .common import file_hash
 from .freeze import atomic_json
 from .terminal_training import ensure
 from .terminal_training_evaluate import Validator
+from .evaluation_refill import VERSION as EVALUATION_SCHEDULER
 
 
 def run_final_test(pipeline):
@@ -21,8 +22,10 @@ def run_final_test(pipeline):
     ensure(checkpoint.name==f'checkpoint-{pipeline.state.step}' and (checkpoint/'COMPLETE.json').is_file(),
         'Final test requires the completed final optimizer checkpoint')
     data=pipeline.collector.dataset;cfg=pipeline.collector.cfg
-    identity=dict(version='terminal-final-test-v2',checkpoint=str(checkpoint.resolve()),
+    stream_factory=getattr(pipeline,'native_stream',None)
+    identity=dict(version='terminal-final-test-v3-eval-refill',checkpoint=str(checkpoint.resolve()),
         checkpoint_complete_sha256=file_hash(checkpoint/'COMPLETE.json'),dataset_sha256=data.sha,
+        evaluation_scheduler=EVALUATION_SCHEDULER if stream_factory is not None else 'legacy-wave',
         split='test',repeats=pipeline.options['test_repeats'],seed=cfg['seed'],
         temperature=0.,max_tokens=cfg['max_tokens'],context=cfg['context'],
         optimizer_step=pipeline.state.step,training_response_tokens=result['training_response_tokens'])
@@ -35,6 +38,8 @@ def run_final_test(pipeline):
         status('complete',report=str(report_path),generated_response_tokens=done['generated_response_tokens'])
         return
     status('running',checkpoint=identity['checkpoint'])
+    def check_stop():
+        if pipeline.stop_requested:raise InterruptedError('Stop requested during final test')
     def generate(requests):
         if pipeline.stop_requested:raise InterruptedError('Stop requested during final test')
         outputs=pipeline.generate(requests)
@@ -45,7 +50,10 @@ def run_final_test(pipeline):
             pipeline.actor_train.offload_states(blocking=True)
             pipeline.model_update(pipeline.state.step+1)
         with pipeline.phase('terminal_final_test'):
-            report=Validator(data,generate,cfg,repeats=pipeline.options['test_repeats'],split='test').run()
+            validator=Validator(data,generate,cfg,repeats=pipeline.options['test_repeats'],split='test',
+                stream_factory=stream_factory,stop_check=check_stop)
+            report=validator.run()
+            report['execution']=validator.last_execution
             if pipeline.stop_requested:raise InterruptedError('Stop requested during final test')
             report.update(final_checkpoint=identity,used_for_checkpoint_selection=False,
                 historical_test_exposure='This split appeared in earlier base-model D analysis; not a never-inspected blind test.')

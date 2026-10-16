@@ -14,6 +14,7 @@ from .common import digest,file_hash,write_json,write_rows
 from .terminal_training import TrainingData,Collector,CONTRACT,VERSION,ensure,mock_generate
 from .terminal_training_checkpoints import SELECTION
 from .terminal_training_schedule import DEFAULT_NODE_GROUPS_PER_UPDATE,DEFAULT_EVAL_TOKENS,DEFAULT_SAVE_TOKENS
+from .evaluation_refill import VERSION as EVALUATION_SCHEDULER
 
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -62,6 +63,8 @@ def main():
     cli.add_argument('--context',type=int,default=16384)
     cli.add_argument('--total-tokens',type=int,default=6000000)
     cli.add_argument('--node-groups-per-update',type=int,default=DEFAULT_NODE_GROUPS_PER_UPDATE)
+    cli.add_argument('--tree-cache-mb',type=int,default=512)
+    cli.add_argument('--oracle-cache-mb',type=int,default=128)
     cli.add_argument('--max-steps',type=int,default=10000)
     cli.add_argument('--eval-every',type=int,help='Override token schedule with an update cadence (e.g. smoke)')
     cli.add_argument('--save-every',type=int,help='Independent update cadence override for recovery checkpoints')
@@ -83,7 +86,8 @@ def main():
     ensure(all(v is None or v>0 for v in (args.eval_every,args.save_every)),'Update cadences must be positive')
     ensure(args.validation_limit is None or args.validation_limit>0,'Validation limit must be positive')
     ensure(args.pause_after_updates is None or args.pause_after_updates>0,'Pause boundary must be positive')
-    data=TrainingData(args.pool,args.selection)
+    ensure(args.tree_cache_mb>=0 and args.oracle_cache_mb>=0,'Cache budgets must be nonnegative')
+    data=TrainingData(args.pool,args.selection,tree_cache_mb=args.tree_cache_mb,oracle_cache_mb=args.oracle_cache_mb)
     report=dict(version=VERSION,dataset_sha256=data.sha,train_slices=len(data.train),
         train_parents=len({r['parent_id'] for r in data.train}),validation_slices=len(data.validation),
         test_used_for_scoring=False,k_counts=dict(Counter(r['k'] for r in data.train)),contract=CONTRACT,
@@ -93,10 +97,12 @@ def main():
         batch_overshoot_max_node_groups=max(r['k'] for r in data.train)-1,
         monitoring=dict(eval_every_tokens=args.eval_every_tokens,save_every_tokens=args.save_every_tokens,
             eval_every_updates=args.eval_every,save_every_updates=args.save_every,
-            baseline=True,final=True,best_saved_immediately=True),
+            baseline=True,final=True,best_saved_immediately=True,evaluation_scheduler=EVALUATION_SCHEDULER),
         checkpoint_selection=SELECTION,checkpoint_retention='Best plus latest/final; deduplicate identical checkpoints.',
         final_test=dict(enabled=True,slices=len(data.test),parents=len({r['parent_id'] for r in data.test}),
-            repeats=args.test_repeats,temperature=0.,training_budget_includes_test=False),
+            repeats=args.test_repeats,temperature=0.,training_budget_includes_test=False,evaluation_scheduler=EVALUATION_SCHEDULER),
+        cpu_reuse=dict(tree_cache_mb=args.tree_cache_mb,oracle_cache_mb=args.oracle_cache_mb,
+            oracle='Exact frozen-profile continuation cache; exhaustive scorer retained for audit',prompt='Per-stream 16MiB encoding cache'),
         model_path_checked=False,gpu_started=False,submitted=False)
     if args.check_only:
         print(json.dumps(report,indent=2));return

@@ -1,5 +1,24 @@
 # Strategic slices：当前进度与历史 checkpoint
 
+## 2026-10-16：验证/测试完成即补位
+
+已落实效率项5：slice评测跨parent补位，完整team和focal-reference跨parent/
+模式共享有界并发池，最多32个活跃episode/请求，懒构建并在完成时释放树引用。
+保留固定题目、reset/seed、greedy、预算和报告顺序；execution成本独立记录，
+best规则不变。final-test中断/失败取消未完成请求、不写COMPLETE，可重试；完成
+报告按新执行身份复用。旧同步路径保留作CPU对照，正式pipeline明确绑定native。
+72项相关CPU回归通过，按用户约束不要求独立GPU smoke、没有启动任务。
+见[验收和源码包](../../new/terminal_evaluation_refill_20261016/README.md)。
+
+## 2026-10-16：CPU复用优化与无独立GPU smoke约束
+
+用户无法跑独立GPU smoke，改为CPU验收后由正式任务前几步记录GPU指标，
+不另开smoke、不把CPU测试当作GPU通过。树512MiB/Q及延续值128MiB独立
+预算缓存；旧完整终局求值保留作审核，新求值器精确复用窗口外reference
+延续值；同节点8回答复用一次prompt编码。采样、reward、loss、数据和预算不变。
+记录见[CPU验收](../../new/terminal_cpu_reuse_20261016/README.md)，正式启动见
+[训练文档](TERMINAL_TRAINING.md)。下方“待smoke”属于此前安排，当前不作为前置条件。
+
 ## 2026-10-16：v6训练完成即补位
 
 已移除训练的wave barrier和底层整批generate barrier。全局32个未完成回答，

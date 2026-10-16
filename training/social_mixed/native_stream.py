@@ -3,6 +3,8 @@
 No HTTP threads, mutable-tokenizer sharing or synthetic padding requests.
 """
 import math
+import json
+from .cache import ByteLRU
 from uuid import uuid4
 
 from training.social_mixed.native_limits import output_limit,check_context
@@ -43,6 +45,7 @@ class NativeStream:
         self.ray,self.parse=ray,parse_completion
         self.pipeline=pipeline;self.workers=pipeline.actor_infer.workers
         self.session=uuid4().hex;self.refs={};self.requests={};self.peak=0;self.ticks=0
+        self.prompt_cache=ByteLRU(16*1024**2);self.tokenizations=0
         n=len(self.workers)
         if n<1 or concurrency<1:raise ValueError('Native stream needs workers and positive concurrency')
         self.limits=[concurrency//n+int(i<concurrency%n) for i in range(n)]
@@ -54,11 +57,18 @@ class NativeStream:
         if not available:raise ValueError('Streaming concurrency exceeded')
         rank=min(available,key=lambda i:(len(self.pending[i]),i))
         p=self.pipeline
-        rendered=p.tokenizer.apply_chat_template(request['messages'],tools=request['tools'],tokenize=True,
-            add_generation_prompt=True,return_dict=True,truncation=False)
-        ids=rendered['input_ids']
-        if not isinstance(ids,list) or not ids or any(type(t) is not int for t in ids):
-            raise TypeError('Chat template must return one unbatched list of integer input_ids')
+        # The stream owns one immutable tokenizer/template configuration. Seeds,
+        # sampling limits and candidate indices do not affect prompt encoding.
+        prompt_key=json.dumps([request['messages'],request['tools']],sort_keys=True,separators=(',',':'))
+        ids=self.prompt_cache.get(prompt_key)
+        if ids is None:
+            rendered=p.tokenizer.apply_chat_template(request['messages'],tools=request['tools'],tokenize=True,
+                add_generation_prompt=True,return_dict=True,truncation=False)
+            ids=rendered['input_ids']
+            if not isinstance(ids,list) or not ids or any(type(t) is not int for t in ids):
+                raise TypeError('Chat template must return one unbatched list of integer input_ids')
+            ids=tuple(ids);self.prompt_cache.put(prompt_key,ids);self.tokenizations+=1
+        ids=list(ids)
         limit=p.pipeline_config.sequence_length
         max_tokens=check_context(len(ids),request,limit)
         encoded=dict(request_id=key,prompt_ids=ids,seed=request['seed'],
