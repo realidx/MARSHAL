@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=terminal-step-binary
+#SBATCH --job-name=terminal-node-grpo
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:h100-47:2
 #SBATCH --time=03:00:00
@@ -10,6 +10,10 @@
 #SBATCH --signal=B:USR1@900
 #SBATCH --output=slurm-%x-%j.out
 set -euo pipefail
+if [[ -n "${TERMINAL_QUESTIONS_PER_UPDATE:-}" ]]; then
+  echo 'Use TERMINAL_NODE_GROUPS_PER_UPDATE (actual decision groups); the old entrance-question setting is incompatible.' >&2
+  exit 2
+fi
 cd "${SLURM_SUBMIT_DIR:?Submit from repository root}"
 source "${CONDA_HOME:-/home/e/e1300530/miniconda3}/etc/profile.d/conda.sh"
 conda activate "${CONDA_ENV:-/home/e/e1300530/tmp/marshal-vllm09}"
@@ -35,18 +39,21 @@ TASK_SITE="$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"]
 export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$CONDA_PREFIX/targets/x86_64-linux/lib:$TASK_SITE/nvidia/cuda_runtime/lib:$TASK_SITE/nvidia/cudnn/lib:${LD_LIBRARY_PATH:-}"
 export CUDNN_FRONTEND_CUDART_LIB_NAME=libcudart.so.13
 export SOCIAL_GPU_PROFILE="${SOCIAL_GPU_PROFILE:-h100-47}"
-TASK_OUTPUT="${TERMINAL_OUTPUT:-$PWD/runs/terminal_step_binary/seed${TERMINAL_SEED:-42}-${SLURM_JOB_ID}}"
+TASK_OUTPUT="${TERMINAL_OUTPUT:-$PWD/runs/terminal_node_regret/seed${TERMINAL_SEED:-42}-${SLURM_JOB_ID}}"
 mkdir -p "$(dirname "$TASK_OUTPUT")"
 args=(--model "$SOCIAL_MODEL" --output "$TASK_OUTPUT"
       --profile "$SOCIAL_GPU_PROFILE" --seed "${TERMINAL_SEED:-42}"
-      --total-tokens "${TERMINAL_TOTAL_TOKENS:-6000000}" --questions-per-update "${TERMINAL_QUESTIONS_PER_UPDATE:-4}"
+      --total-tokens "${TERMINAL_TOTAL_TOKENS:-6000000}" --node-groups-per-update "${TERMINAL_NODE_GROUPS_PER_UPDATE:-20}"
       --replicas "${TERMINAL_REPLICAS:-8}" --concurrency "${TERMINAL_CONCURRENCY:-32}"
       --max-tokens "${TERMINAL_MAX_TOKENS:-1024}" --context "${TERMINAL_CONTEXT:-16384}"
-      --eval-every "${TERMINAL_EVAL_EVERY:-10}" --max-steps "${TERMINAL_MAX_STEPS:-10000}"
+      --eval-every-tokens "${TERMINAL_EVAL_EVERY_TOKENS:-500000}"
+      --save-every-tokens "${TERMINAL_SAVE_EVERY_TOKENS:-1000000}" --max-steps "${TERMINAL_MAX_STEPS:-10000}"
       --test-repeats "${TERMINAL_TEST_REPEATS:-8}")
 if [[ -n "${TERMINAL_POOL:-}" ]]; then args+=(--pool "$TERMINAL_POOL"); fi
 if [[ -n "${TERMINAL_SELECTION:-}" ]]; then args+=(--selection "$TERMINAL_SELECTION"); fi
 if [[ -n "${TERMINAL_RESUME:-}" ]]; then args+=(--resume "$TERMINAL_RESUME"); fi
+if [[ -n "${TERMINAL_EVAL_EVERY:-}" ]]; then args+=(--eval-every "$TERMINAL_EVAL_EVERY"); fi
+if [[ -n "${TERMINAL_SAVE_EVERY:-}" ]]; then args+=(--save-every "$TERMINAL_SAVE_EVERY"); fi
 if [[ -n "${TERMINAL_PAUSE_AFTER_UPDATES:-}" ]]; then args+=(--pause-after-updates "$TERMINAL_PAUSE_AFTER_UPDATES"); fi
 if [[ -n "${TERMINAL_VALIDATION_LIMIT:-}" ]]; then args+=(--validation-limit "$TERMINAL_VALIDATION_LIMIT"); fi
 python -u -m training.strategic_slices.train_terminal "${args[@]}" > "${TASK_OUTPUT}.log" 2>&1 &

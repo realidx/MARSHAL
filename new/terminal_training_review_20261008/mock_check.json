@@ -1,0 +1,91 @@
+{
+  "version": "terminal-step-binary-shared-reset-loo-fixed-questions-v4",
+  "dataset_sha256": "6080bc30f1a70b995bb9d7bfcdc3ed633bd0ff64bfd759691cf758f4533c4379",
+  "train_slices": 100,
+  "train_parents": 56,
+  "validation_slices": 96,
+  "test_used_for_scoring": false,
+  "k_counts": {
+    "2": 29,
+    "3": 19,
+    "1": 52
+  },
+  "contract": {
+    "version": "terminal-step-binary-shared-reset-loo-fixed-questions-v4",
+    "reward": "Per-controlled-decision oracle correctness, 0/1; all tied optimal actions accepted.",
+    "epsilon": 1e-07,
+    "baseline": "Mean trajectory-average step reward of the OTHER replicas in this reset group; no std normalization.",
+    "weighting": "Each trajectory equal weight; average over its actually generated decisions and response tokens.",
+    "failure": "Failed call binary reward=0 and separate protocol advantage=-0.2; stop episode; preserve earlier local rewards; no retry.",
+    "protocol_penalty": 0.2,
+    "batching": "Fixed question groups per optimizer update; token budget only stops training after a complete update.",
+    "reset": "One entrance, hidden world and focal player per group; independent model/reference RNG streams per replica.",
+    "continuation": "Same frozen initial terminal oracle for partners and focal after k; early native terminal ends episode.",
+    "objective": "On-policy local decision correctness, not an equivalent estimator of terminal-utility policy gradient.",
+    "infrastructure": "Transport, context, missing behavior evidence and oracle failures abort collection without committing cursor."
+  },
+  "replicas": 8,
+  "concurrency": 32,
+  "temperature": 1.0,
+  "max_tokens": 1024,
+  "context": 16384,
+  "total_tokens": 6000000,
+  "questions_per_update": 20,
+  "trajectories_per_update": 160,
+  "monitoring": {
+    "eval_every_tokens": 500000,
+    "save_every_tokens": 1000000,
+    "eval_every_updates": null,
+    "save_every_updates": null,
+    "baseline": true,
+    "final": true,
+    "best_saved_immediately": true
+  },
+  "checkpoint_selection": {
+    "version": "terminal-validation-window-success-v1",
+    "metric": "validation full_window_success_rate",
+    "tie_break": "Prefer the later evaluated update, including final.",
+    "baseline_eligible": false,
+    "test_used": false
+  },
+  "checkpoint_retention": "Best plus latest/final; deduplicate identical checkpoints.",
+  "final_test": {
+    "enabled": true,
+    "slices": 200,
+    "parents": 25,
+    "repeats": 8,
+    "temperature": 0.0,
+    "training_budget_includes_test": false
+  },
+  "model_path_checked": false,
+  "gpu_started": false,
+  "submitted": false,
+  "mock": true,
+  "updates": [
+    {
+      "generated_tokens": 484,
+      "rows": 242,
+      "groups": 20,
+      "active_groups": 19,
+      "task_active_groups": 19,
+      "protocol_active_groups": 0,
+      "root_correct_calls": 54,
+      "root_decision_calls": 160,
+      "root_reward_contrast_groups": 16,
+      "information_positive_root_calls": 24,
+      "information_positive_root_correct_calls": 1,
+      "binary_correct_calls": 88,
+      "decision_calls": 242,
+      "completion_rate": 1.0,
+      "truncated_calls": 0,
+      "invalid_calls": 0,
+      "skip_optimizer": false,
+      "step_binary_reward": true,
+      "terminal_utility_used_for_training": false
+    }
+  ],
+  "distinct_train_questions": 20,
+  "exact_next_collection_resume": true,
+  "new_model_calls": 0,
+  "gpu_optimizer_tested": false
+}

@@ -51,7 +51,8 @@ class Validator:
                 record=job.record();record.pop('calls')
                 record.update(step_rewards=job.step_rewards)
                 records.append(record)
-                calls.extend(dict(c,oracle_step=d,slice_id=job.row['id'],replica=job.replica) for c,d in zip(job.calls,job.step_details))
+                calls.extend(dict(c,oracle_step=d,slice_id=job.row['id'],replica=job.replica,decision_index=i)
+                    for i,(c,d) in enumerate(zip(job.calls,job.step_details)))
         def generate_full(requests):
             return self.generate([dict(r,max_tokens=cfg['max_tokens'],top_p=1.,top_k=-1,repetition_penalty=1.) for r in requests])
         full=Evaluator(FullGameView(self.data,set(by_parent),self.split),generate_full,
@@ -61,6 +62,20 @@ class Validator:
         full['protocol']['max_tokens']=cfg['max_tokens']
         rewards=[v for r in records for v in r['step_rewards']]
         completed=[r['utility'] for r in records if r['status']=='terminal']
+        def decision_metrics(subset):
+            legal=[c['oracle_step']['gap'] for c in subset if c['protocol_status']=='ok']
+            # The all-call metric uses exactly the training failure convention;
+            # legal-only regret must not conceal failed responses.
+            regrets=[c['oracle_step']['gap'] if c['protocol_status']=='ok'
+                else float(np.ptp(c['oracle_step']['Q'])) for c in subset]
+            return dict(calls=len(subset),legal_calls=len(legal),
+                per_decision_accuracy=float(np.mean([c['oracle_step']['reward'] for c in subset])) if subset else None,
+                mean_regret_legal=float(np.mean(legal)) if legal else None,
+                mean_regret_with_failure_worst_action=float(np.mean(regrets)) if regrets else None)
+        information_ids={r['id'] for r in selected if r['information_positive']}
+        roots=[c for c in calls if c['decision_index']==0]
+        strata=dict(all=decision_metrics(calls),root=decision_metrics(roots),
+            information_root=decision_metrics([c for c in roots if c['slice_id'] in information_ids]))
         response_tokens=sum(len(c['response_ids']) for c in calls+full['calls'])
         return dict(protocol=dict(split=self.split,test_loaded_for_scoring=self.split=='test',temperature=0.,max_tokens=cfg['max_tokens'],
             limit=self.limit,repeats=self.repeats,primary_checkpoint='final',selection_candidate=False,
@@ -68,5 +83,6 @@ class Validator:
             generated_response_tokens=response_tokens,
             slices=dict(episodes=len(records),completion_rate=len(completed)/len(records),
                 per_decision_accuracy=sum(rewards)/len(rewards),terminal_utility_completed=interval(completed),
+                decision_metrics=strata,
                 full_window_success_rate=sum(r['status']=='terminal' and all(r['step_rewards']) for r in records)/len(records)),
             slice_games=records,slice_calls=calls,full_games=full)

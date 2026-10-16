@@ -21,7 +21,7 @@ def run_final_test(pipeline):
     ensure(checkpoint.name==f'checkpoint-{pipeline.state.step}' and (checkpoint/'COMPLETE.json').is_file(),
         'Final test requires the completed final optimizer checkpoint')
     data=pipeline.collector.dataset;cfg=pipeline.collector.cfg
-    identity=dict(version='terminal-final-test-v1',checkpoint=str(checkpoint.resolve()),
+    identity=dict(version='terminal-final-test-v2',checkpoint=str(checkpoint.resolve()),
         checkpoint_complete_sha256=file_hash(checkpoint/'COMPLETE.json'),dataset_sha256=data.sha,
         split='test',repeats=pipeline.options['test_repeats'],seed=cfg['seed'],
         temperature=0.,max_tokens=cfg['max_tokens'],context=cfg['context'],

@@ -1,15 +1,39 @@
 # Terminal candidate D evaluation on SoC
 
-Training transition: [TERMINAL_TRAINING.md](TERMINAL_TRAINING.md) implements the
-accepted per-decision binary oracle reward, shared-world groups and k-step
+**2026-10-16 最新决定：**采用同节点8采样的连续oracle Q/负regret reward与
+标准GRPO，严格0/1最优率用于评测，随机推进1条。连续值恢复被binary抹掉的
+已采样价值差异，但不保证恢复D/native采样差异或解决重复错误动作。协议已选，
+代码已接入v5并做CPU验收，新协议GPU待smoke；冻结数据、原D结果和归档运行保持原身份。详见
+[已定方案与实施口径](MULTITURN_GROUPING_REVIEW_20261016.md)。
+
+## 当前状态（2026-10-08 仓库核对）
+
+**v4 的首轮真实 D 已完成并汇总，100 道 train slices 已选择。** 当前待执行的是
+新训练合同的GPU验收与学习信号修订；旧v3 GPU smoke/resume和部分预算训练已执行。
+训练暂停于 550 updates / 3,500,783 response tokens，best/latest 的独立导出测试已
+归档，见 [训练与评测证据](../../new/terminal_hf_test_calbench_20261008/README.md)。完整进度统一见
+[PROGRESS.md](PROGRESS.md)，训练配置和手动命令见 [TERMINAL_TRAINING.md](TERMINAL_TRAINING.md)。
+
+- v2 结果复用 722 道完全相同题，v4 delta job **915300** 完成 78 道题 / 624 trajectories；合并为 800 题 / 6,400 trajectories，6,200 terminal、153 truncated、47 invalid。
+- 全部轨迹及每个受控 decision 已 native replay；train 有 139 题的任意一步同题面 value contrast，首步为 116 题。完整定义见 [审核报告](TERMINAL_D_V4_ANALYSIS.md)。
+- 首版选集为 100 题 / 56 parents / 37 families，保留 12 道强 acquisition 和 9 组完整 train entry-answer controls；只使用 train 结果选择。
+- D使用4096输出tokens和独立resets；已归档v3训练使用1024、共享world、每update 4×8。新v4默认20×8、500K tokens验证/1M恢复保存，尚待新批次GPU验收。这些运行身份分别解释。
+- **逐题信号已追踪**：100题各22次曝光；27题一直无task advantage（14全0、7全1、6整组对错切换），另外73题至少出现一次。14道全错题最后4轮全部固定在错误动作上；其中8题的D曾有最优/次优混合。见 [动作与信号完整历史](../../new/terminal_training_review_20261008/signal_history/README.md)。
+
+下方 delta launcher 和 pending-D 条目保留为当时准备记录及复现命令，不再是
+当前待办。原始结果、冻结 manifest、数据包和运行身份均保持原样。
+
+Historical training transition: [TERMINAL_TRAINING.md](TERMINAL_TRAINING.md) describes
+the old implemented binary oracle reward, shared-world groups and k-step
 rollouts. Training uses 1024 output tokens and an extra -0.2 protocol advantage
 on truncated/invalid calls; historical D remains at 4096. Includes local checks
-and manual GPU smoke/resume commands. No GPU
-training task has been submitted; the earlier draft is historical.
+and manual GPU smoke/resume commands. Single-GPU smoke/resume passed and
+training job 915731 reached 550 updates before pausing; the earlier draft is historical.
 Training now targets 6,000,000 response tokens and automatically evaluates the
 final checkpoint on the full test split after normal budget completion. See the
 training document for test repeats, outputs and interruption recovery.
-Updates now use four questions × eight trajectories. Checkpoint retention is
+The archived v3 run used four questions × eight trajectories; the new v4 default
+uses twenty × eight and remains pending GPU acceptance. Checkpoint retention is
 validation-best plus final, with one copy when final is also best; validation
 full-window success rate is the selection metric and ties favor later updates.
 
@@ -50,9 +74,9 @@ job 911072 reused them and finished the other 42. Full evidence is in
 [`new/strategic_slices_terminal_d_20261005`](../../new/strategic_slices_terminal_d_20261005/README.md).
 It does not train weights or select the final 100 slices.
 
-## Current v4 delta launcher (2026-10-06)
+## Historical v4 delta launcher (completed 2026-10-06)
 
-Use `terminal_d_soc_v4_delta.json` for the next run. It pins the verified v4
+The completed delta run used `terminal_d_soc_v4_delta.json`. It pins the verified v4
 manifest and selects `D_reuse.json` automatically: **78 questions, 16 parents,
 624 trajectories, at most 768 model calls**. The serving/sampling profile is
 identical to the current SoC configuration: **32 concurrent requests,
@@ -98,7 +122,11 @@ file hashes and exact offline check command. Both older archives remain unchange
 `terminal_d_soc.json` still targets the original v2 full run for reproducibility;
 always pass the v4 config for the new delta job. No job was submitted by this update.
 
-## v4 acquisition revision and pending D
+## Historical v4 acquisition revision and D reuse plan
+
+This section records the pre-run reuse plan. All 78 delta questions were later
+measured by job 915300 and combined with the unchanged results in the analysis
+above; statements below about pending D or unmerged results refer to that stage.
 
 The separate `new/local_data/strategic_slices_oracle_consistent_candidates_v4`
 pool retains 100 parents x 8 questions, adds six audited acquisition families

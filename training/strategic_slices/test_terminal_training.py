@@ -3,10 +3,11 @@ from copy import deepcopy
 import json
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
-from .terminal_training import StepRollout, Collector, binary_advantages, mock_generate
+from .terminal_training import StepRollout, Collector, group_advantages, score_response, mock_generate
 from .terminal_analysis import audit_game
 from .terminal_candidates import sample_member_world
 from .terminal_d import TerminalRollout
@@ -100,42 +101,112 @@ class TrainingTests(unittest.TestCase):
                     return
         self.fail('Fixture has no correct prefix with a second controlled decision')
 
-    def test_baseline_local_credit_and_degenerate_groups(self):
-        for reward in (0,1):
-            a,b=binary_advantages([[reward],[reward,reward]])
-            self.assertEqual(a,[[0.],[0.,0.]])
-        a,b=binary_advantages([[1,0],[0,0],[1]])
-        self.assertEqual(b,[.5,.75,.25]);self.assertEqual(a,[[.5,-.5],[-.75,-.75],[.75]])
-        _,changed=binary_advantages([[0],[0,0],[1]])
-        self.assertEqual(changed[0],b[0])
-        with self.assertRaises(ValueError):binary_advantages([[1]])
+    def test_group_normalization_preserves_wrong_action_value_order(self):
+        # All actions are strictly wrong; binary labels would all be zero.
+        rewards=[-2.,-2.,-2.,-2.,-2/3,-2/3,-2/3,-.5]
+        a,mean,std=group_advantages(rewards)
+        np.testing.assert_allclose(a,(np.array(rewards)-np.mean(rewards))/(np.std(rewards,ddof=1)+1e-8))
+        self.assertLess(a[0],0);self.assertGreater(a[-1],0)
+        shifted,_,_=group_advantages([r+9 for r in rewards]);np.testing.assert_allclose(a,shifted)
+        for rewards in ([0.,0.],[-2.,-2.],[-2.,-2.+1e-8]):
+            self.assertEqual(group_advantages(rewards)[0],[0.,0.])
+        for bad in ([1.],[0.,float('nan')]):
+            with self.assertRaises(ValueError):group_advantages(bad)
 
-    def test_collector_weights_shared_groups_failure_and_resume(self):
+    def test_failure_uses_all_legal_values_and_does_not_advance(self):
+        job=self.job(self.rows[0]);q,posterior=job.action_values();req,out=self.output(job)
+        q=np.linspace(-3.,7.,len(q));out['finish_reason']='length'
+        before=deepcopy(job.record())
+        scored=score_response(job,out,req,q,posterior)
+        self.assertEqual(scored['task_reward'],-10.)
+        self.assertEqual(scored['binary_reward'],0)
+        self.assertEqual(job.record(),before)
+        out['finish_reason']='stop'
+        out['completion']['raw_message']['tool_calls'][0]['function']['arguments']=json.dumps(dict(action_index=len(q)-1))
+        self.assertEqual(score_response(job,out,req,q,posterior)['task_reward'],0.)
+
+    def test_collector_node_groups_weights_and_exact_resume(self):
         def mixed(requests):
             outs=mock_generate(requests)
-            outs[0]['finish_reason']=outs[0]['completion']['finish_reason']='length'
+            for req,out in zip(requests,outs):
+                if req['seed']%5==0:out['finish_reason']='length'
             return outs
-        collector=Collector(self.data,mixed,replicas=4,concurrency=8)
-        self.assertEqual(collector.cfg['max_tokens'],1024)
+        collector=Collector(self.data,mixed,replicas=8,concurrency=32)
         rows,units,games,metrics=collector.collect(0,'slices',1)
-        self.assertTrue(any(g['status']=='truncated' for g in games))
-        self.assertTrue(any(g['status']=='terminal' for g in games))
         self.assertEqual(metrics['generated_tokens'],2*len(rows))
-        for group in {g['group'] for g in games}:
-            members=[g for g in games if g['group']==group]
-            self.assertEqual(len({(g['member_index'],g['world_index']) for g in members}),1)
+        self.assertEqual(len(rows),8*len(units))
+        self.assertTrue(20<=len(units)<=22)
+        self.assertEqual(metrics['root_decision_calls'],8*len(games))
+        self.assertEqual(metrics['root_correct_calls'],sum(r['binary_reward'] for r in rows if r['decision_index']==0))
         for unit in units:
-            calls=[r for r in rows if r['unit']==unit['unit']]
+            calls=[r for r in rows if r['group']==unit['group']]
+            self.assertEqual(len(calls),8)
+            self.assertEqual(len({r['prompt_sha256'] for r in calls}),1)
+            self.assertEqual(len({r['scoring_sha256'] for r in calls}),1)
+            self.assertEqual(len({r['request']['seed'] for r in calls}),8)
+            self.assertEqual(sum(r['selected_for_continuation'] for r in calls),1)
             self.assertAlmostEqual(sum(r['task_weight'] for r in calls)/len(rows),1/len(units))
+            np.testing.assert_allclose([r['task_advantage'] for r in calls],group_advantages([r['task_reward'] for r in calls])[0])
             for r in calls:
+                self.assertEqual((r['task_weight'],r['protocol_weight'],r['kl_weight']),(1.,1.,1.))
                 self.assertEqual(r['protocol_advantage'],0. if r['valid'] else -.2)
-                self.assertAlmostEqual(r['advantage'],r['task_advantage']+r['protocol_advantage'])
                 self.assertEqual(r['request']['max_tokens'],1024)
-        restored=Collector(self.data,mixed,replicas=4,concurrency=8);restored.restore(collector.state)
+                visible=json.loads(r['request']['messages'][1]['content'])
+                self.assertEqual(visible['evaluation_window']['remaining_controlled_decisions'],r['remaining_k'])
+                self.assertFalse({'root_Q','posterior','world_index','Q'} & set(visible))
+        by_id={r['id']:r for r in self.rows}
+        for game in games:
+            chosen=[r for r in rows if r['chain']==game['chain'] and r['selected_for_continuation']]
+            self.assertEqual(len(chosen),len(game['selected_nodes']))
+            self.assertLessEqual(len(chosen),by_id[game['slice_id']]['k'])
+            self.assertEqual([r['binary_reward'] for r in chosen],game['step_rewards'])
+            audited=audit_game(self.tree,by_id[game['slice_id']],dict(game,calls=chosen),collector.cfg,{})
+            for r,d in zip(chosen,audited['decisions']):
+                self.assertEqual(r['oracle_step']['gap'],d['gap'])
+                np.testing.assert_allclose(r['oracle_step']['Q'],d['Q'])
+                np.testing.assert_allclose(r['oracle_step']['posterior'],d['posterior'])
+        first=games[0];chosen=[r for r in rows if r['chain']==first['chain'] and r['selected_for_continuation']]
+        tampered=deepcopy(dict(first,calls=chosen));tampered['calls'][0]['oracle_step']['Q'][0]+=1.
+        with self.assertRaisesRegex(ValueError,'Training Q differs'):
+            audit_game(self.tree,by_id[first['slice_id']],tampered,collector.cfg,{})
+        restored=Collector(self.data,mixed,replicas=8,concurrency=32);restored.restore(collector.state)
         self.assertEqual(collector.collect(1,'slices',1),restored.collect(1,'slices',1))
         self.assertEqual(collector.state,restored.state)
-        with self.assertRaisesRegex(ValueError,'contract changed'):
-            Collector(self.data,mixed,replicas=8).restore(collector.state)
+        old=deepcopy(collector.state);old['version']='terminal-step-binary-shared-reset-loo-fixed-questions-v4'
+        with self.assertRaisesRegex(ValueError,'contract changed'):restored.restore(old)
+
+    def test_uniform_original_sample_is_score_independent_and_only_it_advances(self):
+        from .common import seed_for
+        row=next(r for r in self.rows if r['k']==3)
+        data=SimpleNamespace(sha='one',train=[row],reference=self.data.reference)
+        chosen=int(np.random.default_rng(seed_for(42,'terminal-train-advance',0,0)).integers(8))
+        selected_seed=seed_for(42,'terminal-train-candidate',0,0,chosen)
+        def fail_selected(requests):
+            outs=mock_generate(requests)
+            for req,out in zip(requests,outs):
+                if req['seed']==selected_seed:out['finish_reason']='length'
+            return outs
+        rows,units,games,_=Collector(data,fail_selected,node_groups_per_update=1).collect(0,'slices')
+        self.assertEqual((len(rows),len(units),len(games)),(8,1,1))
+        self.assertEqual(units[0]['selected_replica'],chosen)
+        self.assertEqual(games[0]['status'],'truncated');self.assertEqual(games[0]['controlled_decisions'],0)
+        # Changing the oracle scores cannot change which original sample executes.
+        original=score_response
+        def altered(*args):
+            r=original(*args);r['task_reward']=-1000. if r['request']['seed']==selected_seed else 0.;return r
+        with patch('training.strategic_slices.terminal_training.score_response',side_effect=altered):
+            _,different,other,_=Collector(data,fail_selected,node_groups_per_update=1).collect(0,'slices')
+        self.assertEqual(different[0]['selected_replica'],chosen)
+        self.assertEqual(games[0]['steps'],other[0]['steps']);self.assertEqual(games[0]['status'],other[0]['status'])
+        # No candidate executes except selected; random choices do not consume
+        # the reference RNG of seven discarded candidates.
+        native_accept=StepRollout.accept;accepted=[]
+        def witness(job,out,req):accepted.append(req['seed']);return native_accept(job,out,req)
+        with patch.object(StepRollout,'accept',witness):
+            rows,units,games,_=Collector(data,mock_generate,node_groups_per_update=1).collect(0,'slices')
+        self.assertEqual(len(accepted),len(units))
+        self.assertEqual(accepted,[r['request']['seed'] for r in rows if r['selected_for_continuation']])
+        self.assertEqual(len(games),1)
 
     def test_infrastructure_and_missing_tokens_abort_without_cursor_commit(self):
         for generator in (lambda _: (_ for _ in ()).throw(RuntimeError('transport')),
@@ -143,6 +214,31 @@ class TrainingTests(unittest.TestCase):
             collector=Collector(self.data,generator,replicas=2,concurrency=2);before=deepcopy(collector.state)
             with self.assertRaises((RuntimeError,ValueError)):collector.collect(0,'slices',1)
             self.assertEqual(before,collector.state)
+        batches=[]
+        def fail_later(requests):
+            batches.append(len(requests))
+            if len(batches)>1:raise RuntimeError('later wave failed')
+            return mock_generate(requests)
+        collector=Collector(self.data,fail_later,concurrency=8);before=deepcopy(collector.state)
+        with self.assertRaisesRegex(RuntimeError,'later wave'):collector.collect(0,'slices')
+        self.assertEqual(collector.state,before)
+
+    def test_discarded_failures_are_trained_but_do_not_terminate_selected_chain(self):
+        from .common import seed_for
+        def discarded_fail(requests):
+            outs=mock_generate(requests)
+            # One entrance at a time; infer its candidate node from its visible
+            # remaining k, so all seven discarded responses can fail each node.
+            for depth in range(3):
+                chosen=int(np.random.default_rng(seed_for(42,'terminal-train-advance',0,depth)).integers(8))
+                seeds={seed_for(42,'terminal-train-candidate',0,depth,r) for r in range(8) if r!=chosen}
+                for req,out in zip(requests,outs):
+                    if req['seed'] in seeds:out['completion']['raw_message']={}
+            return outs
+        rows,units,games,metrics=Collector(self.data,discarded_fail,node_groups_per_update=1).collect(0,'slices')
+        self.assertEqual(len(games),1);self.assertEqual(games[0]['status'],'terminal')
+        self.assertEqual(metrics['invalid_calls'],7*len(units))
+        self.assertTrue(all(r['valid'] for r in rows if r['selected_for_continuation']))
 
     def test_all_failed_groups_keep_protocol_signal(self):
         for failure in ('length','invalid'):
@@ -152,7 +248,7 @@ class TrainingTests(unittest.TestCase):
                     if failure=='length':out['finish_reason']='length'
                     else:out['completion']['raw_message']={}
                 return outputs
-            rows,_,games,metrics=Collector(self.data,fail,replicas=4,concurrency=4,questions_per_update=1).collect(0,'slices',1)
+            rows,_,games,metrics=Collector(self.data,fail,replicas=4,concurrency=4,node_groups_per_update=1).collect(0,'slices',1)
             self.assertTrue(all(r['binary_reward']==0 and r['task_advantage']==0 for r in rows))
             self.assertTrue(all(r['protocol_advantage']==-.2 and r['advantage']==-.2 for r in rows))
             self.assertTrue(all(g['utility'] is None for g in games))
@@ -160,18 +256,19 @@ class TrainingTests(unittest.TestCase):
             self.assertEqual(metrics['protocol_active_groups'],1)
             self.assertEqual(metrics['active_groups'],1)
 
-    def test_fixed_question_batch_is_independent_of_tokens_and_concurrency(self):
-        a=Collector(self.data,mock_generate,replicas=8,concurrency=32)
-        b=Collector(self.data,mock_generate,replicas=8,concurrency=8)
-        low=a.collect(0,'slices',1);high=b.collect(0,'slices',10**9)
-        self.assertEqual(low,high)
-        rows,units,games,metrics=low
-        self.assertEqual(metrics['groups'],4)
-        self.assertEqual(len(games),32)
-        self.assertEqual(len({g['slice_id'] for g in games}),4)
-        self.assertEqual(a.state['cursor'],4)
-        with self.assertRaisesRegex(ValueError,'questions_per_update'):
-            Collector(self.data,mock_generate,questions_per_update=2).restore(a.state)
+    def test_fixed_node_budget_and_bounded_drain_across_concurrency(self):
+        for concurrency in (3,8,32):
+            a=Collector(self.data,mock_generate,replicas=8,concurrency=concurrency)
+            low=a.collect(0,'slices',1)
+            b=Collector(self.data,mock_generate,replicas=8,concurrency=concurrency)
+            self.assertEqual(low,b.collect(0,'slices',10**9))
+            rows,units,games,metrics=low
+            self.assertTrue(20<=len(units)<=22)
+            self.assertEqual(len(rows),8*len(units))
+            self.assertEqual(a.state['cursor'],len(games))
+            self.assertEqual(len(units),sum(len(g['selected_nodes']) for g in games))
+            with self.assertRaisesRegex(ValueError,'node_groups_per_update'):
+                Collector(self.data,mock_generate,node_groups_per_update=2,concurrency=concurrency).restore(a.state)
 
     def test_native_budget_and_settings(self):
         self.assertEqual(output_limit({}),1024)
@@ -182,9 +279,10 @@ class TrainingTests(unittest.TestCase):
         from .train_terminal import settings
         cfg=SimpleNamespace(actor_infer=SimpleNamespace(generating_args=SimpleNamespace(),strategy_args=SimpleNamespace(strategy_config={})),
             actor_train=SimpleNamespace(training_args=SimpleNamespace()))
-        settings(cfg,SimpleNamespace(context=16384,max_tokens=1024,concurrency=32,eval_every=10,max_steps=1000))
+        settings(cfg,SimpleNamespace(context=16384,max_tokens=1024,concurrency=32,eval_every=10,save_every=30,max_steps=1000))
         self.assertEqual(cfg.prompt_length,15360);self.assertEqual(cfg.actor_infer.generating_args.max_new_tokens,1024)
         self.assertEqual(cfg.actor_infer.strategy_args.strategy_config,{'max_model_len':16384,'max_num_seqs':32})
+        self.assertEqual((cfg.eval_steps,cfg.save_steps),(10,30))
 
     def test_production_loss_preserves_local_credit_and_response_mask(self):
         import math
@@ -195,17 +293,18 @@ class TrainingTests(unittest.TestCase):
             @staticmethod
             def from_dict(tensors):return SimpleNamespace(batch=tensors)
         make=function('pipeline.py','make_batch',dict(torch=torch,math=math,DataProto=Proto))
-        advantages,_=binary_advantages([[1,0],[1]])
-        flat=[v for trajectory in advantages for v in trajectory]
-        rows=[dict(prompt_ids=[1,2],response_ids=[3,4],behavior_log_probs=[-.5,-.5],
-            advantage=a,task_advantage=a,protocol_advantage=0.,loss_weight=1.,
-            task_weight=1.,protocol_weight=1.,kl_weight=1.,task_denominator=0.) for a in flat]
+        flat=group_advantages([-2.,-.5])[0]+group_advantages([-1.,0.])[0]
+        rows=[dict(prompt_ids=[1,2],response_ids=[3]*(i+1),behavior_log_probs=[-.5]*(i+1),
+            advantage=a+(-.2 if i==0 else 0.),task_advantage=a,protocol_advantage=-.2 if i==0 else 0.,loss_weight=1.,
+            task_weight=1.,protocol_weight=1.,kl_weight=1.,task_denominator=0.) for i,a in enumerate(flat)]
         data=make(rows,0).batch;mask=data['response_mask'][:,1:].float()
         old=data['behavior_log_probs'];logps=old.clone().requires_grad_()
-        loss,_=stable_objective(logps,old,old,mask,data,.2,.01);loss.backward()
+        loss,_=stable_objective(logps,old,old+.1,mask,data,.2,.01);loss.backward()
         self.assertTrue(torch.all(logps.grad[~mask.bool()]==0))
         for i,a in enumerate(flat):
-            torch.testing.assert_close(logps.grad[i][mask[i].bool()],torch.full((2,),-a/6))
+            protocol=-.2 if i==0 else 0.
+            expected=(-(a+protocol)+.01*(1-math.exp(.1)))/(len(flat)*(i+1))
+            torch.testing.assert_close(logps.grad[i][mask[i].bool()],torch.full((i+1,),expected))
 
 
 if __name__=='__main__':unittest.main()

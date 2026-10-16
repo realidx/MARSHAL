@@ -1,0 +1,230 @@
+{
+  "scope": "Algebraic checks only; not a convergence guarantee for PPO, LLMs, or the current token-level KL surrogate.",
+  "KL_single_state_examples": [
+    {
+      "Q": [
+        1.0,
+        0.99,
+        0.0
+      ],
+      "reference": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "beta": 0.01,
+      "continuous_reward_optimum": [
+        0.7310585786300049,
+        0.2689414213699951,
+        2.7195934554254203e-44
+      ],
+      "binary_reward_optimum": [
+        1.0,
+        3.720075976020836e-44,
+        3.720075976020836e-44
+      ],
+      "continuous_greedy_action": 0,
+      "binary_greedy_action": 0
+    },
+    {
+      "Q": [
+        1.0,
+        0.99,
+        0.0
+      ],
+      "reference": [
+        0.001,
+        0.998,
+        0.001
+      ],
+      "beta": 0.01,
+      "continuous_reward_optimum": [
+        0.002716330737450266,
+        0.9972836692625496,
+        1.0104956719315695e-46
+      ],
+      "binary_reward_optimum": [
+        1.0,
+        3.712635824068772e-41,
+        3.720075976020836e-44
+      ],
+      "continuous_greedy_action": 1,
+      "binary_greedy_action": 0
+    }
+  ],
+  "sampled_reward_contrast": {
+    "sampled_Q": [
+      0.2,
+      0.4,
+      0.7
+    ],
+    "unsampled_optimal_Q": 1.0,
+    "binary_LOO_advantages": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "continuous_LOO_advantages": [
+      -0.35000000000000003,
+      -0.04999999999999999,
+      0.3999999999999999
+    ],
+    "identical_wrong_continuous_LOO_advantages": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "local_credit_counterexample": {
+    "all_eight_step_rewards": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        1
+      ]
+    ],
+    "current_local_advantages": [
+      [
+        -0.5,
+        0.5
+      ],
+      [
+        -0.5,
+        0.5
+      ],
+      [
+        -0.5,
+        0.5
+      ],
+      [
+        -0.5,
+        0.5
+      ],
+      [
+        -0.5,
+        0.5
+      ],
+      [
+        -0.5,
+        0.5
+      ],
+      [
+        -0.5,
+        0.5
+      ],
+      [
+        -0.5,
+        0.5
+      ]
+    ],
+    "trajectory_average_baselines": [
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5
+    ],
+    "whole_window_success_rewards": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "whole_window_success_LOO_advantages": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "variable_horizon_reward_counterexample": {
+    "A": {
+      "terminal_utility": 1.0,
+      "local_binary_rewards": [
+        1
+      ],
+      "local_continuous_rewards": [
+        1.0
+      ]
+    },
+    "B": {
+      "terminal_utility": 0.99,
+      "local_binary_rewards": [
+        0,
+        1,
+        1
+      ],
+      "local_continuous_rewards": [
+        0.99,
+        1.0,
+        1.0
+      ]
+    }
+  },
+  "potential_shaping_all_failed_example": {
+    "potentials": [
+      [
+        2.0,
+        1.0,
+        0.0
+      ],
+      [
+        2.0,
+        3.0,
+        1.0,
+        0.0
+      ]
+    ],
+    "shaped_returns": [
+      -2.0,
+      -2.0
+    ],
+    "LOO_advantages": [
+      0.0,
+      0.0
+    ]
+  }
+}

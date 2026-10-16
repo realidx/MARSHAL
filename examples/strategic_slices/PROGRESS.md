@@ -1,4 +1,170 @@
-# Active checkpoint — 2026-10-04; continuation — 2026-10-05
+# Strategic slices：当前进度与历史 checkpoint
+
+## 2026-10-16：v5实现与训练准备
+
+已将训练入口替换为同节点8回答、负regret、节点内mean/std GRPO、随机推进1条。
+节点/回答等权、token平均；默认20实际节点组，剩余k预留使默认最多超2组。
+所有候选/失败计费，失败task取全部合法动作最差值，独立protocol −0.2。
+保留500K验证/1M恢复保存、best+final与自动final-test；新增regret、信号/动作
+重复、真实链/节点曝光和耗时日志。离线native replay适配新采样种子并保留旧D审核。
+旧checkpoint和旧入口题数参数不兼容；从base开始。当前仅本地验收，未提交GPU。
+
+验收证据和剩余问题统一见[准备检查](../../new/terminal_node_grpo_readiness_20261016/README.md)，
+实际命令见[当前训练文档](TERMINAL_TRAINING.md)。真实模型信号、GPU显存/速度与
+optimizer恢复待smoke；匹配SP训练臂和强信息held-out仍未补齐。下方是此前讨论历史。
+
+## 2026-10-16早先：文献核对与协议决定（实施前历史）
+
+**最新决定：连续oracle价值reward已采纳，尚未实现。**合法动作使用Q/负regret，
+保留严格0/1最优率评测，等值组task优势为0；标准节点GRPO及随机单路推进不变。
+连续reward恢复已采到的价值差异，不自动解决重复错误动作。用户随后确认：
+节点组/回答等权、回答内token平均；update目标20个实际节点组、完整采完已
+开始的链后一次更新；失败task取最差合法动作的负regret，另加独立−0.2协议
+惩罚。20是实际组数目标，不是有效组目标；不默认动态过滤补采。记录与证据见
+[专项记录顶部](MULTITURN_GROUPING_REVIEW_20261016.md)，本轮仅更新文档。
+
+**已定采样方案：**同上下文采8个回答、连续oracle价值、组内优势，均匀抽1个
+原始回答推进，最多k个focal节点；固定采样期权重。
+只选此credit方案，不增做方法对照；原slices/SP比较保留。尚未实现，当前旧
+local-LOO不等于新方案。节点权重、batch和失败评分均已确定；选集信号/信息held-out/
+新sampler验收待完成，详见[协议顶部](MULTITURN_GROUPING_REVIEW_20261016.md)。
+
+**此前batch/二值零方差组文献补充（历史，reward已更新）：**已区分原论文rollout batch、mini/microbatch与
+optimizer step；20×8仍只是候选尺度。DAPO带上限过滤补采有直接针对性，但
+不能教会持续全错题，且需明确protocol/KL及成本口径，尚未采纳。旧14道全错题
+均k=1，不能期待多轮分组自动修复；先检查训练设置下binary contrast及D/native
+差异，记录见同页“更新batch与二值奖励零方差组”。本次未修改训练代码。
+
+**最新讨论：保留中间oracle监督，先查清多轮如何形成可比组。**当前local-LOO
+不是同决策上下文的局部GRPO；但跨状态baseline不等于普遍无效的策略梯度。
+已核对GiGPO/HGPO与Tree-GRPO/ARPO的论文及关键公开实现，见
+[多轮采样与分组专项记录](MULTITURN_GROUPING_REVIEW_20261016.md)。同上下文
+追加采样、重复状态复用与有限分叉预算均未实现为新合同；不默认采用下述早先
+outcome-only建议，不将专项诊断直接宣称为训练退化的已证实原因。
+
+**同日研究边界澄清：研究slices相对SP的效率，不研究新的GRPO方法。**固定成熟
+训练算法、两臂保持一致；没有充分项目动机，不引入其他论文的算法改版或新组合。
+下述初次文献讨论中的算法候选尚未采纳，不作为实施清单。“不标准GRPO”的笼统
+说法已更正为原论文outcome/process与当前local-LOO之间的具体差别，见报告顶部。
+
+**同日追查：**已对照七篇接近的工作及当前适配的仓库记录。多轮并不阻止使用
+整轨迹outcome GRPO；目前没有local-LOO必要性的本项目对照证据。建议回到有
+明确出处的基线定义，并区分算法选择与reward目标，详见报告“同日追查”。尚未
+将此建议实现为新训练合同，未运行新实验。
+
+已阅读并对照原论文及代码，见[训练protocol review](TRAINING_PROTOCOL_REVIEW_20261016.md)。
+本次没有新模型运行；旧训练、数据和候选v4合同不改。主要结论：连续oracle Q
+在理想单步目标下仍以最优动作集为最大值，但固定KL可能保留次优概率；不能直接
+用这个结论证明现有多步local surrogate收敛。此前提出的RLOO/固定长度归一化与
+同state适配等均为未采纳候选，现阶段先明确现有实现及其出处，不默认切换算法。
+不再以继续调batch或重复次数替代目标、credit和探索审计。
+
+## 当前进度（2026-10-08 仓库核对）
+
+**当前已完成 terminal v4 候选池、真实 base-model D、100 题首版选择，以及
+逐步 binary reward 训练入口、真实 GPU smoke/resume，以及部分预算训练和导出评测。
+训练已到 550 updates / 3,500,783 response tokens，尚未完成 6M 目标。**
+本节合并当前远端执行证据与本地进度文档，不代表新增实验结果。
+下方按日期保留历史 checkpoint，其中“待测 D / 尚未选题”等只适用于当时阶段。
+
+**同日训练审核与代码修订：**已检查全部 550 次更新、55 次训练后 validation
+及 base，见 [完整审核/曲线/复现](../../new/terminal_training_review_20261008/README.md)。
+中期输出失稳、后期验证下降；2,200 组仅 699 组有非零 task advantage，信息题
+2,112 条轨迹只有 17 次首步正确。新训练合同 v4 默认改为 20 题 × 8 trajectories，
+500K tokens 验证 / 1M tokens 恢复保存；并发32，best/结束/暂停立即保存。
+新批次 30 项 CPU 检查通过；真实 v4 数据 mock 为 20 题 / 160 trajectories /
+242 controlled calls，下一批恢复一致，待 GPU 验收。旧 v3 运行的结果和
+checkpoint 保留原身份。
+
+**逐题诊断补充：**对齐100题的22轮历史，27题永久无task advantage（14全0、
+7全1、6整组对错切换），73题至少一次active。最后5轮连续无信号的65题中，
+38题此前有过信号；14道持续全错题的后4轮全部固定于错误动作。信息题227/264
+组active，但7/12题始终未选对首步，见 [逐题采样证据](../../new/terminal_training_review_20261008/signal_history/README.md)。
+
+### 当前口径与完成情况
+
+当前采用 `initial-terminal-oracle-consistent-v1`：每个 parent 保存一个从原生
+初态求解并独立认证的完整终局参考剖面。入口概率、posterior、partner 行为及
+focal 离开 k 步窗口后的 continuation 都使用同一保存剖面，窗口内不重新求均衡。
+k=1/2/3 计 focal 实际 decisions，包括 proposal、调查和 response；C/S/D 的
+效用基准仍为 native terminal utility。它与 10-02/03 的 bounded cutoff 方案
+是不同合同，旧数据与结果保留各自身份。
+
+| 阶段 | 已完成的进度 | 证据入口 |
+| --- | --- | --- |
+| Terminal v4 候选池 | 100 parents / 800 questions；train/validation/test 为 63/12/25 parents、504/96/200 questions；双人/三人为 50/50，含 30 个双人双轮 parent | [候选与信息覆盖](README.md)、冻结 v4 manifest |
+| 信息案例 | 6 个强主动调查 structural families，保护 12 个 k=2/3 acquisition windows；保留 10 组 entry-answer contrasts | [入口信息定义](ENTRY_INFORMATION.md)、[v4 分析](TERMINAL_D_V4_ANALYSIS.md) |
+| 真实 D | v2 的 722 道相同题与 job 915300 的 78 道 delta 题组成 800 题 / 6,400 trajectories；6,200 到达 terminal，153 truncated、47 invalid | [v2 原始运行](../../new/strategic_slices_terminal_d_20261005/README.md)、[v4 delta](../../new/strategic_slices_terminal_d_v4_20261006/README.md) |
+| 逐步 native 审核 | 全部 6,400 trajectories 重放；每个受控 decision 核对 posterior/Q/action gap；9,929 calls 通过同题面 Q 一致性审核 | [完整审核与选择报告](TERMINAL_D_V4_ANALYSIS.md) |
+| 首版训练选集 | 100 道 train 题，来自 56 parents / 37 families；k=1/2/3 为 52/29/19；双人/三人及 proposal/response 均为 54/46 | [选集与打包说明](TERMINAL_D.md) |
+| 在线训练、验证与最终测试 | 数据加载、k-step rollout、逐步评分、sampler resume、best/final 保留与预算完成后的自动 test 均已接入 | [训练合同与手动命令](TERMINAL_TRAINING.md) |
+| 历史 v3 本地验收 | 29 项回归通过；真实数据 mock 一次 update 为 4 题 / 32 trajectories / 60 controlled calls，下一批恢复结果一致 | `new/local_data/terminal_training_mock_v3_fixed_batch/CHECK.json` |
+| GPU smoke/resume | 单 H100-96、TP=1；jobs 915648 / 915674 均退出 0，真实 optimizer 更新、权重同步、checkpoint 与 native resume 通过 | [GPU 验收记录](../../new/terminal_training_single_h10096_smoke_20261006/README.md) |
+| 部分预算训练与评测 | job 915731 暂停于 550 updates / 3,500,783 tokens；best 为 checkpoint-379，latest 为 checkpoint-549；两者已导出并评测 frozen terminal test 与全部 24 个 CalBench cases | [原始训练、评测和审核](../../new/terminal_hf_test_calbench_20261008/README.md) |
+
+选集保留全部 12 道强 acquisition windows，以及 9 组完整 train entry-answer
+对照（27 道题）。其中 88 题观察到 decision-gap 或完成状态差异；12 题为
+完整信息对照保留，在这八次抽样中未观察到同题差异。不要求每个 parent 各选一题，
+不使用 validation/test 的结果选择 train 题。
+
+### 当前训练配置
+
+新运行 contract：`terminal-step-binary-shared-reset-loo-fixed-questions-v4`；已归档的 job 915731 使用 v3。
+
+- 模型：Qwen3-4B-Instruct-2507；新默认每 update **20 道题 × 8 trajectories**，并发容量 32。
+- 同组共享 entrance、hidden world 和 focal；model/reference 随机流分别独立。
+- 每个受控 decision 的 oracle-correctness reward 为 0/1，所有最优平局动作均接受，容差 `1e-7`；其他 replicas 的平均得分作 baseline，不做 std normalization。
+- 截断/非法调用得 0，并仅在失败 call 上加独立 **−0.2 protocol advantage**；保留有效 prefix 的局部得分，失败 terminal utility 为 null，无 retry。
+- 训练/validation 输出上限 **1024 tokens**，context 16,384；历史 D 使用 4096 输出 tokens 和独立 resets，不能直接当作共享-world训练组的活跃率。
+- 总预算 **6,000,000 response tokens**，完成当前 update 后停止，可超出目标；validation/test/oracle 成本另计。
+- 默认每 500K tokens 与正常结束时 validation；恢复保存每 1M tokens，best/结束/暂停立即保存。best 按整段成功率，平局选较晚评估点，保留 best + latest/final 并去重。
+- 预算正常完成后仅用 **final** 自动测试 200 slices / 25 parents，默认 8 repeats；预算未完成或暂停不触发，test 不选择 checkpoint。
+
+这里训练的是在线局部决策正确率 surrogate；terminal utility 和 whole-window
+success 是评价指标。当前实现针对选定的 slice 训练，等 token 的正式 SP 对照与
+学习效率结论仍待落实及实跑。
+
+### 最新训练结果与解释边界
+
+GPU smoke 已验证 native optimizer/RNG/sampler 恢复。首轮 device peak 约 87.38
+GiB；实际序列较短，16K 是配置容量，最长序列显存尚未验证。29/30 项相关 CPU
+检查通过，一项历史 social-mixed prompt-source hash 检查失败，详见 smoke 原记录。
+
+部分预算训练的 best/latest 已分别执行独立 HF 评测，每个模型 200 test slices ×
+8 个实例和 696 局完整游戏，另有全部 24 个 CalBench cases。终局 slice 整段
+成功率为 **63.6875% / 63.1875%**；25-parent paired bootstrap 的 best-minus-latest
+95% CI 为 **[−6.8125, 8.0625] 个百分点**，不能由均值近似判定行为相同或谁更优。
+原 Validator 重放核对两者 4,349 / 4,418 个请求，reward、score 和游戏结果匹配。
+
+仍待完成：
+
+1. 6M 预算尚未达到；目前保留的是 best/latest，不是正常预算完成后的 final。当前评测为独立导出评测，不能写成自动 final-test 已完成。
+2. 共享-world训练实际活跃组及学习曲线已审核，见本页顶部链接；下一步验收新批次、改善首步信息学习并落实等 token SP 对照。现有 best/latest 结果本身不证明训练优于 base 或 slices 优于 SP。
+3. held-out 信息覆盖和长程迁移仍不足：当前 validation/test 的信息正值入口字段均为零，强 acquisition family 仅在 train；历史 D 已查看 test，不能称为完全盲测。
+
+强 acquisition 的 96 条历史轨迹中，80 次调查只有 9 次目标选择最优；71 次
+次优调查询问的偏好在当前题面下已经可知。真正遇到 answer-dependent 最优集合
+变化的 decision 只有 6 个。它们支持进一步训练与诊断，尚不能证明模型已学会
+调查或使用答案。八次独立-reset D 的分离度也不等于当前训练组的学习信号。
+
+### 仓库内复现入口
+
+- 主导航：[README.md](README.md)；D 与数据包：[TERMINAL_D.md](TERMINAL_D.md)；训练：[TERMINAL_TRAINING.md](TERMINAL_TRAINING.md)。
+- 真实模型输出归档：`new/strategic_slices_terminal_d_20261005/` 与 `new/strategic_slices_terminal_d_v4_20261006/`。
+- 可通过 Git 传输的数据包：[selected-v4 archive](strategic-slices-terminal-selected-v4.tar.gz) 及 [SHA256 sidecar](strategic-slices-terminal-selected-v4.tar.gz.json)。它包含 pool、selection 和分析，不含模型权重或原始模型输出归档；包内代码是当时快照，训练应使用当前 repo。
+- 解包数据、原始离线分析与 mock 在被 Git 忽略的 `new/local_data/`。冻结 manifest 中 `D_measured=false` 等是生成时的历史字段，后续 D/selection 进度以运行、分析及选择的完成记录为准，不改写旧 manifest。
+
+```bash
+# 使用当前 repo 与已解包的 v4 数据；仅离线检查，不启动 GPU。
+python -m training.strategic_slices.train_terminal --check-only
+```
+
+本次 2026-10-08 核对重新执行该命令，退出码为 0：100 train slices / 56
+parents、96 validation slices，final test 为 200 slices / 25 parents。
+pool+selection 训练身份 SHA256 为
+`6080bc30f1a70b995bb9d7bfcdc3ed633bd0ff64bfd759691cf758f4533c4379`。
+输出明确记录 `model_path_checked=false`、`gpu_started=false`、`submitted=false`；
+这是离线数据与配置校验，不增加 mock、GPU 或模型学习的通过项。
 
 ## 2026-10-06: accepted binary training pipeline
 
@@ -73,7 +239,7 @@ output budget. The original v2 default config and archives remain unchanged;
 use the new `strategic-slices-terminal-D-v4-refill32.tar.gz` transfer bundle and
 the manual commands in [TERMINAL_D.md](TERMINAL_D.md). No job is submitted.
 
-## Current work: game mechanism and information acquisition
+## Historical work: game mechanism and information acquisition (2026-10-05)
 
 The user supplied the completed v2 Qwen D results on 2026-10-05: 800 questions,
 eight trajectories per question. Evidence is in

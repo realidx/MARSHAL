@@ -61,6 +61,25 @@ class FinalTestTests(unittest.TestCase):
         validation=Validator(self.data,mock_generate,self.cfg).run()
         self.assertFalse(validation['protocol']['test_loaded_for_scoring'])
         self.assertEqual({r['parent_id'] for r in validation['slice_games']},{'validation'})
+        metrics=a['slices']['decision_metrics']
+        self.assertEqual(metrics['all']['calls'],len(a['slice_calls']))
+        self.assertEqual(metrics['root']['calls'],a['slices']['episodes'])
+        self.assertAlmostEqual(metrics['all']['mean_regret_legal'],
+            sum(c['oracle_step']['gap'] for c in a['slice_calls'])/len(a['slice_calls']))
+
+    def test_all_failed_evaluation_keeps_failure_regret_and_root_denominator(self):
+        def invalid(requests):
+            outs=mock_generate(requests)
+            for out in outs:out['completion']['raw_message']={}
+            return outs
+        report=Validator(self.data,invalid,self.cfg,split='test').run()
+        metrics=report['slices']['decision_metrics']
+        self.assertEqual(report['slices']['per_decision_accuracy'],0.)
+        self.assertEqual(metrics['all']['legal_calls'],0)
+        self.assertIsNone(metrics['all']['mean_regret_legal'])
+        self.assertEqual(metrics['root']['calls'],report['slices']['episodes'])
+        spans=[max(c['oracle_step']['Q'])-min(c['oracle_step']['Q']) for c in report['slice_calls']]
+        self.assertAlmostEqual(metrics['all']['mean_regret_with_failure_worst_action'],sum(spans)/len(spans))
 
     def test_final_checkpoint_sync_completion_and_no_duplicate_scoring(self):
         with tempfile.TemporaryDirectory() as root:

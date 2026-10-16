@@ -295,6 +295,12 @@ class SocialPipeline(BasePipeline):
             finally:
                 self.actor_infer.offload_states(blocking=True)
 
+    def validation_due(self, step, consumed):
+        return (step+1)%self.pipeline_config.eval_steps==0
+
+    def checkpoint_due(self, step, consumed):
+        return (step+1)%self.pipeline_config.save_steps==0
+
     @torch.no_grad()
     def run(self):
         cfg=self.pipeline_config
@@ -327,6 +333,7 @@ class SocialPipeline(BasePipeline):
                 if self.options.get('recipe') == 'strategic_slices':
                     token_target = min(token_target, self.options['total_tokens'] - consumed)
                 rows,units,games,metrics=self.collector.collect(step,self.options['arm'],token_target)
+                metrics.update(getattr(self.collector,'last_timing',{}))
                 for name, records in (('calls',rows),('units',units),('games',games)):
                     folder=self.root/name;folder.mkdir(exist_ok=True)
                     with (folder/f'step-{step}.jsonl').open('w') as f:
@@ -387,13 +394,13 @@ class SocialPipeline(BasePipeline):
             pause_after=self.options.get('pause_after_updates')
             early_gate_reached=pause_after is not None and step+1>=pause_after
             force=consumed>=self.options['total_tokens'] or self.stop_requested or early_gate_reached or step+1==cfg.max_steps
-            evaluate=(step+1)%cfg.eval_steps==0 or consumed>=self.options['total_tokens'] or step+1==cfg.max_steps
+            evaluate=self.validation_due(step,consumed) or consumed>=self.options['total_tokens'] or step+1==cfg.max_steps
             with (self.root/'metrics.jsonl').open('a') as f:f.write(json.dumps(metrics)+'\n')
             self.tracker.log(metrics,step=step+1)
             if evaluate and not self.stop_requested:
                 self.model_update(step+1)
                 self.validate(step,consumed)
-            if force or (step+1)%cfg.save_steps==0:self.save(step,force=force)
+            if force or self.checkpoint_due(step,consumed):self.save(step,force=force)
             if self.stop_requested:break
             if early_gate_reached:break
         # A time-limit stop while validating also needs the latest optimizer state.

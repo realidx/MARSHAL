@@ -5,6 +5,7 @@ Decision gaps condition on visible information and fixed-reference action reach;
 controlled actions are interventions, never evidence about the hidden world.
 """
 import ast
+from copy import deepcopy
 from collections import Counter, defaultdict
 import hashlib
 import json
@@ -17,6 +18,7 @@ from training.b_sft.social_private_teacher import observed_slots
 from .common import digest, file_hash, seed_for, stable, write_json, write_rows
 from .freeze import atomic_json
 from .terminal_d import TerminalRollout, summarize_slice
+from .terminal_candidates import sample_member_world
 from .values import extreme_value
 
 EPS = 1e-7
@@ -160,7 +162,24 @@ def visible_posterior(tree, node, ego, reach, world_index):
 
 
 def audit_game(tree, row, game, cfg, cache):
-    job = TerminalRollout(tree, row, game['replica'], cfg['seed'])
+    node_training = 'selected_nodes' in game
+    if node_training:
+        # Reconstruct the entrance from the collection seed, rather than trusting
+        # logged hidden-world indices or the sampling-only forced belief.
+        cursor=game['cursor']
+        reset_seed=seed_for(cfg['seed'],'terminal-train-reset',cursor)
+        require(reset_seed==game['reset_seed'],'Training reset seed differs')
+        mi,wi=sample_member_world(row,np.random.default_rng(reset_seed))
+        original=row['members'][mi];forced=deepcopy(row);member=deepcopy(original)
+        weights=[0.]*len(member['world_weights']);weights[wi]=1.
+        member.update(probability=1.,world_weights=weights,joint_world_masses=weights)
+        forced.update(members=[member],V_star=member['V_star'],V_min=member['V_min'],C_span=member['C_span'])
+        job=TerminalRollout(tree,forced,0,seed_for(cfg['seed'],'terminal-train-chain',cursor))
+        job.row=row;job.member=original;job.member_index=mi
+        require(job.seed==game['seed'],'Training reference stream differs')
+        require(len(game['selected_nodes'])==len(game['calls']),'Training chain length differs')
+    else:
+        job = TerminalRollout(tree, row, game['replica'], cfg['seed'])
     require(job.world_index == game['world_index'] and job.member_index == game['member_index'], 'Reset mismatch')
     reach = np.asarray(job.member['world_weights'], dtype=float).copy()
     reports, query_slot = [], None
@@ -171,6 +190,11 @@ def audit_game(tree, row, game, cfg, cache):
         return np.asarray(cache[key])
     for number, call in enumerate(game['calls']):
         req = job.request(cfg)
+        if node_training:
+            selected=game['selected_nodes'][number]
+            chosen=int(np.random.default_rng(seed_for(cfg['seed'],'terminal-train-advance',cursor,number)).integers(cfg['replicas']))
+            require(selected['replica']==chosen and call['replica']==chosen,'Training continuation is not the uniform original sample')
+            req['seed']=seed_for(cfg['seed'],'terminal-train-candidate',cursor,number,chosen)
         require(req == call['request'], 'Replayed visible request or seed differs')
         require(job.index == call['node'], 'Recorded call node differs')
         weights = visible_posterior(tree, job.index, row['ego'], reach, job.world_index)
@@ -179,6 +203,19 @@ def audit_game(tree, row, game, cfg, cache):
         ai = call['action_index']
         valid = call['protocol_status'] == 'ok'
         gap = max(0., float(q.max()-q[ai])) if valid else None
+        if node_training:
+            detail=call['oracle_step']
+            require(np.allclose(detail['Q'],q,atol=EPS,rtol=0),'Training Q differs from independent oracle')
+            require(np.allclose(detail['posterior'],weights,atol=1e-10,rtol=0),'Training posterior differs')
+            reward=float(q[ai]-q.max()) if valid else float(q.min()-q.max())
+            require(abs(call['task_reward']-reward)<=EPS,'Training regret reward differs')
+            require(call['binary_reward']==int(valid and gap<=EPS),'Training strict correctness differs')
+            require(call['remaining_k']==remaining and call['selected_for_continuation'],'Training selected context differs')
+            group=f'node:{cursor}:{row["id"]}:{number}'
+            require(call['group']==selected['group']==group,'Training selected group differs')
+            require(call['scoring_sha256']==digest(dict(prompt=call['prompt_sha256'],reference_id=row['reference_id'],
+                node=job.index,player=job.ego,remaining_k=remaining,posterior=detail['posterior'],Q=detail['Q'])),
+                'Training scoring identity differs')
         if number == 0 and valid:
             require(abs(gap-call['first_action_oracle_gap']) < EPS, 'Root gap differs')
         action = tree.entries[job.index].actions[ai].to_dict() if valid else None
@@ -227,7 +264,9 @@ def audit_game(tree, row, game, cfg, cache):
         else:
             require(np.allclose(replay[key], game[key], atol=1e-12, rtol=0), 'Native utility mismatch')
         replay[key] = game[key]
-    require(replay == game, 'Native replay differs from saved trajectory')
+    expected={key:game[key] for key in replay} if node_training else game
+    require(replay == expected, 'Native replay differs from saved trajectory: '+
+        ', '.join(k for k in replay if replay[k]!=expected.get(k)))
     complete = game['status'] == 'terminal'
     return dict(slice_id=row['id'], replica=game['replica'], status=game['status'],
         decisions=reports, decision_gap_sum=sum(r['gap'] for r in reports if r['gap'] is not None) if complete else None,

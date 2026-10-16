@@ -2,7 +2,13 @@
 
 ## 当前工作
 
-- [直接行动 slices–SP 与当前 oracle 试验](../examples/strategic_slices/README.md)：`bounded-next-own-v1` 已冻结 100/20/40 个共享父游戏、659/128/248 个 slices，58 个 family 分离，正 S 父游戏 12/2/4。首版三人支持固定为 3 个世界，双人最多 27 个世界；训练入口与 CPU/mock 验收通过，真实模型信号和 GPU 更新待执行。
+- [2026-10-16 v5训练准备与遗漏](terminal_node_grpo_readiness_20261016/README.md)：同节点8采样、连续regret、节点GRPO已实现；CPU验收，GPU smoke待执行。当前启动命令见[训练入口](../examples/strategic_slices/TERMINAL_TRAINING.md)。
+
+- [2026-10-16训练protocol文献核对](../examples/strategic_slices/TRAINING_PROTOCOL_REVIEW_20261016.md)：原论文的reward、advantage与归一化选择；连续反馈的最优解/KL区别，以及先验证binary同state基线的建议。研究草案，不是新训练结果。
+
+- [Strategic slices 当前进度](../examples/strategic_slices/PROGRESS.md)：terminal v4 已完成真实 D（6,400 trajectories、6,200 terminal）及 100 题选择（56 parents / 37 families）。单 H100-96 smoke/resume 已通过；训练暂停于 550 updates / 3,500,783 tokens，尚未完成 6M。best/latest 的 terminal 与全部 24-case CalBench 导出评测及原始轨迹已归档，见 [执行与审核](terminal_hf_test_calbench_20261008/README.md)。
+- [数据与训练主导航](../examples/strategic_slices/README.md)：当前 terminal reference、D、选集、训练合同及历史 bounded/terminal-reward 方案；分别见 [D 与选集](../examples/strategic_slices/TERMINAL_D.md)、[训练合同](../examples/strategic_slices/TERMINAL_TRAINING.md)。
+- [550 次更新与全部验证曲线审核](terminal_training_review_20261008/README.md)：中期输出失稳、后期验证下降与调查入口信号不足；完整统计/曲线/复现脚本，以及新 v4 的 20 题 batch、500K 验证和 1M 恢复保存修订。
 - [Strategic game slices checkpoint](strategic_game_slices_checkpoint_20261001.md)：当前讨论的定义、pilot 证据与下一步实验提案；新对话从这里开始。
 - [双人 BENAC slice pilot](benac_slice_pilot/README.md)：C/S 计算、连续窗口与模型 D 探测流程。
 - [井字棋 slice pilot](tictactoe_slice_pilot/README.md)：早期概念与初始模型诊断，不是最终游戏。

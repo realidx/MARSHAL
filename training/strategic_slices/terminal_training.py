@@ -1,31 +1,36 @@
 """CPU-safe online training contract for selected terminal slices.
 
-Binary correctness at each controlled decision; shared reset per replica group;
-leave-one-trajectory-out baseline. Oracle values never enter model requests.
+Same-context candidate groups, continuous oracle regret and node-local GRPO.
+Only a uniformly selected original candidate advances the native environment.
 """
 from copy import deepcopy
 import json
 import math
+import time
 from pathlib import Path
 
 import numpy as np
-from .common import digest, file_hash, seed_for
+from .common import decode, digest, file_hash, seed_for
 from .terminal_analysis import visible_posterior
 from .terminal_candidates import sample_member_world
 from .terminal_d import TerminalRollout, load_dataset
 from .values import extreme_value
 
-VERSION='terminal-step-binary-shared-reset-loo-fixed-questions-v3'
+VERSION='terminal-node-regret-grpo-v5'
 PROTOCOL_PENALTY=0.2
-CONTRACT=dict(version=VERSION,reward='Per-controlled-decision oracle correctness, 0/1; all tied optimal actions accepted.',
-    epsilon=1e-7,baseline='Mean trajectory-average step reward of the OTHER replicas in this reset group; no std normalization.',
-    weighting='Each trajectory equal weight; average over its actually generated decisions and response tokens.',
-    failure='Failed call binary reward=0 and separate protocol advantage=-0.2; stop episode; preserve earlier local rewards; no retry.',
+ORACLE_EPSILON=1e-7
+STD_EPSILON=1e-8
+CONTRACT=dict(version=VERSION,
+    reward='Legal Q-max(Q); invalid/truncated min(Q)-max(Q), over ALL legal actions, native utility scale.',
+    epsilon=ORACLE_EPSILON,std_epsilon=STD_EPSILON,std_correction=1,
+    baseline='Within the SAME actual node: (reward-mean)/(sample_std+1e-8); range <= oracle epsilon has zero task advantage.',
+    weighting='Node groups equal; candidates equal; response tokens averaged. No inverse chain-length weight.',
+    failure='Separate protocol advantage=-0.2 on failed calls only; selected failure terminates without retry.',
     protocol_penalty=PROTOCOL_PENALTY,
-    batching='Fixed question groups per optimizer update; token budget only stops training after a complete update.',
-    reset='One entrance, hidden world and focal player per group; independent model/reference RNG streams per replica.',
-    continuation='Same frozen initial terminal oracle for partners and focal after k; early native terminal ends episode.',
-    objective='On-policy local decision correctness, not an equivalent estimator of terminal-utility policy gradient.',
+    batching='Target actual node groups, including zero-signal groups; stop admissions at target and finish admitted chains; one update, one pass.',
+    reset='One entrance/world/focal per chain; all candidates at a node share prompt, posterior and remaining k.',
+    continuation='Uniform original candidate, duplicates retained, score-independent; saved terminal reference advances partners and focal after k.',
+    objective='On-policy sampled-context oracle action-value surrogate; not a terminal-return policy-gradient estimator.',
     infrastructure='Transport, context, missing behavior evidence and oracle failures abort collection without committing cursor.')
 
 
@@ -97,16 +102,36 @@ class StepRollout(TerminalRollout):
         ensure(self.reach[self.world_index]>0,'Impossible saved-reference continuation')
 
 
-def binary_advantages(rewards):
-    """Other trajectories provide an action-independent scalar baseline.
+def group_advantages(rewards):
+    """Sample std as in the original GRPO implementation; oracle ties stay zero."""
+    values=np.asarray(rewards,dtype=float)
+    ensure(values.ndim==1 and len(values)>=2 and np.isfinite(values).all(),'Need >=2 finite node rewards')
+    mean=float(values.mean());std=float(values.std(ddof=1))
+    advantages=np.zeros_like(values) if np.ptp(values)<=ORACLE_EPSILON else (values-mean)/(std+STD_EPSILON)
+    return advantages.tolist(),mean,std
 
-    Each reward is scored locally, so valid prefixes of failed trajectories
-    remain meaningful. No padding rewards for unvisited decisions are invented.
-    """
-    ensure(len(rewards)>=2 and all(rs and all(r in (0,1) for r in rs) for rs in rewards),'Need >=2 nonempty binary trajectories')
-    means=[sum(rs)/len(rs) for rs in rewards]
-    baselines=[sum(means[j] for j in range(len(means)) if j!=i)/(len(means)-1) for i in range(len(means))]
-    return [[r-b for r in rs] for rs,b in zip(rewards,baselines)],baselines
+
+def check_output(out,cfg):
+    if out.get('completion',{}).get('status')=='infrastructure_failure':
+        raise RuntimeError('Infrastructure failure is not a model reward')
+    ids=out.get('response_ids');logps=out.get('behavior_log_probs')
+    ensure(bool(out.get('prompt_ids')) and bool(ids) and logps is not None and len(ids)==len(logps)
+        and len(ids)<=cfg['max_tokens'] and all(math.isfinite(p) for p in logps),'Missing/invalid behavior token evidence')
+
+
+def score_response(job,out,req,q,posterior):
+    """Score without executing, changing posterior, or sampling a continuation."""
+    check_output(out,dict(max_tokens=req['max_tokens']))
+    ai,status=decode(out,job.tree.rules.actions(job.node))
+    valid=status=='ok';gap=float(q.max()-q[ai]) if valid else None
+    reward=float(q[ai]-q.max()) if valid else float(q.min()-q.max())
+    detail=dict(reward=int(valid and gap<=ORACLE_EPSILON),gap=gap,Q=q.tolist(),posterior=posterior.tolist(),
+        optimal_indices=np.flatnonzero(q.max()-q<=ORACLE_EPSILON).tolist())
+    return dict(out,request=req,node=job.index,action_index=ai,protocol_status=status,
+        prompt_sha256=digest({k:req[k] for k in ('messages','tools')}),
+        first_action_oracle_gap=float(job.member['V_star']-job.member['root_Q'][ai]) if not job.calls and valid else None,
+        binary_reward=detail['reward'],
+        oracle_step=detail,task_reward=reward,valid=valid,protocol_failure=None if valid else status)
 
 
 def execute(jobs,generate,cfg,concurrency):
@@ -119,83 +144,127 @@ def execute(jobs,generate,cfg,concurrency):
             outputs=generate(requests)
             ensure(len(outputs)==len(active),'Missing native generation output')
             for job,out,req in zip(active,outputs,requests):
-                ids=out.get('response_ids');logps=out.get('behavior_log_probs')
-                ensure(bool(out.get('prompt_ids')) and bool(ids) and logps is not None and len(ids)==len(logps)
-                    and len(ids)<=cfg['max_tokens'] and all(math.isfinite(p) for p in logps),'Missing/invalid behavior token evidence')
+                check_output(out,cfg)
                 job.accept(out,req)
 
 
 class Collector:
-    def __init__(self,data,generate,seed=42,replicas=8,concurrency=32,max_tokens=1024,context=16384,questions_per_update=4):
+    def __init__(self,data,generate,seed=42,replicas=8,concurrency=32,max_tokens=1024,context=16384,node_groups_per_update=20):
         ensure(replicas>=2 and concurrency>=1 and 0<max_tokens<context,'Invalid training limits')
-        ensure(type(questions_per_update) is int and 1<=questions_per_update<=len(data.train),'Invalid questions per update')
-        self.questions_per_update=questions_per_update
+        ensure(type(node_groups_per_update) is int and node_groups_per_update>=1,'Invalid node groups per update')
+        self.node_groups_per_update=node_groups_per_update
         self.dataset,self.generate=data,generate
         self.replicas,self.concurrency=replicas,concurrency
         self.cfg=dict(seed=seed,replicas=replicas,workers=concurrency,max_tokens=max_tokens,context=context,
             temperature=1.,top_p=1.,top_k=-1,repetition_penalty=1.)
         self.state=dict(version=VERSION,dataset_sha256=data.sha,seed=seed,replicas=replicas,
-            questions_per_update=questions_per_update,
+            node_groups_per_update=node_groups_per_update,
             config=self.cfg,contract=CONTRACT,cursor=0,consumed=0,exposure={},step=0)
     def restore(self,state):
-        for key in ('version','dataset_sha256','seed','replicas','questions_per_update','config','contract'):
-            ensure(state[key]==self.state[key],'Collector resume contract changed: '+key)
+        for key in ('version','dataset_sha256','seed','replicas','node_groups_per_update','config','contract'):
+            ensure(state.get(key)==self.state[key],'Collector resume contract changed: '+key)
         self.state=deepcopy(state)
     def collect(self,step,arm,token_target=1,validation=False):
-        # The shared driver passes a remaining token budget; this collector
-        # always finishes its fixed number of question groups before updating.
         ensure(arm=='slices' and not validation and token_target>0 and step==self.state['step'],'Invalid terminal collection request')
-        working=deepcopy(self.state);rows=[];units=[];games=[];tokens=0;group_count=0;active_groups=0
-        task_active_groups=protocol_active_groups=0
-        while group_count<self.questions_per_update:
-            specs=[];jobs=[]
-            # Fill up to the native concurrency with complete shared-reset groups.
-            for _ in range(min(max(1,self.concurrency//self.replicas),self.questions_per_update-group_count)):
+        started=time.perf_counter();oracle_seconds=generation_seconds=0.
+        working=deepcopy(self.state);rows=[];units=[];games=[];active=[]
+        # Reserve every admitted chain's remaining k. Even if all survive, total
+        # groups overshoot by at most max(k)-1, independently of concurrency.
+        capacity=max(1,self.concurrency//self.replicas)
+        while len(units)<self.node_groups_per_update or active:
+            reserved=len(units)+sum(j.row['k']-j.controlled for _,j,_,_ in active)
+            while len(active)<capacity and reserved<self.node_groups_per_update:
                 cursor=working['cursor'];cycle,offset=divmod(cursor,len(self.dataset.train))
                 order=np.random.default_rng(seed_for(self.cfg['seed'],'terminal-train-order',cycle)).permutation(len(self.dataset.train))
                 row=self.dataset.train[int(order[offset])];tree,cache=self.dataset.reference(row)
                 reset_seed=seed_for(self.cfg['seed'],'terminal-train-reset',cursor)
                 reset=sample_member_world(row,np.random.default_rng(reset_seed))
-                group_seed=seed_for(self.cfg['seed'],'terminal-train-rollout',cursor)
-                group=[StepRollout(tree,row,r,group_seed,reset,cache=cache) for r in range(self.replicas)]
-                specs.append((cursor,row,group,reset_seed));jobs.extend(group);working['cursor']+=1
-            execute(jobs,self.generate,self.cfg,self.concurrency)
-            for cursor,row,group,reset_seed in specs:
-                group_id=f'terminal:{cursor}:{row["id"]}'
-                advantages,baselines=binary_advantages([j.step_rewards for j in group])
-                task_active=any(abs(v)>1e-12 for vs in advantages for v in vs)
-                protocol_active=any(j.status in ('truncated','invalid_action') for j in group)
-                task_active_groups+=int(task_active);protocol_active_groups+=int(protocol_active)
-                active_groups+=int(task_active or protocol_active);group_count+=1
-                for replica,(job,advs,baseline) in enumerate(zip(group,advantages,baselines)):
-                    unit=f'{group_id}:r{replica}'
-                    units.append(dict(unit=unit,group=group_id,parent_id=row['parent_id'],slice_id=row['id'],
-                        player=row['ego'],replica=replica,utility=job.utility[row['ego']] if job.utility is not None else None,
-                        status=job.status,step_rewards=job.step_rewards,baseline=baseline))
-                    for call,detail,adv in zip(job.calls,job.step_details,advs):
-                        protocol=-PROTOCOL_PENALTY if call['protocol_status'] in ('truncated','invalid_action') else 0.
-                        rows.append(dict(call,kind='slices',task_id=row['id'],parent_id=row['parent_id'],
-                            group=group_id,unit=unit,replica=replica,player=row['ego'],
-                            binary_reward=detail['reward'],oracle_step=detail,baseline=baseline,
-                            valid=call['protocol_status']=='ok',protocol_failure=None if call['protocol_status']=='ok' else call['protocol_status'],
-                            task_advantage=adv,protocol_advantage=protocol,advantage=adv+protocol,task_denominator=0.,
-                            trajectory_length=len(job.calls)))
-                    record=job.record();record.update(group=group_id,reset_seed=reset_seed,step_rewards=job.step_rewards)
-                    record.pop('calls');games.append(record)
-                    tokens+=sum(len(c['response_ids']) for c in job.calls)
-                exposure=working['exposure'].setdefault(row['id'],dict(groups=0,trajectories=0,completed=0))
-                exposure['groups']+=1;exposure['trajectories']+=len(group);exposure['completed']+=sum(j.status=='terminal' for j in group)
-        for row in rows:
-            weight=len(rows)/(len(units)*row['trajectory_length'])
-            row.update(loss_weight=weight,task_weight=weight,protocol_weight=weight,kl_weight=weight)
+                job=StepRollout(tree,row,0,seed_for(self.cfg['seed'],'terminal-train-chain',cursor),reset,cache=cache)
+                active.append((cursor,job,reset_seed,[]));working['cursor']+=1;reserved+=row['k']
+            requests=[];contexts=[]
+            for cursor,job,reset_seed,history in active:
+                depth=len(job.calls);before=time.perf_counter();q,posterior=job.action_values()
+                oracle_seconds+=time.perf_counter()-before
+                ensure(len(q)>0 and np.isfinite(q).all(),'Invalid oracle action values')
+                group=f'node:{cursor}:{job.row["id"]}:{depth}'
+                req=job.request(self.cfg)
+                candidates=[dict(req,seed=seed_for(self.cfg['seed'],'terminal-train-candidate',cursor,depth,r)) for r in range(self.replicas)]
+                contexts.append((cursor,job,reset_seed,history,group,q,posterior,candidates))
+                requests.extend(candidates)
+            outputs=[]
+            for offset in range(0,len(requests),self.concurrency):
+                chunk=requests[offset:offset+self.concurrency];before=time.perf_counter();received=self.generate(chunk)
+                generation_seconds+=time.perf_counter()-before
+                ensure(len(received)==len(chunk),'Missing native generation output')
+                for out in received:check_output(out,self.cfg)
+                outputs.extend(received)
+            still_active=[]
+            for index,(cursor,job,reset_seed,history,group,q,posterior,candidates) in enumerate(contexts):
+                row=job.row;depth=len(job.calls);chain=f'chain:{cursor}:{row["id"]}'
+                outs=outputs[index*self.replicas:(index+1)*self.replicas]
+                calls=[score_response(job,out,req,q,posterior) for out,req in zip(outs,candidates)]
+                ensure(len({c['prompt_sha256'] for c in calls})==1,'Node candidates have different prompts')
+                ensure(all(c['prompt_ids']==calls[0]['prompt_ids'] for c in calls),'Node candidate prompt tokens differ')
+                advs,mean,std=group_advantages([c['task_reward'] for c in calls])
+                # A separate, deterministic RNG, independent of rewards and model
+                # sampling: duplicates have their original sampling multiplicity.
+                chosen=int(np.random.default_rng(seed_for(self.cfg['seed'],'terminal-train-advance',cursor,depth)).integers(self.replicas))
+                scoring_sha=digest(dict(prompt=calls[0]['prompt_sha256'],reference_id=row['reference_id'],
+                    node=job.index,player=job.ego,remaining_k=row['k']-depth,posterior=posterior.tolist(),Q=q.tolist()))
+                for replica,(call,adv) in enumerate(zip(calls,advs)):
+                    protocol=0. if call['valid'] else -PROTOCOL_PENALTY
+                    call.update(kind='slices',task_id=row['id'],parent_id=row['parent_id'],group=group,chain=chain,
+                        cursor=cursor,unit=f'{group}:r{replica}',replica=replica,player=row['ego'],decision_index=depth,
+                        remaining_k=row['k']-depth,scoring_sha256=scoring_sha,selected_for_continuation=replica==chosen,
+                        reward_mean=mean,reward_std=std,task_advantage=adv,protocol_advantage=protocol,advantage=adv+protocol,
+                        task_denominator=0.,loss_weight=1.,task_weight=1.,protocol_weight=1.,kl_weight=1.)
+                    rows.append(call)
+                units.append(dict(group=group,chain=chain,cursor=cursor,decision_index=depth,slice_id=row['id'],parent_id=row['parent_id'],
+                    remaining_k=row['k']-depth,selected_replica=chosen,prompt_sha256=calls[0]['prompt_sha256'],scoring_sha256=scoring_sha,
+                    task_rewards=[c['task_reward'] for c in calls],reward_mean=mean,reward_std=std,
+                    task_active=any(a!=0 for a in advs),protocol_active=any(not c['valid'] for c in calls),
+                    binary_correct=sum(c['binary_reward'] for c in calls),
+                    unique_legal_actions=len({c['action_index'] for c in calls if c['valid']}),
+                    sampled_reward_range=float(np.ptp([c['task_reward'] for c in calls])),oracle_value_span=float(np.ptp(q))))
+                history.append(dict(group=group,replica=chosen,task_reward=calls[chosen]['task_reward']))
+                job.accept(outs[chosen],candidates[chosen])
+                exposure=working['exposure'].setdefault(row['id'],dict(entries=0,node_groups=0,responses=0,completed=0))
+                exposure['node_groups']+=1;exposure['responses']+=self.replicas
+                if job.status=='running':still_active.append((cursor,job,reset_seed,history))
+                else:
+                    record=job.record();record.pop('calls')
+                    record.update(chain=chain,group=chain,cursor=cursor,reset_seed=reset_seed,selected_nodes=history,step_rewards=job.step_rewards)
+                    games.append(record);exposure['entries']+=1;exposure['completed']+=int(job.status=='terminal')
+            active=still_active
+        rows.sort(key=lambda r:(r['cursor'],r['decision_index'],r['replica']))
+        units.sort(key=lambda u:(u['cursor'],u['decision_index']));games.sort(key=lambda g:g['cursor'])
+        tokens=sum(len(r['response_ids']) for r in rows)
+        roots=[r for r in rows if r['decision_index']==0]
+        root_units=[u for u in units if u['decision_index']==0]
+        info_ids={r['id'] for r in self.dataset.train if r['information_positive']}
+        information=[r for r in roots if r['task_id'] in info_ids]
         working['consumed']+=tokens;working['step']+=1;self.state=working
-        return rows,units,games,dict(generated_tokens=tokens,rows=len(rows),groups=group_count,active_groups=active_groups,
-            task_active_groups=task_active_groups,protocol_active_groups=protocol_active_groups,
+        # Diagnostic wall times are deliberately outside deterministic sampler
+        # state/results, so they cannot affect resume or candidate selection.
+        self.last_timing=dict(collection_seconds=time.perf_counter()-started,
+            oracle_action_value_seconds=oracle_seconds,generation_seconds=generation_seconds)
+        return rows,units,games,dict(generated_tokens=tokens,rows=len(rows),groups=len(units),entry_chains=len(games),
+            target_node_groups=self.node_groups_per_update,node_group_overshoot=len(units)-self.node_groups_per_update,
+            active_groups=sum(u['task_active'] or u['protocol_active'] for u in units),
+            task_active_groups=sum(u['task_active'] for u in units),protocol_active_groups=sum(u['protocol_active'] for u in units),
+            zero_task_groups=sum(not u['task_active'] for u in units),
+            single_legal_action_groups=sum(u['unique_legal_actions']==1 for u in units),
+            flat_oracle_groups=sum(u['oracle_value_span']<=ORACLE_EPSILON for u in units),
+            root_correct_calls=sum(r['binary_reward'] for r in roots),root_decision_calls=len(roots),
+            root_reward_contrast_groups=sum(0<u['binary_correct']<self.replicas for u in root_units),
+            information_positive_root_calls=len(information),information_positive_root_correct_calls=sum(r['binary_reward'] for r in information),
             binary_correct_calls=sum(r['binary_reward'] for r in rows),decision_calls=len(rows),
+            mean_task_reward=float(np.mean([r['task_reward'] for r in rows])),
+            legal_mean_regret=float(np.mean([r['oracle_step']['gap'] for r in rows if r['valid']])) if any(r['valid'] for r in rows) else None,
             completion_rate=sum(g['status']=='terminal' for g in games)/len(games),
             truncated_calls=sum(r['protocol_failure']=='truncated' for r in rows),
             invalid_calls=sum(r['protocol_failure']=='invalid_action' for r in rows),
-            skip_optimizer=False,step_binary_reward=True,terminal_utility_used_for_training=False)
+            skip_optimizer=False,step_binary_reward=False,terminal_utility_used_for_training=False)
 
 
 def mock_generate(requests):

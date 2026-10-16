@@ -2,6 +2,8 @@
 
 > **新对话从这里开始：**我们正在重新设计 MARSHAL/BENAC 的训练数据。核心主张是**筛选决策会产生不同后果的游戏片段**，再检验这种数据是否比完整对局 self-play 更有效。本文记录当前共识、数学定义、已有 pilot 和尚未确定的实验细节。`paper/experiment.tex` 目前仍描述旧实验，不代表下文方案已经实施。
 
+> **2026-10-08 当前状态入口：**最新进度以 [PROGRESS.md](../examples/strategic_slices/PROGRESS.md) 为准。当前 terminal v4 使用每个 parent 保存的初态完整终局参考剖面，已完成 100 parents / 800 questions 的真实 D 合并与逐步 native 审核（6,400 trajectories、6,200 terminal），并从 train 选定首版 100 题（56 parents / 37 families）。逐步 binary reward 训练入口已实现：同组共享 world、每 update 4 题 × 8 trajectories、1024 输出 tokens、6M response tokens；validation 整段成功率选择 best，正常预算完成后 final 自动 test。单 H100-96 GPU smoke/resume 已通过，训练暂停于 550 updates / 3,500,783 tokens，尚未完成 6M；best/latest 的独立导出评测已归档于 [最新执行记录](terminal_hf_test_calbench_20261008/README.md)。下方 bounded 口径、“D 尚未运行”等按原日期保留历史含义；详细 D 和训练状态见 [TERMINAL_D.md](../examples/strategic_slices/TERMINAL_D.md)、[TERMINAL_TRAINING.md](../examples/strategic_slices/TERMINAL_TRAINING.md)。
+
 > **2026-10-02 后续决定：**下文保留 10-01 的终局效用定义作为历史记录。用户未接受近视对手策略作为主实验监督目标；当前先试**全体玩家同一有限深度求解程序、截断处取当前承诺收益**的 oracle。深度以未来 RR 表示，1 RR 为双人 2 次、三人 3 次完整提案机会（报价及回应合计一次，PASS/调查各一次），从入口起计，提前到原游戏终局则停止。完整枚举后要求选定策略剖面稳定并通过自身信息条件下的偏离检查；失败不产出标签。这是截断博弈的收益目标，不等同于原游戏终局最优。先验证 oracle 与 C/S，不自动改写既有训练奖励。实现与证据见 [当前 README](../examples/strategic_slices/README.md)。
 
 > **2026-10-02 边界与收敛修订：**用户要求至少覆盖当前玩家的下一次决定，并支持能节省计算的复用。默认窗口现为 RR 基础跨度加上必要延伸，完整执行入口玩家的下一次提案及回应，而非停在其决策前；通常提案入口为双人 3 次、三人 4 次机会，提前到原生终局仍立即结束。收益与私有信息不变。混合策略候选经完整单方偏离、各信息节点自身最优行动支持及回应平局规则检查后，按记录的数值容差认证；不再要求整张均匀平局策略表完全不变。完全相同问题可复用已认证结果；同绝对终点的子树可复用结构但须按新入口先验重建并重新求解认证。旧 RR-only/synchronous 数据仍为历史诊断，不能混用其标签。既有终局奖励训练尚未改写。

@@ -6,9 +6,16 @@ from training.social_mixed.pipeline import SocialPipeline
 from .terminal_training import TrainingData,Collector,ensure
 from .terminal_training_evaluate import Validator
 from .terminal_training_checkpoints import select_best,retain_checkpoints,finalize_checkpoints,SELECTION
+from .terminal_training_schedule import due
 
 
 class TerminalPipeline(SocialPipeline):
+    def validation_due(self,step,consumed):
+        return due(self.options,self.state,'eval',step,consumed)
+
+    def checkpoint_due(self,step,consumed):
+        return due(self.options,self.state,'save',step,consumed)
+
     @torch.no_grad()
     def run(self):
         # A stopped run may have reached the budget before final validation.
@@ -28,7 +35,15 @@ class TerminalPipeline(SocialPipeline):
         if best and best['step']==step:
             # A resumed final/best is copied into this run only once.
             best['checkpoint']=str((self.root/'checkpoints'/f'checkpoint-{step}').resolve())
-        super().save(step,force=force)
+        # Persist the boundary in the checkpoint itself, including best saves.
+        previous=self.state.kv.get('terminal_last_checkpoint_tokens')
+        self.state.kv['terminal_last_checkpoint_tokens']=self.state.kv.get('training_response_tokens',0)
+        try:
+            super().save(step,force=force)
+        except Exception:
+            if previous is None:self.state.kv.pop('terminal_last_checkpoint_tokens',None)
+            else:self.state.kv['terminal_last_checkpoint_tokens']=previous
+            raise
         retain_checkpoints(self)
 
     def configure_collection(self,config,options):
@@ -36,7 +51,7 @@ class TerminalPipeline(SocialPipeline):
         ensure(data.sha==options['dataset_sha256'],'Training data changed after launch')
         self.collector=Collector(data,self.generate,seed=options['seed'],replicas=options['replicas'],
             concurrency=options['concurrency'],max_tokens=options['max_tokens'],context=options['context'],
-            questions_per_update=options['questions_per_update'])
+            node_groups_per_update=options['node_groups_per_update'])
         saved=self.state.kv.get('stable_recipe')
         if saved:self.collector.restore(saved)
         else:ensure(self.state.step<0,'Cannot resume another collector')
@@ -59,6 +74,12 @@ class TerminalPipeline(SocialPipeline):
                     'eval/slice_completion':report['slices']['completion_rate'],
                     'eval/window_success':report['slices']['full_window_success_rate'],
                     'training_response_tokens':consumed,'system/step':step}
+                for stratum,values in report['slices']['decision_metrics'].items():
+                    for name,value in values.items():
+                        if value is not None:metrics[f'eval/{stratum}/{name}']=value
+                # Evaluation costs are accounted separately from the 6M training budget.
+                self.state.kv['terminal_validation_response_tokens']=self.state.kv.get('terminal_validation_response_tokens',0)+report['generated_response_tokens']
+                metrics['validation_response_tokens']=self.state.kv['terminal_validation_response_tokens']
                 for mode,strata in report['full_games']['metrics'].items():
                     metrics[f'eval/{mode}/completion']=strata['all']['completion_rate']
                     value=strata['all']['player_utility_completed_parent_macro']['mean']
@@ -67,5 +88,6 @@ class TerminalPipeline(SocialPipeline):
                 with (self.root/'metrics.jsonl').open('a') as log:log.write(json.dumps(metrics)+'\n')
                 self.state.log_history.append(metrics);self.tracker.log(metrics,step=step+1)
                 self.actor_infer.offload_states(blocking=True)
+                self.state.kv['terminal_last_validation_tokens']=consumed
                 if selection_candidate:select_best(self,report,step,consumed)
             finally:self.actor_infer.offload_states(blocking=True)

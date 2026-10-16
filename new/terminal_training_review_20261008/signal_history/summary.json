@@ -1,0 +1,1328 @@
+{
+  "protocol": "Question-level observed histories, no inference or oracle recomputation; reward zero includes protocol failure.",
+  "questions": 100,
+  "cycles": 22,
+  "classification": {
+    "intermittent": 71,
+    "always_inactive_reward_switches": 6,
+    "always_all_zero": 14,
+    "always_all_correct": 7,
+    "always_active": 2
+  },
+  "active_exposure_histogram": {
+    "0": 27,
+    "1": 12,
+    "2": 8,
+    "3": 2,
+    "4": 3,
+    "5": 3,
+    "6": 1,
+    "7": 4,
+    "8": 2,
+    "9": 1,
+    "10": 2,
+    "11": 5,
+    "12": 3,
+    "13": 2,
+    "14": 2,
+    "15": 5,
+    "16": 2,
+    "17": 2,
+    "18": 3,
+    "19": 6,
+    "20": 2,
+    "21": 1,
+    "22": 2
+  },
+  "last5_inactive_questions": 65,
+  "last5_inactive_but_previously_active": 38,
+  "permanent_inactive_group_share": 0.39573617588274485,
+  "always_all_zero_details": {
+    "questions": 14,
+    "root_calls": 2464,
+    "valid_root_calls": 2431,
+    "last4_exactly_one_valid_action_questions": 14,
+    "proposal_questions_with_multiple_sampled_Q_gaps": 7,
+    "groups_with_sampled_Q_gap_contrast": 18,
+    "D_root_mixed_optimal_suboptimal": 8
+  },
+  "information_root_signal": {
+    "questions": 12,
+    "task_active_groups": 227,
+    "never_root_correct_questions": 7,
+    "root_correct": 17,
+    "root_reward_contrast_groups": 11
+  },
+  "forever_inactive": {
+    "questions": 27,
+    "protected": 15,
+    "D_root_value_contrast": 18,
+    "D_root_mixed_optimal_suboptimal": 14,
+    "D_any_step_value_contrast": 18,
+    "same_prompt_multiple_valid_actions": 15,
+    "first_last_modal_sets_disjoint": 2,
+    "by_class": {
+      "always_all_correct": {
+        "n": 7,
+        "same_prompt_multiple_valid_actions": 1,
+        "first_last_modal_sets_disjoint": 0,
+        "protocol_active_exposures": 0,
+        "k_counts": {
+          "1": 6,
+          "2": 1
+        }
+      },
+      "always_all_zero": {
+        "n": 14,
+        "same_prompt_multiple_valid_actions": 8,
+        "first_last_modal_sets_disjoint": 0,
+        "protocol_active_exposures": 13,
+        "k_counts": {
+          "1": 14
+        }
+      },
+      "always_inactive_reward_switches": {
+        "n": 6,
+        "same_prompt_multiple_valid_actions": 6,
+        "first_last_modal_sets_disjoint": 2,
+        "protocol_active_exposures": 0,
+        "k_counts": {
+          "1": 6
+        }
+      }
+    }
+  },
+  "transitions": {
+    "active -> all_correct": 146,
+    "active -> active": 499,
+    "all_zero -> all_zero": 554,
+    "all_zero -> all_correct": 15,
+    "all_zero -> active": 45,
+    "all_correct -> all_correct": 690,
+    "all_correct -> active": 97,
+    "active -> all_zero": 36,
+    "all_correct -> all_zero": 18
+  },
+  "cycles_detail": [
+    {
+      "cycle": 1,
+      "states": {
+        "active": 58,
+        "all_zero": 28,
+        "all_correct": 14
+      },
+      "became_inactive": null,
+      "became_active": null,
+      "inactive_jaccard": null,
+      "transitions": {}
+    },
+    {
+      "cycle": 2,
+      "states": {
+        "all_correct": 38,
+        "active": 39,
+        "all_zero": 23
+      },
+      "became_inactive": 24,
+      "became_active": 5,
+      "inactive_jaccard": 0.5606060606060606,
+      "transitions": {
+        "active -> all_correct": 23,
+        "active -> active": 34,
+        "all_zero -> all_zero": 22,
+        "all_zero -> all_correct": 2,
+        "all_zero -> active": 4,
+        "all_correct -> all_correct": 13,
+        "all_correct -> active": 1,
+        "active -> all_zero": 1
+      }
+    },
+    {
+      "cycle": 3,
+      "states": {
+        "all_correct": 54,
+        "active": 23,
+        "all_zero": 23
+      },
+      "became_inactive": 18,
+      "became_active": 2,
+      "inactive_jaccard": 0.7468354430379747,
+      "transitions": {
+        "all_correct -> all_correct": 37,
+        "active -> active": 21,
+        "active -> all_correct": 17,
+        "active -> all_zero": 1,
+        "all_zero -> all_zero": 22,
+        "all_correct -> active": 1,
+        "all_zero -> active": 1
+      }
+    },
+    {
+      "cycle": 4,
+      "states": {
+        "all_correct": 52,
+        "active": 26,
+        "all_zero": 22
+      },
+      "became_inactive": 5,
+      "became_active": 8,
+      "inactive_jaccard": 0.8414634146341463,
+      "transitions": {
+        "all_correct -> all_correct": 47,
+        "active -> active": 18,
+        "all_zero -> all_zero": 22,
+        "all_correct -> active": 7,
+        "active -> all_correct": 5,
+        "all_zero -> active": 1
+      }
+    },
+    {
+      "cycle": 5,
+      "states": {
+        "all_correct": 51,
+        "active": 22,
+        "all_zero": 27
+      },
+      "became_inactive": 11,
+      "became_active": 7,
+      "inactive_jaccard": 0.788235294117647,
+      "transitions": {
+        "all_correct -> all_correct": 40,
+        "active -> active": 15,
+        "all_zero -> all_zero": 20,
+        "active -> all_correct": 9,
+        "all_correct -> active": 7,
+        "all_correct -> all_zero": 5,
+        "all_zero -> all_correct": 2,
+        "active -> all_zero": 2
+      }
+    },
+    {
+      "cycle": 6,
+      "states": {
+        "all_correct": 23,
+        "active": 40,
+        "all_zero": 37
+      },
+      "became_inactive": 5,
+      "became_active": 23,
+      "inactive_jaccard": 0.6626506024096386,
+      "transitions": {
+        "all_correct -> all_correct": 23,
+        "all_correct -> active": 20,
+        "active -> active": 17,
+        "all_zero -> active": 3,
+        "all_correct -> all_zero": 8,
+        "all_zero -> all_zero": 24,
+        "active -> all_zero": 5
+      }
+    },
+    {
+      "cycle": 7,
+      "states": {
+        "all_correct": 20,
+        "active": 41,
+        "all_zero": 39
+      },
+      "became_inactive": 9,
+      "became_active": 10,
+      "inactive_jaccard": 0.7246376811594203,
+      "transitions": {
+        "all_correct -> all_correct": 15,
+        "active -> active": 31,
+        "active -> all_zero": 4,
+        "active -> all_correct": 5,
+        "all_correct -> active": 8,
+        "all_zero -> all_zero": 35,
+        "all_zero -> active": 2
+      }
+    },
+    {
+      "cycle": 8,
+      "states": {
+        "all_correct": 26,
+        "active": 31,
+        "all_zero": 43
+      },
+      "became_inactive": 11,
+      "became_active": 1,
+      "inactive_jaccard": 0.8285714285714286,
+      "transitions": {
+        "all_correct -> all_correct": 20,
+        "active -> active": 30,
+        "all_zero -> all_zero": 38,
+        "active -> all_correct": 6,
+        "active -> all_zero": 5,
+        "all_zero -> active": 1
+      }
+    },
+    {
+      "cycle": 9,
+      "states": {
+        "all_correct": 22,
+        "active": 33,
+        "all_zero": 45
+      },
+      "became_inactive": 8,
+      "became_active": 10,
+      "inactive_jaccard": 0.7662337662337663,
+      "transitions": {
+        "all_correct -> all_correct": 19,
+        "active -> active": 23,
+        "all_zero -> all_zero": 40,
+        "active -> all_correct": 3,
+        "all_correct -> active": 7,
+        "all_zero -> active": 3,
+        "active -> all_zero": 5
+      }
+    },
+    {
+      "cycle": 10,
+      "states": {
+        "all_correct": 26,
+        "active": 30,
+        "all_zero": 44
+      },
+      "became_inactive": 6,
+      "became_active": 3,
+      "inactive_jaccard": 0.8767123287671232,
+      "transitions": {
+        "all_correct -> all_correct": 21,
+        "active -> active": 27,
+        "all_zero -> all_zero": 43,
+        "active -> all_correct": 5,
+        "active -> all_zero": 1,
+        "all_zero -> active": 2,
+        "all_correct -> active": 1
+      }
+    },
+    {
+      "cycle": 11,
+      "states": {
+        "all_correct": 31,
+        "active": 34,
+        "all_zero": 35
+      },
+      "became_inactive": 5,
+      "became_active": 9,
+      "inactive_jaccard": 0.8133333333333334,
+      "transitions": {
+        "all_correct -> all_correct": 26,
+        "active -> all_correct": 4,
+        "all_zero -> active": 9,
+        "active -> active": 25,
+        "all_zero -> all_zero": 34,
+        "all_zero -> all_correct": 1,
+        "active -> all_zero": 1
+      }
+    },
+    {
+      "cycle": 12,
+      "states": {
+        "all_correct": 23,
+        "active": 48,
+        "all_zero": 29
+      },
+      "became_inactive": 0,
+      "became_active": 14,
+      "inactive_jaccard": 0.7878787878787878,
+      "transitions": {
+        "all_correct -> all_correct": 23,
+        "active -> active": 34,
+        "all_correct -> active": 8,
+        "all_zero -> all_zero": 29,
+        "all_zero -> active": 6
+      }
+    },
+    {
+      "cycle": 13,
+      "states": {
+        "all_correct": 21,
+        "active": 49,
+        "all_zero": 30
+      },
+      "became_inactive": 6,
+      "became_active": 7,
+      "inactive_jaccard": 0.7758620689655172,
+      "transitions": {
+        "all_correct -> all_correct": 20,
+        "all_correct -> active": 3,
+        "active -> active": 42,
+        "active -> all_zero": 5,
+        "all_zero -> all_zero": 25,
+        "all_zero -> active": 4,
+        "active -> all_correct": 1
+      }
+    },
+    {
+      "cycle": 14,
+      "states": {
+        "all_correct": 40,
+        "active": 31,
+        "all_zero": 29
+      },
+      "became_inactive": 21,
+      "became_active": 3,
+      "inactive_jaccard": 0.6666666666666666,
+      "transitions": {
+        "all_correct -> all_correct": 21,
+        "active -> all_correct": 18,
+        "active -> active": 28,
+        "all_zero -> active": 3,
+        "all_zero -> all_zero": 26,
+        "active -> all_zero": 3,
+        "all_zero -> all_correct": 1
+      }
+    },
+    {
+      "cycle": 15,
+      "states": {
+        "all_correct": 38,
+        "active": 36,
+        "all_zero": 26
+      },
+      "became_inactive": 8,
+      "became_active": 13,
+      "inactive_jaccard": 0.7272727272727273,
+      "transitions": {
+        "all_correct -> all_correct": 27,
+        "all_correct -> active": 11,
+        "active -> active": 23,
+        "active -> all_zero": 3,
+        "all_zero -> all_correct": 6,
+        "all_zero -> all_zero": 21,
+        "all_zero -> active": 2,
+        "all_correct -> all_zero": 2,
+        "active -> all_correct": 5
+      }
+    },
+    {
+      "cycle": 16,
+      "states": {
+        "all_correct": 58,
+        "active": 19,
+        "all_zero": 23
+      },
+      "became_inactive": 19,
+      "became_active": 2,
+      "inactive_jaccard": 0.7469879518072289,
+      "transitions": {
+        "all_correct -> all_correct": 37,
+        "active -> all_correct": 19,
+        "active -> active": 17,
+        "all_zero -> all_zero": 22,
+        "all_correct -> all_zero": 1,
+        "all_zero -> all_correct": 2,
+        "all_zero -> active": 2
+      }
+    },
+    {
+      "cycle": 17,
+      "states": {
+        "all_correct": 54,
+        "active": 24,
+        "all_zero": 22
+      },
+      "became_inactive": 1,
+      "became_active": 6,
+      "inactive_jaccard": 0.9146341463414634,
+      "transitions": {
+        "all_correct -> all_correct": 53,
+        "active -> active": 18,
+        "all_zero -> all_zero": 21,
+        "all_correct -> active": 4,
+        "all_zero -> active": 2,
+        "all_correct -> all_zero": 1,
+        "active -> all_correct": 1
+      }
+    },
+    {
+      "cycle": 18,
+      "states": {
+        "all_correct": 58,
+        "active": 20,
+        "all_zero": 22
+      },
+      "became_inactive": 6,
+      "became_active": 2,
+      "inactive_jaccard": 0.9024390243902439,
+      "transitions": {
+        "all_correct -> all_correct": 52,
+        "active -> active": 18,
+        "all_zero -> all_zero": 22,
+        "all_correct -> active": 2,
+        "active -> all_correct": 6
+      }
+    },
+    {
+      "cycle": 19,
+      "states": {
+        "all_correct": 53,
+        "active": 25,
+        "all_zero": 22
+      },
+      "became_inactive": 3,
+      "became_active": 8,
+      "inactive_jaccard": 0.8674698795180723,
+      "transitions": {
+        "all_correct -> all_correct": 50,
+        "active -> active": 17,
+        "all_zero -> all_zero": 22,
+        "active -> all_correct": 3,
+        "all_correct -> active": 8
+      }
+    },
+    {
+      "cycle": 20,
+      "states": {
+        "all_correct": 46,
+        "active": 31,
+        "all_zero": 23
+      },
+      "became_inactive": 2,
+      "became_active": 8,
+      "inactive_jaccard": 0.8701298701298701,
+      "transitions": {
+        "all_correct -> all_correct": 44,
+        "active -> active": 23,
+        "all_zero -> all_zero": 22,
+        "all_correct -> active": 8,
+        "active -> all_correct": 2,
+        "all_correct -> all_zero": 1
+      }
+    },
+    {
+      "cycle": 21,
+      "states": {
+        "all_correct": 57,
+        "active": 21,
+        "all_zero": 22
+      },
+      "became_inactive": 10,
+      "became_active": 0,
+      "inactive_jaccard": 0.8734177215189873,
+      "transitions": {
+        "all_correct -> all_correct": 46,
+        "active -> active": 21,
+        "all_zero -> all_zero": 22,
+        "active -> all_correct": 10,
+        "all_zero -> all_correct": 1
+      }
+    },
+    {
+      "cycle": 22,
+      "states": {
+        "all_correct": 60,
+        "active": 18,
+        "all_zero": 22
+      },
+      "became_inactive": 4,
+      "became_active": 1,
+      "inactive_jaccard": 0.9397590361445783,
+      "transitions": {
+        "all_correct -> all_correct": 56,
+        "active -> active": 17,
+        "all_zero -> all_zero": 22,
+        "all_correct -> active": 1,
+        "active -> all_correct": 4
+      }
+    }
+  ],
+  "information_positive": [
+    {
+      "slice_id": "033ea29e7ea613d68f8e53d0",
+      "parent_id": "5083f5b786f5dde386cd465e",
+      "family": "eaaa0469dfc223f5d58c",
+      "k": 2,
+      "entry_kind": "proposal",
+      "information_positive": true,
+      "protected": true,
+      "classification": "intermittent",
+      "states": "++++++0000++++++++++++",
+      "active_exposures": 18,
+      "all_correct_exposures": 0,
+      "all_zero_exposures": 4,
+      "protocol_active_exposures": 20,
+      "root_contrast_exposures": 1,
+      "root_correct": 1,
+      "root_valid": 74,
+      "last5_active": 5,
+      "max_inactive_streak": 4,
+      "distinct_root_prompts": 1,
+      "same_prompt_multiple_valid_actions": true,
+      "first4_root_action_counts": {
+        "1": 11,
+        "11": 7,
+        "14": 1,
+        "18": 1,
+        "3": 1,
+        "7": 1
+      },
+      "last4_root_action_counts": {
+        "1": 2,
+        "18": 1,
+        "2": 1,
+        "3": 12,
+        "4": 1,
+        "5": 2
+      },
+      "all_root_action_counts": {
+        "0": 3,
+        "1": 16,
+        "11": 7,
+        "14": 2,
+        "15": 1,
+        "16": 1,
+        "18": 3,
+        "2": 1,
+        "3": 30,
+        "4": 6,
+        "5": 2,
+        "6": 1,
+        "7": 1
+      },
+      "first4_root_modal_actions": [
+        "1"
+      ],
+      "last4_root_modal_actions": [
+        "3"
+      ],
+      "first_last_modal_sets_disjoint": true,
+      "root_action_entropy_bits": 2.6975918476382383,
+      "D_root_value_contrast": false,
+      "D_root_mixed_optimal_suboptimal": false,
+      "D_any_step_value_contrast": false,
+      "D_gap_completion_contrast": true
+    },
+    {
+      "slice_id": "289de888dd8512c2d98f2053",
+      "parent_id": "ef4d9d18e4f8bde86927e484",
+      "family": "ddce50abd09dd1e7ed01",
+      "k": 3,
+      "entry_kind": "proposal",
+      "information_positive": true,
+      "protected": true,
+      "classification": "intermittent",
+      "states": "+++++++000++++++++++++",
+      "active_exposures": 19,
+      "all_correct_exposures": 0,
+      "all_zero_exposures": 3,
+      "protocol_active_exposures": 20,
+      "root_contrast_exposures": 0,
+      "root_correct": 0,
+      "root_valid": 91,
+      "last5_active": 5,
+      "max_inactive_streak": 3,
+      "distinct_root_prompts": 1,
+      "same_prompt_multiple_valid_actions": true,
+      "first4_root_action_counts": {
+        "0": 1,
+        "1": 10,
+        "10": 1,
+        "11": 7,
+        "17": 1,
+        "3": 1,
+        "4": 2,
+        "6": 1,
+        "9": 1
+      },
+      "last4_root_action_counts": {
+        "1": 2,
+        "12": 1,
+        "14": 1,
+        "15": 1,
+        "18": 2,
+        "3": 9,
+        "4": 2,
+        "5": 2,
+        "8": 1
+      },
+      "all_root_action_counts": {
+        "0": 3,
+        "1": 22,
+        "10": 2,
+        "11": 7,
+        "12": 2,
+        "14": 4,
+        "15": 5,
+        "17": 1,
+        "18": 6,
+        "2": 1,
+        "3": 23,
+        "4": 6,
+        "5": 4,
+        "6": 1,
+        "7": 1,
+        "8": 2,
+        "9": 1
+      },
+      "first4_root_modal_actions": [
+        "1"
+      ],
+      "last4_root_modal_actions": [
+        "3"
+      ],
+      "first_last_modal_sets_disjoint": true,
+      "root_action_entropy_bits": 3.3079596617482654,
+      "D_root_value_contrast": false,
+      "D_root_mixed_optimal_suboptimal": false,
+      "D_any_step_value_contrast": true,
+      "D_gap_completion_contrast": true
+    },
+    {
+      "slice_id": "36beae642418a0d7430c3d51",
+      "parent_id": "f1cd644092af0fe4dc8becb6",
+      "family": "5da8bf68a67203b97c61",
+      "k": 3,
+      "entry_kind": "proposal",
+      "information_positive": true,
+      "protected": true,
+      "classification": "intermittent",
+      "states": "++++++++0+++++++++++++",
+      "active_exposures": 21,
+      "all_correct_exposures": 0,
+      "all_zero_exposures": 1,
+      "protocol_active_exposures": 17,
+      "root_contrast_exposures": 5,
+      "root_correct": 10,
+      "root_valid": 112,
+      "last5_active": 5,
+      "max_inactive_streak": 1,
+      "distinct_root_prompts": 1,
+      "same_prompt_multiple_valid_actions": true,
+      "first4_root_action_counts": {
+        "1": 12,
+        "13": 1,
+        "2": 3,
+        "4": 1,
+        "7": 1,
+        "8": 1,
+        "9": 7
+      },
+      "last4_root_action_counts": {
+        "1": 1,
+        "10": 3,
+        "11": 1,
+        "13": 4,
+        "3": 1,
+        "4": 1,
+        "7": 12,
+        "8": 3,
+        "9": 1
+      },
+      "all_root_action_counts": {
+        "0": 1,
+        "1": 27,
+        "10": 3,
+        "11": 2,
+        "12": 1,
+        "13": 11,
+        "2": 3,
+        "3": 2,
+        "4": 20,
+        "5": 2,
+        "6": 1,
+        "7": 24,
+        "8": 5,
+        "9": 10
+      },
+      "first4_root_modal_actions": [
+        "1"
+      ],
+      "last4_root_modal_actions": [
+        "7"
+      ],
+      "first_last_modal_sets_disjoint": true,
+      "root_action_entropy_bits": 3.028318594324423,
+      "D_root_value_contrast": true,
+      "D_root_mixed_optimal_suboptimal": true,
+      "D_any_step_value_contrast": true,
+      "D_gap_completion_contrast": true
+    },
+    {
+      "slice_id": "4d4f25b47437b02973824aab",
+      "parent_id": "5083f5b786f5dde386cd465e",
+      "family": "eaaa0469dfc223f5d58c",
+      "k": 3,
+      "entry_kind": "proposal",
+      "information_positive": true,
+      "protected": true,
+      "classification": "intermittent",
+      "states": "+++++0++00++++++++++++",
+      "active_exposures": 19,
+      "all_correct_exposures": 0,
+      "all_zero_exposures": 3,
+      "protocol_active_exposures": 21,
+      "root_contrast_exposures": 2,
+      "root_correct": 2,
+      "root_valid": 84,
+      "last5_active": 5,
+      "max_inactive_streak": 2,
+      "distinct_root_prompts": 1,
+      "same_prompt_multiple_valid_actions": true,
+      "first4_root_action_counts": {
+        "1": 17,
+        "14": 1,
+        "17": 1,
+        "2": 1,
+        "5": 1
+      },
+      "last4_root_action_counts": {
+        "1": 3,
+        "13": 1,
+        "14": 2,
+        "16": 2,
+        "17": 1,
+        "18": 2,
+        "3": 16,
+        "5": 1
+      },
+      "all_root_action_counts": {
+        "0": 1,
+        "1": 30,
+        "12": 2,
+        "13": 2,
+        "14": 9,
+        "16": 2,
+        "17": 2,
+        "18": 4,
+        "2": 1,
+        "3": 28,
+        "5": 3
+      },
+      "first4_root_modal_actions": [
+        "1"
+      ],
+      "last4_root_modal_actions": [
+        "3"
+      ],
+      "first_last_modal_sets_disjoint": true,
+      "root_action_entropy_bits": 2.4506880394333703,
+      "D_root_value_contrast": false,
+      "D_root_mixed_optimal_suboptimal": false,
+      "D_any_step_value_contrast": true,
+      "D_gap_completion_contrast": true
+    },
+    {
+      "slice_id": "61f547f3df6e7400ad28a638",
+      "parent_id": "ef4d9d18e4f8bde86927e484",
+      "family": "ddce50abd09dd1e7ed01",
+      "k": 2,
+      "entry_kind": "proposal",
+      "information_positive": true,
+      "protected": true,
+      "classification": "intermittent",
+      "states": "+++++0+000++++++++++++",
+      "active_exposures": 18,
+      "all_correct_exposures": 0,
+      "all_zero_exposures": 4,
+      "protocol_active_exposures": 21,
+      "root_contrast_exposures": 0,
+      "root_correct": 0,
+      "root_valid": 88,
+      "last5_active": 5,
+      "max_inactive_streak": 3,
+      "distinct_root_prompts": 1,
+      "same_prompt_multiple_valid_actions": true,
+      "first4_root_action_counts": {
+        "1": 16,
+        "18": 1,
+        "3": 2,
+        "9": 1
+      },
+      "last4_root_action_counts": {
+        "1": 2,
+        "11": 1,
+        "12": 1,
+        "14": 1,
+        "2": 1,
+        "3": 7,
+        "4": 1,
+        "5": 7,
+        "8": 2
+      },
+      "all_root_action_counts": {
+        "1": 30,
+        "10": 4,
+        "11": 1,
+        "12": 1,
+        "14": 2,
+        "18": 3,
+        "2": 2,
+        "3": 21,
+        "4": 7,
+        "5": 11,
+        "6": 1,
+        "8": 4,
+        "9": 1
+      },
+      "first4_root_modal_actions": [
+        "1"
+      ],
+      "last4_root_modal_actions": [
+        "3",
+        "5"
+      ],
+      "first_last_modal_sets_disjoint": true,
+      "root_action_entropy_bits": 2.801414533316996,
+      "D_root_value_contrast": false,
+      "D_root_mixed_optimal_suboptimal": false,
+      "D_any_step_value_contrast": false,
+      "D_gap_completion_contrast": true
+    },
+    {
+      "slice_id": "91668a7cef4e1c0495ba8ca1",
+      "parent_id": "2e67ebf3570ca7a44b24dbd7",
+      "family": "077126e1bcd4c38ef853",
+      "k": 2,
+      "entry_kind": "proposal",
+      "information_positive": true,
+      "protected": true,
+      "classification": "intermittent",
+      "states": "++++++++00++++++++++++",
+      "active_exposures": 20,
+      "all_correct_exposures": 0,
+      "all_zero_exposures": 2,
+      "protocol_active_exposures": 18,
+      "root_contrast_exposures": 0,
+      "root_correct": 0,
+      "root_valid": 103,
+      "last5_active": 5,
+      "max_inactive_streak": 2,
+      "distinct_root_prompts": 1,
+      "same_prompt_multiple_valid_actions": true,
+      "first4_root_action_counts": {
+        "1": 17,
+        "10": 1,
+        "14": 1,
+        "3": 4,
+        "4": 1,
+        "5": 1,
+        "6": 1
+      },
+      "last4_root_action_counts": {
+        "1": 2,
+        "14": 3,
+        "17": 1,
+        "18": 2,
+        "3": 13,
+        "4": 1,
+        "5": 4
+      },
+      "all_root_action_counts": {
+        "1": 30,
+        "10": 1,
+        "14": 13,
+        "17": 1,
+        "18": 4,
+        "3": 44,
+        "4": 4,
+        "5": 5,
+        "6": 1
+      },
+      "first4_root_modal_actions": [
+        "1"
+      ],
+      "last4_root_modal_actions": [
+        "3"
+      ],
+      "first_last_modal_sets_disjoint": true,
+      "root_action_entropy_bits": 2.1900241592359597,
+      "D_root_value_contrast": false,
+      "D_root_mixed_optimal_suboptimal": false,
+      "D_any_step_value_contrast": false,
+      "D_gap_completion_contrast": true
+    },
+    {
+      "slice_id": "a38c277ee058c43bd9fd4989",
+      "parent_id": "502b1bdbf4553f757b99a877",
+      "family": "b809d1311c91882006fe",
+      "k": 2,
+      "entry_kind": "proposal",
+      "information_positive": true,
+      "protected": true,
+      "classification": "intermittent",
+      "states": "+++++++00+++++0+++++++",
+      "active_exposures": 19,
+      "all_correct_exposures": 0,
+      "all_zero_exposures": 3,
+      "protocol_active_exposures": 20,
+      "root_contrast_exposures": 0,
+      "root_correct": 0,
+      "root_valid": 84,
+      "last5_active": 5,
+      "max_inactive_streak": 2,
+      "distinct_root_prompts": 1,
+      "same_prompt_multiple_valid_actions": true,
+      "first4_root_action_counts": {
+        "1": 14,
+        "14": 2,
+        "18": 1,
+        "2": 2,
+        "3": 1,
+        "4": 2,
+        "7": 1
+      },
+      "last4_root_action_counts": {
+        "1": 1,
+        "10": 1,
+        "14": 4,
+        "15": 1,
+        "17": 1,
+        "3": 15,
+        "5": 2
+      },
+      "all_root_action_counts": {
+        "1": 19,
+        "10": 2,
+        "11": 1,
+        "14": 10,
+        "15": 5,
+        "17": 3,
+        "18": 5,
+        "2": 2,
+        "3": 25,
+        "4": 6,
+        "5": 5,
+        "7": 1
+      },
+      "first4_root_modal_actions": [
+        "1"
+      ],
+      "last4_root_modal_actions": [
+        "3"
+      ],
+      "first_last_modal_sets_disjoint": true,
+      "root_action_entropy_bits": 2.9504139420826805,
+      "D_root_value_contrast": true,
+      "D_root_mixed_optimal_suboptimal": true,
+      "D_any_step_value_contrast": true,
+      "D_gap_completion_contrast": true
+    },
+    {
+      "slice_id": "a99082395ee97801185b9f43",
+      "parent_id": "f1cd644092af0fe4dc8becb6",
+      "family": "5da8bf68a67203b97c61",
+      "k": 2,
+      "entry_kind": "proposal",
+      "information_positive": true,
+      "protected": true,
+      "classification": "always_active",
+      "states": "++++++++++++++++++++++",
+      "active_exposures": 22,
+      "all_correct_exposures": 0,
+      "all_zero_exposures": 0,
+      "protocol_active_exposures": 19,
+      "root_contrast_exposures": 2,
+      "root_correct": 3,
+      "root_valid": 114,
+      "last5_active": 5,
+      "max_inactive_streak": 0,
+      "distinct_root_prompts": 1,
+      "same_prompt_multiple_valid_actions": true,
+      "first4_root_action_counts": {
+        "1": 14,
+        "11": 1,
+        "4": 1,
+        "7": 3,
+        "8": 2,
+        "9": 2
+      },
+      "last4_root_action_counts": {
+        "1": 1,
+        "10": 1,
+        "11": 1,
+        "12": 1,
+        "13": 4,
+        "4": 2,
+        "7": 8,
+        "8": 2,
+        "9": 1
+      },
+      "all_root_action_counts": {
+        "0": 3,
+        "1": 32,
+        "10": 1,
+        "11": 2,
+        "12": 4,
+        "13": 15,
+        "2": 3,
+        "3": 1,
+        "4": 21,
+        "7": 19,
+        "8": 10,
+        "9": 3
+      },
+      "first4_root_modal_actions": [
+        "1"
+      ],
+      "last4_root_modal_actions": [
+        "7"
+      ],
+      "first_last_modal_sets_disjoint": true,
+      "root_action_entropy_bits": 2.893972549048304,
+      "D_root_value_contrast": true,
+      "D_root_mixed_optimal_suboptimal": true,
+      "D_any_step_value_contrast": true,
+      "D_gap_completion_contrast": true
+    },
+    {
+      "slice_id": "aaef4847c7152f53b564464b",
+      "parent_id": "502b1bdbf4553f757b99a877",
+      "family": "b809d1311c91882006fe",
+      "k": 3,
+      "entry_kind": "proposal",
+      "information_positive": true,
+      "protected": true,
+      "classification": "intermittent",
+      "states": "++++++0000++++++++++++",
+      "active_exposures": 18,
+      "all_correct_exposures": 0,
+      "all_zero_exposures": 4,
+      "protocol_active_exposures": 20,
+      "root_contrast_exposures": 0,
+      "root_correct": 0,
+      "root_valid": 91,
+      "last5_active": 5,
+      "max_inactive_streak": 4,
+      "distinct_root_prompts": 1,
+      "same_prompt_multiple_valid_actions": true,
+      "first4_root_action_counts": {
+        "1": 17,
+        "14": 2,
+        "3": 1,
+        "4": 1
+      },
+      "last4_root_action_counts": {
+        "11": 1,
+        "14": 1,
+        "3": 19,
+        "4": 2,
+        "5": 4
+      },
+      "all_root_action_counts": {
+        "1": 21,
+        "10": 1,
+        "11": 1,
+        "13": 2,
+        "14": 8,
+        "15": 2,
+        "17": 3,
+        "18": 5,
+        "3": 36,
+        "4": 6,
+        "5": 5,
+        "8": 1
+      },
+      "first4_root_modal_actions": [
+        "1"
+      ],
+      "last4_root_modal_actions": [
+        "3"
+      ],
+      "first_last_modal_sets_disjoint": true,
+      "root_action_entropy_bits": 2.6634000315652764,
+      "D_root_value_contrast": true,
+      "D_root_mixed_optimal_suboptimal": true,
+      "D_any_step_value_contrast": true,
+      "D_gap_completion_contrast": true
+    },
+    {
+      "slice_id": "c4ed60d1addd6085e7ff2291",
+      "parent_id": "702ab9f676809f8d36bc8c9e",
+      "family": "b1ef49697ac9164a651e",
+      "k": 3,
+      "entry_kind": "proposal",
+      "information_positive": true,
+      "protected": true,
+      "classification": "intermittent",
+      "states": "++++++0+00++++++++++++",
+      "active_exposures": 19,
+      "all_correct_exposures": 0,
+      "all_zero_exposures": 3,
+      "protocol_active_exposures": 17,
+      "root_contrast_exposures": 0,
+      "root_correct": 0,
+      "root_valid": 98,
+      "last5_active": 5,
+      "max_inactive_streak": 2,
+      "distinct_root_prompts": 1,
+      "same_prompt_multiple_valid_actions": true,
+      "first4_root_action_counts": {
+        "1": 20,
+        "11": 3,
+        "18": 1,
+        "2": 1,
+        "4": 1,
+        "5": 1,
+        "6": 1
+      },
+      "last4_root_action_counts": {
+        "1": 1,
+        "11": 1,
+        "14": 4,
+        "17": 1,
+        "2": 2,
+        "3": 18
+      },
+      "all_root_action_counts": {
+        "1": 31,
+        "11": 4,
+        "14": 8,
+        "15": 2,
+        "17": 1,
+        "18": 2,
+        "2": 5,
+        "3": 37,
+        "4": 2,
+        "5": 4,
+        "6": 1,
+        "8": 1
+      },
+      "first4_root_modal_actions": [
+        "1"
+      ],
+      "last4_root_modal_actions": [
+        "3"
+      ],
+      "first_last_modal_sets_disjoint": true,
+      "root_action_entropy_bits": 2.492878205087646,
+      "D_root_value_contrast": false,
+      "D_root_mixed_optimal_suboptimal": false,
+      "D_any_step_value_contrast": false,
+      "D_gap_completion_contrast": true
+    },
+    {
+      "slice_id": "cc2b594acaf9cd4d30c8b9bc",
+      "parent_id": "702ab9f676809f8d36bc8c9e",
+      "family": "b1ef49697ac9164a651e",
+      "k": 2,
+      "entry_kind": "proposal",
+      "information_positive": true,
+      "protected": true,
+      "classification": "intermittent",
+      "states": "0+++0++000++++++++++++",
+      "active_exposures": 17,
+      "all_correct_exposures": 0,
+      "all_zero_exposures": 5,
+      "protocol_active_exposures": 20,
+      "root_contrast_exposures": 0,
+      "root_correct": 0,
+      "root_valid": 90,
+      "last5_active": 5,
+      "max_inactive_streak": 3,
+      "distinct_root_prompts": 1,
+      "same_prompt_multiple_valid_actions": true,
+      "first4_root_action_counts": {
+        "1": 11,
+        "10": 1,
+        "11": 6,
+        "13": 1,
+        "2": 1,
+        "3": 1,
+        "4": 2,
+        "6": 1
+      },
+      "last4_root_action_counts": {
+        "1": 1,
+        "14": 1,
+        "3": 23,
+        "5": 2,
+        "9": 1
+      },
+      "all_root_action_counts": {
+        "0": 2,
+        "1": 17,
+        "10": 1,
+        "11": 6,
+        "13": 1,
+        "14": 5,
+        "15": 1,
+        "17": 2,
+        "18": 1,
+        "2": 1,
+        "3": 40,
+        "4": 5,
+        "5": 5,
+        "6": 2,
+        "9": 1
+      },
+      "first4_root_modal_actions": [
+        "1"
+      ],
+      "last4_root_modal_actions": [
+        "3"
+      ],
+      "first_last_modal_sets_disjoint": true,
+      "root_action_entropy_bits": 2.7284898905031456,
+      "D_root_value_contrast": true,
+      "D_root_mixed_optimal_suboptimal": false,
+      "D_any_step_value_contrast": true,
+      "D_gap_completion_contrast": true
+    },
+    {
+      "slice_id": "f60f17033933b446e971d1d2",
+      "parent_id": "2e67ebf3570ca7a44b24dbd7",
+      "family": "077126e1bcd4c38ef853",
+      "k": 3,
+      "entry_kind": "proposal",
+      "information_positive": true,
+      "protected": true,
+      "classification": "intermittent",
+      "states": "+0++++0000++++++++++++",
+      "active_exposures": 17,
+      "all_correct_exposures": 0,
+      "all_zero_exposures": 5,
+      "protocol_active_exposures": 17,
+      "root_contrast_exposures": 1,
+      "root_correct": 1,
+      "root_valid": 101,
+      "last5_active": 5,
+      "max_inactive_streak": 4,
+      "distinct_root_prompts": 1,
+      "same_prompt_multiple_valid_actions": true,
+      "first4_root_action_counts": {
+        "0": 1,
+        "1": 18,
+        "11": 2,
+        "2": 1,
+        "3": 1
+      },
+      "last4_root_action_counts": {
+        "1": 1,
+        "14": 2,
+        "16": 1,
+        "2": 2,
+        "3": 17,
+        "4": 3,
+        "5": 1,
+        "6": 1
+      },
+      "all_root_action_counts": {
+        "0": 3,
+        "1": 36,
+        "11": 2,
+        "14": 10,
+        "16": 1,
+        "18": 1,
+        "2": 3,
+        "3": 38,
+        "4": 4,
+        "5": 2,
+        "6": 1
+      },
+      "first4_root_modal_actions": [
+        "1"
+      ],
+      "last4_root_modal_actions": [
+        "3"
+      ],
+      "first_last_modal_sets_disjoint": true,
+      "root_action_entropy_bits": 2.2991263192272395,
+      "D_root_value_contrast": true,
+      "D_root_mixed_optimal_suboptimal": true,
+      "D_any_step_value_contrast": true,
+      "D_gap_completion_contrast": true
+    }
+  ]
+}

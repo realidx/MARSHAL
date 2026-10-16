@@ -2,13 +2,66 @@
 
 This is the direct-action experiment defined in
 [`new/strategic_game_slices_checkpoint_20261001.md`](../../new/strategic_game_slices_checkpoint_20261001.md).
-The intended comparison has two independent training arms, **slices** and
-**selfplay**. Both start
-from Qwen3-4B-Instruct-2507 and use the same native `act` tool interface,
-optimizer, four replicas per group, and generated-response-token budget.
-There is no separate inference or conditional-planning supervision.
+The intended comparison is slices versus complete self-play using native
+`act` actions, without separate inference/planning supervision. The current
+implemented training path is the selected terminal-v4 slice experiment;
+older four-replica and terminal-reward arm descriptions below are historical.
 
-## 当前研究方向（2026-10-05）
+**研究边界：本文比较slices与完整SP的训练效率，不设计新的GRPO算法。**
+应固定有明确出处的成熟训练实现并在两臂保持一致；不因文献里存在改版就默认
+引入Dr. GRPO、DAPO、GiGPO或混合新loss。算法变更需有本项目充分、具体的动机。
+
+**2026-10-16 新训练方案已接入 v5：**每个相同决策上下文采8个
+回答，用连续oracle Q/负regret计算节点内标准GRPO优势；均匀随机抽1个原始回答执行，
+到下一决策再开8个，最多k=1/2/3个focal节点。所有回答参与本节点训练，采样
+期间固定权重。只采用这一种credit方案，不额外做整轨迹credit方法对照；原
+slices/SP效率比较保留。完整已定协议与依据见
+[多轮采样与分组记录](MULTITURN_GROUPING_REVIEW_20261016.md)。
+连续reward保留已采到的次优动作价值差异，严格0/1最优动作率用于评测；它不
+保证解决重复同一错误动作的探索问题。合法值保留native尺度，可用负regret
+表示；等值组task advantage=0，不默认加动态过滤/补采。
+**补充口径也已确认：**节点组等权、组内回答等权、回答内token平均；每update
+目标20个实际节点组×8回答，已开始的链采完再更新、允许略超，准确记录数量，
+同批只训练一遍。失败task reward取该节点最差合法动作的负regret，另保留
+独立−0.2协议惩罚。新协议需验收连续价值差异、动作重复和严格正确率。
+当前入口为 `terminal-node-regret-grpo-v5`，旧二分/local-LOO checkpoint拒绝续跑。
+模型、数据、oracle、输出/预算及低频验证保存沿用。CPU验收及遗漏见
+[准备检查](../../new/terminal_node_grpo_readiness_20261016/README.md)，启动命令见
+[训练入口](TERMINAL_TRAINING.md)。新协议GPU smoke尚未执行，本轮未提交任务。
+下方文献候选和10月8日配置属于历史讨论。
+
+**2026-10-16：先核定训练protocol。**已按原论文核对RLOO、Dr. GRPO、DAPO、
+GiGPO、RAGEN及oracle辅助学习，见[文献核对与协议建议](TRAINING_PROTOCOL_REVIEW_20261016.md)。
+连续反馈不必然改变单步最优解，但KL、小gap和多步credit必须一起定义；
+当前local advantage与原GRPO的outcome/process定义存在具体差别，详见报告的
+同日澄清；不能以“不标准”笼统归因训练问题。此前组合算法组件的建议尚未采纳，
+不作为实施计划；未改reward或启动新训练，20×8仍是工程候选。
+
+**历史讨论（未采纳）：整轨迹outcome GRPO候选。**已追查当前适配的历史
+动机，并核对Search-R1、ReTool、SocialRL、SPIRAL、Social-R1、GIFT与GiGPO的
+方法选择，见报告“同日追查”一节。没有项目证据证明local-LOO为必需；原始GRPO
+可支持多轮，但标量reward所代表的目标仍需明确。本次仅更新文献记录，未改训练。
+
+## 当前进度（2026-10-08 仓库核对）
+
+**Terminal v4 的真实 D 与首版 100 题选择已完成，逐步 binary reward 训练入口
+已实现；GPU smoke/resume 已通过，部分预算训练及 best/latest 导出评测已归档。**
+完整当前 checkpoint、证据路径和后续工作统一见 [PROGRESS.md](PROGRESS.md)。
+
+- **数据**：100 parents / 800 questions，train/validation/test 为 504/96/200 题；使用同一保存的初态完整终局 oracle，C/S/D 以真实终局效用定义。
+- **真实 D**：722 道原题复用 + 78 道 delta 测量，共 6,400 trajectories，6,200 terminal；全部逐步 native replay。delta job 915300 已完成，无需再做首轮补测。
+- **首版选集**：100 道 train slices、56 parents、37 families，保留 12 道强 acquisition 和 9 组完整 train entry-answer 对照；88 题有已观察到的决策/完成差异，12 题为完整对照保留。
+- **新运行配置**：训练合同 v4，每 update 20 题 × 8 trajectories，并发仍 32，同组共享 world；每 500K tokens 验证、每 1M tokens 恢复保存，best/结束/暂停立即保存。1024 输出 / 16K context、6M response tokens，原逐步 binary reward 与 protocol penalty 不变；新批次尚待 GPU smoke。
+- **评测与 checkpoint**：validation 整段成功率选 best，保留 best + final 并去重；正常预算完成后自动用 final 测试 200 slices / 25 parents，默认 8 repeats。
+- **真实执行**：smoke jobs 915648 / 915674 均退出 0；训练 job 915731 暂停于 550 updates / 3,500,783 response tokens，尚未完成 6M。best-379 / latest-549 已独立导出并测 terminal 与全部 24 个 CalBench cases，见 [执行记录](../../new/terminal_hf_test_calbench_20261008/README.md)。
+- **曲线审核已完成**：55 次训练后验证 + base；中期长输出/截断失稳、后期验证下降。699/2,200 组有非零 task advantage；12 道信息价值题 2,112 条训练轨迹仅 17 次首步正确、9 次整段成功，见 [完整审核与曲线](../../new/terminal_training_review_20261008/README.md)。
+- **下一步**：新 batch 的 GPU 验收、调查入口探索与 reward 信号诊断、强信息 held-out 和等 token SP 对照。旧 v3 checkpoint 不能静默迁移到新合同；6M 未完成，当前导出评测不属于自动 final-test。
+
+细节见 [D 与选集](TERMINAL_D.md)、[完整分析](TERMINAL_D_V4_ANALYSIS.md) 和
+[训练合同及手动命令](TERMINAL_TRAINING.md)。下方历史阶段中的“D 未完成 / 待选
+100 题 / 四 replicas”等不代表当前状态。
+
+## 历史 checkpoint（2026-10-05–06）
 
 **2026-10-06 训练衔接：**采用逐步 oracle-correctness binary reward，同组共享
 hidden world，8 replicas、32 并发容量、1024 输出 tokens；失败调用额外 −0.2
@@ -33,8 +86,8 @@ train 中 139 题有任意 decision 的同题面 value contrast，比仅看首�
 描述保留当时口径；目前尚未开始训练或生成 supervision traces。
 
 
-**正在推进的新目标与可复现 checkpoint 见 [PROGRESS.md](PROGRESS.md)。**
-当前任务是改进入口采样与信息依赖覆盖；下方各阶段报告均
+**最新状态与可复现 checkpoint 见 [PROGRESS.md](PROGRESS.md)。**
+本段记录当时的入口采样与信息依赖覆盖工作；下方各阶段报告均
 保留原始口径，不能将历史条目直接相加作为当前进度。
 
 **v2 的真实 D 结果已由用户提供：800 题，每题 8 次，共 6,400 条轨迹。**
