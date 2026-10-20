@@ -153,16 +153,17 @@ class EvaluationRefillTests(unittest.TestCase):
         def zero(requests):
             outs=mock_generate(requests)
             for req,out in zip(requests,outs):
-                out['completion']['raw_message']['tool_calls'][0]['function']['arguments']=json.dumps(dict(action_index=0))
+                from .named_prompt import mock_call
+                out['completion']['raw_message']['tool_calls'][0]['function']=mock_call(req,0)
                 out.update(response_ids=[7,9],behavior_log_probs=[-.4,-.2],text='answer',request=req)
             return outs
         def factory(n):
             stream,workers,_=helper.bridge()
             stream.limits=[n//2+int(i<n%2) for i in range(2)]
             stream.pipeline.tokenizer.apply_chat_template=lambda *a,**k:dict(input_ids=[1,2])
-            completion=dict(finish_reason='tool_calls',raw_message=dict(tool_calls=[
-                dict(function=dict(name='act',arguments=json.dumps(dict(action_index=0))))]))
-            stream.parse=lambda *a,**k:deepcopy(completion)
+            from .named_prompt import mock_call
+            stream.parse=lambda parser,text,tools,**kw:dict(finish_reason='stop',raw_message=dict(content='MOCK explanation.',tool_calls=[
+                dict(function=mock_call(dict(tools=tools,seed=0),0))]))
             for worker in workers:
                 original=worker.engine.add_requests
                 def add(*args,original=original,worker=worker,**kwargs):

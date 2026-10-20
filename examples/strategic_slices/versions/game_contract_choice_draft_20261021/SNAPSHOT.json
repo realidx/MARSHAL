@@ -1,0 +1,71 @@
+{
+  "version": "game-contract-choice-mechanism-draft-v1",
+  "record_kind": "game-design-proposal-not-active",
+  "created_on": "2026-10-21",
+  "parent_active_training": "terminal-node-regret-grpo-readable-v8",
+  "status": "exact-rational-toy-witness-verified-not-native-certified",
+  "model_or_prompt_changed": false,
+  "production_game_changed": false,
+  "dataset_changed": false,
+  "submitted": false,
+  "public_game_parameters": {
+    "players": 2,
+    "roles": "A proposes, B responds",
+    "contracts": [
+      "X",
+      "Y",
+      "Z"
+    ],
+    "proposal_opportunities": 2,
+    "agreement_capacity": 1,
+    "prior": [
+      "1/3",
+      "1/3",
+      "1/3"
+    ],
+    "B_joint_types": [
+      [
+        1,
+        -1,
+        -1
+      ],
+      [
+        0,
+        1,
+        -1
+      ],
+      [
+        -1,
+        -1,
+        1
+      ]
+    ],
+    "A_contract_payoffs": [
+      1,
+      2,
+      2
+    ],
+    "query": "One selected true preference, private delivery, one use, consumes one proposal opportunity",
+    "first_acceptance_ends_game": true,
+    "rejection_penalty": 0,
+    "extra_query_reward": 0,
+    "response_tie": "Own expected final utility first, then other final utility"
+  },
+  "original_game_differences": [
+    "Complete contract menu instead of arbitrary native commitments",
+    "One accepted contract exhausts scarce resources",
+    "Two proposal opportunities for A; asymmetric role assignment, not the native round-robin schedule",
+    "Public correlated type prior"
+  ],
+  "evidence": {
+    "new/game_mechanism_design_20261021/verify_contract_witness.py": "31c6ad5617f1e69400bd740766db58f96149c83e9e8ef83bb52e5a67fdb1e02f",
+    "new/game_mechanism_design_20261021/witness_results.json": "9af136027b63b506c48ced840aea22274ad762bfd6b03ee0fa86bf03088ce25b",
+    "examples/strategic_slices/GAME_MECHANISM_PROPOSAL_20261021.md": "da85e43ec27c93558547ddb694a615a5fcf5b11d0dec264c7db2213bf6b9ae48"
+  },
+  "unresolved": [
+    "Validate alternate-proposer version before using its labels",
+    "Align vector/social-tie solver and grading",
+    "Validate three-player extension separately",
+    "Build/version new corpus only after mechanism agreement"
+  ]
+}

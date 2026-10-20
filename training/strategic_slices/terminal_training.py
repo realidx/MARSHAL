@@ -19,11 +19,13 @@ from .terminal_d import TerminalRollout, load_dataset
 from .values import cached_extreme_value
 from training.social_mixed.cache import ByteLRU,CacheNamespace
 
-VERSION='terminal-node-regret-grpo-refill-v6'
+from .named_prompt import VERSION as PROMPT_VERSION
+VERSION='terminal-node-regret-grpo-readable-v8'
 PROTOCOL_PENALTY=0.2
 ORACLE_EPSILON=1e-7
 STD_EPSILON=1e-8
 CONTRACT=dict(version=VERSION,
+    prompt_version=PROMPT_VERSION,
     scheduler='completion-refill-v1: preselect a uniform original candidate; advance when it finishes, normalize only after all 8; no length-based filtering.',
     reward='Legal Q-max(Q); invalid/truncated min(Q)-max(Q), over ALL legal actions, native utility scale.',
     epsilon=ORACLE_EPSILON,std_epsilon=STD_EPSILON,std_correction=1,
@@ -79,6 +81,9 @@ class TrainingData:
 
 
 class StepRollout(TerminalRollout):
+    def request(self,cfg):
+        return super().request(dict(cfg,prompt_version=cfg.get('prompt_version',PROMPT_VERSION)))
+
     def __init__(self,tree,row,replica,group_seed,reset,epsilon=1e-7,cache=None):
         # TerminalRollout draws deterministically from a row. Make a local
         # sampling-only view to force the shared reset without changing beliefs
@@ -143,23 +148,26 @@ class ScoreContext:
     first: bool
     root_Q: list
     V_star: float
+    action_calls: object=None
 
     @classmethod
     def capture(cls,job):
         return cls(list(job.tree.rules.actions(job.node)),job.index,not job.calls,
-            job.member['root_Q'],job.member['V_star'])
+            job.member['root_Q'],job.member['V_star'],deepcopy(getattr(job,'_action_calls',None)))
 
 
 def score_response(job,out,req,q,posterior):
     """Score without executing, changing posterior, or sampling a continuation."""
     check_output(out,dict(max_tokens=req['max_tokens']))
     context=job if isinstance(job,ScoreContext) else ScoreContext.capture(job)
-    ai,status=decode(out,context.actions)
+    ai,status=decode(out,context.actions,context.action_calls)
     valid=status=='ok';gap=float(q.max()-q[ai]) if valid else None
     reward=float(q[ai]-q.max()) if valid else float(q.min()-q.max())
     detail=dict(reward=int(valid and gap<=ORACLE_EPSILON),gap=gap,Q=q.tolist(),posterior=posterior.tolist(),
         optimal_indices=np.flatnonzero(q.max()-q<=ORACLE_EPSILON).tolist())
+    explanation=out['completion'].get('raw_message',{}).get('content') or ''
     return dict(out,request=req,node=context.node,action_index=ai,protocol_status=status,
+        explanation_present=bool(explanation.strip()),explanation_chars=len(explanation.strip()),
         prompt_sha256=digest({k:req[k] for k in ('messages','tools')}),
         first_action_oracle_gap=float(context.V_star-context.root_Q[ai]) if context.first and valid else None,
         binary_reward=detail['reward'],
@@ -189,7 +197,7 @@ class Collector:
         self.stream_factory=stream_factory
         self.replicas,self.concurrency=replicas,concurrency
         self.cfg=dict(seed=seed,replicas=replicas,workers=concurrency,max_tokens=max_tokens,context=context,
-            temperature=1.,top_p=1.,top_k=-1,repetition_penalty=1.)
+            temperature=1.,top_p=1.,top_k=-1,repetition_penalty=1.,prompt_version=PROMPT_VERSION)
         self.state=dict(version=VERSION,dataset_sha256=data.sha,seed=seed,replicas=replicas,
             node_groups_per_update=node_groups_per_update,
             config=self.cfg,contract=CONTRACT,cursor=0,consumed=0,exposure={},step=0)
@@ -319,7 +327,10 @@ class Collector:
             completion_rate=sum(g['status']=='terminal' for g in games)/len(games),
             truncated_calls=sum(r['protocol_failure']=='truncated' for r in rows),
             invalid_calls=sum(r['protocol_failure']=='invalid_action' for r in rows),
-            skip_optimizer=False,step_binary_reward=False,terminal_utility_used_for_training=False)
+            skip_optimizer=False,step_binary_reward=False,terminal_utility_used_for_training=False,
+            explanation_calls=sum(r['explanation_present'] for r in rows),
+            explanation_rate=sum(r['explanation_present'] for r in rows)/len(rows),
+            tool_only_calls=sum(r['valid'] and not r['explanation_present'] for r in rows))
 
 
 def mock_generate(requests):

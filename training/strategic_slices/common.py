@@ -40,7 +40,16 @@ def write_rows(path, rows):
     Path(path).write_text(''.join(stable(r) + '\n' for r in rows))
 
 
-def request(rules, node, world, seed, temperature=1.0, cutoff=None, remaining_decisions=None):
+def request(rules, node, world, seed, temperature=1.0, cutoff=None, remaining_decisions=None,
+            prompt_version='terminal-json-act-v6', reference_others=False):
+    from .named_prompt import VERSION as NAMED,LEGACY,V7
+    if prompt_version==NAMED:
+        from .named_prompt import request as named_request
+        return named_request(rules,node,world,seed,temperature,remaining_decisions,cutoff,reference_others)
+    if prompt_version==V7:
+        from .named_prompt_v7 import request as v7_request
+        return v7_request(rules,node,world,seed,temperature,remaining_decisions,cutoff,reference_others)
+    if prompt_version!=LEGACY:raise ValueError('Unknown prompt version')
     actor = rules.actor(node)
     visible = rules.observation(node, actor, world[actor])
     visible['game'] = rules.public_game()
@@ -78,12 +87,19 @@ def request(rules, node, world, seed, temperature=1.0, cutoff=None, remaining_de
                 seed=seed, temperature=temperature)
 
 
-def decode(output, actions):
+def decode(output, actions, action_calls=None):
     completion = output['completion']
     if output.get('finish_reason', completion.get('finish_reason')) == 'length':
         return None, 'truncated'
     calls = completion.get('raw_message', {}).get('tool_calls') or []
     try:
+        if action_calls is not None:
+            from .named_prompt import canonical
+            if len(calls)!=1:raise ValueError('Exactly one named action required')
+            call=calls[0]['function'];key=canonical(call['name'],json.loads(call['arguments']))
+            matches=[i for i,(name,args) in enumerate(action_calls) if canonical(name,args)==key]
+            if len(matches)!=1:raise ValueError('Unregistered named action')
+            return matches[0],'ok'
         if len(calls) != 1 or calls[0]['function']['name'] != 'act':
             raise ValueError('Exactly one act call required')
         args = json.loads(calls[0]['function']['arguments'])

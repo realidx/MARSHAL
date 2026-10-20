@@ -1,0 +1,77 @@
+{
+  "version": "original-100-offer-quota-seeded-search-v4",
+  "status": "launched-not-completed",
+  "parent_run": "new/offer_quota_original_pool_20261021/full_pool_retry_v3",
+  "actual_argv": [
+    "new/offer_quota_original_pool_20261021/retry_full_pool_v4.py",
+    "--source-run",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v3",
+    "--output",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v4",
+    "--solver-seconds",
+    "150"
+  ],
+  "actual_options": {
+    "source_run": "new/offer_quota_original_pool_20261021/full_pool_retry_v3",
+    "output": "new/offer_quota_original_pool_20261021/full_pool_retry_v4",
+    "solver_seconds": 150.0
+  },
+  "active_training": {
+    "version": "terminal-node-regret-grpo-readable-v8",
+    "prompt_version": "terminal-readable-named-v2",
+    "path": "examples/strategic_slices/versions/terminal_v8_readable_20261018/SNAPSHOT.json",
+    "sha256": "3131f1a60d745602e938ccbb38fb4fac1619347316455aa5ea6de7d61117d146"
+  },
+  "resolved_config": {
+    "parent_ids": [
+      "c8fdc75802d43fb7a5b96676"
+    ],
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "initialization": "At each public node and each actor-information cell, draw Dirichlet(1,...,1) action probabilities using np.random.default_rng(seed); repeat identical probabilities across indistinguishable worlds",
+    "selection": "First profile passing the same full-terminal certification, independent of measured Q/query value; later seeds skipped",
+    "offer_limit": 1,
+    "solver_seconds": 150.0,
+    "analysis_seconds": 180,
+    "epsilon": 1e-08,
+    "max_nodes": 160000,
+    "max_joint_evaluations": 640,
+    "max_candidates": 12,
+    "max_joint_cells": 8192,
+    "max_sweeps": 256,
+    "large_tree_ordered_sweeps": 8,
+    "physical_game": "identical to source run; no prior/utility/query/action/response-tie change",
+    "baseline": "reuse original independently verified baseline bytes, preserving identity"
+  },
+  "inputs": {
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v3/pipeline_snapshot.json": "ccab156fc81d54ae127d27b42a3f24b66c12e87b2d245e25a490223986d4eb57",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v3/summary.json": "c8748d4b7d6585a32980ccec934f221f981e5975967e21a1ebc32154cf634a6c",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v3/COMPLETE.json": "4487f436912eeeb1bb9c3c35c68689869023b66ade3908a92cfa63ad2e6b6f0f"
+  },
+  "source_manifest": {
+    "new/offer_quota_original_pool_20261021/retry_full_pool_v4.py": "d874f2569a3b3f4db4d3308896210f88971f8eefa209d35d5fcf21cb49291ac8",
+    "new/offer_quota_original_pool_20261021/full_pool_v1.py": "1863d5b77ba725ffbc4498b9401021d6469e75261f9b6b06d8e6721bffa9048e",
+    "new/offer_budget_mechanism_20261021/research.py": "f36c5cef9e92bb14f1f2ab7fb769207ac148e3de758ae3dadeb44f635307db17",
+    "training/strategic_slices/bounded.py": "b23abdbfa6a8a81661e637d0536a2ec5d8c787eeacfde8e4463685c170244d66",
+    "training/strategic_slices/equilibrium.py": "cffcc5c8e90d9e48e3d0fd125214cacdb4b14805c346a7731ee40c007f5c65f1"
+  },
+  "model_identity": "none",
+  "reward_advantage_training": "not applicable",
+  "runtime": {
+    "python": "3.12.2 | packaged by conda-forge | (main, Feb 16 2024, 20:54:21) [Clang 16.0.6 ]",
+    "numpy": "1.26.4",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "environment": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    }
+  },
+  "production_changed": false,
+  "gpu_used": false
+}

@@ -1,0 +1,188 @@
+{
+  "version": "native-offer-quota-research-v2",
+  "record_kind": "game-design-research-not-active",
+  "created_on": "2026-10-21",
+  "status": "completed-cpu-14-of-14-full-terminal-certified",
+  "parent_research_version": "native-offer-quota-research-v1",
+  "parent_active_training": "terminal-node-regret-grpo-readable-v8",
+  "authorization": "User selected OFFER quota research first, with investigation unchanged and dependent preferences deferred. No production activation requested.",
+  "changes_from_failed_v1": [
+    {
+      "field": "pending-offer quota audit owner",
+      "before": "pending.proposer_id (invalid native field)",
+      "after": "state.current_proposer()",
+      "motivation": "Correct independent bookkeeping audit without changing game semantics or solver parameters"
+    }
+  ],
+  "changes_from_active_training_baseline": [
+    {
+      "field": "physical OFFER legality",
+      "before": "only shared proposal-turn/commitment bounds",
+      "after": "research pair None versus quota 1 per player, charged immediately on proposal, never refunded",
+      "motivation": "User-requested independent cost of offer-based probing"
+    },
+    {
+      "field": "public state",
+      "before": "no OFFER counters",
+      "after": "limit/used/remaining fields; pending proposal already charged",
+      "motivation": "Quota is public game state and affects legality"
+    },
+    {
+      "field": "diagnostic parents",
+      "before": "existing production corpus remains unchanged",
+      "after": "six declared independent compact controls plus existing independent native witness; matched raw/prior within pair",
+      "motivation": "Isolate quota without logical dependence or a new contract menu"
+    },
+    {
+      "field": "diagnostic action values",
+      "before": "production focal own-only scorer has known response social-tie gap",
+      "after": "isolated full-vector terminal BR matching response-only lexicographic convention; production scorer unchanged",
+      "motivation": "Avoid carrying known norm mismatch into new mechanism measurements"
+    },
+    {
+      "field": "prompt/model/training",
+      "before": "active v8 as recorded",
+      "after": "unchanged; no model calls or new request format",
+      "motivation": "Mechanism study only; prompt work deferred"
+    }
+  ],
+  "resolved_run_configuration": {
+    "version": "native-offer-quota-research-v2",
+    "paired_offer_limits": [
+      null,
+      1
+    ],
+    "query": "unchanged: one private answer per player per game; consumes a proposal turn; public target; only proposal phase",
+    "payoff": "unchanged native additive binary/linear goal utility; no OFFER penalty or investigation bonus",
+    "preferences": "original parent support/prior fixed within pair; require factorized support; no dependent-preference rules",
+    "response_ties": "own expected final utility first, then sum of others, response only; uniform remaining ties",
+    "proposal_ties": "own expected final utility only; uniform remaining ties",
+    "solver": {
+      "lookahead_rr": "full native schedule length for each parent; no nonterminal leaves",
+      "max_nodes": 160000,
+      "seconds": 45.0,
+      "max_sweeps": 128,
+      "horizon_mode": "rr-plus-next-own-proposal-v1",
+      "solver_mode": "equilibrium",
+      "epsilon": 1e-08,
+      "max_candidates": 6,
+      "max_joint_cells": 4096,
+      "max_joint_evaluations": 160,
+      "large_tree_ordered_sweeps": 2,
+      "initialization": "uniform",
+      "audit_update_order": null
+    },
+    "analysis_seconds_per_player": 120,
+    "diagnostics": "every reachable first-proposal own-information cell; vector full-terminal BR, no-own-queries BR, same-query answer mask for informative best queries",
+    "selection": "first N of six declared compact convenience parents plus optional existing independent native witness; not random corpus sampling",
+    "model": "not applicable",
+    "training": "not applicable",
+    "sampling": "none; complete public tree and information-conditioned expectations"
+  },
+  "run_snapshot": "new/offer_budget_mechanism_20261021/run_v2/pipeline_snapshot.json",
+  "analysis_snapshot": "new/offer_budget_mechanism_20261021/run_v2/analysis_snapshot.json",
+  "actual_options": {
+    "output": "new/offer_budget_mechanism_20261021/run_v2",
+    "seconds": 45.0,
+    "max_nodes": 160000,
+    "compact_count": 6,
+    "include_fixture": true
+  },
+  "validation": {
+    "executed": true,
+    "semantic_checks_passed": 4,
+    "one_round_nonbinding_controls_passed": 7,
+    "full_terminal_solves_attempted": 14,
+    "certified": 14,
+    "max_own_deviation_gain_reported": 0.0,
+    "epsilon": 1e-08,
+    "response_tie_tolerance": 1e-09,
+    "nonterminal_cutoff_leaves": 0,
+    "scope": "Selected own-utility epsilon-Nash, information consistency, local support and response-social-tie checks; not exact or unique equilibrium",
+    "not_executed": [
+      "three-player multi-round",
+      "production corpus census",
+      "new selection or D measurement",
+      "model sampling",
+      "GPU training"
+    ]
+  },
+  "findings": {
+    "six_compact_controls": "initial query advantage and query access value remain zero within 1e-8",
+    "existing_native_witness_query_advantage": "0.25 -> 0.25",
+    "existing_native_witness_same_query_answer_value": "0.2142857142857144 -> 0.10714285714285732 (separately selected profiles)",
+    "conclusion": "Some offers lose value, but this sample does not establish increased investigation necessity; dependent preferences remain deferred"
+  },
+  "production_game_changed": false,
+  "prompt_changed": false,
+  "dataset_changed": false,
+  "training_changed": false,
+  "gpu_used": false,
+  "evidence": {
+    "new/offer_budget_mechanism_20261021/run_v2/compact_1_slot_1_raw.json": "f25dfd8f6172952f677538e78ee137a45a275728fae1c5b4cdb52afea29ceb2d",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_1_slot_0_raw.json": "3deee07d43a89e62ec96f527196e5339324ac775c2a754cdb0069770de505a92",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_2_slot_0_unlimited_result.json": "860044e5407061a2234ddc2d4d5c44305fc99124b197c37b2ae880faa6952d06",
+    "new/offer_budget_mechanism_20261021/run_v2/summary.json": "e2f5d9cb879267513f7a190d910774834f50cc00734bc96445a9671c19ee06f0",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_2_slot_0_one_round_control.json": "052b14a2ed475289d8b345688afc967929ee912ccd8082a6bd7747e0a5b3ecc5",
+    "new/offer_budget_mechanism_20261021/run_v2/native_two_player_existing_unlimited_result.json": "3d33fe086504bac42cb7a9b535e7b59b9ec99e7a5a82ba5cf2acdcec9afcd865",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_2_slot_0_quota1_reference.npz": "ce72142a31ab5fd21a3771f4018aa49cfc1cc352db4795afee048d75ee5c160b",
+    "new/offer_budget_mechanism_20261021/run_v2/native_two_player_existing_quota1_result.json": "13d2f30d43da8b0aa0e28713dd6e626b6a3c94fb6f4dcc242b2df8641e90e110",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_1_slot_0_unlimited_reference.npz": "71c189580002500eab737a681d07104a277b01e2504e2351656c718c50b5c082",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_0_slot_0_quota1_result.json": "c17248a37ab59baf4237cb380b2a3ab6b34d4e4bece489bebc461aa996fe7320",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_1_slot_0_unlimited_result.json": "ec46538034f745c6cf583b71e68d663142e51a22f7ac4aa22f3c19b9e02ff70a",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_1_slot_1_quota1_result.json": "c58dfcde219b226a4acb37686af1ea0a056b85bbf90c47f432f7765998ed9b24",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_2_slot_1_quota1_reference.npz": "0e05af03956688a4c3e18097d65bc1aa94df0397f4fd1035439691ef6f84c0dc",
+    "new/offer_budget_mechanism_20261021/run_v2/native_two_player_existing_quota1_reference.npz": "47a0ecdc9c21afcbcbbe1151dd206f8ffd9e54b9b6a18d7a6f4d82ec627c229a",
+    "new/offer_budget_mechanism_20261021/run_v2/pipeline_snapshot.json": "372dbd9e51c88f8f9e1e36524317cb4c113dc89ae6d3d207a5376370ef0c8fad",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_0_slot_1_unlimited_result.json": "c97369185c49ef07eecc51d60c3992960e1c1af569f5a82acb51409804e79da6",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_0_slot_0_unlimited_reference.npz": "c7e7702573775f55c6d9aab2f557f7183e0ac2106fd2ebc256088c2ff055be61",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_2_slot_0_quota1_result.json": "a5aa7812e227f0f089482399cf299a131ab77d42d4856d626b26cbd278764c30",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_0_slot_1_raw.json": "e830e260408466b36cc2e2be73231e929b9c5c375da7a6db8e2d1b2365d298bc",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_0_slot_0_raw.json": "7bd37605d47b5a0974ea7639cefcd5a53f8662a96424101a240bb42647d2df92",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_2_slot_1_one_round_control.json": "052b14a2ed475289d8b345688afc967929ee912ccd8082a6bd7747e0a5b3ecc5",
+    "new/offer_budget_mechanism_20261021/run_v2/native_two_player_existing_raw.json": "160e8af888705dfde47e9755f59c2ca24b76ad29e8f6e315a1a45b3e29a37001",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_2_slot_1_unlimited_reference.npz": "e417ca88262ff454f5ef8760ab6645ff54cca99eb375db76eb3c22fc7a9b4a13",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_2_slot_1_quota1_result.json": "66aaffb5b5a513e085447452c7b8e0193c873084aff99cbfeea2c0f4b07ab8b3",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_1_slot_1_one_round_control.json": "052b14a2ed475289d8b345688afc967929ee912ccd8082a6bd7747e0a5b3ecc5",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_2_slot_1_unlimited_result.json": "aaf3b6f84332e872d3f1260638d1337f0b82982841846b75663e40f8a48b6fc2",
+    "new/offer_budget_mechanism_20261021/run_v2/COMPLETE.json": "000a661329476ca82483bb53d02da1d5565bec43cb07964efedf1be7e9cfc751",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_1_slot_1_unlimited_reference.npz": "cdc217df0647db64ee397b502fd4602311e091f3876bf41e3d23ff4220c34e73",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_1_slot_1_unlimited_result.json": "431fd02c266a158b1ab3ebf7aaa803e73cfd69efeeae81f3aecdcf4dc919960e",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_2_slot_1_raw.json": "02c809c86d883bd8ed57d524bb402c221404f3571f505e2738a41dcaa4fd78a4",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_2_slot_0_raw.json": "967874103173ae00e24fd2da7b5cf3ead4e5fe796f7b22e165888cffe9f665dc",
+    "new/offer_budget_mechanism_20261021/run_v2/native_two_player_existing_unlimited_reference.npz": "7f60893f34a92b923abc56669bd98eca77fd43217fb40e296e06c951e23a934b",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_1_slot_1_quota1_reference.npz": "68c3c5dede409afa3f2be2615c6bf7008fcb55d94b09730a06acc04974f88e13",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_0_slot_0_quota1_reference.npz": "1d6b0b1ed8fe34909551fffa29a8f7964459eb2db9b9ee86f24f530772f1623a",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_0_slot_0_one_round_control.json": "052b14a2ed475289d8b345688afc967929ee912ccd8082a6bd7747e0a5b3ecc5",
+    "new/offer_budget_mechanism_20261021/run_v2/analysis_snapshot.json": "c16371286d2a4f615d3149482e04bc3ee0d02b132c8f6906d4a0de8665ec316b",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_2_slot_0_unlimited_reference.npz": "c13e09b686bcc7a29bac8bfe172f58be0ff7e69abecff934bc2f29fd7ec4d57d",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_0_slot_1_one_round_control.json": "052b14a2ed475289d8b345688afc967929ee912ccd8082a6bd7747e0a5b3ecc5",
+    "new/offer_budget_mechanism_20261021/run_v2/native_two_player_existing_one_round_control.json": "efc5069364c7d3cd16427cecf2b303e8d4b7e7a0e1f0088ad9920394ae935403",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_0_slot_1_quota1_result.json": "9f61c8dff3dbadb083578f7dde33de203c46c73407eee33c5110618af04cb141",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_0_slot_0_unlimited_result.json": "eff6eb073cd15b0a5788480fff78e42a1a94bd6311b6e93d2678c1dbfbc685ab",
+    "new/offer_budget_mechanism_20261021/run_v2/paired_analysis.json": "5b4467dae2f3eaa5e0a2c6f24d2b743a6c6c5dd270a4699964888bfb0e75e196",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_1_slot_0_quota1_result.json": "9a0398289d302b9575d1f501c6ab1945b1a6f34afc278ca5cd5c251bd2140a7f",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_0_slot_1_quota1_reference.npz": "4f6f5f9258995ab5bafc3d5aa4995d666d893464ed4153205fc88c948db561bf",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_1_slot_0_quota1_reference.npz": "6f1185406c01a7acf75c1d6c86c3a0acc7f5a0d1e634bc9385b0e6e04db601c7",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_0_slot_1_unlimited_reference.npz": "9ff1657bd4e6822a9618e265a152495f7f02c72bb08ad5cc3c9ad88da956d44a",
+    "new/offer_budget_mechanism_20261021/run_v2/compact_1_slot_0_one_round_control.json": "052b14a2ed475289d8b345688afc967929ee912ccd8082a6bd7747e0a5b3ecc5",
+    "new/offer_budget_mechanism_20261021/run_v2/semantic_checks.json": "21e60dcd6f3bb2504351c837d0b5c84f5658cde5b83bb73cfd0ecec42f23b935",
+    "new/offer_budget_mechanism_20261021/run_v2/source/run.py": "6ab73285b4e2743cb344738f2b2dff5d66cb7e75d9f86c86e219504a57d25a26",
+    "new/offer_budget_mechanism_20261021/run_v2/source/research.py": "f36c5cef9e92bb14f1f2ab7fb769207ac148e3de758ae3dadeb44f635307db17",
+    "new/offer_budget_mechanism_20261021/run_v2/source/test_research.py": "34d278b0c6c03697fe41ad5ff3d09ef2dc3373a66dd0f9936f836ac4bd679230",
+    "new/offer_budget_mechanism_20261021/run_v2/source/analyze.py": "eb46af5503489f1de35eaa5b09a25d2ed3a9cd50812a9a34bc2b659b962b55a5",
+    "new/offer_budget_mechanism_20261021/run.py": "6ab73285b4e2743cb344738f2b2dff5d66cb7e75d9f86c86e219504a57d25a26",
+    "new/offer_budget_mechanism_20261021/research.py": "f36c5cef9e92bb14f1f2ab7fb769207ac148e3de758ae3dadeb44f635307db17",
+    "new/offer_budget_mechanism_20261021/test_research.py": "34d278b0c6c03697fe41ad5ff3d09ef2dc3373a66dd0f9936f836ac4bd679230",
+    "new/offer_budget_mechanism_20261021/analyze.py": "eb46af5503489f1de35eaa5b09a25d2ed3a9cd50812a9a34bc2b659b962b55a5",
+    "new/offer_budget_mechanism_20261021/README.md": "c9af9031733ebf23502f2ae93dc570d7e8cea9b9a106219df9d0b8e4402a2c94",
+    "examples/strategic_slices/GAME_OFFER_QUOTA_RESEARCH_20261021.md": "4b647a2f2b724b4a0b2c1efed726d980b1174e70d9c88e9f939c2e407f7bcce0"
+  },
+  "unresolved": [
+    "Whether quota improves investigation value across broader independent native parents",
+    "Safe/unilateral offers and informed-partner offers as substitutes",
+    "Production offer budget value not selected",
+    "Three-player multi-round size and solver behavior",
+    "Production response social-tie grading gap remains"
+  ]
+}

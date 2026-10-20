@@ -1,5 +1,76 @@
 # Strategic slices：当前进度与历史 checkpoint
 
+## 2026-10-21：原100父游戏报价额度整批研究
+
+原100个baseline均重新认证通过，ID/raw/split精确保留。70个一轮局游戏等价，原profile按原身份复用；
+30个两轮局中29个得到新认证profile，`c8fdc75802d43fb7a5b96676`在预算、固定种子和旧profile起点重试后仍缺失，未删题或当零信号。
+99个有效配对：真实调查见证6→16、严格调查动作优势父游戏7→17；新增10个真实见证均在train。
+29个受影响配对：初始合法OFFER平均regret 0.04248→0.36464，28个初始最优动作集合改变。
+validation/test尚无新增严格调查需求；不是模型训练或泛化验证。
+各预算/初始化变化、完整参数和失败均单独留痕，见[整批结果](OFFER_QUOTA_ORIGINAL_POOL_RESULTS_20261021.md)。
+物理变化只有提出OFFER立即扣个人一次额度；调查/独立偏好/utility不变。生产prompt/评分/GRPO和active未变。
+新slice/C/S/D、最后1局认证、生产响应平局对齐和正式训练仍待完成。
+
+## 2026-10-21：固定原100父游戏为研究对象
+
+用户澄清：保留该调查/不该调查的异质性，目标是同批原父游戏下SP与slices的效率比较，
+不能以额外小控制题的调查优势作为整体机制结论。调查不改，dependent preference仍暂缓。
+按active v8 source身份核对原pool为100父游戏，split=63/12/25；历史100训练slice覆盖其中56个train父游戏。
+额度1合法性审核：30个两人两轮局确有额外约束（逐局合法反例），70个一轮局完全冗余。
+全部原reference hash和逐目标独立support核对通过；无新生成父游戏、未重求100局、未重算C/S/D或训练。
+见[对象与后续合同](OFFER_QUOTA_ORIGINAL_POOL_SCOPE_20261021.md)。
+
+## 2026-10-21：保持调查原机制，单独检查OFFER报价额度
+
+用户决定先研究提出OFFER立即扣除个人额度，接受/拒绝不退还；dependent preference暂缓。
+独立研究实现每人整局1次报价，与无额外额度限制配对，调查和独立偏好support/prior不变。
+7个两人两轮父游戏、14次完整终局求解均通过自身偏离/局部支持/响应平局和信息集认证；
+4项语义检查及7个一轮非约束控制通过。一轮每人本来仅一次proposal，因此额度1不产生额外约束。
+部分试探报价Q下降，但6个紧凑控制仍无调查价值；已有原生样例首步调查优势仍为0.25，
+相同查询的答案价值由0.214286降为0.107143（两个独立重求profile间，含伙伴适应/选择效应）。
+尚未证明额度改善调查信号，不据此加入dependent preference。见[完整记录](GAME_OFFER_QUOTA_RESEARCH_20261021.md)。
+首次研究run_v1审核字段错误中止、source留档，无可用标签；run_v2修正审核后完成全部14次。
+只CPU研究，无LLM或GPU；未改变生产游戏/prompt/Oracle/题库/训练/active，未修复v8评分缺口。
+
+## 2026-10-21：转向游戏机制设计，暂停prompt改版
+
+按用户要求先处理调查与报价的替代问题。复核旧机制审计，提出完整合同菜单、稀缺资源、
+有限期限与公开联合类型的设计；用新的两人非对称议价原型做精确分数验证：查询一个三值偏好
+最优5/3，不调查的自适应offer策略（包含混合策略的宽松上界）至多4/3；同一查询屏蔽答案2/3。
+二值单槽信号或第三次报价机会控制均令严格调查优势为0。构造策略包含完整后续回应及社会平局，
+不以近视接受策略代替对手。见[设计提案与全部边界](GAME_MECHANISM_PROPOSAL_20261021.md)。
+该模型不含原生任意部分承诺，A独享两次提案权；不是现有RR/三人局的均衡证书。
+生产游戏、Oracle、题库、prompt和active v8未变，未模型调用或训练。
+
+## 2026-10-21：核对状态、记忆与response tie，暂不激活新训练协议
+
+当前是环境连续推进、每步完整状态重建；不携带过去assistant解释。CPU三次focal决策
+验证调查答案在后两次request中保留，另一玩家不获得私有回答；proposal阶段也可有已接受承诺。
+100个参考策略均认证response-only social tie，但focal求值/训练/正确率只看自身Q。
+真实v6日志可复现own0/0、others2/4却同reward的上下文，不能只加prompt声称对齐。
+生成单user+原tools、共享披露+分状态决策的V9草案，仅登记draft，active仍v8。
+没有修改生产代码/题库/超参、没有重跑D或GPU训练。见[审阅与证据](PROMPT_PROTOCOL_REVIEW_20261021.md)。
+
+## 2026-10-18：v8按逐段审阅简化prompt
+
+规则集中解释BINARY/LINEAR与自身最终score；目标表明确commitment要求；
+公开/私有事实分表，保留调查答案、去掉来源提示。所有100父游戏/1344 worlds
+核验独立概率与原值完全相同，删除冗长support枚举。376个实际context可见事实集合、
+system和tools与v7一致，2045动作映射无错配。窗口/终局含义保留并改成普通语言。
+85项CPU测试通过；原数据/Oracle/reward/参数沿用，旧D未重测，无GPU训练。
+完整[v8输入](versions/terminal_v8_readable_20261018/PROMPT_PREVIEW.md)、
+[逐项审阅](PROMPT_REVIEW_20261018.md)和[版本记录](versions/README.md)。v7快照不覆盖。
+
+## 2026-10-17：恢复9月prompt，建立逐版配置快照
+
+当前v7恢复自然语言规则、表格、时间线、末尾brief explain以及具名游戏工具。
+未改变v6已确认的Oracle/连续reward/同节点采样/预算/题库；旧D仍标为旧prompt测量。
+完整输入：[prompt预览](versions/terminal_v7_named_20261017/PROMPT_PREVIEW.md)；
+9月BP/SP/D及terminal各版：[逐项配置对照](PIPELINE_CONFIG_COMPARISON_20261017.md)。
+原始配置、全字段CSV、版本索引和后续留痕流程在[versions](versions/README.md)。
+376个实际context/2045动作映射无错配；81项CPU测试通过。新版本尚未GPU训练，
+不能resume v6；注册快照及每run实际配置快照用于约束后续变更。
+
 ## 2026-10-16：验证/测试完成即补位
 
 已落实效率项5：slice评测跨parent补位，完整team和focal-reference跨parent/
@@ -544,3 +615,40 @@ Results and source snapshots:
   unmeasured/null. These limits are recorded in the manifest, not hidden by the count.
 - Model usefulness and long-horizon generalization remain unmeasured. D and the
   final 100-slice selection are explicitly deferred until requested.
+## 2026-10-21：重新审计设计的工作顺序
+
+用户要求依次复核游戏各项设计、筛选与solver标签，研究OFFER代价，讨论Q/S与题型，
+再修改prompt、重测D，最后对照失败训练修复failure pattern。
+[审计计划](REBUILD_AUDIT_PLAN_20261021.md)记录阶段交付、已知问题和待决事项。
+原100题保留历史身份；新正式分布不默认继承未经研究论证的70/30轮数比例。
+仅文档变更，未激活新游戏、prompt、标签或训练版本，未重测D。
+
+## 2026-10-21：参数、先验和行动菜单的独立CPU可行性检查
+
+完成三个独立版本共114次诊断尝试：17次认证和辅助求值完成、29次无可用认证结果、
+68次资源预检跳过。包含配对条件及重复游戏预算，不是114个独立父游戏。
+均匀独立先验、参数化额度、显式移除旧正偏好准入条件、两种调查菜单均在隔离代码留痕。
+[完整报告](GAME_PARAMETER_FEASIBILITY_20261021.md)区分规则变体和计算优化、保存所有失败。
+原调查菜单的三人多轮仍未获得本轮求解成功证据；受限菜单隐藏1单元的两个样例认证成功。
+新正式100题、S、prompt、D尚未生成/测量；调查已公开/本人查过偏好是否继续允许待讨论。
+4项CPU检查通过、v8 source门禁保持通过，生产训练配置未改。
+
+## 2026-10-21：调查合法目标规则确认，新100父游戏冻结
+
+用户同意排除调查公开偏好及本人直接查过的偏好，仍保留所有其他未知目标，
+不按Q/S/推断或真实隐藏值删目标，不增加少回合/少调查奖励。
+新研究规则版本`native-private-unknown-query-offer-quota-v1`已实现，6项CPU检查通过。
+[规则记录](KNOWN_QUERY_RULE_20261021.md)及[新100父游戏](PARENT_POOL_V1_20261021.md)保留完整身份。
+100个均为两轮，67双人/33三人，85结构families；输入在任何求解/Q/S/D之前冻结。
+预定12例终局认证探针7通过/5无可用结果，88未尝试，完整失败保留；
+见[检查记录](PARENT_POOL_V1_PROBE_20261021.md)。未改生产prompt/reward/训练，未测新S/D。
+
+## 2026-10-21：完整远端CPU求解交付
+
+用户希望把求解移到remote server，要求完整指示，不再询问未知硬件配置。
+已提供[独立包与SSH/Slurm指南](REMOTE_SOLVER_20261021.md)，固定同100父游戏、base/extended
+完整终局求解、首个认证初始化选择、失败保留、按局恢复和NPZ独立重认证。
+最终归档在仓库外解包通过6项CPU语义测试及11项集成断言；
+见[交付验收](REMOTE_SOLVER_VALIDATION_20261021.md)。未运行远端或GPU，未测新Q/S/D。
+独立记录`strategic-parents-remote-terminal-solver-v1`，生产active仍v8。
+

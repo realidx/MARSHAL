@@ -1,0 +1,32 @@
+{
+  "versions": {
+    "megatron-core": "0.12.3",
+    "transformer-engine": "2.19.0",
+    "flash-attn": "2.8.3.post1"
+  },
+  "modules": {
+    "megatron.core": "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/megatron/core/__init__.py",
+    "transformer_engine.pytorch": "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/transformer_engine/pytorch/__init__.py",
+    "flash_attn": "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/flash_attn/__init__.py",
+    "mcore_adapter": "/home/e/e1300530/MARSHAL-train-20260916-063308/mcore_adapter/src/mcore_adapter/__init__.py",
+    "roll.distributed.strategy.megatron_strategy": "/home/e/e1300530/MARSHAL-train-20260916-063308/roll/distributed/strategy/megatron_strategy.py",
+    "roll.third_party.megatron.offload_states_patch": "/home/e/e1300530/MARSHAL-train-20260916-063308/roll/third_party/megatron/offload_states_patch.py"
+  },
+  "interfaces": {
+    "VirtualModels.all_gather_weights_as_hf_inflight": "(self, models=None)",
+    "MegatronOptimizer.step": "(self)",
+    "MegatronOptimizer.sharded_state_dict": "(self, model_sharded_state_dict: Dict[str, Any], is_loading: bool = False) -> Dict[str, Any]",
+    "OptimizerParamScheduler.state_dict": "(self) -> dict",
+    "OptimizerParamScheduler.load_state_dict": "(self, state_dict: dict) -> None"
+  },
+  "gpus": [
+    {
+      "name": "NVIDIA H100 NVL MIG 3g.47gb",
+      "memory": 49794777088
+    },
+    {
+      "name": "NVIDIA H100 NVL MIG 3g.47gb",
+      "memory": 49794777088
+    }
+  ]
+}

@@ -102,7 +102,8 @@ class Validator:
         strata=dict(all=decision_metrics(calls),root=decision_metrics(roots),
             information_root=decision_metrics([c for c in roots if c['slice_id'] in information_ids]))
         response_tokens=sum(len(c['response_ids']) for c in calls+full['calls'])
-        return dict(protocol=dict(split=self.split,test_loaded_for_scoring=self.split=='test',temperature=0.,max_tokens=cfg['max_tokens'],
+        from .named_prompt import VERSION as PROMPT_VERSION
+        return dict(protocol=dict(prompt_version=cfg.get('prompt_version',PROMPT_VERSION),split=self.split,test_loaded_for_scoring=self.split=='test',temperature=0.,max_tokens=cfg['max_tokens'],
             limit=self.limit,repeats=self.repeats,primary_checkpoint='final',selection_candidate=False,
             limitation='No independent strong-acquisition held-out family; native parent horizons remain short.'),
             generated_response_tokens=response_tokens,

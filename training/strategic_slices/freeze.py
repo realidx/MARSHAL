@@ -29,7 +29,7 @@ SPLITS = ('train', 'validation', 'test')
 
 
 def source_identity():
-    folders = ('training/strategic_slices', 'training/b_sft', 'new/benac_slice_pilot',
+    folders = ('training/strategic_slices', 'training/b_sft', 'training/social_mixed/frozen', 'new/benac_slice_pilot',
                'third_party/negotiation_benchmark/src')
     return {str(p.relative_to(ROOT)): file_hash(p) for folder in folders
             for p in sorted((ROOT / folder).rglob('*.py'))}

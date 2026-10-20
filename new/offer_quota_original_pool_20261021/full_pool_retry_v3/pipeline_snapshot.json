@@ -1,0 +1,81 @@
+{
+  "version": "original-100-offer-quota-resource-retry-v3",
+  "status": "launched-not-completed",
+  "parent_run": "new/offer_quota_original_pool_20261021/full_pool_retry_v2",
+  "actual_argv": [
+    "new/offer_quota_original_pool_20261021/retry_full_pool_v3.py",
+    "--source-run",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v2",
+    "--output",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v3",
+    "--workers",
+    "2",
+    "--solver-seconds",
+    "300",
+    "--max-joint-evaluations",
+    "1280"
+  ],
+  "actual_options": {
+    "source_run": "new/offer_quota_original_pool_20261021/full_pool_retry_v2",
+    "output": "new/offer_quota_original_pool_20261021/full_pool_retry_v3",
+    "workers": 2,
+    "solver_seconds": 300.0,
+    "max_joint_evaluations": 1280
+  },
+  "active_training": {
+    "version": "terminal-node-regret-grpo-readable-v8",
+    "prompt_version": "terminal-readable-named-v2",
+    "path": "examples/strategic_slices/versions/terminal_v8_readable_20261018/SNAPSHOT.json",
+    "sha256": "3131f1a60d745602e938ccbb38fb4fac1619347316455aa5ea6de7d61117d146"
+  },
+  "resolved_config": {
+    "parent_game_config": "exactly source run",
+    "offer_limit": 1,
+    "solver_seconds": 300.0,
+    "max_joint_evaluations": 1280,
+    "analysis_seconds": 180,
+    "epsilon": 1e-08,
+    "max_nodes": 160000,
+    "max_candidates": 12,
+    "max_joint_cells": 8192,
+    "max_sweeps": 256,
+    "large_tree_ordered_sweeps": 8,
+    "initialization": "uniform",
+    "parent_ids": [
+      "bb5cdb2fd2e6f1d607369695",
+      "c8fdc75802d43fb7a5b96676"
+    ],
+    "baseline": "reuse validated original baseline bytes with source hash",
+    "change": "Increase existing wall/sweep/candidate/history-cell/nonlinear evaluation budgets; algorithm/physical game/objective/tolerance unchanged",
+    "failure": "missing label, never zero information value"
+  },
+  "input_hashes": {
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v2/pipeline_snapshot.json": "4606c2ec4f8eb631cc58afa2f33ed718997e5855a46d833f5eaceccd85d7d1cc",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v2/summary.json": "b6704f8d00a601510429f1602acab35106a742eea73a64d83f044180ad592e06",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v2/COMPLETE.json": "85afdb5fd7a33fec6535575ed47d41b59f0d5af6dbecfecacf55aac05a470ff5",
+    "new/offer_quota_original_pool_20261021/full_pool_run_v1/parents.json": "b42051ae508957144ede70f1ad566a27abae46c18e2c60765ea9f447c8389691"
+  },
+  "source_manifest": {
+    "new/offer_quota_original_pool_20261021/retry_full_pool_v3.py": "b228f60a17eb319a5758b7b2c8446a16e46b8c9a65a382cd37f6f04f48e9cfb3",
+    "new/offer_quota_original_pool_20261021/full_pool_v1.py": "1863d5b77ba725ffbc4498b9401021d6469e75261f9b6b06d8e6721bffa9048e",
+    "new/offer_budget_mechanism_20261021/research.py": "f36c5cef9e92bb14f1f2ab7fb769207ac148e3de758ae3dadeb44f635307db17",
+    "training/strategic_slices/bounded.py": "b23abdbfa6a8a81661e637d0536a2ec5d8c787eeacfde8e4463685c170244d66",
+    "training/strategic_slices/equilibrium.py": "cffcc5c8e90d9e48e3d0fd125214cacdb4b14805c346a7731ee40c007f5c65f1"
+  },
+  "model_identity": "none",
+  "reward_advantage_training": "not applicable",
+  "runtime": {
+    "python": "3.12.2 | packaged by conda-forge | (main, Feb 16 2024, 20:54:21) [Clang 16.0.6 ]",
+    "numpy": "1.26.4",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "environment": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    }
+  },
+  "gpu_used": false,
+  "production_changed": false
+}

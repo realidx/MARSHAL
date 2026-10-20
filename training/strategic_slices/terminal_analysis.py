@@ -189,7 +189,11 @@ def audit_game(tree, row, game, cfg, cache):
             cache[key] = extreme_value(tree, row['ego'], node, weights, remaining)['root_Q']
         return np.asarray(cache[key])
     for number, call in enumerate(game['calls']):
-        req = job.request(cfg)
+        from .named_prompt import VERSION as NAMED,LEGACY,V7
+        inferred=LEGACY if call['request']['tools'][0]['function']['name']=='act' else (
+            V7 if 'PUBLIC PREFERENCE SUPPORT' in call['request']['messages'][-1]['content'] else NAMED)
+        version=cfg.get('prompt_version',inferred)
+        req = job.request(dict(cfg,prompt_version=version))
         if node_training:
             selected=game['selected_nodes'][number]
             chosen=int(np.random.default_rng(seed_for(cfg['seed'],'terminal-train-advance',cursor,number)).integers(cfg['replicas']))

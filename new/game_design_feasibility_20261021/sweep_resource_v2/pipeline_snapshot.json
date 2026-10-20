@@ -1,0 +1,137 @@
+{
+  "version": "parameterized-native-feasibility-resource-v2",
+  "status": "launched-not-completed",
+  "parent": "parameterized-native-feasibility-v1",
+  "changes": [
+    "Hidden support reduced to 1/2 cells",
+    "180000 node and 1700000 node-world pair guards",
+    "60s solve,45s audit/metrics",
+    "128 sweeps,16384 joint cells,320 evaluations; other numerical tolerances unchanged"
+  ],
+  "actual_argv": [
+    "/Users/bruce/MARSHAL/new/game_design_feasibility_20261021/run_resource_v2.py"
+  ],
+  "options": {
+    "max_nodes": 180000,
+    "max_node_world_pairs": 1700000,
+    "solver_seconds": 60,
+    "analysis_seconds": 45,
+    "max_sweeps": 128,
+    "max_candidates": 6,
+    "max_joint_cells": 16384,
+    "max_joint_evaluations": 320,
+    "large_tree_ordered_sweeps": 2
+  },
+  "workers": 2,
+  "seeds": [
+    2026102200,
+    2026102201
+  ],
+  "configurations": [
+    {
+      "players": 2,
+      "actions": [
+        2,
+        1
+      ],
+      "goals": 2,
+      "hidden": 1,
+      "rounds": 2,
+      "query_limit": 1,
+      "offer_limit": 1,
+      "query_targets": "all"
+    },
+    {
+      "players": 2,
+      "actions": [
+        2,
+        1
+      ],
+      "goals": 2,
+      "hidden": 2,
+      "rounds": 2,
+      "query_limit": 1,
+      "offer_limit": 1,
+      "query_targets": "all"
+    },
+    {
+      "players": 2,
+      "actions": [
+        2,
+        1
+      ],
+      "goals": 3,
+      "hidden": 2,
+      "rounds": 2,
+      "query_limit": 1,
+      "offer_limit": 1,
+      "query_targets": "all"
+    },
+    {
+      "players": 3,
+      "actions": [
+        1,
+        1,
+        1
+      ],
+      "goals": 2,
+      "hidden": 1,
+      "rounds": 2,
+      "query_limit": 1,
+      "offer_limit": 1,
+      "query_targets": "hidden-unobserved"
+    },
+    {
+      "players": 3,
+      "actions": [
+        1,
+        1,
+        1
+      ],
+      "goals": 2,
+      "hidden": 2,
+      "rounds": 2,
+      "query_limit": 1,
+      "offer_limit": 1,
+      "query_targets": "hidden-unobserved"
+    }
+  ],
+  "jobs": 10,
+  "sources": {
+    "new/game_design_feasibility_20261021/design.py": "7b49623a6ea9dceaa8489a4d9487c6e81ef14fe50ce15fd01a69a10891e05a1f",
+    "new/game_design_feasibility_20261021/run.py": "f019d1a67c0ce9154b2afb3ec797df3abd6de47867534ec2299a19b035adbb8a",
+    "new/game_design_feasibility_20261021/test_design.py": "c49ced3691b680b991061672b640fda43f746c92afcb1bd13b1926f5daf014d0",
+    "new/offer_budget_mechanism_20261021/research.py": "f36c5cef9e92bb14f1f2ab7fb769207ac148e3de758ae3dadeb44f635307db17",
+    "training/b_sft/social_private_teacher.py": "7de7b48a6266be266891d58866114a02a045efa89490073f95f47a5014c2e6e9",
+    "training/b_sft/shared_teacher.py": "8286897b76fd271b69c0ec72a48795453fb69ca0be8e782e789de35109cff86c",
+    "training/b_sft/social_terminal_teacher.py": "578baa372b82d0057b8a3868f81c0d052486803e896f511af3b3d900a078a56b",
+    "training/b_sft/decision_policy.py": "8671683f9cde5f5fc30c3fe7d37a070ad97b4da4e00876f6bea9301f1a976b62",
+    "training/b_sft/preference_contract.py": "0eef1a38f40c097ffb2d6e21c1f3b4556997c7b8f31a83f9c009ef26f729063f",
+    "training/strategic_slices/bounded.py": "b23abdbfa6a8a81661e637d0536a2ec5d8c787eeacfde8e4463685c170244d66",
+    "training/strategic_slices/equilibrium.py": "cffcc5c8e90d9e48e3d0fd125214cacdb4b14805c346a7731ee40c007f5c65f1",
+    "training/strategic_slices/common.py": "5227642167d8eabdc55d6d3360a797f36bc48584c640e92677c910451efef786",
+    "third_party/negotiation_benchmark/src/benac_p/state.py": "3fe865731e4a6e5b6209e1cee4d2b33e2cfd44d44ac3d663b9ab1bea958b5281",
+    "third_party/negotiation_benchmark/src/benac_p/endgame.py": "6d8856c6f8278eeb0eeecfafd5875916b51b3111cc98a3631b2935e38fe2eedd",
+    "third_party/negotiation_benchmark/src/benac_p/schema.py": "13c4d5ab63189c95c239a410bfebb3addec28af498cc15e43d09ba3f1860f19b",
+    "new/game_design_feasibility_20261021/run_resource_v2.py": "bdd2e9041674f4ed8d917f8390b66ce2860636ca0199e80d2cd5fc3ab2ae348f"
+  },
+  "parent_run_sha256": "633df3e4d2612e1c447281de7dde35a8d274ab77c6e017f2734c3b94b39c5cbf",
+  "game_contract": "Same independent-uniform/no-positive-admission generator and two explicit target-menu variants as v1; full native terminal",
+  "model_D_prompt_training": "Not run or changed; query mechanism diagnostics are not new S or D",
+  "admission": "All specified seeds/configurations retained, no replacement by success",
+  "environment": {
+    "python": "3.12.2 | packaged by conda-forge | (main, Feb 16 2024, 20:54:21) [Clang 16.0.6 ]",
+    "numpy": "1.26.4",
+    "scipy": "1.12.0",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "executable": "/opt/anaconda3/bin/python",
+    "pythonpath": ".:third_party/negotiation_benchmark/src",
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    }
+  }
+}

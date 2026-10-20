@@ -15,6 +15,7 @@ import time
 from urllib.request import urlopen
 
 from training.strategic_slices.common import digest, file_hash, write_json
+from training.strategic_slices.named_prompt import VERSION as PROMPT_VERSION, LEGACY, V7
 from training.strategic_slices.terminal_d import (
     DEFAULT_CONFIG, ROOT, HTTPGenerator, load_config, load_configured_dataset, run_evaluation)
 
@@ -66,6 +67,7 @@ def stop_server(server):
 def main():
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument('--config', type=Path, default=DEFAULT_CONFIG)
+    cli.add_argument('--prompt-version', choices=(PROMPT_VERSION, V7, LEGACY), default=PROMPT_VERSION)
     cli.add_argument('--data', type=Path)
     cli.add_argument('--model', type=Path)
     cli.add_argument('--output', type=Path)
@@ -75,6 +77,7 @@ def main():
     cli.add_argument('--candidate-ids',type=Path,help='JSON ID list or D_reuse.json; restrict this run to changed questions')
     args = cli.parse_args()
     cfg = load_config(args.config)
+    cfg['prompt_version'] = args.prompt_version
     if args.port is not None:
         cfg['port'] = args.port
     model = args.model or Path(cfg['model'])

@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "diagnostic_version": "game-free-investigation-timing-diagnostic-v1",
+  "active_training_version": "terminal-node-regret-grpo-readable-v8",
+  "status": "completed-cpu-exact-enumeration-only",
+  "actual_argv": [
+    "new/free_investigation_timing_20261021/verify_timing.py"
+  ],
+  "resolved_config": {
+    "arithmetic": "fractions.Fraction; exhaustive deterministic policy enumeration",
+    "investigation_budget": "one per player per game; only A has unknown preferences to query in these toys",
+    "query_turn_cost": 0,
+    "query_utility_cost": 0,
+    "query_observation": "target/use public, exact answer private to A; answers persist",
+    "response_objective": "own final utility, then other final utility",
+    "fixed_target_control": "two players; fixed relevant pair; one final offer",
+    "adaptive_target_control": {
+      "players": 2,
+      "B_type": "(b0,b1) uniform in {0,1}^2; B knows both bits",
+      "logical_preferences": "in each pair exactly one project is WANT (+1), the other AVOID (-1); no neutral types",
+      "query_menu": "any of four project preferences; complementary queries are equivalent and canonicalized to two bits",
+      "public_event": "independent fair R in {0,1}; only pair R is feasible after revelation",
+      "timeline": "optional early query -> public R -> optional late query if unused -> one offer or PASS -> B ACCEPT/REJECT -> terminal",
+      "payoff": "accepted project gives A=1, B=+1/-1 according to preference; REJECT/PASS=(0,0)",
+      "response": "B strictly accepts WANT, strictly rejects AVOID; no strategic continuation",
+      "offers": "one final offer, unchanged by query timing; no rejection penalty",
+      "query_before_event_can_be_conditioned_on": "no observations",
+      "query_after_event_can_be_conditioned_on": "public R only; never hidden B bits"
+    },
+    "prior_contract_control": "original 3-contract/3-type/2-offer asymmetric toy, changing only query opportunity cost from one to zero; one query maximum",
+    "training_configuration": "not applicable; no model, reward optimization, advantage, batching, validation or checkpoints"
+  },
+  "source_manifest": {
+    "new/free_investigation_timing_20261021/verify_timing.py": "91c83f1cf0568ced18b04447a5a63096b3bb2d5c8096dc243a7947a96f5de38b",
+    "new/game_mechanism_design_20261021/verify_contract_witness.py": "31c6ad5617f1e69400bd740766db58f96149c83e9e8ef83bb52e5a67fdb1e02f"
+  },
+  "data_identity": "synthetic full supports and exact priors specified in resolved_config; no external corpus/selection/D",
+  "model_identity": "not applicable; no model",
+  "sampling_reward_contract": "exhaustive exact expectation; no Monte Carlo, GRPO, training reward or advantage",
+  "runtime": {
+    "python_executable": "/opt/anaconda3/bin/python",
+    "python_version": "3.12.2",
+    "platform": "macOS-26.5.2-arm64-arm-64bit"
+  },
+  "results_sha256": "e7b0faebd9b25bfbf516d900b98a4fca242f833c900a30a0c16a4c337f7f4254"
+}

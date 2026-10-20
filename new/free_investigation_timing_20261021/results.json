@@ -1,0 +1,239 @@
+{
+  "version": "game-free-investigation-timing-diagnostic-v1",
+  "status": "exact-rational-toy-timing-verified-not-native-certified",
+  "original_contract_toy_free_query": {
+    "best_no_query": {
+      "exact": "4/3",
+      "decimal": 1.3333333333333333
+    },
+    "early_query_X_attained": {
+      "exact": "5/3",
+      "decimal": 1.6666666666666667
+    },
+    "typewise_upper_bound_for_any_timing": {
+      "exact": "5/3",
+      "decimal": 1.6666666666666667
+    },
+    "conditional_contract_policy": {
+      "-1": {
+        "types": [
+          2
+        ],
+        "chosen": "Z",
+        "value": {
+          "exact": "2",
+          "decimal": 2.0
+        }
+      },
+      "0": {
+        "types": [
+          1
+        ],
+        "chosen": "Y",
+        "value": {
+          "exact": "2",
+          "decimal": 2.0
+        }
+      },
+      "1": {
+        "types": [
+          0
+        ],
+        "chosen": "X",
+        "value": {
+          "exact": "1",
+          "decimal": 1.0
+        }
+      }
+    },
+    "conclusion": "querying X immediately is optimal; strict superiority to every delayed-query policy is NOT established"
+  },
+  "fixed_relevant_target": {
+    "world_count": 4,
+    "policy_counts": {
+      "early": 18,
+      "late": 18,
+      "never": 3
+    },
+    "early": {
+      "query": 0,
+      "offer_policy": [
+        [
+          [
+            0,
+            0
+          ],
+          0
+        ],
+        [
+          [
+            0,
+            1
+          ],
+          1
+        ]
+      ],
+      "value": {
+        "exact": "1",
+        "decimal": 1.0
+      }
+    },
+    "late": {
+      "query_policy": [
+        [
+          0,
+          0
+        ]
+      ],
+      "offer_policy": [
+        [
+          [
+            0,
+            0
+          ],
+          0
+        ],
+        [
+          [
+            0,
+            1
+          ],
+          1
+        ]
+      ],
+      "value": {
+        "exact": "1",
+        "decimal": 1.0
+      }
+    },
+    "never": {
+      "offer_policy": [
+        [
+          0,
+          0
+        ]
+      ],
+      "value": {
+        "exact": "1/2",
+        "decimal": 0.5
+      }
+    },
+    "mixed_policy_check": "all randomized plans are convex combinations of enumerated pure plans; same upper bounds"
+  },
+  "later_public_information_selects_relevant_target": {
+    "world_count": 8,
+    "policy_counts": {
+      "early": 162,
+      "late": 324,
+      "never": 9
+    },
+    "early": {
+      "query": 0,
+      "offer_policy": [
+        [
+          [
+            0,
+            0
+          ],
+          0
+        ],
+        [
+          [
+            0,
+            1
+          ],
+          1
+        ],
+        [
+          [
+            1,
+            0
+          ],
+          0
+        ],
+        [
+          [
+            1,
+            1
+          ],
+          0
+        ]
+      ],
+      "value": {
+        "exact": "3/4",
+        "decimal": 0.75
+      }
+    },
+    "late": {
+      "query_policy": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "offer_policy": [
+        [
+          [
+            0,
+            0
+          ],
+          0
+        ],
+        [
+          [
+            0,
+            1
+          ],
+          1
+        ],
+        [
+          [
+            1,
+            0
+          ],
+          0
+        ],
+        [
+          [
+            1,
+            1
+          ],
+          1
+        ]
+      ],
+      "value": {
+        "exact": "1",
+        "decimal": 1.0
+      }
+    },
+    "never": {
+      "offer_policy": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "value": {
+        "exact": "1/2",
+        "decimal": 0.5
+      }
+    },
+    "mixed_policy_check": "all randomized plans are convex combinations of enumerated pure plans; same upper bounds"
+  },
+  "timing_gap_wait_minus_early": {
+    "exact": "1/4",
+    "decimal": 0.25
+  },
+  "scope": "two independent finite toy mechanisms plus a free-cost modification of prior contract witness; NOT current alternating native game, not corpus prevalence or production equilibrium certification",
+  "production_rules_changed": false,
+  "model_called": false,
+  "gpu_used": false
+}

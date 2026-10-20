@@ -1,0 +1,94 @@
+<|im_start|>system
+# Tools
+
+You may call one or more functions to assist with the user query.
+
+You are provided with function signatures within <tools></tools> XML tags:
+<tools>
+{"type": "function", "function": {"name": "REJECT", "description": "Reject the pending offer without binding its additions.", "parameters": {"type": "object", "properties": {}, "required": [], "additionalProperties": false, "enum": [{}]}}}
+{"type": "function", "function": {"name": "ACCEPT", "description": "Accept the pending offer and bind its additions.", "parameters": {"type": "object", "properties": {}, "required": [], "additionalProperties": false, "enum": [{}]}}}
+</tools>
+
+For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:
+<tool_call>
+{"name": <function-name>, "arguments": <args-json-object>}
+</tool_call><|im_end|>
+<|im_start|>user
+YOUR TASK
+You are Alex. Choose your next game action.
+
+GAME RULES
+1. Goals: Each goal is marked BINARY or LINEAR in the table below. For a BINARY goal, completion is 1 if ALL listed commitments are binding, and 0 otherwise. For a LINEAR goal, completion is the fraction of its listed commitments that are binding; for example, 1 of 2 required commitments gives completion 0.5. Requirements are player-specific: Alex undertaking Cedar and Blair undertaking Cedar are different commitments. One commitment can contribute to several goals.
+2. Final score: For each goal, multiply its completion by your preference: want = +1, neutral = 0, avoid = -1. Add these values across goals. Your objective is to maximize your own expected score at the END OF THE GAME.
+3. Commitments and offers: A commitment is an action a player agrees to undertake. OFFER proposes NEW commitments for yourself and one partner; it does not transfer items. ACCEPT makes all proposed additions binding; REJECT makes none binding. Existing binding commitments cannot be removed or added a second time. Each offer may add at most 1 new commitment per involved player.
+4. Turns: An offer and its response together use one proposal opportunity. PASS uses that opportunity without changing commitments. Players follow the proposal order shown in the current state. The game ends after the last opportunity and its response, if any.
+5. Information and investigation: Everyone knows the public preferences and public event history. Each player also knows all of their own preferences. Each player can INVESTIGATE once per game. INVESTIGATE uses the current proposal opportunity and reveals the selected other player's true preference for the selected goal to the investigator only. The investigation action and its target are public; its answer is private. All preferences stay fixed throughout the game.
+6. Response tie-breaking (for EVERY player): When responding to an offer, first maximize your own expected final score using the information available to you. If ACCEPT and REJECT give you the same expected final score, choose the response with the higher SUM of expected final scores for all other players. If both your score and the other-player sum are tied, either response is acceptable. Do not use other-player scores to break your own-score ties at proposal decisions.
+
+GOAL REQUIREMENTS BY PLAYER
+| Goal | Scoring | Alex's required commitments | Blair's required commitments | Casey's required commitments |
+| --- | --- | --- | --- | --- |
+| Orchard | LINEAR | Cedar | Cedar | Cedar |
+| Harbor | LINEAR | Maple | Cedar | Cedar |
+| Library | BINARY | none | Cedar | Cedar |
+| Garden | BINARY | Cedar, Maple | Cedar | none |
+Each cell lists that player's commitments required for the goal; none means no requirement from that player.
+
+PUBLIC PREFERENCES
+These preferences are fixed and known to every player.
+| Player | Goal | Preference |
+| --- | --- | --- |
+| Alex | Orchard | avoid |
+| Alex | Harbor | avoid |
+| Alex | Library | neutral |
+| Alex | Garden | want |
+| Blair | Orchard | want |
+| Blair | Harbor | want |
+| Blair | Library | neutral |
+| Blair | Garden | neutral |
+| Casey | Orchard | want |
+| Casey | Library | avoid |
+| Casey | Garden | neutral |
+
+YOUR PRIVATE INFORMATION
+These are the additional preference facts available to you through your private information.
+| Player | Goal | Preference |
+| --- | --- | --- |
+| Casey | Harbor | want |
+
+BACKGROUND PREFERENCE DISTRIBUTION
+Public preferences are fixed as listed above. Every other player-goal preference is drawn independently with these starting probabilities: want, neutral and avoid are equally likely (1/3 each). Everyone knows this distribution. These are probabilities of preferences, not scoring weights. Your private information and observed choices can change your beliefs.
+
+EVENTS IN ORDER
+1. Observed player choice.
+Alex investigated Casey / Harbor. No commitments changed.
+2. Observed player choice.
+Binding immediately BEFORE this offer:
+| Player | Binding commitments |
+| --- | --- |
+| Alex | none |
+| Blair | none |
+| Casey | none |
+Blair proposed to Alex: Blair would add Cedar; Alex would add Maple. These proposed additions are not yet binding.
+
+ALREADY ACCEPTED COMMITMENTS
+These commitments from earlier accepted offers are already binding and remain in force.
+| Player | Binding commitments |
+| --- | --- |
+| Alex | none |
+| Blair | none |
+| Casey | none |
+
+PUBLIC TURN STATUS
+Remaining proposal order (including the current opportunity and its response): Blair -> Casey.
+Investigations remaining: Alex=0; Blair=1; Casey=1.
+
+CURRENT DECISION
+You are RESPONDING to an offer.
+Blair offers to Alex: Blair would add Cedar; Alex would add Maple.
+These proposed additions are NOT yet binding. Choose ACCEPT or REJECT.
+Apply the response tie-breaking rule in GAME RULES when your own expected final scores are equal.
+
+RESPONSE INSTRUCTIONS
+Briefly explain your decision using the visible information, then make exactly one registered game-action tool call. Keep the explanation outside the tool arguments. Use a legal argument combination from the registered tools.<|im_end|>
+<|im_start|>assistant

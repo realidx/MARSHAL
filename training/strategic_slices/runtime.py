@@ -84,16 +84,19 @@ class Rollout:
                 raise AssertionError('Live branch diverged from native reference tree')
 
     def request(self, temperature):
+        from .named_prompt import VERSION as PROMPT_VERSION,calls_for
         cutoff = self.tree.cutoff if self.bounded and self.slice else None
-        remaining = max(0, self.slice['k'] - self.controlled) if cutoff is not None else None
+        remaining = max(0, self.slice['k'] - self.controlled) if self.slice is not None else None
+        self._action_calls=calls_for(self.rules,self.node)
         return request(self.rules, self.node, self.world, seed_for(self.seed, len(self.calls)), temperature,
-                       cutoff=cutoff, remaining_decisions=remaining)
+                       cutoff=cutoff, remaining_decisions=remaining,prompt_version=PROMPT_VERSION,
+                       reference_others=self.ego is not None)
 
     def accept(self, output):
         if output['completion'].get('status') == 'infrastructure_failure':
             raise RuntimeError('Infrastructure failure is not a game reward')
         actor = self.rules.actor(self.node)
-        ai, status = decode(output, self.rules.actions(self.node))
+        ai, status = decode(output, self.rules.actions(self.node),self._action_calls)
         self.calls.append(dict(output, player=actor, action_index=ai, valid=status == 'ok',
                                native_node_index=self.index if self.tree else None,
                                protocol_failure=None if status == 'ok' else status, decision=len(self.calls)))

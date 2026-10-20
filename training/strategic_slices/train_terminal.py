@@ -15,6 +15,8 @@ from .terminal_training import TrainingData,Collector,CONTRACT,VERSION,ensure,mo
 from .terminal_training_checkpoints import SELECTION
 from .terminal_training_schedule import DEFAULT_NODE_GROUPS_PER_UPDATE,DEFAULT_EVAL_TOKENS,DEFAULT_SAVE_TOKENS
 from .evaluation_refill import VERSION as EVALUATION_SCHEDULER
+from .named_prompt import VERSION as PROMPT_VERSION
+from .pipeline_versions import registered_snapshot,write_run_snapshot
 
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -25,6 +27,11 @@ def source_identity():
          'roll','mcore_adapter/src','third_party/negotiation_benchmark/src') for p in sorted((ROOT/folder).rglob('*.py'))}
     for p in sorted((ROOT/'examples/social_mixed').glob('*.yaml')):
         sources[str(p.relative_to(ROOT))]=file_hash(p)
+    for p in sorted((ROOT/'examples/strategic_slices').iterdir()):
+        if p.is_file() and p.suffix in ('.py','.sh','.json'):
+            sources[str(p.relative_to(ROOT))]=file_hash(p)
+    for p in sorted((ROOT/'examples/strategic_slices/fixtures').rglob('*')):
+        if p.is_file():sources[str(p.relative_to(ROOT))]=file_hash(p)
     return sources
 
 
@@ -80,6 +87,7 @@ def main():
     cli.add_argument('--mock',action='store_true')
     cli.add_argument('--mock-updates',type=int,default=1)
     args=cli.parse_args()
+    registered=registered_snapshot(VERSION,PROMPT_VERSION)
     ensure(args.replicas>=2 and 0<args.max_tokens<args.context,'Invalid replica/token limits')
     ensure(min(args.concurrency,args.total_tokens,args.node_groups_per_update,args.max_steps,args.eval_every_tokens,args.save_every_tokens,
         args.validation_repeats,args.test_repeats,args.keep_checkpoints,args.mock_updates)>0,'Budgets/cadences must be positive')
@@ -88,7 +96,7 @@ def main():
     ensure(args.pause_after_updates is None or args.pause_after_updates>0,'Pause boundary must be positive')
     ensure(args.tree_cache_mb>=0 and args.oracle_cache_mb>=0,'Cache budgets must be nonnegative')
     data=TrainingData(args.pool,args.selection,tree_cache_mb=args.tree_cache_mb,oracle_cache_mb=args.oracle_cache_mb)
-    report=dict(version=VERSION,dataset_sha256=data.sha,train_slices=len(data.train),
+    report=dict(version=VERSION,prompt_version=PROMPT_VERSION,registered_snapshot=registered,dataset_sha256=data.sha,train_slices=len(data.train),
         train_parents=len({r['parent_id'] for r in data.train}),validation_slices=len(data.validation),
         test_used_for_scoring=False,k_counts=dict(Counter(r['k'] for r in data.train)),contract=CONTRACT,
         replicas=args.replicas,concurrency=args.concurrency,temperature=1.,max_tokens=args.max_tokens,context=args.context,
@@ -142,7 +150,8 @@ def main():
     options.update(arm='slices',recipe='strategic_slices',recipe_version=VERSION,dataset_sha256=data.sha,
         max_behavior_logprob_delta=.05,max_behavior_clip_fraction=.01)
     run_contract=dict(options={k:v for k,v in options.items() if k not in ('output','resume','check_only','mock','mock_updates','pause_after_updates')},
-        reward=CONTRACT,checkpoint_selection=SELECTION,model_sha256=digest(model_hashes),source_sha256=digest(sources))
+        reward=CONTRACT,checkpoint_selection=SELECTION,registered_snapshot=registered,
+        model_sha256=digest(model_hashes),source_sha256=digest(sources))
     from training.social_mixed.hardware import PROFILES
     if args.resume:validate_resume(args.resume.resolve(),run_contract,PROFILES[args.profile])
     args.output.mkdir(parents=True,exist_ok=False);(args.output/'logs').mkdir()
@@ -157,6 +166,7 @@ def main():
     write_json(root/'experiment.json',dict(run_contract=run_contract,options=options,checks=report,
         primary_checkpoint='final',reward=CONTRACT,validation_limit=args.validation_limit,
         gpu_validation='This launch must establish the 16K/1024 profile on actual hardware.'))
+    write_run_snapshot(root,registered,options,cfg.to_dict(),run_contract,sources,model_hashes)
     if os.environ.get('SOCIAL_GPU_PREFLIGHT')=='1':
         from training.social_mixed.soc_gpu_check import run as gpu_check
         gpu_check(root)

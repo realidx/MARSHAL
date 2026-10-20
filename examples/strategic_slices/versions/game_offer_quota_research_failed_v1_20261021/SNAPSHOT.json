@@ -1,0 +1,56 @@
+{
+  "version": "native-offer-quota-research-v1",
+  "record_kind": "game-design-research-not-active",
+  "status": "aborted-implementation-error-no-usable-labels",
+  "created_on": "2026-10-21",
+  "parent_active_training": "terminal-node-regret-grpo-readable-v8",
+  "authorization": "Study only immediate per-player OFFER quota; retain investigation and independent preference distributions; defer dependent preferences.",
+  "failure": "Pending native Offer has no proposer_id attribute; quota audit failed before research result accepted.",
+  "resolved_run_configuration": {
+    "version": "native-offer-quota-research-v1",
+    "paired_offer_limits": [
+      null,
+      1
+    ],
+    "query": "unchanged: one private answer per player per game; consumes a proposal turn; public target; only proposal phase",
+    "payoff": "unchanged native additive binary/linear goal utility; no OFFER penalty or investigation bonus",
+    "preferences": "original parent support/prior fixed within pair; require factorized support; no dependent-preference rules",
+    "response_ties": "own expected final utility first, then sum of others, response only; uniform remaining ties",
+    "proposal_ties": "own expected final utility only; uniform remaining ties",
+    "solver": {
+      "lookahead_rr": "full native schedule length for each parent; no nonterminal leaves",
+      "max_nodes": 160000,
+      "seconds": 45.0,
+      "max_sweeps": 128,
+      "horizon_mode": "rr-plus-next-own-proposal-v1",
+      "solver_mode": "equilibrium",
+      "epsilon": 1e-08,
+      "max_candidates": 6,
+      "max_joint_cells": 4096,
+      "max_joint_evaluations": 160,
+      "large_tree_ordered_sweeps": 2,
+      "initialization": "uniform",
+      "audit_update_order": null
+    },
+    "analysis_seconds_per_player": 120,
+    "diagnostics": "every reachable first-proposal own-information cell; vector full-terminal BR, no-own-queries BR, same-query answer mask for informative best queries",
+    "selection": "first N of six declared compact convenience parents plus optional existing independent native witness; not random corpus sampling",
+    "model": "not applicable",
+    "training": "not applicable",
+    "sampling": "none; complete public tree and information-conditioned expectations"
+  },
+  "executed": "4 semantic checks passed; first unlimited control solved but quota audit failed; no usable labels or completed paired study",
+  "production_changed": false,
+  "gpu_used": false,
+  "evidence": {
+    "new/offer_budget_mechanism_20261021/run_v1/ABORTED.json": "00b52d221801ef5dcc8a72120880b0b756bdd71222f2aea336510ce7e9f6bb47",
+    "new/offer_budget_mechanism_20261021/run_v1/pipeline_snapshot.json": "86e17b2f5097fcc9862e214cbe954a1723fca01a6624bcf47b0a49e38f9e71f3",
+    "new/offer_budget_mechanism_20261021/run_v1/compact_0_slot_0_raw.json": "7bd37605d47b5a0974ea7639cefcd5a53f8662a96424101a240bb42647d2df92",
+    "new/offer_budget_mechanism_20261021/run_v1/compact_0_slot_0_one_round_control.json": "052b14a2ed475289d8b345688afc967929ee912ccd8082a6bd7747e0a5b3ecc5",
+    "new/offer_budget_mechanism_20261021/run_v1/compact_0_slot_0_unlimited_result.json": "35aaba0634497ab23b9779e1ece174db27c8a4b83bd3f17bbbc2d643885f65c9",
+    "new/offer_budget_mechanism_20261021/run_v1/semantic_checks.json": "21e60dcd6f3bb2504351c837d0b5c84f5658cde5b83bb73cfd0ecec42f23b935",
+    "new/offer_budget_mechanism_20261021/run_v1/source/run.py": "6ab73285b4e2743cb344738f2b2dff5d66cb7e75d9f86c86e219504a57d25a26",
+    "new/offer_budget_mechanism_20261021/run_v1/source/research.py": "fbc1f415db8546d5751b65356b16e191cff00255f4be2a1bfff88ec6fc820de4",
+    "new/offer_budget_mechanism_20261021/run_v1/source/test_research.py": "34d278b0c6c03697fe41ad5ff3d09ef2dc3373a66dd0f9936f836ac4bd679230"
+  }
+}

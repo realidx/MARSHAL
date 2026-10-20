@@ -1,0 +1,47 @@
+{
+  "version": "node-qsd-design-v1",
+  "record_kind": "confirmed-design-not-a-training-version",
+  "status": "DESIGN_SCOPE_CONFIRMED_IMPLEMENTATION_PENDING",
+  "created_on": "2026-10-21",
+  "parent": "terminal-node-regret-grpo-readable-v8",
+  "motivation": "Record user decisions on full-terminal node strategy, permitted information omissions and model-relative Q/S/D selection.",
+  "user_authorization": "User confirmed bilateral OFFER, per-item omission of own investigation answers and public-history information, immutable base facts, full-terminal strategy scope, and direct model D measurement.",
+  "changes_from_parent": [
+    "New intended strategy scope optimizes from current player decision through native terminal; existing finite-k production implementation unchanged.",
+    "Information omission scope explicitly excludes public preferences, own preferences, rules, goal requirements and current commitments.",
+    "Per-item omission only; misunderstanding and arbitrary worst-case subsets excluded.",
+    "Q/S alone do not determine node training value; selection must consider target-model measured D."
+  ],
+  "files": {
+    "DESIGN.md": "7260bc2e1171faec74b268115d477c549297bdeeda3998e039d2175e2dcf4093"
+  },
+  "parameters": {
+    "offer_parties": "proposer_and_one_partner",
+    "strategy_horizon": "native_terminal",
+    "omission_mode": "per_item",
+    "omittable": [
+      "own_investigation_answers",
+      "information_from_public_history"
+    ],
+    "retained": [
+      "public_preferences",
+      "rules",
+      "goal_requirements",
+      "own_preferences",
+      "current_commitment_state"
+    ],
+    "other_parameters": "UNDECIDED: see DESIGN.md; not filled from current defaults"
+  },
+  "production_code_changed": false,
+  "active_changed": false,
+  "new_model_calls": false,
+  "new_solver_runs": false,
+  "new_D_measured": false,
+  "validation": {
+    "kind": "documentation_and_snapshot_integrity_only",
+    "cpu_behavior_tests": "NOT_RUN",
+    "gpu_tests": "NOT_RUN",
+    "training": "NOT_RUN",
+    "effects": "NOT_MEASURED"
+  }
+}

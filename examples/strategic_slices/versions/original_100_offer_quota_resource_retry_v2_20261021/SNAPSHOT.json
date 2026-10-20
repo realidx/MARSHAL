@@ -1,0 +1,69 @@
+{
+  "version": "original-100-offer-quota-resource-retry-v2",
+  "record_kind": "game-mechanism-research-not-training",
+  "created_on": "2026-10-21",
+  "parent_research_version": "original-100-offer-quota-terminal-study-v1",
+  "parent_active_training": "terminal-node-regret-grpo-readable-v8",
+  "status": "completed-all-declared-attempts; failures-retained-without-labels",
+  "authorization": "User authorized continuing OFFER-quota study on original 100 parents; investigation and independent preference distributions retained; dependent preferences deferred.",
+  "changes_and_motivation": "Resource-only retry: seconds 90->240, joint evaluations 160->640.",
+  "actual_argv": [
+    "new/offer_quota_original_pool_20261021/retry_full_pool_v2.py",
+    "--source-run",
+    "new/offer_quota_original_pool_20261021/full_pool_run_v1",
+    "--output",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v2",
+    "--workers",
+    "2",
+    "--solver-seconds",
+    "240",
+    "--max-joint-evaluations",
+    "640"
+  ],
+  "resolved_config": {
+    "parent_game_config": "exactly source run",
+    "offer_limit": 1,
+    "solver_seconds": 240.0,
+    "max_joint_evaluations": 640,
+    "analysis_seconds": 180,
+    "epsilon": 1e-08,
+    "max_nodes": 160000,
+    "max_candidates": 6,
+    "max_joint_cells": 4096,
+    "max_sweeps": 128,
+    "large_tree_ordered_sweeps": 2,
+    "initialization": "uniform",
+    "parent_ids": [
+      "bb5cdb2fd2e6f1d607369695",
+      "c8fdc75802d43fb7a5b96676",
+      "e5b441ecc98caf787186103c"
+    ],
+    "baseline": "reuse validated original baseline bytes with source hash",
+    "change": "Only wall and nonlinear-evaluation budgets increased; algorithm/physical game/objective/tolerance unchanged",
+    "failure": "missing label, never zero information value"
+  },
+  "result_summary": {
+    "version": "original-100-offer-quota-resource-retry-v2",
+    "status": "completed-all-retries",
+    "attempted": 3,
+    "certified": 1,
+    "failure_imputation": false,
+    "production_changed": false
+  },
+  "production_changed": false,
+  "prompt_changed": false,
+  "training_changed": false,
+  "gpu_used": false,
+  "evidence": {
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v2/c8fdc75802d43fb7a5b96676_status.json": "2bb8a56ca2127102a2e914ee1d3fce1a210f94335c13ed1c52de0ca3bdc63bf6",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v2/summary.json": "b6704f8d00a601510429f1602acab35106a742eea73a64d83f044180ad592e06",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v2/bb5cdb2fd2e6f1d607369695_status.json": "fe394b7e18da4e5df796a52d15012996a17a55990b95fcd4d1749408de7d02e6",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v2/e5b441ecc98caf787186103c_baseline.json": "28b7f7c2e0027748eaa65561af49418bb0f3868cd4c205389e326a8ffce35660",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v2/pipeline_snapshot.json": "4606c2ec4f8eb631cc58afa2f33ed718997e5855a46d833f5eaceccd85d7d1cc",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v2/e5b441ecc98caf787186103c_status.json": "7306df2f2e3ef01d42bd62eebdcd2ac28a3846ada3bb188fce93616113fe1270",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v2/COMPLETE.json": "85afdb5fd7a33fec6535575ed47d41b59f0d5af6dbecfecacf55aac05a470ff5",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v2/e5b441ecc98caf787186103c_quota.json": "e83e686f1bf821f0fa067cc7adfc544d6c3c18a16ea3725ed8e649df5419cf2a",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v2/e5b441ecc98caf787186103c_quota_reference.npz": "38888d58bae947b7e9cbc01ddbc92243a002e4c911ff65413b510f4f2612cf87",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v2/source/retry_full_pool_v2.py": "45e580199be2d056e01462497da03f4195f9c2023ef4c792fcaffc4fa016a653"
+  }
+}

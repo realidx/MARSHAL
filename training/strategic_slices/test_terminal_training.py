@@ -30,7 +30,9 @@ class TrainingTests(unittest.TestCase):
     def output(self,job,ai=None):
         req=job.request(self.cfg);out=mock_generate([req])[0]
         if ai is not None:
-            out['completion']['raw_message']['tool_calls'][0]['function']['arguments']=json.dumps(dict(action_index=int(ai)))
+            from .named_prompt import calls_for
+            name,args=calls_for(job.tree.rules,job.node)[int(ai)]
+            out['completion']['raw_message']['tool_calls'][0]['function']=dict(name=name,arguments=json.dumps(args))
         return req,out
 
     def test_shared_reset_without_collapsing_visible_belief(self):
@@ -122,7 +124,9 @@ class TrainingTests(unittest.TestCase):
         self.assertEqual(scored['binary_reward'],0)
         self.assertEqual(job.record(),before)
         out['finish_reason']='stop'
-        out['completion']['raw_message']['tool_calls'][0]['function']['arguments']=json.dumps(dict(action_index=len(q)-1))
+        from .named_prompt import calls_for
+        name,args=calls_for(job.tree.rules,job.node)[len(q)-1]
+        out['completion']['raw_message']['tool_calls'][0]['function']=dict(name=name,arguments=json.dumps(args))
         self.assertEqual(score_response(job,out,req,q,posterior)['task_reward'],0.)
 
     def test_collector_node_groups_weights_and_exact_resume(self):
@@ -151,9 +155,9 @@ class TrainingTests(unittest.TestCase):
                 self.assertEqual((r['task_weight'],r['protocol_weight'],r['kl_weight']),(1.,1.,1.))
                 self.assertEqual(r['protocol_advantage'],0. if r['valid'] else -.2)
                 self.assertEqual(r['request']['max_tokens'],1024)
-                visible=json.loads(r['request']['messages'][1]['content'])
-                self.assertEqual(visible['evaluation_window']['remaining_controlled_decisions'],r['remaining_k'])
-                self.assertFalse({'root_Q','posterior','world_index','Q'} & set(visible))
+                text=r['request']['messages'][1]['content']
+                self.assertIn(f'You will choose at most {r["remaining_k"]} more decision',text)
+                self.assertNotIn('root_Q',text);self.assertNotIn('world_index',text)
         by_id={r['id']:r for r in self.rows}
         for game in games:
             chosen=[r for r in rows if r['chain']==game['chain'] and r['selected_for_continuation']]

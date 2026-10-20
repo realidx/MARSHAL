@@ -1,0 +1,153 @@
+{
+  "version": "strategic-parents-100-two-round-unknown-query-v1",
+  "created_on": "2026-10-21",
+  "record_kind": "raw-parent-pool-not-training",
+  "parent": "native-private-unknown-query-offer-quota-v1",
+  "document": "examples/strategic_slices/PARENT_POOL_V1_20261021.md",
+  "document_sha256": "97246c3bcfb03b3aadd79861a10a345018a7dcfcaa2f58c538c6fcca73f91106",
+  "source_hashes": {
+    "new/strategic_game_v1_20261021/rules.py": "53d65ea9aa7e84d11e3c4cf109ba2b179247868b8b4e55c4214a8b842e7ab441",
+    "new/strategic_game_v1_20261021/pool.py": "9fe2ca6a78eefb933c3d76401c3edd29ae3f05cdfb9707e08f339acd66044dd6",
+    "new/game_design_feasibility_20261021/design.py": "7b49623a6ea9dceaa8489a4d9487c6e81ef14fe50ce15fd01a69a10891e05a1f"
+  },
+  "production_active": "terminal-node-regret-grpo-readable-v8",
+  "production_changed": false,
+  "model": "NOT_USED",
+  "prompt": "NOT_CHANGED",
+  "training": "NOT_RUN",
+  "status": "RAW_PARENTS_FROZEN_ORACLE_AUDIT_SEPARATE",
+  "user_authorization": "User delegated joint game-scale and preference generation design, followed by 100 random games; earlier approximate 2:1 player ratio allowed.",
+  "changes": [
+    "All parents two rounds",
+    "67 two-player and 33 three-player parents",
+    "3/4 goals; bounded per-player commitments and hidden slots",
+    "Uniform independent publicly known prior",
+    "Geometry coverage and renaming-equivalence duplicate checks only; no Q/S/D/solver-success membership filters"
+  ],
+  "generation_snapshot": {
+    "version": "strategic-parents-100-two-round-unknown-query-v1",
+    "status": "RAW_PARENTS_FROZEN_NOT_TRAINING_READY",
+    "actual_argv": [
+      "/Users/bruce/MARSHAL/new/strategic_game_v1_20261021/pool.py"
+    ],
+    "resolved_config": {
+      "players": {
+        "2": 67,
+        "3": 33
+      },
+      "rounds": 2,
+      "investigation_budget": 1,
+      "offer_budget": 1,
+      "new_commitments_per_offer_per_party": 1,
+      "actions": {
+        "2": [
+          2,
+          2
+        ],
+        "3": [
+          1,
+          1,
+          1
+        ]
+      },
+      "goals": [
+        3,
+        4
+      ],
+      "hidden_cells": {
+        "2": [
+          2,
+          3
+        ],
+        "3": [
+          1
+        ]
+      },
+      "prior": {
+        "want": 0.3333333333333333,
+        "neutral": 0.3333333333333333,
+        "avoid": 0.3333333333333333,
+        "independent": true,
+        "public": true
+      },
+      "world_support": {
+        "2": [
+          9,
+          27
+        ],
+        "3": [
+          3
+        ]
+      },
+      "goal_required_commitments": [
+        2,
+        3
+      ],
+      "goal_scoring": "independent binary/linear 50/50 per goal",
+      "structural_admission": "Each declared commitment occurs in a goal; no duplicate requirement set",
+      "preference_admission": "No forced want, no exclusion of all-neutral/avoid types or goals",
+      "duplicate_admission": "Reject exact games equivalent under player/action/goal renaming; no metric-based filtering",
+      "information": "Public fixed preferences + own full preferences + accumulated own direct investigation answers + full public action history",
+      "investigation_targets": "Other-player nonpublic cells not directly investigated before; no utility/posterior/true-world filtering",
+      "offer_cost": "One per-player quota charged on proposal, never refunded; no extra utility penalty",
+      "response_ties": "Own expected terminal utility first, then other-player sum only for ACCEPT/REJECT",
+      "horizon": "Current node through native terminal; no approximate nonterminal leaf",
+      "membership": "All 100 fixed before solver/Q/S/D/model calls; failures stay attached, never replaced",
+      "splits": "NOT_ASSIGNED; no selection/evaluation yet"
+    },
+    "sources": {
+      "new/strategic_game_v1_20261021/rules.py": "53d65ea9aa7e84d11e3c4cf109ba2b179247868b8b4e55c4214a8b842e7ab441",
+      "new/strategic_game_v1_20261021/pool.py": "9fe2ca6a78eefb933c3d76401c3edd29ae3f05cdfb9707e08f339acd66044dd6",
+      "new/game_design_feasibility_20261021/design.py": "7b49623a6ea9dceaa8489a4d9487c6e81ef14fe50ce15fd01a69a10891e05a1f",
+      "training/b_sft/social_private_teacher.py": "7de7b48a6266be266891d58866114a02a045efa89490073f95f47a5014c2e6e9",
+      "training/b_sft/social_terminal_teacher.py": "578baa372b82d0057b8a3868f81c0d052486803e896f511af3b3d900a078a56b",
+      "training/b_sft/shared_teacher.py": "8286897b76fd271b69c0ec72a48795453fb69ca0be8e782e789de35109cff86c",
+      "training/b_sft/preference_contract.py": "0eef1a38f40c097ffb2d6e21c1f3b4556997c7b8f31a83f9c009ef26f729063f",
+      "training/strategic_slices/oracle_consistent.py": "d3fcba78982df13138bcf149740946f3a71a5ae4ca6c885a971d09779a867072",
+      "training/strategic_slices/build.py": "afc7c7eea635d8cf0d2ff3e79da39c99d05636e64c4f5c99903b87129281fd5a",
+      "third_party/negotiation_benchmark/src/benac_p/schema.py": "13c4d5ab63189c95c239a410bfebb3addec28af498cc15e43d09ba3f1860f19b",
+      "third_party/negotiation_benchmark/src/benac_p/state.py": "3fe865731e4a6e5b6209e1cee4d2b33e2cfd44d44ac3d663b9ab1bea958b5281",
+      "third_party/negotiation_benchmark/src/benac_p/endgame.py": "6d8856c6f8278eeb0eeecfafd5875916b51b3111cc98a3631b2935e38fe2eedd"
+    },
+    "environment": {
+      "python": "3.12.2 | packaged by conda-forge | (main, Feb 16 2024, 20:54:21) [Clang 16.0.6 ]",
+      "numpy": "1.26.4",
+      "executable": "/opt/anaconda3/bin/python",
+      "platform": "macOS-26.5.2-arm64-arm-64bit"
+    },
+    "sampling": {
+      "configuration_shuffle_seed": 2026102109,
+      "seed_formula": "202610240000+index*1000+duplicate_retry",
+      "components": "5 independent SeedSequence streams",
+      "structural_rejection": "Only geometry; independent of preference RNG",
+      "model_calls": 0
+    },
+    "reward_advantage_training": "NOT_APPLICABLE: parent generation only",
+    "production": "Unchanged v8; no prompt or training activation",
+    "model_data_identity": "Model not used; exact parent data hash in manifest"
+  },
+  "manifest": {
+    "version": "strategic-parents-100-two-round-unknown-query-v1",
+    "status": "RAW_PARENTS_FROZEN_NOT_TRAINING_READY",
+    "parents": 100,
+    "distinct_canonical_parents": 100,
+    "families": 85,
+    "configuration_counts": {
+      "{\"goals\":3,\"hidden\":2,\"players\":2}": 17,
+      "{\"goals\":4,\"hidden\":3,\"players\":2}": 16,
+      "{\"goals\":4,\"hidden\":2,\"players\":2}": 17,
+      "{\"goals\":3,\"hidden\":1,\"players\":3}": 17,
+      "{\"goals\":3,\"hidden\":3,\"players\":2}": 17,
+      "{\"goals\":4,\"hidden\":1,\"players\":3}": 16
+    },
+    "raw_sha256": "30fb0f7d012f33f5d175650258698e9ba46cd88cafc64da39f848a69c4bfd3ad",
+    "snapshot_sha256": "d6f77276d9f0cd9ccc28531e4585eff2e8dee22ff86bbcbf950a14083c22965e",
+    "duplicate_rejections": [],
+    "structural_draws": 102,
+    "all_native_rounds": 2,
+    "oracle_profiles": 0,
+    "S_D_measured": false,
+    "training_compatible": false,
+    "limits": "Raw parent pool only; source-matched solver statuses belong to separate audits. No model effects measured."
+  }
+}

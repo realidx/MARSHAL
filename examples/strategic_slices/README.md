@@ -1,9 +1,71 @@
 # Consequence-selected slices versus complete self-play
 
+**新100父游戏可转远端CPU求解：**[完整操作指南](REMOTE_SOLVER_20261021.md)
+提供独立小包、SSH/Slurm两种启动方式、全量求解、缺失局重试、断点恢复、独立认证与回传。
+[本地交付验收](REMOTE_SOLVER_VALIDATION_20261021.md)通过；远端尚未运行，未测新Q/S/D或训练。
+
+**最新确认并实现：**[调查已公开或本人已查过的偏好不再合法](KNOWN_QUERY_RULE_20261021.md)，
+未知但无用的目标仍保留，不按推断或隐藏world删菜单。6项CPU检查通过，未切换生产prompt。
+[新100原始父游戏](PARENT_POOL_V1_20261021.md)已冻结：全两轮、2/3人67/33、目标3/4。
+[首批12例检查](PARENT_POOL_V1_PROBE_20261021.md)7通过、5无可用认证结果；88未尝试。
+这不是已选定训练题库，尚未测新S/D，失败未换题。
+
+**参数诊断已完成114次尝试，尚未冻结新100题。**
+见[规模、先验、调查菜单与认证失败记录](GAME_PARAMETER_FEASIBILITY_20261021.md)。
+两轮及个人调查1/报价1有可认证样例；三人成功仅见于明确受限菜单的诊断变体，
+不能当作旧游戏已解决。调查已知偏好是否继续合法仍在讨论；未改生产规则或测新S/D。
+
+**节点定义最新确认：**见[Q/S/D设计v1](versions/node_qsd_design_v1_20261021/DESIGN.md)。
+策略到terminal；S仅逐条遗漏调查答案或历史信息，保留游戏基础事实；
+Q/S须结合目标模型实测D判断选题意义。仅设计记录，尚未改生产实现或测新D。
+
+**2026-10-21最新工作计划：从设计重新审计。** 按游戏/筛选/solver标签 → OFFER代价 →
+Q/S与题型 → prompt → 新D → 历史failure pattern修复的顺序推进。
+见[完整审计计划与待决事项](REBUILD_AUDIT_PLAN_20261021.md)。旧100题保留为历史诊断池，
+新正式题库覆盖不默认继承70个单轮或50/50人数配额；本次仅记录计划，未更改生产合同。
+
+**原100父游戏的报价额度研究已有整批结果。** 70局等价、29局新profile认证通过、1局仍缺失。
+99个有效配对中，真实调查价值见证从6个父游戏增至16个，新增10个；29个受影响局报价平均regret全部增加。
+见[完整结果、失败和版本记录](OFFER_QUOTA_ORIGINAL_POOL_RESULTS_20261021.md)。调查与独立偏好未改，
+未重建slice/C/S/D或启动训练，生产active仍v8。
+
+**研究对象已明确回到原100父游戏。** 有些题不需调查是正常控制，不要求逐题提高调查优势。
+[范围核对](OFFER_QUOTA_ORIGINAL_POOL_SCOPE_20261021.md)确认额度1会约束30个两人两轮局，
+70个一轮局不受影响；尚未重求这100局或重测指标。后续SP与slices共享同批父游戏及规则。
+
+**2026-10-21最新决定：调查机制保持原样，先只研究OFFER个人报价额度，dependent preference暂缓。**
+[首轮研究](GAME_OFFER_QUOTA_RESEARCH_20261021.md)完成7父游戏×2条件的14次CPU终局认证：
+部分报价承压，但这批样例的最优调查优势未提高。仅研究实现，未接入生产prompt/Oracle/题库/训练。
+
+**2026-10-21当前先讨论游戏机制，prompt改版暂停。**
+[新机制提案](GAME_MECHANISM_PROPOSAL_20261021.md)给出资源稀缺、有限合同/期限与联合类型的
+精确可解校准：单槽调查5/3，最佳完整offer试探4/3，控制条件下优势降为0。
+这是新的非对称两人原型，未替换当前轮换提案游戏；未改规则/题库/prompt/训练参数。
+
+**2026-10-21：状态/记忆/响应平局审阅。** active仍v8；生产代码、数据和超参未变。
+核验调查后3个focal决策的答案持续披露；区分proposal中已有承诺与response的pending offer。
+发现参考策略有response-only social tie、训练评分只看own Q，真实日志可复现不一致。
+[V9状态化草案](versions/terminal_v9_state_draft_20261021/PROMPT_PREVIEW.md)未激活，
+完整结论、依据及未来相依偏好方向见[审阅记录](PROMPT_PROTOCOL_REVIEW_20261021.md)。
+
+**2026-10-18当前为v8：**按逐段审阅重写题面；GAME RULES集中计分定义，公开/私有事实分表，
+调查答案保留但去掉来源提示。已证明全部100父游戏可用固定公开偏好+独立抽样概率等价表达，
+删support枚举；已生效承诺和窗口含义改为普通语言。system/tools、可见事实和原生动作不变。
+见[完整输入](versions/terminal_v8_readable_20261018/PROMPT_PREVIEW.md)、
+[逐块解释与核验](PROMPT_REVIEW_20261018.md)。85项CPU测试通过，未GPU训练，旧D未重测。
+
+**2026-10-17 当时v7恢复9月题面/具名工具并强制版本留痕。**
+完整输入直接看[新prompt预览](versions/terminal_v7_named_20261017/PROMPT_PREVIEW.md)；
+9月BP/SP/D、旧terminal及v6/v7逐项比较见[独立配置快照](PIPELINE_CONFIG_COMPARISON_20261017.md)，
+全部配置/索引见[versions](versions/README.md)。本轮只恢复呈现与动作接口，增加解释观测和
+版本记录；当前连续reward、同节点8采样、20组、Oracle和冻结题库沿用v6。
+376个实际context/2045动作映射检查及81项CPU测试通过；未提交GPU训练。
+历史D按旧prompt测量，未把它改称新prompt D。v7从base另开，不能resume v6。
+
 This is the direct-action experiment defined in
 [`new/strategic_game_slices_checkpoint_20261001.md`](../../new/strategic_game_slices_checkpoint_20261001.md).
 The intended comparison is slices versus complete self-play using native
-`act` actions, without separate inference/planning supervision. The current
+game actions through named tools, without separate inference/planning supervision. The current
 implemented training path is the selected terminal-v4 slice experiment;
 older four-replica and terminal-reward arm descriptions below are historical.
 
@@ -39,7 +101,7 @@ slices/SP效率比较保留。完整已定协议与依据见
 目标20个实际节点组×8回答，已开始的链采完再更新、允许略超，准确记录数量，
 同批只训练一遍。失败task reward取该节点最差合法动作的负regret，另保留
 独立−0.2协议惩罚。新协议需验收连续价值差异、动作重复和严格正确率。
-当前入口为 `terminal-node-regret-grpo-refill-v6`，旧二分/local-LOO checkpoint拒绝续跑。
+当时入口为 `terminal-node-regret-grpo-refill-v6`；当前v7见页首。旧二分/local-LOO checkpoint拒绝续跑。
 模型、数据、oracle、输出/预算及低频验证保存沿用。CPU验收及遗漏见
 [准备检查](../../new/terminal_refill_readiness_20261016/README.md)，启动命令见
 [训练入口](TERMINAL_TRAINING.md)。不要求独立GPU smoke，本轮未提交任务；GPU性质保留未验证。

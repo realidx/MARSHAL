@@ -1,5 +1,16 @@
 # Terminal candidate D evaluation on SoC
 
+**2026-10-18：**当前v8题面与v7的system/tools/可见偏好事实相同，但移除来源提示，
+support改为经核验等价的独立概率说明。见[新完整输入](versions/terminal_v8_readable_20261018/PROMPT_PREVIEW.md)
+及[审阅记录](PROMPT_REVIEW_20261018.md)。新D CLI默认v8；历史v7显式传
+`--prompt-version terminal-september-named-v1`，JSON传`terminal-json-act-v6`。
+没有重跑D或重选题，历史结果不改名。
+
+**2026-10-17：**当前训练v7恢复9月题面与具名工具，完整[新prompt](versions/terminal_v7_named_20261017/PROMPT_PREVIEW.md)，
+历史/当下逐项对照见[配置快照](PIPELINE_CONFIG_COMPARISON_20261017.md)。新D CLI默认用named
+接口，历史复现须显式传`--prompt-version terminal-json-act-v6`。本轮没有重跑D或重选100题；
+原D保留原JSON/act身份，不能称为新prompt的测量。新训练不要求独立GPU smoke，尚未提交。
+
 **2026-10-16 最新决定：**采用同节点8采样的连续oracle Q/负regret reward与
 标准GRPO，严格0/1最优率用于评测，随机推进1条。连续值恢复被binary抹掉的
 已采样价值差异，但不保证恢复D/native采样差异或解决重复错误动作。协议已选，

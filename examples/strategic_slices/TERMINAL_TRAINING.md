@@ -1,6 +1,36 @@
-# Terminal slices v6：同节点连续奖励 GRPO
+# Terminal slices v8：可读题面与同节点连续奖励 GRPO
 
-2026-10-16：已实现已确认的协议 `terminal-node-regret-grpo-refill-v6`。冻结的 v4 数据、
+**原100父游戏的新机制检查已有结果：**[70等价、29新认证、1缺失](OFFER_QUOTA_ORIGINAL_POOL_RESULTS_20261021.md)。
+99个有效配对真实调查见证6→16。报价额度仅在研究代码实现，尚无新的训练兼容slice/C/S/D/prompt版本；
+以下v8入口仍使用旧规则，不可用这次机制统计声称新训练管线已就绪。
+
+**当前机制研究方向：调查保持原样，只检查OFFER个人报价额度，dependent preference暂缓。**
+[独立14次终局认证研究](GAME_OFFER_QUOTA_RESEARCH_20261021.md)已完成；尚未证明提高调查价值。
+未将规则接入本训练入口，以下v8配置不含报价额度，不能用旧checkpoint/prompt静默运行新规则。
+
+**2026-10-21核对：当前响应平局评分未与用户明确的游戏规范完整对齐。**参考策略有
+response-only social tie，focal训练/验证却只看own Q。真实日志已验证相同自身收益、
+不同others收益仍同reward的情况。下方保留v8配置及历史准备记录，不代表此缺口已修复。
+[V9题面草案](versions/terminal_v9_state_draft_20261021/PROMPT_PREVIEW.md)尚未激活，
+需先统一求值、训练评分和评测；见[审阅记录](PROMPT_PROTOCOL_REVIEW_20261021.md)。
+
+2026-10-18当前版本：`terminal-node-regret-grpo-readable-v8`，prompt为
+`terminal-readable-named-v2`。完整输入见[v8预览](versions/terminal_v8_readable_20261018/PROMPT_PREVIEW.md)，
+逐段解释和修改见[审阅记录](PROMPT_REVIEW_20261018.md)，
+全部配置见[v8快照](versions/terminal_v8_readable_20261018/SNAPSHOT.json)。公开/私有事实分表，
+调查答案保留，额外来源提示删除；support在证明概率等价后改成简单抽样说明；
+规则/状态/窗口文字简化。原v7保留。85项CPU测试通过；未GPU训练，不可resume v7/v6。
+
+2026-10-17当时版本：`terminal-node-regret-grpo-named-v7`，prompt为
+`terminal-september-named-v1`。完整system/user/tools见[新prompt预览](versions/terminal_v7_named_20261017/PROMPT_PREVIEW.md)，
+历史和当下的逐项参数见[独立配置对照](PIPELINE_CONFIG_COMPARISON_20261017.md)，
+全部默认值/source hash见[冻结快照](versions/terminal_v7_named_20261017/SNAPSHOT.json)。
+恢复9月可读表格/时间线/具名工具及末尾解释要求；当前Oracle、奖励、采样和超参沿用v6。
+增加explanation出现率/字符数观测，不新增解释奖励。376个context/2045动作映射和81项CPU测试通过。
+尚未GPU训练；必须从base新开，不能续跑v6/job960070。每次实际run额外写
+`pipeline_snapshot.json`；未登记源码或prompt变更时启动/打包失败。
+
+2026-10-16基础协议为 `terminal-node-regret-grpo-refill-v6`。冻结的 v4 数据、
 Qwen3-4B-Instruct-2507 和初态完整终局 reference 不变；需要从 base 开新 run。
 CPU 验收与遗漏清单见[本轮记录](../../new/terminal_refill_readiness_20261016/README.md)。
 **用户当前无法运行独立GPU smoke：不将其作为训练准备的前置条件。**
@@ -89,7 +119,7 @@ GPU始终有工作还取决于CPU能否准备新节点、剩余预算和链依�
   full-game的jobs、calls、response tokens、peak_inflight、seconds、native ticks
   和prompt tokenizations；metrics中用`eval_execution/...`单独记录验证执行成本。
   这些执行字段不进入best排序，验证/测试token不消耗6M训练预算。
-- final-test使用新执行身份`terminal-final-test-v3-eval-refill`，完整cohort排空
+- v8 final-test使用执行身份`terminal-final-test-v5-readable`，完整cohort排空
   后才写COMPLETE。中断/基础设施失败会abort/flush，保留原checkpoint，不能写成
   完成测试；已完成同身份报告复用，不重复评分。旧source不能混续。
 - 旧同步实现保留作CPU报告对照及独立调用兼容；正式TerminalPipeline的validation
@@ -134,8 +164,8 @@ mock 使用真实冻结题/Oracle和合成模型回答、tokens/logprobs，验�
 它不是实际模型信号、真实 tokenizer、GPU optimizer 或收敛证据。reference树恢复
 有CPU成本，mock也可能需数分钟。`--check-only`只核验数据和配置，不检查本地权重/GPU。
 已有 selected-v4 数据包仍可使用；**只复制其中 `new/local_data/` 数据到当前 repo**，
-不要用包里的旧 source 覆盖 v6。新 source overlay 可由
-`python -m examples.strategic_slices.prepare_terminal_training_bundle --output /tmp/terminal-node-v6.tar.gz`
+不要用包里的旧 source 覆盖 v8。新 source overlay 可由
+`python -m examples.strategic_slices.prepare_terminal_training_bundle --output /tmp/terminal-node-v8.tar.gz`
 生成，用于已有完整 MARSHAL checkout/环境；不含数据、权重或依赖。
 
 ## 正式任务启动（无独立GPU smoke）
@@ -161,7 +191,7 @@ sbatch examples/strategic_slices/sbatch_terminal_train.sh
 CPU精确恢复不等于GPU逐位浮点复现；16K最长序列显存、实际速度和GPU恢复仍未知。
 
 普通恢复从最近完整checkpoint开始，保持代码、数据、profile、预算、采样及缓存
-配置一致，使用新output目录并设置`TERMINAL_RESUME`；v5或修改前source不能混续。
+配置一致，使用新output目录并设置`TERMINAL_RESUME`；v7/v6或修改前source不能混续。
 
 正式validation覆盖96 slices /12 parents，另做完整team SP和focal-vs-reference。
 严格最优率接受所有1e-7内并列动作，并报告合法regret、失败按最差动作计regret、

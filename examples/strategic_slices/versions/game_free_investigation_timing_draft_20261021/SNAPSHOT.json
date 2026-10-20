@@ -1,0 +1,97 @@
+{
+  "version": "game-free-investigation-timing-diagnostic-v1",
+  "record_kind": "game-design-proposal-not-active",
+  "created_on": "2026-10-21",
+  "parent_proposal": "game-contract-choice-mechanism-draft-v1",
+  "parent_active_training": "terminal-node-regret-grpo-readable-v8",
+  "status": "completed-cpu-exact-rational-toy-enumeration-not-native-certified",
+  "authorization": "User authorized checking free, once-per-game investigation, particularly whether immediate use becomes optimal; no authorization to activate production rule changes.",
+  "differences_from_parent": [
+    {
+      "field": "query opportunity cost in original contract toy",
+      "before": 1,
+      "after": 0,
+      "motivation": "isolate user-proposed free investigation; one query maximum and two offers retained"
+    },
+    {
+      "field": "additional controls",
+      "before": "binary-signal and extra-offer controls",
+      "after": "fixed-relevant-target and later-public-event adaptive-target controls",
+      "motivation": "distinguish information value from strict value of waiting"
+    },
+    {
+      "field": "dependent preference control",
+      "before": "three enumerated joint types in old contract toy",
+      "after": "additional toy with two independent logical pairs, exactly one WANT and the other AVOID in each pair",
+      "motivation": "demonstrate target adaptation with explicit logical dependencies; not added to old toy or production"
+    }
+  ],
+  "resolved_diagnostic_config": {
+    "arithmetic": "fractions.Fraction; exhaustive deterministic policy enumeration",
+    "investigation_budget": "one per player per game; only A has unknown preferences to query in these toys",
+    "query_turn_cost": 0,
+    "query_utility_cost": 0,
+    "query_observation": "target/use public, exact answer private to A; answers persist",
+    "response_objective": "own final utility, then other final utility",
+    "fixed_target_control": "two players; fixed relevant pair; one final offer",
+    "adaptive_target_control": {
+      "players": 2,
+      "B_type": "(b0,b1) uniform in {0,1}^2; B knows both bits",
+      "logical_preferences": "in each pair exactly one project is WANT (+1), the other AVOID (-1); no neutral types",
+      "query_menu": "any of four project preferences; complementary queries are equivalent and canonicalized to two bits",
+      "public_event": "independent fair R in {0,1}; only pair R is feasible after revelation",
+      "timeline": "optional early query -> public R -> optional late query if unused -> one offer or PASS -> B ACCEPT/REJECT -> terminal",
+      "payoff": "accepted project gives A=1, B=+1/-1 according to preference; REJECT/PASS=(0,0)",
+      "response": "B strictly accepts WANT, strictly rejects AVOID; no strategic continuation",
+      "offers": "one final offer, unchanged by query timing; no rejection penalty",
+      "query_before_event_can_be_conditioned_on": "no observations",
+      "query_after_event_can_be_conditioned_on": "public R only; never hidden B bits"
+    },
+    "prior_contract_control": "original 3-contract/3-type/2-offer asymmetric toy, changing only query opportunity cost from one to zero; one query maximum",
+    "training_configuration": "not applicable; no model, reward optimization, advantage, batching, validation or checkpoints"
+  },
+  "validation": {
+    "executed": true,
+    "method": "CPU Fraction exhaustive finite-policy enumeration; original contract attainment checked against typewise upper bound",
+    "adaptive_policy_counts": {
+      "early": 162,
+      "late": 324,
+      "never": 9
+    },
+    "adaptive_values": {
+      "early": "3/4",
+      "late": "1",
+      "never": "1/2"
+    },
+    "fixed_values": {
+      "early": "1",
+      "late": "1",
+      "never": "1/2"
+    },
+    "original_contract_free_query_value_and_upper_bound": "5/3",
+    "not_executed": [
+      "native alternating-game solution",
+      "three-player solution",
+      "corpus census or D measurement",
+      "model sampling",
+      "GPU training"
+    ]
+  },
+  "production_game_changed": false,
+  "model_or_prompt_changed": false,
+  "dataset_changed": false,
+  "submitted": false,
+  "evidence": {
+    "new/free_investigation_timing_20261021/verify_timing.py": "91c83f1cf0568ced18b04447a5a63096b3bb2d5c8096dc243a7947a96f5de38b",
+    "new/free_investigation_timing_20261021/results.json": "e7b0faebd9b25bfbf516d900b98a4fca242f833c900a30a0c16a4c337f7f4254",
+    "new/free_investigation_timing_20261021/pipeline_snapshot.json": "49ec1c8d994a6752ee359cc42f83a4a47028e1c929f371b70f997317000aeccd",
+    "new/free_investigation_timing_20261021/README.md": "b3fb8935b000bffb586626680775dcaf69f593597b63dceae9bba364b0cb9fac",
+    "examples/strategic_slices/GAME_FREE_INVESTIGATION_TIMING_20261021.md": "274547bec2d609605ec9417c9c433feb01cb5e76b4479b33bd049f2570b85838"
+  },
+  "unresolved": [
+    "Query availability at proposal versus response",
+    "Native query public signaling and adaptive timing values",
+    "Slice budget semantics for free-query substeps",
+    "Native solver and response social-tie grading alignment"
+  ]
+}

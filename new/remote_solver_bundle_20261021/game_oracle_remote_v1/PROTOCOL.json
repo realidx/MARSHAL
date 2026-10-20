@@ -1,0 +1,42 @@
+{
+  "version": "strategic-parents-remote-terminal-solver-v1",
+  "profiles": {
+    "base": {
+      "solve_seconds": 300,
+      "audit_seconds": 180,
+      "max_sweeps": 256,
+      "max_candidates": 8,
+      "max_joint_cells": 65536,
+      "max_joint_evaluations": 640,
+      "large_tree_ordered_sweeps": 4,
+      "starts": [
+        "uniform"
+      ]
+    },
+    "extended": {
+      "solve_seconds": 900,
+      "audit_seconds": 300,
+      "max_sweeps": 512,
+      "max_candidates": 12,
+      "max_joint_cells": 131072,
+      "max_joint_evaluations": 2048,
+      "large_tree_ordered_sweeps": 8,
+      "starts": [
+        "uniform",
+        "dirichlet:0",
+        "dirichlet:1",
+        "dirichlet:2"
+      ]
+    }
+  },
+  "workers": "0=auto, min(4, allocated CPUs); CLI override recorded",
+  "construct_seconds": 120,
+  "max_nodes": 100000,
+  "epsilon": 1e-08,
+  "tie_tolerance": 1e-09,
+  "independent_native_terminal_audit": true,
+  "policy_selection": "first certified declared start",
+  "source": "Frozen current repository files; uncommitted files included explicitly",
+  "model_GPU_prompt_Q_S_D_training": "Not used or changed",
+  "data_sha256": "30fb0f7d012f33f5d175650258698e9ba46cd88cafc64da39f848a69c4bfd3ad"
+}

@@ -19,6 +19,7 @@ import numpy as np
 from .common import decode, digest, file_hash, materialize_node, request, seed_for, stable, write_json, write_rows
 from .freeze import atomic_json, source_identity
 from .terminal_candidates import TerminalCandidates, sample_member_world
+from .named_prompt import VERSION as PROMPT_VERSION, LEGACY, V7
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG = ROOT/'examples/strategic_slices/terminal_d_soc.json'
@@ -108,8 +109,16 @@ class TerminalRollout:
         self.calls, self.steps = [], []
 
     def request(self, cfg):
+        from .named_prompt import VERSION as NAMED,LEGACY,V7,calls_for
+        version=cfg.get('prompt_version',LEGACY)
         req = request(self.tree.rules, self.node, self.world,
-                      seed_for(self.seed, 'model', self.controlled), cfg['temperature'])
+                      seed_for(self.seed, 'model', self.controlled), cfg['temperature'],prompt_version=version,
+                      remaining_decisions=self.row['k']-self.controlled)
+        self._action_calls=calls_for(self.tree.rules,self.node) if version in (NAMED,V7) else None
+        if version in (NAMED,V7):
+            req.update(max_tokens=cfg['max_tokens'],top_p=cfg['top_p'],top_k=cfg['top_k'],
+                repetition_penalty=cfg['repetition_penalty'],tool_choice='auto',parallel_tool_calls=False)
+            return req
         visible = json.loads(req['messages'][1]['content'])
         visible['evaluation_window'] = dict(
             remaining_controlled_decisions=self.row['k']-self.controlled,
@@ -147,7 +156,9 @@ class TerminalRollout:
     def accept(self, output, req):
         if output['completion'].get('status') == 'infrastructure_failure':
             raise RuntimeError('Infrastructure failure is not a model reward')
-        ai, status = decode(output, self.tree.rules.actions(self.node))
+        from .named_prompt import calls_for
+        named=any(t['function']['name']!='act' for t in req['tools'])
+        ai, status = decode(output, self.tree.rules.actions(self.node),calls_for(self.tree.rules,self.node) if named else None)
         prompt_hash = digest({k: req[k] for k in ('messages', 'tools')})
         root_gap = None
         if not self.calls and status == 'ok':
@@ -233,6 +244,11 @@ def mock_generate(requests):
     """Seeded legal random actor, explicitly not base-model evidence."""
     result = []
     for req in requests:
+        if req['tools'][0]['function']['name']!='act':
+            from .named_prompt import mock_call
+            result.append(dict(completion=dict(raw_message=dict(content='MOCK explanation.',tool_calls=[
+                dict(function=mock_call(req))]),finish_reason='stop')))
+            continue
         choices = req['tools'][0]['function']['parameters']['properties']['action_index']['enum']
         ai = int(np.random.default_rng(req['seed']).choice(choices))
         result.append(dict(completion=dict(finish_reason='tool_calls', raw_message=dict(tool_calls=[
@@ -473,6 +489,7 @@ def run_evaluation(dataset, cfg, output, generate, identity, *, parent_limit=Non
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', type=Path, default=DEFAULT_CONFIG)
+    parser.add_argument('--prompt-version', choices=(PROMPT_VERSION, V7, LEGACY), default=PROMPT_VERSION)
     parser.add_argument('--data', type=Path)
     parser.add_argument('--output', type=Path)
     parser.add_argument('--check', action='store_true')
@@ -482,6 +499,7 @@ def main():
     parser.add_argument('--candidate-ids',type=Path,help='JSON ID list or D_reuse.json; evaluate only these questions')
     args = parser.parse_args()
     cfg = load_config(args.config)
+    cfg['prompt_version'] = args.prompt_version
     dataset = load_configured_dataset(cfg, args.data, args.candidate_ids)
     if args.check:
         print(stable(dict(parents=len(dataset.parents), slices=len(dataset.candidates), trajectories=8*len(dataset.candidates),

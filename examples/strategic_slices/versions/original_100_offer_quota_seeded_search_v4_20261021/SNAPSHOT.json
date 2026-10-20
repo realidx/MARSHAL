@@ -1,0 +1,67 @@
+{
+  "version": "original-100-offer-quota-seeded-search-v4",
+  "record_kind": "game-mechanism-research-not-training",
+  "created_on": "2026-10-21",
+  "parent_research_version": "original-100-offer-quota-resource-retry-v3",
+  "parent_active_training": "terminal-node-regret-grpo-readable-v8",
+  "status": "completed-all-declared-attempts; failures-retained-without-labels",
+  "authorization": "User authorized continuing OFFER-quota study on original 100 parents; investigation and independent preference distributions retained; dependent preferences deferred.",
+  "changes_and_motivation": "Numerical initialization changed to public Dirichlet information-set seeds 0/1/2 in fixed order; stop at first certified profile, before measuring information values. Not a physical rule or tolerance change.",
+  "actual_argv": [
+    "new/offer_quota_original_pool_20261021/retry_full_pool_v4.py",
+    "--source-run",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v3",
+    "--output",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v4",
+    "--solver-seconds",
+    "150"
+  ],
+  "resolved_config": {
+    "parent_ids": [
+      "c8fdc75802d43fb7a5b96676"
+    ],
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "initialization": "At each public node and each actor-information cell, draw Dirichlet(1,...,1) action probabilities using np.random.default_rng(seed); repeat identical probabilities across indistinguishable worlds",
+    "selection": "First profile passing the same full-terminal certification, independent of measured Q/query value; later seeds skipped",
+    "offer_limit": 1,
+    "solver_seconds": 150.0,
+    "analysis_seconds": 180,
+    "epsilon": 1e-08,
+    "max_nodes": 160000,
+    "max_joint_evaluations": 640,
+    "max_candidates": 12,
+    "max_joint_cells": 8192,
+    "max_sweeps": 256,
+    "large_tree_ordered_sweeps": 8,
+    "physical_game": "identical to source run; no prior/utility/query/action/response-tie change",
+    "baseline": "reuse original independently verified baseline bytes, preserving identity"
+  },
+  "result_summary": {
+    "version": "original-100-offer-quota-seeded-search-v4",
+    "status": "completed-all-declared-seed-attempts",
+    "attempted": 1,
+    "certified": 0,
+    "production_changed": false
+  },
+  "production_changed": false,
+  "prompt_changed": false,
+  "training_changed": false,
+  "gpu_used": false,
+  "evidence": {
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v4/c8fdc75802d43fb7a5b96676_status.json": "cee778d28296c9a761843014a3c59a6164806fbc1634fd7b1d69812a56b74c4a",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v4/summary.json": "358cf863d1356685e16cf5c775291d9bb819d2c729c83f13df233c4fddd404a8",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v4/pipeline_snapshot.json": "80c2e97fff859458c65b9878856f0e37cecf52f60616e82a16f79d5c96b1068a",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v4/retry_full_pool_v4.py": "d874f2569a3b3f4db4d3308896210f88971f8eefa209d35d5fcf21cb49291ac8",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v4/COMPLETE.json": "828fd3cf6ba7bc941fcc34afc0032002f5bfec166f012151f5d389e236f3a161",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v4/c8fdc75802d43fb7a5b96676_seed_2/pipeline_snapshot.json": "ca9389e50e660e6799482bf437229f9f22759fefda048e8b79a8e476b19a2fec",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v4/c8fdc75802d43fb7a5b96676_seed_2/failed.json": "543cbe2e148b3b27389488c3a399be5e68e759f69ef70d95f3cc6b4a4f593fe3",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v4/c8fdc75802d43fb7a5b96676_seed_0/pipeline_snapshot.json": "38b66ed69976608e071d87b3922c3c5f12a5061e78f573382288596d5905f04a",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v4/c8fdc75802d43fb7a5b96676_seed_0/failed.json": "2acd7c9b06b82ddbde5768663b9440b2887a4b3854e2c29d209962065492930c",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v4/c8fdc75802d43fb7a5b96676_seed_1/pipeline_snapshot.json": "d140b91b48f377cdc112916f809a4faa64925f05ce6c856e1f56774735905390",
+    "new/offer_quota_original_pool_20261021/full_pool_retry_v4/c8fdc75802d43fb7a5b96676_seed_1/failed.json": "b70e29cd2e7cf7ba767814aeb1a4a3155953d0c160097bfe8d663bfab5e3f72e"
+  }
+}

@@ -1,0 +1,2188 @@
+[
+  {
+    "label": "terminal_first",
+    "raw": {
+      "background_prior": {
+        "name": "want_heavy",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 2
+        }
+      },
+      "ego": 0,
+      "game": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 0,
+                "player_id": 2
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 2
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          1,
+          1,
+          1
+        ],
+        "n_players": 3,
+        "round_robin": [
+          1,
+          0,
+          2
+        ]
+      },
+      "own_preferences": [
+        1,
+        1,
+        1
+      ],
+      "type_catalogues": {
+        "0": [
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "1": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            1,
+            -1
+          ],
+          [
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            -1
+          ],
+          [
+            1,
+            -1,
+            1
+          ],
+          [
+            1,
+            -1,
+            0
+          ],
+          [
+            1,
+            -1,
+            -1
+          ]
+        ],
+        "2": [
+          [
+            -1,
+            1,
+            1
+          ],
+          [
+            -1,
+            1,
+            0
+          ],
+          [
+            -1,
+            1,
+            -1
+          ]
+        ]
+      }
+    },
+    "visible": {
+      "background_prior": {
+        "name": "want_heavy",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 2
+        }
+      },
+      "evaluation_window": {
+        "continuation": "Other players and you after this window follow the fixed reference policy. Both proposals and responses count as your decisions.",
+        "objective": "Your terminal utility in the original game",
+        "remaining_controlled_decisions": 1
+      },
+      "game": {
+        "forbidden_actions": null,
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 0,
+                "player_id": 2
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 2
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigate": {
+          "action_visibility": "Query actor and target are public",
+          "budget": 1,
+          "budget_scope": "per player per game",
+          "cost": "Consumes the current proposal turn; commitments do not change",
+          "result_visibility": "Only the investigator receives the true preference",
+          "targets": "Any goal preference of another player, including already known or irrelevant preferences"
+        },
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          1,
+          1,
+          1
+        ],
+        "n_players": 3,
+        "round_robin": [
+          1,
+          0,
+          2
+        ],
+        "seed": 0,
+        "variant": "social-private-investigate-per-player-v1"
+      },
+      "legal_actions": [
+        {
+          "action": {
+            "action": "PASS"
+          },
+          "index": 0
+        },
+        {
+          "action": {
+            "action": "OFFER",
+            "partner_action": [
+              1
+            ],
+            "partner_id": 0,
+            "proposer_action": [
+              0
+            ]
+          },
+          "index": 1
+        },
+        {
+          "action": {
+            "action": "OFFER",
+            "partner_action": [
+              0
+            ],
+            "partner_id": 0,
+            "proposer_action": [
+              1
+            ]
+          },
+          "index": 2
+        },
+        {
+          "action": {
+            "action": "OFFER",
+            "partner_action": [
+              1
+            ],
+            "partner_id": 0,
+            "proposer_action": [
+              1
+            ]
+          },
+          "index": 3
+        },
+        {
+          "action": {
+            "action": "OFFER",
+            "partner_action": [
+              1
+            ],
+            "partner_id": 2,
+            "proposer_action": [
+              0
+            ]
+          },
+          "index": 4
+        },
+        {
+          "action": {
+            "action": "OFFER",
+            "partner_action": [
+              0
+            ],
+            "partner_id": 2,
+            "proposer_action": [
+              1
+            ]
+          },
+          "index": 5
+        },
+        {
+          "action": {
+            "action": "OFFER",
+            "partner_action": [
+              1
+            ],
+            "partner_id": 2,
+            "proposer_action": [
+              1
+            ]
+          },
+          "index": 6
+        },
+        {
+          "action": {
+            "action": "INVESTIGATE",
+            "goal": 0,
+            "player": 0
+          },
+          "index": 7
+        },
+        {
+          "action": {
+            "action": "INVESTIGATE",
+            "goal": 1,
+            "player": 0
+          },
+          "index": 8
+        },
+        {
+          "action": {
+            "action": "INVESTIGATE",
+            "goal": 2,
+            "player": 0
+          },
+          "index": 9
+        },
+        {
+          "action": {
+            "action": "INVESTIGATE",
+            "goal": 0,
+            "player": 2
+          },
+          "index": 10
+        },
+        {
+          "action": {
+            "action": "INVESTIGATE",
+            "goal": 1,
+            "player": 2
+          },
+          "index": 11
+        },
+        {
+          "action": {
+            "action": "INVESTIGATE",
+            "goal": 2,
+            "player": 2
+          },
+          "index": 12
+        }
+      ],
+      "own_preferences": [
+        "want",
+        "want",
+        "neutral"
+      ],
+      "pending_offer": null,
+      "player": 1,
+      "private_results": [],
+      "public_preference_support": {
+        "0": [
+          [
+            "want",
+            "want",
+            "want"
+          ]
+        ],
+        "1": [
+          [
+            "want",
+            "want",
+            "want"
+          ],
+          [
+            "want",
+            "want",
+            "neutral"
+          ],
+          [
+            "want",
+            "want",
+            "avoid"
+          ],
+          [
+            "want",
+            "neutral",
+            "want"
+          ],
+          [
+            "want",
+            "neutral",
+            "neutral"
+          ],
+          [
+            "want",
+            "neutral",
+            "avoid"
+          ],
+          [
+            "want",
+            "avoid",
+            "want"
+          ],
+          [
+            "want",
+            "avoid",
+            "neutral"
+          ],
+          [
+            "want",
+            "avoid",
+            "avoid"
+          ]
+        ],
+        "2": [
+          [
+            "avoid",
+            "want",
+            "want"
+          ],
+          [
+            "avoid",
+            "want",
+            "neutral"
+          ],
+          [
+            "avoid",
+            "want",
+            "avoid"
+          ]
+        ]
+      },
+      "public_state": {
+        "commitments": [
+          [
+            0
+          ],
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ],
+        "current_proposer": 1,
+        "forbidden_actions": null,
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 0,
+                "player_id": 2
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 2
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget_scope": "one use per player per game",
+        "investigation_remaining_by_player": [
+          1,
+          1,
+          1
+        ],
+        "max_changes": 1,
+        "n_actions_per_player": [
+          1,
+          1,
+          1
+        ],
+        "n_players": 3,
+        "round_robin": [
+          1,
+          0,
+          2
+        ],
+        "transcript": [],
+        "turn_index": 0
+      }
+    }
+  },
+  {
+    "label": "terminal_existing_commitments",
+    "raw": {
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "ego": 0,
+      "game": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 3,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "round_robin": [
+          1,
+          0,
+          1,
+          0
+        ]
+      },
+      "own_preferences": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "type_catalogues": {
+        "0": [
+          [
+            1,
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            1,
+            -1,
+            1
+          ],
+          [
+            1,
+            0,
+            1,
+            1
+          ],
+          [
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            -1,
+            1
+          ],
+          [
+            1,
+            -1,
+            1,
+            1
+          ],
+          [
+            1,
+            -1,
+            0,
+            1
+          ],
+          [
+            1,
+            -1,
+            -1,
+            1
+          ]
+        ],
+        "1": [
+          [
+            1,
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            1,
+            1,
+            -1
+          ]
+        ]
+      }
+    },
+    "visible": {
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "evaluation_window": {
+        "continuation": "Other players and you after this window follow the fixed reference policy. Both proposals and responses count as your decisions.",
+        "objective": "Your terminal utility in the original game",
+        "remaining_controlled_decisions": 2
+      },
+      "game": {
+        "forbidden_actions": null,
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 3,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigate": {
+          "action_visibility": "Query actor and target are public",
+          "budget": 1,
+          "budget_scope": "per player per game",
+          "cost": "Consumes the current proposal turn; commitments do not change",
+          "result_visibility": "Only the investigator receives the true preference",
+          "targets": "Any goal preference of another player, including already known or irrelevant preferences"
+        },
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "round_robin": [
+          1,
+          0,
+          1,
+          0
+        ],
+        "seed": 0,
+        "variant": "social-private-investigate-per-player-v1"
+      },
+      "legal_actions": [
+        {
+          "action": {
+            "action": "PASS"
+          },
+          "index": 0
+        },
+        {
+          "action": {
+            "action": "OFFER",
+            "partner_action": [
+              1,
+              1
+            ],
+            "partner_id": 0,
+            "proposer_action": [
+              1,
+              0
+            ]
+          },
+          "index": 1
+        },
+        {
+          "action": {
+            "action": "OFFER",
+            "partner_action": [
+              0,
+              1
+            ],
+            "partner_id": 0,
+            "proposer_action": [
+              1,
+              1
+            ]
+          },
+          "index": 2
+        },
+        {
+          "action": {
+            "action": "OFFER",
+            "partner_action": [
+              1,
+              1
+            ],
+            "partner_id": 0,
+            "proposer_action": [
+              1,
+              1
+            ]
+          },
+          "index": 3
+        },
+        {
+          "action": {
+            "action": "INVESTIGATE",
+            "goal": 0,
+            "player": 0
+          },
+          "index": 4
+        },
+        {
+          "action": {
+            "action": "INVESTIGATE",
+            "goal": 1,
+            "player": 0
+          },
+          "index": 5
+        },
+        {
+          "action": {
+            "action": "INVESTIGATE",
+            "goal": 2,
+            "player": 0
+          },
+          "index": 6
+        },
+        {
+          "action": {
+            "action": "INVESTIGATE",
+            "goal": 3,
+            "player": 0
+          },
+          "index": 7
+        }
+      ],
+      "own_preferences": [
+        "want",
+        "want",
+        "want",
+        "want"
+      ],
+      "pending_offer": null,
+      "player": 1,
+      "private_results": [],
+      "public_preference_support": {
+        "0": [
+          [
+            "want",
+            "want",
+            "want",
+            "want"
+          ],
+          [
+            "want",
+            "want",
+            "neutral",
+            "want"
+          ],
+          [
+            "want",
+            "want",
+            "avoid",
+            "want"
+          ],
+          [
+            "want",
+            "neutral",
+            "want",
+            "want"
+          ],
+          [
+            "want",
+            "neutral",
+            "neutral",
+            "want"
+          ],
+          [
+            "want",
+            "neutral",
+            "avoid",
+            "want"
+          ],
+          [
+            "want",
+            "avoid",
+            "want",
+            "want"
+          ],
+          [
+            "want",
+            "avoid",
+            "neutral",
+            "want"
+          ],
+          [
+            "want",
+            "avoid",
+            "avoid",
+            "want"
+          ]
+        ],
+        "1": [
+          [
+            "want",
+            "want",
+            "want",
+            "want"
+          ],
+          [
+            "want",
+            "want",
+            "want",
+            "neutral"
+          ],
+          [
+            "want",
+            "want",
+            "want",
+            "avoid"
+          ]
+        ]
+      },
+      "public_state": {
+        "commitments": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ],
+        "current_proposer": 1,
+        "forbidden_actions": null,
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 3,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget_scope": "one use per player per game",
+        "investigation_remaining_by_player": [
+          1,
+          1
+        ],
+        "max_changes": 1,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "round_robin": [
+          1,
+          0,
+          1,
+          0
+        ],
+        "transcript": [
+          {
+            "action": "OFFER",
+            "commitments_after": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "invalid_action": false,
+            "offer": {
+              "partner_action": [
+                0,
+                1
+              ],
+              "partner_id": 0,
+              "proposer_action": [
+                1,
+                0
+              ]
+            },
+            "partner_id": 0,
+            "proposer_id": 1,
+            "response": "REJECT",
+            "turn_index": 0
+          },
+          {
+            "action": "OFFER",
+            "commitments_after": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                0
+              ]
+            ],
+            "invalid_action": false,
+            "offer": {
+              "partner_action": [
+                1,
+                0
+              ],
+              "partner_id": 1,
+              "proposer_action": [
+                0,
+                1
+              ]
+            },
+            "partner_id": 1,
+            "proposer_id": 0,
+            "response": "ACCEPT",
+            "turn_index": 1
+          }
+        ],
+        "turn_index": 2
+      }
+    }
+  },
+  {
+    "label": "terminal_response",
+    "raw": {
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "ego": 0,
+      "game": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 3,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "round_robin": [
+          1,
+          0,
+          1,
+          0
+        ]
+      },
+      "own_preferences": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "type_catalogues": {
+        "0": [
+          [
+            1,
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            1,
+            -1,
+            1
+          ],
+          [
+            1,
+            0,
+            1,
+            1
+          ],
+          [
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            -1,
+            1
+          ],
+          [
+            1,
+            -1,
+            1,
+            1
+          ],
+          [
+            1,
+            -1,
+            0,
+            1
+          ],
+          [
+            1,
+            -1,
+            -1,
+            1
+          ]
+        ],
+        "1": [
+          [
+            1,
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            1,
+            1,
+            -1
+          ]
+        ]
+      }
+    },
+    "visible": {
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "evaluation_window": {
+        "continuation": "Other players and you after this window follow the fixed reference policy. Both proposals and responses count as your decisions.",
+        "objective": "Your terminal utility in the original game",
+        "remaining_controlled_decisions": 3
+      },
+      "game": {
+        "forbidden_actions": null,
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 3,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigate": {
+          "action_visibility": "Query actor and target are public",
+          "budget": 1,
+          "budget_scope": "per player per game",
+          "cost": "Consumes the current proposal turn; commitments do not change",
+          "result_visibility": "Only the investigator receives the true preference",
+          "targets": "Any goal preference of another player, including already known or irrelevant preferences"
+        },
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "round_robin": [
+          1,
+          0,
+          1,
+          0
+        ],
+        "seed": 0,
+        "variant": "social-private-investigate-per-player-v1"
+      },
+      "legal_actions": [
+        {
+          "action": {
+            "response": "REJECT"
+          },
+          "index": 0
+        },
+        {
+          "action": {
+            "response": "ACCEPT"
+          },
+          "index": 1
+        }
+      ],
+      "own_preferences": [
+        "want",
+        "want",
+        "want",
+        "want"
+      ],
+      "pending_offer": {
+        "partner_action": [
+          1,
+          0
+        ],
+        "partner_id": 1,
+        "proposer_action": [
+          0,
+          1
+        ]
+      },
+      "player": 1,
+      "private_results": [],
+      "public_preference_support": {
+        "0": [
+          [
+            "want",
+            "want",
+            "want",
+            "want"
+          ],
+          [
+            "want",
+            "want",
+            "neutral",
+            "want"
+          ],
+          [
+            "want",
+            "want",
+            "avoid",
+            "want"
+          ],
+          [
+            "want",
+            "neutral",
+            "want",
+            "want"
+          ],
+          [
+            "want",
+            "neutral",
+            "neutral",
+            "want"
+          ],
+          [
+            "want",
+            "neutral",
+            "avoid",
+            "want"
+          ],
+          [
+            "want",
+            "avoid",
+            "want",
+            "want"
+          ],
+          [
+            "want",
+            "avoid",
+            "neutral",
+            "want"
+          ],
+          [
+            "want",
+            "avoid",
+            "avoid",
+            "want"
+          ]
+        ],
+        "1": [
+          [
+            "want",
+            "want",
+            "want",
+            "want"
+          ],
+          [
+            "want",
+            "want",
+            "want",
+            "neutral"
+          ],
+          [
+            "want",
+            "want",
+            "want",
+            "avoid"
+          ]
+        ]
+      },
+      "public_state": {
+        "commitments": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "current_proposer": 0,
+        "forbidden_actions": null,
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 3,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget_scope": "one use per player per game",
+        "investigation_remaining_by_player": [
+          1,
+          1
+        ],
+        "max_changes": 1,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "round_robin": [
+          1,
+          0,
+          1,
+          0
+        ],
+        "transcript": [
+          {
+            "action": "OFFER",
+            "commitments_after": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "invalid_action": false,
+            "offer": {
+              "partner_action": [
+                0,
+                1
+              ],
+              "partner_id": 0,
+              "proposer_action": [
+                1,
+                0
+              ]
+            },
+            "partner_id": 0,
+            "proposer_id": 1,
+            "response": "REJECT",
+            "turn_index": 0
+          }
+        ],
+        "turn_index": 1
+      }
+    }
+  },
+  {
+    "label": "terminal_private_investigation",
+    "raw": {
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "ego": 0,
+      "game": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 3,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "round_robin": [
+          1,
+          0,
+          1,
+          0
+        ]
+      },
+      "own_preferences": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "type_catalogues": {
+        "0": [
+          [
+            1,
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            1,
+            -1,
+            1
+          ],
+          [
+            1,
+            0,
+            1,
+            1
+          ],
+          [
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            -1,
+            1
+          ],
+          [
+            1,
+            -1,
+            1,
+            1
+          ],
+          [
+            1,
+            -1,
+            0,
+            1
+          ],
+          [
+            1,
+            -1,
+            -1,
+            1
+          ]
+        ],
+        "1": [
+          [
+            1,
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            1,
+            1,
+            -1
+          ]
+        ]
+      }
+    },
+    "visible": {
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "evaluation_window": {
+        "continuation": "Other players and you after this window follow the fixed reference policy. Both proposals and responses count as your decisions.",
+        "objective": "Your terminal utility in the original game",
+        "remaining_controlled_decisions": 1
+      },
+      "game": {
+        "forbidden_actions": null,
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 3,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigate": {
+          "action_visibility": "Query actor and target are public",
+          "budget": 1,
+          "budget_scope": "per player per game",
+          "cost": "Consumes the current proposal turn; commitments do not change",
+          "result_visibility": "Only the investigator receives the true preference",
+          "targets": "Any goal preference of another player, including already known or irrelevant preferences"
+        },
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "round_robin": [
+          1,
+          0,
+          1,
+          0
+        ],
+        "seed": 0,
+        "variant": "social-private-investigate-per-player-v1"
+      },
+      "legal_actions": [
+        {
+          "action": {
+            "response": "REJECT"
+          },
+          "index": 0
+        },
+        {
+          "action": {
+            "response": "ACCEPT"
+          },
+          "index": 1
+        }
+      ],
+      "own_preferences": [
+        "want",
+        "want",
+        "want",
+        "want"
+      ],
+      "pending_offer": {
+        "partner_action": [
+          1,
+          1
+        ],
+        "partner_id": 1,
+        "proposer_action": [
+          1,
+          1
+        ]
+      },
+      "player": 1,
+      "private_results": [
+        {
+          "goal": 0,
+          "player": 0,
+          "preference": "want"
+        }
+      ],
+      "public_preference_support": {
+        "0": [
+          [
+            "want",
+            "want",
+            "want",
+            "want"
+          ],
+          [
+            "want",
+            "want",
+            "neutral",
+            "want"
+          ],
+          [
+            "want",
+            "want",
+            "avoid",
+            "want"
+          ],
+          [
+            "want",
+            "neutral",
+            "want",
+            "want"
+          ],
+          [
+            "want",
+            "neutral",
+            "neutral",
+            "want"
+          ],
+          [
+            "want",
+            "neutral",
+            "avoid",
+            "want"
+          ],
+          [
+            "want",
+            "avoid",
+            "want",
+            "want"
+          ],
+          [
+            "want",
+            "avoid",
+            "neutral",
+            "want"
+          ],
+          [
+            "want",
+            "avoid",
+            "avoid",
+            "want"
+          ]
+        ],
+        "1": [
+          [
+            "want",
+            "want",
+            "want",
+            "want"
+          ],
+          [
+            "want",
+            "want",
+            "want",
+            "neutral"
+          ],
+          [
+            "want",
+            "want",
+            "want",
+            "avoid"
+          ]
+        ]
+      },
+      "public_state": {
+        "commitments": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ],
+        "current_proposer": 0,
+        "forbidden_actions": null,
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 3,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget_scope": "one use per player per game",
+        "investigation_remaining_by_player": [
+          1,
+          0
+        ],
+        "max_changes": 1,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "round_robin": [
+          1,
+          0,
+          1,
+          0
+        ],
+        "transcript": [
+          {
+            "action": "OFFER",
+            "commitments_after": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "invalid_action": false,
+            "offer": {
+              "partner_action": [
+                0,
+                1
+              ],
+              "partner_id": 0,
+              "proposer_action": [
+                1,
+                0
+              ]
+            },
+            "partner_id": 0,
+            "proposer_id": 1,
+            "response": "REJECT",
+            "turn_index": 0
+          },
+          {
+            "action": "OFFER",
+            "commitments_after": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                0
+              ]
+            ],
+            "invalid_action": false,
+            "offer": {
+              "partner_action": [
+                1,
+                0
+              ],
+              "partner_id": 1,
+              "proposer_action": [
+                0,
+                1
+              ]
+            },
+            "partner_id": 1,
+            "proposer_id": 0,
+            "response": "ACCEPT",
+            "turn_index": 1
+          },
+          {
+            "action": "INVESTIGATE",
+            "commitments_after": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                0
+              ]
+            ],
+            "goal": 0,
+            "player": 0,
+            "proposer_id": 1,
+            "turn_index": 2
+          }
+        ],
+        "turn_index": 3
+      }
+    }
+  }
+]

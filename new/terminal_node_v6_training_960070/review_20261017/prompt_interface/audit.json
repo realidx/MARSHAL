@@ -1,0 +1,83 @@
+{
+  "counts": {
+    "calls": 50232,
+    "native_menus_checked": 376,
+    "first_collection_calls": 176,
+    "first_collection_with_text": 44
+  },
+  "unique_visible_contexts": 376,
+  "unique_training_root_questions": 100,
+  "visible_prompt_Q_or_posterior_conflicts": 0,
+  "conflict_examples": [],
+  "terminal_root_brief_instruction_distance_tokens": {
+    "min": 711,
+    "median": 985.0,
+    "max": 1454
+  },
+  "plain_assistant_suffix": "<|im_start|>assistant\n",
+  "september_samples": {
+    "september_D": {
+      "path": "new/d24_partner32_evidence_20260926/training/decomposed-seed42-881010/calls/step-0.jsonl",
+      "file_sha256": "3e58cb3dd8db8975e24b2b364748228efdd8c109ba6c4947f8b6c3b4b2245370",
+      "calls": 128,
+      "with_content": 128,
+      "brief_instruction_distance_tokens": {
+        "min": 21,
+        "median": 29.0,
+        "max": 33
+      },
+      "all_generation_prefix_plain": true,
+      "all_response_decodes_match": true
+    },
+    "september_SP": {
+      "path": "new/training_chain_evidence_20260921/new_sp/calls/866677-step-10.jsonl.gz",
+      "file_sha256": "d9237ae26d05f4934914aca01eaab66977806f1c0b7e4f28f209ea73f1805e2c",
+      "calls": 343,
+      "with_content": 312,
+      "brief_instruction_distance_tokens": {
+        "min": 81,
+        "median": 81.0,
+        "max": 139
+      },
+      "all_generation_prefix_plain": true,
+      "all_response_decodes_match": true
+    }
+  },
+  "checkpoint_template_equals_existing_tokenizer": true,
+  "template_sha256": "64f85b198065d0fba2a81f37e10ed68161ce2c19a754c7100e67e0ca2ee9c326",
+  "tokenizer_sha256": {
+    "tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+    "tokenizer_config.json": "a62ff0a2472a0fa1b8eaabcb57c59b58afa42a22831dc141400b6e0cf2b65ce3",
+    "config.json": "5beea1a4a34c62782bfb2f911c606741a3bab8f92d80a118fa053c28af12e8ba"
+  },
+  "generation": {
+    "terminal_resolved": {
+      "do_sample": true,
+      "temperature": 1.0,
+      "top_p": 1.0,
+      "top_k": -1,
+      "num_beams": 1,
+      "max_length": 512,
+      "max_new_tokens": 1024,
+      "repetition_penalty": 1.0,
+      "length_penalty": 1.0,
+      "num_return_sequences": 1,
+      "stop": null,
+      "include_stop_str_in_output": false
+    },
+    "september_22_archived_source_calls": {
+      "training/social_mixed/pipeline.py": "self.tokenizer.apply_chat_template(req['messages'], tools=req['tools'], tokenize=True, add_generation_prompt=True, return_dict=True, truncation=False)",
+      "training/social_mixed/workers.py": "SamplingParams(n=1, temperature=float(r.get('temperature', 1.0)), top_p=1.0, top_k=-1, repetition_penalty=1.0, max_tokens=1024, logprobs=0, seed=int(r['seed']), stop_token_ids=[self.tokenizer.eos_token_id])"
+    }
+  },
+  "last_57_updates_first_decoded_token": {
+    "<tool_call>": 9347,
+    "่อน": 4,
+    "<tool_response>": 1
+  },
+  "limitations": [
+    "No GPU/base-model sampling; presentation changes are not causally isolated.",
+    "September D first collection is base; retained September SP sample is a continuation.",
+    "Q consistency uses archived values, not a new exhaustive value solve."
+  ]
+}

@@ -11,6 +11,7 @@ from urllib.request import Request, urlopen
 import numpy as np
 from .common import Dataset, VERSION, seed_for, stable, write_json, write_rows
 from .runtime import Rollout, execute
+from .named_prompt import VERSION as PROMPT_VERSION
 
 
 def interval(values, seed=42):
@@ -103,7 +104,7 @@ class Evaluator:
                               seed=job.seed, world=[list(r) for r in job.world])
                 games.append(record)
                 calls.extend(dict(c, mode=mode, parent_id=job.parent['id'], evaluation_id=record['evaluation_id']) for c in job.calls)
-        return dict(protocol=dict(version=VERSION, split=self.split, dataset_sha256=self.dataset.sha,
+        return dict(protocol=dict(version=VERSION,prompt_version=PROMPT_VERSION, split=self.split, dataset_sha256=self.dataset.sha,
                                   repeats=self.repeats, modes=self.modes, temperature=0., max_tokens=1024,
                                   primary='Final checkpoint, complete-game utility and legal completion; failed utilities remain null.'),
                     metrics=reports, games=games, calls=calls)
@@ -147,7 +148,7 @@ class Evaluator:
             record=dict(job.summary(),mode=mode,evaluation_id=f'{mode}:{number}',seed=job.seed,world=[list(r) for r in job.world])
             games.append(record)
             calls.extend(dict(c,mode=mode,parent_id=job.parent['id'],evaluation_id=record['evaluation_id']) for c in job.calls)
-        return dict(protocol=dict(version=VERSION,split=self.split,dataset_sha256=self.dataset.sha,
+        return dict(protocol=dict(version=VERSION,prompt_version=PROMPT_VERSION,split=self.split,dataset_sha256=self.dataset.sha,
             repeats=self.repeats,modes=self.modes,temperature=0.,max_tokens=self.request_options.get('max_tokens',1024),
             primary='Final checkpoint, complete-game utility and legal completion; failed utilities remain null.'),
             metrics={mode:summarize(cohorts[mode]) for mode in self.modes},games=games,calls=calls)

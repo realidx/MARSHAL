@@ -23,7 +23,8 @@ def run_final_test(pipeline):
         'Final test requires the completed final optimizer checkpoint')
     data=pipeline.collector.dataset;cfg=pipeline.collector.cfg
     stream_factory=getattr(pipeline,'native_stream',None)
-    identity=dict(version='terminal-final-test-v3-eval-refill',checkpoint=str(checkpoint.resolve()),
+    from .named_prompt import VERSION as PROMPT_VERSION
+    identity=dict(version='terminal-final-test-v5-readable',prompt_version=PROMPT_VERSION,checkpoint=str(checkpoint.resolve()),
         checkpoint_complete_sha256=file_hash(checkpoint/'COMPLETE.json'),dataset_sha256=data.sha,
         evaluation_scheduler=EVALUATION_SCHEDULER if stream_factory is not None else 'legacy-wave',
         split='test',repeats=pipeline.options['test_repeats'],seed=cfg['seed'],
