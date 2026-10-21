@@ -1,0 +1,74 @@
+{
+  "version": "strategic-parents-remote-terminal-solver-slurm-resources-v1",
+  "parent": "strategic-parents-remote-terminal-solver-v1",
+  "created_at": "2026-10-20T23:00:26.843689+00:00",
+  "status": "FULL_BASE_RUNNING",
+  "user_authorization": "User approved independent environment, representative CPU/memory probe, then full 100-worker run based on measured resources.",
+  "changes_from_parent": [
+    "Execution environment: Linux x86_64, Python3.12.3, NumPy1.26.4, SciPy1.12.0.",
+    "Explicit 8 workers on 8 physical cores for predeclared resource probe; automatic four-worker cap avoided.",
+    "External per-process Linux CPU/RSS sampling every 2 seconds, outside frozen bundle.",
+    "All source, games, base/extended plans, solver budgets, tolerances and policy acceptance unchanged."
+  ],
+  "probe": {
+    "indices": [
+      2,
+      15,
+      79,
+      62,
+      17,
+      5,
+      4,
+      95
+    ],
+    "selection": "8 quantiles of node_world_pairs, ties in frozen input order; no result/Q/S/D selection",
+    "profile": "base",
+    "workers": 8,
+    "partition": "normal",
+    "constraint": "xcnh",
+    "cpus_per_task": 8,
+    "hint": "nomultithread",
+    "memory": "64G",
+    "time": "00:30:00",
+    "output": "/home/e/e1300530/tmp/oracle_cpu_20261021/game_oracle_remote_v1/remote_runs/probe"
+  },
+  "full_run": {
+    "status": "RUNNING",
+    "workers_target": 100,
+    "partition": "long",
+    "constraint": "xcnh",
+    "hint": "nomultithread",
+    "memory": "128G",
+    "time": "24:00:00",
+    "cpus_per_task": 100,
+    "source_bundle_unchanged": true,
+    "output": "/home/e/e1300530/tmp/oracle_cpu_20261021/game_oracle_remote_v1/remote_runs/base",
+    "physical_affinity": "Choose one allowed logical CPU per socket/core, require 100 unique cores before exec",
+    "job": 986646,
+    "node": "xcnh1",
+    "verified_effective_workers": 100,
+    "verified_process_affinity_cpu_count": 100
+  },
+  "bundle_archive_sha256": "44f93be412e1c369db8390168c3892e10b4450c98820de6a6504b9a412a08bc0",
+  "source_files": {
+    "new/remote_solver_slurm_20261021/physical_exec.py": "ec7b12ca6c5c956011748c0f2654c8124c078845085a2cd9ed0d4bc57e7a9beb",
+    "new/remote_solver_slurm_20261021/probe.sbatch": "512b7c4596314356a633a472c8c0829f7b74a012bddb029ec55e43a66109b0be",
+    "new/remote_solver_slurm_20261021/full.sbatch": "03cf206c1981949ab4e43a7e90d10a0d82443b358a048c3bfa983abf468e0615",
+    "new/remote_solver_slurm_20261021/monitor.py": "82f5d1008ae904a99364ed4dee2ba57e6b232dff281184f062c01192021edd3e"
+  },
+  "production_active": "terminal-node-regret-grpo-readable-v8",
+  "production_changed": false,
+  "validation": {
+    "doctor": "PASS",
+    "six_CPU_tests": "PASS",
+    "GPU": "NOT_USED",
+    "Q_S_D": "NOT_MEASURED",
+    "remote_probe": {
+      "job": 986645,
+      "certified": 5,
+      "unavailable": 3,
+      "elapsed_seconds": 102.02398655563593,
+      "max_sampled_rss_kib": 569820
+    }
+  }
+}

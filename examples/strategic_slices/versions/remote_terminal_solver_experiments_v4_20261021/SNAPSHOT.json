@@ -1,0 +1,83 @@
+{
+  "version": "strategic-parents-remote-terminal-solver-experiments-v4",
+  "parent": "strategic-parents-remote-terminal-solver-repair-v3",
+  "created_at": "2026-10-21T08:57:46.333151+00:00",
+  "status": "CPU_TESTED_READY",
+  "user_authorization": "User approved targeted experiments on parents34/6/24 before broadening to remaining16.",
+  "experiments": [
+    {
+      "mode": "backward",
+      "index": 34,
+      "change": "One reverse-depth candidate repair sweep with actual current child values and existing own/social tie convention; full original audit afterward"
+    },
+    {
+      "mode": "sparse",
+      "index": 6,
+      "change": "Use bounded least_squares/trf/lsmr with exact structural jacobian sparsity and x_scale=jac for up to8192variables; original optimizer budget2048 and independent certification unchanged"
+    },
+    {
+      "mode": "staged",
+      "index": 24,
+      "change": "Candidate initial working set and each expansion capped128 information cells ranked by current local supported-action gain; no legal game action removed; complete native audit unchanged"
+    }
+  ],
+  "resolved": {
+    "profile": "extended",
+    "starts": [
+      "uniform",
+      "dirichlet:0",
+      "dirichlet:1",
+      "dirichlet:2"
+    ],
+    "selection": "First independently certified profile in fixed order; no Q/S/D or investigation-value selection",
+    "construct_seconds": 120,
+    "solve_seconds": 900,
+    "audit_seconds": 300,
+    "max_sweeps": 512,
+    "max_candidates": 12,
+    "max_joint_cells": 131072,
+    "max_joint_evaluations": 2048,
+    "large_tree_ordered_sweeps": 8,
+    "max_nodes": 100000,
+    "epsilon": 1e-08,
+    "tie_tolerance": 1e-09,
+    "workers": 1,
+    "threads_per_worker": 1,
+    "cpus_per_task": 1,
+    "hint": "nomultithread",
+    "partition": "normal",
+    "constraint": "xcnh",
+    "memory": "8G",
+    "walltime": "03:00:00"
+  },
+  "new_candidate_parameters": {
+    "staged_cell_limit": 128,
+    "sparse_variable_limit": 8192,
+    "backward_sweeps_per_joint_round": 1,
+    "joint_rounds": 8
+  },
+  "unchanged": [
+    "Full certify_policy,local_policy_audit,_validate,_screen_root AST identical to v3",
+    "All games, payoffs, information groups, epsilon1e-8,tie1e-9 and full-terminal certification unchanged",
+    "Production source/active and prior84 references preserved",
+    "Each experiment only activates its corresponding mechanism; no cross-version imports"
+  ],
+  "bundle_manifest_sha256": "11c9347e47db160196bfb512a463f4b46ce27257732c5a653120c7ecda190f0f",
+  "bundle_archive_sha256": "545a792689a311dc9a3612ee96ce36f6cf9bba3f8de6908542bc901d76f6c273",
+  "files": {
+    "new/remote_solver_experiments_v4_20261021/experiments.sbatch": "c0dcef3b3ec5f4e94e5710f61c7c697b0c42b16fa82aa96036aa494793b260be",
+    "new/remote_solver_experiments_v4_20261021/solver_experiments_v4.tar.gz": "545a792689a311dc9a3612ee96ce36f6cf9bba3f8de6908542bc901d76f6c273",
+    "new/remote_solver_experiments_v4_20261021/tests.log": "d3f59e3aaf6789fa6eb31db3b6f1fe16a779cc994581c3c2b88d66c3753ae243",
+    "new/remote_solver_experiments_v4_20261021/doctor.json": "62438b25ea2ca439ae07d7621974bd502ccee541a5de2c5054ea8c427087592d",
+    "new/remote_solver_experiments_v4_20261021/source/BUNDLE_MANIFEST.json": "11c9347e47db160196bfb512a463f4b46ce27257732c5a653120c7ecda190f0f",
+    "new/remote_solver_experiments_v4_20261021/source/new/strategic_game_v1_20261021/remote_solver.py": "7fe84bbad2fbc46a85e9cbfa43bac1f3efc6984e1701c33e8bdb062f75b4aed9",
+    "new/remote_solver_experiments_v4_20261021/source/training/strategic_slices/equilibrium.py": "2c0db9c879aea33c3f7ff1c2943d06ff22d7047d6535867f1c56674c73044da1",
+    "new/remote_solver_experiments_v4_20261021/source/training/strategic_slices/test_experiments_v4.py": "da634cd273f15e40b8dbe9dc16e82bc72df2ac867052cde7ea26c0740ff4ab5c"
+  },
+  "validation": {
+    "doctor": "PASS",
+    "CPU_tests": "28 PASS",
+    "representative_certification": "NOT_RUN_YET",
+    "GPU_Q_S_D_training": "NOT_USED"
+  }
+}

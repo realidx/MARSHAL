@@ -1,0 +1,87 @@
+{
+  "probe_completion": {
+    "execution_complete": true,
+    "all_100_certified": false,
+    "certified": 5,
+    "unavailable": 3,
+    "expected": 8,
+    "summary_sha256": "722ca567abc19e2b2975c1b639799e9c3aa7f223c0620027a4e60480fb768d98",
+    "artifacts_sha256": "f8b5fd0f58ba9039be7d003d0aaa9cd5f9d328199e21cb6c1390c2e99f1aaf23"
+  },
+  "probe_resources": {
+    "command": [
+      "python",
+      "-u",
+      "-m",
+      "new.strategic_game_v1_20261021.remote_solver",
+      "run",
+      "--output",
+      "remote_runs/probe",
+      "--profile",
+      "base",
+      "--workers",
+      "8",
+      "--indices",
+      "2",
+      "15",
+      "79",
+      "62",
+      "17",
+      "5",
+      "4",
+      "95"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 102.02398655563593,
+    "child_cpu_seconds": 230.217695,
+    "average_busy_cpus": 2.256505580425023,
+    "child_maxrss_kib": 565680,
+    "sampled_process_peaks": {
+      "2276855": {
+        "max_rss_kib": 43452,
+        "cpu_seconds": 0.99
+      },
+      "2276857": {
+        "max_rss_kib": 58056,
+        "cpu_seconds": 3.15
+      },
+      "2276858": {
+        "max_rss_kib": 251424,
+        "cpu_seconds": 57.08
+      },
+      "2276859": {
+        "max_rss_kib": 104052,
+        "cpu_seconds": 9.15
+      },
+      "2276860": {
+        "max_rss_kib": 57056,
+        "cpu_seconds": 1.14
+      },
+      "2276861": {
+        "max_rss_kib": 569820,
+        "cpu_seconds": 19.02
+      },
+      "2276862": {
+        "max_rss_kib": 449144,
+        "cpu_seconds": 30.57
+      },
+      "2276863": {
+        "max_rss_kib": 60904,
+        "cpu_seconds": 3.13
+      },
+      "2276864": {
+        "max_rss_kib": 268320,
+        "cpu_seconds": 99.1
+      }
+    }
+  },
+  "full_memory_rationale": {
+    "sampled_max_process_GiB": 0.5434226989746094,
+    "workers": 100,
+    "estimated_at_observed_peak_GiB": 54.34226989746094,
+    "requested_GiB": 128,
+    "limitation": "8 predeclared size-quantile cases, not proof of all-100 peak; full run monitored"
+  },
+  "observed_cpu_model": "AMD EPYC 9755 128-Core Processor",
+  "physical_binding": "Full run restricts affinity to 100 unique socket/core identities; one numerical thread per worker"
+}

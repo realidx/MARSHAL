@@ -1,0 +1,206 @@
+{
+  "bundle": "strategic-parent-remote-bundle-v1",
+  "environment": {
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+    "python_version": "3.12.3",
+    "executable": "/home/e/e1300530/tmp/oracle_cpu_20261021/game_oracle_remote_v1/.venv/bin/python",
+    "numpy": "1.26.4",
+    "scipy": "1.12.0",
+    "platform": "Linux-6.8.0-147-generic-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "hostname": "xcnc17",
+    "cpu_count": 24,
+    "slurm": {
+      "SLURM_JOB_ID": "986621",
+      "SLURM_CPUS_PER_TASK": "8",
+      "SLURM_MEM_PER_NODE": "8192",
+      "SLURM_JOB_PARTITION": "long"
+    },
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "numpy_build_config": {
+      "Compilers": {
+        "c": {
+          "name": "gcc",
+          "linker": "ld.bfd",
+          "version": "10.2.1",
+          "commands": "cc",
+          "args": "-fno-strict-aliasing",
+          "linker args": "-Wl,--strip-debug, -fno-strict-aliasing"
+        },
+        "cython": {
+          "name": "cython",
+          "linker": "cython",
+          "version": "3.0.8",
+          "commands": "cython"
+        },
+        "c++": {
+          "name": "gcc",
+          "linker": "ld.bfd",
+          "version": "10.2.1",
+          "commands": "c++",
+          "linker args": "-Wl,--strip-debug"
+        }
+      },
+      "Machine Information": {
+        "host": {
+          "cpu": "x86_64",
+          "family": "x86_64",
+          "endian": "little",
+          "system": "linux"
+        },
+        "build": {
+          "cpu": "x86_64",
+          "family": "x86_64",
+          "endian": "little",
+          "system": "linux"
+        }
+      },
+      "Build Dependencies": {
+        "blas": {
+          "name": "openblas64",
+          "found": true,
+          "version": "0.3.23.dev",
+          "detection method": "pkgconfig",
+          "include directory": "/usr/local/include",
+          "lib directory": "/usr/local/lib",
+          "openblas configuration": "USE_64BITINT=1 DYNAMIC_ARCH=1 DYNAMIC_OLDER= NO_CBLAS= NO_LAPACK= NO_LAPACKE= NO_AFFINITY=1 USE_OPENMP= HASWELL MAX_THREADS=2",
+          "pc file directory": "/usr/local/lib/pkgconfig"
+        },
+        "lapack": {
+          "name": "dep140551260102944",
+          "found": true,
+          "version": "1.26.4",
+          "detection method": "internal",
+          "include directory": "unknown",
+          "lib directory": "unknown",
+          "openblas configuration": "unknown",
+          "pc file directory": "unknown"
+        }
+      },
+      "Python Information": {
+        "path": "/opt/python/cp312-cp312/bin/python",
+        "version": "3.12"
+      },
+      "SIMD Extensions": {
+        "baseline": [
+          "SSE",
+          "SSE2",
+          "SSE3"
+        ],
+        "found": [
+          "SSSE3",
+          "SSE41",
+          "POPCNT",
+          "SSE42",
+          "AVX",
+          "F16C",
+          "FMA3",
+          "AVX2"
+        ],
+        "not found": [
+          "AVX512F",
+          "AVX512CD",
+          "AVX512_KNL",
+          "AVX512_KNM",
+          "AVX512_SKX",
+          "AVX512_CLX",
+          "AVX512_CNL",
+          "AVX512_ICL"
+        ]
+      }
+    }
+  },
+  "parents": 100,
+  "input_sha256": "30fb0f7d012f33f5d175650258698e9ba46cd88cafc64da39f848a69c4bfd3ad",
+  "first_game": {
+    "n_players": 2,
+    "n_actions_per_player": [
+      2,
+      2
+    ],
+    "goals": [
+      {
+        "goal_id": 0,
+        "binary": true,
+        "required_actions": [
+          {
+            "player_id": 0,
+            "action_id": 1
+          },
+          {
+            "player_id": 1,
+            "action_id": 1
+          }
+        ]
+      },
+      {
+        "goal_id": 1,
+        "binary": false,
+        "required_actions": [
+          {
+            "player_id": 0,
+            "action_id": 0
+          },
+          {
+            "player_id": 1,
+            "action_id": 0
+          }
+        ]
+      },
+      {
+        "goal_id": 2,
+        "binary": false,
+        "required_actions": [
+          {
+            "player_id": 0,
+            "action_id": 1
+          },
+          {
+            "player_id": 1,
+            "action_id": 0
+          },
+          {
+            "player_id": 1,
+            "action_id": 1
+          }
+        ]
+      }
+    ],
+    "round_robin": [
+      1,
+      0,
+      1,
+      0
+    ],
+    "max_changes": 1,
+    "seed": 0,
+    "forbidden_actions": null,
+    "variant": "native-private-unknown-query-offer-quota-v1",
+    "menu_enabled": false,
+    "investigate": {
+      "budget": 1,
+      "budget_scope": "per player per game",
+      "cost": "Consumes the current proposal turn; commitments do not change",
+      "action_visibility": "Query actor and target are public",
+      "result_visibility": "Only the investigator receives the true preference",
+      "targets": "Only non-public preferences of another player not previously investigated by this player",
+      "public_preferences_eligible": false,
+      "already_directly_investigated_eligible": false,
+      "inference_or_utility_used_for_legality": false,
+      "hidden_world_used_for_legality": false
+    },
+    "offer_quota": {
+      "budget": 1,
+      "scope": "per player per game",
+      "charged": "immediately on proposal",
+      "refunded": false,
+      "utility_penalty": 0
+    }
+  }
+}

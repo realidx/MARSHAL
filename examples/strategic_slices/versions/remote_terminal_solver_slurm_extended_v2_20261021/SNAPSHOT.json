@@ -1,0 +1,59 @@
+{
+  "version": "strategic-parents-remote-terminal-solver-slurm-extended-v2",
+  "parent": "strategic-parents-remote-terminal-solver-slurm-resources-v1",
+  "protocol_parent": "strategic-parents-remote-terminal-solver-v1",
+  "created_at": "2026-10-20T23:28:01.521698+00:00",
+  "user_authorization": "User explicitly requested continued search after base returned 35 uncertified parents.",
+  "status": "READY_TO_SUBMIT",
+  "changes_from_parent": [
+    "Use predeclared extended profile instead of base.",
+    "Import all 65 certified base references; only remaining 35 parents require search.",
+    "35 physical cores and 35 single-thread workers; memory reduced from 128GiB to 64GiB based on base measurements.",
+    "New output remote_runs/extended; base is preserved unchanged."
+  ],
+  "resolved": {
+    "profile": "extended",
+    "starts": [
+      "uniform",
+      "dirichlet:0",
+      "dirichlet:1",
+      "dirichlet:2"
+    ],
+    "selection": "First independently certified profile in fixed order; no Q/S/D or investigation-value selection",
+    "construct_seconds": 120,
+    "solve_seconds": 900,
+    "audit_seconds": 300,
+    "max_sweeps": 512,
+    "max_candidates": 12,
+    "max_joint_cells": 131072,
+    "max_joint_evaluations": 2048,
+    "large_tree_ordered_sweeps": 8,
+    "max_nodes": 100000,
+    "epsilon": 1e-08,
+    "tie_tolerance": 1e-09,
+    "workers": 35,
+    "threads_per_worker": 1,
+    "cpus_per_task": 35,
+    "hint": "nomultithread",
+    "partition": "long",
+    "constraint": "xcnh",
+    "memory": "64G",
+    "walltime": "24:00:00"
+  },
+  "base_summary_sha256": "590e2bc85cc3a63edd2ee0ba965e494a08d060510a8d862da8c9f3f52d7a293c",
+  "environment": "Same frozen bundle and Python3.12.3/NumPy1.26.4/SciPy1.12.0 as base",
+  "source": {
+    "new/remote_solver_slurm_20261021/extended.sbatch": "662508d274337191d8c237d2039f1a3c175ddad83885bfd6c6d5ded08309f459",
+    "new/remote_solver_slurm_20261021/monitor.py": "82f5d1008ae904a99364ed4dee2ba57e6b232dff281184f062c01192021edd3e",
+    "new/remote_solver_slurm_20261021/physical_exec.py": "ec7b12ca6c5c956011748c0f2654c8124c078845085a2cd9ed0d4bc57e7a9beb"
+  },
+  "production_changed": false,
+  "model_GPU_Q_S_D_training": "NOT_USED",
+  "validation": {
+    "shell_syntax": "PASS",
+    "base_execution": "COMPLETED",
+    "base_certified": 65,
+    "base_unavailable": 35,
+    "extended": "NOT_RUN_YET"
+  }
+}
