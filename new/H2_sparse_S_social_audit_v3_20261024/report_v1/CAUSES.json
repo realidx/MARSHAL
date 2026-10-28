@@ -1,0 +1,151 @@
+{
+  "measured": 31,
+  "missing_original_indices": [
+    46,
+    76
+  ],
+  "control_bounds": {
+    "contexts": 183348,
+    "no_future_own_payoff_control": 94614,
+    "ambiguous_and_no_future_control": 89867
+  },
+  "composites": {
+    "all_entry_history": {
+      "groups": 31067,
+      "contexts": 183348,
+      "singleton_groups": 12166,
+      "positive_contexts": 31,
+      "new_positive_over_single_item_S": 10
+    },
+    "all_entry_allowed": {
+      "groups": 21965,
+      "contexts": 183348,
+      "singleton_groups": 6561,
+      "positive_contexts": 121,
+      "new_positive_over_single_item_S": 84
+    }
+  },
+  "main_S_positive_parents": [
+    3,
+    7,
+    22,
+    35,
+    43,
+    49,
+    65,
+    78,
+    96
+  ],
+  "joint_diagnostic_positive_parents": [
+    3,
+    7,
+    17,
+    22,
+    35,
+    43,
+    49,
+    65,
+    78,
+    96
+  ],
+  "previously_zero_main_S_but_joint_positive": [
+    17
+  ],
+  "zero_joint_diagnostic_parents": [
+    10,
+    12,
+    19,
+    21,
+    27,
+    28,
+    34,
+    52,
+    54,
+    60,
+    62,
+    66,
+    70,
+    71,
+    80,
+    81,
+    85,
+    88,
+    89,
+    92,
+    98
+  ],
+  "LP_checks": 47,
+  "recorded_ambiguous_zero_private_LP_checks": 31,
+  "all_LP_matches": true,
+  "future_observation_invariants": 120348,
+  "response_tie_information": {
+    "counts": {
+      "contexts": 395,
+      "main_own_S_zero": 395,
+      "on_reference": 84,
+      "terminal_contexts": 277,
+      "terminal_on_reference": 20
+    },
+    "parents": [
+      3,
+      35,
+      49,
+      54,
+      65,
+      70,
+      78,
+      80
+    ],
+    "terminal_parents": [
+      35,
+      65,
+      80
+    ],
+    "union_with_main_S_contexts": 444,
+    "union_on_reference": 90,
+    "union_parent_count": 12,
+    "definition": "Separate current oracle-response tie diagnostic, not a new scalar S or reward"
+  },
+  "label_audit": {
+    "counts": {
+      "all": {
+        "contexts": 183348,
+        "no_omittable_item": 162,
+        "own_action_Q_flat": 103261,
+        "ambiguous_and_Q_nonflat": 74420,
+        "positive_S_and_Q_nonflat": 46,
+        "positive_S_and_Q_flat": 3,
+        "ambiguous_zero_S": 171396,
+        "all_single_omissions_recoverable": 11741,
+        "ambiguous_positive_S": 49
+      },
+      "on_reference": {
+        "contexts": 45940,
+        "no_omittable_item": 162,
+        "own_action_Q_flat": 29669,
+        "ambiguous_and_Q_nonflat": 14800,
+        "positive_S_and_Q_nonflat": 6,
+        "positive_S_and_Q_flat": 0,
+        "all_single_omissions_recoverable": 3027,
+        "ambiguous_zero_S": 42745,
+        "ambiguous_positive_S": 6
+      }
+    },
+    "private_group_counts": {
+      "ambiguous_all_zero": 23392,
+      "ambiguous_all_zero:common_current_optimal": 23392,
+      "ambiguous_all_zero:contexts": 52209,
+      "answer_recoverable_singleton": 25420,
+      "ambiguous_mixed": 21,
+      "ambiguous_mixed:common_current_optimal": 3,
+      "ambiguous_mixed:contexts": 53
+    },
+    "minimum_S_above_EPS": 0.0016339869281045694
+  },
+  "conclusions": [
+    "Own-S sparsity has real payoff-control and common-optimum causes; numeric cutoff does not erase meaningful positives",
+    "Redundant entry-time evidence hides some single-item information value; uniformly stronger omission still leaves21 parents with no own-utility information loss",
+    "Main own-utility S does not measure information needed for the mandated response social tie rule; report this channel separately",
+    "D and model self-play exposure remain unmeasured; no parent selection, reward, game or prompt change"
+  ]
+}

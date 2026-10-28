@@ -1,0 +1,33 @@
+{
+  "version": "three-player-complexity-study-v1",
+  "source_registration_sha256": "a19afd1226ce9077dc5e44480476a54696ec4da636ef3c9991c21957b16fba12",
+  "defaults": {
+    "max_nodes": 600000,
+    "construct_seconds": 180.0,
+    "solve_seconds": 600.0,
+    "audit_seconds": 300.0,
+    "metric_seconds": 1200.0,
+    "case_seconds": 3600.0,
+    "memory_gb": 8.0,
+    "epsilon": 1e-08,
+    "tie_tolerance": 1e-09,
+    "max_sweeps": 512,
+    "joint_evaluations": 400,
+    "repair_passes": 8,
+    "labels": true,
+    "backend": "inertia_then_joint",
+    "repair_internal_audit_seconds": 60,
+    "joint_front_internal_max_sweeps": 256,
+    "operation": "solve"
+  },
+  "workers": 1,
+  "primary_arm": "H2",
+  "optional_arms": [
+    "H3",
+    "A2H2"
+  ],
+  "acceptance": "native full-terminal private BR/local support/response social ties; no threshold relaxation",
+  "S": "per-item current-node omission; uniform remaining masked ties; zero_CF unavailable",
+  "heavy_remote_run": "NOT_RUN_LOCALLY",
+  "production_changed": false
+}

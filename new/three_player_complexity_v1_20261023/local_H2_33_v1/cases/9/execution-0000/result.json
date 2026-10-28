@@ -1,0 +1,924 @@
+{
+  "index": 9,
+  "id": "de3b6457c564f40b19bf01c0",
+  "original_index": 28,
+  "arm": "H2",
+  "kind": "expanded_parent",
+  "status": "certified_native_terminal_parent",
+  "labels": "MEASURED",
+  "setup": [],
+  "phase": "Q_S",
+  "memory_limit_applied": false,
+  "nodes": 168029,
+  "worlds": 9,
+  "cutoff_leaves": 0,
+  "solver": {
+    "front": {
+      "status": "reduced_local_candidate",
+      "events": [
+        {
+          "initialization": "uniform",
+          "synchronous": false,
+          "sweeps": 13,
+          "worst": 0.6666666666666666,
+          "ties": 2,
+          "failed": 15
+        }
+      ],
+      "initialization": "first",
+      "synchronous": false,
+      "sweeps": 5,
+      "reduced_public_nodes": 49639
+    },
+    "front_budget_seconds": 90.0
+  },
+  "certificate": {
+    "version": "private-behavioral-joint-epsilon-v5",
+    "verified": true,
+    "numerical_epsilon": 1e-08,
+    "own_utility_epsilon_nash_verified": true,
+    "exact_equilibrium_claim": false,
+    "uniqueness_proven": false,
+    "uniqueness_required": false,
+    "full_game_equilibrium_verified": false,
+    "all_player_same_solver": true,
+    "max_own_deviation_gain": 0.0,
+    "root_private_information_deviation_checks": [
+      {
+        "player": 0,
+        "root_private_cell": 0,
+        "own_type": [
+          0,
+          0,
+          -1,
+          0
+        ],
+        "own_gain": 0.0
+      },
+      {
+        "player": 0,
+        "root_private_cell": 1,
+        "own_type": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "own_gain": 0.0
+      },
+      {
+        "player": 0,
+        "root_private_cell": 2,
+        "own_type": [
+          0,
+          0,
+          1,
+          0
+        ],
+        "own_gain": 0.0
+      },
+      {
+        "player": 1,
+        "root_private_cell": 0,
+        "own_type": [
+          -1,
+          1,
+          0,
+          0
+        ],
+        "own_gain": 0.0
+      },
+      {
+        "player": 1,
+        "root_private_cell": 1,
+        "own_type": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "own_gain": 0.0
+      },
+      {
+        "player": 1,
+        "root_private_cell": 2,
+        "own_type": [
+          1,
+          1,
+          0,
+          0
+        ],
+        "own_gain": 0.0
+      },
+      {
+        "player": 2,
+        "root_private_cell": 0,
+        "own_type": [
+          1,
+          -1,
+          0,
+          1
+        ],
+        "own_gain": 0.0
+      }
+    ],
+    "response_only_social_ties_verified": true,
+    "social_tie_audit": {
+      "verified": true,
+      "information_cell_checks": 133333,
+      "failures": [],
+      "tie_tolerance": 1e-09,
+      "local_own_support_verified": true,
+      "own_information_cell_checks": 252700,
+      "own_failures": [],
+      "max_local_supported_action_gain": 4.440892098500626e-16,
+      "local_own_support_epsilon": 1e-08,
+      "off_path": "Initial prior conditioned on own type and own private answers when counterfactual reach is zero; no formal sequential-equilibrium claim",
+      "convention": "Among own-optimal offer responses, support only responses maximizing other-player utility; remaining admissible action ties may mix nonuniformly at every decision"
+    },
+    "exact_enumeration": true,
+    "local_own_support_verified": true,
+    "max_local_supported_action_gain": 4.440892098500626e-16,
+    "off_path": "Initial prior conditioned on own type and own private answers when counterfactual reach is zero; no formal sequential-equilibrium claim",
+    "information": "Public action history + own preferences + own private query answers; perfect recall",
+    "selection_contract": "Deterministic complete contingent BR candidates retain the response-only social tie rule; final joint behavioral mixing may be nonuniform among remaining admissible actions; complete-tree private-information-conditioned BR checks and local own-optimal support audits accept only epsilon-Nash profiles under the declared off-path convention",
+    "scope": "Numerically certified own-utility epsilon-Nash profile of this explicitly enumerated cutoff game; no unique or original-game terminal equilibrium claim"
+  },
+  "native_audit": {
+    "nodes": 168029,
+    "edges": 168028,
+    "terminal_leaves": 99989,
+    "cutoff_leaves": 0,
+    "horizon_mode": "rr-plus-next-own-proposal-v1",
+    "lookahead_rr": 3,
+    "proposal_turns": 9,
+    "root_turn_index": 0,
+    "root_actor": 0,
+    "base_cutoff": 6,
+    "cutoff": 6,
+    "next_own_proposal_index": 3,
+    "next_own_proposal_included": true,
+    "actual_proposal_turns": 6,
+    "terminal_truncated_horizon": true,
+    "native_transitions_match": true,
+    "native_action_set_complete": true,
+    "leaf_payoffs_match": true,
+    "all_values_match": false,
+    "leaf_objective": "Own native goal utility from commitments already made at cutoff; no continuation value"
+  },
+  "reference_sha256": "5068786a172a4d398b566879e9486741d7d27ed9230d135a954a210df1b3f153",
+  "summary": {
+    "all_cells": 252700,
+    "zero_CF_cells": 251925,
+    "S_unavailable_items": 0,
+    "counterfactual": {
+      "contexts": 775,
+      "proposals": 389,
+      "responses": 386,
+      "positive_Q_span": 269,
+      "all_actions_own_tied": 506,
+      "response_social_tie_matters": 196,
+      "query_available": 282,
+      "query_strictly_better": 0,
+      "max_query_gap": 0.0,
+      "private_S_positive": 0,
+      "history_S_positive": 0,
+      "max_private_S": 2.220446049250313e-16,
+      "max_history_S": 0,
+      "private_answer_contexts": 271,
+      "with_history_omission": 772,
+      "offers_type_dependent": 24,
+      "optimal_offer_type_dependent": 7,
+      "static_dynamic_offer_disjoint": 4,
+      "immediate_action_optimal_disjoint": 1,
+      "max_BR_vs_ref_Q_difference": 0.0,
+      "proposal_spans_quantiles": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.0
+      ],
+      "positive_distinct_gaps_quantiles": [
+        0.05555555555555558,
+        1.0,
+        1.0,
+        1.0,
+        2.0
+      ],
+      "private_entry_action_positive": 0,
+      "history_entry_action_positive": 0
+    },
+    "on_reference": {
+      "contexts": 90,
+      "proposals": 53,
+      "responses": 37,
+      "positive_Q_span": 49,
+      "all_actions_own_tied": 41,
+      "response_social_tie_matters": 19,
+      "query_available": 34,
+      "query_strictly_better": 0,
+      "max_query_gap": 0.0,
+      "private_S_positive": 0,
+      "history_S_positive": 0,
+      "max_private_S": 0,
+      "max_history_S": 0,
+      "private_answer_contexts": 30,
+      "with_history_omission": 87,
+      "offers_type_dependent": 19,
+      "optimal_offer_type_dependent": 5,
+      "static_dynamic_offer_disjoint": 4,
+      "immediate_action_optimal_disjoint": 0,
+      "max_BR_vs_ref_Q_difference": 0.0,
+      "proposal_spans_quantiles": [
+        0.0,
+        0.25,
+        0.7222222222222223,
+        1.0,
+        2.0
+      ],
+      "positive_distinct_gaps_quantiles": [
+        0.05555555555555558,
+        0.5,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "private_entry_action_positive": 0,
+      "history_entry_action_positive": 0
+    },
+    "S_zero_CF": "UNAVAILABLE_NOT_ZERO"
+  },
+  "metrics": {
+    "nontrivial_forests": 165,
+    "forest_nodes": 21669,
+    "omitted_policy_remaining_ties": "uniform",
+    "information": "current-node omission, not pre-answer acquisition value"
+  },
+  "root_contexts": [
+    {
+      "node": 0,
+      "actor": 0,
+      "phase": "proposal",
+      "turn": 0,
+      "own_type": [
+        0,
+        0,
+        -1,
+        0
+      ],
+      "private_answers": [],
+      "world_ids": [
+        0,
+        1,
+        2
+      ],
+      "posterior": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "counterfactual_mass": 0.3333333333333333,
+      "reference_mass": 0.3333333333333333,
+      "belief": "reference_counterfactual",
+      "Q_scope": "contingent_BR",
+      "actions": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0
+          ],
+          "partner_action": [
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1
+          ],
+          "partner_action": [
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1
+          ],
+          "partner_action": [
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 2,
+          "proposer_action": [
+            0
+          ],
+          "partner_action": [
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 2,
+          "proposer_action": [
+            1
+          ],
+          "partner_action": [
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 2,
+          "proposer_action": [
+            1
+          ],
+          "partner_action": [
+            1
+          ]
+        },
+        {
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0
+        }
+      ],
+      "Q": [
+        0.0,
+        0.0,
+        -0.6666666666666666,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "Q_others": [
+        1.4999999999999998,
+        1.4999999999999998,
+        2.0,
+        1.4999999999999998,
+        1.4999999999999998,
+        1.4999999999999998,
+        1.4999999999999998,
+        1.4999999999999998
+      ],
+      "Q_reference": [
+        0.0,
+        0.0,
+        -0.6666666666666666,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "optimal": [
+        0,
+        1,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "own_optimal": [
+        0,
+        1,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "span": 0.6666666666666666,
+      "best_minus_next_distinct": 0.6666666666666666,
+      "query_gap": 0.0,
+      "immediate_child_utility": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "immediate_optimal_overlap": true,
+      "S_private": 0.0,
+      "S_history": 0.0,
+      "S_items": [],
+      "unavailable_S_items": 0,
+      "offers": [
+        {
+          "action": 1,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 2,
+          "acceptance": 0.6666666666666666,
+          "acceptance_type_range": 1.0,
+          "own_accept_minus_reject": -1.0,
+          "Q_accept": -1.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 3,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 4,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 5,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": -1.0,
+          "Q_accept": -1.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 6,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": -0.6666666666666666,
+          "Q_accept": -0.6666666666666666,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        }
+      ],
+      "offer_static_dynamic_disjoint": false,
+      "cell": 0
+    },
+    {
+      "node": 0,
+      "actor": 0,
+      "phase": "proposal",
+      "turn": 0,
+      "own_type": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "private_answers": [],
+      "world_ids": [
+        3,
+        4,
+        5
+      ],
+      "posterior": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "counterfactual_mass": 0.3333333333333333,
+      "reference_mass": 0.3333333333333333,
+      "belief": "reference_counterfactual",
+      "Q_scope": "contingent_BR",
+      "actions": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0
+          ],
+          "partner_action": [
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1
+          ],
+          "partner_action": [
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1
+          ],
+          "partner_action": [
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 2,
+          "proposer_action": [
+            0
+          ],
+          "partner_action": [
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 2,
+          "proposer_action": [
+            1
+          ],
+          "partner_action": [
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 2,
+          "proposer_action": [
+            1
+          ],
+          "partner_action": [
+            1
+          ]
+        },
+        {
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0
+        }
+      ],
+      "Q": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "Q_others": [
+        1.833333333333333,
+        1.833333333333333,
+        2.0,
+        1.833333333333333,
+        1.833333333333333,
+        1.833333333333333,
+        1.833333333333333,
+        1.833333333333333
+      ],
+      "Q_reference": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "optimal": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "own_optimal": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "span": 0.0,
+      "best_minus_next_distinct": null,
+      "query_gap": 0.0,
+      "immediate_child_utility": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "immediate_optimal_overlap": true,
+      "S_private": 0.0,
+      "S_history": 0.0,
+      "S_items": [],
+      "unavailable_S_items": 0,
+      "offers": [
+        {
+          "action": 1,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 2,
+          "acceptance": 0.6666666666666666,
+          "acceptance_type_range": 1.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 3,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 4,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 5,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 6,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        }
+      ],
+      "offer_static_dynamic_disjoint": false,
+      "cell": 1
+    },
+    {
+      "node": 0,
+      "actor": 0,
+      "phase": "proposal",
+      "turn": 0,
+      "own_type": [
+        0,
+        0,
+        1,
+        0
+      ],
+      "private_answers": [],
+      "world_ids": [
+        6,
+        7,
+        8
+      ],
+      "posterior": [
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333
+      ],
+      "counterfactual_mass": 0.3333333333333333,
+      "reference_mass": 0.3333333333333333,
+      "belief": "reference_counterfactual",
+      "Q_scope": "contingent_BR",
+      "actions": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0
+          ],
+          "partner_action": [
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1
+          ],
+          "partner_action": [
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1
+          ],
+          "partner_action": [
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 2,
+          "proposer_action": [
+            0
+          ],
+          "partner_action": [
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 2,
+          "proposer_action": [
+            1
+          ],
+          "partner_action": [
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 2,
+          "proposer_action": [
+            1
+          ],
+          "partner_action": [
+            1
+          ]
+        },
+        {
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0
+        }
+      ],
+      "Q": [
+        1.0,
+        0.3333333333333333,
+        0.6666666666666666,
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        0.6666666666666666
+      ],
+      "Q_others": [
+        2.0,
+        1.8333333333333333,
+        2.0,
+        1.8333333333333333,
+        1.8333333333333333,
+        1.8333333333333333,
+        1.8333333333333333,
+        2.0
+      ],
+      "Q_reference": [
+        1.0,
+        0.3333333333333333,
+        0.6666666666666666,
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        0.3333333333333333,
+        0.6666666666666666
+      ],
+      "optimal": [
+        0
+      ],
+      "own_optimal": [
+        0
+      ],
+      "span": 0.6666666666666667,
+      "best_minus_next_distinct": 0.33333333333333337,
+      "query_gap": -0.33333333333333337,
+      "immediate_child_utility": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "immediate_optimal_overlap": true,
+      "S_private": 0.0,
+      "S_history": 0.0,
+      "S_items": [],
+      "unavailable_S_items": 0,
+      "offers": [
+        {
+          "action": 1,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": -0.3333333333333333,
+          "Q_accept": 0.0,
+          "Q_reject": 0.3333333333333333,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 2,
+          "acceptance": 0.6666666666666666,
+          "acceptance_type_range": 1.0,
+          "own_accept_minus_reject": 0.6666666666666667,
+          "Q_accept": 1.0,
+          "Q_reject": 0.3333333333333333,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 3,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": -0.3333333333333333,
+          "Q_accept": 0.0,
+          "Q_reject": 0.3333333333333333,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 4,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.3333333333333333,
+          "Q_accept": 0.6666666666666666,
+          "Q_reject": 0.3333333333333333,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 5,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.6666666666666667,
+          "Q_accept": 1.0,
+          "Q_reject": 0.3333333333333333,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 6,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.3333333333333333,
+          "Q_accept": 0.6666666666666666,
+          "Q_reject": 0.3333333333333333,
+          "static_accepted_utility": 0.0
+        }
+      ],
+      "offer_static_dynamic_disjoint": false,
+      "cell": 2
+    }
+  ],
+  "labels_sha256": "492e8292f66454b5f2ee89aeb3e21c8017b51e9380a40ba1d84df028e931b6f1",
+  "examples_sha256": "d141711bd9f9147b8a89659267219db7d085928bf3a11c570a2006aa18f18f02",
+  "elapsed_seconds": 51.733351540984586,
+  "worker_python": "3.12.2 | packaged by conda-forge | (main, Feb 16 2024, 20:54:21) [Clang 16.0.6 ]",
+  "environment_threads": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1"
+  }
+}

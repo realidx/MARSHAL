@@ -1,0 +1,327 @@
+{
+  "version": "strategic-game-design-v1",
+  "created_on": "2026-10-21",
+  "record_kind": "consolidated-game-and-label-design",
+  "status": "CLOSED_DESIGN_RECORD_IMPLEMENTATION_AND_RUN_STATUS_DISTINGUISHED",
+  "parent": "node-qsd-design-v1",
+  "user_authorization": "User requested a concise design-version snapshot of game environment configuration, solver calculation, and Q/S/D; consolidates previously authorized decisions without new rules or runs.",
+  "changes_from_parent": [
+    "Record now-frozen scale and independent preference generation: 100 parents, all 2 RR, 67 two-player / 33 three-player, 3/4 goals and explicit hidden-cell limits.",
+    "Record implemented personal offer quota and approved exclusion of public or self-previously-queried investigation targets.",
+    "Record full-native-terminal numerical solver, certification tolerances, base/extended search budgets and identity-checked reuse.",
+    "Keep previously confirmed Q/S/D semantics; explicitly separate pending executable definitions and unmeasured model D from implemented reference certification.",
+    "Consolidate evidence and remaining work in one readable design document; production, prompt, reward, advantage and training defaults unchanged."
+  ],
+  "document": "examples/strategic_slices/versions/game_design_v1_20261021/DESIGN.md",
+  "document_sha256": "a69791e88a8d744727d2691ecb62b5f4a67e51c58a3b7aa61e1fb2b4bb783391",
+  "components": {
+    "node-qsd-design-v1": {
+      "path": "examples/strategic_slices/versions/node_qsd_design_v1_20261021/SNAPSHOT.json",
+      "sha256": "cacf4d57868b144da836492b92e40d8ce05ae650fcb10ecc0e8f3da03f85c2be"
+    },
+    "native-private-unknown-query-offer-quota-v1": {
+      "path": "examples/strategic_slices/versions/native_private_unknown_query_v1_20261021/SNAPSHOT.json",
+      "sha256": "6474fa6e5ec8450150987d0ae6c48c59dce275ecce73cfe2ebda758ced97e650"
+    },
+    "strategic-parents-100-two-round-unknown-query-v1": {
+      "path": "examples/strategic_slices/versions/strategic_parents_100_v1_20261021/SNAPSHOT.json",
+      "sha256": "06dac3ebd75bc98e793bec027c0164b12830de9ea87a22ecd3c58068d9ca7815"
+    },
+    "strategic-parents-100-certification-probe-v1": {
+      "path": "examples/strategic_slices/versions/strategic_parents_100_probe_v1_20261021/SNAPSHOT.json",
+      "sha256": "26d147ec50e3b9a05d302033f49f1e24822c6dafb728dd94e3dc4d50e586d06e"
+    },
+    "strategic-parents-remote-terminal-solver-v1": {
+      "path": "examples/strategic_slices/versions/remote_terminal_solver_v1_20261021/SNAPSHOT.json",
+      "sha256": "678166a4e688fb80e3784c3ac97ac87bd1334d76c64ce2417aabe26b21a6f17e"
+    }
+  },
+  "game_and_generation_config": {
+    "players": {
+      "2": 67,
+      "3": 33
+    },
+    "rounds": 2,
+    "investigation_budget": 1,
+    "offer_budget": 1,
+    "new_commitments_per_offer_per_party": 1,
+    "actions": {
+      "2": [
+        2,
+        2
+      ],
+      "3": [
+        1,
+        1,
+        1
+      ]
+    },
+    "goals": [
+      3,
+      4
+    ],
+    "hidden_cells": {
+      "2": [
+        2,
+        3
+      ],
+      "3": [
+        1
+      ]
+    },
+    "prior": {
+      "want": 0.3333333333333333,
+      "neutral": 0.3333333333333333,
+      "avoid": 0.3333333333333333,
+      "independent": true,
+      "public": true
+    },
+    "world_support": {
+      "2": [
+        9,
+        27
+      ],
+      "3": [
+        3
+      ]
+    },
+    "goal_required_commitments": [
+      2,
+      3
+    ],
+    "goal_scoring": "independent binary/linear 50/50 per goal",
+    "structural_admission": "Each declared commitment occurs in a goal; no duplicate requirement set",
+    "preference_admission": "No forced want, no exclusion of all-neutral/avoid types or goals",
+    "duplicate_admission": "Reject exact games equivalent under player/action/goal renaming; no metric-based filtering",
+    "information": "Public fixed preferences + own full preferences + accumulated own direct investigation answers + full public action history",
+    "investigation_targets": "Other-player nonpublic cells not directly investigated before; no utility/posterior/true-world filtering",
+    "offer_cost": "One per-player quota charged on proposal, never refunded; no extra utility penalty",
+    "response_ties": "Own expected terminal utility first, then other-player sum only for ACCEPT/REJECT",
+    "horizon": "Current node through native terminal; no approximate nonterminal leaf",
+    "membership": "All 100 fixed before solver/Q/S/D/model calls; failures stay attached, never replaced",
+    "splits": "NOT_ASSIGNED; no selection/evaluation yet"
+  },
+  "generation_sampling": {
+    "configuration_shuffle_seed": 2026102109,
+    "seed_formula": "202610240000+index*1000+duplicate_retry",
+    "components": "5 independent SeedSequence streams",
+    "structural_rejection": "Only geometry; independent of preference RNG",
+    "model_calls": 0
+  },
+  "data": {
+    "version": "strategic-parents-100-two-round-unknown-query-v1",
+    "path": "new/strategic_game_v1_20261021/parents_100_v1/parents.jsonl",
+    "sha256": "30fb0f7d012f33f5d175650258698e9ba46cd88cafc64da39f848a69c4bfd3ad",
+    "families": 85,
+    "split": "NOT_ASSIGNED",
+    "training_ready": false
+  },
+  "solver_config": {
+    "version": "strategic-parents-remote-terminal-solver-v1",
+    "profiles": {
+      "base": {
+        "solve_seconds": 300,
+        "audit_seconds": 180,
+        "max_sweeps": 256,
+        "max_candidates": 8,
+        "max_joint_cells": 65536,
+        "max_joint_evaluations": 640,
+        "large_tree_ordered_sweeps": 4,
+        "starts": [
+          "uniform"
+        ]
+      },
+      "extended": {
+        "solve_seconds": 900,
+        "audit_seconds": 300,
+        "max_sweeps": 512,
+        "max_candidates": 12,
+        "max_joint_cells": 131072,
+        "max_joint_evaluations": 2048,
+        "large_tree_ordered_sweeps": 8,
+        "starts": [
+          "uniform",
+          "dirichlet:0",
+          "dirichlet:1",
+          "dirichlet:2"
+        ]
+      }
+    },
+    "workers": "0=auto, min(4, allocated CPUs); CLI override recorded",
+    "construct_seconds": 120,
+    "max_nodes": 100000,
+    "epsilon": 1e-08,
+    "tie_tolerance": 1e-09,
+    "independent_native_terminal_audit": true,
+    "policy_selection": "first certified declared start",
+    "source": "Frozen current repository files; uncommitted files included explicitly",
+    "model_GPU_prompt_Q_S_D_training": "Not used or changed",
+    "data_sha256": "30fb0f7d012f33f5d175650258698e9ba46cd88cafc64da39f848a69c4bfd3ad"
+  },
+  "solver_cli_defaults": {
+    "profile": "base",
+    "workers": 0,
+    "construct_seconds": 120,
+    "solve_seconds": "profile-resolved unless CLI override",
+    "audit_seconds": "profile-resolved unless CLI override",
+    "max_joint_cells": "profile-resolved unless CLI override",
+    "indices": "all 100",
+    "resume": false,
+    "recover_lock": false,
+    "audit_recertification_seconds": 300,
+    "audit_hash_only": false,
+    "audit_require_all": false,
+    "supervisor_extra_seconds": 60,
+    "worker_threads": 1
+  },
+  "solver_environment": {
+    "recommended_python": "3.12",
+    "supported_python": "3.10-3.12",
+    "numpy": "1.26.4",
+    "scipy": "1.12.0",
+    "GPU": "NOT_USED",
+    "remote_hardware": "NOT_RECORDED"
+  },
+  "solver_source_hashes": {
+    "PROTOCOL.json": "871748770ce983e3f86861407f3548b099b1b0633d09659865bb950ba229421d",
+    "examples/strategic_slices/REMOTE_SOLVER_20261021.md": "c0a07d0fab110aa1ef72654492de2668715f0829bc7476542b0a168d2bc636bf",
+    "examples/strategic_slices/build_remote_solver_bundle.py": "6700a12d7bde041e0e39bf60dbdf06f7830cc40b47946dc4b84261f541c3f1eb",
+    "examples/strategic_slices/solve_parents_100_cpu.sbatch": "063e27ca9e3217e66243c0b29038a01a4ca9ece7a7feec162de309af8fa4260c",
+    "new/benac_slice_pilot/metrics.py": "88ee299d9ee2d8acc202f77941ba3ea937addc9a897c92fb750797312811872d",
+    "new/game_design_feasibility_20261021/design.py": "7b49623a6ea9dceaa8489a4d9487c6e81ef14fe50ce15fd01a69a10891e05a1f",
+    "new/game_design_feasibility_20261021/test_design.py": "c49ced3691b680b991061672b640fda43f746c92afcb1bd13b1926f5daf014d0",
+    "new/strategic_game_v1_20261021/parents_100_v1/manifest.json": "d2c1b27c680036f01f426707af49cf0dc7d94900469af178afec68f62960d12f",
+    "new/strategic_game_v1_20261021/parents_100_v1/parents.jsonl": "30fb0f7d012f33f5d175650258698e9ba46cd88cafc64da39f848a69c4bfd3ad",
+    "new/strategic_game_v1_20261021/parents_100_v1/pipeline_snapshot.json": "d6f77276d9f0cd9ccc28531e4585eff2e8dee22ff86bbcbf950a14083c22965e",
+    "new/strategic_game_v1_20261021/pool.py": "9fe2ca6a78eefb933c3d76401c3edd29ae3f05cdfb9707e08f339acd66044dd6",
+    "new/strategic_game_v1_20261021/remote_solver.py": "f1cfcba0cfbf3130e863448f9d9503337f433c05324316bc25cbd6a3ef4a97ad",
+    "new/strategic_game_v1_20261021/rules.py": "53d65ea9aa7e84d11e3c4cf109ba2b179247868b8b4e55c4214a8b842e7ab441",
+    "new/strategic_game_v1_20261021/test_rules.py": "50a737d4bd62e675a42c46fee0ddf25677a2ee3d4f42c4591d73a18ca5eaeadc",
+    "requirements-oracle.txt": "e0b6511997d726600913903bc01caa6d3f81623568f910b39e16b37de229f2db",
+    "third_party/negotiation_benchmark/src/benac_p/__init__.py": "fdeb9d7ec7616ed7c03ebc3cd9da5011fc0548c8810175f9105824b5e5ce6a83",
+    "third_party/negotiation_benchmark/src/benac_p/bayes_planner.py": "73debfda81922a4950e7f06c4997525ad370cac815b8a5869337a4317800b50d",
+    "third_party/negotiation_benchmark/src/benac_p/belief.py": "a063ebed7ba05699bbe3c133d97109e0a1b93fa92ed7d082907cf7a7df62d051",
+    "third_party/negotiation_benchmark/src/benac_p/controlled.py": "6cc29e6a95a012745caa50f5335cb5b1a88d784cc902b2c300fa0de49bfca224",
+    "third_party/negotiation_benchmark/src/benac_p/diagnose_instances.py": "f955c6e0259cda0390ffbb8acc3858abe3c769443e810222614349d7123105c1",
+    "third_party/negotiation_benchmark/src/benac_p/diagnose_protocol.py": "3870b8230fd502f046b324dc414bf6c814502cef7bc5bc53a97e0bfce14e82da",
+    "third_party/negotiation_benchmark/src/benac_p/diagnose_suite.py": "de75fe589e420e7dc8c9a5631c7ec36d765f50ec062e58130dc34e79bdcc154d",
+    "third_party/negotiation_benchmark/src/benac_p/endgame.py": "6d8856c6f8278eeb0eeecfafd5875916b51b3111cc98a3631b2935e38fe2eedd",
+    "third_party/negotiation_benchmark/src/benac_p/endgame_diagnose.py": "bd4cf96cc0edc97ef08d4e17786163797baa0e62cde5627f9124f8ef34a1a59a",
+    "third_party/negotiation_benchmark/src/benac_p/endgame_partner.py": "470f661a9984f7d44cd9fd5d47f0fc9c166e47037f0e8b1265c96a4071e0815d",
+    "third_party/negotiation_benchmark/src/benac_p/generator.py": "4fa219d42784f1ddc8ce70d545ddea8ced30959473a391b360f4c98b66a8e2b9",
+    "third_party/negotiation_benchmark/src/benac_p/menu_diagnose.py": "4dc02f071bc2f2c28b143e4a37152837497f13364c319b6d1e5dab96e66ac5ba",
+    "third_party/negotiation_benchmark/src/benac_p/observations.py": "97f3bc9c1cf659849f8d39a7814befc46289775ac26bcbc936add86a82f0a694",
+    "third_party/negotiation_benchmark/src/benac_p/oracle.py": "4d978f0b2671eef5ced7e52a8148a00e03497daf7cdb02484d58718e188a6784",
+    "third_party/negotiation_benchmark/src/benac_p/policies.py": "6c93a6a3edea80b1beef1d43edde3391a4a2de110e2f48b61c5997c9a87e77b7",
+    "third_party/negotiation_benchmark/src/benac_p/runner.py": "4e51444919a303779740420d7f941013617871cb85b29f92fbdef456a20a0de2",
+    "third_party/negotiation_benchmark/src/benac_p/sampling.py": "b1ef0ce51798064529df1fa4e9bada30632372c166f349af04293272b1723f3a",
+    "third_party/negotiation_benchmark/src/benac_p/schema.py": "13c4d5ab63189c95c239a410bfebb3addec28af498cc15e43d09ba3f1860f19b",
+    "third_party/negotiation_benchmark/src/benac_p/solver.py": "5279cce538255ec774fc6186442040d9af0ca841f07e82958029149dc0ac7926",
+    "third_party/negotiation_benchmark/src/benac_p/state.py": "3fe865731e4a6e5b6209e1cee4d2b33e2cfd44d44ac3d663b9ab1bea958b5281",
+    "third_party/negotiation_benchmark/src/benac_p/vllm_policy.py": "306c1e7ad5436f8e01cec785954b7a1bb2ad4050737b3939b101912539be7f2a",
+    "training/__init__.py": "cfd18fbea7f30cf44bbd8d52a9de4fb67081e1625947c8bc2bb20e2747162bf0",
+    "training/b_sft/__init__.py": "c6b0bdd3e81b434fa9699da1cd3bbf8de0d30153aac091c571f73972d2de9a91",
+    "training/b_sft/catalogues.py": "012cef1645799f61ccd66dba8068f2b107caed7569c46ad1d305ccb6cfaca3d0",
+    "training/b_sft/decision_policy.py": "8671683f9cde5f5fc30c3fe7d37a070ad97b4da4e00876f6bea9301f1a976b62",
+    "training/b_sft/preference_contract.py": "0eef1a38f40c097ffb2d6e21c1f3b4556997c7b8f31a83f9c009ef26f729063f",
+    "training/b_sft/shared_teacher.py": "8286897b76fd271b69c0ec72a48795453fb69ca0be8e782e789de35109cff86c",
+    "training/b_sft/social_b_oracle.py": "7b78baa525885c38f99abda4a56533a7e377ba6efbf1b7b0dfefdd45827b21f3",
+    "training/b_sft/social_b_random_window.py": "2680faddc1d620e8ecf53f363dc28978a0e850fce9109a4b5b1cd9259903c62f",
+    "training/b_sft/social_private_teacher.py": "7de7b48a6266be266891d58866114a02a045efa89490073f95f47a5014c2e6e9",
+    "training/b_sft/social_terminal_teacher.py": "578baa372b82d0057b8a3868f81c0d052486803e896f511af3b3d900a078a56b",
+    "training/strategic_slices/__init__.py": "357bebb8d629720858ef1b7ddf25b7f144c1fde94b0b6d681b6d02f727589d59",
+    "training/strategic_slices/batched_response.py": "08cb099b279ce6ef88409f6c9741c83b9c5be63d828d6d90a3aaae7db37e26b7",
+    "training/strategic_slices/behavior_information.py": "a0865cecd72f1984b50d0a8049b489d287c39b24c1a009c1993d22791a26ee0f",
+    "training/strategic_slices/bounded.py": "b23abdbfa6a8a81661e637d0536a2ec5d8c787eeacfde8e4463685c170244d66",
+    "training/strategic_slices/build.py": "afc7c7eea635d8cf0d2ff3e79da39c99d05636e64c4f5c99903b87129281fd5a",
+    "training/strategic_slices/common.py": "5227642167d8eabdc55d6d3360a797f36bc48584c640e92677c910451efef786",
+    "training/strategic_slices/equilibrium.py": "cffcc5c8e90d9e48e3d0fd125214cacdb4b14805c346a7731ee40c007f5c65f1",
+    "training/strategic_slices/oracle_consistent.py": "d3fcba78982df13138bcf149740946f3a71a5ae4ca6c885a971d09779a867072",
+    "training/strategic_slices/values.py": "ad010c20b9c8286d7e5b7be274879a312c22ef684efd7076a7246c37559a9568"
+  },
+  "solver_archive": {
+    "path": "new/remote_solver_bundle_20261021/game_oracle_remote_v1.tar.gz",
+    "sha256": "44f93be412e1c369db8390168c3892e10b4450c98820de6a6504b9a412a08bc0",
+    "bytes": 178204
+  },
+  "Q_S_D": {
+    "horizon": "current player decision through native terminal",
+    "Q": {
+      "meaning": "expected terminal own utility of action and continuation conditional on current player information",
+      "node_summary_statistic": "UNDECIDED",
+      "counterfactual_continuation_contract": "PENDING_FORMALIZATION"
+    },
+    "S": {
+      "meaning": "terminal loss under actual full information from strategy chosen after one information item is omitted",
+      "conceptual_formula": "S_e(I) = V_I(pi*_I) - V_I(pi*_{-e})",
+      "omittable": [
+        "own direct investigation answers",
+        "information supplied by public history"
+      ],
+      "preserved": [
+        "public preferences",
+        "game rules",
+        "goal requirements",
+        "own preferences",
+        "binding state",
+        "pending offer and actual legal decision conditions"
+      ],
+      "omission_units_information_sets_ties": "PENDING_FORMALIZATION",
+      "new_implementation": "NOT_IMPLEMENTED"
+    },
+    "D": {
+      "meaning": "actual target-model difficulty under final prompt/interface",
+      "formula": "UNDECIDED",
+      "model": "UNDECIDED",
+      "prompt": "PENDING_REVIEW_NOT_ACTIVATED",
+      "sampling_repeats_failure_policy": "UNDECIDED",
+      "new_measurement": "NOT_RUN"
+    },
+    "joint_selection_thresholds_splits_SP_budget": "UNDECIDED",
+    "legacy_Q_S_D": "Retain original version and prompt identity; not measurements under this design."
+  },
+  "existing_evidence": {
+    "rules_cpu_checks_passed": 6,
+    "preselected_probe": {
+      "attempted": 12,
+      "certified": 7,
+      "unavailable": 5,
+      "unattempted": 88,
+      "version": "strategic-parents-100-certification-probe-v1"
+    },
+    "remote_bundle_local_validation": {
+      "six_semantic_cpu_tests": true,
+      "integration_checks": {
+        "six_semantic_tests": true,
+        "completed_reference_reused_without_rewrite": true,
+        "saved_npz_reloaded_full_terminal_recertification": true,
+        "import_preserves_reference_and_original_constructor_identity": true,
+        "failure_is_missing_and_four_retry_starts_exhaust_in_order": true,
+        "sigterm_preserves_partial_execution_and_resume_creates_new_execution": true,
+        "first_certified_retry_stops_further_starts": true,
+        "changed_resume_contract_rejected": true,
+        "one_parent_smoke_never_claimed_as_100_complete": true,
+        "reference_corruption_rejected": true,
+        "changed_parent_data_rejected": true
+      },
+      "real_solver_scope": "Frozen index 0 for solve/save/reload/resume/retry integration; not a full-100 experiment",
+      "environment": "Local macOS/ARM Python3.12.2 NumPy1.26.4 SciPy1.12.0",
+      "remote_linux": "NOT_RUN",
+      "slurm": "NOT_RUN",
+      "GPU": "NOT_RUN",
+      "Q_S_D": "NOT_MEASURED"
+    },
+    "remote_full_pool": "NOT_RUN",
+    "new_Q_S_D": "NOT_MEASURED",
+    "new_training": "NOT_RUN"
+  },
+  "validation_for_this_record": {
+    "kind": "document links, component/source/data hashes and version registration; no new solver/model/training run",
+    "all_referenced_component_hashes_captured": true
+  },
+  "production_active": "terminal-node-regret-grpo-readable-v8",
+  "production_changed": false,
+  "known_gap": "Existing v8 reference response social ties are not fully reflected in focal own-only training/scoring.",
+  "new_run": "NONE_DOCUMENTATION_ONLY",
+  "future_record_policy": "New design versions preserve old snapshots; actual executions save full pipeline_snapshot.json with CLI overrides, resolved config, identities and contracts."
+}

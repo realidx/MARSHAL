@@ -1,0 +1,198 @@
+{
+  "job": {
+    "arm": "parent25-query-G1",
+    "claim": "Certified native terminal subgame only; does not certify original opening equilibrium",
+    "id": "914935645e7ae5e2e1b6db9e",
+    "index": 0,
+    "kind": "original_parent25_terminal_endgame_diagnostic",
+    "original_index": 25,
+    "original_parent_id": "ce9d23843d01aeeb5b972435",
+    "raw": {
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "ego": 0,
+      "game": {
+        "goals": [
+          {
+            "binary": true,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget": 1,
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "offer_budget": 1,
+        "round_robin": [
+          0,
+          1,
+          0,
+          1
+        ]
+      },
+      "history": [],
+      "own_preferences": [
+        0,
+        1,
+        1
+      ],
+      "type_catalogues": {
+        "0": [
+          [
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            -1
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            -1
+          ],
+          [
+            0,
+            -1,
+            1
+          ],
+          [
+            0,
+            -1,
+            0
+          ],
+          [
+            0,
+            -1,
+            -1
+          ]
+        ],
+        "1": [
+          [
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            -1
+          ]
+        ]
+      }
+    },
+    "setup": [
+      {
+        "action": "INVESTIGATE",
+        "goal": 2,
+        "player": 1
+      },
+      {
+        "action": "INVESTIGATE",
+        "goal": 1,
+        "player": 0
+      },
+      {
+        "action": "PASS"
+      }
+    ]
+  },
+  "config": {
+    "max_nodes": 10000,
+    "construct_seconds": 20.0,
+    "solve_seconds": 15.0,
+    "audit_seconds": 30.0,
+    "metric_seconds": 30.0,
+    "case_seconds": 90.0,
+    "memory_gb": 0.0,
+    "epsilon": 1e-08,
+    "tie_tolerance": 1e-09,
+    "max_sweeps": 512,
+    "joint_evaluations": 400,
+    "repair_passes": 8,
+    "labels": true,
+    "backend": "inertia",
+    "repair_internal_audit_seconds": 60,
+    "joint_front_internal_max_sweeps": 256,
+    "operation": "solve"
+  }
+}

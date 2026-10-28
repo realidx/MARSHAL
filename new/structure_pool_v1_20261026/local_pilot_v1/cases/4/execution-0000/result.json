@@ -1,0 +1,26 @@
+{
+  "index": 4,
+  "id": "117108d8ba19bafe318f8f08",
+  "original_index": null,
+  "arm": "uniform_mask",
+  "kind": "new_structural_pilot_parent",
+  "status": "error",
+  "labels": "NOT_MEASURED",
+  "setup": [],
+  "phase": "search",
+  "memory_limit_applied": false,
+  "nodes": 480795,
+  "worlds": 9,
+  "cutoff_leaves": 0,
+  "error": "SearchLimit: Shared teacher wall budget exceeded",
+  "traceback": "Traceback (most recent call last):\n  File \"/Users/bruce/MARSHAL/new/three_player_complexity_v1_20261023/worker.py\", line 82, in main\n    found,refinement=joint(engine,seconds=cfg['solve_seconds']*.25,max_evaluations=cfg['joint_evaluations'])\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bruce/MARSHAL/new/sparse_solver_v1_20261023/joint.py\", line 62, in solve\n    numerical_residual=float(np.max(np.abs(residual.residual(result.x)))),\n                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/bruce/MARSHAL/training/strategic_slices/equilibrium.py\", line 339, in residual\n    self.tree._check()\n  File \"/Users/bruce/MARSHAL/training/b_sft/shared_teacher.py\", line 81, in _check\n    if time.monotonic()>self.deadline:raise SearchLimit('Shared teacher wall budget exceeded')\n                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nbenac_p.endgame.SearchLimit: Shared teacher wall budget exceeded\n",
+  "elapsed_seconds": 89.2635272089392,
+  "worker_python": "3.12.2 | packaged by conda-forge | (main, Feb 16 2024, 20:54:21) [Clang 16.0.6 ]",
+  "environment_threads": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1"
+  }
+}

@@ -1,5 +1,50 @@
 # Pipeline版本记录
 
+**2026-10-26结构覆盖候选版本：**[方法、数据与实际执行](../STRUCTURE_POOL_PILOT_20261026.md)。
+独立24候选、12配对：目标依赖/计分覆盖，随机隐藏位置与同目标贡献者隐藏位置配对；不强制全want，不按Q/S重抽。
+偏好独立均匀与原生规则/终局Q/S不变；试验计分覆盖比例单独留痕，不是正式100分布。预定六例CPU实跑，5题终局认证/QS且5/5独立重载，3题共6个私人正S；1题重试仍缺失、18题未跑。
+尚未证明改善稀疏S，D/训练未测，生产仍v8。
+
+**2026-10-26行动—目标结构审计：**[结论与案例](../ACTION_GOAL_STRUCTURE_AUDIT_20261026.md)、
+[最终关闭证据](A2H2_structure_answer_channel_v4_20261026/EVIDENCE.json)。
+v1结构/原生节点重建，v2仅扩展到报价额度证明无后续承诺变化的尾部，v3回查调查入口，v4分解答案渠道。
+原方法和每次输出关闭保留；全部复用已有reference，不改主Q/S、生成器、prompt或训练。D未测。
+
+**2026-10-24/25 A2H2配对检查：**[整批结果](../A2H2_PAIRED_RESULTS_20261024.md)。
+主求解沿用研究v1；新增[配对报告v1](A2H2_paired_audit_v1_20261024/SNAPSHOT.json)、
+[完整/遗漏森林LP v2](A2H2_witness_LP_v2_20261025/SNAPSHOT.json)、
+[显式导入环境v3](A2H2_audit_runtime_v3_20261025/SNAPSHOT.json)，旧方法快照不覆盖。
+30/33认证/QS，29个可测配对；32次LP核对一致。首次直接导入失败保留记录，不能写成测量成功。
+每次实际执行单独pipeline_snapshot；30/30独立重载通过，已关闭为[v3执行证据](A2H2_audit_runtime_v3_20261025/EVIDENCE.json)。生产active仍v8，D/训练未执行。
+
+**2026-10-24稀疏S原因诊断：**[全批证据](H2_sparse_S_social_audit_v3_20261024/EVIDENCE.json)、
+[结果报告](../H2_SPARSE_S_CAUSES_20261024.md)。先关闭6例方法v1，再以v2统一补全其余25例，
+v3单列既定response社会平局的信息需求；不把联合遗漏或他人效用静默并入主S/训练。
+
+**2026-10-24 H2本地执行与诊断：**[全部结果与实际预算](../LOCAL_THREE_PLAYER_FOLLOWUP_20261024.md)。
+沿用关闭研究v1源码，33次尝试31局认证/QS，46/76较大预算重试仍缺失；31/31独立重载通过。
+新诊断与每次CLI有各自snapshot，不覆盖研究快照或激活训练。
+10个最大见证LP通过，独立关闭为[本地审计v1](three_player_local_audit_v1_20261024/SNAPSHOT.json)。
+
+**2026-10-23三人复杂度研究v1：**[设计与完整快照](three_player_complexity_v1_20261023/SNAPSHOT.json)、
+[小样有效性/25价值见证](../THREE_PLAYER_COMPLEXITY_20261023.md)、[远端指示](../REMOTE_THREE_PLAYER_20261023.md)。
+H2优先，原100保留，25不直接删除；远端33局效果仍待运行，不激活训练。
+
+**2026-10-23节点Q/S审计v1：**[可执行约定](node_qs_audit_v1_20261023/DESIGN.md)、
+[完整快照](node_qs_audit_v1_20261023/SNAPSHOT.json)、[整批结果与真实案例](../SOLVER_QS_AUDIT_20261023.md)。
+终局99/窗口100完成测量，66个最大S见证通过独立LP；三人信息信号稀少。25仍缺失，D/训练未运行，active仍v8。
+
+**2026-10-23 solver研究v6：**[逐项变化](terminal_solver_repair_v6_20261023/CHANGELOG.md)、[完整结果](../SOLVER_REPAIR_20261023.md)：统一窗口100/100认证/重载复核；完整终局99/100、25缺失。版本独立登记，旧v1/v2设计和远端快照保留；未激活训练或测新Q/S/D。
+
+**2026-10-22有限窗口检查：**[设计v2与结果](game_design_v2_window_20261022/RESULTS.md)：原100开局树缩小约4/8.7倍；
+预定26题18通过窗口认证、8缺失。4个父游戏验证私有答案访问收益；非终局标签补全，未测完整S/D或训练。
+
+**2026-10-22远端实际结果：**[本地核查](../../../new/remote_solver_results_20261022/LOCAL_REVIEW_20261022.md)确认多版本合计85/100认证、15缺失；
+新Q/S/D与训练未运行。下方“远端尚未运行”等内容是此前交付时的历史状态。
+
+**当前设计统一快照：**[游戏 / solver / Q/S/D v1](game_design_v1_20261021/DESIGN.md)，
+[完整参数与组件hash](game_design_v1_20261021/SNAPSHOT.json)。设计版本与生产active分开记录，旧快照不覆盖。
+
 **远端求解交付：**[CPU指南](../REMOTE_SOLVER_20261021.md)和
 [本地验收](../REMOTE_SOLVER_VALIDATION_20261021.md)对应独立研究版本
 `strategic-parents-remote-terminal-solver-v1`；固定原始100池，未激活训练版本或执行远端任务。
