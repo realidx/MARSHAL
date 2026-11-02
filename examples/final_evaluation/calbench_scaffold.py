@@ -11,7 +11,7 @@ import time
 from examples.final_evaluation.interaction_scaffold import VERSION, ms_request, action_request
 
 ROOT = Path(__file__).resolve().parents[2]
-REGISTRATION = ROOT / 'examples/strategic_slices/versions/general_ms_calbench_v2_20261102/SNAPSHOT.json'
+REGISTRATION = ROOT / 'examples/strategic_slices/versions/general_ms_calbench_v6_20261102/SNAPSHOT.json'
 
 
 class ScaffoldFailure(BaseException):
@@ -25,16 +25,18 @@ def sha(value):
 def protocol(config):
     total = config.get('max_tokens')
     if 'ms_max_tokens' in config:
-        raise ValueError('Fixed ms_max_tokens belongs to v1; remove it to use the v2 shared budget')
+        raise ValueError('Fixed ms_max_tokens is historical; belief-ms uses one shared total budget')
     if type(total) is not int or total <= 0:
         raise ValueError('Require a positive integer max_tokens shared budget')
-    return dict(version=VERSION, mode='base-ms', ms_request_cap=total,
+    return dict(version=VERSION, mode='belief-ms', ms_request_cap=total,
         action_request_cap='max_tokens - actual MS usage.completion_tokens',
         total_output_cap_per_native_call=total, fixed_stage_allocation=False,
         usage_contract='required nonnegative integer completion_tokens from provider; includes reasoning tokens when provider counts them in completion_tokens; do not add reasoning tokens twice',
         budget_failure='abort without executing an action if usage is missing/invalid, cap exceeded, or no action budget remains',
         calls_per_native_request=2, budget_scope='output-token cap, not matched FLOPs or input tokens',
         ms_memory='no independent MS history; native final assistant responses remain in native history',
+        request_layout='native messages byte-for-byte unchanged; append separate user MS prompt; continue exact prefix with actual assistant MS response then user action prompt',
+        persistence='temporary stage messages never mutate native history; return only final action response to original client for its original persistence policy',
         analysis_failure='abort game/run on empty, truncated, unfinished or non-stop MS; no fallback',
         action_failure='retain native parsing/retry policy; do not erase failed attempts',
         seed_policy='action uses original native seed sequence; MS uses SHA256(native seed:ms)',
@@ -50,7 +52,7 @@ def verify_registration():
     return registered
 
 
-class MSTransport:
+class BeliefTransport:
     """Wrap the native transport twice. Only the final action returns to LLMClient."""
     def __init__(self, route, config, output, seed, agent_id, transport_class=None):
         if transport_class is None:
@@ -78,7 +80,8 @@ class MSTransport:
         receipt['budget'] = dict(total_cap=total, ms_request_cap=total)
         started = time.monotonic()
         try:
-            analysis = self.ms.streaming_with_retry(ms_request(messages))
+            conversation = ms_request(messages)
+            analysis = self.ms.streaming_with_retry(conversation)
             text = analysis.get('text')
             if (analysis.get('finish_reason') != 'stop' or not isinstance(text, str) or not text.strip()):
                 receipt['status'] = 'analysis_failure'
@@ -94,7 +97,7 @@ class MSTransport:
             if remaining == 0:
                 receipt['status'] = 'budget_exhausted'
                 raise ScaffoldFailure(f'Agent {self.agent_id}: MS exhausted the shared generation budget')
-            result = self.action.streaming_with_retry(action_request(messages, text), max_tokens=remaining)
+            result = self.action.streaming_with_retry(action_request(conversation, text), max_tokens=remaining)
             action_used = result.get('completion_tokens')
             receipt['budget']['action_completion_tokens'] = action_used
             if type(action_used) is not int or not 0 <= action_used <= remaining:

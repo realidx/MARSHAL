@@ -1,5 +1,26 @@
 # 9月与当前 pipeline 配置快照及逐项对照
 
+**2026-11-02用户逐字指定MS提示：**[v6 user-prompt](versions/general_ms_calbench_v6_20261102/SNAPSHOT.json)只替换MS文本，
+使用用户给定三段第一人称own states/对他人mental states的belief提示，不加标题或末尾限制句。
+独立两次调用、真实assistant MS接续、action提示、共享4096、原生历史/游戏/评分均不变；完整实际请求重新导出。
+52项CPU离线检查通过；未跑真实模型、训练或测D，active仍v8，历史版本保留。
+
+**2026-11-02用户明确独立belief阶段：**[v5 two-call](versions/general_ms_calbench_v5_20261102/SNAPSHOT.json)不采用v4单次方案。
+原生system/历史/本次user完整保留，在其后新增user MS提示，第一次真实模型回复作为assistant，再接user action提示及第二次模型回复。
+临时阶段消息只在本次行动内接续，跨行动保存仍由原生客户端负责。恢复两次调用共享4096、分阶段日志/用量与失败合同，显式`--scaffold belief-ms`。
+52项CPU离线检查通过，完整请求和当前审阅副本更新；未调用真实模型验证重复/效果，未训练/测D，active仍v8。历史版本均保留。
+
+**2026-11-02用户改单次行动内MS要求：**[v4 single-call](versions/general_ms_calbench_v4_20261102/SNAPSHOT.json)恢复原生一次行动调用，
+只在当前最后user增加四句brief MS→规划→行动要求，仍输出原生thinking/actions；没有独立MS阶段、额外消息或预算扣除。
+默认单次4096，原生system/跨行动历史/parser/retry/缺失usage处理保留；用`--scaffold ms-guided`明确选择，旧base-ms不静默切换身份。
+39项CPU离线检查通过（含24局固定假响应对照），完整请求导出；旧版本与审阅副本原貌另存，未调用真实模型/训练/测D，active仍v8。
+
+**2026-11-02用户修订单次行动内接续：**通用 Base+MS 新增 [v3 local-continuation](versions/general_ms_calbench_v3_20261102/SNAPSHOT.json)。
+MS指令移至当前最后user，action以前一MS请求为完整前缀，再接assistant MS与user Action Stage。
+原生system和跨行动历史保存逻辑不变；只返回最终行动，临时阶段消息不写入原生历史。共享4096合同不变。
+用户明确要求更新v1预览路径：先保留原预览bytes/hash，再将该单一路径标记为v3审阅副本；旧SNAPSHOT/EVIDENCE不改。
+51项CPU离线检查通过，完整请求导出；尚未调用真实模型验证重复问题，未训练或测D，active仍v8。
+
 **2026-11-02用户修订生成预算：**通用 Base+MS 新增 [v2 shared-budget](versions/general_ms_calbench_v2_20261102/SNAPSHOT.json)。
 默认两阶段共4096，不再固定512/3584：MS可使用总预算，行动仅使用4096减MS实际completion_tokens的剩余额度。
 缺失/非法用量、MS耗尽额度或服务超额均单列失败，不猜tokens或补额度；去掉固定分配CLI，旧v1完整快照与证据不改。

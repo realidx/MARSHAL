@@ -11,7 +11,7 @@ import sys
 from unittest.mock import patch
 
 from examples.final_evaluation.calbench_local import verify_source
-from examples.final_evaluation.calbench_scaffold import MSTransport, write_snapshot
+from examples.final_evaluation.calbench_scaffold import BeliefTransport, write_snapshot
 from examples.final_evaluation.interaction_scaffold import MS_INSTRUCTION
 
 
@@ -25,14 +25,14 @@ def export(output):
     case = next(c for c in cases if c['id'] == 'loose_uniform_s1')
     output = Path(output)
     output.mkdir(parents=True, exist_ok=False)
-    config = dict(scaffold='base-ms', max_tokens=4096, temperature=0.,
+    config = dict(scaffold='belief-ms', max_tokens=4096, temperature=0.,
                   local_only=True, endpoints={a:dict(base_url='http://127.0.0.1:1/v1', model='OFFLINE_FIXTURE_NOT_A_MODEL')
                                               for a in ('focal', 'q0')})
     route = config['endpoints']['q0']
     payloads, native_contexts = [], []
     state = {}
 
-    class Capture(MSTransport):
+    class Capture(BeliefTransport):
         def streaming_with_retry(self, messages, **kwargs):
             native_contexts.append(deepcopy(messages))
             return super().streaming_with_retry(messages, **kwargs)
@@ -46,7 +46,7 @@ def export(output):
     def provider(request, **kwargs):
         body = json.loads(request.data)
         payloads.append(body)
-        is_ms = MS_INSTRUCTION in body['messages'][0]['content']
+        is_ms = body['messages'][-1]['content'].endswith(MS_INSTRUCTION)
         content = state['ms'] if is_ms else json.dumps(state['action'])
         return Response(dict(choices=[dict(message=dict(content=content), finish_reason='stop')],
                              usage=dict(prompt_tokens=0, completion_tokens=3, total_tokens=3)))
@@ -67,6 +67,7 @@ def export(output):
         examples.append(dict(label=label, provenance=note, native_messages=native_contexts[-1],
                              actual_ms_request=payloads[start], actual_action_request=payloads[start+1],
                              synthetic_ms=analysis, synthetic_action=action,
+                             native_history_after=deepcopy(client._history),
                              native_parsed_actions=result.tool_calls,
                              tools_registration='No HTTP tools field; native named actions embedded in original prompt'))
 
@@ -108,10 +109,25 @@ def export(output):
     # Preserve the actual initial calendar rather than the authored continuation.
     artifact['actual_initial_calendar'] = case['scenario']['calendars'][0]
     (output/'requests.json').write_text(json.dumps(artifact,ensure_ascii=False,indent=2)+'\n')
-    blocks = ['# Full request export', '', 'Offline fixture responses; no model calls. No request fields omitted.', '']
+    blocks = ['# Full request export: v6 user-authored belief/MS → action', '',
+              'Offline fixture responses; no model calls. Each request below is rendered in full, in actual message order.', '',
+              'The native user request ends unchanged, followed by a separate user MS prompt. Action has the exact same prefix,',
+              'followed by assistant MS and user action-stage instruction. Native system and prior history are untouched.',
+              'The assistant MS message is the real first provider response (a synthetic fixture in this export). Only the final action returns to the original client; native cross-action history is unchanged.', '',
+              'Raw complete wire requests and persisted histories: [requests.json](requests.json).', '',
+              'Shared output cap: 4096. Fixture MS usage is 3, so fixture action cap is 4093; these are synthetic usage values.', '',
+              'The original native system still contains action-format instructions; this export does not establish that',
+              'a real model will obey the temporary MS user instruction or that the observed repetition is fixed.', '']
     for example in examples:
-        blocks.extend([f"## {example['label']}", '', example['provenance'], '',
-                       '```json', json.dumps(example,ensure_ascii=False,indent=2), '```', ''])
+        blocks.extend([f"## {example['label']}", '', example['provenance'], ''])
+        for key, title in [('actual_ms_request','MS request'),('actual_action_request','Action request')]:
+            request=example[key]
+            blocks.extend([f'### {title}', '', 'Request fields other than messages:', '', '```json',
+                           json.dumps({k:v for k,v in request.items() if k!='messages'},ensure_ascii=False,indent=2), '```', ''])
+            for i,message in enumerate(request['messages']):
+                blocks.extend([f"#### message {i}: {message['role']}", '', '```text', message['content'], '```', ''])
+        blocks.extend(['### Native history after final action (no stage-local messages)', '', '```json',
+                       json.dumps(example['native_history_after'],ensure_ascii=False,indent=2), '```', ''])
     (output/'PROMPT_PREVIEW.md').write_text('\n'.join(blocks))
     snapshot = write_snapshot(output, config, cli=dict(argv=sys.argv, mode='offline HTTP fixture; no network/model'),
                               game_config=manifest['config'])

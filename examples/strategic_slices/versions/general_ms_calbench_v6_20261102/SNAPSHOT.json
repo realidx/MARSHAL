@@ -1,0 +1,71 @@
+{
+  "version": "general-belief-ms-v6-user-prompt",
+  "date": "2026-11-02",
+  "status": "IMPLEMENTED_OFFLINE_VALIDATED_NOT_MODEL_EVALUATED",
+  "parent": "general-belief-ms-v5-two-call",
+  "parent_snapshot_sha256": "956c1a888a43c20bd8bfec2fb4ead28275664cb9d63e57bc2bf19a7ab6ba2fdf",
+  "authorization": "User supplied exact three-paragraph MS text and instructed replacing the MS prompt with it. No additional heading or final restriction sentence added.",
+  "source_sha256": {
+    "examples/final_evaluation/interaction_scaffold.py": "4ef3d3fd9210540879d53a066712b08880d144c2ebade406b1243471c15c6ab8",
+    "examples/final_evaluation/calbench_scaffold.py": "355ee59e4079ad2b710fd011c46864be00dd747ebc50656059a8c5d313ccdc8a",
+    "examples/final_evaluation/calbench_local.py": "a1d24595039f29515040e571eb49bb0aa71419a9aa77ca9a8bee414612d4de52",
+    "examples/final_evaluation/export_calbench_ms.py": "9907d25caf969382817dbbf22c7e8f96dab643ac7e58e3b23f3a7c1396b263e1",
+    "examples/final_evaluation/launch_calbench_local.py": "6fb4964030b79ece1bb047d00081238bfb9cffa84c39b5cc2ce9e09e924a17e5",
+    "tests/agentic/test_calbench_ms.py": "543d9b73700491e6573dcd909bdec1e515fc9c7c80776d765338822c3219e740",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "5c5def9751f608ef1f609b32ba8905dbba5c1214dcb2c1d5ebfbec2502561eab",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659"
+  },
+  "differences": [
+    {
+      "field": "MS prompt",
+      "before": "v5 short participants-state assessment with no-action restriction",
+      "after": "Exact user-supplied first-person own mental states and beliefs about others; brief paragraph; emotions only when relevant",
+      "motivation": "Explicit user text replacement"
+    }
+  ],
+  "MS_INSTRUCTION": "Before your next action, briefly articulate your own mental states and\nyour beliefs about the mental states of other participants.\n\nWrite from your own perspective: what you believe, want, know, or intend,\nand what you think others believe, want, know, or intend. Include emotions\nonly when relevant to the interaction.\n\nGround these judgments in the available context and history, without\ninventing hidden facts. Write one brief paragraph that can guide your\nnext decision.\n\n",
+  "MS_INSTRUCTION_sha256": "051d312e141d3b5f798b42f8e57953476e8d76b658dd4f5726399c81b1d77cdf",
+  "parameters": {
+    "scaffold": "belief-ms",
+    "primary_total_output_cap": 4096,
+    "MS_request_cap": "total",
+    "action_request_cap": "total - provider MS completion_tokens",
+    "calls_per_native_request": 2,
+    "fixed_allocation": false,
+    "stage_order": "native request -> user MS -> assistant actual MS -> user action -> assistant action",
+    "cross_action_history": "original native user and final action response only; no additional temporary stage messages",
+    "temperature": 0.0,
+    "context": 32768,
+    "thinking": "native template unless explicit override",
+    "nonprimary_budget": 768,
+    "timeout_default_seconds": 120,
+    "launcher_timeout_seconds_at4096": 600,
+    "seed": "original action sequence plus separate SHA256(seed:ms) MS seed",
+    "failures": "abort on empty/non-stop MS, missing/invalid completion tokens, exhausted or exceeded total; native action parser/retry otherwise unchanged"
+  },
+  "inputs": {
+    "suite_manifest_sha256": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "source_manifest_sha256": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "unchanged": [
+    "all message roles and order",
+    "separate user MS prompt and actual assistant MS passed to action",
+    "action prompt text",
+    "shared total4096 and all sampling/seeds/error handling",
+    "original native history, system, action parser/retry",
+    "24 frozen cases/scoring/environment",
+    "no training, no new D, production active v8"
+  ],
+  "full_requests": "preview/PROMPT_PREVIEW.md",
+  "user_review_copy": "../general_ms_calbench_v1_20261102/preview/PROMPT_PREVIEW.md",
+  "evidence": "EVIDENCE.json",
+  "real_model_calls": 0,
+  "training": "NOT_RUN",
+  "D": "NOT_MEASURED",
+  "limitations": [
+    "Native system still contains action-format rules; no hidden rewrite to resolve all instruction-priority conflicts.",
+    "No real model evidence yet that this stops repetition or improves coordination.",
+    "The second stateless API request still transmits accumulated messages; no guaranteed cache reuse or avoided prefix computation."
+  ]
+}

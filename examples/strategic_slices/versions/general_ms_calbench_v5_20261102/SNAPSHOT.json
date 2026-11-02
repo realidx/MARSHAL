@@ -1,0 +1,90 @@
+{
+  "version": "general-belief-ms-v5-two-call",
+  "date": "2026-11-02",
+  "status": "IMPLEMENTED_OFFLINE_VALIDATED_NOT_MODEL_EVALUATED",
+  "parent": "general-ms-guided-action-v4-single-call",
+  "parent_snapshot_sha256": "3bfff5943aa51e75b11ed5fb30c1aefd1e5282a5422367ccaa35d9d6b890525c",
+  "authorization": "User insists on independent belief/MS stage: after original user append separate user MS prompt, generate real assistant MS, append user action prompt, generate assistant action; preserve earlier cross-action history relationship.",
+  "source_sha256": {
+    "examples/final_evaluation/interaction_scaffold.py": "7df6665c5126c4db2886398c06d26c179d120627a66ad456a342e2511459c36c",
+    "examples/final_evaluation/calbench_scaffold.py": "81231ba8e7fb35c92d445167c1452c2588e8f2aa1f2bedd070bcd6b90eb37612",
+    "examples/final_evaluation/calbench_local.py": "a1d24595039f29515040e571eb49bb0aa71419a9aa77ca9a8bee414612d4de52",
+    "examples/final_evaluation/export_calbench_ms.py": "035f63aef9107594f9131ec11bc9c166dd2c3dc266445d6e7d3ce2508d07eb45",
+    "examples/final_evaluation/launch_calbench_local.py": "6fb4964030b79ece1bb047d00081238bfb9cffa84c39b5cc2ce9e09e924a17e5",
+    "tests/agentic/test_calbench_ms.py": "543d9b73700491e6573dcd909bdec1e515fc9c7c80776d765338822c3219e740",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "5c5def9751f608ef1f609b32ba8905dbba5c1214dcb2c1d5ebfbec2502561eab",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659"
+  },
+  "differences": [
+    {
+      "field": "call structure",
+      "before": "v4 single action request with MS guidance in final user",
+      "after": "original messages + separate user MS request -> actual assistant MS -> user action request -> final assistant action",
+      "motivation": "Explicit user requirement for valuable independent belief-stage test-time comparison"
+    },
+    {
+      "field": "assistant role",
+      "before": "only final response",
+      "after": "real first model output copied as assistant message in second request; never synthesized by adapter or embedded as a user quote",
+      "motivation": "Clarify and enforce model output role"
+    },
+    {
+      "field": "prompt text",
+      "before": "v4 four-sentence combined guidance",
+      "after": "short independent belief prompt and short action prompt; original system/history/current user intact",
+      "motivation": "Separate inference and conditioned planning without rewriting native context"
+    },
+    {
+      "field": "budget, seeds, failure",
+      "before": "one original 4096 cap and seed, native action failures",
+      "after": "restore two-call shared4096 protocol with MS seed, exact provider-usage subtraction and explicit analysis/accounting aborts",
+      "motivation": "Retain previously authorized total budget and record added compute"
+    },
+    {
+      "field": "CLI and logs",
+      "before": "ms-guided single-call mode and only action logs",
+      "after": "belief-ms explicit mode, separate MS logs and paired receipts; historical modes rejected",
+      "motivation": "Avoid silently mixing method identities"
+    }
+  ],
+  "parameters": {
+    "scaffold": "belief-ms",
+    "primary_total_output_cap": 4096,
+    "MS_request_cap": "total",
+    "action_request_cap": "total - provider MS completion_tokens",
+    "calls_per_native_request": 2,
+    "fixed_allocation": false,
+    "stage_order": "native request -> user MS -> assistant actual MS -> user action -> assistant action",
+    "cross_action_history": "original native user and final action response only; no additional temporary stage messages",
+    "temperature": 0.0,
+    "context": 32768,
+    "thinking": "native template unless explicit override",
+    "nonprimary_budget": 768,
+    "timeout_default_seconds": 120,
+    "launcher_timeout_seconds_at4096": 600,
+    "seed": "original action sequence plus separate SHA256(seed:ms) MS seed",
+    "failures": "abort on empty/non-stop MS, missing/invalid completion tokens, exhausted or exceeded total; native action parser/retry otherwise unchanged"
+  },
+  "inputs": {
+    "suite_manifest_sha256": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "source_manifest_sha256": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "unchanged": [
+    "native system, original current user and native history persistence",
+    "24 cases, original game rules and action scoring",
+    "all seats same checkpoint, no teacher beliefs or extra facts",
+    "no fallback/environment reflection, no training or new D, production active v8"
+  ],
+  "full_requests": "preview/PROMPT_PREVIEW.md",
+  "user_review_copy": "../general_ms_calbench_v1_20261102/preview/PROMPT_PREVIEW.md",
+  "evidence": "EVIDENCE.json",
+  "real_model_calls": 0,
+  "training": "NOT_RUN",
+  "D": "NOT_MEASURED",
+  "limitations": [
+    "Native system still contains action-format rules; no hidden rewrite to resolve all instruction-priority conflicts.",
+    "No real model evidence yet that this stops repetition or improves coordination.",
+    "The second stateless API request still transmits accumulated messages; no guaranteed cache reuse or avoided prefix computation."
+  ]
+}

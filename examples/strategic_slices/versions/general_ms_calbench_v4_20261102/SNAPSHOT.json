@@ -1,0 +1,99 @@
+{
+  "version": "general-ms-guided-action-v4-single-call",
+  "date": "2026-11-02",
+  "status": "IMPLEMENTED_OFFLINE_VALIDATED_NOT_MODEL_EVALUATED",
+  "parent": "general-ms-conditioning-v3-local-continuation",
+  "parent_snapshot_sha256": "1063e41c791b481a034f002876c8f5ef5d809e89a7c0ed61814a62ed290a2f34",
+  "authorization": "User approved restoring the original single-call action flow and adding brief MS-guided planning within that action prompt. Previous request to maintain the v1 preview review path persists; archive the v3 review before updating it.",
+  "source_sha256": {
+    "examples/final_evaluation/interaction_scaffold.py": "edff8720258d8c826cd3e448436c5a5893a018349b740a7bea98966db3177105",
+    "examples/final_evaluation/calbench_scaffold.py": "ca159f859b4fca19976a2d77183ae0d26d3421ee5ee68764a2b42f34c93b9a31",
+    "examples/final_evaluation/calbench_local.py": "e6bde4f4d297f96fda2fe76393810de56be1bfb24798596d03d9c62b217bf28a",
+    "examples/final_evaluation/export_calbench_ms.py": "98843a4fbe62bf6419932f7229f2095573f88fc06b53f1c3eb20a3c8b9b22d17",
+    "examples/final_evaluation/launch_calbench_local.py": "9bab9a62d74dd0805919bba5011f3e38905cace2a9bc8e9300b7a80f6792a624",
+    "tests/agentic/test_calbench_ms.py": "454a3dcad07f242e243845418f808ef80f7e893d983e677380cbb1043403865a",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "5c5def9751f608ef1f609b32ba8905dbba5c1214dcb2c1d5ebfbec2502561eab",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659"
+  },
+  "differences": [
+    {
+      "field": "model calls",
+      "before": "one MS call followed by one action call",
+      "after": "one original action call with concise MS-to-plan-to-action guidance appended to current user",
+      "motivation": "User chose minimal single-call prompting after reported repetition and test-time cost"
+    },
+    {
+      "field": "prompt",
+      "before": "long standalone MS instruction and separate Action Stage instruction",
+      "after": "four-sentence environment-independent guidance; native response format retained",
+      "motivation": "Explicit brief assessment followed by planning and action without conflicting prose-stage output contract"
+    },
+    {
+      "field": "output schema and history",
+      "before": "temporary assistant MS/user action messages not persisted; final action persisted",
+      "after": "no temporary stage messages at all; one native thinking/actions reply and original persistence policy",
+      "motivation": "Keep original action-to-action relationship"
+    },
+    {
+      "field": "budget and failures",
+      "before": "shared4096 with provider-usage subtraction and mandatory usage gate",
+      "after": "single native generation cap4096; no split/subtraction/MS-stage failures; native missing-usage/truncation/parser/retry handling restored",
+      "motivation": "No separate stage to budget or audit"
+    },
+    {
+      "field": "seed and logs",
+      "before": "separate MS seed, provider log directory and pairing receipts",
+      "after": "original native call seed, one provider log stream, single-call summary",
+      "motivation": "Match native one-call execution"
+    },
+    {
+      "field": "CLI",
+      "before": "--scaffold base-ms",
+      "after": "--scaffold ms-guided; reject old mode rather than silently changing meaning",
+      "motivation": "Keep old and new experimental identities distinguishable"
+    }
+  ],
+  "parameters": {
+    "scaffold": "ms-guided",
+    "primary_output_cap": 4096,
+    "calls_per_native_request": 1,
+    "response_format": "original thinking/actions JSON",
+    "history": "original native user and assistant action response only",
+    "MS": "brief guidance within same action request, no separate output/fields/stage/memory",
+    "temperature": 0.0,
+    "context": 32768,
+    "thinking": "native model template unless explicit override",
+    "nonprimary_budget": 768,
+    "timeout_default_seconds": 120,
+    "launcher_timeout_seconds_at4096": 600,
+    "seeds": "original native sequence",
+    "parser_retry": "original native parser and one retry",
+    "usage": "original provider usage, unavailable fields remain null",
+    "resume": "no implicit overwrite or resume"
+  },
+  "unchanged": [
+    "native system and original history policy",
+    "24 frozen cases and native source identity",
+    "native goals, privacy instructions, action schema and scoring",
+    "all seats same checkpoint",
+    "no fallback or environment reflection",
+    "production active v8; no training or D"
+  ],
+  "inputs": {
+    "suite_manifest_sha256": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "source_manifest_sha256": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "full_requests": "preview/PROMPT_PREVIEW.md",
+  "user_review_copy": "../general_ms_calbench_v1_20261102/preview/PROMPT_PREVIEW.md",
+  "evidence": "EVIDENCE.json",
+  "validation": "See EVIDENCE.json; CPU mocked-provider tests only",
+  "real_model_calls": 0,
+  "training": "NOT_RUN",
+  "D": "NOT_MEASURED",
+  "limitations": [
+    "Not a reproduction of two-stage Base+MS.",
+    "Brief guidance is not evidence of shorter real model outputs or improved coordination.",
+    "No inference/planning ability claim from thinking text alone."
+  ]
+}

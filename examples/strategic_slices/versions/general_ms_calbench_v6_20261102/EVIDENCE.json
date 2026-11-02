@@ -1,0 +1,78 @@
+{
+  "version": "general-belief-ms-v6-user-prompt",
+  "date": "2026-11-02",
+  "status": "IMPLEMENTED_OFFLINE_VALIDATED_NOT_MODEL_EVALUATED",
+  "validation": {
+    "passed": 52,
+    "exit_code": 0,
+    "command": "PYTHONPATH=/private/tmp/calbench-ms-deps:$PWD python -m pytest -q tests/agentic/test_calbench_ms.py tests/agentic/test_final_calbench.py --tb=short --color=no",
+    "exact_user_MS_text_verified": true,
+    "action_instruction_unchanged": true,
+    "parent_artifacts_unchanged": true,
+    "scope": "request layout, exact prompt text, native history/visibility, shared budget, all24 fixed-response engine parity",
+    "warnings": "6037 inherited native utcnow/test-harness warnings; CPU only"
+  },
+  "review_override": {
+    "date": "2026-11-02",
+    "authorization": "Exact user MS text replacement; maintain previously requested current review path.",
+    "previous_review_version": "general-belief-ms-v5-two-call",
+    "previous_review_sha256": "38be7ac8a00c6cd62845d1346e5c34a22e2620bf17f4c486cafef748dd11ba98",
+    "previous_archive": "preview/PROMPT_PREVIEW.v5_review_frozen.md",
+    "current_review_version": "general-belief-ms-v6-user-prompt",
+    "current_review_sha256": "e1b4e2a771d595116bc03f9dbb7ab5516921f6f4efcc6b74ac33723a82f46bcd",
+    "canonical_preview": "../general_ms_calbench_v6_20261102/preview/PROMPT_PREVIEW.md",
+    "historical_v1_archive": "preview/PROMPT_PREVIEW.v1_frozen.md",
+    "predecessor_override": "PREVIEW_REVIEW_OVERRIDE_v5_20261102.json"
+  },
+  "source_sha256": {
+    "examples/final_evaluation/interaction_scaffold.py": "4ef3d3fd9210540879d53a066712b08880d144c2ebade406b1243471c15c6ab8",
+    "examples/final_evaluation/calbench_scaffold.py": "355ee59e4079ad2b710fd011c46864be00dd747ebc50656059a8c5d313ccdc8a",
+    "examples/final_evaluation/calbench_local.py": "a1d24595039f29515040e571eb49bb0aa71419a9aa77ca9a8bee414612d4de52",
+    "examples/final_evaluation/export_calbench_ms.py": "9907d25caf969382817dbbf22c7e8f96dab643ac7e58e3b23f3a7c1396b263e1",
+    "examples/final_evaluation/launch_calbench_local.py": "6fb4964030b79ece1bb047d00081238bfb9cffa84c39b5cc2ce9e09e924a17e5",
+    "tests/agentic/test_calbench_ms.py": "543d9b73700491e6573dcd909bdec1e515fc9c7c80776d765338822c3219e740",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "5c5def9751f608ef1f609b32ba8905dbba5c1214dcb2c1d5ebfbec2502561eab",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659"
+  },
+  "inputs": {
+    "suite_manifest_sha256": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "source_manifest_sha256": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "runtime_changes": "None; existing isolated temporary dependencies reused",
+  "real_model_calls": 0,
+  "training": false,
+  "D": "NOT_MEASURED",
+  "production_active": {
+    "version": "terminal-node-regret-grpo-readable-v8",
+    "prompt_version": "terminal-readable-named-v2",
+    "path": "examples/strategic_slices/versions/terminal_v8_readable_20261018/SNAPSHOT.json",
+    "sha256": "3131f1a60d745602e938ccbb38fb4fac1619347316455aa5ea6de7d61117d146"
+  },
+  "limitations": [
+    "Native system still contains action-format rules; no hidden rewrite to resolve all instruction-priority conflicts.",
+    "No real model evidence yet that this stops repetition or improves coordination.",
+    "The second stateless API request still transmits accumulated messages; no guaranteed cache reuse or avoided prefix computation."
+  ],
+  "artifacts_sha256": {
+    "preview/PROMPT_PREVIEW.md": "1a37d15de811abeb5272e20e904299a05d203182ad5d89319737d503151a785f",
+    "preview/ms/transport-agent-0.jsonl": "45303f9a75b31f16a9c673bb82dfde69ba7910a139697be4b68c1e3b038f5245",
+    "preview/pipeline_snapshot.json": "11caece7984f681b5a0186723d442df8760f0e8396ffcaa9646b32fc65d14064",
+    "preview/requests.json": "3c3420749ddfaa9a9cefa946e2058abadff6ac70f7b1c478858a454fc2748889",
+    "preview/scaffold-agent-0.jsonl": "db1e4a6393a004c7d9c59cc28d7cc54222c5ce88b998e63050d7a29f0f958d65",
+    "preview/transport-agent-0.jsonl": "29134d68e310bbada11dd4613da36d2f8e6bd7155e6b425811ded2581e3338ac",
+    "validation/all24_fixture_summary.json": "79d4d80ac0125f4cb825f617704fae3f5304f9479d33ed0f4bc5d12f8fde7663",
+    "validation/offline_fixture_replays.tar.gz": "862fe4bb48fa4a65bb2b22699a89c229afaea7c2b449f576f19389ed3eb3133b",
+    "validation/pipeline_snapshot.json": "151a66e2569808aa7e9fa045082d5a38298567505ab08942eb5018e689e5e183",
+    "validation/pytest_output.txt": "05e470befbc76e661a941f1f0043ac08b7eaf0dd7c9078a34f2a1e2d2fdf988b",
+    "source/examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659",
+    "source/examples/final_evaluation/calbench_local.py": "a1d24595039f29515040e571eb49bb0aa71419a9aa77ca9a8bee414612d4de52",
+    "source/examples/final_evaluation/calbench_scaffold.py": "355ee59e4079ad2b710fd011c46864be00dd747ebc50656059a8c5d313ccdc8a",
+    "source/examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "source/examples/final_evaluation/calbench_stream_metrics.py": "5c5def9751f608ef1f609b32ba8905dbba5c1214dcb2c1d5ebfbec2502561eab",
+    "source/examples/final_evaluation/export_calbench_ms.py": "9907d25caf969382817dbbf22c7e8f96dab643ac7e58e3b23f3a7c1396b263e1",
+    "source/examples/final_evaluation/interaction_scaffold.py": "4ef3d3fd9210540879d53a066712b08880d144c2ebade406b1243471c15c6ab8",
+    "source/examples/final_evaluation/launch_calbench_local.py": "6fb4964030b79ece1bb047d00081238bfb9cffa84c39b5cc2ce9e09e924a17e5",
+    "source/tests/agentic/test_calbench_ms.py": "543d9b73700491e6573dcd909bdec1e515fc9c7c80776d765338822c3219e740"
+  }
+}

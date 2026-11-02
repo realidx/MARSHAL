@@ -1,0 +1,82 @@
+{
+  "version": "general-ms-guided-action-v4-single-call",
+  "date": "2026-11-02",
+  "status": "IMPLEMENTED_OFFLINE_VALIDATED_NOT_MODEL_EVALUATED",
+  "validation": {
+    "passed": 39,
+    "exit_code": 0,
+    "command": "PYTHONPATH=/private/tmp/calbench-ms-deps:$PWD python -m pytest -q tests/agentic/test_calbench_ms.py tests/agentic/test_final_calbench.py --tb=short --color=no",
+    "scope": [
+      "one provider call and original native seed/options/result",
+      "only current user suffix modified, system/history unchanged",
+      "native thinking/actions response and persistence",
+      "missing usage/truncation passed through without MS gates",
+      "six full native request examples",
+      "24 native/guided fixed-response engine pairs",
+      "legacy configuration rejection and explicit CLI/launcher identity"
+    ],
+    "warnings": "6037 inherited native utcnow/test-harness warnings; CPU only"
+  },
+  "review_override": {
+    "date": "2026-11-02",
+    "authorization": "Continued user-approved implementation and existing authorization to maintain this exact preview review path; original versions retained.",
+    "previous_review_version": "general-ms-conditioning-v3-local-continuation",
+    "previous_review_sha256": "72820a7f6c071aa2e2dbb4f68d4b6239016f143b923d63dbdca180a92ae5e15a",
+    "previous_archive": "preview/PROMPT_PREVIEW.v3_review_frozen.md",
+    "current_review_version": "general-ms-guided-action-v4-single-call",
+    "current_review_sha256": "9f100eb87888b0a9f53ac8c72614faab7c9cdab71781fd6d7f45f191af0cfb1b",
+    "canonical_preview": "../general_ms_calbench_v4_20261102/preview/PROMPT_PREVIEW.md",
+    "historical_v1_archive": "preview/PROMPT_PREVIEW.v1_frozen.md",
+    "predecessor_override": "PREVIEW_REVIEW_OVERRIDE_20261102.json",
+    "note": "Original v1/v2/v3 snapshots, raw requests and evidence remain unchanged. The named current review Markdown is intentionally mutable at user request."
+  },
+  "source_sha256": {
+    "examples/final_evaluation/interaction_scaffold.py": "edff8720258d8c826cd3e448436c5a5893a018349b740a7bea98966db3177105",
+    "examples/final_evaluation/calbench_scaffold.py": "ca159f859b4fca19976a2d77183ae0d26d3421ee5ee68764a2b42f34c93b9a31",
+    "examples/final_evaluation/calbench_local.py": "e6bde4f4d297f96fda2fe76393810de56be1bfb24798596d03d9c62b217bf28a",
+    "examples/final_evaluation/export_calbench_ms.py": "98843a4fbe62bf6419932f7229f2095573f88fc06b53f1c3eb20a3c8b9b22d17",
+    "examples/final_evaluation/launch_calbench_local.py": "9bab9a62d74dd0805919bba5011f3e38905cace2a9bc8e9300b7a80f6792a624",
+    "tests/agentic/test_calbench_ms.py": "454a3dcad07f242e243845418f808ef80f7e893d983e677380cbb1043403865a",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "5c5def9751f608ef1f609b32ba8905dbba5c1214dcb2c1d5ebfbec2502561eab",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659"
+  },
+  "inputs": {
+    "suite_manifest_sha256": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "source_manifest_sha256": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "runtime_changes": "No dependency or environment changes; reused isolated /private/tmp/calbench-ms-deps",
+  "real_model_calls": 0,
+  "training": false,
+  "D": "NOT_MEASURED",
+  "production_active": {
+    "version": "terminal-node-regret-grpo-readable-v8",
+    "prompt_version": "terminal-readable-named-v2",
+    "path": "examples/strategic_slices/versions/terminal_v8_readable_20261018/SNAPSHOT.json",
+    "sha256": "3131f1a60d745602e938ccbb38fb4fac1619347316455aa5ea6de7d61117d146"
+  },
+  "limitations": [
+    "Not a reproduction of two-stage Base+MS.",
+    "Brief guidance is not evidence of shorter real model outputs or improved coordination.",
+    "No inference/planning ability claim from thinking text alone."
+  ],
+  "artifacts_sha256": {
+    "preview/PROMPT_PREVIEW.md": "c0d7ea509afd4789e3da94a34e54c6081271de643b862401ca96197bb8df3e1b",
+    "preview/pipeline_snapshot.json": "1e83e2cd370eee943597ba7b5a5457acd60e35b20ac382c68b1ff891b87bd0c1",
+    "preview/requests.json": "0bb4f04e87de18720f50ffe3ad5310e7e48a8ef12303886ee66dee784aa3a65c",
+    "preview/transport-agent-0.jsonl": "62c8023a52d94b1688bc3f408ab1fa6c67ef0369fe00e4b603bc0d19e1478a7e",
+    "validation/all24_fixture_summary.json": "9c39ca52edc04c710dfe93835cf4f7d7fdb755b6a690c81eb81f8cd5ad76767a",
+    "validation/offline_fixture_replays.tar.gz": "c80e2b748c0858736b50cf3eccb5c7b4128c3ec3e976a5fe3af77f0311e4c7c5",
+    "validation/pipeline_snapshot.json": "01b41dbb31c1bbfccbb47656abe9e0716aa9412501ccbdbcf0cdf58f56a6e21f",
+    "validation/pytest_output.txt": "7e79b6162d5530ec1ded49b4f8c49aaa504968549503d2b9ed16ba84cb25cf70",
+    "source/examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659",
+    "source/examples/final_evaluation/calbench_local.py": "e6bde4f4d297f96fda2fe76393810de56be1bfb24798596d03d9c62b217bf28a",
+    "source/examples/final_evaluation/calbench_scaffold.py": "ca159f859b4fca19976a2d77183ae0d26d3421ee5ee68764a2b42f34c93b9a31",
+    "source/examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "source/examples/final_evaluation/calbench_stream_metrics.py": "5c5def9751f608ef1f609b32ba8905dbba5c1214dcb2c1d5ebfbec2502561eab",
+    "source/examples/final_evaluation/export_calbench_ms.py": "98843a4fbe62bf6419932f7229f2095573f88fc06b53f1c3eb20a3c8b9b22d17",
+    "source/examples/final_evaluation/interaction_scaffold.py": "edff8720258d8c826cd3e448436c5a5893a018349b740a7bea98966db3177105",
+    "source/examples/final_evaluation/launch_calbench_local.py": "9bab9a62d74dd0805919bba5011f3e38905cace2a9bc8e9300b7a80f6792a624",
+    "source/tests/agentic/test_calbench_ms.py": "454a3dcad07f242e243845418f808ef80f7e893d983e677380cbb1043403865a"
+  }
+}

@@ -106,4 +106,4 @@ New `--suite stream`: 24 frozen four-player, three-meeting games with temperatur
 
 ## Generic Base+MS (2026-11-02)
 
-Opt-in two-stage conditioning for the frozen CalBench stream24 suite: [design, concrete example and commands](CALBENCH_BASE_MS.md). Native invocation remains the default. CPU fixture checks are separate from model evaluation; no new model results or training.
+Current opt-in independent belief/MS then action (`--scaffold belief-ms`) for the frozen CalBench stream24 suite: [design, concrete example and commands](CALBENCH_BASE_MS.md). Native invocation remains the default. CPU fixture checks are separate from model evaluation; no new model results or training.

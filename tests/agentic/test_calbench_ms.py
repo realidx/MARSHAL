@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from examples.final_evaluation.interaction_scaffold import VERSION, MS_INSTRUCTION, ms_request, action_request
-from examples.final_evaluation.calbench_scaffold import MSTransport, ScaffoldFailure, protocol, verify_registration
+from examples.final_evaluation.calbench_scaffold import BeliefTransport, ScaffoldFailure, protocol, verify_registration
 
 
 def test_generic_builders_preserve_only_native_context():
@@ -15,13 +15,37 @@ def test_generic_builders_preserve_only_native_context():
                 dict(role='assistant', content='MY_PREVIOUS_ACTION'),
                 dict(role='user', content='RECEIVED_MESSAGE')]
     before = copy.deepcopy(messages)
-    ms, act = ms_request(messages), action_request(messages, 'TENTATIVE_MS')
+    ms = ms_request(messages)
+    act = action_request(ms, 'TENTATIVE_MS')
     assert messages == before
-    assert ms[0]['content'].startswith(messages[0]['content'])
-    assert MS_INSTRUCTION in ms[0]['content']
-    assert ms[1:-1] == messages[1:]
-    assert act[:-1] == messages and 'TENTATIVE_MS' in act[-1]['content']
+    assert ms[:-1] == messages
+    assert ms[-1] == dict(role='user',content=MS_INSTRUCTION)
+    assert len(ms)==len(messages)+1
+    assert act[:-2] == ms
+    assert act[-2] == dict(role='assistant',content='TENTATIVE_MS')
+    assert act[-1]['role']=='user' and act[-1]['content'].startswith('ACTION STAGE')
     assert not any(word in MS_INSTRUCTION.lower() for word in ('calendar', 'slot', 'meeting', 'calbench'))
+
+
+def test_actual_first_response_is_the_assistant_turn_for_action(tmp_path):
+    transport=wrapper(tmp_path)
+    transport.ms.analysis='THE_ACTUAL_FIRST_PROVIDER_REPLY'
+    native=[dict(role='system',content='native system'),dict(role='user',content='original user prompt')]
+    transport.streaming_with_retry(native)
+    first=transport.ms.requests[0]
+    second=transport.action.requests[0]
+    assert [m['role'] for m in first]==['system','user','user']
+    assert [m['role'] for m in second]==['system','user','user','assistant','user']
+    assert first[:-1]==native and second[:-2]==first
+    assert second[-2]['content']=='THE_ACTUAL_FIRST_PROVIDER_REPLY'
+    assert second[-1]['content'].startswith('ACTION STAGE')
+
+
+@pytest.mark.parametrize('messages', [[], [dict(role='system',content='rules')],
+    [dict(role='assistant',content='past action')]])
+def test_ms_does_not_rearrange_or_invent_native_user_turns(messages):
+    with pytest.raises(ValueError,match='ending in a text user message'):
+        ms_request(messages)
 
 
 class FakeTransport:
@@ -49,7 +73,7 @@ class FakeTransport:
 
 
 def wrapper(tmp_path):
-    return MSTransport(dict(model='same-checkpoint'), dict(max_tokens=4096),
+    return BeliefTransport(dict(model='same-checkpoint'), dict(max_tokens=4096),
                        tmp_path, 123, 0, transport_class=FakeTransport)
 
 
@@ -64,7 +88,8 @@ def test_two_stage_same_checkpoint_budgets_usage_and_no_persistent_ms(tmp_path):
     assert transport.action.seed == 123 and transport.ms.seed != 123
     assert (result['prompt_tokens'], result['completion_tokens'], result['total_tokens']) == (30, 8, 38)
     assert 'PRIVATE_MS_MARKER' not in result['text']
-    assert 'PRIVATE_MS_MARKER' in transport.action.requests[0][-1]['content']
+    assert transport.action.requests[0][:-2] == transport.ms.requests[0]
+    assert transport.action.requests[0][-2] == dict(role='assistant',content='PRIVATE_MS_MARKER')
     transport.streaming_with_retry([dict(role='user',content='NEW_VISIBLE_CONTEXT')])
     assert 'PRIVATE_MS_MARKER' not in json.dumps(transport.ms.requests[1])
     assert messages == before
@@ -90,7 +115,7 @@ def test_invalid_budgets_fail_before_calls(total):
 
 
 def test_old_fixed_allocation_cannot_be_silently_reused():
-    with pytest.raises(ValueError, match='belongs to v1'):
+    with pytest.raises(ValueError, match='historical'):
         protocol(dict(max_tokens=4096, ms_max_tokens=512))
 
 
@@ -149,7 +174,13 @@ def test_native_client_lifecycle_exports_full_requests_and_keeps_ms_private(tmp_
         ms, act = example['actual_ms_request'], example['actual_action_request']
         assert ms['model'] == act['model'] == 'OFFLINE_FIXTURE_NOT_A_MODEL'
         assert (ms['max_tokens'], act['max_tokens']) == (4096,4093)
-        assert act['messages'][:-1] == example['native_messages']
+        assert act['messages'][:-2] == ms['messages']
+        assert act['messages'][-2] == dict(role='assistant', content=example['synthetic_ms'])
+        assert ms['messages'][:-1] == example['native_messages']
+        assert ms['messages'][-1] == dict(role='user',content=MS_INSTRUCTION)
+        assert example['native_history_after'][:-1] == example['native_messages'][1:]
+        assert example['native_history_after'][-1]['role'] == 'assistant'
+        assert json.loads(example['native_history_after'][-1]['content']) == example['synthetic_action']
         assert 'internal analysis stage' not in json.dumps(example['native_messages']).lower()
         assert 'Tentative private analysis (JSON string' not in json.dumps(example['native_messages'])
         assert all('"optimal"' not in m['content'] and 'minimum_team_cost' not in m['content']
@@ -171,7 +202,7 @@ def test_runner_aborts_ms_failure_as_missing_game_not_model_score(tmp_path):
         def __exit__(self,*args): pass
         def read(self):
             return json.dumps(dict(choices=[dict(message=dict(content='partial'),finish_reason='length')])).encode()
-    routes = dict(scaffold='base-ms',max_tokens=4096,temperature=0,
+    routes = dict(scaffold='belief-ms',max_tokens=4096,temperature=0,
                   endpoints={a:dict(base_url='http://127.0.0.1:1/v1', model='fixture') for a in ('q0','focal')})
     with patch('examples.final_evaluation.calbench_local.urlopen',return_value=Response()):
         result = run_one(dict(game_id='failed', stream_case='loose_uniform_s1', seed=2026091901, focal_seat=0), routes, tmp_path)
@@ -206,7 +237,7 @@ def test_all24_native_engine_fixture_actions_match_with_and_without_ms(tmp_path)
                                    usage=dict(prompt_tokens=1,completion_tokens=1,total_tokens=2))).encode()
     def provider(request, **kwargs):
         body=json.loads(request.data);requests.append(body)
-        is_ms=MS_INSTRUCTION in body['messages'][0]['content']
+        is_ms=body['messages'][-1]['content'].endswith(MS_INSTRUCTION)
         return Response('Tentative analysis based only on the current observations.' if is_ms
                         else '{"thinking":"offline empty-action fixture","actions":[]}')
     routes=dict(max_tokens=4096,temperature=0,
@@ -215,7 +246,7 @@ def test_all24_native_engine_fixture_actions_match_with_and_without_ms(tmp_path)
         for i,case in enumerate(cases):
             job=dict(game_id=case['id'],stream_case=case['id'],seed=case['scenario_seed'],focal_seat=i)
             native=run_one(job,routes,native_root)
-            scaffold=run_one(job,dict(routes,scaffold='base-ms'),ms_root)
+            scaffold=run_one(job,dict(routes,scaffold='belief-ms'),ms_root)
             assert native['engine_finished'] and scaffold['engine_finished'] and scaffold['healthy_scaffold']
             assert native['diagnostics']==scaffold['diagnostics']
             assert native['calls']==scaffold['calls']==scaffold['scaffold']['ms_calls']
@@ -254,10 +285,10 @@ def test_launcher_selects_scaffold_explicitly(tmp_path, monkeypatch):
     monkeypatch.setattr(launcher.os,'killpg',lambda *a:None)
     monkeypatch.setattr(launcher.signal,'signal',lambda *a:None)
     monkeypatch.setattr(sys,'argv',['launcher','--runtime','soc','--model',str(model),'--output',str(output),
-                                  '--suite','stream','--scaffold','base-ms','--ports','27101'])
+                                  '--suite','stream','--scaffold','belief-ms','--ports','27101'])
     launcher.main()
     routes=json.loads((output/'routes.json').read_text())
-    assert routes['scaffold']=='base-ms' and protocol(routes)['total_output_cap_per_native_call']==4096
+    assert routes['scaffold']=='belief-ms' and protocol(routes)['total_output_cap_per_native_call']==4096
     assert 'ms_max_tokens' not in routes
 
 
@@ -280,13 +311,13 @@ def test_main_records_cli_protocol_and_all24_jobs(tmp_path, monkeypatch):
     monkeypatch.setattr(runner,'ProcessPoolExecutor',Executor)
     output=tmp_path/'run'
     monkeypatch.setattr(sys,'argv',['calbench_local','--routes',str(routes),'--output',str(output),
-        '--suite','stream','--scaffold','base-ms'])
+        '--suite','stream','--scaffold','belief-ms'])
     runner.main()
-    assert len(seen)==24 and all('ms_max_tokens' not in c and c['scaffold']=='base-ms' for _,c in seen)
+    assert len(seen)==24 and all('ms_max_tokens' not in c and c['scaffold']=='belief-ms' for _,c in seen)
     execution=json.loads((output/'execution_protocol.json').read_text())
     assert execution['prompt_changed'] and execution['protocol']==VERSION
     assert execution['scaffold']['action_request_cap']=='max_tokens - actual MS usage.completion_tokens'
     snapshot=json.loads((output/'pipeline_snapshot.json').read_text())
     assert 'ms_max_tokens' not in snapshot['cli']['parsed']
-    assert snapshot['resolved_routes']['scaffold']=='base-ms'
+    assert snapshot['resolved_routes']['scaffold']=='belief-ms'
     assert snapshot['model_identity'].startswith('未记录')

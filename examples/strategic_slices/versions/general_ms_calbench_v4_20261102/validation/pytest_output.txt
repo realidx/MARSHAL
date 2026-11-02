@@ -1,0 +1,68 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.2, pytest-7.4.4, pluggy-1.0.0 -- /opt/anaconda3/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/bruce/MARSHAL/tests
+configfile: pytest.ini
+plugins: typeguard-4.4.4, anyio-4.2.0
+collecting ... collected 39 items
+
+tests/agentic/test_calbench_ms.py::test_single_request_changes_only_current_user_and_keeps_generic_guidance PASSED [  2%]
+tests/agentic/test_calbench_ms.py::test_cannot_invent_or_rearrange_native_user_turns[messages0] PASSED [  5%]
+tests/agentic/test_calbench_ms.py::test_cannot_invent_or_rearrange_native_user_turns[messages1] PASSED [  7%]
+tests/agentic/test_calbench_ms.py::test_cannot_invent_or_rearrange_native_user_turns[messages2] PASSED [ 10%]
+tests/agentic/test_calbench_ms.py::test_one_generation_cap_without_partition[4096] PASSED [ 12%]
+tests/agentic/test_calbench_ms.py::test_one_generation_cap_without_partition[768] PASSED [ 15%]
+tests/agentic/test_calbench_ms.py::test_invalid_budget_rejected[None] PASSED [ 17%]
+tests/agentic/test_calbench_ms.py::test_invalid_budget_rejected[0] PASSED [ 20%]
+tests/agentic/test_calbench_ms.py::test_invalid_budget_rejected[-1] PASSED [ 23%]
+tests/agentic/test_calbench_ms.py::test_invalid_budget_rejected[True] PASSED [ 25%]
+tests/agentic/test_calbench_ms.py::test_invalid_budget_rejected[0.5] PASSED [ 28%]
+tests/agentic/test_calbench_ms.py::test_old_stage_allocation_and_mode_rejected PASSED [ 30%]
+tests/agentic/test_calbench_ms.py::test_one_provider_call_same_seed_raw_result_and_native_options PASSED [ 33%]
+tests/agentic/test_calbench_ms.py::test_native_truncation_and_missing_usage_pass_through_unchanged[length-None] PASSED [ 35%]
+tests/agentic/test_calbench_ms.py::test_native_truncation_and_missing_usage_pass_through_unchanged[stop-None] PASSED [ 38%]
+tests/agentic/test_calbench_ms.py::test_native_truncation_and_missing_usage_pass_through_unchanged[stop-5] PASSED [ 41%]
+tests/agentic/test_calbench_ms.py::test_native_client_export_has_one_call_and_original_history PASSED [ 43%]
+tests/agentic/test_calbench_ms.py::test_runner_keeps_infrastructure_failure_separate PASSED [ 46%]
+tests/agentic/test_calbench_ms.py::test_registered_source_identity PASSED [ 48%]
+tests/agentic/test_calbench_ms.py::test_all24_native_engine_fixed_actions_match_with_one_call PASSED [ 51%]
+tests/agentic/test_calbench_ms.py::test_launcher_selects_scaffold_explicitly PASSED [ 53%]
+tests/agentic/test_calbench_ms.py::test_main_records_cli_protocol_and_all24_jobs PASSED [ 56%]
+tests/agentic/test_final_calbench.py::test_source_matches_pinned_manifest PASSED [ 58%]
+tests/agentic/test_final_calbench.py::test_remote_routes_require_explicit_opt_in PASSED [ 61%]
+tests/agentic/test_final_calbench.py::test_transport_records_truncation_and_leaves_native_parsing_intact PASSED [ 64%]
+tests/agentic/test_final_calbench.py::test_frozen_suite_certificates_and_costs PASSED [ 66%]
+tests/agentic/test_final_calbench.py::test_frozen_suite_rejects_tampering PASSED [ 69%]
+tests/agentic/test_final_calbench.py::test_transport_infrastructure_failure_cannot_become_empty_action PASSED [ 71%]
+tests/agentic/test_final_calbench.py::test_reasoning_wrapper_separated_before_native_json_repair PASSED [ 74%]
+tests/agentic/test_final_calbench.py::test_unfinished_reasoning_never_becomes_an_action PASSED [ 76%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[formal-1] PASSED [ 79%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[formal-2] PASSED [ 82%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[stream-1] PASSED [ 84%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[stream-2] PASSED [ 87%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[shapefactory_native_lite-1] PASSED [ 89%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[shapefactory_native_lite-2] PASSED [ 92%]
+tests/agentic/test_final_calbench.py::test_stream_suite_native_replays_and_seed_coverage PASSED [ 94%]
+tests/agentic/test_final_calbench.py::test_stream_runner_uses_homogeneous_team_and_three_meeting_reference PASSED [ 97%]
+tests/agentic/test_final_calbench.py::test_stream_diagnostics_replan_and_final_consistency PASSED [100%]
+
+=============================== warnings summary ===============================
+agentic/test_calbench_ms.py::test_single_request_changes_only_current_user_and_keeps_generic_guidance
+  /Users/bruce/MARSHAL/tests/conftest.py:48: UserWarning: Running test without verifying torch version, please provide an expected torch version with --torch_ver
+    warnings.warn(
+
+agentic/test_calbench_ms.py::test_single_request_changes_only_current_user_and_keeps_generic_guidance
+  /Users/bruce/MARSHAL/tests/conftest.py:57: UserWarning: Running test without verifying cuda version, please provide an expected cuda version with --cuda_ver
+    warnings.warn(
+
+agentic/test_calbench_ms.py: 3655 warnings
+agentic/test_final_calbench.py: 2380 warnings
+  /opt/anaconda3/lib/python3.12/site-packages/pydantic/main.py:164: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    __pydantic_self__.__pydantic_validator__.validate_python(data, self_instance=__pydantic_self__)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================== slowest durations ===============================
+2.41s call     agentic/test_calbench_ms.py::test_all24_native_engine_fixed_actions_match_with_one_call
+
+(116 durations < 1s hidden.  Use -vv to show these durations.)
+====================== 39 passed, 6037 warnings in 3.16s =======================
