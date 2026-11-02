@@ -1,0 +1,790 @@
+% CA report, evidence cut-off: 29 October 2026.
+% Standalone source; no BibTeX run or external figures are required.
+% Build from paper/: latexmk -pdf ca_report.tex
+% This report does not change any experimental configuration or version.
+\documentclass[12pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=25mm]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!45!black,citecolor=blue!45!black,
+  urlcolor=blue!45!black,pdftitle={Learning to Coordinate through Strategic Game Slices: CA Report},
+  pdfauthor={Li Daoxin}}
+\urlstyle{same}
+\setstretch{1.12}
+\setlength{\parskip}{3pt}
+\setlength{\parindent}{1.2em}
+\setlist{nosep,leftmargin=*}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small H009720: Strategic Game Slices}
+\fancyhead[R]{\small CA Report}
+\fancyfoot[C]{\thepage}
+\setlength{\headheight}{14pt}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\reportdate}{1 November 2026}
+
+\begin{document}
+\begin{titlepage}
+\centering
+\vspace*{18mm}
+{\large National University of Singapore\\School of Computing\par}
+\vspace{19mm}
+{\LARGE\bfseries Learning to Coordinate through\\[3mm] Strategic Game Slices\par}
+\vspace{10mm}
+{\Large Final Year Project\\Continuous Assessment Report\par}
+\vspace{18mm}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{rl}
+Student & Li Daoxin\\
+Student number & A0288040H\\
+Project code & H009720\\
+Supervisor & Chua Tat Seng\\
+Main evaluator & Yang YOU\\
+Report date & \reportdate
+\end{tabular}
+\vfill
+
+\vspace{15mm}
+\end{titlepage}
+
+\begin{abstract}
+Coordination under private information requires agents to infer others'
+preferences and use those inferences to choose effective actions. This
+project studies these capabilities through strategic game slices: selected
+segments of a finite negotiation game with binding commitments and private
+investigation. A reference-policy solver provides preference posteriors,
+action values, and information-omission losses. Matched diagnostic
+interventions reveal that supplying a correct preference judgment does
+not reliably resolve planning errors. Initial training experiments show
+improved calendar coordination, with joint slice training retaining 47 of
+72 meetings compared with 37 for the base model and complete-game
+self-play. Further analysis identifies two obstacles to effective
+supervision: information-sensitive decisions are sparse, and grouped
+sampling often produces identical actions even at persistently incorrect
+decisions. Controlled game-design studies examine how hidden preferences
+and commitment structure affect this signal. The next stage will use these
+findings to construct a targeted slice curriculum and evaluate its effect
+on negotiation and transfer.
+\end{abstract}
+
+\section{Introduction}
+Large language models (LLMs) increasingly participate in multi-agent tasks
+that require communication, negotiation, and coordinated action. In these
+settings, an agent's success depends on information distributed across
+participants and on the decisions those participants make. Interactive
+benchmarks capture this dependence through collaboration, competition,
+and decentralised scheduling~\cite{multiagentbench,calbench}. However, a
+failed interaction rarely reveals whether an agent misunderstood its
+partner or selected an ineffective action despite sufficient understanding.
+This ambiguity makes both diagnosis and training difficult.
+
+We study two coupled capabilities: \emph{interactive-state inference},
+which estimates a partner's task-relevant hidden preferences from available
+evidence, and \emph{interaction planning}, which uses this information to
+evaluate and select actions. The distinction follows classical accounts
+of decision-making with models of other agents~\cite{ipomdp,hop}. It also
+suggests a practical intervention: compare an agent's choices when supplied
+with its own preference judgment and with a correct oracle judgment.
+The remaining error measures a planning difficulty that preference
+prediction alone does not capture.
+
+Our approach uses a finite negotiation game in which players make binding
+commitments toward goals with aligned or conflicting preferences. Private
+preferences create uncertainty, while investigation provides an opportunity
+to acquire information. A reference solver evaluates the consequences of
+legal decisions, allowing the same environment to support diagnosis and
+training. We use \emph{game slices}, interaction segments beginning at
+selected decision contexts, to concentrate supervision on identifiable
+inference and planning demands. This gives finer control over training
+content than relying entirely on states visited in complete-game self-play.
+
+The project investigates three questions. First, how much action error
+remains after a correct preference judgment is supplied? Second, which
+game structures create information that changes an optimal decision?
+Third, can training on selected decisions improve complete-game behaviour
+and coordination in a different environment? These questions connect the
+design of a training task to the reasoning difficulty it presents and the
+learning signal it actually produces.
+
+The contributions completed at this stage are as follows:
+\begin{enumerate}[topsep=4pt,itemsep=3pt]
+\item We develop a negotiation environment and reference-policy evaluation
+framework that supports matched tests of preference inference, planning,
+and the value of observed information.
+\item We conduct diagnostic and training experiments with
+Qwen3-4B-Instruct-2507, identifying persistent planning errors under oracle
+judgments and preliminary transfer gains from slice training.
+\item We characterise sparse supervision through training-log analysis and
+controlled three-player game studies, showing how commitment choices and
+goal dependencies affect information-sensitive decisions.
+\end{enumerate}
+The report presents the framework, completed experiments, and the research
+plan for a revised slice-training study. The new game-design candidates
+have completed solver-based analysis; model evaluation and training on
+these candidates form the next phase.
+
+\section{Literature Review}
+\paragraph{Inference and planning.}
+Interactive partially observable Markov decision processes represent
+uncertainty over both the environment and other agents, connecting belief
+updates to action selection~\cite{ipomdp}. Bayesian Action Decoder further
+shows how an action's informational meaning depends on the policy that
+produced it~\cite{bad}. Hierarchical Opponent Modeling and Planning couples
+goal inference with response planning in mixed-motive environments~\cite{hop}.
+For language agents, theory-of-mind representations have also been studied
+as a mechanism for collaboration~\cite{tom}. These approaches motivate our
+separation of preference inference and conditional planning. We use an
+explicit reference policy to interpret behaviour and matched interventions
+to test whether an inferred preference is used effectively.
+
+\paragraph{Coordination benchmarks.}
+MultiAgentBench evaluates collaboration and competition across interactive
+scenarios~\cite{multiagentbench}. Benac et al. model negotiation through
+binding action-level commitments, exposing the importance of delayed
+consequences~\cite{benac}. CalBench studies communication across private
+calendars and evaluates scheduling quality against reference
+solutions~\cite{calbench}. Our negotiation environment extends the local
+commitment-game implementation with private preferences and investigation.
+Its finite structure permits decision-level labels, while the project's
+sequential CalBench adaptation tests transfer to a different action space.
+
+\paragraph{Game-based learning and curricula.}
+MARSHAL trains strategic LLMs through multi-turn self-play, using turn-level
+credit assignment and agent-specific advantage normalisation~\cite{marshal}.
+Subgame curriculum learning instead adjusts the distribution of starting
+states to focus practice on useful parts of a game~\cite{sacl}. These
+approaches motivate our use of selected interaction segments. We optimise
+language-model responses using grouped relative advantages, following the
+principle of GRPO~\cite{grpo}, and examine whether the sampled responses
+provide informative reward differences. Other-Play's analysis of
+partner-specific conventions also motivates evaluation beyond homogeneous
+self-play~\cite{otherplay}.
+
+This project connects these directions by using one controlled environment
+for capability diagnosis, decision-level supervision, and curriculum
+construction. The central issue is whether a selected context combines
+consequential information, a model error, and a usable optimisation signal.
+The experiments examine these properties separately.
+
+\section{Strategic Game Slices}
+\subsection{Negotiation under Private Information}
+The game contains players $i\in\{0,\ldots,n-1\}$, binary commitment
+variables $x_j$, and goals $g$. Each commitment belongs to one player.
+A goal specifies a set of required commitments $R_g$ and uses binary or
+linear completion scoring:
+\begin{equation}
+ f_g(x)=\prod_{j\in R_g}x_j
+ \quad\text{or}\quad
+ f_g(x)=\frac{1}{|R_g|}\sum_{j\in R_g}x_j.
+ \label{eq:completion}
+\end{equation}
+Player $i$ has preferences $\theta_{ig}\in\{-1,0,1\}$, corresponding to
+avoid, neutral, and want. Its terminal utility is
+\begin{equation}
+ U_i(x,\theta_i)=\sum_g\theta_{ig}f_g(x).
+ \label{eq:utility}
+\end{equation}
+The same goal can therefore benefit one player and harm another. Players
+negotiate over contributions to these shared goal structures.
+
+At a proposal opportunity, a player can make a bilateral offer, pass, or
+investigate an eligible hidden preference. An offer specifies additional
+commitments for the proposer and recipient. Acceptance makes them binding;
+rejection leaves the commitment state unchanged. Commitments accumulate
+and cannot be withdrawn. Proposal opportunities follow a fixed
+round-robin schedule, and the recipient's response does not consume its
+own future proposal opportunity.
+
+Each player observes public preferences, its own complete preferences,
+and the public action history. An investigation reveals one true
+preference privately to the investigator, while the queried player and
+goal are publicly observable. Subsequent decision inputs include the
+player's accumulated answers. The recent research candidates use
+independent uniform priors over hidden preferences and exclude queries
+of publicly disclosed or previously directly queried preferences.
+Behavioural inference does not remove a query target from the legal menu.
+
+The game-design studies also introduce a personal offer quota. Proposing
+an offer consumes this quota immediately, including when the recipient
+rejects it. Investigation and passing consume proposal opportunities.
+The resulting cost is the loss of a future opportunity rather than a
+utility penalty. The three-player studies use two round robins, one
+investigation and one offer per player, with additional commitment choices
+introduced in controlled variants. These parameters define the studied
+instances within a more general game framework~\cite{walkthrough}.
+
+\subsection{Reference Policies and Action Values}
+A behavioural reference policy specifies a distribution over legal actions
+at each information context. Strategies respect the player's observations:
+worlds that are indistinguishable to a player share the same decision
+rule. Candidate references are checked numerically for unilateral
+improvement, locally optimal supported actions, and the response objective.
+At ACCEPT/REJECT decisions, players maximise their own expected terminal
+utility and, in an own-utility tie, maximise the sum of other players'
+expected terminal utilities. Proposal decisions use own utility alone.
+The numerical checks use equilibrium tolerance $10^{-8}$ and tie tolerance
+$10^{-9}$; saved policies are independently reloaded and
+rechecked~\cite{qs}.
+
+For a focal player $i$ at information context $I$, let
+$\pi_{-i}^{\mathrm{ref}}$ denote the fixed policies of its opponents.
+The action value and regret are
+\begin{align}
+ Q_i(I,a)&=\max_{\pi_i:\,\pi_i(I)=a}
+ \E[U_i\mid I,\pi_i,\pi_{-i}^{\mathrm{ref}}],\label{eq:q}\\
+ R_i(I,a)&=\max_{b\in\mathcal L(I)}Q_i(I,b)-Q_i(I,a),
+ \label{eq:regret}
+\end{align}
+where $\mathcal L(I)$ is the legal action set. The focal player's future
+contingent strategy is optimised to the specified endpoint. In the recent
+main analysis, that endpoint is the native terminal state. Thus $Q$
+captures the consequences of later offers and responses, rather than
+only the immediate change in commitments.
+
+\subsection{Information Sensitivity}
+We measure the decision value of an observed item $e$ by comparing a
+full-information optimal policy $\pi_I^*$ with a policy
+$\pi_{-e}^*$ that cannot access the item:
+\begin{equation}
+ S_e(I)=V_I(\pi_I^*)-V_I(\pi_{-e}^*).
+ \label{eq:s}
+\end{equation}
+The omitted item is either one private investigation answer or one
+completed public proposal event. Entry contexts with identical retained
+observations share a policy under omission. Both policies are evaluated
+at the same true context, with the same opponents and terminal utility.
+Rules, current commitments, remaining quotas, and other observations are
+retained, and later evidence may reveal the missing information again.
+
+The omission policy is optimised over a forest of indistinguishable
+entries. Their weights use counterfactual prefix likelihood, excluding
+the focal player's past action probabilities. This prevents its earlier
+choices from revealing the hidden item. After own optimisation and the
+response tie rule, remaining omission-policy ties are mixed uniformly.
+Entries with zero counterfactual likelihood have undefined $S$ and are
+excluded from positive/zero statistics. Selected witnesses receive
+independent sequence-form linear-programming checks, including bounds
+over own-optimal omission policies~\cite{qs}.
+
+We also record the regret of the omission policy's first action. This
+distinguishes an immediate contract-selection error from a loss that
+arises only in later decisions. Investigation value is measured separately
+at the pre-query context by comparing its Q with the best non-query
+action. It averages over subsequent outcomes, whereas $S_e(I)$ measures
+the use of information already available at a particular context.
+
+\subsection{Slice Supervision}
+A game slice begins at a selected information context and specifies a
+focal player, a model-control horizon, and a continuation policy. Historical
+experiments explore three objectives: direct action selection, explicit
+preference inference, and planning conditioned on a supplied oracle
+judgment~\cite{manuscript}. These objectives train a shared model; they do
+not require an explicit inference-to-planning pipeline at evaluation.
+
+For direct action selection, the terminal-slice implementation uses
+negative own-utility regret as the task reward. Multiple responses are
+sampled at the same decision context and compared within their group.
+Training therefore depends on both the structure of the task and the
+actions the model samples. If all responses receive the same reward,
+there is no within-group task-relative signal even when an alternative
+legal action has higher value.
+
+Curriculum construction additionally requires a model-difficulty
+measurement $D$: empirical performance under a specified checkpoint,
+prompt, tools, decoding settings, and continuation. Q identifies valuable
+actions, S identifies consequential information, and D identifies the
+model's actual difficulty. The recent game-design studies establish Q/S;
+their D measurement and revised slice training remain future work.
+
+\section{Model Diagnosis and Preliminary Training Results}
+\subsection{Preference Inference and Conditional Planning}
+We evaluate Qwen3-4B-Instruct-2507~\cite{qwen} on 22 two-player diagnostic
+cases. Each case elicits a preference judgment, a direct action, a planning
+action conditioned on the model judgment, and a planning action conditioned
+on the oracle judgment. The planning calls remove behavioural history
+while retaining the state and a judgment sufficient to determine the
+optimal action set. This intervention tests the decision made from a
+supplied inference~\cite{diagnostic,manuscript}.
+
+\begin{table}[tb]
+\centering\small
+\caption{Base-model diagnostic accuracy. Joint inference requires both
+posterior support and the most likely preference to match the oracle.}
+\label{tab:diagnosis}
+\begin{tabular}{lrrrr}
+\toprule
+Evidence & Inference & Direct & Plan: model & Plan: oracle\\
+\midrule
+Direct investigation answer & 6/6 & 2/6 & 3/6 & 3/6\\
+Single-choice elimination & 0/6 & 3/6 & 2/6 & 3/6\\
+Ambiguous single choice & 5/6 & 2/6 & 2/6 & 2/6\\
+Multi-step update & 0/4 & 4/4 & 4/4 & 3/4\\
+\midrule
+Total & 11/22 & 11/22 & 11/22 & 11/22\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:diagnosis} shows failures in both behavioural inference and
+conditional planning. The model recovers every directly revealed
+preference but correctly plans in only three of these six cases even
+with the oracle judgment. Equal aggregate action accuracy also conceals
+changes in utility: among ten valid pairs with initially incorrect
+judgments, oracle replacement improves the selected action in three,
+leaves utility unchanged in six, and reduces it in one. This motivates
+supervising action selection alongside preference judgments.
+
+\subsection{Transfer to Sequential Calendar Coordination}
+The preliminary transfer experiment uses a local sequential adaptation
+of CalBench~\cite{calbench}. Four agents coordinate three meetings in each
+of 24 fixed scenarios. Agents observe private calendars and communicate
+to establish common meeting slots while preserving earlier commitments.
+Every player in a team uses the same checkpoint. We report meetings
+retained in the final calendars and games retaining all three meetings.
+
+\begin{table}[tb]
+\centering\small
+\caption{September checkpoint results on 24 sequential scheduling games.
+Checkpoint identifiers connect the training families to their archived runs.}
+\label{tab:transfer}
+\begin{tabular}{lrr}
+\toprule
+Training family (checkpoint) & Meetings /72 & Full games /24\\
+\midrule
+Base model (Q0) & 37 & 5\\
+Complete-game self-play (SP-41) & 37 & 6\\
+Direct action (O-99) & 38 & 8\\
+Action and planning (BP-99) & 44 & 10\\
+Joint objectives (micro24-39) & 47 & 9\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Joint training retains ten more meetings than the baseline and self-play,
+while action-and-planning training completes the most full games
+(Table~\ref{tab:transfer}). The results suggest that conditional planning
+is a useful training component for transfer. These are preliminary
+checkpoint comparisons: training exposure and serving protocols vary
+across the archived runs~\cite{inventory}. A controlled comparison with
+matched budgets and repeated runs is planned for the next phase.
+
+\subsection{Terminal-Slice Learning Dynamics}
+A subsequent terminal-slice run used the same base model on one H100-96,
+with eight responses per node group and continuous negative-regret rewards.
+It completed 307 updates and 1,123,499 generated training tokens before
+cancellation. The last saved checkpoint corresponds to 270 updates.
+This run used JSON observations and an indexed \texttt{act} tool; later
+versions restored readable observations and named action tools. Results
+here refer to the indexed-interface run~\cite{trainingaudit,pipeline}.
+
+\begin{table}[tb]
+\centering\small
+\caption{Validation during terminal-slice training (job 960070).}
+\label{tab:learning}
+\begin{tabular}{rrrr}
+\toprule
+Updates & Whole-slice success /96 & Entry accuracy & Mean regret\\
+\midrule
+0 & 49 & 64.58\% & 0.19520\\
+119 & 72 & 79.17\% & 0.08249\\
+270 & 80 & 84.38\% & 0.04725\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Validation improves substantially (Table~\ref{tab:learning}), but training
+signal becomes sparse. Only 140 of 6,279 node groups have nonzero
+within-group task-relative advantage. During the final 57 updates,
+98.72\% of groups sample a single distinct legal action, despite having
+multiple legal alternatives. Consequently, some consistently incorrect
+entries produce the same negative reward across all eight responses.
+The twelve training entries requiring investigation receive no correct
+response in 3,272 samples after update 50. The validation set contains
+no information-positive investigation entry and therefore misses this
+failure~\cite{trainingaudit}.
+
+These observations distinguish task difficulty from learnability under
+the current sampling distribution. More informative rewards help when
+sampled actions have different values; they cannot create a relative
+signal among identical choices. This motivates measuring sampling diversity
+and investigation performance explicitly in the revised experiment.
+
+\section{Game Structure and Information-Sensitive Decisions}
+\subsection{Varying Hidden Preferences and Commitment Options}
+The October reference-policy study obtains terminal-certified labels for
+99 of 100 parent games. A separate finite-window evaluator solves all
+100, but provides different continuation values. In the terminal set,
+only two of the 33 measurable three-player games contain positive own
+information-omission loss~\cite{qs}. These games initially have one hidden
+preference and one commitment per player. We investigate whether richer
+information and contract choices create additional decision-relevant
+uncertainty.
+
+The H2 variant adds a second hidden preference belonging to another player,
+while retaining two round robins, one investigation, and one offer per
+player. Of 33 attempted games, 31 receive terminal certification and Q/S
+labels. Nine contain positive own S, comprising 49 of 183,348 measurable
+contexts~\cite{h2}. The A2H2 variant adds a second commitment option to
+one player, with both options available for cumulative agreement.
+Thirty of 33 games receive labels. Table~\ref{tab:paired} compares the
+29 parents measured in both arms.
+
+\begin{table}[tb]
+\centering\small
+\caption{Paired three-player results on 29 jointly measurable parents.
+H2 has two hidden preferences; A2H2 additionally gives one player a second
+commitment option.}
+\label{tab:paired}
+\begin{tabular}{lrr}
+\toprule
+Quantity & H2 & A2H2\\
+\midrule
+Parents with positive own S & 8 & 9\\
+Positive contexts & 43 & 632\\
+Measurable contexts & 172,033 & 414,853\\
+Positive contexts with current-action regret & 39 & 585\\
+Positive contexts on reference paths & 6 & 193\\
+Positive share of reference decision occupancy & 0.0244\% & 0.1080\%\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Additional commitment choices create more information-sensitive contexts,
+but the gain is concentrated: two parents account for 94.8\% of A2H2's
+positive contexts~\cite{a2h2}. This concentration makes parent-level and
+structural coverage important when constructing a curriculum. It also
+suggests examining the goal dependencies that connect commitments,
+rather than increasing the number of rounds alone.
+
+\subsection{Structure-Coverage Pilot}
+We generate an independent set of 24 parents organised into 12 pairs.
+The design covers split and bundled goal structures, binary/mixed/linear
+scoring, and alternative hidden-preference placements. A bundled goal
+requires both commitment options belonging to the same player; split
+structures avoid this dependency. Each pair compares uniform hidden
+placement with placement on two contributors to a common goal. Hidden
+preferences remain independent and uniform, and candidates are generated
+without resampling based on Q/S~\cite{structure}.
+
+\begin{table}[tb]
+\centering\small
+\caption{Structure-coverage results for the 22 certified parents.}
+\label{tab:structure}
+\begin{tabularx}{\textwidth}{Yr}
+\toprule
+Quantity & Result\\
+\midrule
+Attempted / certified and measured parents & 24 / 22\\
+Parents with positive own S & 14\\
+Private-answer / public-history positive contexts & 87 / 27\\
+Positive / measurable contexts & 114 / 246,713\\
+Positive contexts with current-action regret & 112\\
+Positive share of reference decision occupancy & 0.5476\%\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+All 24 games are attempted, and 22 obtain terminal-certified labels and
+pass independent reload checks. Indices 4 and 11 remain unlabelled after
+retries. Successful cases reach the native terminal state with no
+nonterminal cutoff leaves. Fourteen parents contain positive own S,
+although the positive-context share remains 0.0462\%
+(Table~\ref{tab:structure}). Two parents contribute 75 of the 114 positive
+contexts. The reference occupancy measure weights decisions by the saved
+policy's visitation probabilities; it describes oracle coverage rather
+than the model's observed difficulty.
+
+Among measured parents, bundled structures contain positive own S in
+9/11 games, compared with 5/11 split games. Hidden placement shows a
+channel-dependent pattern. Across ten complete pairs, uniform placement
+gives private-answer-positive parents in 5/10 cases and shared-goal
+placement in 4/10; including history sensitivity changes the counts to
+5/10 and 7/10. These results motivate goal dependency as a coverage
+dimension while retaining both placement strategies. The sample is small,
+and the two missing games both use linear scoring.
+
+\subsection{Case Study: Information Changes the Preferred Contract}
+A three-player game from the structure pilot illustrates the underlying
+decision~\cite{walkthrough}. P0 controls commitment $A$, P1 controls
+$B,C$, and P2 controls $D$. All goals use linear scoring
+(Table~\ref{tab:goals}). Two hidden preferences, P0/G2 and P2/G2, are
+independent and uniformly distributed, giving nine possible worlds.
+We consider the realised world in which both are want.
+
+\begin{table}[tb]
+\centering\small
+\caption{Goal requirements and preferences in the case study. The realised
+hidden values are shown for analysis; each is initially private to its owner.}
+\label{tab:goals}
+\begin{tabular}{lcccc}
+\toprule
+Goal & Required commitments & P0 & P1 & P2\\
+\midrule
+G0 & $B,C,D$ & Neutral & Neutral & Avoid\\
+G1 & $A,B,C$ & Want & Neutral & Neutral\\
+G2 & $C,D$ & Want (hidden) & Avoid & Want (hidden)\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The proposal order is P2, P0, P1, P2, P0, P1. P2 first offers to obtain
+$A$ without adding a commitment, and P0 rejects. P0 investigates P2/G2
+and learns want. P1 then investigates P0/G2, and P2 passes. At P0's
+second proposal, all commitments are inactive. P0 retains its own
+investigation answer, and P2's offer quota has been consumed by its first
+proposal. Table~\ref{tab:caseq} lists all actions at this context.
+
+\begin{table}[tb]
+\centering\small
+\caption{P0's action values at its second proposal, including the final
+P1 proposal and responses under the saved reference.}
+\label{tab:caseq}
+\begin{tabularx}{\textwidth}{Yr}
+\toprule
+Action & Q\\
+\midrule
+Pass & $2/9$\\
+Offer to P1: add $B$ only & $1/2$\\
+Offer to P1: add $C$ only & $2/9$\\
+Offer to P1: add $A$ only & $5/12$\\
+Offer to P1: add $A,B$ & $2/3$\\
+Offer to P1: add $A,C$ & $2/9$\\
+Offer to P2: add $D$ only & $23/30$\\
+Offer to P2: add $A$ only & $5/12$\\
+Offer to P2: add $A,D$ & $17/18$\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+With the answer available, P0 optimally offers $A+D$ to P2, which accepts.
+P1's final reference proposal mixes equally among three own-utility-tied
+choices. These produce P0 payoffs $5/6$, $7/6$, and $5/6$, giving
+\begin{equation}
+ Q_i(I,A+D)=\frac{1}{3}\left(\frac{5}{6}+\frac{7}{6}+\frac{5}{6}\right)
+ =\frac{17}{18}.
+\end{equation}
+This value includes future negotiation and depends on the specified
+reference mixture at P1's proposal.
+
+When the private answer is omitted, P0 must use one policy across the
+three answer contexts. The omission-optimal action offers $A+B$ to P1,
+yielding $2/3$ in the realised want context. Therefore
+\begin{equation}
+ S_{\mathrm{answer}}(I)=\frac{17}{18}-\frac{2}{3}=\frac{5}{18}.
+\end{equation}
+The neutral and avoid contexts retain the same optimal $A+B$ offer and
+have zero omission loss. Information thus changes which partner and
+contract P0 should choose. Replaying 448 native continuation nodes matches
+the three context-specific Q/S records, and an independent LP gives the
+loss interval $[5/18,5/18]$ over own-optimal omission policies for this
+fixed reference. At the earlier pre-query decision, the investigation's
+advantage over the best non-query action is $71/810$. The difference
+between these quantities reflects acquisition before observing the answer
+and utilisation at the realised later context.
+
+\section{Discussion}
+The results identify three requirements for a useful slice curriculum.
+A game must offer strategically different actions, observations must
+help select among them, and the model's samples must expose a reward
+contrast. These requirements can fail independently. More hidden
+preferences create uncertainty, but many answer groups still share a
+common optimal action. Additional commitments create new contracts, yet
+positive S may remain concentrated in a few parents. Finally, a meaningful
+Q difference provides no within-group task signal when all responses
+choose the same action.
+
+The response objective also affects what counts as relevant information.
+An H2 analysis finds 395 response contexts sensitive to the social tie
+rule despite zero main own S; 277 terminal responses have verified losses
+to other players~\cite{sparse}. The focal scorer currently uses own
+regret, while the reference distinguishes these ties. One recorded
+response has equal own values but other-player totals of 2 and 4, with
+both actions receiving the same task reward~\cite{protocol}. Aligning
+response evaluation and reward is therefore part of the next methodological
+step.
+
+The present evidence is conditional on the saved reference policies and
+numerical certification. Independent LP checks establish selected
+witnesses, while broader sensitivity to partner policies remains open.
+Correlated histories and missing solver labels also affect the coverage
+of a training set. We retain these distinctions in evaluation by reporting
+parent-level coverage, context counts, and reference visitation separately.
+
+\section{Research Plan for the Next Semester}
+The next stage will test whether a curriculum selected by strategic
+relevance and model difficulty improves coordination. We will first
+complete the slice specification: the parent-game distribution, model
+control horizon, continuation policy, and response scoring objective.
+The prompt will present the rules, public history, current commitments,
+and cumulative private answers consistently at every decision. Q/S labels
+and response rewards will be checked against this common specification.
+
+We will then construct 800 candidate slices from the parent pool and
+measure D using the base model under fixed prompting and decoding
+conditions. Selection of the final 100 training slices will combine this
+measurement with Q/S and structural coverage. The curriculum will include
+information acquisition, use of existing answers, behavioural inference,
+and cases where investigation is unnecessary. Splits will be assigned by
+parent game before model-guided selection to separate related histories
+across training and evaluation. The new pool has not yet undergone this
+candidate-generation or D stage.
+
+The main experiment will compare targeted slice training with complete-game
+self-play and the unchanged model using a common starting checkpoint and
+equal budgets of generated response tokens. Ablations will examine the
+contribution of inference and conditional-planning objectives. Training
+analysis will track distinct sampled actions, nonzero task advantages,
+and investigation accuracy alongside reward and regret. This directly
+tests whether the revised curriculum addresses the weaknesses observed
+in the terminal-slice run.
+
+Evaluation will cover held-out negotiation games and sequential calendar
+coordination. Negotiation metrics will include action validity, regret,
+information acquisition, and terminal utility. Scheduling evaluation will
+measure final retained meetings, complete games, communication, and
+rescheduling costs. Repeated runs and paired scenarios will quantify
+variation, and partner-policy tests will examine generalisation beyond
+same-model teams. Each experiment will preserve its model, data, prompt,
+and resolved configuration so that comparisons remain reproducible.
+
+\section{Conclusion}
+We investigate strategic game slices as a basis for diagnosing and
+training coordination under private information. Matched interventions
+show that correct preference judgments leave substantial planning error,
+and initial slice-trained checkpoints improve meeting retention in a
+sequential scheduling task. Training and game-structure analyses further
+identify sparse information relevance and limited sampled action diversity
+as distinct obstacles. The three-player studies provide concrete,
+independently checked examples in which information changes the optimal
+contract. Building on these results, the next phase will evaluate a
+curriculum that connects strategic relevance, measured model difficulty,
+and effective training signal.
+
+\paragraph*{AI assistance.}
+Generative AI tools assisted literature discovery, manuscript drafting,
+and LaTeX preparation.
+
+\clearpage
+\begin{thebibliography}{99}
+\small\setstretch{1.0}\raggedright
+\setlength{\parskip}{0pt}
+
+\bibitem{ipomdp} P. J. Gmytrasiewicz and P. Doshi.
+``A Framework for Sequential Planning in Multi-Agent Settings.''
+\emph{Journal of Artificial Intelligence Research}, 24:49--79, 2005.
+\href{https://doi.org/10.1613/jair.1579}{doi:10.1613/jair.1579}.
+
+\bibitem{bad} J. Foerster et al.
+``Bayesian Action Decoder for Deep Multi-Agent Reinforcement Learning.''
+\emph{ICML}, PMLR 97:1942--1951, 2019.
+\url{https://proceedings.mlr.press/v97/foerster19a.html}.
+
+\bibitem{hop} Y. Huang, A. Liu, F. Kong, Y. Yang, S.-C. Zhu, and X. Feng.
+``Efficient Adaptation in Mixed-Motive Environments via Hierarchical Opponent
+Modeling and Planning.'' \emph{ICML}, PMLR 235:20004--20022, 2024.
+\url{https://openreview.net/pdf?id=disVlUOH4b}.
+
+\bibitem{tom} H. Li et al.
+``Theory of Mind for Multi-Agent Collaboration via Large Language Models.''
+\emph{EMNLP}, pp. 180--192, 2023.
+\url{https://aclanthology.org/2023.emnlp-main.13/}.
+
+\bibitem{multiagentbench} K. Zhu et al.
+``MultiAgentBench: Evaluating the Collaboration and Competition of LLM Agents.''
+\emph{ACL}, pp. 8580--8622, 2025.
+\url{https://aclanthology.org/2025.acl-long.421/}.
+
+\bibitem{benac} L. Benac, J. Raedler, Z. Ma, and F. Doshi-Velez.
+``A Benchmark for Multi-Party Negotiation Games from Real Negotiation Data.''
+arXiv:2603.14066, 2026. \url{https://arxiv.org/abs/2603.14066}.
+
+\bibitem{marshal} H. Yuan et al.
+``MARSHAL: Incentivizing Multi-Agent Reasoning via Self-Play with Strategic LLMs.''
+\emph{ICLR}, 2026. \url{https://openreview.net/pdf?id=GCd5v3ehmr}.
+
+\bibitem{sacl} J. Chen et al.
+``Accelerate Multi-Agent Reinforcement Learning in Zero-Sum Games with Subgame
+Curriculum Learning.'' \emph{AAAI}, 38(10):11320--11328, 2024.
+\href{https://doi.org/10.1609/aaai.v38i10.29011}{doi:10.1609/aaai.v38i10.29011}.
+
+\bibitem{grpo} Z. Shao et al.
+``DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models.''
+arXiv:2402.03300, 2024. \url{https://arxiv.org/abs/2402.03300}.
+
+\bibitem{otherplay} H. Hu, A. Lerer, A. Peysakhovich, and J. Foerster.
+``Other-Play for Zero-Shot Coordination.'' \emph{ICML}, PMLR 119:4399--4410, 2020.
+\url{https://proceedings.mlr.press/v119/hu20a.html}.
+
+\bibitem{calbench} C. Zou, Y. Yao, S. She, and R. D. Hawkins.
+``CalBench: Evaluating Coordination-Privacy Trade-offs in Multi-Agent LLMs.''
+arXiv:2605.09823, 2026. \url{https://arxiv.org/abs/2605.09823}.
+
+\bibitem{qwen} Qwen Team.
+\emph{Qwen3-4B-Instruct-2507: Official Model Card}, 2025.
+\url{https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507}.
+
+\bibitem{manuscript} Project working manuscript.
+\emph{Learning to Coordinate through Strategic Game Slices}, September 2026.
+Local source: \href{main.tex}{\texttt{paper/main.tex}} and its included sections.
+Historical claims are qualified by the subsequent audits cited below.
+
+\bibitem{diagnostic} Project experimental archive.
+\emph{Diagnostic v9: Seven-Model H100-47 Results}, 26 September 2026.
+\href{../new/diagnostic_v9_results_20260926/README.md}{Local diagnostic report and archive index}.
+
+\bibitem{inventory} Project evidence inventory.
+\emph{CalBench Transfer Results Inventory}, September 2026.
+\href{calbench_transfer_inventory.md}{Local inventory with per-run raw-evidence links}.
+
+\bibitem{trainingaudit} Project audit.
+\emph{Job 960070: Local Training-Log Review}, 17 October 2026.
+\href{../new/terminal_node_v6_training_960070/review_20261017/README.md}{Local full-run audit, validation, and sampling analysis}.
+
+\bibitem{pipeline} Project configuration record.
+\emph{September and Current Pipeline Configuration Snapshots and Comparison},
+17 October 2026, with dated updates through 29 October 2026.
+\href{../examples/strategic_slices/PIPELINE_CONFIG_COMPARISON_20261017.md}{Local comparison report};
+\href{../examples/strategic_slices/versions/index.json}{version registry}.
+
+\bibitem{protocol} Project protocol audit.
+\emph{Input Form, State Disclosure, Memory, and Response Tie-Breaking Review},
+21 October 2026.
+\href{../examples/strategic_slices/PROMPT_PROTOCOL_REVIEW_20261021.md}{Local protocol review and scoring counterexample}.
+
+\bibitem{qs} Project label audit.
+\emph{Game 25 Diagnosis, Node Q/S, and Interactivity Audit}, 23 October 2026.
+\href{../examples/strategic_slices/SOLVER_QS_AUDIT_20261023.md}{Local terminal/window analysis and independent LP evidence}.
+
+\bibitem{h2} Project investigation.
+\emph{Local Three-Player H2 Follow-Up}, 24 October 2026.
+\href{../examples/strategic_slices/LOCAL_THREE_PLAYER_FOLLOWUP_20261024.md}{Local 33-case attempt and 31-case certification report}.
+
+\bibitem{a2h2} Project paired investigation.
+\emph{Three-Player A2H2 versus H2 Paired Results}, 24--25 October 2026.
+\href{../examples/strategic_slices/A2H2_PAIRED_RESULTS_20261024.md}{Local paired analysis and LP validation evidence}.
+
+\bibitem{sparse} Project diagnostic.
+\emph{Causes of Sparse H2 Information Signal}, 24 October 2026.
+\href{../examples/strategic_slices/H2_SPARSE_S_CAUSES_20261024.md}{Local full-31-game cause and social-tie audit}.
+
+\bibitem{structure} Project return audit.
+\emph{Structure-Coverage Pilot: Remote Return Audit and Paired Results},
+29 October 2026.
+\href{../examples/strategic_slices/STRUCTURE_POOL_RETURN_AUDIT_20261029.md}{Local 24-parent report, hashes, and native replay evidence}.
+
+\bibitem{walkthrough} Project case study.
+\emph{Three-Player Walkthrough: Game Definition, Q/S, Slices, and D},
+29 October 2026.
+\href{../examples/strategic_slices/THREE_PLAYER_WALKTHROUGH_20261029.md}{Local index-10 walkthrough and independent LP evidence}.
+\end{thebibliography}
+\end{document}

@@ -103,3 +103,7 @@ These changes require a fresh launch; speedup has not yet been benchmarked.
 ## CalBench sequential suite
 
 New `--suite stream`: 24 frozen four-player, three-meeting games with temperature 0 and three scenario seeds per condition. See [design, scoring and commands](CALBENCH_STREAM.md). The historical 12-case `formal` suite is unchanged.
+
+## Generic Base+MS (2026-11-02)
+
+Opt-in two-stage conditioning for the frozen CalBench stream24 suite: [design, concrete example and commands](CALBENCH_BASE_MS.md). Native invocation remains the default. CPU fixture checks are separate from model evaluation; no new model results or training.

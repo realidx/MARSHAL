@@ -1,0 +1,76 @@
+{
+  "version": "general-ms-conditioning-v2-shared-budget",
+  "date": "2026-11-02",
+  "status": "IMPLEMENTED_OFFLINE_VALIDATED_NOT_MODEL_EVALUATED",
+  "parent_unchanged_verified": true,
+  "instruction_bodies_unchanged_verified": true,
+  "validation": {
+    "passed": 48,
+    "exit_code": 0,
+    "command": "PYTHONPATH=/private/tmp/calbench-ms-deps:$PWD python -m pytest -q tests/agentic/test_calbench_ms.py tests/agentic/test_final_calbench.py --tb=short --color=no",
+    "scope": [
+      "shared-budget subtraction uses actual provider completion_tokens on each native call",
+      "MS cap remains full total without stage reservation",
+      "valid exact-total completion accepted",
+      "missing/invalid/overcap usage and exhausted MS abort before execution",
+      "old fixed allocation explicitly rejected",
+      "native lifecycle requests and no independent MS memory",
+      "all24 fixture replay parity",
+      "launcher/CLI/snapshots/native source and data integrity"
+    ],
+    "warnings": "6037 inherited native utcnow/test-harness warnings; no GPU validation"
+  },
+  "runtime_changes": "No new packages/configuration changes; reused isolated /private/tmp/calbench-ms-deps from v1. Actual process identity in validation/pipeline_snapshot.json.",
+  "real_model_calls": 0,
+  "training": false,
+  "D": "NOT_MEASURED",
+  "production_active": {
+    "version": "terminal-node-regret-grpo-readable-v8",
+    "prompt_version": "terminal-readable-named-v2",
+    "path": "examples/strategic_slices/versions/terminal_v8_readable_20261018/SNAPSHOT.json",
+    "sha256": "3131f1a60d745602e938ccbb38fb4fac1619347316455aa5ea6de7d61117d146"
+  },
+  "source_sha256": {
+    "examples/final_evaluation/interaction_scaffold.py": "60b5b3b0880c1d11f674f3dad94b96fdd19ccf8d2013e24a0f0145a998dddd31",
+    "examples/final_evaluation/calbench_scaffold.py": "300914843f077e7d2fa473be0afdf2553834ec8e2a59af463abdcf57df2cfb4f",
+    "examples/final_evaluation/calbench_local.py": "d03956044c0e2d12bbc2e45cc678333cc5cd7fb3a7e83c2f09a298549108a425",
+    "examples/final_evaluation/export_calbench_ms.py": "046ae76c6cbe2beffb2ea1eddd0422fc27c3a100e7c7a6aa3db22610fca9df10",
+    "examples/final_evaluation/launch_calbench_local.py": "f16c0e4eafef9879d434fac04892d6323d62be98f8625f54f65bc6de99df6dc0",
+    "tests/agentic/test_calbench_ms.py": "814325c97a9e6ee316e5a6b450954bd932e4b81c2ecef10e2fce2bcf29663664",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "5c5def9751f608ef1f609b32ba8905dbba5c1214dcb2c1d5ebfbec2502561eab",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659"
+  },
+  "inputs": {
+    "suite_manifest_sha256": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "source_manifest_sha256": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "limitations": [
+    "Output cap uses provider completion_tokens, not string-length estimates; server must report valid counts.",
+    "Reasoning tokens already included in completion_tokens are not counted twice.",
+    "MS can consume the entire total; no action tokens reserved and no automatic refills.",
+    "Shared output cap does not match input FLOPs or latency.",
+    "Fixture usage is synthetic; no model effectiveness claim."
+  ],
+  "artifacts_sha256": {
+    "preview/PROMPT_PREVIEW.md": "8544b1b0af406f4ba915fcff99d1a2f3e2c98ddb20c217eb385461d47ace916f",
+    "preview/ms/transport-agent-0.jsonl": "f1c22d352c796102ae2191bbf1d90f1507b9f682266222366421cd84959c6fb5",
+    "preview/pipeline_snapshot.json": "0f0bf2ea15b85c19e4d4a1d66f9cfff130ba7577e88066c6cbbb81f70edf32f8",
+    "preview/requests.json": "33c0ab695a93902470f1bedf07845ee15db3ab72a9d6c629639ef84bf6d5c498",
+    "preview/scaffold-agent-0.jsonl": "a42ce1bcbbb49014ac2b841d523c3cac3108be19bb739bd9ca47b0b40beabf2d",
+    "preview/transport-agent-0.jsonl": "620a591f42563536ac854d4caf149673abcc7780d510b9661d3a726d65318cef",
+    "validation/all24_fixture_summary.json": "a90516b22fe3275ee7ad7ddee0ab5e8d0f58c8704e1f7fc4fadd3f1560d1ae92",
+    "validation/offline_fixture_replays.tar.gz": "cd82401014cf67fe3536710d5400239b6a78fee72e6cd514560b996de46528e8",
+    "validation/pipeline_snapshot.json": "0e2d843b18a3567f841ff82769a7ee34d53905ac15edd91322409da7d787179c",
+    "validation/pytest_output.txt": "44940bec970a68263e02a942b327626094ba7c014d440a5bdfb8116cb8f5d2e8",
+    "source/examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659",
+    "source/examples/final_evaluation/calbench_local.py": "d03956044c0e2d12bbc2e45cc678333cc5cd7fb3a7e83c2f09a298549108a425",
+    "source/examples/final_evaluation/calbench_scaffold.py": "300914843f077e7d2fa473be0afdf2553834ec8e2a59af463abdcf57df2cfb4f",
+    "source/examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "source/examples/final_evaluation/calbench_stream_metrics.py": "5c5def9751f608ef1f609b32ba8905dbba5c1214dcb2c1d5ebfbec2502561eab",
+    "source/examples/final_evaluation/export_calbench_ms.py": "046ae76c6cbe2beffb2ea1eddd0422fc27c3a100e7c7a6aa3db22610fca9df10",
+    "source/examples/final_evaluation/interaction_scaffold.py": "60b5b3b0880c1d11f674f3dad94b96fdd19ccf8d2013e24a0f0145a998dddd31",
+    "source/examples/final_evaluation/launch_calbench_local.py": "f16c0e4eafef9879d434fac04892d6323d62be98f8625f54f65bc6de99df6dc0",
+    "source/tests/agentic/test_calbench_ms.py": "814325c97a9e6ee316e5a6b450954bd932e4b81c2ecef10e2fce2bcf29663664"
+  }
+}

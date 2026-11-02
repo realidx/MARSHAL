@@ -96,3 +96,20 @@ advantage、训练参数、采样、评测、保存/恢复或运行环境的改�
   预定六例实跑，5题终局数值认证/QS，5/5独立重载；3题共6个私人正S且当前proposal regret为正，均无公开全want角色。
   index4先SearchLimit，候选600秒独立重试仍BR循环/joint不通过、未测；失败保留，不能置零或按低价值替换。18题未运行，尚无改善信号稀疏证据。
   主Q/S/原生规则/prompt/reward/训练不改，active v8，D未测；详见`examples/strategic_slices/STRUCTURE_POOL_PILOT_20261026.md`与版本EVIDENCE。
+
+- 2026-10-29远端结构池回传已核对：正确runtime_v4剩余18题17认证/QS并17/17独立重载；与本地合并22/24、22/22重载。
+  缺4/11，11候选600秒重试仍内部SearchLimit；保留失败，不当零/低价值替换。错误数值环境取消作业与两次启动前失败隔离，不混入。
+  2733归档文件hash、原480项source和题库身份匹配；所有成功题cutoff_leaves=0，实际到原生第6次proposal终局，不是有限深度近似叶。
+  14/22有任一种own S：私人11题87状态、历史4题27状态，合计114/246713=0.0462%，112当前动作regret>0；reference正S63状态、占决策概率质量0.5476%，非模型D。
+  仅10完整配对：私人正S父游戏uniform5/10对shared_goal4/10；合并历史变5/10对7/10，不能硬设同目标隐藏位置优于随机。
+  bundled9/11对split5/11有own S，全linear5/6有信号但缺失两题也是linear；小样分层关联非因果/效果证明，正式100分布未定。
+  14父游戏15最大渠道见证原生剩余游戏Q重放全匹配，未新做遗漏森林LP/跨reference稳健性；主Q/S/prompt/reward/训练未改，active v8，D未测。
+  见`examples/strategic_slices/STRUCTURE_POOL_RETURN_AUDIT_20261029.md`及独立审阅v1 EVIDENCE；旧关闭报告不改。
+
+- 2026-10-29用户要求停止盲目推进、先审查三人具体流程：见`examples/strategic_slices/THREE_PLAYER_WALKTHROUGH_20261029.md`。
+  [1,1,2]仅为本轮可求解实例参数范围，不是原GameSpec限制，也未确定为正式父池默认；实际新24index10为[1,2,1]，与旧original_index10不是同一题。
+  使用保存reference重放该例公开历史并按native step持续私有答案；448节点、三个答案context的Q/S匹配，完整/遗漏LP及目标最优面边界给S=[5/18,5/18]。
+  最优报价Q17/18包含最后P1在自身proposal平局时的reference混合；仅此固定reference下核验，不宣称跨均衡唯一；调查前Q优势71/810与当前S不同。
+  当前已实现的节点Q/S不等于已导出新版800slices；模型控制长度/退出续接、最终prompt与response评分对齐、D仍需审查，不将旧k=1/2/3分布自动激活为新设置。
+  用户流程为父游戏池→800候选slices→D→100训练slices，不能将最终100混写为100父游戏；本轮不生成候选、不测模型、不改游戏/prompt/reward/训练，active v8。
+  独立走读v1保存source/input/实际pipeline_snapshot与验证证据；先完成用户审查，再推进数据与训练配置。

@@ -1,0 +1,86 @@
+{
+  "version": "general-ms-conditioning-v1",
+  "date": "2026-11-02",
+  "status": "IMPLEMENTED_OFFLINE_VALIDATED_NOT_MODEL_EVALUATED",
+  "tests": {
+    "passed": 35,
+    "command": "PYTHONPATH=/private/tmp/calbench-ms-deps:$PWD python -m pytest -q tests/agentic/test_calbench_ms.py tests/agentic/test_final_calbench.py --tb=short --color=no",
+    "exit_code": 0,
+    "scope": [
+      "native data/source hashes",
+      "all24 native-engine fixture parity",
+      "native cheap-talk/decision/retry/voluntary request construction",
+      "no independent MS history",
+      "same endpoint across stages and token accounting",
+      "empty/truncated analysis abort and missing-score identity",
+      "explicit launcher selection and CLI snapshot"
+    ],
+    "warnings": "6037 warnings: 6035 native Pydantic utcnow deprecations, two repo test harness torch/CUDA-version notices; no GPU inference"
+  },
+  "actual_model_calls": 0,
+  "training": false,
+  "D": "NOT_MEASURED",
+  "production_active": "terminal-node-regret-grpo-readable-v8",
+  "environment_changes": {
+    "scope": "isolated /private/tmp/calbench-ms-deps; base environment and pinned third_party sources not edited",
+    "python": "3.12.2 | packaged by conda-forge | (main, Feb 16 2024, 20:54:21) [Clang 16.0.6 ]",
+    "packages": "validation/requirements_added.txt",
+    "attempts": [
+      "Initial sandboxed pip install failed on DNS; no package installed by that attempt.",
+      "Pinned opentelemetry-api installed through approved network execution.",
+      "SDK install initially skipped an existing namespace; retried with --upgrade in the same isolated target.",
+      "Initial test run: 28 passed, 4 failed (three SDK import failures, one overbroad reference substring assertion).",
+      "Namespace install completed and leakage assertion corrected; intermediate suite 34 passed.",
+      "After resolved-config and CLI/reporting tests: final suite 35 passed."
+    ],
+    "solver_note": "ortools is absent in this CPU process; native optional solver implementation was not changed; frozen certificates and native replays passed.",
+    "threads": "not separately measured; no thread setting changed by this implementation"
+  },
+  "baseline": "Frozen stream24/native prompt; no archived record or closed snapshot overwritten",
+  "source_sha256": {
+    "examples/final_evaluation/interaction_scaffold.py": "7c66bf72254a5305d47a9d7ca09389a71dee19405e413a4678d51f0b6848dd18",
+    "examples/final_evaluation/calbench_scaffold.py": "becb70a3d6ec840dbb03ed8675c2c392408048530cbfd48425f024f894204ef6",
+    "examples/final_evaluation/calbench_local.py": "fa44e5b53726627dd30ec5db737585da5726cc65fe4b8f6b0f549cd914d379e3",
+    "examples/final_evaluation/export_calbench_ms.py": "d535df6e721454eac0a0b7b01375abc20303cb224ac396cb7343dd717eb45b9f",
+    "examples/final_evaluation/launch_calbench_local.py": "ee9ae5f706eef2d64b156815ea94fc817bc2af3f7866fe404080fa394ea5fbfa",
+    "tests/agentic/test_calbench_ms.py": "af7aeb355191d7c09e8fe9b9cf3cd12109f3484be12356e3376f5146630bdf9a",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "5c5def9751f608ef1f609b32ba8905dbba5c1214dcb2c1d5ebfbec2502561eab",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659"
+  },
+  "inputs": {
+    "suite_manifest_sha256": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "source_manifest_sha256": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "request_export": "preview/requests.json",
+  "full_preview": "preview/PROMPT_PREVIEW.md",
+  "limitations": [
+    "Synthetic responses and messages are not model evidence.",
+    "Base+MS adaptations are not a verbatim ToMA reproduction.",
+    "Output cap matching is not input-token/FLOP/latency matching.",
+    "No model checkpoint selected or evaluated in this change.",
+    "24 cases are paired/shared-seed structures; s1 has development-use history."
+  ],
+  "artifacts_sha256": {
+    "preview/PROMPT_PREVIEW.md": "bca622a9d2ad23cb09cf60825732f8e637c93dcb3751e26dcc8c6d8048c745a6",
+    "preview/ms/transport-agent-0.jsonl": "a1f7589e6f4d4041b04c7697c6c83f9ed462e117c2f652682485f02d70858e6e",
+    "preview/pipeline_snapshot.json": "72edc7e012741cf8047c6c49e8bf7e24d6e689cf726b1ce1c650ae676683ed18",
+    "preview/requests.json": "a40f42c63e678b745bd240d41f0d29b7b0aa15463fd37eabc3f9a5bbd98516db",
+    "preview/scaffold-agent-0.jsonl": "af65c412a620102ca40e2824329311f976d172fd57fbc22765c372c273f8e4a9",
+    "preview/transport-agent-0.jsonl": "00ff17763dfa38a2da8018647c1a2973be7650fe890605dc71e1c6c9cf16b703",
+    "validation/all24_fixture_summary.json": "5f8eef6f7124f5d7039ae55e9a9b6947a309310ea5b369579af2b43d22034641",
+    "validation/offline_fixture_replays.tar.gz": "9be803aacade53e2c2af6e3658597ee6851578a6202276cedb880c33628709bf",
+    "validation/pipeline_snapshot.json": "b4a560b76c49b7ced7ee71b4e0a2f251f903cfffa1fb96c852f0793d62ed3628",
+    "validation/pytest_output.txt": "ef1a7751813d8ed5bb9c49de5f09c0c16cd3ed4ab20ce62c672e7a8ce4acc832",
+    "validation/requirements_added.txt": "69e40531dfb868275b44273ab3ebd16823ad5d1fac9ddfffc34a36db48d52123",
+    "source/examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659",
+    "source/examples/final_evaluation/calbench_local.py": "fa44e5b53726627dd30ec5db737585da5726cc65fe4b8f6b0f549cd914d379e3",
+    "source/examples/final_evaluation/calbench_scaffold.py": "becb70a3d6ec840dbb03ed8675c2c392408048530cbfd48425f024f894204ef6",
+    "source/examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "source/examples/final_evaluation/calbench_stream_metrics.py": "5c5def9751f608ef1f609b32ba8905dbba5c1214dcb2c1d5ebfbec2502561eab",
+    "source/examples/final_evaluation/export_calbench_ms.py": "d535df6e721454eac0a0b7b01375abc20303cb224ac396cb7343dd717eb45b9f",
+    "source/examples/final_evaluation/interaction_scaffold.py": "7c66bf72254a5305d47a9d7ca09389a71dee19405e413a4678d51f0b6848dd18",
+    "source/examples/final_evaluation/launch_calbench_local.py": "ee9ae5f706eef2d64b156815ea94fc817bc2af3f7866fe404080fa394ea5fbfa",
+    "source/tests/agentic/test_calbench_ms.py": "af7aeb355191d7c09e8fe9b9cf3cd12109f3484be12356e3376f5146630bdf9a"
+  }
+}

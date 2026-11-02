@@ -14,6 +14,9 @@ import time
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
+from examples.final_evaluation.calbench_scaffold import ScaffoldFailure
+from examples.final_evaluation.interaction_scaffold import VERSION as SCAFFOLD_VERSION
+
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / 'third_party/calbench'
 
@@ -159,10 +162,14 @@ def run_one(job, routes, output):
     (folder / 'scenario.json').write_text(json.dumps(scenario, indent=2) + '\n')
     (folder / 'manifest.json').write_text(json.dumps(dict(stage='formal' if job.get('formal_case') or job.get('stream_case') else 'development', formal_test=bool(job.get('formal_case') or job.get('stream_case')),
         source_hash=source_hash, config=cfg, routes=routes, job=job), indent=2) + '\n')
+    use_ms = routes.get('scaffold', 'native') == 'base-ms'
+    if use_ms:
+        from examples.final_evaluation.calbench_scaffold import MSTransport, write_snapshot
     original = game_module.make_llm_client
     def factory(spec):
         aid = spec['agent_id']
-        return Transport(routes['endpoints'][spec['model']], routes, folder, job['seed'], aid)
+        cls = MSTransport if use_ms else Transport
+        return cls(routes['endpoints'][spec['model']], routes, folder, job['seed'], aid)
     game_module.make_llm_client = factory
     class LiveEvents(EventLog):
         def append(self, type, data=None, **extra):
@@ -175,6 +182,8 @@ def run_one(job, routes, output):
     started = time.monotonic()
     try:
         game = CalendarGame(cfg)
+        if use_ms:
+            write_snapshot(folder, routes, game_config=game.config.model_dump(mode='json'), job=job)
         game.events = LiveEvents()
         trace = game.run_with_scenario(scenario)
         trace.ended_at = datetime.now(timezone.utc)
@@ -188,6 +197,15 @@ def run_one(job, routes, output):
                       event_counts=dict(events), metrics=json.loads(trace.model_dump_json())['metrics'],
                       healthy_transport=bool(calls) and counts['infrastructure_failure']==0,
                       all_generations_untruncated=counts['truncated']==0)
+        if use_ms:
+            ms_calls = [json.loads(line) for p in (folder/'ms').glob('transport-*.jsonl') for line in p.read_text().splitlines()]
+            result['scaffold'] = dict(version=SCAFFOLD_VERSION, native_calls=len(calls),
+                ms_calls=len(ms_calls), physical_calls=len(calls)+len(ms_calls),
+                ms_log_scope='ms/transport-agent-*.jsonl; not action-format attempts',
+                usage={k: (sum(c.get('response', {}).get('usage', {}).get(k, 0) for c in calls+ms_calls)
+                       if all(isinstance(c.get('response', {}).get('usage', {}).get(k), int) for c in calls+ms_calls) else None)
+                       for k in ('prompt_tokens', 'completion_tokens', 'total_tokens')})
+            result['healthy_scaffold'] = True
         if case:
             result['reference' if job.get('formal_case') or job.get('stream_case') else 'development_reference']=case['reference']
             result['native_oracle_scores_valid']=not bool(case['scenario'].get('prior_meetings'))
@@ -215,10 +233,14 @@ def run_one(job, routes, output):
                 oracle_scope='Full-stream hindsight; not an online-policy oracle')
         (folder / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
         return result
-    except InfrastructureFailure as exc:
+    except (InfrastructureFailure, ScaffoldFailure) as exc:
+        infrastructure = isinstance(exc, InfrastructureFailure)
         result=dict(game_id=job['game_id'],formal_test=bool(job.get('formal_case') or job.get('stream_case')),engine_finished=False,
-                    healthy_transport=False,error_type='InfrastructureFailure',error=str(exc),
+                    healthy_transport=not infrastructure,
+                    error_type=type(exc).__name__,error=str(exc),
                     elapsed_seconds=time.monotonic()-started,metrics=None)
+        if use_ms:
+            result['healthy_scaffold'] = False
         (folder/'result.json').write_text(json.dumps(result,indent=2)+'\n')
         return result
     finally:
@@ -233,10 +255,22 @@ def main():
     parser.add_argument('--parallel-games', type=int, default=2)
     parser.add_argument('--seed', type=int, default=2026091800)
     parser.add_argument('--suite',choices=['smoke','structures','formal','stream'],default='smoke')
+    parser.add_argument('--scaffold', choices=['native', 'base-ms'], default=None)
     args = parser.parse_args()
     if not 1 <= args.games <= 4 or args.parallel_games < 1:
         parser.error('Development run: games=1..4, parallel-games>=1')
     routes = load_routes(args.routes)
+    if args.scaffold is not None:
+        routes['scaffold'] = args.scaffold
+    if routes.get('scaffold', 'native') not in ('native', 'base-ms'):
+        parser.error('Unknown scaffold')
+    use_ms = routes.get('scaffold', 'native') == 'base-ms'
+    if use_ms:
+        if args.suite != 'stream':
+            parser.error('Base+MS is registered only for the frozen stream24 suite')
+        from examples.final_evaluation.calbench_scaffold import protocol, verify_registration, write_snapshot
+        protocol(routes)
+        verify_registration()
     verify_source()
     args.output.mkdir(parents=True, exist_ok=False)
     jobs = [dict(game_id=f'dev_{i}', seed=args.seed, focal_seat=i) for i in range(args.games)]
@@ -269,6 +303,14 @@ def main():
         jobs=[dict(game_id=c['id'],seed=c['scenario']['seed'],focal_seat=i,
                    **{('stream_case' if args.suite=='stream' else 'formal_case'):c['id']}) for i,c in enumerate(cases)]
         (args.output/'frozen_manifest.json').write_bytes((FROZEN/'manifest.json').read_bytes())
+    if use_ms:
+        execution = json.loads((args.output/'execution_protocol.json').read_text())
+        execution.update(native_execution_protocol=execution['protocol'], protocol=SCAFFOLD_VERSION,
+                         prompt_changed=True, scaffold=protocol(routes),
+                         result_role='scaffold_experiment_primary_budget' if routes['max_tokens']==4096 else 'scaffold_diagnostic_budget')
+        (args.output/'execution_protocol.json').write_text(json.dumps(execution, indent=2)+'\n')
+        write_snapshot(args.output, routes, cli=dict(argv=sys.argv, parsed={k:str(v) if isinstance(v,Path) else v for k,v in vars(args).items()}),
+                       game_config=frozen['config'])
     results = []
     with ProcessPoolExecutor(max_workers=args.parallel_games, mp_context=mp.get_context('spawn')) as pool:
         # Submit one bounded batch at a time: a dead server must not consume
@@ -280,10 +322,10 @@ def main():
                 result=future.result();results.append(result);batch.append(result)
                 (args.output/'results.json').write_text(json.dumps(results,indent=2)+'\n')
                 print(f'Finished {len(results)}/{len(jobs)}',flush=True)
-            if any(not r['healthy_transport'] for r in batch):
-                (args.output/'RUN_FAILED.json').write_text(json.dumps(dict(reason='infrastructure_failure',
+            if any(not r['healthy_transport'] or not r.get('healthy_scaffold', True) for r in batch):
+                (args.output/'RUN_FAILED.json').write_text(json.dumps(dict(reason='infrastructure_or_scaffold_failure' if use_ms else 'infrastructure_failure',
                     attempted=[r['game_id'] for r in results],not_started=[j['game_id'] for j in jobs[offset+args.parallel_games:]]),indent=2)+'\n')
-                raise RuntimeError('Infrastructure failure; remaining games were not started')
+                raise RuntimeError(('Infrastructure/scaffold failure' if use_ms else 'Infrastructure failure') + '; remaining games were not started')
     (args.output / 'RUN_FINISHED.json').write_text(json.dumps(dict(formal_test=args.suite in ('formal','stream'),
         engine_finished=True, healthy_transport=all(r['healthy_transport'] for r in results))) + '\n')
 

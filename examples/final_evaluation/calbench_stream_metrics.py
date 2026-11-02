@@ -90,6 +90,10 @@ def summarize_run(root):
         raw=json.loads(result_path.read_text()) if result_path.exists() else {}
         row=dict(case_id=case['id'],condition=case['structure_group'],scenario_seed=case['scenario_seed'],
                  healthy_transport=raw.get('healthy_transport'),engine_finished=raw.get('engine_finished',False))
+        if 'healthy_scaffold' in raw:
+            row['healthy_scaffold'] = raw['healthy_scaffold']
+        if 'scaffold' in raw:
+            row['scaffold'] = raw['scaffold']
         if trace_path.exists():
             trace=json.loads(trace_path.read_text())
             calls=[json.loads(line) for p in folder.glob('transport-*.jsonl') for line in p.read_text().splitlines()]

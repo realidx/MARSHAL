@@ -1,0 +1,189 @@
+{
+  "schema": 1,
+  "version": "general-ms-conditioning-v1",
+  "scope": "CalBench opt-in evaluation; production active unchanged",
+  "cli": {
+    "command": "PYTHONPATH=/private/tmp/calbench-ms-deps:$PWD python -m pytest -q tests/agentic/test_calbench_ms.py tests/agentic/test_final_calbench.py --tb=short --color=no",
+    "exit_code": 0
+  },
+  "resolved_routes": {
+    "max_tokens": 4096,
+    "temperature": 0,
+    "endpoints": {
+      "q0": {
+        "base_url": "http://127.0.0.1:1/v1",
+        "model": "OFFLINE_FIXTURE"
+      },
+      "focal": {
+        "base_url": "http://127.0.0.1:1/v1",
+        "model": "OFFLINE_FIXTURE"
+      }
+    },
+    "scaffold": "base-ms",
+    "ms_max_tokens": 512
+  },
+  "game_config": {
+    "game_name": "calendar",
+    "num_agents": 4,
+    "agents": [
+      {
+        "type": "llm",
+        "model": "q0",
+        "extra": {},
+        "agent_id": 0
+      },
+      {
+        "type": "llm",
+        "model": "q0",
+        "extra": {},
+        "agent_id": 1
+      },
+      {
+        "type": "llm",
+        "model": "q0",
+        "extra": {},
+        "agent_id": 2
+      },
+      {
+        "type": "llm",
+        "model": "q0",
+        "extra": {},
+        "agent_id": 3
+      }
+    ],
+    "seed": 2026091901,
+    "experiment_run_id": null,
+    "experiment_name": null,
+    "git_hash": null,
+    "extra": {},
+    "num_slots": 8,
+    "density": 0.5,
+    "agent_densities": null,
+    "pref_level": 3,
+    "num_meetings": 3,
+    "num_participants": 3,
+    "max_turns_per_round": 4,
+    "dm_cap": 1000000,
+    "decision_retries": 1,
+    "errand_cost_level": 3,
+    "meeting_cost_level": 1,
+    "enable_fallback": false,
+    "fallback_max_depth": 3,
+    "communication_protocol": "dm",
+    "enable_reflection": false,
+    "reflection_frequency": "round",
+    "reflection_max_parallelism": 20,
+    "task_path": null,
+    "task_id": null,
+    "dsm_num_proposals": 4,
+    "dsm_cascade_depth": 1,
+    "dsm_displacement_targets": 4,
+    "dsm_exhaustive_search": true,
+    "dsm_stop_on_perfect": true,
+    "nosy_agent_ids": [],
+    "dsm_lmin": 1,
+    "dsm_lmax": null,
+    "dsm_beta": 1.0,
+    "dsm_theta": 0.0,
+    "dsm_social_welfare_weight": 1.0,
+    "dsm_privacy_unit_cost": 1.0,
+    "dsm_initial_budget": 100,
+    "sd_model": {},
+    "representation_elo_base": 1500.0,
+    "representation_elo_scale": 400.0
+  },
+  "job": {
+    "game_id": "loose_uniform_s1",
+    "stream_case": "loose_uniform_s1",
+    "seed": 2026091901,
+    "focal_seat": 0
+  },
+  "contract": {
+    "version": "general-ms-conditioning-v1",
+    "mode": "base-ms",
+    "ms_max_tokens": 512,
+    "action_max_tokens": 3584,
+    "total_output_cap_per_native_call": 4096,
+    "calls_per_native_request": 2,
+    "budget_scope": "output-token cap, not matched FLOPs or input tokens",
+    "ms_memory": "no independent MS history; native final assistant responses remain in native history",
+    "analysis_failure": "abort game/run on empty, truncated, unfinished or non-stop MS; no fallback",
+    "action_failure": "retain native parsing/retry policy; do not erase failed attempts",
+    "seed_policy": "action uses original native seed sequence; MS uses SHA256(native seed:ms)",
+    "privacy": "only native visible messages; MS is private and never executed",
+    "environment_reflection": false,
+    "training": false
+  },
+  "source_sha256": {
+    "examples/final_evaluation/interaction_scaffold.py": "7c66bf72254a5305d47a9d7ca09389a71dee19405e413a4678d51f0b6848dd18",
+    "examples/final_evaluation/calbench_scaffold.py": "becb70a3d6ec840dbb03ed8675c2c392408048530cbfd48425f024f894204ef6",
+    "examples/final_evaluation/calbench_local.py": "fa44e5b53726627dd30ec5db737585da5726cc65fe4b8f6b0f549cd914d379e3",
+    "examples/final_evaluation/export_calbench_ms.py": "d535df6e721454eac0a0b7b01375abc20303cb224ac396cb7343dd717eb45b9f",
+    "examples/final_evaluation/launch_calbench_local.py": "ee9ae5f706eef2d64b156815ea94fc817bc2af3f7866fe404080fa394ea5fbfa",
+    "tests/agentic/test_calbench_ms.py": "af7aeb355191d7c09e8fe9b9cf3cd12109f3484be12356e3376f5146630bdf9a",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "5c5def9751f608ef1f609b32ba8905dbba5c1214dcb2c1d5ebfbec2502561eab",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659"
+  },
+  "resolved_transport": {
+    "temperature": 0,
+    "timeout_seconds": 120,
+    "chat_template_kwargs": "native model template; no override",
+    "context_policy": "no adapter truncation; server rejects oversized requests",
+    "context_capacity": "see server_commands; external API capacity otherwise 未记录"
+  },
+  "input_sha256": {
+    "examples/final_evaluation/calbench_stream_v1/manifest.json": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "examples/final_evaluation/calbench_stream_v1/MANIFEST.sha256": "38408db9a785e5358a3e9cb5a26e77371c39529c853cfb2c3166e1b371261d44",
+    "examples/final_evaluation/calbench_source.json": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "registered_snapshot_sha256": "f639495c704831e9fb1473f7e05c32a5184766d6dbb632d3c814be529e89dee4",
+  "model_identity": "未记录（API model alias is not a weight hash）",
+  "runtime": {
+    "python": "3.12.2 | packaged by conda-forge | (main, Feb 16 2024, 20:54:21) [Clang 16.0.6 ]",
+    "executable": "/opt/anaconda3/bin/python",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "dependencies": {
+      "pydantic": "2.5.3",
+      "json-repair": "未记录（当前进程环境未安装）",
+      "ortools": "未记录（当前进程环境未安装）",
+      "opentelemetry-api": "1.38.0",
+      "opentelemetry-sdk": "1.38.0",
+      "opentelemetry-semantic-conventions": "0.59b0",
+      "pytest": "7.4.4",
+      "vllm": "未记录（当前进程环境未安装）",
+      "torch": "2.3.0",
+      "transformers": "未记录（当前进程环境未安装）"
+    },
+    "sys_path": [
+      "/Users/bruce/MARSHAL/third_party/calbench",
+      "/Users/bruce/MARSHAL/third_party/calbench/vendor/a2a-engine",
+      "/Users/bruce/MARSHAL/third_party/calbench",
+      "/Users/bruce/MARSHAL/third_party/calbench/vendor/a2a-engine",
+      "/Users/bruce/MARSHAL/third_party/calbench",
+      "/Users/bruce/MARSHAL/third_party/calbench/vendor/a2a-engine",
+      "/Users/bruce/MARSHAL/third_party/calbench",
+      "/Users/bruce/MARSHAL/third_party/calbench/vendor/a2a-engine",
+      "/Users/bruce/MARSHAL/third_party/calbench",
+      "/Users/bruce/MARSHAL/third_party/calbench/vendor/a2a-engine",
+      "/Users/bruce/MARSHAL",
+      "/Users/bruce/MARSHAL",
+      "/private/tmp/calbench-ms-deps",
+      "/Users/bruce/MARSHAL",
+      "/opt/anaconda3/lib/python312.zip",
+      "/opt/anaconda3/lib/python3.12",
+      "/opt/anaconda3/lib/python3.12/lib-dynload",
+      "/Users/bruce/.local/lib/python3.12/site-packages",
+      "/opt/anaconda3/lib/python3.12/site-packages",
+      "/opt/anaconda3/lib/python3.12/site-packages/aeosa"
+    ],
+    "launcher_environment": "未记录",
+    "server_commands": "未记录"
+  },
+  "evaluation": "original native rules, all four seats, original final-state scoring; hindsight reference only",
+  "reward_advantage_training": "not applicable; no parameter updates",
+  "resume": "existing outputs cannot be overwritten; reruns use new output directories",
+  "execution_kind": "CPU pytest regression; all provider calls mocked",
+  "model_sampling": false,
+  "fixture_contract": "Native and MS run each of 24 frozen games with fixed empty-action provider fixtures; no model policy"
+}

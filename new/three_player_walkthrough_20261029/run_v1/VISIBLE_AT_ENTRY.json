@@ -1,0 +1,428 @@
+{
+  "kind": "Environment facts only; NOT a generated LLM messages/tools request",
+  "public_rules": {
+    "n_players": 3,
+    "n_actions_per_player": [
+      1,
+      2,
+      1
+    ],
+    "goals": [
+      {
+        "goal_id": 0,
+        "binary": false,
+        "required_actions": [
+          {
+            "player_id": 1,
+            "action_id": 0
+          },
+          {
+            "player_id": 1,
+            "action_id": 1
+          },
+          {
+            "player_id": 2,
+            "action_id": 0
+          }
+        ]
+      },
+      {
+        "goal_id": 1,
+        "binary": false,
+        "required_actions": [
+          {
+            "player_id": 0,
+            "action_id": 0
+          },
+          {
+            "player_id": 1,
+            "action_id": 0
+          },
+          {
+            "player_id": 1,
+            "action_id": 1
+          }
+        ]
+      },
+      {
+        "goal_id": 2,
+        "binary": false,
+        "required_actions": [
+          {
+            "player_id": 1,
+            "action_id": 1
+          },
+          {
+            "player_id": 2,
+            "action_id": 0
+          }
+        ]
+      }
+    ],
+    "round_robin": [
+      2,
+      0,
+      1,
+      2,
+      0,
+      1
+    ],
+    "max_changes": 1,
+    "seed": 0,
+    "forbidden_actions": null,
+    "variant": "native-private-unknown-query-offer-quota-v1",
+    "menu_enabled": false,
+    "investigate": {
+      "budget": 1,
+      "budget_scope": "per player per game",
+      "cost": "Consumes the current proposal turn; commitments do not change",
+      "action_visibility": "Query actor and target are public",
+      "result_visibility": "Only the investigator receives the true preference",
+      "targets": "Only non-public preferences of another player not previously investigated by this player",
+      "public_preferences_eligible": false,
+      "already_directly_investigated_eligible": false,
+      "inference_or_utility_used_for_legality": false,
+      "hidden_world_used_for_legality": false
+    },
+    "offer_quota": {
+      "budget": 1,
+      "scope": "per player per game",
+      "charged": "immediately on proposal",
+      "refunded": false,
+      "utility_penalty": 0
+    }
+  },
+  "public_preferences": [
+    {
+      "player": 0,
+      "goal": 0,
+      "value": 0
+    },
+    {
+      "player": 0,
+      "goal": 1,
+      "value": 1
+    },
+    {
+      "player": 1,
+      "goal": 0,
+      "value": 0
+    },
+    {
+      "player": 1,
+      "goal": 1,
+      "value": 0
+    },
+    {
+      "player": 1,
+      "goal": 2,
+      "value": -1
+    },
+    {
+      "player": 2,
+      "goal": 0,
+      "value": -1
+    },
+    {
+      "player": 2,
+      "goal": 1,
+      "value": 0
+    }
+  ],
+  "observation": {
+    "player": 0,
+    "own_preferences": [
+      "neutral",
+      "want",
+      "want"
+    ],
+    "public_state": {
+      "n_players": 3,
+      "n_actions_per_player": [
+        1,
+        2,
+        1
+      ],
+      "max_changes": 1,
+      "forbidden_actions": null,
+      "goals": [
+        {
+          "goal_id": 0,
+          "binary": false,
+          "required_actions": [
+            {
+              "player_id": 1,
+              "action_id": 0
+            },
+            {
+              "player_id": 1,
+              "action_id": 1
+            },
+            {
+              "player_id": 2,
+              "action_id": 0
+            }
+          ]
+        },
+        {
+          "goal_id": 1,
+          "binary": false,
+          "required_actions": [
+            {
+              "player_id": 0,
+              "action_id": 0
+            },
+            {
+              "player_id": 1,
+              "action_id": 0
+            },
+            {
+              "player_id": 1,
+              "action_id": 1
+            }
+          ]
+        },
+        {
+          "goal_id": 2,
+          "binary": false,
+          "required_actions": [
+            {
+              "player_id": 1,
+              "action_id": 1
+            },
+            {
+              "player_id": 2,
+              "action_id": 0
+            }
+          ]
+        }
+      ],
+      "commitments": [
+        [
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "round_robin": [
+        2,
+        0,
+        1,
+        2,
+        0,
+        1
+      ],
+      "turn_index": 4,
+      "current_proposer": 0,
+      "transcript": [
+        {
+          "turn_index": 0,
+          "proposer_id": 2,
+          "action": "OFFER",
+          "partner_id": 0,
+          "offer": {
+            "partner_id": 0,
+            "proposer_action": [
+              0
+            ],
+            "partner_action": [
+              1
+            ]
+          },
+          "response": "REJECT",
+          "commitments_after": [
+            [
+              0
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              0
+            ]
+          ],
+          "invalid_action": false
+        },
+        {
+          "turn_index": 1,
+          "proposer_id": 0,
+          "action": "INVESTIGATE",
+          "player": 2,
+          "goal": 2,
+          "commitments_after": [
+            [
+              0
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              0
+            ]
+          ]
+        },
+        {
+          "turn_index": 2,
+          "proposer_id": 1,
+          "action": "INVESTIGATE",
+          "player": 0,
+          "goal": 2,
+          "commitments_after": [
+            [
+              0
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              0
+            ]
+          ]
+        },
+        {
+          "turn_index": 3,
+          "proposer_id": 2,
+          "action": "PASS",
+          "partner_id": null,
+          "offer": null,
+          "response": null,
+          "commitments_after": [
+            [
+              0
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              0
+            ]
+          ],
+          "invalid_action": false
+        }
+      ],
+      "investigation_remaining_by_player": [
+        0,
+        0,
+        1
+      ],
+      "investigation_budget_scope": "per player per game",
+      "offer_remaining_by_player": [
+        1,
+        1,
+        0
+      ],
+      "offer_used_by_player": [
+        0,
+        0,
+        1
+      ]
+    },
+    "private_results": [
+      {
+        "player": 2,
+        "goal": 2,
+        "preference": "want"
+      }
+    ],
+    "pending_offer": null
+  },
+  "legal_native_actions": [
+    {
+      "action": "PASS"
+    },
+    {
+      "action": "OFFER",
+      "partner_id": 1,
+      "proposer_action": [
+        0
+      ],
+      "partner_action": [
+        1,
+        0
+      ]
+    },
+    {
+      "action": "OFFER",
+      "partner_id": 1,
+      "proposer_action": [
+        0
+      ],
+      "partner_action": [
+        0,
+        1
+      ]
+    },
+    {
+      "action": "OFFER",
+      "partner_id": 1,
+      "proposer_action": [
+        1
+      ],
+      "partner_action": [
+        0,
+        0
+      ]
+    },
+    {
+      "action": "OFFER",
+      "partner_id": 1,
+      "proposer_action": [
+        1
+      ],
+      "partner_action": [
+        1,
+        0
+      ]
+    },
+    {
+      "action": "OFFER",
+      "partner_id": 1,
+      "proposer_action": [
+        1
+      ],
+      "partner_action": [
+        0,
+        1
+      ]
+    },
+    {
+      "action": "OFFER",
+      "partner_id": 2,
+      "proposer_action": [
+        0
+      ],
+      "partner_action": [
+        1
+      ]
+    },
+    {
+      "action": "OFFER",
+      "partner_id": 2,
+      "proposer_action": [
+        1
+      ],
+      "partner_action": [
+        0
+      ]
+    },
+    {
+      "action": "OFFER",
+      "partner_id": 2,
+      "proposer_action": [
+        1
+      ],
+      "partner_action": [
+        1
+      ]
+    }
+  ]
+}

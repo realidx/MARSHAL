@@ -28,10 +28,17 @@ def main():
     parser.add_argument('--max-num-seqs',type=int,default=4)
     parser.add_argument('--disable-chunked-prefill',action='store_true')
     parser.add_argument('--disable-cascade-attn',action='store_true')
+    parser.add_argument('--scaffold', choices=['native', 'base-ms'], default='native')
     parser.add_argument('--suite',choices=['smoke','structures','formal','stream','shapefactory','shapefactory_native_lite'],default='smoke')
     args=parser.parse_args()
     if args.max_tokens is None:
         args.max_tokens = 4096 if args.suite in ('stream','shapefactory','shapefactory_native_lite') else 768
+    if args.scaffold == 'base-ms':
+        if args.suite != 'stream':
+            parser.error('Base+MS requires --suite stream')
+        from examples.final_evaluation.calbench_scaffold import protocol, verify_registration
+        protocol(dict(max_tokens=args.max_tokens))
+        verify_registration()
     if args.suite=='shapefactory_native_lite' and (args.max_tokens!=4096 or args.max_model_len!=98304 or args.disable_thinking):
         parser.error('Frozen ShapeFactory requires 4096 output tokens, 98304 context, and the native chat template')
     if args.parallel_games<1 or args.max_num_seqs<1:parser.error('--parallel-games and --max-num-seqs must be positive')
@@ -61,6 +68,8 @@ def main():
     config['endpoints']['focal']=dict(config['equivalent_replicas'][0])
     config['endpoints']['q0']=dict(config['equivalent_replicas'][-1])
     config['execution_protocol']=f'reasoning-separated-v2-tokens-{args.max_tokens}'
+    if args.scaffold == 'base-ms':
+        config.update(scaffold='base-ms')
     if args.disable_thinking:
         config['chat_template_kwargs']={'enable_thinking':False}
         (out/'thinking_template_check.json').write_text(json.dumps(dict(enabled_suffix=on[-200:],disabled_suffix=off[-200:]),indent=2)+'\n')
