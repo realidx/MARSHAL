@@ -542,7 +542,7 @@
     },
     "calbench24-h10047-v11-minimal-scaffold-20261102": {
       "source_version": "general-belief-ms-v11-minimal",
-      "status": "RUNNING_ACTIVE_INFERENCE_ZERO_COMPLETED_CASES_AT_LATEST_CHECK",
+      "status": "COMPLETED_ALL24_ATTEMPTED_QWEN23_OUTCOME22_WITH_UNRESOLVED_MS_FAILURES",
       "authorization": "User requested pulling the updated code, reviewing it, and submitting scaffold-prompt CalBench tests for the Qwen base checkpoint and outcome-99 step99.",
       "prompt_registration": "general_ms_calbench_v11_minimal_20261102/SNAPSHOT.json",
       "review_status": "AWAITING_USER_REVIEW in the frozen prompt snapshot; the user explicitly authorized these real-model evaluations.",
@@ -555,17 +555,44 @@
           "model_path": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
           "scaffold": "belief-ms",
           "prompt_version": "general-belief-ms-v11-minimal",
-          "status": "RUNNING_MODEL_SERVER_STARTUP",
+          "status": "COMPLETED_23_OF24_ENGINE_FINISHED_ONE_MS_TRUNCATION",
           "node": "xgpi13",
           "output": "../../../runs/calbench_soc/qwen3-4b-instruct-2507-ms-v11-minimal-r1-stream-1063236/",
           "submission_metadata": "../../../runs/calbench_soc/submissions/1063236.json",
-          "progress_at_latest_check": {
-            "in_progress_case_directories": 8,
-            "completed_cases": 0,
-            "total_cases": 24,
-            "server_concurrent_requests": 8,
-            "server_waiting_requests": 0
-          }
+          "cases_expected": 24,
+          "cases_attempted": 24,
+          "cases_completed": 23,
+          "unresolved_cases": [
+            "blocked_varied_s3"
+          ],
+          "healthy_transport_cases": 24,
+          "transport_failures": 0,
+          "suite_elapsed_seconds": 1125.319030046463,
+          "final_valid_meetings": 23,
+          "requested_meetings_completed_cases": 69,
+          "full_stream_games": 1,
+          "semantic_invalid_actions_completed_cases": 65,
+          "strict_envelope_failures_completed_cases": 0,
+          "native_schema_rejections_completed_cases": 0,
+          "physical_calls": 2082,
+          "prompt_tokens": 7467078,
+          "completion_tokens": 324963,
+          "total_tokens": 7792041,
+          "prompt_retries": 1,
+          "recovered_prompts": 0,
+          "exhausted_prompts": 1,
+          "failed_prompt_attempts": 2,
+          "failure_diagnostic": {
+            "stage": "MS",
+            "finish_reason": "length",
+            "completion_tokens_each_attempt": 4096,
+            "visible_characters": 15051,
+            "retry_output_equal_to_first": true,
+            "separate_reasoning_field": "absent",
+            "error": "empty or unfinished prompt output"
+          },
+          "pipeline_snapshot": "../../../runs/calbench_soc/qwen3-4b-instruct-2507-ms-v11-minimal-r1-stream-1063236/pipeline_snapshot.json",
+          "case_ledger": "../../../runs/calbench_soc/qwen3-4b-instruct-2507-ms-v11-minimal-r1-stream-1063236/games/case_results.json"
         },
         {
           "job_id": 1063239,
@@ -574,17 +601,56 @@
           "model_path": "/home/e/e1300530/tmp/hf-exports-871623/outcome-step99",
           "scaffold": "belief-ms",
           "prompt_version": "general-belief-ms-v11-minimal",
-          "status": "RUNNING_MODEL_SERVER_STARTUP",
+          "status": "COMPLETED_22_OF24_ENGINE_FINISHED_TWO_INVALID_MS_JSON_CASES",
           "node": "xgpi16",
           "output": "../../../runs/calbench_soc/outcome99-step99-ms-v11-minimal-r1-stream-1063239/",
           "submission_metadata": "../../../runs/calbench_soc/submissions/1063239.json",
-          "progress_at_latest_check": {
-            "in_progress_case_directories": 8,
-            "completed_cases": 0,
-            "total_cases": 24,
-            "server_concurrent_requests": 8,
-            "server_waiting_requests": 0
-          }
+          "cases_expected": 24,
+          "cases_attempted": 24,
+          "cases_completed": 22,
+          "unresolved_cases": [
+            "replan_uniform_s1",
+            "replan_varied_s1"
+          ],
+          "healthy_transport_cases": 24,
+          "transport_failures": 0,
+          "suite_elapsed_seconds": 1089.3997905375436,
+          "final_valid_meetings": 25,
+          "requested_meetings_completed_cases": 66,
+          "full_stream_games": 1,
+          "semantic_invalid_actions_completed_cases": 42,
+          "strict_envelope_failures_completed_cases": 0,
+          "native_schema_rejections_completed_cases": 0,
+          "physical_calls": 2008,
+          "prompt_tokens": 6987452,
+          "completion_tokens": 302505,
+          "total_tokens": 7289957,
+          "prompt_retries": 2,
+          "recovered_prompts": 0,
+          "exhausted_prompts": 2,
+          "failed_prompt_attempts": 4,
+          "failure_diagnostics": [
+            {
+              "case": "replan_uniform_s1",
+              "stage": "MS",
+              "finish_reason": "stop",
+              "output_format": "JSON, rejected; required natural-language belief paragraph",
+              "completion_tokens_each_attempt": 1968,
+              "visible_characters_each_attempt": 7632,
+              "retry_output_equal_to_first": true
+            },
+            {
+              "case": "replan_varied_s1",
+              "stage": "MS",
+              "finish_reason": "stop",
+              "output_format": "JSON, rejected; required natural-language belief paragraph",
+              "completion_tokens_each_attempt": 2812,
+              "visible_characters_each_attempt": 10177,
+              "retry_output_equal_to_first": true
+            }
+          ],
+          "pipeline_snapshot": "../../../runs/calbench_soc/outcome99-step99-ms-v11-minimal-r1-stream-1063239/pipeline_snapshot.json",
+          "case_ledger": "../../../runs/calbench_soc/outcome99-step99-ms-v11-minimal-r1-stream-1063239/games/case_results.json"
         }
       ],
       "pre_model_startup_failures": [
@@ -647,10 +713,41 @@
       "execution_helper_commit": "2a6504c44f10a12a72131fffa31375c8d0f4e9c7",
       "report": "../../final_evaluation/CALBENCH_V11_MINIMAL_H10047_20261102.md",
       "full_requests": "general_ms_calbench_v11_minimal_20261102/preview/PROMPT_PREVIEW.md",
-      "completed_case_metrics": "NOT_AVAILABLE_YET",
+      "completed_case_metrics": {
+        "Qwen": {
+          "cases": 23,
+          "final_valid_meetings": "23/69",
+          "full_stream_games": "1/23",
+          "semantic_invalid_actions": 65,
+          "strict_envelope_failures": 0,
+          "native_schema_rejections": 0
+        },
+        "outcome99": {
+          "cases": 22,
+          "final_valid_meetings": "25/66",
+          "full_stream_games": "1/22",
+          "semantic_invalid_actions": 42,
+          "strict_envelope_failures": 0,
+          "native_schema_rejections": 0
+        },
+        "interpretation": "Completed-case denominators only; 1 unresolved Qwen case and 2 unresolved outcome-99 cases remain missing, not zero-filled."
+      },
       "model_D": "NOT_MEASURED",
       "training": "NOT_RUN",
-      "production_changed": false
+      "production_changed": false,
+      "native_base_prompt_reference": {
+        "Qwen": {
+          "cases": "24/24",
+          "final_valid_meetings": "37/72",
+          "full_stream_games": "5/24"
+        },
+        "outcome99": {
+          "cases": "24/24",
+          "final_valid_meetings": "38/72",
+          "full_stream_games": "8/24"
+        },
+        "interpretation": "Descriptive comparator only; v11 unresolved cases are missing, so not an all-case paired comparison."
+      }
     }
   },
   "maintenance_versions": {
