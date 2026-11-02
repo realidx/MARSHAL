@@ -30,6 +30,14 @@ COUNTER = re.compile(r'CHEAP_TALK safety turn counter: turn \d+ of \d+\. \d+ tur
 TURN_TAIL = re.compile(
     r'Only the [^\n]+ tool\(s\) are valid right now\. CHEAP_TALK phase is still active\. '
     r'Return a JSON object with "thinking" and "actions" keys\. Use \[\] for actions to pass\.$')
+ROUND_END = 'Return a JSON object with "thinking" and "actions" keys. "actions" should be a list of communication tool calls, or [] to pass.\n'
+BUDGET_END = re.compile(
+    r'\n(?P<counter>CHEAP_TALK safety turn counter: turn \d+ of \d+\. \d+ turn\(s\) remain after this one\.) '
+    r'If all necessary coordination is complete, return \[\] to end cheap-talk\.'
+    r'(?:\nThis is the final CHEAP_TALK turn before DECISION\. Do not ask open-ended '
+    r'questions; state your final proposed slot or return \[\] if coordination is complete\.)?\n$')
+
+
 FORMAT_REMINDER = 'Do NOT include any text outside the JSON object.'
 
 
@@ -71,22 +79,41 @@ def _system(text):
     return common, '=== TOOLS ==='+action
 
 
+def _turn_parts(text):
+    match = TURN_TAIL.search(text)
+    if match is None:
+        raise ValueError('Pinned communication trailer changed')
+    prefix = text[:match.start()]
+    budget = BUDGET_END.search(prefix)
+    cut = budget.start() if budget else match.start()
+    counter = '\n'+budget.group('counter') if budget else ''
+    return text[:cut], counter, text[cut:]
+
+
 def _user(text):
     if re.match(r'^=== ROUND \d+ START ===', text):
+        # Native first turn appends a full inbox update AFTER the round footer.
+        # Bound the round template before splitting phase directives, so received
+        # quotations (including template-like strings) remain ordinary data.
+        round_text, footer, appended = text.partition(ROUND_END)
+        if not footer:
+            raise ValueError('Pinned round-start format footer missing')
         marker = '** CURRENT PHASE: CHEAP_TALK **'
-        if marker not in text:
+        if marker not in round_text:
             raise ValueError('Pinned round-start phase marker missing')
-        observation, directives = text.rsplit(marker, 1)
-        return observation+_phase('CHEAP_TALK')+_counter(directives), marker+directives
+        observation, directives = round_text.rsplit(marker, 1)
+        counter = _counter(directives)
+        actions = marker+directives+footer
+        if appended:
+            if not appended.startswith('\n\nNew messages received:\n'):
+                raise ValueError('Pinned first-turn inbox composition changed')
+            inbox, counter, turn_actions = _turn_parts(appended[2:])
+            observation += '\n\n'+inbox
+            actions += '\n\n'+turn_actions
+        return observation+_phase('CHEAP_TALK')+counter, actions
     if text.startswith(('New messages received:', 'No new messages in your inbox.')):
-        match = TURN_TAIL.search(text)
-        if match is None:
-            raise ValueError('Pinned communication trailer changed')
-        prefix = text[:match.start()]
-        counters = list(COUNTER.finditer(prefix))
-        cut = counters[-1].start() if counters else match.start()
-        # Everything before the builder's final counter/trailer is received data.
-        return text[:cut]+_phase('CHEAP_TALK')+_counter(prefix[cut:]), text[cut:]
+        observation, counter, directives = _turn_parts(text)
+        return observation+_phase('CHEAP_TALK')+counter, directives
     if text.startswith('=== DECISION PHASE ==='):
         marker = '** MEETING TO SCHEDULE **'
         if marker not in text or '** INSTRUCTIONS **' not in text:

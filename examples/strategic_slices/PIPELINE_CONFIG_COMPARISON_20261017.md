@@ -1,5 +1,10 @@
 # 9月与当前 pipeline 配置快照及逐项对照
 
+**2026-11-02首轮收件箱修复v12（待用户审查）：**[完整例子](versions/general_ms_calbench_v12_inbox_20261102/EXAMPLE.md)与[实际请求](versions/general_ms_calbench_v12_inbox_20261102/preview/PROMPT_PREVIEW.md)。
+修复原生首轮“开局题面＋收件箱”被错误整体移入ACTION的问题；已送达消息在MS生成前及后续MS历史中完整可见，只有行动指令移位。独立收件箱按完整原生结尾拆分，保留正文引用。
+MS/ACTION原文、原生历史/解析、共享4096、采样、重试和题库不变。94项CPU检查通过；真实日志205个首轮收件箱事件的235条消息离线重放全部保留，不是新模型效果验证。
+v11及其真实运行保留原身份；本版未跑模型、未训练或测D，生产active仍terminal readable v8。
+
 **2026-11-02按用户要求移除冗余阶段说明v11：**[实际示例](versions/general_ms_calbench_v11_minimal_20261102/EXAMPLE.md)与[完整请求](versions/general_ms_calbench_v11_minimal_20261102/preview/PROMPT_PREVIEW.md)。
 删除system中整段STAGE PROTOCOL、操作reference尾句及retry观察视图的额外阶段提醒；ACTION开头只保留一句直接任务提示。用户精简MS原文不变，阶段拆分、输出校验、预算、重试、历史、游戏与采样不变。
 90项CPU离线检查通过；未调用模型、未训练或测D。v9/v10保留原身份，生产active仍terminal readable v8。

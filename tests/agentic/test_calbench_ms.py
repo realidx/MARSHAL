@@ -178,7 +178,7 @@ def test_exact_budget_total_and_zero_remaining_after_action_are_valid(tmp_path):
 def test_native_client_lifecycle_exports_full_requests_and_keeps_ms_private(tmp_path):
     from examples.final_evaluation.export_calbench_ms import export
     artifact = export(tmp_path/'export')
-    assert len(artifact['examples']) == 6
+    assert len(artifact['examples']) == 8
     for example in artifact['examples']:
         ms, act = example['actual_ms_request'], example['actual_action_request']
         assert ms['model'] == act['model'] == 'OFFLINE_FIXTURE_NOT_A_MODEL'
@@ -201,8 +201,8 @@ def test_native_client_lifecycle_exports_full_requests_and_keeps_ms_private(tmp_
     assert 'Meeting ID : 2' not in json.dumps(initial['actual_ms_request'])  # future request
     assert initial['native_parsed_actions'] == initial['synthetic_action']['actions']
     assert len(list((tmp_path/'export/ms').glob('transport-*.jsonl'))) == 1
-    assert len((tmp_path/'export/transport-agent-0.jsonl').read_text().splitlines()) == 6
-    assert len((tmp_path/'export/ms/transport-agent-0.jsonl').read_text().splitlines()) == 6
+    assert len((tmp_path/'export/transport-agent-0.jsonl').read_text().splitlines()) == 8
+    assert len((tmp_path/'export/ms/transport-agent-0.jsonl').read_text().splitlines()) == 8
 
 
 def test_runner_aborts_ms_failure_as_missing_game_not_model_score(tmp_path):
@@ -332,3 +332,16 @@ def test_main_records_cli_protocol_and_all24_jobs(tmp_path, monkeypatch):
     assert 'ms_max_tokens' not in snapshot['cli']['parsed']
     assert snapshot['resolved_routes']['scaffold']=='belief-ms'
     assert snapshot['model_identity'].startswith('未记录')
+
+
+def test_first_turn_inbox_and_later_history_visible_before_belief(tmp_path):
+    from examples.final_evaluation.export_calbench_ms import export
+    artifact = export(tmp_path/'inbox-export')
+    entries = {x['label']:x for x in artifact['examples']}
+    received = 'Slot 5 works for me. Does it work for you?'
+    for label in ('first_turn_with_inbox', 'history_after_first_inbox'):
+        entry = entries[label]
+        observations = entry['actual_ms_request']['messages'][:-1]
+        assert any(received in m['content'] for m in observations if m['role']=='user')
+        assert received not in entry['actual_action_request']['messages'][-1]['content']
+    assert 'Can we move meeting 1 from slot 1 to slot 2?' in str(entries['nonparticipant_communication']['actual_ms_request'])

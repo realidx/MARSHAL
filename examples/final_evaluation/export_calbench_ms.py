@@ -105,6 +105,24 @@ def export(output):
         lambda:client.voluntary_decide(case['scenario']['meetings'][1], calendar.render()),
         'Native voluntary builder on authored continuation; no model or game outcome claim')
 
+    # Independent first-turn branch: incoming messages already exist before this
+    # player's first turn. Both that request and its later history must keep them.
+    client = LLMClient(Capture(route, config, output, case['scenario_seed'], 0))
+    client.register(0, GameConfig(num_agents=4, num_slots=8, agent_id=0,
+                                 all_agent_ids=[0,1,2,3], decision_retries=1, communication_protocol='dm'))
+    calendar.slots = deepcopy(case['scenario']['calendars'][0])
+    client.start_round(case['scenario']['meetings'][0], calendar.render(), 0)
+    invoke('first_turn_with_inbox',
+        'Agent 1 says slot 5 works for them and asks whether it works for me. My slot 5 is free. I do not yet know whether the other participant agrees.',
+        dict(thinking='Ask the remaining participant about the proposed slot.', actions=[dict(type='dm', to=2, content='Agent 1 proposed slot 5. Does it work for you?')]),
+        lambda:client.turn([dict(**{'from':1}, meeting_id=1, content='Slot 5 works for me. Does it work for you?')], 0, 4),
+        'Independent branch: real frozen initial calendar, synthetic incoming DM before the first turn; not a model result')
+    invoke('history_after_first_inbox',
+        'Agent 1 previously said slot 5 works. I have asked Agent 2 about it, but no reply has arrived, so their availability remains uncertain.',
+        dict(thinking='There is no new information.', actions=[]),
+        lambda:client.turn([], 1, 4),
+        'Continuation of first_turn_with_inbox: the earlier received DM remains visible in the projected history')
+
     artifact = dict(status='OFFLINE_REQUEST_EXPORT_WITH_SYNTHETIC_RESPONSES', case_id=case['id'],
                     native_suite='calbench_stream_v1', case_sha256=manifest['files'][f"cases/{case['id']}.json"],
                     agent_id=0, actual_initial_calendar=calendar.slots, examples=examples)
@@ -115,7 +133,7 @@ def export(output):
               '本文件由实际原生客户端和生产两阶段请求函数生成；仅HTTP响应替换成人工fixture，没有调用模型。', '',
               'MS的system及各user是原生可见上下文的观察/规则视图：行动输出要求和示例已移到最后ACTION user。',
               '历史assistant保留真实原生提交；当前MS是实际第一响应（此处为人工fixture），不会执行或作为pass。',
-              'Action完整续接同一MS前缀，再追加assistant MS和user ACTION；最后user恢复原生工具/格式/当前阶段行动要求，并明确MS没有执行。',
+              'Action完整续接同一MS前缀，再追加assistant MS和user ACTION；最后user恢复原生工具/格式/当前阶段行动要求。',
               '跨行动保存仍是原生user与最终assistant action，临时MS不写进原生历史。', '',
               '完整wire requests、原生输入、投影视图/移位内容及历史：[requests.json](requests.json)。', '',
               '接受的MS+action共享4096。fixture MS用量3，所以action cap4093；重试是额外成本，全部保留。',

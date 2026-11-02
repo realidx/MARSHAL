@@ -3,7 +3,7 @@ from copy import deepcopy
 import json
 import re
 
-VERSION = 'general-belief-ms-v11-minimal'
+VERSION = 'general-belief-ms-v12-inbox'
 
 MS_CORE = 'Before your next action, briefly articulate your own mental states and\nyour beliefs about the mental states of other participants.\n\nWrite from your own perspective: what you believe, want, know, or intend,\nand what you think others believe, want, know, or intend. Include emotions\nonly when relevant to the interaction.\n\nGround these judgments in the available context and history, without\ninventing hidden facts. Write one brief paragraph that can guide your\nnext decision.\n\n'
 

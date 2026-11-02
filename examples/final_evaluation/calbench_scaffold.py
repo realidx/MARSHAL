@@ -12,7 +12,7 @@ from examples.final_evaluation.interaction_scaffold import VERSION, ms_request, 
 from examples.final_evaluation.calbench_stage_context import stage_context
 
 ROOT = Path(__file__).resolve().parents[2]
-REGISTRATION = ROOT / 'examples/strategic_slices/versions/general_ms_calbench_v11_minimal_20261102/SNAPSHOT.json'
+REGISTRATION = ROOT / 'examples/strategic_slices/versions/general_ms_calbench_v12_inbox_20261102/SNAPSHOT.json'
 
 
 class ScaffoldFailure(BaseException):
