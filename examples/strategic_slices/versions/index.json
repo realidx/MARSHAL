@@ -405,6 +405,628 @@
       "pipeline_snapshot": "../../../new/three_player_walkthrough_20261029/run_v1/pipeline_snapshot.json",
       "evidence": "three_player_case_walkthrough_v1_20261029/EVIDENCE.json",
       "completed_on": "2026-10-29"
+    },
+    "calbench24-h10047-v6-belief-ms-two-models-20261102": {
+      "source_version": "general-belief-ms-v6-user-prompt",
+      "source_snapshot": "general_ms_calbench_v6_20261102/SNAPSHOT.json",
+      "status": "BOTH_ABORTED_ON_OCCASIONAL_4096_MS_LOOP",
+      "authorization": "2026-11-02: user requested pulling the newly updated code, reading it, and submitting the evaluation. Existing authorization covers H100-47, 3-hour jobs and the two Base+MS model conditions.",
+      "conditions": [
+        {
+          "job_id": 1060153,
+          "condition": "Qwen3-4B-Instruct-2507 belief-MS v6",
+          "model_path": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+          "scaffold": "belief-ms",
+          "status": "ABORTED_AFTER_16_CASES_15_HEALTHY_1_TRUNCATED",
+          "attempted_cases": 16,
+          "engine_finished_cases": 15,
+          "healthy_transport_cases": 16,
+          "healthy_scaffold_cases": 15,
+          "truncated_ms_calls": 1,
+          "remaining_cases_not_started": 8,
+          "elapsed": "00:14:08",
+          "failure": {
+            "game": "blocked_uniform_s3",
+            "agent": 2,
+            "ms_call": 11,
+            "finish_reason": "length",
+            "completion_tokens": 4096,
+            "elapsed_seconds": 97.3,
+            "visible_content_characters": 16332,
+            "repeated_8gram_occurrence_share": 0.786
+          },
+          "pipeline_snapshot": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/qwen_base_v6_1060153/pipeline_snapshot.json",
+          "diagnostic_data": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/qwen_base_v6_1060153/"
+        },
+        {
+          "job_id": 1060154,
+          "condition": "outcome-99 step99 belief-MS v6",
+          "model_path": "/home/e/e1300530/tmp/hf-exports-871623/outcome-step99",
+          "scaffold": "belief-ms",
+          "status": "ABORTED_AFTER_8_CASES_7_HEALTHY_1_TRUNCATED",
+          "attempted_cases": 8,
+          "engine_finished_cases": 7,
+          "healthy_transport_cases": 8,
+          "healthy_scaffold_cases": 7,
+          "truncated_ms_calls": 1,
+          "remaining_cases_not_started": 16,
+          "elapsed": "00:07:52",
+          "failure": {
+            "game": "loose_varied_s1",
+            "agent": 2,
+            "ms_call": 9,
+            "finish_reason": "length",
+            "completion_tokens": 4096,
+            "elapsed_seconds": 98.8,
+            "visible_content_characters": 15144,
+            "repeated_8gram_occurrence_share": 0.856
+          },
+          "pipeline_snapshot": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/outcome99_v6_1060154/pipeline_snapshot.json",
+          "diagnostic_data": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/outcome99_v6_1060154/"
+        }
+      ],
+      "runtime_config": {
+        "partition": "gpu",
+        "gres": "gpu:h100-47:1",
+        "walltime": "03:00:00",
+        "cpus_per_task": 8,
+        "memory": "64G",
+        "vllm": "0.28.0",
+        "dtype": "bfloat16",
+        "max_model_len": 32768,
+        "max_num_seqs": 32,
+        "parallel_games": 8,
+        "gpu_memory_utilization": 0.65,
+        "enforce_eager": true,
+        "enable_prefix_caching": true,
+        "enable_chunked_prefill": false,
+        "cascade_attention": false,
+        "VLLM_BATCH_INVARIANT": "1",
+        "OMP_NUM_THREADS": 4,
+        "OPENBLAS_NUM_THREADS": 1,
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "budget_contract": "MS request cap=4096; action cap=4096-actual MS completion_tokens; no fixed allocation"
+      },
+      "suite": "CalBench frozen stream24, same suite/source manifests as prior runs.",
+      "comparison": "The completed Qwen native/base-prompt job 1059395 used the same 4096 generation cap and H100-47 serving profile.",
+      "D": "NOT_MEASURED",
+      "training": "NOT_RUN",
+      "production_changed": false,
+      "report": "../../final_evaluation/CALBENCH_BELIEF_MS_V6_H10047_20261102.md",
+      "progress_at_5m55s": {
+        "qwen_cases_completed": 3,
+        "outcome99_cases_completed": 3,
+        "qwen_successful_native_action_requests": 267,
+        "outcome99_successful_native_action_requests": 254,
+        "scaffold_or_transport_failures": 0,
+        "qwen_ms_tokens_mean_max": [
+          225.2,
+          499
+        ],
+        "outcome99_ms_tokens_mean_max": [
+          223.6,
+          449
+        ]
+      },
+      "progress_at_7m48s": {
+        "qwen_requests_status_ok": 327,
+        "qwen_cases_completed": 8,
+        "outcome99_requests_status_ok": 288,
+        "outcome99_analysis_failures": 1,
+        "outcome99_cases_completed": 8,
+        "outcome99_failure_case": "loose_varied_s1",
+        "qwen_second_batch_started": true,
+        "outcome99_remaining_cases_not_started": 16
+      },
+      "outcome99_ms_output_audit": {
+        "successful_ms_calls_first_8_cases": 288,
+        "mean_completion_tokens": 218.55,
+        "median_completion_tokens": 206.5,
+        "min_completion_tokens": 119,
+        "max_completion_tokens": 459,
+        "p90_completion_tokens": 306,
+        "mean_visible_content_characters": 958.2,
+        "median_visible_content_characters": 904,
+        "min_visible_content_characters": 552,
+        "max_visible_content_characters": 1992,
+        "single_failure": {
+          "case": "loose_varied_s1",
+          "agent": 2,
+          "call": 9,
+          "completion_tokens": 4096,
+          "content_characters": 15144,
+          "finish_reason": "length",
+          "repeat_8gram_occurrence_share": 0.856,
+          "message_reasoning": null,
+          "completion_tokens_details": null
+        }
+      },
+      "qwen_successful_ms_length_audit": {
+        "successful_ms_calls": 613,
+        "mean_completion_tokens": 219.62,
+        "median_completion_tokens": 208,
+        "min_completion_tokens": 110,
+        "max_completion_tokens": 499,
+        "mean_visible_content_characters": 971.8,
+        "median_visible_content_characters": 907,
+        "min_visible_content_characters": 527,
+        "max_visible_content_characters": 2160
+      },
+      "outcome99_successful_ms_length_audit": {
+        "successful_ms_calls": 288,
+        "mean_completion_tokens": 218.55,
+        "median_completion_tokens": 206.5,
+        "min_completion_tokens": 119,
+        "max_completion_tokens": 459,
+        "mean_visible_content_characters": 958.2,
+        "median_visible_content_characters": 904,
+        "min_visible_content_characters": 552,
+        "max_visible_content_characters": 1992
+      },
+      "common_failure_class": "Both jobs passed worker preflight and had healthy transport. Their one failure each was an MS completion ending finish_reason=length at exactly 4096 tokens; no action was executed for that call, and remaining cases were not started.",
+      "comparison_caveat": "Qwen native/base-prompt baseline job 1059395 completed 24/24 with 4096 tokens. v6 shared budget matches, but both belief-MS conditions are partial and cannot yield full-suite scores.",
+      "diagnostic_data_bundle": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/README.md"
+    },
+    "calbench24-h10047-v2-three-conditions-20261102": {
+      "source_version": "general-ms-conditioning-v2-shared-budget",
+      "source_snapshot": "general_ms_calbench_v2_20261102/SNAPSHOT.json",
+      "status": "NATIVE_QWEN_COMPLETED_24; BOTH_BASE_MS_ABORTED_ON_TRUNCATED_MS_AFTER_FIRST_8",
+      "authorization": "2026-11-02: user instructed that Qwen native baseline use the same serving configuration as outcome-99 and authorized three H100-47 jobs with a 3-hour limit.",
+      "conditions": [
+        {
+          "job_id": 1059395,
+          "condition": "Qwen3-4B-Instruct-2507 native/base prompt",
+          "model_path": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+          "scaffold": "native",
+          "status": "COMPLETED_24_OF24_HEALTHY_TRANSPORT",
+          "restarts": 1,
+          "pipeline_snapshot": "../../../runs/calbench_soc/qwen3-4b-instruct-2507-base-native-v2-stream-1059395/pipeline_snapshot.json",
+          "first_attempt_snapshot": "../../../runs/calbench_soc/preflight_failures/first_attempt/1059395/pipeline_snapshot.json",
+          "elapsed": "00:15:35"
+        },
+        {
+          "job_id": 1059396,
+          "condition": "Qwen3-4B-Instruct-2507 Base+MS v2",
+          "model_path": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+          "scaffold": "base-ms",
+          "status": "ABORTED_AFTER_8_CASES_7_ENGINE_FINISHED_1_TRUNCATED_MS",
+          "restarts": 1,
+          "pipeline_snapshot": "../../../runs/calbench_soc/qwen3-4b-instruct-2507-base-ms-v2-stream-1059396/pipeline_snapshot.json",
+          "first_attempt_snapshot": "../../../runs/calbench_soc/preflight_failures/first_attempt/1059396/pipeline_snapshot.json",
+          "elapsed": "00:07:16",
+          "failure": {
+            "game": "loose_uniform_s1",
+            "agent": 0,
+            "ms_call": 2,
+            "finish_reason": "length",
+            "completion_tokens": 4096,
+            "remaining_cases_not_started": 16,
+            "healthy_transport": true
+          }
+        },
+        {
+          "job_id": 1059397,
+          "condition": "outcome-step99 Base+MS v2",
+          "model_path": "/home/e/e1300530/tmp/hf-exports-871623/outcome-step99",
+          "scaffold": "base-ms",
+          "status": "ABORTED_AFTER_8_CASES_4_ENGINE_FINISHED_4_TRUNCATED_MS",
+          "restarts": 1,
+          "pipeline_snapshot": "../../../runs/calbench_soc/outcome99-step99-base-ms-v2-stream-1059397/pipeline_snapshot.json",
+          "first_attempt_snapshot": "../../../runs/calbench_soc/preflight_failures/first_attempt/1059397/pipeline_snapshot.json",
+          "elapsed": "00:08:01",
+          "failures": [
+            {
+              "game": "loose_varied_s1",
+              "agent": 1,
+              "ms_call": 1,
+              "finish_reason": "length",
+              "completion_tokens": 4096
+            },
+            {
+              "game": "loose_varied_s2",
+              "agent": 1,
+              "ms_call": 1,
+              "finish_reason": "length",
+              "completion_tokens": 4096
+            },
+            {
+              "game": "loose_uniform_s1",
+              "agent": 1,
+              "ms_call": 5,
+              "finish_reason": "length",
+              "completion_tokens": 4096
+            },
+            {
+              "game": "dense_uniform_s1",
+              "agent": 1,
+              "ms_call": 6,
+              "finish_reason": "length",
+              "completion_tokens": 4096
+            }
+          ]
+        }
+      ],
+      "runtime_config": {
+        "partition": "gpu",
+        "gres": "gpu:h100-47:1",
+        "walltime": "03:00:00",
+        "cpus_per_task": 8,
+        "memory": "64G",
+        "vllm": "0.28.0",
+        "dtype": "bfloat16",
+        "max_model_len": 32768,
+        "max_num_seqs": 32,
+        "parallel_games": 8,
+        "gpu_memory_utilization": 0.65,
+        "enforce_eager": true,
+        "enable_prefix_caching": true,
+        "enable_chunked_prefill": false,
+        "cascade_attention": false,
+        "VLLM_BATCH_INVARIANT": "1",
+        "OMP_NUM_THREADS": 4,
+        "OPENBLAS_NUM_THREADS": 1,
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "reasoning_protocol": "reasoning-separated-v2-tokens-4096"
+      },
+      "CLI_overrides": {
+        "suite": "stream",
+        "runtime": "soc",
+        "max_tokens": 4096,
+        "max_model_len": 32768,
+        "max_num_seqs": 32,
+        "parallel_games": 8,
+        "disable_chunked_prefill": true,
+        "disable_cascade_attn": true,
+        "scaffolds": [
+          "native",
+          "base-ms",
+          "base-ms"
+        ]
+      },
+      "first_attempts": {
+        "status": "FAILED_BEFORE_MODEL_REQUESTS_ALL_THREE",
+        "reason": "third_party/calbench missing; verify_source stopped at .gitignore",
+        "preserved_logs": "../../../runs/calbench_soc/preflight_failures/first_attempt/",
+        "preserved_snapshots": "../../../runs/calbench_soc/preflight_failures/first_attempt/",
+        "model_requests": 0,
+        "source_restoration": "Copied the existing complete vendored CalBench checkout into third_party/calbench; registered manifests and prompting snapshots were not edited."
+      },
+      "run_record": "../../final_evaluation/CALBENCH_H10047_RUN_20261102.md",
+      "production_changed": false,
+      "model_D": "NOT_MEASURED",
+      "training": "NOT_RUN",
+      "startup_observation": {
+        "suite": "CalBench stream24",
+        "runtime": "All jobs used the requested H100-47 profile matching outcome-99 job 872963; the extra wall limit was 03:00:00.",
+        "model_server": "One GPU, max_num_seqs=32, parallel_games=8, BF16, context=32768, utilization=0.65, eager, prefix cache enabled, chunked prefill and cascade attention disabled, VLLM_BATCH_INVARIANT=1.",
+        "failure_class": "The two Base+MS batches had healthy transport. Their registered v2 scaffold stopped on provider finish_reason=length at the 4096-token MS cap; no fallback action was generated.",
+        "comparison_status": "Only the native Qwen condition has all 24 cases. Base+MS has partial first-batch results and is not a full-suite comparison."
+      },
+      "native_qwen_results": {
+        "cases": 24,
+        "engine_finished": 24,
+        "healthy_transport": 24,
+        "final_valid_meetings": "37/72",
+        "full_stream_completion": "5/24",
+        "realized_cost_total_all_games": 38,
+        "verified_hindsight_excess_cost_complete_games": {
+          "complete_games": 5,
+          "total": 2,
+          "mean": 0.4
+        },
+        "native_calls": 967,
+        "strict_envelope_failures": 6,
+        "native_schema_rejections": 0,
+        "semantic_invalid_actions": 28,
+        "blocked_state_violations": 0,
+        "truncated_calls": 3,
+        "replan": {
+          "entered": 5,
+          "contacted_old_participant": 0,
+          "consistent_revision": 0,
+          "not_entered": 1
+        }
+      },
+      "base_ms_partial_results": {
+        "qwen": {
+          "cases_attempted": 8,
+          "engine_finished": 7,
+          "scaffold_failures": 1,
+          "remaining_cases_not_started": 16
+        },
+        "outcome99": {
+          "cases_attempted": 8,
+          "engine_finished": 4,
+          "scaffold_failures": 4,
+          "remaining_cases_not_started": 16
+        },
+        "interpretation": "No 24-case score; missing cases remain missing, not zeros."
+      }
+    },
+    "calbench24-h10047-v3-8192-two-conditions-20261102": {
+      "source_version": "general-ms-conditioning-v3-shared-budget-8192",
+      "source_snapshot": "general_ms_calbench_v3_8192_20261102/SNAPSHOT.json",
+      "status": "BOTH_ABORTED_AFTER_FIRST_8_CASE_BATCH_ON_8192_MS_TRUNCATIONS",
+      "authorization": "2026-11-02: after both registered 4096-token Base+MS batches stopped on truncated MS responses, user instructed to try 8192 directly; existing H100-47 three-hour job authorization applies.",
+      "conditions": [
+        {
+          "job_id": 1059574,
+          "condition": "Qwen3-4B-Instruct-2507 Base+MS v3, total cap 8192",
+          "model_path": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+          "scaffold": "base-ms",
+          "status": "ABORTED_AFTER_8_CASES_7_SCAFFOLD_HEALTHY_1_TRUNCATED",
+          "attempted_cases": 8,
+          "healthy_transport_cases": 8,
+          "healthy_scaffold_cases": 7,
+          "truncated_ms_calls": 1,
+          "remaining_cases_not_started": 16,
+          "elapsed": "00:07:42",
+          "failure": {
+            "game": "loose_uniform_s1",
+            "agent": 0,
+            "ms_call": 2,
+            "finish_reason": "length",
+            "completion_tokens": 8192,
+            "elapsed_seconds": 211.2
+          },
+          "pipeline_snapshot": "../../../runs/calbench_soc/qwen3-4b-instruct-2507-base-ms-v3-8192-stream-1059574/pipeline_snapshot.json",
+          "run_failed": "../../../runs/calbench_soc/qwen3-4b-instruct-2507-base-ms-v3-8192-stream-1059574/LAUNCH_FAILED.json"
+        },
+        {
+          "job_id": 1059575,
+          "condition": "outcome-99 Base+MS v3, total cap 8192",
+          "model_path": "/home/e/e1300530/tmp/hf-exports-871623/outcome-step99",
+          "scaffold": "base-ms",
+          "status": "ABORTED_AFTER_8_CASES_4_SCAFFOLD_HEALTHY_4_TRUNCATED",
+          "attempted_cases": 8,
+          "healthy_transport_cases": 8,
+          "healthy_scaffold_cases": 4,
+          "truncated_ms_calls": 4,
+          "remaining_cases_not_started": 16,
+          "elapsed": "00:07:32",
+          "failures": [
+            {
+              "game": "loose_varied_s1",
+              "agent": 1,
+              "ms_call": 1,
+              "finish_reason": "length",
+              "completion_tokens": 8192,
+              "elapsed_seconds": 203.6
+            },
+            {
+              "game": "loose_varied_s2",
+              "agent": 1,
+              "ms_call": 1,
+              "finish_reason": "length",
+              "completion_tokens": 8192,
+              "elapsed_seconds": 204.0
+            },
+            {
+              "game": "loose_uniform_s1",
+              "agent": 1,
+              "ms_call": 5,
+              "finish_reason": "length",
+              "completion_tokens": 8192,
+              "elapsed_seconds": 206.3
+            },
+            {
+              "game": "dense_uniform_s1",
+              "agent": 1,
+              "ms_call": 6,
+              "finish_reason": "length",
+              "completion_tokens": 8192,
+              "elapsed_seconds": 206.7
+            }
+          ],
+          "pipeline_snapshot": "../../../runs/calbench_soc/outcome99-step99-base-ms-v3-8192-stream-1059575/pipeline_snapshot.json",
+          "run_failed": "../../../runs/calbench_soc/outcome99-step99-base-ms-v3-8192-stream-1059575/LAUNCH_FAILED.json"
+        }
+      ],
+      "runtime_config": {
+        "partition": "gpu",
+        "gres": "gpu:h100-47:1",
+        "walltime": "03:00:00",
+        "cpus_per_task": 8,
+        "memory": "64G",
+        "vllm": "0.28.0",
+        "dtype": "bfloat16",
+        "max_model_len": 32768,
+        "max_num_seqs": 32,
+        "parallel_games": 8,
+        "gpu_memory_utilization": 0.65,
+        "enforce_eager": true,
+        "enable_prefix_caching": true,
+        "enable_chunked_prefill": false,
+        "cascade_attention": false,
+        "VLLM_BATCH_INVARIANT": "1",
+        "OMP_NUM_THREADS": 4,
+        "OPENBLAS_NUM_THREADS": 1,
+        "temperature": 0.0,
+        "max_tokens": 8192,
+        "reasoning_protocol": "reasoning-separated-v2-tokens-8192"
+      },
+      "suite": "Same frozen CalBench stream24 and source manifest as v2.",
+      "comparison_caveat": "8192 did not eliminate MS truncation in either model. The native Qwen baseline remains 4096; partial first-batch records are not full-suite or budget-matched scores.",
+      "prior_4096_runs_preserved": true,
+      "run_record": "../../final_evaluation/CALBENCH_BASE_MS_8192_DIAGNOSTIC_20261102.md",
+      "production_changed": false,
+      "model_D": "NOT_MEASURED",
+      "training": "NOT_RUN",
+      "progress_at_2m50s": {
+        "cases_started_per_condition": 24,
+        "qwen_completed_native_action_requests_with_status_ok": 62,
+        "outcome99_completed_native_action_requests_with_status_ok": 59,
+        "scaffold_failures": 0,
+        "completed_games_per_condition": 0
+      },
+      "result_at_8192": {
+        "all_truncated_ms_calls_used_full_8192_completion_tokens": true,
+        "transport_healthy": true,
+        "failure_mode": "MS response finish_reason=length; the registered scaffold aborts without fallback and stops later batches."
+      }
+    },
+    "calbench24-h10047-v8-prompt-retry-once-20261102": {
+      "source_version": "general-belief-ms-v8-prompt-retry-once",
+      "source_snapshot": "general_ms_calbench_v8_20261102/SNAPSHOT.json",
+      "status": "COMPLETED_ALL24_ATTEMPTED_20_ENGINE_FINISHED_PER_MODEL_4_MS_TRUNCATIONS_AFTER_IDENTICAL_RETRY",
+      "authorization": "User requested pulling the updated code, reviewing it, and submitting; existing H100-47 authorization covers the two Base+MS model conditions with a 3-hour limit.",
+      "conditions": [
+        {
+          "job_id": 1060433,
+          "condition": "Qwen3-4B-Instruct-2507 belief-MS v8",
+          "model_path": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+          "scaffold": "belief-ms",
+          "status": "ALL24_ATTEMPTED_20_ENGINE_AND_SCAFFOLD_FINISHED_4_MS_TRUNCATED",
+          "attempted_cases": 24,
+          "engine_finished_cases": 20,
+          "healthy_transport_cases": 24,
+          "healthy_scaffold_cases": 20,
+          "unresolved_cases": [
+            "blocked_uniform_s3",
+            "replan_uniform_s1",
+            "replan_uniform_s3",
+            "replan_varied_s1"
+          ],
+          "prompt_retries": 4,
+          "recovered_prompts": 0,
+          "exhausted_prompts": 4,
+          "failed_prompt_attempts": 8,
+          "all_retries_identical_to_first_output": true,
+          "pipeline_status": "COMPLETE_BATCH_CLEAN_CASES_PARTIAL",
+          "elapsed": "00:21:24",
+          "output": "../../../runs/calbench_soc/qwen3-4b-instruct-2507-belief-ms-v8-stream-1060433/",
+          "pipeline_snapshot": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/qwen_base_v8_1060433/pipeline_snapshot.json",
+          "diagnostic_data": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/qwen_base_v8_1060433/"
+        },
+        {
+          "job_id": 1060434,
+          "condition": "outcome-99 step99 belief-MS v8",
+          "model_path": "/home/e/e1300530/tmp/hf-exports-871623/outcome-step99",
+          "scaffold": "belief-ms",
+          "status": "ALL24_ATTEMPTED_20_ENGINE_AND_SCAFFOLD_FINISHED_4_MS_TRUNCATED",
+          "attempted_cases": 24,
+          "engine_finished_cases": 20,
+          "healthy_transport_cases": 24,
+          "healthy_scaffold_cases": 20,
+          "unresolved_cases": [
+            "loose_varied_s1",
+            "blocked_uniform_s1",
+            "blocked_varied_s3",
+            "replan_varied_s1"
+          ],
+          "prompt_retries": 4,
+          "recovered_prompts": 0,
+          "exhausted_prompts": 4,
+          "failed_prompt_attempts": 8,
+          "all_retries_identical_to_first_output": true,
+          "pipeline_status": "COMPLETE_BATCH_CLEAN_CASES_PARTIAL",
+          "elapsed": "00:19:21",
+          "output": "../../../runs/calbench_soc/outcome99-step99-belief-ms-v8-stream-1060434/",
+          "pipeline_snapshot": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/outcome99_v8_1060434/pipeline_snapshot.json",
+          "diagnostic_data": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/outcome99_v8_1060434/"
+        }
+      ],
+      "runtime_config": {
+        "partition": "gpu",
+        "gres": "gpu:h100-47:1",
+        "walltime": "03:00:00",
+        "cpus_per_task": 8,
+        "memory": "64G",
+        "vllm": "0.28.0",
+        "dtype": "bfloat16",
+        "max_model_len": 32768,
+        "max_num_seqs": 32,
+        "parallel_games": 8,
+        "gpu_memory_utilization": 0.65,
+        "enforce_eager": true,
+        "enable_prefix_caching": true,
+        "enable_chunked_prefill": false,
+        "cascade_attention": false,
+        "VLLM_BATCH_INVARIANT": "1",
+        "OMP_NUM_THREADS": 4,
+        "OPENBLAS_NUM_THREADS": 1,
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "budget_contract": "accepted MS and action share4096 per native action request; failed prompt retries add fully recorded actual compute"
+      },
+      "retry_policy": "At the current game position, immediately retry only the failed MS or action prompt once using identical request/seed/temperature/max_tokens; never append failed output or replay a completed stage/game. After exhaustion abort only that game and continue remaining cases. Native stream comparator follows the same request-retry policy; it was not submitted in this v8 batch.",
+      "suite": "Frozen calbench_stream_v1, 24 cases; v8 registered source and frozen manifest preflight passed in both workers.",
+      "startup_check": "Both jobs passed registered source and frozen-suite preflight; ran on separate H100 NVL MIG 3g.47 allocations. Initial startup had no completed cases; both jobs later completed the suite protocol.",
+      "production_changed": false,
+      "D": "NOT_MEASURED",
+      "training": "NOT_RUN",
+      "report": "../../final_evaluation/CALBENCH_BELIEF_MS_V8_H10047_20261102.md",
+      "response_length_audit": {
+        "Qwen_successful_accepted_MS_outputs": 842,
+        "Qwen_mean_completion_tokens": 220.02,
+        "Qwen_median_completion_tokens": 207,
+        "Qwen_mean_visible_characters": 974.8,
+        "Qwen_median_visible_characters": 913,
+        "outcome99_successful_accepted_MS_outputs": 785,
+        "outcome99_mean_completion_tokens": 218.0,
+        "outcome99_median_completion_tokens": 203,
+        "outcome99_mean_visible_characters": 958.7,
+        "outcome99_median_visible_characters": 900
+      },
+      "completed_case_metrics": {
+        "Qwen": {
+          "cases": 20,
+          "final_valid_meetings": 16,
+          "requested_meetings": 60,
+          "full_stream_cases": 1,
+          "semantic_invalid_actions": 31,
+          "strict_envelope_failures": 0
+        },
+        "outcome99": {
+          "cases": 20,
+          "final_valid_meetings": 17,
+          "requested_meetings": 60,
+          "full_stream_cases": 0,
+          "semantic_invalid_actions": 41,
+          "strict_envelope_failures": 1,
+          "native_schema_rejections": 0
+        },
+        "interpretation": "Completed-case subset only; 4 aborted games per model have missing outcomes, not zero scores. Do not claim full 24-case or paired all-case result."
+      },
+      "actual_physical_costs": {
+        "Qwen": {
+          "physical_calls": 1692,
+          "prompt_tokens": 6984435,
+          "completion_tokens": 298322,
+          "total_tokens": 7282757,
+          "missing_usage_calls": 0
+        },
+        "outcome99": {
+          "physical_calls": 1578,
+          "prompt_tokens": 6409467,
+          "completion_tokens": 276956,
+          "total_tokens": 6686423,
+          "missing_usage_calls": 0
+        },
+        "note": "Includes all discarded failed prompt outputs; generation totals can exceed the accepted 4096 MS+action budget."
+      },
+      "failure_audit": {
+        "stage": "MS only",
+        "reason": "finish_reason=length at 4096 completion tokens",
+        "transport_failures": 0,
+        "separate_reasoning_content": "null in all failed responses",
+        "completion_tokens_details": "null in all failed responses",
+        "retry_identity": "Every retry returned a body byte-identical to its first attempt.",
+        "repeated_8gram_occurrence_share_range": {
+          "Qwen": [
+            0.786,
+            0.9
+          ],
+          "outcome99": [
+            0.84,
+            0.89
+          ]
+        },
+        "metric_note": "Lowercased word/punctuation 8-gram recurrence diagnostic; not a token fraction."
+      },
+      "diagnostic_data_bundle": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/README.md"
     }
   },
   "prompting_systems": {

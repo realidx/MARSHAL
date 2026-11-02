@@ -1,0 +1,33 @@
+{
+  "protocol": "general-belief-ms-v6-user-prompt",
+  "result_role": "scaffold_experiment_primary_budget",
+  "max_tokens": 4096,
+  "original_frozen_max_tokens": 4096,
+  "temperature": 0.0,
+  "prompt_changed": true,
+  "chat_template_kwargs": {},
+  "model_chat_template_changed": false,
+  "reasoning_normalization": "separate leading think block; preserve raw output",
+  "native_execution_protocol": "reasoning-separated-v2-tokens-4096",
+  "scaffold": {
+    "version": "general-belief-ms-v6-user-prompt",
+    "mode": "belief-ms",
+    "ms_request_cap": 4096,
+    "action_request_cap": "max_tokens - actual MS usage.completion_tokens",
+    "total_output_cap_per_native_call": 4096,
+    "fixed_stage_allocation": false,
+    "usage_contract": "required nonnegative integer completion_tokens from provider; includes reasoning tokens when provider counts them in completion_tokens; do not add reasoning tokens twice",
+    "budget_failure": "abort without executing an action if usage is missing/invalid, cap exceeded, or no action budget remains",
+    "calls_per_native_request": 2,
+    "budget_scope": "output-token cap, not matched FLOPs or input tokens",
+    "ms_memory": "no independent MS history; native final assistant responses remain in native history",
+    "request_layout": "native messages byte-for-byte unchanged; append separate user MS prompt; continue exact prefix with actual assistant MS response then user action prompt",
+    "persistence": "temporary stage messages never mutate native history; return only final action response to original client for its original persistence policy",
+    "analysis_failure": "abort game/run on empty, truncated, unfinished or non-stop MS; no fallback",
+    "action_failure": "retain native parsing/retry policy; do not erase failed attempts",
+    "seed_policy": "action uses original native seed sequence; MS uses SHA256(native seed:ms)",
+    "privacy": "only native visible messages; MS is private and never executed",
+    "environment_reflection": false,
+    "training": false
+  }
+}

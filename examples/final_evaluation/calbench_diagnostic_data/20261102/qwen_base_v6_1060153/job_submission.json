@@ -1,0 +1,99 @@
+{
+  "run_label": "qwen3-4b-instruct-2507-belief-ms-v6",
+  "condition": {
+    "model": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+    "scaffold": "belief-ms"
+  },
+  "launch_argv": [
+    "python",
+    "-u",
+    "-m",
+    "examples.final_evaluation.launch_calbench_local",
+    "--runtime",
+    "soc",
+    "--suite",
+    "stream",
+    "--model",
+    "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+    "--max-tokens",
+    "4096",
+    "--max-model-len",
+    "32768",
+    "--max-num-seqs",
+    "32",
+    "--runner-python",
+    "/home/e/e1300530/tmp/MARSHAL-calbench-20260918/.venv-calbench/bin/python",
+    "--ports",
+    "20153",
+    "--parallel-games",
+    "8",
+    "--disable-chunked-prefill",
+    "--disable-cascade-attn",
+    "--scaffold",
+    "belief-ms",
+    "--output",
+    "/home/e/e1300530/MARSHAL/runs/calbench_soc/qwen3-4b-instruct-2507-belief-ms-v6-stream-1060153"
+  ],
+  "resolved_routes_if_launcher_fails": {
+    "local_only": true,
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "timeout_seconds": 600,
+    "execution_protocol": "reasoning-separated-v2-tokens-4096",
+    "endpoints": {
+      "focal": {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:20153/v1"
+      },
+      "q0": {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:20153/v1"
+      }
+    },
+    "equivalent_replicas": [
+      {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:20153/v1"
+      }
+    ],
+    "scaffold": "belief-ms"
+  },
+  "runtime_profile": {
+    "partition": "gpu",
+    "gres": "gpu:h100-47:1",
+    "time_limit": "03:00:00",
+    "cpus_per_task": 8,
+    "memory": "64G",
+    "parallel_games": 8,
+    "max_num_seqs": 32,
+    "max_model_len": 32768,
+    "dtype": "bfloat16",
+    "gpu_memory_utilization": 0.65,
+    "enforce_eager": true,
+    "enable_prefix_caching": true,
+    "chunked_prefill": false,
+    "cascade_attention": false,
+    "VLLM_BATCH_INVARIANT": "1",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "1",
+    "temperature": 0.0,
+    "max_tokens": 4096
+  },
+  "submission": {
+    "job_id": "1060153",
+    "job_name": "cb24-qwen3-4b-instruct-2507-belief-ms-v6",
+    "partition": "gpu",
+    "nodelist": "xgpi19",
+    "cuda_visible_devices": "0",
+    "cpus_per_task": "8",
+    "time_limit_minutes": 180
+  },
+  "source": {
+    "git_head": "bae0a3bef14a6dd7661ce7d950d7fe425727f188",
+    "execution_scripts_sha256": {
+      "examples/final_evaluation/submit_calbench_h10047_v6.sh": "0d1d0f3d73ff4b13908666093f924dcdc6c2971a07e946bacfbf92964e431c68",
+      "examples/final_evaluation/sbatch_calbench_h10047_v6.sh": "d0bbe1ea48bac55f3c0671f2a84aadcb53a1cf1b915c1f7a20a265c546c4073a",
+      "examples/final_evaluation/finalize_calbench_pipeline_snapshot_v6.py": "09e332bca879216726c48c09ee4cfe9e3690a6b55253f0125d70a9f7054b66a6"
+    }
+  }
+}

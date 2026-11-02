@@ -1,0 +1,160 @@
+{
+  "version": "general-ms-conditioning-v3-shared-budget-8192",
+  "date": "2026-11-02",
+  "status": "COMPLETED_PARTIAL_BOTH_ABORTED_AFTER_8192_MS_TRUNCATIONS",
+  "validation": {
+    "registration": "Source digests in SNAPSHOT.json were generated from and archived with the implementation source.",
+    "worker_preflight": "Both H100-47 workers passed verify_registration and frozen-source verification; serving transport was healthy.",
+    "test_suite": "Not run; no test run requested.",
+    "gpu_model_calls": true,
+    "model_evaluation": "Both jobs reached only the first 8-case batch. Every recorded failure was an MS response with finish_reason=length and completion_tokens=8192; the pipeline aborted without fallback.",
+    "full_suite": "Not completed: 16 later cases per condition were not started. Missing cases are not zeros."
+  },
+  "runs": [
+    {
+      "job_id": 1059574,
+      "condition": "Qwen3-4B-Instruct-2507 Base+MS v3, 8192",
+      "status": "ABORTED_AFTER_FIRST_8_CASE_BATCH",
+      "elapsed": "00:07:42",
+      "attempted_cases": 8,
+      "healthy_transport_cases": 8,
+      "healthy_scaffold_cases": 7,
+      "truncated_ms_calls": [
+        {
+          "game": "loose_uniform_s1",
+          "agent": 0,
+          "ms_call": 2,
+          "finish_reason": "length",
+          "completion_tokens": 8192,
+          "elapsed_seconds": 211.2
+        }
+      ],
+      "remaining_cases_not_started": 16,
+      "pipeline_snapshot": "../../../../runs/calbench_soc/qwen3-4b-instruct-2507-base-ms-v3-8192-stream-1059574/pipeline_snapshot.json"
+    },
+    {
+      "job_id": 1059575,
+      "condition": "outcome-99 Base+MS v3, 8192",
+      "status": "ABORTED_AFTER_FIRST_8_CASE_BATCH",
+      "elapsed": "00:07:32",
+      "attempted_cases": 8,
+      "healthy_transport_cases": 8,
+      "healthy_scaffold_cases": 4,
+      "truncated_ms_calls": [
+        {
+          "game": "loose_varied_s1",
+          "agent": 1,
+          "ms_call": 1,
+          "finish_reason": "length",
+          "completion_tokens": 8192,
+          "elapsed_seconds": 203.6
+        },
+        {
+          "game": "loose_varied_s2",
+          "agent": 1,
+          "ms_call": 1,
+          "finish_reason": "length",
+          "completion_tokens": 8192,
+          "elapsed_seconds": 204.0
+        },
+        {
+          "game": "loose_uniform_s1",
+          "agent": 1,
+          "ms_call": 5,
+          "finish_reason": "length",
+          "completion_tokens": 8192,
+          "elapsed_seconds": 206.3
+        },
+        {
+          "game": "dense_uniform_s1",
+          "agent": 1,
+          "ms_call": 6,
+          "finish_reason": "length",
+          "completion_tokens": 8192,
+          "elapsed_seconds": 206.7
+        }
+      ],
+      "remaining_cases_not_started": 16,
+      "pipeline_snapshot": "../../../../runs/calbench_soc/outcome99-step99-base-ms-v3-8192-stream-1059575/pipeline_snapshot.json"
+    }
+  ],
+  "production_active": "terminal-node-regret-grpo-readable-v8",
+  "model_D": "NOT_MEASURED",
+  "training": false,
+  "limitations": [
+    "8192 did not eliminate MS truncation: Qwen had 1 truncated MS call in the first 8 cases; outcome-99 had 4.",
+    "Each truncated MS call used exactly 8192 completion tokens and ended with finish_reason=length; healthy transport rules out a scheduler or network failure for these cases.",
+    "The other 16 cases per condition were not started; no 24-case score or full-suite comparison is available.",
+    "The completed Qwen native baseline used 4096 tokens, so it is not budget-matched to this diagnostic.",
+    "The MS can consume the full shared budget; no action reservation or fallback is registered."
+  ],
+  "output_audit": {
+    "basis": "Read the raw vLLM response records for all five failed MS calls; no rerun or test was performed.",
+    "common": {
+      "finish_reason": "length",
+      "completion_tokens": 8192,
+      "visible_response": "30,578–35,534 characters in assistant message.content; output_normalization=plain",
+      "separate_reasoning": "message.reasoning is null and usage.completion_tokens_details is null for every failed call; no separate reasoning-token breakdown is exposed. Hidden internal computation not exposed by the API cannot be measured from these logs.",
+      "format": "assistant role; no tool_calls, no <think> tags, and no JSON actions envelope. Text repeatedly narrates proposed actions despite the private-analysis instruction.",
+      "stop": "All five responses end at the cap with incomplete prose; these are generation-limit truncations, not stream/network errors."
+    },
+    "text_recurrence_metric": "For each lowercased content string, tokenize words and punctuation; repeated 8-gram occurrence share = (all sliding 8-gram occurrences - number of unique 8-grams) / all occurrences. This is a text recurrence diagnostic, not a model-token usage percentage.",
+    "calls": [
+      {
+        "model": "Qwen3-4B-Instruct-2507",
+        "case": "loose_uniform_s1",
+        "agent": 0,
+        "ms_call": 2,
+        "content_characters": 35534,
+        "repeated_8gram_occurrence_share": 0.838,
+        "action_narration_counts": {
+          "Final action": 33,
+          "Action: send": 69
+        },
+        "truncated_tail": "I will not send"
+      },
+      {
+        "model": "outcome-99 step99",
+        "case": "loose_varied_s1",
+        "agent": 1,
+        "ms_call": 1,
+        "content_characters": 31245,
+        "repeated_8gram_occurrence_share": 0.775,
+        "action_narration_counts": {
+          "Final internal analysis": 32
+        }
+      },
+      {
+        "model": "outcome-99 step99",
+        "case": "loose_varied_s2",
+        "agent": 1,
+        "ms_call": 1,
+        "content_characters": 33359,
+        "repeated_8gram_occurrence_share": 0.756,
+        "truncated_tail": "valid and"
+      },
+      {
+        "model": "outcome-99 step99",
+        "case": "loose_uniform_s1",
+        "agent": 1,
+        "ms_call": 5,
+        "content_characters": 31260,
+        "repeated_8gram_occurrence_share": 0.683,
+        "truncated_tail": "Therefore,"
+      },
+      {
+        "model": "outcome-99 step99",
+        "case": "dense_uniform_s1",
+        "agent": 1,
+        "ms_call": 6,
+        "content_characters": 30578,
+        "repeated_8gram_occurrence_share": 0.869,
+        "action_narration_counts": {
+          "I will now send": 429,
+          "But I already did": 216
+        },
+        "truncated_tail": "But I"
+      }
+    ]
+  }
+}
