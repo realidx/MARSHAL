@@ -78,6 +78,56 @@ def summarize_run(root):
     import json
     from pathlib import Path
     root=Path(root)
+    retry_report=root/'case_results.json'
+    if retry_report.is_file():
+        report=json.loads(retry_report.read_text())
+        if report.get('schema') == 2:
+            cases=[]
+            for case in report['cases']:
+                audit=summarize_run(root/case['folder'])
+                raw=case.get('result') or {}
+                row=(audit['cases'][0] if audit['cases'] else dict(case_id=case['case_id'],
+                    engine_finished=raw.get('engine_finished',False),full_stream_completion=None,
+                    diagnostic_status='missing_trace' if raw else 'not_started'))
+                cases.append(dict(row,error_type=raw.get('error_type'),prompt_resources=case['resources']))
+            protocol=root/'execution_protocol.json'
+            return dict(evaluation_claim='homogeneous_team_transfer',
+                execution_protocol=json.loads(protocol.read_text()) if protocol.exists() else None,
+                expected_cases=report['summary']['cases_expected'],observed_cases=report['summary']['cases_attempted'],
+                cases=cases,prompt_retry_policy=report['policy'],case_summary=report['summary'],
+                all_attempt_resources=report['resources'],
+                replan_totals={k:sum(c.get('replan_branch',{}).get(k,0) for c in cases)
+                    for k in ('entered','contacted_old_participant','consistent_revision','not_entered')},
+                note='Each case executed once; failed prompts retry in place. All physical attempts counted. Aborted utility remains missing. Legacy v7 reports retain original whole-case policy.')
+        cases=[];first_cases=[]
+        for case in report['cases']:
+            attempts=[]
+            for attempt in case['attempts']:
+                audit=summarize_run(root/attempt['folder'])
+                raw=attempt['result']
+                row=(audit['cases'][0] if audit['cases'] else dict(case_id=case['case_id'],
+                    engine_finished=raw.get('engine_finished',False),healthy_transport=raw.get('healthy_transport'),
+                    full_stream_completion=None,diagnostic_status='missing_trace'))
+                row=dict(row,attempt=attempt['attempt'],attempt_folder=attempt['folder'],
+                         error_type=raw.get('error_type'),attempt_resources=attempt['resources'])
+                attempts.append(row)
+            first=attempts[0] if attempts else dict(case_id=case['case_id'],engine_finished=False,
+                full_stream_completion=None,diagnostic_status='not_started')
+            first_cases.append(first)
+            selected=next((a for a in attempts if a['attempt']==case['selected_attempt']),None)
+            row=dict(selected or (attempts[-1] if attempts else first))
+            row.update(selected_attempt=case['selected_attempt'],first_attempt_completed=case['first_attempt_completed'],
+                       completed_after_retry=case['completed_after_retry'],attempts=attempts)
+            cases.append(row)
+        protocol=root/'execution_protocol.json'
+        return dict(evaluation_claim='homogeneous_team_transfer',
+            execution_protocol=json.loads(protocol.read_text()) if protocol.exists() else None,
+            expected_cases=report['summary']['cases_expected'],observed_cases=len(cases),
+            cases=cases,first_attempt_cases=first_cases,case_retry_policy=report['policy'],
+            attempt_summary=report['summary'],all_attempt_resources=report['resources'],
+            replan_totals={k:sum(c.get('replan_branch',{}).get(k,0) for c in cases)
+                for k in ('entered','contacted_old_participant','consistent_revision','not_entered')},
+            note='cases are post-retry selections, first_attempt_cases are first-pass results. No aborted utility is set to zero. All first and retry costs are retained; retries are not independent cases.')
     cases=[]
     for path in sorted(root.rglob('scenario.json')):
         folder=path.parent

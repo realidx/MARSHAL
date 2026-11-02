@@ -71,16 +71,58 @@ class Transport:
         self.seed, self.agent_id, self.index = seed, agent_id, 0
 
     def streaming_with_retry(self, messages, **kwargs):
+        """Retry only this immutable request, never its previous stage or game."""
+        validate = kwargs.pop('_validate', None)
         index = self.index
         self.index += 1
         started = time.monotonic()
         seed = int(hashlib.sha256(f'{self.seed}:{self.agent_id}:{index}'.encode()).hexdigest()[:8], 16)
-        body = dict(model=self.route['model'], messages=messages,
+        body = dict(model=self.route['model'], messages=copy.deepcopy(messages),
                     temperature=self.config.get('temperature', 0.0),
                     max_tokens=kwargs.get('max_tokens') or self.config.get('max_tokens', 768), seed=seed)
         if 'chat_template_kwargs' in self.config:
             body['chat_template_kwargs'] = self.config['chat_template_kwargs']
-        record = dict(agent_id=self.agent_id, call_index=index, base_url=self.route['base_url'], request=body)
+        attempts = []
+        retry_enabled = self.config.get('prompt_retry_once', False)
+        for attempt in range(1, 3 if retry_enabled else 2):
+            record = dict(agent_id=self.agent_id, call_index=index, prompt_attempt=attempt,
+                          base_url=self.route['base_url'], request=copy.deepcopy(body))
+            attempt_started = time.monotonic()
+            try:
+                result = self._request_once(body, record)
+                if retry_enabled and (result.get('finish_reason') != 'stop'
+                        or not isinstance(result.get('text'), str) or not result['text'].strip()):
+                    raise ScaffoldFailure(f'Agent {self.agent_id}: empty or unfinished prompt output')
+                if validate is not None:
+                    validate(result)
+                record['accepted'] = True
+            except (InfrastructureFailure, ScaffoldFailure) as exc:
+                record['accepted'] = False
+                record['failure_type'] = type(exc).__name__
+                record['failure'] = str(exc)
+                if 'status' not in record:
+                    record['status'] = 'validation_failure'
+                if attempt == (2 if retry_enabled else 1):
+                    raise
+            else:
+                # Selected completion_tokens stays per-generation for the MS budget.
+                # All physical attempts are separately summed for cost accounting.
+                result['_prompt_attempts'] = [dict(attempt=r['prompt_attempt'], accepted=r.get('accepted'),
+                    status=r['status'], failure_type=r.get('failure_type')) for r in attempts+[record]]
+                from examples.final_evaluation.calbench_retry import usage_from_calls
+                result['_all_attempt_usage'] = usage_from_calls(attempts + [record])
+                if validate is None:
+                    result.update({k:v['total'] for k,v in result['_all_attempt_usage'].items()})
+                result['duration_s'] = time.monotonic()-started
+                return result
+            finally:
+                record['elapsed_seconds'] = time.monotonic()-attempt_started
+                with (self.output / f'transport-agent-{self.agent_id}.jsonl').open('a') as f:
+                    f.write(json.dumps(record, ensure_ascii=False) + '\n')
+                print(f"agent={self.agent_id} call={index} attempt={attempt} status={record['status']} seconds={record['elapsed_seconds']:.1f}", flush=True)
+            attempts.append(record)
+
+    def _request_once(self, body, record):
         try:
             key = os.environ.get(self.route.get('api_key_env', ''), 'EMPTY')
             request = Request(self.route['base_url'].rstrip('/') + '/chat/completions',
@@ -104,25 +146,21 @@ class Transport:
                     and all(isinstance(a, dict) for a in parsed['actions']))
             except (ValueError, TypeError):
                 record['strict_envelope_valid'] = False
-            usage = raw.get('usage', {})
-            return dict(text=text, reasoning=reasoning, duration_s=time.monotonic()-started,
-                        finish_reason=choice.get('finish_reason'), _raw_response=raw,
+            usage = raw.get('usage') or {}
+            return dict(text=text, reasoning=reasoning, finish_reason=choice.get('finish_reason'), _raw_response=raw,
                         **{k: usage.get(k) for k in ('prompt_tokens', 'completion_tokens', 'total_tokens')})
         except Exception as exc:
             record['status'] = 'infrastructure_failure'
             record['error_type'] = type(exc).__name__
             raise InfrastructureFailure(f'Agent {self.agent_id}: {type(exc).__name__}: {exc}') from exc
-        finally:
-            record['elapsed_seconds'] = time.monotonic() - started
-            with (self.output / f'transport-agent-{self.agent_id}.jsonl').open('a') as f:
-                f.write(json.dumps(record, ensure_ascii=False) + '\n')
-            print(f"agent={self.agent_id} call={index} status={record['status']} seconds={record['elapsed_seconds']:.1f}", flush=True)
 
 
 def run_one(job, routes, output):
     if routes.get('scaffold', 'native') not in ('native', 'belief-ms'):
-        raise ValueError('Historical scaffold config cannot run as v5; choose belief-ms explicitly')
+        raise ValueError('Historical scaffold config cannot run as the current version; choose belief-ms explicitly')
     routes = copy.deepcopy(routes)
+    if job.get('stream_case'):
+        routes['prompt_retry_once'] = True
     if routes.get('equivalent_replicas'):
         route = routes['equivalent_replicas'][job['focal_seat'] % len(routes['equivalent_replicas'])]
         routes['endpoints'] = {alias: dict(route) for alias in ('focal', 'q0')}
@@ -166,7 +204,9 @@ def run_one(job, routes, output):
         source_hash=source_hash, config=cfg, routes=routes, job=job), indent=2) + '\n')
     use_ms = routes.get('scaffold', 'native') == 'belief-ms'
     if use_ms:
-        from examples.final_evaluation.calbench_scaffold import BeliefTransport, write_snapshot
+        from examples.final_evaluation.calbench_scaffold import BeliefTransport
+    if use_ms or job.get('stream_case'):
+        from examples.final_evaluation.calbench_scaffold import write_snapshot
     original = game_module.make_llm_client
     def factory(spec):
         aid = spec['agent_id']
@@ -184,7 +224,7 @@ def run_one(job, routes, output):
     started = time.monotonic()
     try:
         game = CalendarGame(cfg)
-        if use_ms:
+        if use_ms or job.get('stream_case'):
             write_snapshot(folder, routes, game_config=game.config.model_dump(mode='json'), job=job)
         game.events = LiveEvents()
         trace = game.run_with_scenario(scenario)
@@ -197,17 +237,19 @@ def run_one(job, routes, output):
                       elapsed_seconds=time.monotonic()-started, call_statuses=dict(counts),
                       strict_envelope_failures=sum(not c.get('strict_envelope_valid', False) for c in calls),
                       event_counts=dict(events), metrics=json.loads(trace.model_dump_json())['metrics'],
-                      healthy_transport=bool(calls) and counts['infrastructure_failure']==0,
+                      healthy_transport=bool(calls), had_transport_failures=counts['infrastructure_failure']>0,
                       all_generations_untruncated=counts['truncated']==0)
         if use_ms:
             ms_calls = [json.loads(line) for p in (folder/'ms').glob('transport-*.jsonl') for line in p.read_text().splitlines()]
-            result['scaffold'] = dict(version=SCAFFOLD_VERSION, mode='belief-ms', native_calls=len(calls),
-                ms_calls=len(ms_calls), physical_calls=len(calls)+len(ms_calls), calls_per_native_request=2,
+            receipts = [json.loads(line) for p in folder.glob('scaffold-agent-*.jsonl') for line in p.read_text().splitlines()]
+            result['scaffold'] = dict(version=SCAFFOLD_VERSION, mode='belief-ms', native_calls=len(receipts), action_physical_calls=len(calls),
+                ms_calls=len(ms_calls), physical_calls=len(calls)+len(ms_calls), calls_per_native_request='2 normally; failed prompt alone may retry once',
                 ms_log_scope='ms/transport-agent-*.jsonl; these are not action-format attempts',
-                usage={k: (sum(c.get('response', {}).get('usage', {}).get(k, 0) for c in calls+ms_calls)
-                       if all(isinstance(c.get('response', {}).get('usage', {}).get(k), int) for c in calls+ms_calls) else None)
+                usage={k: (sum(((c.get('response') or {}).get('usage') or {}).get(k, 0) for c in calls+ms_calls)
+                       if all(isinstance(((c.get('response') or {}).get('usage') or {}).get(k), int) for c in calls+ms_calls) else None)
                        for k in ('prompt_tokens', 'completion_tokens', 'total_tokens')})
             result['healthy_scaffold'] = True
+            result['had_transport_failures'] = any(c['status']=='infrastructure_failure' for c in calls+ms_calls)
         if case:
             result['reference' if job.get('formal_case') or job.get('stream_case') else 'development_reference']=case['reference']
             result['native_oracle_scores_valid']=not bool(case['scenario'].get('prior_meetings'))
@@ -265,10 +307,12 @@ def main():
         routes['scaffold'] = args.scaffold
     if routes.get('scaffold', 'native') not in ('native', 'belief-ms'):
         parser.error('Unknown or historical scaffold; choose native or belief-ms explicitly')
+    if args.suite == 'stream':
+        routes['prompt_retry_once'] = True
     use_ms = routes.get('scaffold', 'native') == 'belief-ms'
     if use_ms:
         if args.suite != 'stream':
-            parser.error('Independent belief-MS v5 is registered only for the frozen stream24 suite')
+            parser.error('Independent belief-MS is registered only for the frozen stream24 suite')
         from examples.final_evaluation.calbench_scaffold import protocol, verify_registration, write_snapshot
         protocol(routes)
         verify_registration()
@@ -310,8 +354,17 @@ def main():
                          prompt_changed=True, scaffold=protocol(routes),
                          result_role='scaffold_experiment_primary_budget' if routes['max_tokens']==4096 else 'scaffold_diagnostic_budget')
         (args.output/'execution_protocol.json').write_text(json.dumps(execution, indent=2)+'\n')
-        write_snapshot(args.output, routes, cli=dict(argv=sys.argv, parsed={k:str(v) if isinstance(v,Path) else v for k,v in vars(args).items()}),
-                       game_config=frozen['config'])
+    if args.suite == 'stream':
+        from examples.final_evaluation.calbench_retry import retry_policy, run_suite
+        from examples.final_evaluation.calbench_scaffold import write_snapshot
+        execution = json.loads((args.output/'execution_protocol.json').read_text())
+        execution['prompt_retry_policy'] = retry_policy()
+        (args.output/'execution_protocol.json').write_text(json.dumps(execution, indent=2)+'\n')
+        write_snapshot(args.output, routes, cli=dict(argv=sys.argv,
+            parsed={k:str(v) if isinstance(v,Path) else v for k,v in vars(args).items()}), game_config=frozen['config'])
+        with ProcessPoolExecutor(max_workers=args.parallel_games, mp_context=mp.get_context('spawn')) as pool:
+            run_suite(jobs, routes, args.output, pool, run_one, as_completed, args.parallel_games)
+        return
     results = []
     with ProcessPoolExecutor(max_workers=args.parallel_games, mp_context=mp.get_context('spawn')) as pool:
         # Submit one bounded batch at a time: a dead server must not consume

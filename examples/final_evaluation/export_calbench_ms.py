@@ -109,7 +109,7 @@ def export(output):
     # Preserve the actual initial calendar rather than the authored continuation.
     artifact['actual_initial_calendar'] = case['scenario']['calendars'][0]
     (output/'requests.json').write_text(json.dumps(artifact,ensure_ascii=False,indent=2)+'\n')
-    blocks = ['# Full request export: v6 user-authored belief/MS → action', '',
+    blocks = ['# Full request export: v8 belief/MS → action (same user prompt, failed prompt retry once)', '',
               'Offline fixture responses; no model calls. Each request below is rendered in full, in actual message order.', '',
               'The native user request ends unchanged, followed by a separate user MS prompt. Action has the exact same prefix,',
               'followed by assistant MS and user action-stage instruction. Native system and prior history are untouched.',

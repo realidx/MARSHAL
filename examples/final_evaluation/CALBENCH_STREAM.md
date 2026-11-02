@@ -111,3 +111,9 @@ python -m examples.final_evaluation.calbench_stream_metrics /path/to/run/evaluat
 Use the directory containing execution_protocol.json for protocol attribution.
 Missing traces/infrastructure failures remain explicitly missing. Raw native
 headline scores are retained for debugging only, not the primary comparison.
+
+## Current execution policy: retry the failed prompt once (2026-11-02)
+
+v8 executes each case once. A failed request/output is retried immediately with identical messages/model/seed/temperature/cap at its current position. MS failure retries only MS; action failure keeps the accepted MS and retries only action. Failed outputs are never appended to history. After two failed attempts, abort that case and continue all remaining cases. Completed poor scheduling outcomes do not trigger retries. Native semantic/parser decision retries remain unchanged.
+
+Accepted MS/action share4096; discarded failed attempts add compute and every physical attempt is retained in the stage transport logs (call_index plus prompt_attempt). Actual spend can exceed4096 and includes failed outputs. case_results.json schema2 reports one execution per case and all prompt retry costs; results.json is one result per case, with no whole-case replay. RUN_FINISHED distinguishes all cases attempted from all cases completed. The same request retry applies to native stream24 comparisons. Legacy v7 whole-case retry outputs retain their original identity/audit; frozen reporting_protocol.md, other suites, prompts, game rules and scoring are not rewritten. See [current MS protocol](CALBENCH_BASE_MS.md).

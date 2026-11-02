@@ -1,5 +1,17 @@
 # 9月与当前 pipeline 配置快照及逐项对照
 
+**2026-11-02用户纠正重试单位：**[v8 prompt-retry-once](versions/general_ms_calbench_v8_20261102/SNAPSHOT.json)取消v7整局重跑，
+只在当前位置对失败prompt立即重试一次。MS失败只重试MS；action失败保留成功MS，只重试action。上下文/model/seed/温度/上限相同，失败输出不入历史，逻辑采样序号不因物理重试偏移。
+每局只执行一次；prompt两次失败则该局保留缺失，继续其余题。原生DECISION parser/语义重试保留，正常调度失败不额外重试；native stream对照采用相同请求重试。
+被接受MS/action共享4096，失败重试可使实际总成本超过4096，全部物理输出与未知用量显式记录；schema2汇总每题一次及prompt恢复/耗尽，旧v7审计与关闭快照不改。
+69项CPU离线检查通过，包括后段action失败时先前请求/状态不重放、失败prompt重复后其余23局继续；未启动真实模型重测/训练/新D，active仍v8。
+
+**2026-11-02用户要求失败重测一次并跑全：**[v7 retry-once](versions/general_ms_calbench_v7_20261102/SNAPSHOT.json)先尝试全部24局，
+再将执行中止局从初始状态、同模型/参数/种子完整重跑一次；普通正常结束但调度失败不重试，两次均失败保留缺失并继续。
+首试与重试分目录，不覆盖；first-pass/post-retry结果分报，所有尝试开销计入，同一题不当两道独立题。
+stream原生对照也用同一政策，旧suite保持；MS/action提示、每次原生行动共享4096及原生游戏/评分未变。
+59项CPU离线检查通过；旧v6运行不补写成完整结果，未启动真实模型重测/训练/新D，active仍v8。
+
 **2026-11-02用户逐字指定MS提示：**[v6 user-prompt](versions/general_ms_calbench_v6_20261102/SNAPSHOT.json)只替换MS文本，
 使用用户给定三段第一人称own states/对他人mental states的belief提示，不加标题或末尾限制句。
 独立两次调用、真实assistant MS接续、action提示、共享4096、原生历史/游戏/评分均不变；完整实际请求重新导出。

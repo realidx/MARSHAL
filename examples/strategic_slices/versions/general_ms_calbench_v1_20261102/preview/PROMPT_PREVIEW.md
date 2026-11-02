@@ -1,10 +1,12 @@
-# 当前审阅副本：v6 用户指定的 MS prompt
+# 当前审阅副本：v8（只重试失败prompt）
 
-MS文本逐字采用用户给定三段内容，未添加标题或末尾指令。消息顺序和action提示沿用v5。
-原v1：[PROMPT_PREVIEW.v1_frozen.md](PROMPT_PREVIEW.v1_frozen.md)；上一版审阅副本：[PROMPT_PREVIEW.v5_review_frozen.md](PROMPT_PREVIEW.v5_review_frozen.md)。
-本次规范导出：[v6 preview](../../general_ms_calbench_v6_20261102/preview/PROMPT_PREVIEW.md)。
+此路径按用户先前指定，作为可更新审阅入口；原v1注册快照、原始requests与证据保持原身份。
 
-# Full request export: v6 user-authored belief/MS → action
+v8按用户纠正取消整局重跑：MS失败只重试当前MS；action失败保留成功MS，只重试当前action。相同上下文/model/seed/温度/上限，失败输出不入历史，每个prompt最多两次。两次失败则中止该局并继续其余题。成功MS/action共享4096，失败输出成本额外累计，不能声称实际总花费仍不超过4096。提示正文与消息顺序保持v6/v7原样，69项CPU检查通过，未启动真实模型评测。
+
+[规范v8预览](../../general_ms_calbench_v8_20261102/preview/PROMPT_PREVIEW.md) · [上次v7审阅归档](PROMPT_PREVIEW.v7_review_frozen.md) · [原v1预览归档](PROMPT_PREVIEW.v1_frozen.md)
+
+# Full request export: v8 belief/MS → action (same user prompt, failed prompt retry once)
 
 Offline fixture responses; no model calls. Each request below is rendered in full, in actual message order.
 
@@ -12,7 +14,7 @@ The native user request ends unchanged, followed by a separate user MS prompt. A
 followed by assistant MS and user action-stage instruction. Native system and prior history are untouched.
 The assistant MS message is the real first provider response (a synthetic fixture in this export). Only the final action returns to the original client; native cross-action history is unchanged.
 
-Raw complete wire requests and persisted histories: [requests.json](../../general_ms_calbench_v6_20261102/preview/requests.json).
+Raw complete wire requests and persisted histories: [requests.json](../../general_ms_calbench_v8_20261102/preview/requests.json).
 
 Shared output cap: 4096. Fixture MS usage is 3, so fixture action cap is 4093; these are synthetic usage values.
 

@@ -62,14 +62,20 @@ class FakeTransport:
         self.instances.append(self)
 
     def streaming_with_retry(self, messages, **kwargs):
-        self.requests.append(copy.deepcopy(messages))
-        self.request_caps.append(kwargs.get('max_tokens',self.config['max_tokens']))
-        ms = self.output.name == 'ms'
-        tokens = self.ms_tokens if ms else self.action_tokens
-        return dict(text=self.analysis if ms else '{"thinking":"done","actions":[]}',
-                    finish_reason=self.finish_reason if ms else 'stop',
-                    prompt_tokens=10 if ms else 20, completion_tokens=tokens,
-                    total_tokens=(10 if ms else 20)+tokens if type(tokens) is int else None)
+        for attempt in range(2 if self.config.get('prompt_retry_once') else 1):
+            self.requests.append(copy.deepcopy(messages))
+            self.request_caps.append(kwargs.get('max_tokens',self.config['max_tokens']))
+            ms = self.output.name == 'ms'
+            tokens = self.ms_tokens if ms else self.action_tokens
+            response = dict(text=self.analysis if ms else '{"thinking":"done","actions":[]}',
+                        finish_reason=self.finish_reason if ms else 'stop',
+                        prompt_tokens=10 if ms else 20, completion_tokens=tokens,
+                        total_tokens=(10 if ms else 20)+tokens if type(tokens) is int else None)
+            try:
+                if kwargs.get('_validate'):kwargs['_validate'](response)
+                return response
+            except ScaffoldFailure:
+                if attempt==1 or not self.config.get('prompt_retry_once'):raise
 
 
 def wrapper(tmp_path):
@@ -306,7 +312,7 @@ def test_main_records_cli_protocol_and_all24_jobs(tmp_path, monkeypatch):
         def __exit__(self,*args):pass
         def submit(self,fn,job,config,output):
             seen.append((job,config));future=Future()
-            future.set_result(dict(game_id=job['game_id'],healthy_transport=True,healthy_scaffold=True))
+            future.set_result(dict(game_id=job['game_id'],engine_finished=True,healthy_transport=True,healthy_scaffold=True))
             return future
     monkeypatch.setattr(runner,'ProcessPoolExecutor',Executor)
     output=tmp_path/'run'

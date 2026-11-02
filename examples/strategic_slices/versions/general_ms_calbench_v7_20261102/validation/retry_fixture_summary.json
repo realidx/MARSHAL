@@ -1,0 +1,54 @@
+{
+  "scope": "synthetic failure/recovery scheduler fixture, not real model results",
+  "policy": {
+    "version": "calbench-case-retry-once-v7",
+    "max_attempts_per_case": 2,
+    "order": "all first attempts, then exactly one retry of each aborted case",
+    "retry_trigger": "engine abort, scaffold failure, infrastructure failure or worker exception; not an ordinary completed game with poor task outcome",
+    "restart": "whole case from the frozen initial state with fresh player histories",
+    "seed": "same original scenario and sampling seeds; no new temperature or hidden reseeding",
+    "stop_on_case_failure": false,
+    "budget": "original per-native-call budget on each attempt; all attempt costs retained",
+    "report": "first attempt and post-retry outcomes separately; incomplete utility remains missing"
+  },
+  "summary": {
+    "cases_expected": 5,
+    "cases_attempted": 5,
+    "first_attempt_completed": 2,
+    "completed_after_retry": 4,
+    "recovered_on_retry": 2,
+    "failed_attempts": 4,
+    "retried_cases": 3,
+    "attempts_total": 8,
+    "unresolved_cases": [
+      "double_fail"
+    ],
+    "not_started": [],
+    "suite_elapsed_seconds": 0.01092562498524785
+  },
+  "resources": {
+    "observed_physical_calls": 13,
+    "attempts_without_call_logs": 0,
+    "usage": {
+      "prompt_tokens": {
+        "known_sum": 180,
+        "missing_calls": 0,
+        "total": 180
+      },
+      "completion_tokens": {
+        "known_sum": 12328,
+        "missing_calls": 0,
+        "total": 12328
+      },
+      "total_tokens": {
+        "known_sum": 12508,
+        "missing_calls": 0,
+        "total": 12508
+      }
+    },
+    "attempt_elapsed_seconds_known_sum": 8,
+    "attempts_missing_elapsed_seconds": 0,
+    "attempt_elapsed_seconds_sum": 8,
+    "note": "Includes first and retry attempts; summed attempt durations are not parallel suite wall time"
+  }
+}
