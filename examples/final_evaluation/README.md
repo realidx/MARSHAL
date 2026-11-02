@@ -104,6 +104,6 @@ These changes require a fresh launch; speedup has not yet been benchmarked.
 
 New `--suite stream`: 24 frozen four-player, three-meeting games with temperature 0 and three scenario seeds per condition. See [design, scoring and commands](CALBENCH_STREAM.md). The historical 12-case `formal` suite is unchanged.
 
-## Generic Base+MS (2026-11-02)
+## Independent belief/MS stages (review pending)
 
-Current opt-in independent belief/MS then action (`--scaffold belief-ms`) for the frozen CalBench stream24 suite: [design, concrete example and commands](CALBENCH_BASE_MS.md). Native invocation remains the default. CPU fixture checks are separate from model evaluation; no new model results or training.
+The v11 minimal implementation separates private belief text from executable action output. See the [actual CalBench example](../strategic_slices/versions/general_ms_calbench_v11_minimal_20261102/EXAMPLE.md) and [complete request preview](../strategic_slices/versions/general_ms_calbench_v11_minimal_20261102/preview/PROMPT_PREVIEW.md). Native prompting remains the default. Offline checks passed; no model evaluation was run for this version.

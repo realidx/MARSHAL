@@ -7,6 +7,7 @@ import pytest
 
 from examples.final_evaluation.interaction_scaffold import VERSION, MS_INSTRUCTION, ms_request, action_request
 from examples.final_evaluation.calbench_scaffold import BeliefTransport, ScaffoldFailure, protocol, verify_registration
+from examples.final_evaluation.calbench_stage_context import stage_context
 
 
 def test_generic_builders_preserve_only_native_context():
@@ -36,7 +37,9 @@ def test_actual_first_response_is_the_assistant_turn_for_action(tmp_path):
     second=transport.action.requests[0]
     assert [m['role'] for m in first]==['system','user','user']
     assert [m['role'] for m in second]==['system','user','user','assistant','user']
-    assert first[:-1]==native and second[:-2]==first
+    assert first[:-1]==stage_context(native).messages and second[:-2]==first
+    assert first[0]['content']=='native system'
+    assert 'Use the context and your preceding assessment' in second[-1]['content']
     assert second[-2]['content']=='THE_ACTUAL_FIRST_PROVIDER_REPLY'
     assert second[-1]['content'].startswith('ACTION STAGE')
 
@@ -182,7 +185,9 @@ def test_native_client_lifecycle_exports_full_requests_and_keeps_ms_private(tmp_
         assert (ms['max_tokens'], act['max_tokens']) == (4096,4093)
         assert act['messages'][:-2] == ms['messages']
         assert act['messages'][-2] == dict(role='assistant', content=example['synthetic_ms'])
-        assert ms['messages'][:-1] == example['native_messages']
+        assert ms['messages'][:-1] == stage_context(example['native_messages']).messages
+        assert 'Always respond with a JSON object' not in ms['messages'][0]['content']
+        assert 'Always respond with a JSON object' in act['messages'][-1]['content']
         assert ms['messages'][-1] == dict(role='user',content=MS_INSTRUCTION)
         assert example['native_history_after'][:-1] == example['native_messages'][1:]
         assert example['native_history_after'][-1]['role'] == 'assistant'

@@ -1,0 +1,97 @@
+{
+  "version": "general-belief-ms-v9-stage-contract",
+  "date": "2026-11-02",
+  "status": "IMPLEMENTED_OFFLINE_VALIDATED_NOT_MODEL_EVALUATED",
+  "review_status": "AWAITING_USER_REVIEW",
+  "parent": "general-belief-ms-v8-prompt-retry-once (withdrawn; records deleted at user request)",
+  "authorization": "User approved repairing the MS/action prompt flow and requested an actual CalBench example MD for review; no model evaluation requested.",
+  "source_sha256": {
+    "examples/final_evaluation/interaction_scaffold.py": "f25087a37562a8de6d275138cd5fa3c26e937c79640464aa946fb42e08cab7a5",
+    "examples/final_evaluation/calbench_stage_context.py": "43a12268970014aceba25c80ca13590540ed4016739f100a560383d5026b6de4",
+    "examples/final_evaluation/calbench_scaffold.py": "0a85e14f96d39fcbdb20006d72752c36541ccdfe09094df1c017e9defc8f29e0",
+    "examples/final_evaluation/calbench_local.py": "4c53d008cea0617d50b7cbd114bf5a9fbe53b58e53a23dc785a07fc66ab7bf1e",
+    "examples/final_evaluation/calbench_retry.py": "fd8703726d0aba4fe36a200222e25987a5bea26f228efcb92893e3225e7400f9",
+    "examples/final_evaluation/export_calbench_ms.py": "9126ddd9e3bd47031740984ac9d89f763a3ae844c6390f63ae8a6b0978279a40",
+    "examples/final_evaluation/launch_calbench_local.py": "6fb4964030b79ece1bb047d00081238bfb9cffa84c39b5cc2ce9e09e924a17e5",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "0ea3c227e27e4dd682b9e843a1b6844ab5be45c03ffb03aae9f17aec2e3b6106",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659",
+    "tests/agentic/test_calbench_ms.py": "7c3c841833b3d13cba3849ac2cf6b24cf9ce1418b87a5145ab1088bfc50718eb",
+    "tests/agentic/test_calbench_retry.py": "951c40a0c0d9119699d0c3d15e58a4e43e4a069530446db011dc74080a9ac247",
+    "tests/agentic/test_calbench_stage_contract.py": "4cb41725210ab32840b586e21bd36b9d67171a4f6ed4065ae9d8ee07de91ec6f"
+  },
+  "differences": [
+    {
+      "field": "MS system",
+      "before": "native action tools/schema/response-format and examples present",
+      "after": "shared stage protocol plus original goals/rules/privacy/identity and descriptive operation constraints; native action protocol moves to final ACTION user",
+      "motivation": "Remove conflicting action-output obligations from MS"
+    },
+    {
+      "field": "current and past user prompt view",
+      "before": "native current/history user action directives and examples remain visible as instructions",
+      "after": "pinned template projection retains observations, received statements, calendars, penalties, phase and turn counters; output directives/examples move to current ACTION user; past assistant submissions stay unchanged",
+      "motivation": "Keep evidence while separating stage-specific commands"
+    },
+    {
+      "field": "execution semantics",
+      "before": "MS assistant may be read as a prior completed action",
+      "after": "shared stage protocol and ACTION message explicitly say current MS is private/unexecuted, not pass, not environment feedback or agreement; needed actions must still be returned",
+      "motivation": "Prevent planned DM being mistaken for sent DM"
+    },
+    {
+      "field": "belief validation",
+      "before": "nonempty/stop/usage check accepts action JSON",
+      "after": "reject JSON, code fences, provider tools/action objects and executable/directive lines; retry only failed MS prompt once; invalid MS never forwarded",
+      "motivation": "Enforce intended belief-only boundary rather than silently extracting thinking"
+    },
+    {
+      "field": "unknown native templates",
+      "before": "all action directives forwarded as-is",
+      "after": "unrecognized instruction-bearing template fails before model calls instead of guessing how to strip data",
+      "motivation": "Avoid silent evidence loss or action directive leakage"
+    }
+  ],
+  "parameters": {
+    "scaffold": "belief-ms",
+    "total_output_cap_per_native_call": 4096,
+    "stage_allocation": "no fixed allocation; MS cap=total; ACTION cap=total minus accepted MS completion_tokens",
+    "retry": "failed prompt only once, identical request/seed; no whole-case replay; case abort after exhausted prompt continues remaining cases",
+    "actual_cost": "all physical failed and accepted calls counted; retry can exceed accepted4096 cap",
+    "temperature": 0.0,
+    "context": 32768,
+    "thinking": "native model template; no override",
+    "environment_reflection": false,
+    "independent_MS_memory": false,
+    "original_history": "native original user plus final assistant action only; stage views are copies",
+    "action_format": "original native named JSON action contract restored only in ACTION user",
+    "timeout_seconds_default": 120,
+    "launcher_timeout_at4096": 600,
+    "native_suites": "frozen stream24 only for MS; native default remains native",
+    "training": false
+  },
+  "inputs": {
+    "examples/final_evaluation/calbench_stream_v1/manifest.json": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "examples/final_evaluation/calbench_stream_v1/MANIFEST.sha256": "38408db9a785e5358a3e9cb5a26e77371c39529c853cfb2c3166e1b371261d44",
+    "examples/final_evaluation/calbench_source.json": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "unchanged": [
+    "frozen24 cases/selection and all scenario seeds",
+    "native rules/game/scoring/action parser/native decision retries",
+    "model weights, no parameter updates/new D",
+    "native client persistence and action-to-action relationship",
+    "shared4096 accepted-path contract and failed-prompt retry/continue policy",
+    "native plain prompt and production active terminal readable v8"
+  ],
+  "full_requests": "preview/PROMPT_PREVIEW.md",
+  "example": "EXAMPLE.md",
+  "evidence": "EVIDENCE.json",
+  "validation": "See EVIDENCE.json for actual offline checks; no real-model effect claim",
+  "limitations": [
+    "No real model evidence yet that wording eliminates hallucinated already-executed claims or improves coordination.",
+    "Output guard rejects structured/executable syntax; it cannot prove all natural-language assertions are factually correct.",
+    "Pinned template adapter is CalBench-specific plumbing; mental-state instruction is environment-independent and no scenario strategies were added.",
+    "Historical assistant action JSON remains as past submissions, not current MS output; outcomes depend on later environment feedback.",
+    "All stage projection and rule-reference changes are an explicit new prompt condition, not the old native condition."
+  ]
+}

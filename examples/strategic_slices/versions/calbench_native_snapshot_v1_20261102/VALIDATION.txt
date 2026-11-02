@@ -1,0 +1,44 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.2, pytest-7.4.4, pluggy-1.0.0 -- /opt/anaconda3/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/bruce/MARSHAL/tests
+configfile: pytest.ini
+plugins: typeguard-4.4.4, anyio-4.2.0
+collecting ... collected 17 items
+
+tests/agentic/test_final_calbench.py::test_source_matches_pinned_manifest PASSED [  5%]
+tests/agentic/test_final_calbench.py::test_remote_routes_require_explicit_opt_in PASSED [ 11%]
+tests/agentic/test_final_calbench.py::test_transport_records_truncation_and_leaves_native_parsing_intact PASSED [ 17%]
+tests/agentic/test_final_calbench.py::test_frozen_suite_certificates_and_costs PASSED [ 23%]
+tests/agentic/test_final_calbench.py::test_frozen_suite_rejects_tampering PASSED [ 29%]
+tests/agentic/test_final_calbench.py::test_transport_infrastructure_failure_cannot_become_empty_action PASSED [ 35%]
+tests/agentic/test_final_calbench.py::test_reasoning_wrapper_separated_before_native_json_repair PASSED [ 41%]
+tests/agentic/test_final_calbench.py::test_unfinished_reasoning_never_becomes_an_action PASSED [ 47%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[formal-1] PASSED [ 52%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[formal-2] PASSED [ 58%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[stream-1] PASSED [ 64%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[stream-2] PASSED [ 70%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[shapefactory_native_lite-1] PASSED [ 76%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[shapefactory_native_lite-2] PASSED [ 82%]
+tests/agentic/test_final_calbench.py::test_stream_suite_native_replays_and_seed_coverage PASSED [ 88%]
+tests/agentic/test_final_calbench.py::test_stream_runner_uses_homogeneous_team_and_three_meeting_reference PASSED [ 94%]
+tests/agentic/test_final_calbench.py::test_stream_diagnostics_replan_and_final_consistency PASSED [100%]
+
+=============================== warnings summary ===============================
+agentic/test_final_calbench.py::test_source_matches_pinned_manifest
+  /Users/bruce/MARSHAL/tests/conftest.py:48: UserWarning: Running test without verifying torch version, please provide an expected torch version with --torch_ver
+    warnings.warn(
+
+agentic/test_final_calbench.py::test_source_matches_pinned_manifest
+  /Users/bruce/MARSHAL/tests/conftest.py:57: UserWarning: Running test without verifying cuda version, please provide an expected cuda version with --cuda_ver
+    warnings.warn(
+
+agentic/test_final_calbench.py: 2380 warnings
+  /opt/anaconda3/lib/python3.12/site-packages/pydantic/main.py:164: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    __pydantic_self__.__pydantic_validator__.validate_python(data, self_instance=__pydantic_self__)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================== slowest durations ===============================
+
+(51 durations < 1s hidden.  Use -vv to show these durations.)
+====================== 17 passed, 2382 warnings in 0.55s =======================

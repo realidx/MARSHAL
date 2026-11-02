@@ -1,0 +1,76 @@
+{
+  "version": "general-belief-ms-v10-user-brief",
+  "date": "2026-11-02",
+  "status": "IMPLEMENTED_OFFLINE_VALIDATED_NOT_MODEL_EVALUATED",
+  "review_status": "AWAITING_USER_REVIEW",
+  "parent": "general-belief-ms-v9-stage-contract",
+  "authorization": "User supplied the exact shortened MS prompt and asked to adjust implementation/examples accordingly; preserve v9 stage separation, validation, action prompt, budget and retry.",
+  "source_sha256": {
+    "examples/final_evaluation/interaction_scaffold.py": "0de638bbf36cca514a781a30f860f80fd125925f45d638cd27ef929dc3e01296",
+    "examples/final_evaluation/calbench_stage_context.py": "43a12268970014aceba25c80ca13590540ed4016739f100a560383d5026b6de4",
+    "examples/final_evaluation/calbench_scaffold.py": "e1a50a7f99ad54c315b2eead50bd06f9ce3da794d038f0082d7748ed96c628cd",
+    "examples/final_evaluation/calbench_local.py": "4c53d008cea0617d50b7cbd114bf5a9fbe53b58e53a23dc785a07fc66ab7bf1e",
+    "examples/final_evaluation/calbench_retry.py": "fd8703726d0aba4fe36a200222e25987a5bea26f228efcb92893e3225e7400f9",
+    "examples/final_evaluation/export_calbench_ms.py": "1eecadc4fbbebc310562f97b7b86ffa5db2a1843d858914de765db008537dc7b",
+    "examples/final_evaluation/launch_calbench_local.py": "6fb4964030b79ece1bb047d00081238bfb9cffa84c39b5cc2ce9e09e924a17e5",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "0ea3c227e27e4dd682b9e843a1b6844ab5be45c03ffb03aae9f17aec2e3b6106",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659",
+    "tests/agentic/test_calbench_ms.py": "7c3c841833b3d13cba3849ac2cf6b24cf9ce1418b87a5145ab1088bfc50718eb",
+    "tests/agentic/test_calbench_retry.py": "9a883a707ed5bfdff0fb99f4d72031a0d2e87c85ed072ddbce0842e5187ff5b5",
+    "tests/agentic/test_calbench_stage_contract.py": "9b98a1c09babfd54dffee10d0a0217abb332983271b3c24038395bb79a34086c"
+  },
+  "differences": [
+    {
+      "field": "MS user text",
+      "before": "v9 stage header/introduction plus user core and additional explicit JSON/code/action prohibitions",
+      "after": "exact user-supplied shortened text, no added header/introduction/restriction sentences",
+      "motivation": "User requested a simpler general MS prompt; non-execution sentence retained"
+    }
+  ],
+  "parameters": {
+    "scaffold": "belief-ms",
+    "total_output_cap_per_native_call": 4096,
+    "stage_allocation": "no fixed allocation; MS cap=total; ACTION cap=total minus accepted MS completion_tokens",
+    "retry": "failed prompt only once, identical request/seed; no whole-case replay; case abort after exhausted prompt continues remaining cases",
+    "actual_cost": "all physical failed and accepted calls counted; retry can exceed accepted4096 cap",
+    "temperature": 0.0,
+    "context": 32768,
+    "thinking": "native model template; no override",
+    "environment_reflection": false,
+    "independent_MS_memory": false,
+    "original_history": "native original user plus final assistant action only; stage views are copies",
+    "action_format": "original native named JSON action contract restored only in ACTION user",
+    "timeout_seconds_default": 120,
+    "launcher_timeout_at4096": 600,
+    "native_suites": "frozen stream24 only for MS; native default remains native",
+    "training": false
+  },
+  "inputs": {
+    "examples/final_evaluation/calbench_stream_v1/manifest.json": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "examples/final_evaluation/calbench_stream_v1/MANIFEST.sha256": "38408db9a785e5358a3e9cb5a26e77371c39529c853cfb2c3166e1b371261d44",
+    "examples/final_evaluation/calbench_source.json": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "unchanged": [
+    "v9 shared system stage protocol and pinned observation/action projection",
+    "ACTION user text and restoration of native action instructions",
+    "MS output validator and failed-prompt-once/continue policy",
+    "original cross-action native history and no independent MS memory",
+    "shared4096 accepted MS/action budget; failed attempts fully counted",
+    "frozen24 cases/scenario seeds/source/scoring, models/sampling/production active; no training or D"
+  ],
+  "full_requests": "preview/PROMPT_PREVIEW.md",
+  "example": "EXAMPLE.md",
+  "evidence": "EVIDENCE.json",
+  "validation": "See EVIDENCE.json for actual offline checks; no real-model effect claim",
+  "limitations": [
+    "No real model evidence yet that wording eliminates hallucinated already-executed claims or improves coordination.",
+    "Output guard rejects structured/executable syntax; it cannot prove all natural-language assertions are factually correct.",
+    "Pinned template adapter is CalBench-specific plumbing; mental-state instruction is environment-independent and no scenario strategies were added.",
+    "Historical assistant action JSON remains as past submissions, not current MS output; outcomes depend on later environment feedback.",
+    "All stage projection and rule-reference changes are an explicit new prompt condition, not the old native condition."
+  ],
+  "parent_snapshot_sha256": "976fd11f69f7de2dd28ee024bcbdbc3637d99b48f611d550dc9db35f9156fd65",
+  "MS_INSTRUCTION": "Before your next action, briefly articulate your own mental states and\nyour beliefs about the mental states of other participants.\n\nWrite from your own perspective: what you believe, want, know, or intend,\nand what you think others believe, want, know, or intend. Include emotions\nonly when relevant to the interaction.\n\nGround these judgments in the available context and history, without\ninventing hidden facts. Write one brief paragraph that can guide your\nnext decision.\n\nOutput only one brief natural-language paragraph about mental states. Nothing written in this stage is executed or delivered to anyone.",
+  "MS_INSTRUCTION_sha256": "e71ae63356f1061c8e0f0ca3ee428565d07739287e61919c25fdfafb0a9968fc"
+}

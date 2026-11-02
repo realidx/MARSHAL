@@ -1,47 +1,19 @@
 # 9月与当前 pipeline 配置快照及逐项对照
 
-**2026-11-02用户纠正重试单位：**[v8 prompt-retry-once](versions/general_ms_calbench_v8_20261102/SNAPSHOT.json)取消v7整局重跑，
-只在当前位置对失败prompt立即重试一次。MS失败只重试MS；action失败保留成功MS，只重试action。上下文/model/seed/温度/上限相同，失败输出不入历史，逻辑采样序号不因物理重试偏移。
-每局只执行一次；prompt两次失败则该局保留缺失，继续其余题。原生DECISION parser/语义重试保留，正常调度失败不额外重试；native stream对照采用相同请求重试。
-被接受MS/action共享4096，失败重试可使实际总成本超过4096，全部物理输出与未知用量显式记录；schema2汇总每题一次及prompt恢复/耗尽，旧v7审计与关闭快照不改。
-69项CPU离线检查通过，包括后段action失败时先前请求/状态不重放、失败prompt重复后其余23局继续；未启动真实模型重测/训练/新D，active仍v8。
+**2026-11-02按用户要求移除冗余阶段说明v11：**[实际示例](versions/general_ms_calbench_v11_minimal_20261102/EXAMPLE.md)与[完整请求](versions/general_ms_calbench_v11_minimal_20261102/preview/PROMPT_PREVIEW.md)。
+删除system中整段STAGE PROTOCOL、操作reference尾句及retry观察视图的额外阶段提醒；ACTION开头只保留一句直接任务提示。用户精简MS原文不变，阶段拆分、输出校验、预算、重试、历史、游戏与采样不变。
+90项CPU离线检查通过；未调用模型、未训练或测D。v9/v10保留原身份，生产active仍terminal readable v8。
 
-**2026-11-02用户要求失败重测一次并跑全：**[v7 retry-once](versions/general_ms_calbench_v7_20261102/SNAPSHOT.json)先尝试全部24局，
-再将执行中止局从初始状态、同模型/参数/种子完整重跑一次；普通正常结束但调度失败不重试，两次均失败保留缺失并继续。
-首试与重试分目录，不覆盖；first-pass/post-retry结果分报，所有尝试开销计入，同一题不当两道独立题。
-stream原生对照也用同一政策，旧suite保持；MS/action提示、每次原生行动共享4096及原生游戏/评分未变。
-59项CPU离线检查通过；旧v6运行不补写成完整结果，未启动真实模型重测/训练/新D，active仍v8。
+**2026-11-02用户精简MS提示v10（待审查）：**[实际示例](versions/general_ms_calbench_v10_user_brief_20261102/EXAMPLE.md)与[完整请求](versions/general_ms_calbench_v10_user_brief_20261102/preview/PROMPT_PREVIEW.md)。
+MS user逐字采用用户给定的三段core加一句自然语言/未执行说明，不再附加v9标题、前导句或其他禁令；v9阶段拆分、ACTION、校验、共享4096、原地重试、历史及题库/采样均不变。
+89项CPU离线检查通过，含精确文本断言与实际请求导出；未调用模型/训练/测D。v9关闭快照保留，生产active仍terminal readable v8。
 
-**2026-11-02用户逐字指定MS提示：**[v6 user-prompt](versions/general_ms_calbench_v6_20261102/SNAPSHOT.json)只替换MS文本，
-使用用户给定三段第一人称own states/对他人mental states的belief提示，不加标题或末尾限制句。
-独立两次调用、真实assistant MS接续、action提示、共享4096、原生历史/游戏/评分均不变；完整实际请求重新导出。
-52项CPU离线检查通过；未跑真实模型、训练或测D，active仍v8，历史版本保留。
+**2026-11-02新阶段协议v9（待用户审查）：**[实际CalBench示例](versions/general_ms_calbench_v9_stage_contract_20261102/EXAMPLE.md)与[完整请求](versions/general_ms_calbench_v9_stage_contract_20261102/preview/PROMPT_PREVIEW.md)。
+MS请求将原生system/user转换为保留事实、历史与规则的观察视图，行动模板/输出要求/示例只恢复到最后ACTION user；两次调用共用同一上下文前缀。
+当前assistant MS明确为未执行的私有文本；JSON/code/action/tool输出拒绝并仅原地重试MS一次，不把脏输出传给action。历史原生assistant提交保留，原生持久历史策略不变。
+共享4096、原生游戏/评分/题库/模型/采样保持；所有新prompt与上下文呈现变化显式登记，88项CPU离线检查通过，未调用模型、未训练或测D，生产active仍terminal readable v8。
 
-**2026-11-02用户明确独立belief阶段：**[v5 two-call](versions/general_ms_calbench_v5_20261102/SNAPSHOT.json)不采用v4单次方案。
-原生system/历史/本次user完整保留，在其后新增user MS提示，第一次真实模型回复作为assistant，再接user action提示及第二次模型回复。
-临时阶段消息只在本次行动内接续，跨行动保存仍由原生客户端负责。恢复两次调用共享4096、分阶段日志/用量与失败合同，显式`--scaffold belief-ms`。
-52项CPU离线检查通过，完整请求和当前审阅副本更新；未调用真实模型验证重复/效果，未训练/测D，active仍v8。历史版本均保留。
-
-**2026-11-02用户改单次行动内MS要求：**[v4 single-call](versions/general_ms_calbench_v4_20261102/SNAPSHOT.json)恢复原生一次行动调用，
-只在当前最后user增加四句brief MS→规划→行动要求，仍输出原生thinking/actions；没有独立MS阶段、额外消息或预算扣除。
-默认单次4096，原生system/跨行动历史/parser/retry/缺失usage处理保留；用`--scaffold ms-guided`明确选择，旧base-ms不静默切换身份。
-39项CPU离线检查通过（含24局固定假响应对照），完整请求导出；旧版本与审阅副本原貌另存，未调用真实模型/训练/测D，active仍v8。
-
-**2026-11-02用户修订单次行动内接续：**通用 Base+MS 新增 [v3 local-continuation](versions/general_ms_calbench_v3_20261102/SNAPSHOT.json)。
-MS指令移至当前最后user，action以前一MS请求为完整前缀，再接assistant MS与user Action Stage。
-原生system和跨行动历史保存逻辑不变；只返回最终行动，临时阶段消息不写入原生历史。共享4096合同不变。
-用户明确要求更新v1预览路径：先保留原预览bytes/hash，再将该单一路径标记为v3审阅副本；旧SNAPSHOT/EVIDENCE不改。
-51项CPU离线检查通过，完整请求导出；尚未调用真实模型验证重复问题，未训练或测D，active仍v8。
-
-**2026-11-02用户修订生成预算：**通用 Base+MS 新增 [v2 shared-budget](versions/general_ms_calbench_v2_20261102/SNAPSHOT.json)。
-默认两阶段共4096，不再固定512/3584：MS可使用总预算，行动仅使用4096减MS实际completion_tokens的剩余额度。
-缺失/非法用量、MS耗尽额度或服务超额均单列失败，不猜tokens或补额度；去掉固定分配CLI，旧v1完整快照与证据不改。
-prompt正文/24题/游戏/评分不变；完整请求重新导出，未调用真实模型、未训练或测D，生产active仍v8。
-
-**2026-11-02独立 prompting 系统实现：**[通用 Base+MS 与 CalBench 示例](../final_evaluation/CALBENCH_BASE_MS.md)。
-显式选择的两阶段推理，MS仅依赖原生可见上下文、无独立MS记忆；默认4096总生成上限拆为512+3584。
-新[独立注册快照](versions/general_ms_calbench_v1_20261102/SNAPSHOT.json)及完整实际请求/CPU证据分别保存；不是原论文逐字复现。
-未启动真实模型评测、未测新D或训练，旧24题/生产active v8/旧关闭快照保持原身份；不把离线fixture当效果结果。
+2026-11-02：用户确认删除旧CalBench MS版本、报告、原始日志与分析记录，保留普通prompt基线。旧MS注册已撤销，阶段协议尚待修复。native保存快照改为直接记录其实际source哈希，不再依赖旧MS注册；prompt、游戏和采样不变。[native快照维护记录](versions/calbench_native_snapshot_v1_20261102/SNAPSHOT.json)保存该项变更与17项CPU回归检查结果。
 
 **2026-10-29用户审查：**[真实三人游戏完整走读](THREE_PLAYER_WALKTHROUGH_20261029.md)。
 明确[1,1,2]为研究实例规模、非原框架固定规则；以新24池index10的实际[1,2,1]展示生成/9world/公开历史/私有答案/Q/S/终局分支。

@@ -8,10 +8,11 @@ import platform
 import sys
 import time
 
-from examples.final_evaluation.interaction_scaffold import VERSION, ms_request, action_request
+from examples.final_evaluation.interaction_scaffold import VERSION, ms_request, action_request, validate_belief_text
+from examples.final_evaluation.calbench_stage_context import stage_context
 
 ROOT = Path(__file__).resolve().parents[2]
-REGISTRATION = ROOT / 'examples/strategic_slices/versions/general_ms_calbench_v8_20261102/SNAPSHOT.json'
+REGISTRATION = ROOT / 'examples/strategic_slices/versions/general_ms_calbench_v11_minimal_20261102/SNAPSHOT.json'
 
 
 class ScaffoldFailure(BaseException):
@@ -37,9 +38,12 @@ def protocol(config):
         calls_per_native_request=2, max_physical_calls_with_prompt_retries=4,
         budget_scope='accepted MS/action output cap; discarded failed generations add fully recorded cost, not matched FLOPs or input tokens',
         ms_memory='no independent MS history; native final assistant responses remain in native history',
-        request_layout='native messages byte-for-byte unchanged; append separate user MS prompt; continue exact prefix with actual assistant MS response then user action prompt',
+        request_layout='native observation/history view with action directives removed from system/users; user MS; actual assistant belief; user ACTION restores original action protocol and current directives',
+        context_projection='pinned CalBench template sections, not scenario strategy; preserve visible facts and past assistant submissions; unknown instruction-bearing templates abort before generation',
+        belief_output='natural-language paragraph only; JSON/code/tool or action objects rejected, never stripped into belief',
+        stage_execution='MS is private and is not executed or counted as pass; only final ACTION response is submitted',
         persistence='temporary stage messages never mutate native history; return only final action response to original client for its original persistence policy',
-        analysis_failure='retry only failed MS prompt once; no failed output appended; if both fail abort case and continue suite',
+        analysis_failure='retry failed MS prompt once including output-format violations; no invalid MS forwarded; if both fail abort case and continue suite',
         action_failure='retry only failed action prompt once with accepted MS unchanged; native parser/decision retry retained',
         seed_policy='action uses original native seed sequence; MS uses SHA256(native seed:ms)',
         privacy='only native visible messages; MS is private and never executed',
@@ -47,6 +51,8 @@ def protocol(config):
 
 
 def verify_registration():
+    if not REGISTRATION.is_file():
+        raise ValueError('MS registration was withdrawn at user request; repair the stage protocol and register a new version before evaluation')
     registered = json.loads(REGISTRATION.read_text())
     for name, expected in registered['source_sha256'].items():
         if sha((ROOT / name).read_bytes()) != expected:
@@ -84,12 +90,32 @@ class BeliefTransport:
             scope='accepted MS/action path only; discarded retry costs counted separately in all_attempt_usage')
         started = time.monotonic()
         try:
-            conversation = ms_request(messages)
+            try:
+                context = stage_context(messages)
+            except ValueError as exc:
+                receipt['status'] = 'context_projection_failure'
+                raise ScaffoldFailure(f'Agent {self.agent_id}: unsafe stage context: {exc}') from exc
+            receipt['context_projection'] = dict(
+                version='calbench-stage-context-v1',
+                changed_messages=[dict(index=t['index'], role=t['role'],
+                    original_sha256=sha(t['original'].encode()),
+                    observation_view_sha256=sha(t['observation_view'].encode())) for t in context.transformations],
+                action_instructions_sha256=sha(context.action_instructions.encode()))
+            conversation = ms_request(context.messages)
             def validate_ms(analysis):
                 text = analysis.get('text')
                 if analysis.get('finish_reason') != 'stop' or not isinstance(text, str) or not text.strip():
                     receipt['status'] = 'analysis_failure'
                     raise ScaffoldFailure(f'Agent {self.agent_id}: MS {index} was empty or did not finish normally')
+                try:
+                    validate_belief_text(text)
+                    raw = analysis.get('_raw_response') or {}
+                    message = (raw.get('choices') or [{}])[0].get('message') or {}
+                    if message.get('tool_calls') or message.get('function_call'):
+                        raise ValueError('Belief must not contain provider tool calls')
+                except ValueError as exc:
+                    receipt['status'] = 'analysis_format_failure'
+                    raise ScaffoldFailure(f'Agent {self.agent_id}: invalid belief output: {exc}') from exc
                 used = analysis.get('completion_tokens')
                 if type(used) is not int or not 0 <= used <= total:
                     receipt['status'] = 'budget_accounting_failure'
@@ -110,7 +136,7 @@ class BeliefTransport:
                 if type(action_used) is not int or not 0 <= action_used <= remaining:
                     receipt['status'] = 'budget_accounting_failure'
                     raise ScaffoldFailure(f'Agent {self.agent_id}: invalid/missing action completion_tokens for shared budget')
-            result = self.action.streaming_with_retry(action_request(conversation, text),
+            result = self.action.streaming_with_retry(action_request(conversation, text, context.action_instructions),
                 max_tokens=remaining, _validate=validate_action)
             validate_action(result)
             receipt['budget']['action_completion_tokens'] = result['completion_tokens']
@@ -142,7 +168,17 @@ class BeliefTransport:
 
 def write_snapshot(output, config, *, cli=None, game_config=None, job=None):
     """Record actual identity; an API alias does not establish checkpoint identity."""
-    registered = verify_registration()
+    use_ms = config.get('scaffold', 'native') == 'belief-ms'
+    if use_ms:
+        registered = verify_registration()
+    else:
+        # Native execution does not depend on a withdrawn MS registration.
+        sources = ('calbench_local.py', 'calbench_scaffold.py', 'calbench_retry.py',
+                   'calbench_stream.py', 'calbench_stream_metrics.py',
+                   'calbench_formal.py', 'launch_calbench_local.py')
+        registered = dict(source_sha256={
+            str(Path(__file__).parent.joinpath(name).relative_to(ROOT)):
+            sha(Path(__file__).with_name(name).read_bytes()) for name in sources})
     files = ['examples/final_evaluation/calbench_stream_v1/manifest.json',
              'examples/final_evaluation/calbench_stream_v1/MANIFEST.sha256',
              'examples/final_evaluation/calbench_source.json']
@@ -160,10 +196,11 @@ def write_snapshot(output, config, *, cli=None, game_config=None, job=None):
     runtime = launcher_root / 'runtime_environment.json'
     servers = launcher_root / 'servers.json'
     from examples.final_evaluation.calbench_retry import retry_policy
-    contract = protocol(config) if config.get('scaffold', 'native') == 'belief-ms' else dict(
+    contract = protocol(config) if use_ms else dict(
         mode='native', calls_per_native_request=1, max_tokens=config.get('max_tokens'), prompt_retry_policy=retry_policy(),
         prompt='unchanged native', failures='failed prompt retries once with identical request; native parser/retry retained; no whole-case replay')
-    snapshot = dict(schema=1, version=VERSION, scope='CalBench opt-in evaluation; production active unchanged',
+    snapshot = dict(schema=1, version=VERSION if use_ms else 'calbench-native-stream-snapshot-v1',
+        scope='CalBench evaluation; production active unchanged',
         cli=cli if cli is not None else '未记录（per-game snapshot; see run root）',
         resolved_routes=deepcopy(config), game_config=game_config, job=job,
         contract=contract, source_sha256=registered['source_sha256'],
@@ -173,7 +210,8 @@ def write_snapshot(output, config, *, cli=None, game_config=None, job=None):
             context_policy='no adapter truncation; server rejects oversized requests',
             context_capacity='see server_commands; external API capacity otherwise 未记录'),
         input_sha256={name:sha((ROOT/name).read_bytes()) for name in files},
-        registered_snapshot_sha256=sha(REGISTRATION.read_bytes()),
+        registered_snapshot_sha256=sha(REGISTRATION.read_bytes()) if use_ms else None,
+        registration_status='registered MS' if use_ms else 'native source recorded directly; no MS registration required',
         model_identity=json.loads(launcher.read_text()) if launcher.is_file() else '未记录（API model alias is not a weight hash）',
         runtime=dict(python=sys.version, executable=sys.executable, platform=platform.platform(),
                      dependencies=dependencies, sys_path=sys.path,

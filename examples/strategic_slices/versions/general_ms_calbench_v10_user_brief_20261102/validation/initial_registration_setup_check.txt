@@ -1,0 +1,284 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.2, pytest-7.4.4, pluggy-1.0.0 -- /opt/anaconda3/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/bruce/MARSHAL/tests
+configfile: pytest.ini
+plugins: typeguard-4.4.4, anyio-4.2.0
+collecting ... collected 89 items
+
+tests/agentic/test_calbench_stage_contract.py::test_stage_views_preserve_facts_and_move_only_native_action_requirements[round] PASSED [  1%]
+tests/agentic/test_calbench_stage_contract.py::test_stage_views_preserve_facts_and_move_only_native_action_requirements[messages] PASSED [  2%]
+tests/agentic/test_calbench_stage_contract.py::test_stage_views_preserve_facts_and_move_only_native_action_requirements[empty] PASSED [  3%]
+tests/agentic/test_calbench_stage_contract.py::test_stage_views_preserve_facts_and_move_only_native_action_requirements[decision] PASSED [  4%]
+tests/agentic/test_calbench_stage_contract.py::test_stage_views_preserve_facts_and_move_only_native_action_requirements[voluntary] PASSED [  5%]
+tests/agentic/test_calbench_stage_contract.py::test_stage_views_preserve_facts_and_move_only_native_action_requirements[retry] PASSED [  6%]
+tests/agentic/test_calbench_stage_contract.py::test_old_user_directives_are_projected_but_real_assistant_history_is_preserved PASSED [  7%]
+tests/agentic/test_calbench_stage_contract.py::test_executable_or_structured_MS_is_rejected[{"thinking":"belief","actions":[]}] PASSED [  8%]
+tests/agentic/test_calbench_stage_contract.py::test_executable_or_structured_MS_is_rejected[I believe they are uncertain.\n{"actions":[{"type":"dm","to":1,"content":"draft"}]}] PASSED [ 10%]
+tests/agentic/test_calbench_stage_contract.py::test_executable_or_structured_MS_is_rejected[{"actions": [{"type": "dm", "content": "unfinished] PASSED [ 11%]
+tests/agentic/test_calbench_stage_contract.py::test_executable_or_structured_MS_is_rejected[```json\n{"actions":[]}\n```] PASSED [ 12%]
+tests/agentic/test_calbench_stage_contract.py::test_executable_or_structured_MS_is_rejected[<tool_call>{"name":"send"}</tool_call>] PASSED [ 13%]
+tests/agentic/test_calbench_stage_contract.py::test_executable_or_structured_MS_is_rejected[Action: send a message now.] PASSED [ 14%]
+tests/agentic/test_calbench_stage_contract.py::test_executable_or_structured_MS_is_rejected[send_message(to=1, text="draft")] PASSED [ 15%]
+tests/agentic/test_calbench_stage_contract.py::test_executable_or_structured_MS_is_rejected[[]] PASSED [ 16%]
+tests/agentic/test_calbench_stage_contract.py::test_intentions_are_allowed_as_mental_states_without_executable_output PASSED [ 17%]
+tests/agentic/test_calbench_stage_contract.py::test_unknown_native_directive_template_fails_before_any_model_call PASSED [ 19%]
+tests/agentic/test_calbench_stage_contract.py::test_invalid_actionful_MS_retries_only_MS_and_is_never_forwarded PASSED [ 20%]
+tests/agentic/test_calbench_stage_contract.py::test_two_actionful_MS_failures_abort_without_any_action_request PASSED [ 21%]
+tests/agentic/test_calbench_stage_contract.py::test_MS_prompt_is_exactly_the_user_shortened_text PASSED [ 22%]
+tests/agentic/test_calbench_ms.py::test_generic_builders_preserve_only_native_context PASSED [ 23%]
+tests/agentic/test_calbench_ms.py::test_actual_first_response_is_the_assistant_turn_for_action PASSED [ 24%]
+tests/agentic/test_calbench_ms.py::test_ms_does_not_rearrange_or_invent_native_user_turns[messages0] PASSED [ 25%]
+tests/agentic/test_calbench_ms.py::test_ms_does_not_rearrange_or_invent_native_user_turns[messages1] PASSED [ 26%]
+tests/agentic/test_calbench_ms.py::test_ms_does_not_rearrange_or_invent_native_user_turns[messages2] PASSED [ 28%]
+tests/agentic/test_calbench_ms.py::test_two_stage_same_checkpoint_budgets_usage_and_no_persistent_ms PASSED [ 29%]
+tests/agentic/test_calbench_ms.py::test_analysis_failure_aborts_without_action_or_native_empty_fallback[-stop] PASSED [ 30%]
+tests/agentic/test_calbench_ms.py::test_analysis_failure_aborts_without_action_or_native_empty_fallback[  -stop] PASSED [ 31%]
+tests/agentic/test_calbench_ms.py::test_analysis_failure_aborts_without_action_or_native_empty_fallback[partial-length] PASSED [ 32%]
+tests/agentic/test_calbench_ms.py::test_analysis_failure_aborts_without_action_or_native_empty_fallback[partial-content_filter] PASSED [ 33%]
+tests/agentic/test_calbench_ms.py::test_analysis_failure_aborts_without_action_or_native_empty_fallback[None-stop] PASSED [ 34%]
+tests/agentic/test_calbench_ms.py::test_invalid_budgets_fail_before_calls[0] PASSED [ 35%]
+tests/agentic/test_calbench_ms.py::test_invalid_budgets_fail_before_calls[-1] PASSED [ 37%]
+tests/agentic/test_calbench_ms.py::test_invalid_budgets_fail_before_calls[True] PASSED [ 38%]
+tests/agentic/test_calbench_ms.py::test_invalid_budgets_fail_before_calls[0.5] PASSED [ 39%]
+tests/agentic/test_calbench_ms.py::test_invalid_budgets_fail_before_calls[None] PASSED [ 40%]
+tests/agentic/test_calbench_ms.py::test_old_fixed_allocation_cannot_be_silently_reused PASSED [ 41%]
+tests/agentic/test_calbench_ms.py::test_action_budget_tracks_actual_ms_usage_on_each_call PASSED [ 42%]
+tests/agentic/test_calbench_ms.py::test_unusable_ms_usage_aborts_without_guessing_tokens[None] PASSED [ 43%]
+tests/agentic/test_calbench_ms.py::test_unusable_ms_usage_aborts_without_guessing_tokens[-1] PASSED [ 44%]
+tests/agentic/test_calbench_ms.py::test_unusable_ms_usage_aborts_without_guessing_tokens[True] PASSED [ 46%]
+tests/agentic/test_calbench_ms.py::test_unusable_ms_usage_aborts_without_guessing_tokens[1.5] PASSED [ 47%]
+tests/agentic/test_calbench_ms.py::test_unusable_ms_usage_aborts_without_guessing_tokens[4097] PASSED [ 48%]
+tests/agentic/test_calbench_ms.py::test_ms_may_use_whole_budget_but_action_cannot_overspend PASSED [ 49%]
+tests/agentic/test_calbench_ms.py::test_bad_action_usage_is_not_executed[None] PASSED [ 50%]
+tests/agentic/test_calbench_ms.py::test_bad_action_usage_is_not_executed[-1] PASSED [ 51%]
+tests/agentic/test_calbench_ms.py::test_bad_action_usage_is_not_executed[True] PASSED [ 52%]
+tests/agentic/test_calbench_ms.py::test_bad_action_usage_is_not_executed[4094] PASSED [ 53%]
+tests/agentic/test_calbench_ms.py::test_exact_budget_total_and_zero_remaining_after_action_are_valid PASSED [ 55%]
+tests/agentic/test_calbench_ms.py::test_native_client_lifecycle_exports_full_requests_and_keeps_ms_private FAILED [ 56%]
+tests/agentic/test_calbench_ms.py::test_runner_aborts_ms_failure_as_missing_game_not_model_score FAILED [ 57%]
+tests/agentic/test_calbench_ms.py::test_registered_source_identity FAILED [ 58%]
+tests/agentic/test_calbench_ms.py::test_all24_native_engine_fixture_actions_match_with_and_without_ms FAILED [ 59%]
+tests/agentic/test_calbench_ms.py::test_launcher_selects_scaffold_explicitly FAILED [ 60%]
+tests/agentic/test_calbench_ms.py::test_main_records_cli_protocol_and_all24_jobs FAILED [ 61%]
+tests/agentic/test_calbench_retry.py::test_retry_only_failed_ms_identical_prompt_before_one_action[length] PASSED [ 62%]
+tests/agentic/test_calbench_retry.py::test_retry_only_failed_ms_identical_prompt_before_one_action[empty] PASSED [ 64%]
+tests/agentic/test_calbench_retry.py::test_retry_only_failed_ms_identical_prompt_before_one_action[network] PASSED [ 65%]
+tests/agentic/test_calbench_retry.py::test_retry_only_failed_ms_identical_prompt_before_one_action[usage] PASSED [ 66%]
+tests/agentic/test_calbench_retry.py::test_retry_only_failed_ms_identical_prompt_before_one_action[exhausted] PASSED [ 67%]
+tests/agentic/test_calbench_retry.py::test_action_retry_keeps_successful_ms_and_remaining_budget[length] PASSED [ 68%]
+tests/agentic/test_calbench_retry.py::test_action_retry_keeps_successful_ms_and_remaining_budget[network] PASSED [ 69%]
+tests/agentic/test_calbench_retry.py::test_action_retry_keeps_successful_ms_and_remaining_budget[usage] PASSED [ 70%]
+tests/agentic/test_calbench_retry.py::test_repeated_failure_tries_only_that_prompt_twice[ms] PASSED [ 71%]
+tests/agentic/test_calbench_retry.py::test_repeated_failure_tries_only_that_prompt_twice[action] PASSED [ 73%]
+tests/agentic/test_calbench_retry.py::test_native_transport_retry_same_request_and_counts_failed_cost PASSED [ 74%]
+tests/agentic/test_calbench_retry.py::test_failed_prompt_exhaustion_continues_all24_without_replaying_game FAILED [ 75%]
+tests/agentic/test_calbench_retry.py::test_worker_exception_continues_without_whole_case_retry PASSED [ 76%]
+tests/agentic/test_calbench_retry.py::test_retry_resource_missing_usage_remains_unknown[record0] PASSED [ 77%]
+tests/agentic/test_calbench_retry.py::test_retry_resource_missing_usage_remains_unknown[record1] PASSED [ 78%]
+tests/agentic/test_calbench_retry.py::test_retry_resource_missing_usage_remains_unknown[record2] PASSED [ 79%]
+tests/agentic/test_calbench_retry.py::test_recover_later_prompt_preserves_prior_game_progress FAILED [ 80%]
+tests/agentic/test_final_calbench.py::test_source_matches_pinned_manifest PASSED [ 82%]
+tests/agentic/test_final_calbench.py::test_remote_routes_require_explicit_opt_in PASSED [ 83%]
+tests/agentic/test_final_calbench.py::test_transport_records_truncation_and_leaves_native_parsing_intact PASSED [ 84%]
+tests/agentic/test_final_calbench.py::test_frozen_suite_certificates_and_costs PASSED [ 85%]
+tests/agentic/test_final_calbench.py::test_frozen_suite_rejects_tampering PASSED [ 86%]
+tests/agentic/test_final_calbench.py::test_transport_infrastructure_failure_cannot_become_empty_action PASSED [ 87%]
+tests/agentic/test_final_calbench.py::test_reasoning_wrapper_separated_before_native_json_repair PASSED [ 88%]
+tests/agentic/test_final_calbench.py::test_unfinished_reasoning_never_becomes_an_action PASSED [ 89%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[formal-1] PASSED [ 91%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[formal-2] PASSED [ 92%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[stream-1] PASSED [ 93%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[stream-2] PASSED [ 94%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[shapefactory_native_lite-1] PASSED [ 95%]
+tests/agentic/test_final_calbench.py::test_soc_launcher_uses_slurm_devices_and_v1_flags[shapefactory_native_lite-2] PASSED [ 96%]
+tests/agentic/test_final_calbench.py::test_stream_suite_native_replays_and_seed_coverage PASSED [ 97%]
+tests/agentic/test_final_calbench.py::test_stream_runner_uses_homogeneous_team_and_three_meeting_reference PASSED [ 98%]
+tests/agentic/test_final_calbench.py::test_stream_diagnostics_replan_and_final_consistency PASSED [100%]
+
+=================================== FAILURES ===================================
+___ test_native_client_lifecycle_exports_full_requests_and_keeps_ms_private ____
+tests/agentic/test_calbench_ms.py:180: in test_native_client_lifecycle_exports_full_requests_and_keeps_ms_private
+    artifact = export(tmp_path/'export')
+examples/final_evaluation/export_calbench_ms.py:134: in export
+    snapshot = write_snapshot(output, config, cli=dict(argv=sys.argv, mode='offline HTTP fixture; no network/model'),
+examples/final_evaluation/calbench_scaffold.py:173: in write_snapshot
+    registered = verify_registration()
+examples/final_evaluation/calbench_scaffold.py:55: in verify_registration
+    raise ValueError('MS registration was withdrawn at user request; repair the stage protocol and register a new version before evaluation')
+E   ValueError: MS registration was withdrawn at user request; repair the stage protocol and register a new version before evaluation
+----------------------------- Captured stdout call -----------------------------
+agent=0 call=0 attempt=1 status=ok seconds=0.0
+agent=0 call=0 attempt=1 status=ok seconds=0.0
+agent=0 call=1 attempt=1 status=ok seconds=0.0
+agent=0 call=1 attempt=1 status=ok seconds=0.0
+agent=0 call=2 attempt=1 status=ok seconds=0.0
+agent=0 call=2 attempt=1 status=ok seconds=0.0
+agent=0 call=3 attempt=1 status=ok seconds=0.0
+agent=0 call=3 attempt=1 status=ok seconds=0.0
+agent=0 call=4 attempt=1 status=ok seconds=0.0
+agent=0 call=4 attempt=1 status=ok seconds=0.0
+agent=0 call=5 attempt=1 status=ok seconds=0.0
+agent=0 call=5 attempt=1 status=ok seconds=0.0
+________ test_runner_aborts_ms_failure_as_missing_game_not_model_score _________
+tests/agentic/test_calbench_ms.py:219: in test_runner_aborts_ms_failure_as_missing_game_not_model_score
+    result = run_one(dict(game_id='failed', stream_case='loose_uniform_s1', seed=2026091901, focal_seat=0), routes, tmp_path)
+examples/final_evaluation/calbench_local.py:228: in run_one
+    write_snapshot(folder, routes, game_config=game.config.model_dump(mode='json'), job=job)
+examples/final_evaluation/calbench_scaffold.py:173: in write_snapshot
+    registered = verify_registration()
+examples/final_evaluation/calbench_scaffold.py:55: in verify_registration
+    raise ValueError('MS registration was withdrawn at user request; repair the stage protocol and register a new version before evaluation')
+E   ValueError: MS registration was withdrawn at user request; repair the stage protocol and register a new version before evaluation
+_______________________ test_registered_source_identity ________________________
+tests/agentic/test_calbench_ms.py:230: in test_registered_source_identity
+    registered=verify_registration()
+examples/final_evaluation/calbench_scaffold.py:55: in verify_registration
+    raise ValueError('MS registration was withdrawn at user request; repair the stage protocol and register a new version before evaluation')
+E   ValueError: MS registration was withdrawn at user request; repair the stage protocol and register a new version before evaluation
+______ test_all24_native_engine_fixture_actions_match_with_and_without_ms ______
+tests/agentic/test_calbench_ms.py:260: in test_all24_native_engine_fixture_actions_match_with_and_without_ms
+    scaffold=run_one(job,dict(routes,scaffold='belief-ms'),ms_root)
+examples/final_evaluation/calbench_local.py:228: in run_one
+    write_snapshot(folder, routes, game_config=game.config.model_dump(mode='json'), job=job)
+examples/final_evaluation/calbench_scaffold.py:173: in write_snapshot
+    registered = verify_registration()
+examples/final_evaluation/calbench_scaffold.py:55: in verify_registration
+    raise ValueError('MS registration was withdrawn at user request; repair the stage protocol and register a new version before evaluation')
+E   ValueError: MS registration was withdrawn at user request; repair the stage protocol and register a new version before evaluation
+----------------------------- Captured stdout call -----------------------------
+loose_uniform_s1 round_start 0
+agent=0 call=0 attempt=1 status=ok seconds=0.0
+agent=1 call=0 attempt=1 status=ok seconds=0.0
+agent=2 call=0 attempt=1 status=ok seconds=0.0
+agent=0 call=1 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 0
+agent=0 call=2 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 0
+agent=1 call=1 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 0
+agent=1 call=2 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 0
+agent=2 call=1 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 0
+agent=2 call=2 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 0
+loose_uniform_s1 resolution 0
+loose_uniform_s1 round_start 1
+agent=1 call=3 attempt=1 status=ok seconds=0.0
+agent=2 call=3 attempt=1 status=ok seconds=0.0
+agent=3 call=0 attempt=1 status=ok seconds=0.0
+agent=1 call=4 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 1
+agent=1 call=5 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 1
+agent=2 call=4 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 1
+agent=2 call=5 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 1
+agent=3 call=1 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 1
+agent=3 call=2 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 1
+loose_uniform_s1 resolution 1
+loose_uniform_s1 round_start 2
+agent=0 call=3 attempt=1 status=ok seconds=0.0
+agent=2 call=6 attempt=1 status=ok seconds=0.0
+agent=3 call=3 attempt=1 status=ok seconds=0.0
+agent=0 call=4 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 2
+agent=0 call=5 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 2
+agent=2 call=7 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 2
+agent=2 call=8 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 2
+agent=3 call=4 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 2
+agent=3 call=5 attempt=1 status=ok seconds=0.0
+loose_uniform_s1 batch_rejected 2
+loose_uniform_s1 resolution 2
+loose_uniform_s1 game_end 3
+__________________ test_launcher_selects_scaffold_explicitly ___________________
+tests/agentic/test_calbench_ms.py:300: in test_launcher_selects_scaffold_explicitly
+    launcher.main()
+examples/final_evaluation/launch_calbench_local.py:41: in main
+    verify_registration()
+examples/final_evaluation/calbench_scaffold.py:55: in verify_registration
+    raise ValueError('MS registration was withdrawn at user request; repair the stage protocol and register a new version before evaluation')
+E   ValueError: MS registration was withdrawn at user request; repair the stage protocol and register a new version before evaluation
+________________ test_main_records_cli_protocol_and_all24_jobs _________________
+tests/agentic/test_calbench_ms.py:326: in test_main_records_cli_protocol_and_all24_jobs
+    runner.main()
+examples/final_evaluation/calbench_local.py:318: in main
+    verify_registration()
+examples/final_evaluation/calbench_scaffold.py:55: in verify_registration
+    raise ValueError('MS registration was withdrawn at user request; repair the stage protocol and register a new version before evaluation')
+E   ValueError: MS registration was withdrawn at user request; repair the stage protocol and register a new version before evaluation
+_____ test_failed_prompt_exhaustion_continues_all24_without_replaying_game _____
+tests/agentic/test_calbench_retry.py:134: in test_failed_prompt_exhaustion_continues_all24_without_replaying_game
+    assert seen_requests[0]==seen_requests[1]
+E   IndexError: list index out of range
+----------------------------- Captured stdout call -----------------------------
+case=loose_uniform_s1 engine_completed=False cases=1/24
+case=loose_uniform_s2 engine_completed=False cases=2/24
+case=loose_varied_s1 engine_completed=False cases=3/24
+case=loose_uniform_s3 engine_completed=False cases=4/24
+case=loose_varied_s3 engine_completed=False cases=5/24
+case=loose_varied_s2 engine_completed=False cases=6/24
+case=dense_uniform_s1 engine_completed=False cases=7/24
+case=dense_uniform_s2 engine_completed=False cases=8/24
+case=dense_varied_s1 engine_completed=False cases=9/24
+case=dense_uniform_s3 engine_completed=False cases=10/24
+case=dense_varied_s2 engine_completed=False cases=11/24
+case=dense_varied_s3 engine_completed=False cases=12/24
+case=blocked_uniform_s2 engine_completed=False cases=13/24
+case=blocked_uniform_s1 engine_completed=False cases=14/24
+case=blocked_uniform_s3 engine_completed=False cases=15/24
+case=blocked_varied_s1 engine_completed=False cases=16/24
+case=blocked_varied_s3 engine_completed=False cases=17/24
+case=blocked_varied_s2 engine_completed=False cases=18/24
+case=replan_uniform_s1 engine_completed=False cases=19/24
+case=replan_uniform_s2 engine_completed=False cases=20/24
+case=replan_uniform_s3 engine_completed=False cases=21/24
+case=replan_varied_s1 engine_completed=False cases=22/24
+case=replan_varied_s2 engine_completed=False cases=23/24
+case=replan_varied_s3 engine_completed=False cases=24/24
+___________ test_recover_later_prompt_preserves_prior_game_progress ____________
+tests/agentic/test_calbench_retry.py:184: in test_recover_later_prompt_preserves_prior_game_progress
+    results.append(run_one(job,routes,tmp_path/name))
+examples/final_evaluation/calbench_local.py:228: in run_one
+    write_snapshot(folder, routes, game_config=game.config.model_dump(mode='json'), job=job)
+examples/final_evaluation/calbench_scaffold.py:173: in write_snapshot
+    registered = verify_registration()
+examples/final_evaluation/calbench_scaffold.py:55: in verify_registration
+    raise ValueError('MS registration was withdrawn at user request; repair the stage protocol and register a new version before evaluation')
+E   ValueError: MS registration was withdrawn at user request; repair the stage protocol and register a new version before evaluation
+=============================== warnings summary ===============================
+agentic/test_calbench_stage_contract.py::test_stage_views_preserve_facts_and_move_only_native_action_requirements[round]
+  /Users/bruce/MARSHAL/tests/conftest.py:48: UserWarning: Running test without verifying torch version, please provide an expected torch version with --torch_ver
+    warnings.warn(
+
+agentic/test_calbench_stage_contract.py::test_stage_views_preserve_facts_and_move_only_native_action_requirements[round]
+  /Users/bruce/MARSHAL/tests/conftest.py:57: UserWarning: Running test without verifying cuda version, please provide an expected cuda version with --cuda_ver
+    warnings.warn(
+
+agentic/test_calbench_ms.py: 76 warnings
+agentic/test_final_calbench.py: 2380 warnings
+  /opt/anaconda3/lib/python3.12/site-packages/pydantic/main.py:164: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    __pydantic_self__.__pydantic_validator__.validate_python(data, self_instance=__pydantic_self__)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================== slowest durations ===============================
+
+(267 durations < 1s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+FAILED tests/agentic/test_calbench_ms.py::test_native_client_lifecycle_exports_full_requests_and_keeps_ms_private - ValueError: MS registration was withdrawn at user request; repair the stage...
+FAILED tests/agentic/test_calbench_ms.py::test_runner_aborts_ms_failure_as_missing_game_not_model_score - ValueError: MS registration was withdrawn at user request; repair the stage...
+FAILED tests/agentic/test_calbench_ms.py::test_registered_source_identity - ValueError: MS registration was withdrawn at user request; repair the stage...
+FAILED tests/agentic/test_calbench_ms.py::test_all24_native_engine_fixture_actions_match_with_and_without_ms - ValueError: MS registration was withdrawn at user request; repair the stage...
+FAILED tests/agentic/test_calbench_ms.py::test_launcher_selects_scaffold_explicitly - ValueError: MS registration was withdrawn at user request; repair the stage...
+FAILED tests/agentic/test_calbench_ms.py::test_main_records_cli_protocol_and_all24_jobs - ValueError: MS registration was withdrawn at user request; repair the stage...
+FAILED tests/agentic/test_calbench_retry.py::test_failed_prompt_exhaustion_continues_all24_without_replaying_game - IndexError: list index out of range
+FAILED tests/agentic/test_calbench_retry.py::test_recover_later_prompt_preserves_prior_game_progress - ValueError: MS registration was withdrawn at user request; repair the stage...
+================= 8 failed, 81 passed, 2458 warnings in 1.51s ==================

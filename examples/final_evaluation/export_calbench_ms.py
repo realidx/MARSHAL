@@ -12,7 +12,8 @@ from unittest.mock import patch
 
 from examples.final_evaluation.calbench_local import verify_source
 from examples.final_evaluation.calbench_scaffold import BeliefTransport, write_snapshot
-from examples.final_evaluation.interaction_scaffold import MS_INSTRUCTION
+from examples.final_evaluation.interaction_scaffold import VERSION, MS_INSTRUCTION
+from examples.final_evaluation.calbench_stage_context import stage_context
 
 
 def export(output):
@@ -56,7 +57,7 @@ def export(output):
                                  all_agent_ids=[0,1,2,3], decision_retries=1, communication_protocol='dm'))
     calendar = Calendar(8)
     calendar.slots = deepcopy(case['scenario']['calendars'][0])
-    client.start_round(case['scenario']['meetings'][0], calendar.render(), 1)
+    client.start_round(case['scenario']['meetings'][0], calendar.render(), 0)
     examples = []
 
     def invoke(label, analysis, action, callback, note):
@@ -65,11 +66,12 @@ def export(output):
         with patch('examples.final_evaluation.calbench_local.urlopen', side_effect=provider):
             result = callback()
         examples.append(dict(label=label, provenance=note, native_messages=native_contexts[-1],
+                             context_projection=stage_context(native_contexts[-1]).__dict__,
                              actual_ms_request=payloads[start], actual_action_request=payloads[start+1],
                              synthetic_ms=analysis, synthetic_action=action,
                              native_history_after=deepcopy(client._history),
                              native_parsed_actions=result.tool_calls,
-                             tools_registration='No HTTP tools field; native named actions embedded in original prompt'))
+                             tools_registration='No HTTP tools field; native named action schemas restored only in final ACTION user'))
 
     invoke('cheap_talk_initial',
         'My own calendar has free slots 1, 2, 5, and 7. I have not received any statements about the other participants\' availability. Their acceptable slots are uncertain.',
@@ -93,7 +95,7 @@ def export(output):
     # Only the current meeting and received request are supplied, never future ones.
     calendar.slots[1] = dict(meeting_id=1, cost=1)
     calendar.meeting_participants[1] = [0,1,2]
-    client.start_round(case['scenario']['meetings'][1], calendar.render(), 2)
+    client.start_round(case['scenario']['meetings'][1], calendar.render(), 1)
     invoke('nonparticipant_communication', 'Agent 1 requests a change to our existing shared commitment. I need to consider my own constraints; their request does not reveal everyone else\'s agreement.',
         dict(thinking='Acknowledge the request without assuming others agreed.', actions=[]),
         lambda:client.turn([dict(**{'from':1}, meeting_id=2, content='Can we move meeting 1 from slot 1 to slot 2?')], 0, 4),
@@ -109,15 +111,15 @@ def export(output):
     # Preserve the actual initial calendar rather than the authored continuation.
     artifact['actual_initial_calendar'] = case['scenario']['calendars'][0]
     (output/'requests.json').write_text(json.dumps(artifact,ensure_ascii=False,indent=2)+'\n')
-    blocks = ['# Full request export: v8 belief/MS → action (same user prompt, failed prompt retry once)', '',
-              'Offline fixture responses; no model calls. Each request below is rendered in full, in actual message order.', '',
-              'The native user request ends unchanged, followed by a separate user MS prompt. Action has the exact same prefix,',
-              'followed by assistant MS and user action-stage instruction. Native system and prior history are untouched.',
-              'The assistant MS message is the real first provider response (a synthetic fixture in this export). Only the final action returns to the original client; native cross-action history is unchanged.', '',
-              'Raw complete wire requests and persisted histories: [requests.json](requests.json).', '',
-              'Shared output cap: 4096. Fixture MS usage is 3, so fixture action cap is 4093; these are synthetic usage values.', '',
-              'The original native system still contains action-format instructions; this export does not establish that',
-              'a real model will obey the temporary MS user instruction or that the observed repetition is fixed.', '']
+    blocks = [f'# 完整请求预览：{VERSION} 独立belief/MS → action', '',
+              '本文件由实际原生客户端和生产两阶段请求函数生成；仅HTTP响应替换成人工fixture，没有调用模型。', '',
+              'MS的system及各user是原生可见上下文的观察/规则视图：行动输出要求和示例已移到最后ACTION user。',
+              '历史assistant保留真实原生提交；当前MS是实际第一响应（此处为人工fixture），不会执行或作为pass。',
+              'Action完整续接同一MS前缀，再追加assistant MS和user ACTION；最后user恢复原生工具/格式/当前阶段行动要求，并明确MS没有执行。',
+              '跨行动保存仍是原生user与最终assistant action，临时MS不写进原生历史。', '',
+              '完整wire requests、原生输入、投影视图/移位内容及历史：[requests.json](requests.json)。', '',
+              '接受的MS+action共享4096。fixture MS用量3，所以action cap4093；重试是额外成本，全部保留。',
+              '这份CPU导出只验证请求构造，不证明真实模型一定遵守阶段要求或协调成绩提升。', '']
     for example in examples:
         blocks.extend([f"## {example['label']}", '', example['provenance'], ''])
         for key, title in [('actual_ms_request','MS request'),('actual_action_request','Action request')]:

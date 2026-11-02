@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "version": "calbench-native-stream-snapshot-v1",
+  "scope": "CalBench evaluation; production active unchanged",
+  "cli": {
+    "mode": "CPU metadata-only check, no model/network",
+    "command": "/opt/anaconda3/bin/python native snapshot validation"
+  },
+  "resolved_routes": {
+    "scaffold": "native",
+    "max_tokens": 4096,
+    "temperature": 0,
+    "prompt_retry_once": true
+  },
+  "game_config": {
+    "communication_protocol": "dm",
+    "decision_retries": 1,
+    "enable_fallback": false,
+    "enable_reflection": false,
+    "max_turns_per_round": 4,
+    "meeting_cost_level": 1,
+    "num_agents": 4,
+    "num_meetings": 3,
+    "num_participants": 3,
+    "num_slots": 8
+  },
+  "job": null,
+  "contract": {
+    "mode": "native",
+    "calls_per_native_request": 1,
+    "max_tokens": 4096,
+    "prompt_retry_policy": {
+      "version": "calbench-prompt-retry-once-v8",
+      "max_attempts_per_prompt": 2,
+      "max_executions_per_case": 1,
+      "retry_trigger": "request/transport failure, empty or unfinished output; MS/action budget validation failure; native semantic/parser retries otherwise unchanged",
+      "restart": "only the failed prompt at the current game position, immediately; no whole-case or previous-stage replay",
+      "request": "identical messages/model/seed/temperature/max_tokens; failed output never appended",
+      "action_retry": "keep the accepted MS and retry only action with the same remaining cap",
+      "stop_on_case_failure": false,
+      "budget": "accepted MS + accepted action share configured cap (primary4096); failed-generation retries add fully recorded compute beyond that cap",
+      "exhausted": "after two failed attempts abort only this case and continue remaining cases",
+      "report": "one case result; preserve every physical prompt attempt, errors and all costs; incomplete utility remains missing"
+    },
+    "prompt": "unchanged native",
+    "failures": "failed prompt retries once with identical request; native parser/retry retained; no whole-case replay"
+  },
+  "source_sha256": {
+    "examples/final_evaluation/calbench_local.py": "4c53d008cea0617d50b7cbd114bf5a9fbe53b58e53a23dc785a07fc66ab7bf1e",
+    "examples/final_evaluation/calbench_scaffold.py": "b5e184136b0b2f6e7bb7d3bb3bab8f0e376cfbcec1c1266f7e7840c3b559d6d8",
+    "examples/final_evaluation/calbench_retry.py": "fd8703726d0aba4fe36a200222e25987a5bea26f228efcb92893e3225e7400f9",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "0ea3c227e27e4dd682b9e843a1b6844ab5be45c03ffb03aae9f17aec2e3b6106",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659",
+    "examples/final_evaluation/launch_calbench_local.py": "6fb4964030b79ece1bb047d00081238bfb9cffa84c39b5cc2ce9e09e924a17e5"
+  },
+  "resolved_transport": {
+    "temperature": 0,
+    "timeout_seconds": 120,
+    "chat_template_kwargs": "native model template; no override",
+    "context_policy": "no adapter truncation; server rejects oversized requests",
+    "context_capacity": "see server_commands; external API capacity otherwise 未记录"
+  },
+  "input_sha256": {
+    "examples/final_evaluation/calbench_stream_v1/manifest.json": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "examples/final_evaluation/calbench_stream_v1/MANIFEST.sha256": "38408db9a785e5358a3e9cb5a26e77371c39529c853cfb2c3166e1b371261d44",
+    "examples/final_evaluation/calbench_source.json": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "registered_snapshot_sha256": null,
+  "registration_status": "native source recorded directly; no MS registration required",
+  "model_identity": "未记录（API model alias is not a weight hash）",
+  "runtime": {
+    "python": "3.12.2 | packaged by conda-forge | (main, Feb 16 2024, 20:54:21) [Clang 16.0.6 ]",
+    "executable": "/opt/anaconda3/bin/python",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "dependencies": {
+      "pydantic": "2.5.3",
+      "json-repair": "未记录（当前进程环境未安装）",
+      "ortools": "未记录（当前进程环境未安装）",
+      "opentelemetry-api": "未记录（当前进程环境未安装）",
+      "opentelemetry-sdk": "未记录（当前进程环境未安装）",
+      "opentelemetry-semantic-conventions": "未记录（当前进程环境未安装）",
+      "pytest": "7.4.4",
+      "vllm": "未记录（当前进程环境未安装）",
+      "torch": "2.3.0",
+      "transformers": "未记录（当前进程环境未安装）"
+    },
+    "sys_path": [
+      "",
+      "/opt/anaconda3/lib/python312.zip",
+      "/opt/anaconda3/lib/python3.12",
+      "/opt/anaconda3/lib/python3.12/lib-dynload",
+      "/Users/bruce/.local/lib/python3.12/site-packages",
+      "/opt/anaconda3/lib/python3.12/site-packages",
+      "/opt/anaconda3/lib/python3.12/site-packages/aeosa"
+    ],
+    "launcher_environment": "未记录",
+    "server_commands": "未记录"
+  },
+  "evaluation": "original native rules, all four seats, original final-state scoring; hindsight reference only",
+  "reward_advantage_training": "not applicable; no parameter updates",
+  "resume": "existing outputs cannot be overwritten; reruns use new output directories"
+}

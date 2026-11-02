@@ -9,6 +9,7 @@ import pytest
 from examples.final_evaluation.calbench_retry import resources, run_suite
 from examples.final_evaluation.calbench_local import Transport, InfrastructureFailure
 from examples.final_evaluation.calbench_scaffold import BeliefTransport, ScaffoldFailure
+from examples.final_evaluation.interaction_scaffold import MS_INSTRUCTION
 
 
 class Response:
@@ -21,7 +22,7 @@ class Response:
 
 
 def stage(body):
-    return 'ms' if body['messages'][-1]['content'].startswith('Before your next action') else 'action'
+    return 'ms' if body['messages'][-1]['content']==MS_INSTRUCTION else 'action'
 
 
 def call_wrapper(tmp_path, provider):

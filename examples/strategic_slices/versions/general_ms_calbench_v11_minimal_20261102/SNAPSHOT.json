@@ -1,0 +1,89 @@
+{
+  "version": "general-belief-ms-v11-minimal",
+  "date": "2026-11-02",
+  "status": "IMPLEMENTED_OFFLINE_VALIDATED_NOT_MODEL_EVALUATED",
+  "review_status": "AWAITING_USER_REVIEW",
+  "parent": "general-belief-ms-v10-user-brief",
+  "authorization": "User objected to redundant defensive stage prose. Remove assistant-added system stage declaration and repeated stage disclaimers; keep the user-supplied MS text, environment rules, stage separation and executable-output validation.",
+  "source_sha256": {
+    "examples/final_evaluation/interaction_scaffold.py": "96b58d4999dee4a74a93a7cc625cba2f47bb4378cccfe8834cc608bd6da5ecfb",
+    "examples/final_evaluation/calbench_stage_context.py": "193c52ed5a48a6aedbfb3dd4a7d2a2654e1e21384cd5d158256c5bada9bc84ac",
+    "examples/final_evaluation/calbench_scaffold.py": "22bd58a83779c25f64f9c2c4ad63e291a5ca41a98529ae427e26532f1c91b3d1",
+    "examples/final_evaluation/calbench_local.py": "4c53d008cea0617d50b7cbd114bf5a9fbe53b58e53a23dc785a07fc66ab7bf1e",
+    "examples/final_evaluation/calbench_retry.py": "fd8703726d0aba4fe36a200222e25987a5bea26f228efcb92893e3225e7400f9",
+    "examples/final_evaluation/export_calbench_ms.py": "1eecadc4fbbebc310562f97b7b86ffa5db2a1843d858914de765db008537dc7b",
+    "examples/final_evaluation/launch_calbench_local.py": "6fb4964030b79ece1bb047d00081238bfb9cffa84c39b5cc2ce9e09e924a17e5",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "0ea3c227e27e4dd682b9e843a1b6844ab5be45c03ffb03aae9f17aec2e3b6106",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659",
+    "tests/agentic/test_calbench_ms.py": "45ca6bd0eb4a3cec6e2de932d09a08c16f9638d751da6b9ff4a4cf6aad194fe3",
+    "tests/agentic/test_calbench_retry.py": "9a883a707ed5bfdff0fb99f4d72031a0d2e87c85ed072ddbce0842e5187ff5b5",
+    "tests/agentic/test_calbench_stage_contract.py": "7e98cc8f0e0c9f8fe27120e31a04e7fccd95d95a74a5cd96af3a6a3e8e3558ba"
+  },
+  "differences": [
+    {
+      "field": "shared system",
+      "before": "assistant-added STAGE PROTOCOL declaration plus environment context",
+      "after": "environment context only; no generic stage boilerplate",
+      "motivation": "User requested removal of defensive/redundant prose"
+    },
+    {
+      "field": "ACTION preface",
+      "before": "long private/unexecuted/fallible/no-knowledge/reminder paragraph",
+      "after": "ACTION STAGE\nUse the context and your preceding assessment to choose your next action.\n",
+      "motivation": "Direct task instruction without repeated disclaimers"
+    },
+    {
+      "field": "observation adapters",
+      "before": "extra reference-only footer and retry-stage non-execution sentence",
+      "after": "remove those meta reminders, retain actual environment constraints and original rejection feedback",
+      "motivation": "Same simplification throughout the prompt"
+    }
+  ],
+  "parameters": {
+    "scaffold": "belief-ms",
+    "total_output_cap_per_native_call": 4096,
+    "stage_allocation": "no fixed allocation; MS cap=total; ACTION cap=total minus accepted MS completion_tokens",
+    "retry": "failed prompt only once, identical request/seed; no whole-case replay; case abort after exhausted prompt continues remaining cases",
+    "actual_cost": "all physical failed and accepted calls counted; retry can exceed accepted4096 cap",
+    "temperature": 0.0,
+    "context": 32768,
+    "thinking": "native model template; no override",
+    "environment_reflection": false,
+    "independent_MS_memory": false,
+    "original_history": "native original user plus final assistant action only; stage views are copies",
+    "action_format": "original native named JSON action contract restored only in ACTION user",
+    "timeout_seconds_default": 120,
+    "launcher_timeout_at4096": 600,
+    "native_suites": "frozen stream24 only for MS; native default remains native",
+    "training": false
+  },
+  "inputs": {
+    "examples/final_evaluation/calbench_stream_v1/manifest.json": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "examples/final_evaluation/calbench_stream_v1/MANIFEST.sha256": "38408db9a785e5358a3e9cb5a26e77371c39529c853cfb2c3166e1b371261d44",
+    "examples/final_evaluation/calbench_source.json": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "unchanged": [
+    "exact user-supplied shortened MS text including its non-execution sentence",
+    "action directives/examples remain outside MS and restored in ACTION only",
+    "MS output validation, per-prompt retry/continue policy and native action parser",
+    "all visible observations, environment rules, prior submissions and native persistence",
+    "shared4096 budget and actual-cost accounting",
+    "frozen24 data/scenario seeds, models/sampling/production; no training/new D"
+  ],
+  "full_requests": "preview/PROMPT_PREVIEW.md",
+  "example": "EXAMPLE.md",
+  "evidence": "EVIDENCE.json",
+  "validation": "See EVIDENCE.json for actual offline checks; no real-model effect claim",
+  "limitations": [
+    "No real model evidence yet that wording eliminates hallucinated already-executed claims or improves coordination.",
+    "Output guard rejects structured/executable syntax; it cannot prove all natural-language assertions are factually correct.",
+    "Pinned template adapter is CalBench-specific plumbing; mental-state instruction is environment-independent and no scenario strategies were added.",
+    "Historical assistant action JSON remains as past submissions, not current MS output; outcomes depend on later environment feedback.",
+    "All stage projection and rule-reference changes are an explicit new prompt condition, not the old native condition."
+  ],
+  "parent_snapshot_sha256": "b0ab868fa59780fcdd240d0a907cad4e0a625f447f2f99c389747070c6dbefad",
+  "MS_INSTRUCTION": "Before your next action, briefly articulate your own mental states and\nyour beliefs about the mental states of other participants.\n\nWrite from your own perspective: what you believe, want, know, or intend,\nand what you think others believe, want, know, or intend. Include emotions\nonly when relevant to the interaction.\n\nGround these judgments in the available context and history, without\ninventing hidden facts. Write one brief paragraph that can guide your\nnext decision.\n\nOutput only one brief natural-language paragraph about mental states. Nothing written in this stage is executed or delivered to anyone.",
+  "MS_INSTRUCTION_sha256": "e71ae63356f1061c8e0f0ca3ee428565d07739287e61919c25fdfafb0a9968fc",
+  "ACTION_INSTRUCTION": "ACTION STAGE\nUse the context and your preceding assessment to choose your next action.\n"
+}

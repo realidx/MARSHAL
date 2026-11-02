@@ -1,0 +1,56 @@
+{
+  "version": "calbench-native-stream-snapshot-v1",
+  "date": "2026-11-02",
+  "status": "IMPLEMENTED_NATIVE_METADATA_CHECKED_NO_NEW_MODEL_RUN",
+  "authorization": "User explicitly requested deletion of all previous MS experiment versions/reports/raw logs while retaining the native baseline.",
+  "scope": "Native snapshot recording only; ordinary prompt, game, data, scoring and sampling unchanged",
+  "differences": [
+    {
+      "field": "snapshot dependency",
+      "before": "Native snapshot writing required a withdrawn experimental registration",
+      "after": "Native snapshot records actual native source digests directly and requires no experimental registration",
+      "motivation": "Keep ordinary-prompt evaluation usable after authorized record deletion"
+    },
+    {
+      "field": "native metadata identity",
+      "before": "Native snapshot inherited an experimental version label",
+      "after": "Native-specific version, null experimental registration digest and explicit direct-source identity",
+      "motivation": "Accurately label native execution"
+    }
+  ],
+  "source_sha256": {
+    "examples/final_evaluation/calbench_local.py": "4c53d008cea0617d50b7cbd114bf5a9fbe53b58e53a23dc785a07fc66ab7bf1e",
+    "examples/final_evaluation/calbench_scaffold.py": "b5e184136b0b2f6e7bb7d3bb3bab8f0e376cfbcec1c1266f7e7840c3b559d6d8",
+    "examples/final_evaluation/calbench_retry.py": "fd8703726d0aba4fe36a200222e25987a5bea26f228efcb92893e3225e7400f9",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "0ea3c227e27e4dd682b9e843a1b6844ab5be45c03ffb03aae9f17aec2e3b6106",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659",
+    "examples/final_evaluation/launch_calbench_local.py": "6fb4964030b79ece1bb047d00081238bfb9cffa84c39b5cc2ce9e09e924a17e5"
+  },
+  "input_sha256": {
+    "examples/final_evaluation/calbench_stream_v1/manifest.json": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "examples/final_evaluation/calbench_stream_v1/MANIFEST.sha256": "38408db9a785e5358a3e9cb5a26e77371c39529c853cfb2c3166e1b371261d44",
+    "examples/final_evaluation/calbench_source.json": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "parameters": {
+    "scaffold": "native",
+    "per_request_output_cap": 4096,
+    "temperature": 0,
+    "context": "server-recorded per actual run; no server started in validation",
+    "prompt": "original native; unchanged",
+    "retry": "existing per-prompt once and continue behavior; unchanged by record cleanup"
+  },
+  "validation": {
+    "native_regression_tests_passed": 17,
+    "command": "PYTHONPATH=/private/tmp/calbench-ms-deps:$PWD /opt/anaconda3/bin/python -m pytest -q tests/agentic/test_final_calbench.py --tb=short --color=no",
+    "metadata_only_snapshot_passed": true,
+    "withdrawn_evaluation_rejected": true,
+    "native_baseline_job": 1059395,
+    "native_existing_run_and_frozen_data_files_verified_unchanged": 924,
+    "real_model_calls": 0,
+    "scope": "CPU only; no prompt-system redesign or model effect claim"
+  },
+  "production_active": "terminal-node-regret-grpo-readable-v8",
+  "training": "NOT_RUN",
+  "D": "NOT_MEASURED"
+}
