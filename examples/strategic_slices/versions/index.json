@@ -539,6 +539,118 @@
       "production_changed": false,
       "report": "../../final_evaluation/CALBENCH_NATIVE_BASE_PROMPT_H10047_20261102.md",
       "diagnostic_data_bundle": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/README.md"
+    },
+    "calbench24-h10047-v11-minimal-scaffold-20261102": {
+      "source_version": "general-belief-ms-v11-minimal",
+      "status": "RUNNING_ACTIVE_INFERENCE_ZERO_COMPLETED_CASES_AT_LATEST_CHECK",
+      "authorization": "User requested pulling the updated code, reviewing it, and submitting scaffold-prompt CalBench tests for the Qwen base checkpoint and outcome-99 step99.",
+      "prompt_registration": "general_ms_calbench_v11_minimal_20261102/SNAPSHOT.json",
+      "review_status": "AWAITING_USER_REVIEW in the frozen prompt snapshot; the user explicitly authorized these real-model evaluations.",
+      "suite": "calbench_stream_v1; frozen 24 cases; same case IDs, scenario seeds, game configuration, and native scoring as the recorded baseline.",
+      "conditions": [
+        {
+          "job_id": 1063236,
+          "attempt": 2,
+          "condition": "Qwen3-4B-Instruct-2507 base checkpoint, belief-MS v11-minimal",
+          "model_path": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+          "scaffold": "belief-ms",
+          "prompt_version": "general-belief-ms-v11-minimal",
+          "status": "RUNNING_MODEL_SERVER_STARTUP",
+          "node": "xgpi13",
+          "output": "../../../runs/calbench_soc/qwen3-4b-instruct-2507-ms-v11-minimal-r1-stream-1063236/",
+          "submission_metadata": "../../../runs/calbench_soc/submissions/1063236.json",
+          "progress_at_latest_check": {
+            "in_progress_case_directories": 8,
+            "completed_cases": 0,
+            "total_cases": 24,
+            "server_concurrent_requests": 8,
+            "server_waiting_requests": 0
+          }
+        },
+        {
+          "job_id": 1063239,
+          "attempt": 2,
+          "condition": "outcome-99 step99, belief-MS v11-minimal",
+          "model_path": "/home/e/e1300530/tmp/hf-exports-871623/outcome-step99",
+          "scaffold": "belief-ms",
+          "prompt_version": "general-belief-ms-v11-minimal",
+          "status": "RUNNING_MODEL_SERVER_STARTUP",
+          "node": "xgpi16",
+          "output": "../../../runs/calbench_soc/outcome99-step99-ms-v11-minimal-r1-stream-1063239/",
+          "submission_metadata": "../../../runs/calbench_soc/submissions/1063239.json",
+          "progress_at_latest_check": {
+            "in_progress_case_directories": 8,
+            "completed_cases": 0,
+            "total_cases": 24,
+            "server_concurrent_requests": 8,
+            "server_waiting_requests": 0
+          }
+        }
+      ],
+      "pre_model_startup_failures": [
+        {
+          "job_id": 1063222,
+          "condition": "Qwen3-4B-Instruct-2507 base checkpoint",
+          "status": "FAILED_BEFORE_LAUNCHER_NO_MODEL_REQUESTS",
+          "exit_code": 1,
+          "elapsed": "00:00:26",
+          "reason": "Python syntax error in the initial submission metadata heredoc; corrected before retry."
+        },
+        {
+          "job_id": 1063224,
+          "condition": "outcome-99 step99",
+          "status": "FAILED_BEFORE_LAUNCHER_NO_MODEL_REQUESTS",
+          "exit_code": 1,
+          "elapsed": "00:00:16",
+          "reason": "Same Python syntax error in the initial submission metadata heredoc; corrected before retry."
+        }
+      ],
+      "runtime_config": {
+        "partition": "gpu",
+        "gres": "gpu:h100-47:1",
+        "walltime": "03:00:00",
+        "cpus_per_task": 8,
+        "memory": "64G",
+        "observed_device": "NVIDIA H100 NVL MIG 3g.47gb",
+        "vllm": "0.28.0",
+        "dtype": "bfloat16",
+        "max_model_len": 32768,
+        "max_num_seqs": 32,
+        "parallel_games": 8,
+        "gpu_memory_utilization": 0.65,
+        "enforce_eager": true,
+        "enable_prefix_caching": true,
+        "enable_chunked_prefill": false,
+        "cascade_attention": false,
+        "VLLM_BATCH_INVARIANT": "1",
+        "OMP_NUM_THREADS": 4,
+        "OPENBLAS_NUM_THREADS": 1,
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "execution_protocol": "reasoning-separated-v2-tokens-4096"
+      },
+      "prompt_contract": {
+        "scaffold": "belief-ms",
+        "shared_accepted_ms_action_budget": 4096,
+        "fixed_stage_allocation": false,
+        "prompt_retry": "retry only the failed prompt once at the current game position; no whole-case replay; abort only that game after exhaustion and continue the suite",
+        "failed_generation_cost": "all physical failed and accepted calls are recorded; retries can add compute beyond the accepted 4096-token cap",
+        "MS_is_executed": false,
+        "action_parser": "native named JSON action contract restored for ACTION only"
+      },
+      "preflight": {
+        "registered_v11_source": "verified",
+        "frozen_suite": "calbench_stream_v1 24 cases verified",
+        "v11_offline_validation": "90 CPU checks passed in the registered EVIDENCE.json; not model evidence",
+        "first_attempt_error_corrected": true
+      },
+      "execution_helper_commit": "2a6504c44f10a12a72131fffa31375c8d0f4e9c7",
+      "report": "../../final_evaluation/CALBENCH_V11_MINIMAL_H10047_20261102.md",
+      "full_requests": "general_ms_calbench_v11_minimal_20261102/preview/PROMPT_PREVIEW.md",
+      "completed_case_metrics": "NOT_AVAILABLE_YET",
+      "model_D": "NOT_MEASURED",
+      "training": "NOT_RUN",
+      "production_changed": false
     }
   },
   "maintenance_versions": {

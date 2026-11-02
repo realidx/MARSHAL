@@ -106,4 +106,4 @@ New `--suite stream`: 24 frozen four-player, three-meeting games with temperatur
 
 ## Independent belief/MS stages (review pending)
 
-The v11 minimal implementation separates private belief text from executable action output. See the [actual CalBench example](../strategic_slices/versions/general_ms_calbench_v11_minimal_20261102/EXAMPLE.md) and [complete request preview](../strategic_slices/versions/general_ms_calbench_v11_minimal_20261102/preview/PROMPT_PREVIEW.md). Native prompting remains the default. Offline checks passed; no model evaluation was run for this version.
+The v11 minimal implementation separates private belief text from executable action output. See the [actual CalBench example](../strategic_slices/versions/general_ms_calbench_v11_minimal_20261102/EXAMPLE.md) and [complete request preview](../strategic_slices/versions/general_ms_calbench_v11_minimal_20261102/preview/PROMPT_PREVIEW.md). Native prompting remains the default. At the user's request, H100-47 evaluations for Qwen3-4B-Instruct-2507 and outcome-99 step99 are now running; see the [run record](CALBENCH_V11_MINIMAL_H10047_20261102.md). This does not activate v11 in production.
