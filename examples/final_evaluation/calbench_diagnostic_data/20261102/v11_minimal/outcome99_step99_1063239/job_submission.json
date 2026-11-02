@@ -1,0 +1,101 @@
+{
+  "run_label": "outcome99-step99-ms-v11-minimal-r1",
+  "prompt_version": "general-belief-ms-v11-minimal",
+  "condition": {
+    "model": "/home/e/e1300530/tmp/hf-exports-871623/outcome-step99",
+    "scaffold": "belief-ms"
+  },
+  "launch_argv": [
+    "python",
+    "-u",
+    "-m",
+    "examples.final_evaluation.launch_calbench_local",
+    "--runtime",
+    "soc",
+    "--suite",
+    "stream",
+    "--model",
+    "/home/e/e1300530/tmp/hf-exports-871623/outcome-step99",
+    "--max-tokens",
+    "4096",
+    "--max-model-len",
+    "32768",
+    "--max-num-seqs",
+    "32",
+    "--runner-python",
+    "/home/e/e1300530/tmp/MARSHAL-calbench-20260918/.venv-calbench/bin/python",
+    "--ports",
+    "23239",
+    "--parallel-games",
+    "8",
+    "--disable-chunked-prefill",
+    "--disable-cascade-attn",
+    "--scaffold",
+    "belief-ms",
+    "--output",
+    "/home/e/e1300530/MARSHAL/runs/calbench_soc/outcome99-step99-ms-v11-minimal-r1-stream-1063239"
+  ],
+  "resolved_routes_if_launcher_fails": {
+    "local_only": true,
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "timeout_seconds": 600,
+    "execution_protocol": "reasoning-separated-v2-tokens-4096",
+    "endpoints": {
+      "focal": {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:23239/v1"
+      },
+      "q0": {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:23239/v1"
+      }
+    },
+    "equivalent_replicas": [
+      {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:23239/v1"
+      }
+    ],
+    "scaffold": "belief-ms"
+  },
+  "runtime_profile": {
+    "partition": "gpu",
+    "gres": "gpu:h100-47:1",
+    "time_limit": "03:00:00",
+    "cpus_per_task": 8,
+    "memory": "64G",
+    "parallel_games": 8,
+    "max_num_seqs": 32,
+    "max_model_len": 32768,
+    "dtype": "bfloat16",
+    "gpu_memory_utilization": 0.65,
+    "enforce_eager": true,
+    "enable_prefix_caching": true,
+    "chunked_prefill": false,
+    "cascade_attention": false,
+    "VLLM_BATCH_INVARIANT": "1",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "1",
+    "temperature": 0.0,
+    "max_tokens": 4096
+  },
+  "submission": {
+    "job_id": "1063239",
+    "job_name": "cb24-outcome99-step99-ms-v11-minimal-r1",
+    "partition": "gpu",
+    "nodelist": "xgpi16",
+    "cuda_visible_devices": "0",
+    "cpus_per_task": "8",
+    "time_limit_minutes": 180
+  },
+  "source": {
+    "git_head": "2a6504c44f10a12a72131fffa31375c8d0f4e9c7",
+    "execution_scripts_sha256": {
+      "examples/final_evaluation/submit_calbench_h10047_v11_minimal.sh": "f193c2029ce5ba54c44e358c4988a07b06334ecb11d4044d2e840a2caea1f55e",
+      "examples/final_evaluation/sbatch_calbench_h10047_v11_minimal.sh": "e497a5575079011b5c7d6d8215483d3a9758ef733f2a0d58cfb5b8bd3fd48e5a",
+      "examples/final_evaluation/finalize_calbench_pipeline_snapshot_v11_minimal.py": "128d94084b5f31692f3f9d14033c37b4d996284a7dbd5f3133b8dcec36eb2c28",
+      "examples/strategic_slices/versions/general_ms_calbench_v11_minimal_20261102/SNAPSHOT.json": "2705171f5f5dfc9a7af8f92f032b347fba66d3b14a567c440e79a205f953167f"
+    }
+  }
+}

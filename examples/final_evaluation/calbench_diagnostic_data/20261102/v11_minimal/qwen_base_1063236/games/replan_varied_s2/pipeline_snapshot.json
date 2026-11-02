@@ -1,0 +1,453 @@
+{
+  "schema": 1,
+  "version": "general-belief-ms-v11-minimal",
+  "scope": "One CalBench stream24 case.",
+  "cli": {
+    "argv": [
+      "/home/e/e1300530/MARSHAL/examples/final_evaluation/calbench_local.py",
+      "--routes",
+      "/home/e/e1300530/MARSHAL/runs/calbench_soc/qwen3-4b-instruct-2507-ms-v11-minimal-r1-stream-1063236/routes.json",
+      "--output",
+      "/home/e/e1300530/MARSHAL/runs/calbench_soc/qwen3-4b-instruct-2507-ms-v11-minimal-r1-stream-1063236/games",
+      "--parallel-games",
+      "8",
+      "--games",
+      "2",
+      "--suite",
+      "stream"
+    ],
+    "parsed": {
+      "routes": "/home/e/e1300530/MARSHAL/runs/calbench_soc/qwen3-4b-instruct-2507-ms-v11-minimal-r1-stream-1063236/routes.json",
+      "output": "/home/e/e1300530/MARSHAL/runs/calbench_soc/qwen3-4b-instruct-2507-ms-v11-minimal-r1-stream-1063236/games",
+      "games": 2,
+      "parallel_games": 8,
+      "seed": 2026091800,
+      "suite": "stream",
+      "scaffold": null
+    }
+  },
+  "resolved_routes": {
+    "local_only": true,
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "timeout_seconds": 600,
+    "endpoints": {
+      "focal": {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:23236/v1"
+      },
+      "q0": {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:23236/v1"
+      }
+    },
+    "equivalent_replicas": [
+      {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:23236/v1"
+      }
+    ],
+    "execution_protocol": "reasoning-separated-v2-tokens-4096",
+    "scaffold": "belief-ms",
+    "prompt_retry_once": true
+  },
+  "game_config": {
+    "game_name": "calendar",
+    "seed": 2026091902,
+    "num_agents": 4,
+    "num_slots": 8,
+    "num_meetings": 3,
+    "num_participants": 3,
+    "density": 0.5,
+    "pref_level": 3,
+    "errand_cost_level": 3,
+    "meeting_cost_level": 1,
+    "max_turns_per_round": 4,
+    "decision_retries": 1,
+    "enable_fallback": false,
+    "enable_reflection": false,
+    "communication_protocol": "dm",
+    "agents": [
+      {
+        "type": "llm",
+        "model": "q0",
+        "agent_id": 0
+      },
+      {
+        "type": "llm",
+        "model": "q0",
+        "agent_id": 1
+      },
+      {
+        "type": "llm",
+        "model": "q0",
+        "agent_id": 2
+      },
+      {
+        "type": "llm",
+        "model": "q0",
+        "agent_id": 3
+      }
+    ]
+  },
+  "job": null,
+  "contract": {
+    "version": "general-belief-ms-v11-minimal",
+    "mode": "belief-ms",
+    "prompt_retry_policy": {
+      "version": "calbench-prompt-retry-once-v8",
+      "max_attempts_per_prompt": 2,
+      "max_executions_per_case": 1,
+      "retry_trigger": "request/transport failure, empty or unfinished output; MS/action budget validation failure; native semantic/parser retries otherwise unchanged",
+      "restart": "only the failed prompt at the current game position, immediately; no whole-case or previous-stage replay",
+      "request": "identical messages/model/seed/temperature/max_tokens; failed output never appended",
+      "action_retry": "keep the accepted MS and retry only action with the same remaining cap",
+      "stop_on_case_failure": false,
+      "budget": "accepted MS + accepted action share configured cap (primary4096); failed-generation retries add fully recorded compute beyond that cap",
+      "exhausted": "after two failed attempts abort only this case and continue remaining cases",
+      "report": "one case result; preserve every physical prompt attempt, errors and all costs; incomplete utility remains missing"
+    },
+    "ms_request_cap": 4096,
+    "action_request_cap": "max_tokens - actual MS usage.completion_tokens",
+    "total_output_cap_per_native_call": 4096,
+    "fixed_stage_allocation": false,
+    "usage_contract": "required nonnegative integer completion_tokens from provider; includes reasoning tokens when provider counts them in completion_tokens; do not add reasoning tokens twice",
+    "budget_failure": "retry only failed stage once on invalid/missing usage, exceeded cap or exhausted MS budget; abort case after exhaustion without executing failed output",
+    "calls_per_native_request": 2,
+    "max_physical_calls_with_prompt_retries": 4,
+    "budget_scope": "accepted MS/action output cap; discarded failed generations add fully recorded cost, not matched FLOPs or input tokens",
+    "ms_memory": "no independent MS history; native final assistant responses remain in native history",
+    "request_layout": "native observation/history view with action directives removed from system/users; user MS; actual assistant belief; user ACTION restores original action protocol and current directives",
+    "context_projection": "pinned CalBench template sections, not scenario strategy; preserve visible facts and past assistant submissions; unknown instruction-bearing templates abort before generation",
+    "belief_output": "natural-language paragraph only; JSON/code/tool or action objects rejected, never stripped into belief",
+    "stage_execution": "MS is private and is not executed or counted as pass; only final ACTION response is submitted",
+    "persistence": "temporary stage messages never mutate native history; return only final action response to original client for its original persistence policy",
+    "analysis_failure": "retry failed MS prompt once including output-format violations; no invalid MS forwarded; if both fail abort case and continue suite",
+    "action_failure": "retry only failed action prompt once with accepted MS unchanged; native parser/decision retry retained",
+    "seed_policy": "action uses original native seed sequence; MS uses SHA256(native seed:ms)",
+    "privacy": "only native visible messages; MS is private and never executed",
+    "environment_reflection": false,
+    "training": false
+  },
+  "source_sha256": {
+    "examples/final_evaluation/interaction_scaffold.py": "96b58d4999dee4a74a93a7cc625cba2f47bb4378cccfe8834cc608bd6da5ecfb",
+    "examples/final_evaluation/calbench_stage_context.py": "193c52ed5a48a6aedbfb3dd4a7d2a2654e1e21384cd5d158256c5bada9bc84ac",
+    "examples/final_evaluation/calbench_scaffold.py": "22bd58a83779c25f64f9c2c4ad63e291a5ca41a98529ae427e26532f1c91b3d1",
+    "examples/final_evaluation/calbench_local.py": "4c53d008cea0617d50b7cbd114bf5a9fbe53b58e53a23dc785a07fc66ab7bf1e",
+    "examples/final_evaluation/calbench_retry.py": "fd8703726d0aba4fe36a200222e25987a5bea26f228efcb92893e3225e7400f9",
+    "examples/final_evaluation/export_calbench_ms.py": "1eecadc4fbbebc310562f97b7b86ffa5db2a1843d858914de765db008537dc7b",
+    "examples/final_evaluation/launch_calbench_local.py": "6fb4964030b79ece1bb047d00081238bfb9cffa84c39b5cc2ce9e09e924a17e5",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "0ea3c227e27e4dd682b9e843a1b6844ab5be45c03ffb03aae9f17aec2e3b6106",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659",
+    "tests/agentic/test_calbench_ms.py": "45ca6bd0eb4a3cec6e2de932d09a08c16f9638d751da6b9ff4a4cf6aad194fe3",
+    "tests/agentic/test_calbench_retry.py": "9a883a707ed5bfdff0fb99f4d72031a0d2e87c85ed072ddbce0842e5187ff5b5",
+    "tests/agentic/test_calbench_stage_contract.py": "7e98cc8f0e0c9f8fe27120e31a04e7fccd95d95a74a5cd96af3a6a3e8e3558ba"
+  },
+  "resolved_transport": {
+    "temperature": 0.0,
+    "timeout_seconds": 600,
+    "chat_template_kwargs": "native model template; no override",
+    "context_policy": "no adapter truncation; server rejects oversized requests",
+    "context_capacity": "see server_commands; external API capacity otherwise 未记录"
+  },
+  "input_sha256": {
+    "examples/final_evaluation/calbench_stream_v1/manifest.json": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "examples/final_evaluation/calbench_stream_v1/MANIFEST.sha256": "38408db9a785e5358a3e9cb5a26e77371c39529c853cfb2c3166e1b371261d44",
+    "examples/final_evaluation/calbench_source.json": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "registered_snapshot_sha256": "2705171f5f5dfc9a7af8f92f032b347fba66d3b14a567c440e79a205f953167f",
+  "registration_status": "registered MS",
+  "model_identity": {
+    "model": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+    "files": {
+      "config.json": {
+        "sha256": "5beea1a4a34c62782bfb2f911c606741a3bab8f92d80a118fa053c28af12e8ba",
+        "bytes": 727
+      },
+      "generation_config.json": {
+        "sha256": "835fffe355c9438e7a25be099b3fccaa98350b83451f9fd2d99512e74f1ade48",
+        "bytes": 238
+      },
+      "merges.txt": {
+        "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+        "bytes": 1671839
+      },
+      "model-00001-of-00003.safetensors": {
+        "sha256": "75311d91bb08cf0b882913da464a1e722a31fb44db35208663487efb7a3d8ed6",
+        "bytes": 3957900840
+      },
+      "model-00002-of-00003.safetensors": {
+        "sha256": "0b48adbb1f60e901153d91907ba11ce63bd4b8b584482e730f48808d055dfba1",
+        "bytes": 3987450520
+      },
+      "model-00003-of-00003.safetensors": {
+        "sha256": "7dd39ccca5e4de123c74c14af44c9bf2eb75df33b4614382af0134528e060d5d",
+        "bytes": 99630640
+      },
+      "model.safetensors.index.json": {
+        "sha256": "d6c42883a895dfef5b0080ed2116a1bcd764f558406b98923d675978a1abf29c",
+        "bytes": 32819
+      },
+      "tokenizer.json": {
+        "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+        "bytes": 11422654
+      },
+      "tokenizer_config.json": {
+        "sha256": "a62ff0a2472a0fa1b8eaabcb57c59b58afa42a22831dc141400b6e0cf2b65ce3",
+        "bytes": 9377
+      },
+      "vocab.json": {
+        "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+        "bytes": 2776833
+      }
+    },
+    "versions": {
+      "vllm": "0.28.0",
+      "torch": "2.13.0",
+      "transformers": "5.16.1",
+      "tokenizers": "0.23.1"
+    },
+    "scripts": {
+      "bounded_reference.py": "2ef5c52deacca4005de114fab5d3b1cb2fb5a30f74e92c4775dec4bae1af1eea",
+      "calbench_stream_metrics.py": "0ea3c227e27e4dd682b9e843a1b6844ab5be45c03ffb03aae9f17aec2e3b6106",
+      "test_shapefactory.py": "741488590bb924e22dc7cf6f1ca58174b2db222b75aa2e395427793b10fbd919",
+      "adversarial_suite.py": "6418b2f745b4deda04a7693eb894eb87f5f57f31208217f325a4d15e42393fe2",
+      "test_shapefactory_lite.py": "45fcf38c69c99150766bd8f9690a1b4f07a6a4c6f92a4939491a03c51dd1de30",
+      "setup_calbench.py": "8c2b2f642b33a1d2575313bee1fee951290a2fec0a068e636ef6b7a479bb08bf",
+      "setup_c2c.py": "f9edfab5260940d499b758a9604b08fdcde52ec1aabf85ed33d270d162b63ccd",
+      "test_team_benac.py": "671a3a2d31edc6a6987830293a79e7151294a5720d6926412b653051d1fb9996",
+      "shapefactory_references.py": "aefa7c35e513efd7b4b74a0c0358a88faab7ea88a3e7ea3eabea66174fc0a77a",
+      "collabsim_frozen.py": "cc923aeec8f02d7fc3c1574b1d50c3dfb55c0e6ba9ef708d6ecfd17f354d1bfe",
+      "team_benac_suite.py": "1af5dfdcc16eb73055db7c4bf7559b88b3d4f6eb6eebf46da76fa05c316cf2dc",
+      "adversarial.py": "020de7fdae1f248b8e778f2f9a77f6a8985e65a5bfe025426f67fd8d075691c2",
+      "finalize_calbench_pipeline_snapshot_v11_minimal.py": "128d94084b5f31692f3f9d14033c37b4d996284a7dbd5f3133b8dcec36eb2c28",
+      "launch_calbench_local.py": "6fb4964030b79ece1bb047d00081238bfb9cffa84c39b5cc2ce9e09e924a17e5",
+      "launch_c2c_local.py": "f206f9ab6e3d38c8d861c25037dda636c7f1b9df986e21fa5ae034928708ab21",
+      "adversarial_checks.py": "32e74a11598c2663b5b726c3364cd2b7d83661648daa548a9286316f027ea0ce",
+      "calbench_development_cases.py": "7690870aa68f5ec9ad842279018758f14b64513bf83971e69a88a2c4cb2b310a",
+      "shapefactory_native_summary.py": "317cf48448099791e61626c4f32cb5efede551158cc96547a8859d7c1daea731",
+      "benac_a.py": "91abb87c8f3699e0bf6dab6b1ba051f9011cd80e93057df2306aaf668996868c",
+      "calbench_scaffold.py": "22bd58a83779c25f64f9c2c4ad63e291a5ca41a98529ae427e26532f1c91b3d1",
+      "calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+      "team_benac.py": "ad8eaf2b94c052450b0e8751df5ed6b0829530eb3d9cb6d2c523c5f9cdec1af8",
+      "adversarial_runtime.py": "10cdc4225306d55ef47204866de4149a77cd3295bd8137c9481f762e6d2b26fc",
+      "collabsim_frozen_v3.py": "b9af491b40445288aadaf417b8ec2337f227b170b456ab96a10ffb1919fe786d",
+      "finalize_calbench_pipeline_snapshot.py": "07b0765a02392908aaa63f0d19c5a98f932d5d4e9c72a7cd07965317724c7706",
+      "hidden_profile_local.py": "9bd44e1b4a6045d592662c0ca11d6e99ebc2f84e6822add671b419ada3b8037a",
+      "interaction_scaffold.py": "96b58d4999dee4a74a93a7cc625cba2f47bb4378cccfe8834cc608bd6da5ecfb",
+      "export_calbench_ms.py": "1eecadc4fbbebc310562f97b7b86ffa5db2a1843d858914de765db008537dc7b",
+      "test_adversarial_v2.py": "feace3cc216dd9c0b95e355c6f062a9fb1c5d0ee6faa9ae8e4eee4f71b6e2514",
+      "test_hidden_profile_local.py": "1de141794af6f3efa6c24faf6575fb5cfa66368f8d427edb380b12b0e357e1b9",
+      "collabsim_frozen_v2.py": "967bf1063fd43d1ac2f83d294c60bffea48d157dcae1af5e83f34a4594263092",
+      "shapefactory_local.py": "82ac1529b3aae7566c9eb732e2856f71098f321c48b7d692a3ebbae04e9d8c73",
+      "c2c_local.py": "3567bc4dc07d73889300b6e1394e8bee0a29efc63939b5356fda16832e486e93",
+      "run_team_oracle.py": "89a785a3d5dbb3be8092be3b193d8515488fbd394079c8bccad32f62d8ff4bed",
+      "calbench_local.py": "4c53d008cea0617d50b7cbd114bf5a9fbe53b58e53a23dc785a07fc66ab7bf1e",
+      "test_team_sizes.py": "2baf7d0c829737a4eb20009f7267bfe845e3be87253a2f2dc9bfb9919028842f",
+      "calbench_retry.py": "fd8703726d0aba4fe36a200222e25987a5bea26f228efcb92893e3225e7400f9",
+      "team_oracle.py": "3295f49e7f3492dfdd3ff08b6dd9beca335c31b73dbe7fe148d2d2a331b6f80c",
+      "launch_shapefactory_local.py": "b0b8e0f2a319a3f1c5d6b735de0a61b15f90743a7ffc52e60aa68e9ea70c9d2a",
+      "shapefactory.py": "a55415bb23a083e8d1fa4649cb456158c30a12e4234be4a27d0227616862c488",
+      "shapefactory_lite_3p.py": "e1c7f33ae719f5f9ff98e651e5e05ae0e10e1ca0db5ca04a1b2111a3e8a77b04",
+      "benac_a_suite.py": "a87d20c34139ded63810fdcc8693729c826029dab3be8b0070e846093a646c1a",
+      "shapefactory_lite.py": "bcf7a8b6d35712e76bab233222dc38586e8e02740b5e1842745d80080249aa40",
+      "calbench_stage_context.py": "193c52ed5a48a6aedbfb3dd4a7d2a2654e1e21384cd5d158256c5bada9bc84ac",
+      "calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659",
+      "launch_benac_a.py": "8d2799ea10e3c32f528bac99bf9578374de80803e5c3e66941cbd97a7c417bea",
+      "test_bounded_reference.py": "333a10ec604f08da778eb7d55425b997bc71f3c27197cd8aca69b293fa507830",
+      "finalize_calbench_pipeline_snapshot_v8.py": "0682d6200d61958ba490e20c41c211dcf8e1206ab20ce502e1ef53089023b1d3"
+    }
+  },
+  "runtime": {
+    "python": "3.13.13 | packaged by Anaconda, Inc. | (main, Apr 14 2026, 06:19:41) [GCC 14.3.0]",
+    "executable": "/home/e/e1300530/tmp/MARSHAL-calbench-20260918/.venv-calbench/bin/python",
+    "platform": "Linux-6.8.0-85-generic-x86_64-with-glibc2.39",
+    "dependencies": {
+      "pydantic": "2.11.7",
+      "json-repair": "0.59.4",
+      "ortools": "9.12.4544",
+      "opentelemetry-api": "1.37.0",
+      "opentelemetry-sdk": "1.37.0",
+      "opentelemetry-semantic-conventions": "0.58b0",
+      "pytest": "8.4.1",
+      "vllm": "未记录（当前进程环境未安装）",
+      "torch": "未记录（当前进程环境未安装）",
+      "transformers": "未记录（当前进程环境未安装）"
+    },
+    "sys_path": [
+      "/home/e/e1300530/MARSHAL/third_party/calbench",
+      "/home/e/e1300530/MARSHAL/third_party/calbench/vendor/a2a-engine",
+      "/home/e/e1300530/MARSHAL",
+      "/home/e/e1300530/MARSHAL",
+      "/home/e/e1300530/miniconda3/lib/python313.zip",
+      "/home/e/e1300530/miniconda3/lib/python3.13",
+      "/home/e/e1300530/miniconda3/lib/python3.13/lib-dynload",
+      "/home/e/e1300530/tmp/MARSHAL-calbench-20260918/.venv-calbench/lib/python3.13/site-packages"
+    ],
+    "launcher_environment": {
+      "runtime": "soc",
+      "CUDA_HOME": "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/nvidia/cu13",
+      "CONDA_PREFIX": "/home/e/e1300530/tmp/marshal-vllm09",
+      "CUDA_VISIBLE_DEVICES": [
+        "0"
+      ],
+      "TRITON_PTXAS_PATH": "vLLM/Triton default",
+      "enforce_eager": true
+    },
+    "server_commands": {
+      "commands": [
+        [
+          "/home/e/e1300530/tmp/marshal-vllm09/bin/python",
+          "-u",
+          "-m",
+          "vllm.entrypoints.openai.api_server",
+          "--model",
+          "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+          "--served-model-name",
+          "social-replica-0",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "23236",
+          "--tensor-parallel-size",
+          "1",
+          "--dtype",
+          "bfloat16",
+          "--max-model-len",
+          "32768",
+          "--max-num-seqs",
+          "32",
+          "--gpu-memory-utilization",
+          "0.65",
+          "--enable-prefix-caching",
+          "--no-enable-chunked-prefill",
+          "--disable-cascade-attn",
+          "--enforce-eager"
+        ]
+      ],
+      "gpus": [
+        "0"
+      ],
+      "pids": [
+        110550
+      ],
+      "development_only": false
+    }
+  },
+  "evaluation": "original native rules, all four seats, original final-state scoring; hindsight reference only",
+  "reward_advantage_training": "not applicable; no parameter updates",
+  "resume": "existing outputs cannot be overwritten; reruns use new output directories",
+  "scheduler": {
+    "job_id": "1063236",
+    "job_name": "cb24-qwen3-4b-instruct-2507-ms-v11-minimal-r1",
+    "partition": "gpu",
+    "nodelist": "xgpi13",
+    "cuda_visible_devices": "0",
+    "cpus_per_task": "8",
+    "time_limit_minutes": 180
+  },
+  "job_profile": {
+    "partition": "gpu",
+    "gres": "gpu:h100-47:1",
+    "time_limit": "03:00:00",
+    "cpus_per_task": 8,
+    "memory": "64G",
+    "parallel_games": 8,
+    "max_num_seqs": 32,
+    "max_model_len": 32768,
+    "dtype": "bfloat16",
+    "gpu_memory_utilization": 0.65,
+    "enforce_eager": true,
+    "enable_prefix_caching": true,
+    "chunked_prefill": false,
+    "cascade_attention": false,
+    "VLLM_BATCH_INVARIANT": "1",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "1",
+    "temperature": 0.0,
+    "max_tokens": 4096
+  },
+  "condition": {
+    "model": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+    "scaffold": "belief-ms"
+  },
+  "prompt_version": "general-belief-ms-v11-minimal",
+  "prompt_registration": "examples/strategic_slices/versions/general_ms_calbench_v11_minimal_20261102/SNAPSHOT.json",
+  "launcher_cli": [
+    "python",
+    "-u",
+    "-m",
+    "examples.final_evaluation.launch_calbench_local",
+    "--runtime",
+    "soc",
+    "--suite",
+    "stream",
+    "--model",
+    "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+    "--max-tokens",
+    "4096",
+    "--max-model-len",
+    "32768",
+    "--max-num-seqs",
+    "32",
+    "--runner-python",
+    "/home/e/e1300530/tmp/MARSHAL-calbench-20260918/.venv-calbench/bin/python",
+    "--ports",
+    "23236",
+    "--parallel-games",
+    "8",
+    "--disable-chunked-prefill",
+    "--disable-cascade-attn",
+    "--scaffold",
+    "belief-ms",
+    "--output",
+    "/home/e/e1300530/MARSHAL/runs/calbench_soc/qwen3-4b-instruct-2507-ms-v11-minimal-r1-stream-1063236"
+  ],
+  "submission_script_sha256": {
+    "examples/final_evaluation/submit_calbench_h10047_v11_minimal.sh": "f193c2029ce5ba54c44e358c4988a07b06334ecb11d4044d2e840a2caea1f55e",
+    "examples/final_evaluation/sbatch_calbench_h10047_v11_minimal.sh": "e497a5575079011b5c7d6d8215483d3a9758ef733f2a0d58cfb5b8bd3fd48e5a",
+    "examples/final_evaluation/finalize_calbench_pipeline_snapshot_v11_minimal.py": "128d94084b5f31692f3f9d14033c37b4d996284a7dbd5f3133b8dcec36eb2c28",
+    "examples/strategic_slices/versions/general_ms_calbench_v11_minimal_20261102/SNAPSHOT.json": "2705171f5f5dfc9a7af8f92f032b347fba66d3b14a567c440e79a205f953167f"
+  },
+  "batch_exit_code": "0",
+  "launcher_exit_code": "0",
+  "run_finished": {
+    "formal_test": true,
+    "suite_finished": true,
+    "all_cases_attempted": true,
+    "engine_finished": false,
+    "healthy_transport": true,
+    "had_transport_failures": false,
+    "prompt_retry_policy": {
+      "version": "calbench-prompt-retry-once-v8",
+      "max_attempts_per_prompt": 2,
+      "max_executions_per_case": 1,
+      "retry_trigger": "request/transport failure, empty or unfinished output; MS/action budget validation failure; native semantic/parser retries otherwise unchanged",
+      "restart": "only the failed prompt at the current game position, immediately; no whole-case or previous-stage replay",
+      "request": "identical messages/model/seed/temperature/max_tokens; failed output never appended",
+      "action_retry": "keep the accepted MS and retry only action with the same remaining cap",
+      "stop_on_case_failure": false,
+      "budget": "accepted MS + accepted action share configured cap (primary4096); failed-generation retries add fully recorded compute beyond that cap",
+      "exhausted": "after two failed attempts abort only this case and continue remaining cases",
+      "report": "one case result; preserve every physical prompt attempt, errors and all costs; incomplete utility remains missing"
+    },
+    "cases_expected": 24,
+    "cases_attempted": 24,
+    "cases_completed": 23,
+    "case_executions": 24,
+    "unresolved_cases": [
+      "blocked_varied_s3"
+    ],
+    "not_started": [],
+    "suite_elapsed_seconds": 1125.319030046463
+  },
+  "pipeline_status": "COMPLETE",
+  "game_job": {
+    "game_id": "replan_varied_s2",
+    "seed": 2026091902,
+    "focal_seat": 22,
+    "stream_case": "replan_varied_s2"
+  },
+  "case_reference_sha256": "216e72f0b32d5c1a643a336c65566331a0615a19e641b066e6354cfef8f2d298"
+}

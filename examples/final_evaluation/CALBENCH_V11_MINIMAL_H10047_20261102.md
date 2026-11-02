@@ -42,6 +42,10 @@ All three unresolved games failed in the scaffold MS stage, not in transport or 
 
 The first submissions, jobs 1063222 (Qwen) and 1063224 (outcome-99), failed before model launch because the newly created batch script had a syntax error in its metadata heredoc. Both exited with code 1 before the launcher was invoked, so they made no model requests and produced no evaluation outcomes. The script was corrected, its shell and embedded Python syntax checked, the registered v11 source reverified, and the frozen 24-case suite preflight passed before submitting jobs 1063236 and 1063239. The corrected helper source is local commit `2a6504c44f10a12a72131fffa31375c8d0f4e9c7`.
 
+## Raw diagnostic data
+
+The complete per-case run artifacts and canonical trace audits are archived in the [v11-minimal diagnostic bundle](calbench_diagnostic_data/20261102/v11_minimal/README.md). It preserves requests/responses, scenarios/references, event and trace logs, results, runtime/model identity, and root/per-case pipeline snapshots. Reproducible compiler caches and model weights are excluded. The initial jobs that failed before model startup are preserved separately in the [startup-failure logs](calbench_diagnostic_data/20261102/v11_minimal/startup_failures/).
+
 ## Interpretation
 
 The full runtime and per-case `pipeline_snapshot.json` files were finalized in each run directory. The read-only canonical trace audit is reproducible with `python -m examples.final_evaluation.calbench_stream_metrics <run-directory>/games`. Training and D measurement were not run; production remains on native prompting.
