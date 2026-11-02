@@ -1,0 +1,101 @@
+{
+  "run_label": "qwen3-4b-instruct-2507-ms-v12-inbox-r1",
+  "prompt_version": "general-belief-ms-v12-inbox",
+  "condition": {
+    "model": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+    "scaffold": "belief-ms"
+  },
+  "launch_argv": [
+    "python",
+    "-u",
+    "-m",
+    "examples.final_evaluation.launch_calbench_local",
+    "--runtime",
+    "soc",
+    "--suite",
+    "stream",
+    "--model",
+    "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+    "--max-tokens",
+    "4096",
+    "--max-model-len",
+    "32768",
+    "--max-num-seqs",
+    "32",
+    "--runner-python",
+    "/home/e/e1300530/tmp/MARSHAL-calbench-20260918/.venv-calbench/bin/python",
+    "--ports",
+    "23524",
+    "--parallel-games",
+    "8",
+    "--disable-chunked-prefill",
+    "--disable-cascade-attn",
+    "--scaffold",
+    "belief-ms",
+    "--output",
+    "/home/e/e1300530/MARSHAL/runs/calbench_soc/qwen3-4b-instruct-2507-ms-v12-inbox-r1-stream-1063524"
+  ],
+  "resolved_routes_if_launcher_fails": {
+    "local_only": true,
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "timeout_seconds": 600,
+    "execution_protocol": "reasoning-separated-v2-tokens-4096",
+    "endpoints": {
+      "focal": {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:23524/v1"
+      },
+      "q0": {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:23524/v1"
+      }
+    },
+    "equivalent_replicas": [
+      {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:23524/v1"
+      }
+    ],
+    "scaffold": "belief-ms"
+  },
+  "runtime_profile": {
+    "partition": "gpu",
+    "gres": "gpu:h100-47:1",
+    "time_limit": "03:00:00",
+    "cpus_per_task": 8,
+    "memory": "64G",
+    "parallel_games": 8,
+    "max_num_seqs": 32,
+    "max_model_len": 32768,
+    "dtype": "bfloat16",
+    "gpu_memory_utilization": 0.65,
+    "enforce_eager": true,
+    "enable_prefix_caching": true,
+    "chunked_prefill": false,
+    "cascade_attention": false,
+    "VLLM_BATCH_INVARIANT": "1",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "1",
+    "temperature": 0.0,
+    "max_tokens": 4096
+  },
+  "submission": {
+    "job_id": "1063524",
+    "job_name": "cb24-qwen3-4b-instruct-2507-ms-v12-inbox-r1",
+    "partition": "gpu",
+    "nodelist": "xgpi19",
+    "cuda_visible_devices": "0",
+    "cpus_per_task": "8",
+    "time_limit_minutes": 180
+  },
+  "source": {
+    "git_head": "b74e861195961b8771e39a8e1feec2c1d8bf44ad",
+    "execution_scripts_sha256": {
+      "examples/final_evaluation/submit_calbench_h10047_v12_inbox.sh": "f71695a6cbe36959eb5a985d7d92b24093cdc318357eb1b89f665dad9a814a4d",
+      "examples/final_evaluation/sbatch_calbench_h10047_v12_inbox.sh": "6dcb396c0a3559cd0cc1c988ffc6e4a08dc9deaf7386f711662545b915632b8e",
+      "examples/final_evaluation/finalize_calbench_pipeline_snapshot_v12_inbox.py": "30531e97d9b4045820d828dcb44995ca5e24a9e6c0a6d593843f94d574bfca2b",
+      "examples/strategic_slices/versions/general_ms_calbench_v12_inbox_20261102/SNAPSHOT.json": "2194edf9da622b659a0396490d0c1535fe03615ffc0d6f52d9e3913ebfdb1ed5"
+    }
+  }
+}

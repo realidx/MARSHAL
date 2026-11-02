@@ -16,3 +16,8 @@ See the [native run report](../../CALBENCH_NATIVE_BASE_PROMPT_H10047_20261102.md
 ## v11-minimal scaffold runs
 
 The raw diagnostic package is in [v11-minimal results](v11_minimal/README.md). It contains Qwen base job 1063236 (23/24 engine-finished) and outcome-99 step99 job 1063239 (22/24), along with the two pre-launch failure logs. Regenerable Triton/compiler caches and model weights are excluded. See the [v11 run report](../../CALBENCH_V11_MINIMAL_H10047_20261102.md).
+
+
+## v12-inbox scaffold runs
+
+The raw data is in [v12-inbox results](v12_inbox/README.md): Qwen base job 1063524 (24/24 engine-finished) and outcome-99 step99 job 1063527 (22/24). The package preserves per-case requests/responses, traces, pipeline snapshots, audits and Slurm/vLLM logs; weights and regenerable compiler caches are excluded. See the [v12 report](../../CALBENCH_V12_INBOX_H10047_20261102.md).
