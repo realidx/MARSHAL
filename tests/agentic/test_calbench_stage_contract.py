@@ -5,7 +5,6 @@ from unittest.mock import patch
 import pytest
 
 from examples.final_evaluation.calbench_stage_context import stage_context
-from examples.final_evaluation.interaction_scaffold import validate_belief_text
 from examples.final_evaluation.calbench_scaffold import BeliefTransport, ScaffoldFailure
 from examples.final_evaluation.calbench_local import verify_source
 
@@ -72,24 +71,6 @@ def test_old_user_directives_are_projected_but_real_assistant_history_is_preserv
     assert 'CALENDAR_MARKER' in c.messages[1]['content']
 
 
-@pytest.mark.parametrize('text',[
-    '{"thinking":"belief","actions":[]}',
-    'I believe they are uncertain.\n{"actions":[{"type":"dm","to":1,"content":"draft"}]}',
-    '{"actions": [{"type": "dm", "content": "unfinished',
-    '```json\n{"actions":[]}\n```',
-    '<tool_call>{"name":"send"}</tool_call>',
-    'Action: send a message now.',
-    'send_message(to=1, text="draft")',
-    '[]',
-])
-def test_executable_or_structured_MS_is_rejected(text):
-    with pytest.raises(ValueError):validate_belief_text(text)
-
-
-def test_intentions_are_allowed_as_mental_states_without_executable_output():
-    validate_belief_text('I want a feasible agreement. I believe the others have not confirmed their availability, and I intend to learn their constraints.')
-
-
 def test_unknown_native_directive_template_fails_before_any_model_call(tmp_path):
     t=BeliefTransport(dict(base_url='http://127.0.0.1:1/v1',model='fixture'),dict(max_tokens=4096),tmp_path,1,0)
     with patch('examples.final_evaluation.calbench_local.urlopen') as provider:
@@ -98,44 +79,15 @@ def test_unknown_native_directive_template_fails_before_any_model_call(tmp_path)
     provider.assert_not_called()
 
 
-def test_invalid_actionful_MS_retries_only_MS_and_is_never_forwarded(tmp_path):
-    from examples.final_evaluation.interaction_scaffold import MS_INSTRUCTION
-    from examples.final_evaluation.calbench_retry import resources
-    seen=[]
-    class Response:
-        def __init__(self,value):self.value=value
-        def __enter__(self):return self
-        def __exit__(self,*a):pass
-        def read(self):return json.dumps(self.value).encode()
-    def provider(request,**kwargs):
-        body=json.loads(request.data);seen.append(body)
-        content='{"thinking":"draft","actions":[{"type":"dm","to":1,"content":"BAD_DRAFT"}]}' if len(seen)==1 else ('I believe their availability remains uncertain.' if body['messages'][-1]['content']==MS_INSTRUCTION else '{"thinking":"Ask now","actions":[{"type":"dm","to":1,"content":"ACTUAL_MESSAGE"}]}')
-        return Response(dict(choices=[dict(message=dict(content=content),finish_reason='stop')],usage=dict(prompt_tokens=10,completion_tokens=3,total_tokens=13)))
-    t=BeliefTransport(dict(base_url='http://127.0.0.1:1/v1',model='fixture'),dict(max_tokens=4096),tmp_path,77,0)
-    with patch('examples.final_evaluation.calbench_local.urlopen',side_effect=provider):
-        result=t.streaming_with_retry([dict(role='system',content=native_system()),dict(role='user',content=builders().build_turn_message([],0,4))])
-    assert len(seen)==3 and seen[0]==seen[1]
-    assert 'BAD_DRAFT' not in json.dumps(seen[2])
-    assert 'Use the context and your preceding assessment' in seen[2]['messages'][-1]['content']
-    assert json.loads(result['text'])['actions'][0]['content']=='ACTUAL_MESSAGE'
-    assert result['completion_tokens']==9  # all failed+accepted outputs retained
-    assert resources(tmp_path)['recovered_prompts']==1
-
-
-def test_two_actionful_MS_failures_abort_without_any_action_request(tmp_path):
-    from examples.final_evaluation.interaction_scaffold import MS_INSTRUCTION
-    class Response:
-        def __enter__(self):return self
-        def __exit__(self,*a):pass
-        def read(self):return json.dumps(dict(choices=[dict(message=dict(content='{"actions":[]}'),finish_reason='stop')],usage=dict(completion_tokens=3))).encode()
-    seen=[]
-    def provider(request,**kwargs):seen.append(json.loads(request.data));return Response()
-    t=BeliefTransport(dict(base_url='http://127.0.0.1:1/v1',model='fixture'),dict(max_tokens=4096),tmp_path,77,0)
-    with patch('examples.final_evaluation.calbench_local.urlopen',side_effect=provider):
-        with pytest.raises(ScaffoldFailure,match='invalid belief output'):
-            t.streaming_with_retry([dict(role='user',content='VISIBLE_CONTEXT')])
-    assert len(seen)==2 and all(x['messages'][-1]['content']==MS_INSTRUCTION for x in seen)
-    assert not list(tmp_path.glob('transport-*.jsonl'))
+@pytest.mark.parametrize('text', ['{"actions":[]}', '```json\n{"actions":[]}\n```',
+    'Action: send a message now.', 'I think so.\n{"actions":[{"type":"dm"}]}'])
+def test_MS_text_is_forwarded_verbatim_without_format_rejection(tmp_path,text):
+    from tests.agentic.test_calbench_ms import wrapper
+    t=wrapper(tmp_path)
+    t.ms.analysis=text
+    t.streaming_with_retry([dict(role='user',content='OBSERVATION')])
+    assert len(t.ms.requests)==1
+    assert t.action.requests[0][-2]==dict(role='assistant',content=text)
 
 
 def test_MS_prompt_is_exactly_the_user_shortened_text():
@@ -192,3 +144,22 @@ def test_composite_first_turn_preserves_multiple_quoted_messages_and_history(tur
     assert quoted in stage_context(native).messages[1]['content']
     # Standalone updates use the same complete anchored budget boundary.
     assert quoted in stage_context([original[0],dict(role='user',content=update)]).messages[-1]['content']
+
+
+@pytest.mark.parametrize('phase',['decision','voluntary'])
+def test_validation_retry_restores_full_original_phase_contract(phase):
+    p=builders();meeting=dict(id=17,participants=[0,1,2],duration=1)
+    msg=(p.build_decision_message(meeting,'CALENDAR') if phase=='decision'
+         else p.build_voluntary_reschedule_message(meeting,'CALENDAR'))
+    native=[dict(role='system',content=native_system()),dict(role='user',content=msg),
+            dict(role='assistant',content='{"thinking":"rejected","actions":[]}'),
+            dict(role='user',content=p.build_retry_message(1,1,'CONFLICT'))]
+    c=stage_context(native)
+    original_contract=stage_context(native[:2]).action_instructions
+    assert c.action_instructions.startswith(original_contract)
+    assert 'Please resubmit the ENTIRE batch' in c.action_instructions
+    assert 'CONFLICT' in c.messages[-1]['content']
+    if phase=='decision':
+        assert 'No messages may be sent during this phase' in c.action_instructions
+        assert '"actions" must contain at least one "schedule" tool call for meeting 17' in c.action_instructions
+    else: assert 'You may not use "schedule" in this phase' in c.action_instructions

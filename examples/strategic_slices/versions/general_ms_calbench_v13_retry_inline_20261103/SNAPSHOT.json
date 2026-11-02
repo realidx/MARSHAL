@@ -1,0 +1,105 @@
+{
+  "version": "general-ms-v13-retry-inline",
+  "date": "2026-11-03",
+  "status": "IMPLEMENTED_OFFLINE_VALIDATED_NOT_MODEL_EVALUATED",
+  "review_status": "AWAITING_USER_REVIEW",
+  "parent": "general-belief-ms-v12-inbox",
+  "authorization": "User explicitly requested decision-retry repair, deletion of MS format checking, and a native base-prompt single-call MS-in-action mode.",
+  "source_sha256": {
+    "examples/final_evaluation/interaction_scaffold.py": "402b28bab9aa14ebbb47e9c29d80f454ccf4a6062213c404c636e55cde4c302d",
+    "examples/final_evaluation/calbench_stage_context.py": "504fcbd10e5d695aedf96c109e98469c7a94569f6821030b15dbd7bd60717d8a",
+    "examples/final_evaluation/calbench_scaffold.py": "199da3947fd613f46baf349a3d0cecc2d3e36eb779070dd460d6fcca3a7730f4",
+    "examples/final_evaluation/calbench_local.py": "2d4ac3185b0a75beda07064b58ef64bb933dbdf4cc3bebb5d253feba1114a687",
+    "examples/final_evaluation/calbench_retry.py": "fd8703726d0aba4fe36a200222e25987a5bea26f228efcb92893e3225e7400f9",
+    "examples/final_evaluation/export_calbench_ms.py": "866351889d876a56367f2bfccec6c326b2aaf1eb04ec65377bbc20c408bae802",
+    "examples/final_evaluation/launch_calbench_local.py": "eb9772bc727c0a031005680a24167f188dbc2b4157e1c16ee44b12c12623ee1f",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "0ea3c227e27e4dd682b9e843a1b6844ab5be45c03ffb03aae9f17aec2e3b6106",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659",
+    "tests/agentic/test_calbench_ms.py": "950c9c39ad5114c99a2350722981665be1c8d5d8cfc4652025935edf4d590a4f",
+    "tests/agentic/test_calbench_retry.py": "9a883a707ed5bfdff0fb99f4d72031a0d2e87c85ed072ddbce0842e5187ff5b5",
+    "tests/agentic/test_calbench_stage_contract.py": "b4e4900ea9c3406d9ccf3b0e01cbcf9ec434ec321c1ecee29cc3eafc302ec262"
+  },
+  "differences": [
+    {
+      "field": "decision/voluntary validation retry",
+      "before": "only current retry footer restored; prior phase directives dropped",
+      "after": "restore latest original decision/voluntary contract before current retry footer"
+    },
+    {
+      "field": "MS output validation",
+      "before": "reject JSON/code/action/provider tool syntax",
+      "after": "remove MS content/format validator; forward completed nonempty MS text unchanged; retain transport/completion/budget checks"
+    },
+    {
+      "field": "new optional mode inline-ms",
+      "before": "native or two-call belief-ms",
+      "after": "original native messages plus final-user generic MS request; one JSON output uses original thinking/actions; no separate MS stage or projection"
+    }
+  ],
+  "parameters": {
+    "scaffold": "explicit choice: native default, belief-ms, inline-ms",
+    "total_output_cap_per_native_call": 4096,
+    "stage_allocation": "no fixed allocation; MS cap=total; ACTION cap=total minus accepted MS completion_tokens",
+    "retry": "failed prompt only once, identical request/seed; no whole-case replay; case abort after exhausted prompt continues remaining cases",
+    "actual_cost": "all physical failed and accepted calls counted; retry can exceed accepted4096 cap",
+    "temperature": 0.0,
+    "context": 32768,
+    "thinking": "native model template; no override",
+    "environment_reflection": false,
+    "independent_MS_memory": false,
+    "original_history": "native original user plus final assistant action only; stage views are copies",
+    "action_format": "original native named JSON action contract restored only in ACTION user",
+    "timeout_seconds_default": 120,
+    "launcher_timeout_at4096": 600,
+    "native_suites": "frozen stream24 only for MS; native default remains native",
+    "training": false,
+    "MS_format_validation": false,
+    "inline-ms": {
+      "calls": 1,
+      "max_tokens": 4096,
+      "prompt": "append to final native user only",
+      "history": "original native user + final JSON assistant",
+      "allocation": "one shared native output",
+      "output": "native thinking/actions JSON"
+    },
+    "belief-ms": {
+      "calls": 2,
+      "MS_format_validation": false,
+      "empty_unfinished_budget_checks": true,
+      "retry_contract": "latest complete original DECISION/VOLUNTARY directives restored before correction footer",
+      "max_tokens": 4096,
+      "allocation": "accepted MS + action shared total, no fixed split"
+    }
+  },
+  "inputs": {
+    "examples/final_evaluation/calbench_stream_v1/manifest.json": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "examples/final_evaluation/calbench_stream_v1/MANIFEST.sha256": "38408db9a785e5358a3e9cb5a26e77371c39529c853cfb2c3166e1b371261d44",
+    "examples/final_evaluation/calbench_source.json": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "unchanged": [
+    "independent MS text and ACTION instruction",
+    "native default, frozen24/selection/scenario hashes/game/reward/model/sampling",
+    "accepted generation cap4096, failed-prompt-only retry once and continue-suite behavior",
+    "production active v8; no training or D"
+  ],
+  "full_requests": "preview/PROMPT_PREVIEW.md",
+  "example": "EXAMPLE.md",
+  "evidence": "EVIDENCE.json",
+  "validation": "See EVIDENCE.json for actual offline checks; no real-model effect claim",
+  "limitations": [
+    "No real model evaluation; no evidence of score recovery yet.",
+    "Two-stage MS content is no longer checked: even structured/action-like text is forwarded without execution.",
+    "Inline mode exposes MS in the native thinking field/history; separate MS is temporary. These are explicitly different prompt conditions."
+  ],
+  "parent_snapshot_sha256": "2194edf9da622b659a0396490d0c1535fe03615ffc0d6f52d9e3913ebfdb1ed5",
+  "MS_INSTRUCTION": "Before your next action, briefly articulate your own mental states and\nyour beliefs about the mental states of other participants.\n\nWrite from your own perspective: what you believe, want, know, or intend,\nand what you think others believe, want, know, or intend. Include emotions\nonly when relevant to the interaction.\n\nGround these judgments in the available context and history, without\ninventing hidden facts. Write one brief paragraph that can guide your\nnext decision.\n\nOutput only one brief natural-language paragraph about mental states. Nothing written in this stage is executed or delivered to anyone.",
+  "MS_INSTRUCTION_sha256": "e71ae63356f1061c8e0f0ca3ee428565d07739287e61919c25fdfafb0a9968fc",
+  "ACTION_INSTRUCTION": "ACTION STAGE\nUse the context and your preceding assessment to choose your next action.\n",
+  "modes": [
+    "belief-ms",
+    "inline-ms"
+  ],
+  "INLINE_MS_INSTRUCTION": "Before your next action, briefly articulate your own mental states and\nyour beliefs about the mental states of other participants.\n\nWrite from your own perspective: what you believe, want, know, or intend,\nand what you think others believe, want, know, or intend. Include emotions\nonly when relevant to the interaction.\n\nGround these judgments in the available context and history, without\ninventing hidden facts. Write one brief paragraph that can guide your\nnext decision.\n\nIn the existing JSON response, first use the \"thinking\" string for this mental-state assessment and brief reasoning for your action, then provide the action list in \"actions\".",
+  "inline_full_requests": "inline-preview/PROMPT_PREVIEW.md"
+}

@@ -149,6 +149,7 @@ def stage_context(native_messages):
     transformations = []
     system_actions = ''
     current_actions = ''
+    phase_actions = ''
     for i, message in enumerate(messages):
         if not isinstance(message.get('content'), str):
             raise ValueError('Expected text-only pinned CalBench context')
@@ -157,8 +158,15 @@ def stage_context(native_messages):
             message['content'], system_actions = _system(original)
         elif message['role'] == 'user':
             message['content'], directives = _user(original)
+            if original.startswith(('=== DECISION PHASE ===', '=== VOLUNTARY RESCHEDULE PHASE ===')):
+                phase_actions = directives
+            elif re.match(r'^=== ROUND \d+ START ===', original):
+                phase_actions = ''
             if i == len(messages)-1:
-                current_actions = directives
+                # A native validation retry inherits the last decision contract.
+                # Its short correction footer is not a replacement for that contract.
+                current_actions = ('\n\n'.join(x for x in (phase_actions, directives) if x)
+                                   if original.startswith('[RETRY ') else directives)
         elif message['role'] != 'assistant':
             raise ValueError('Unexpected native message role')
         if message['content'] != original:

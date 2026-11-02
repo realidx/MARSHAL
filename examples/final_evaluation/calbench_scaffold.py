@@ -8,11 +8,11 @@ import platform
 import sys
 import time
 
-from examples.final_evaluation.interaction_scaffold import VERSION, ms_request, action_request, validate_belief_text
+from examples.final_evaluation.interaction_scaffold import VERSION, ms_request, action_request, inline_request, INLINE_MS_INSTRUCTION
 from examples.final_evaluation.calbench_stage_context import stage_context
 
 ROOT = Path(__file__).resolve().parents[2]
-REGISTRATION = ROOT / 'examples/strategic_slices/versions/general_ms_calbench_v12_inbox_20261102/SNAPSHOT.json'
+REGISTRATION = ROOT / 'examples/strategic_slices/versions/general_ms_calbench_v13_retry_inline_20261103/SNAPSHOT.json'
 
 
 class ScaffoldFailure(BaseException):
@@ -30,6 +30,13 @@ def protocol(config):
     if type(total) is not int or total <= 0:
         raise ValueError('Require a positive integer max_tokens shared budget')
     from examples.final_evaluation.calbench_retry import retry_policy
+    if config.get('scaffold') == 'inline-ms':
+        return dict(version=VERSION, mode='inline-ms', calls_per_native_request=1,
+            max_tokens=total, prompt_retry_policy=retry_policy(),
+            prompt='unchanged native system/history/current user, append generic MS instruction to final user only',
+            output='native JSON thinking contains MS and action reasoning; native actions unchanged',
+            persistence='native original user plus final assistant JSON; no separate MS output/history',
+            inline_instruction=INLINE_MS_INSTRUCTION, training=False)
     return dict(version=VERSION, mode='belief-ms', prompt_retry_policy=retry_policy(), ms_request_cap=total,
         action_request_cap='max_tokens - actual MS usage.completion_tokens',
         total_output_cap_per_native_call=total, fixed_stage_allocation=False,
@@ -40,10 +47,10 @@ def protocol(config):
         ms_memory='no independent MS history; native final assistant responses remain in native history',
         request_layout='native observation/history view with action directives removed from system/users; user MS; actual assistant belief; user ACTION restores original action protocol and current directives',
         context_projection='pinned CalBench template sections, not scenario strategy; preserve visible facts and past assistant submissions; unknown instruction-bearing templates abort before generation',
-        belief_output='natural-language paragraph only; JSON/code/tool or action objects rejected, never stripped into belief',
+        belief_output='requested natural-language paragraph; no MS format/content validation; complete text forwarded unchanged',
         stage_execution='MS is private and is not executed or counted as pass; only final ACTION response is submitted',
         persistence='temporary stage messages never mutate native history; return only final action response to original client for its original persistence policy',
-        analysis_failure='retry failed MS prompt once including output-format violations; no invalid MS forwarded; if both fail abort case and continue suite',
+        analysis_failure='retry failed MS prompt once on transport, empty/unfinished output or budget failure; no content/format rejection',
         action_failure='retry only failed action prompt once with accepted MS unchanged; native parser/decision retry retained',
         seed_policy='action uses original native seed sequence; MS uses SHA256(native seed:ms)',
         privacy='only native visible messages; MS is private and never executed',
@@ -107,15 +114,6 @@ class BeliefTransport:
                 if analysis.get('finish_reason') != 'stop' or not isinstance(text, str) or not text.strip():
                     receipt['status'] = 'analysis_failure'
                     raise ScaffoldFailure(f'Agent {self.agent_id}: MS {index} was empty or did not finish normally')
-                try:
-                    validate_belief_text(text)
-                    raw = analysis.get('_raw_response') or {}
-                    message = (raw.get('choices') or [{}])[0].get('message') or {}
-                    if message.get('tool_calls') or message.get('function_call'):
-                        raise ValueError('Belief must not contain provider tool calls')
-                except ValueError as exc:
-                    receipt['status'] = 'analysis_format_failure'
-                    raise ScaffoldFailure(f'Agent {self.agent_id}: invalid belief output: {exc}') from exc
                 used = analysis.get('completion_tokens')
                 if type(used) is not int or not 0 <= used <= total:
                     receipt['status'] = 'budget_accounting_failure'
@@ -166,9 +164,21 @@ class BeliefTransport:
                 f.write(json.dumps(receipt, ensure_ascii=False) + '\n')
 
 
+class InlineTransport:
+    """One original native call with MS requested inside its existing thinking field."""
+    def __init__(self, route, config, output, seed, agent_id, transport_class=None):
+        if transport_class is None:
+            from examples.final_evaluation.calbench_local import Transport
+            transport_class = Transport
+        self.transport = transport_class(route, config, output, seed, agent_id)
+
+    def streaming_with_retry(self, messages, **kwargs):
+        return self.transport.streaming_with_retry(inline_request(messages), **kwargs)
+
+
 def write_snapshot(output, config, *, cli=None, game_config=None, job=None):
     """Record actual identity; an API alias does not establish checkpoint identity."""
-    use_ms = config.get('scaffold', 'native') == 'belief-ms'
+    use_ms = config.get('scaffold', 'native') in ('belief-ms', 'inline-ms')
     if use_ms:
         registered = verify_registration()
     else:

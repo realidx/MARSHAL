@@ -156,8 +156,8 @@ class Transport:
 
 
 def run_one(job, routes, output):
-    if routes.get('scaffold', 'native') not in ('native', 'belief-ms'):
-        raise ValueError('Historical scaffold config cannot run as the current version; choose belief-ms explicitly')
+    if routes.get('scaffold', 'native') not in ('native', 'belief-ms', 'inline-ms'):
+        raise ValueError('Historical scaffold config cannot run as the current version; choose native, belief-ms or inline-ms explicitly')
     routes = copy.deepcopy(routes)
     if job.get('stream_case'):
         routes['prompt_retry_once'] = True
@@ -203,14 +203,15 @@ def run_one(job, routes, output):
     (folder / 'manifest.json').write_text(json.dumps(dict(stage='formal' if job.get('formal_case') or job.get('stream_case') else 'development', formal_test=bool(job.get('formal_case') or job.get('stream_case')),
         source_hash=source_hash, config=cfg, routes=routes, job=job), indent=2) + '\n')
     use_ms = routes.get('scaffold', 'native') == 'belief-ms'
-    if use_ms:
-        from examples.final_evaluation.calbench_scaffold import BeliefTransport
-    if use_ms or job.get('stream_case'):
+    use_inline = routes.get('scaffold') == 'inline-ms'
+    if use_ms or use_inline:
+        from examples.final_evaluation.calbench_scaffold import BeliefTransport, InlineTransport
+    if use_ms or use_inline or job.get('stream_case'):
         from examples.final_evaluation.calbench_scaffold import write_snapshot
     original = game_module.make_llm_client
     def factory(spec):
         aid = spec['agent_id']
-        cls = BeliefTransport if use_ms else Transport
+        cls = BeliefTransport if use_ms else InlineTransport if use_inline else Transport
         return cls(routes['endpoints'][spec['model']], routes, folder, job['seed'], aid)
     game_module.make_llm_client = factory
     class LiveEvents(EventLog):
@@ -224,7 +225,7 @@ def run_one(job, routes, output):
     started = time.monotonic()
     try:
         game = CalendarGame(cfg)
-        if use_ms or job.get('stream_case'):
+        if use_ms or use_inline or job.get('stream_case'):
             write_snapshot(folder, routes, game_config=game.config.model_dump(mode='json'), job=job)
         game.events = LiveEvents()
         trace = game.run_with_scenario(scenario)
@@ -250,6 +251,11 @@ def run_one(job, routes, output):
                        for k in ('prompt_tokens', 'completion_tokens', 'total_tokens')})
             result['healthy_scaffold'] = True
             result['had_transport_failures'] = any(c['status']=='infrastructure_failure' for c in calls+ms_calls)
+        if use_inline:
+            result['scaffold'] = dict(version=SCAFFOLD_VERSION, mode='inline-ms',
+                physical_calls=len(calls), calls_per_native_request=1,
+                output='MS in native thinking field; no separate MS call')
+            result['healthy_scaffold'] = True
         if case:
             result['reference' if job.get('formal_case') or job.get('stream_case') else 'development_reference']=case['reference']
             result['native_oracle_scores_valid']=not bool(case['scenario'].get('prior_meetings'))
@@ -298,21 +304,21 @@ def main():
     parser.add_argument('--parallel-games', type=int, default=2)
     parser.add_argument('--seed', type=int, default=2026091800)
     parser.add_argument('--suite',choices=['smoke','structures','formal','stream'],default='smoke')
-    parser.add_argument('--scaffold', choices=['native', 'belief-ms'], default=None)
+    parser.add_argument('--scaffold', choices=['native', 'belief-ms', 'inline-ms'], default=None)
     args = parser.parse_args()
     if not 1 <= args.games <= 4 or args.parallel_games < 1:
         parser.error('Development run: games=1..4, parallel-games>=1')
     routes = load_routes(args.routes)
     if args.scaffold is not None:
         routes['scaffold'] = args.scaffold
-    if routes.get('scaffold', 'native') not in ('native', 'belief-ms'):
-        parser.error('Unknown or historical scaffold; choose native or belief-ms explicitly')
+    if routes.get('scaffold', 'native') not in ('native', 'belief-ms', 'inline-ms'):
+        parser.error('Unknown or historical scaffold; choose native, belief-ms or inline-ms explicitly')
     if args.suite == 'stream':
         routes['prompt_retry_once'] = True
-    use_ms = routes.get('scaffold', 'native') == 'belief-ms'
+    use_ms = routes.get('scaffold', 'native') in ('belief-ms', 'inline-ms')
     if use_ms:
         if args.suite != 'stream':
-            parser.error('Independent belief-MS is registered only for the frozen stream24 suite')
+            parser.error('MS prompt modes are registered only for the frozen stream24 suite')
         from examples.final_evaluation.calbench_scaffold import protocol, verify_registration, write_snapshot
         protocol(routes)
         verify_registration()

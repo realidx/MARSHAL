@@ -238,6 +238,7 @@ def test_all24_native_engine_fixture_actions_match_with_and_without_ms(tmp_path)
     _, cases = load_frozen()
     native_root, ms_root = tmp_path/'native', tmp_path/'scaffold'
     native_root.mkdir(); ms_root.mkdir()
+    inline_root=tmp_path/'inline';inline_root.mkdir()
     requests = []
     class Response:
         def __init__(self, content): self.content=content
@@ -267,10 +268,16 @@ def test_all24_native_engine_fixture_actions_match_with_and_without_ms(tmp_path)
             native_trace=json.loads((native_root/case['id']/'trace.json').read_text())
             ms_trace=json.loads((ms_root/case['id']/'trace.json').read_text())
             assert native_trace['final_state']==ms_trace['final_state']
+            inline=run_one(job,dict(routes,scaffold='inline-ms'),inline_root)
+            assert inline['engine_finished'] and inline['healthy_scaffold']
+            assert inline['diagnostics']==native['diagnostics']
+            assert inline['calls']==native['calls']==inline['scaffold']['physical_calls']
+            assert not (inline_root/case['id']/'ms').exists()
     assert len(cases)==24
 
 
-def test_launcher_selects_scaffold_explicitly(tmp_path, monkeypatch):
+@pytest.mark.parametrize('mode',['belief-ms','inline-ms'])
+def test_launcher_selects_scaffold_explicitly(tmp_path, monkeypatch, mode):
     import sys
     from examples.final_evaluation import launch_calbench_local as launcher
     model=tmp_path/'model';model.mkdir();(model/'config.json').write_text('{}')
@@ -296,10 +303,11 @@ def test_launcher_selects_scaffold_explicitly(tmp_path, monkeypatch):
     monkeypatch.setattr(launcher.os,'killpg',lambda *a:None)
     monkeypatch.setattr(launcher.signal,'signal',lambda *a:None)
     monkeypatch.setattr(sys,'argv',['launcher','--runtime','soc','--model',str(model),'--output',str(output),
-                                  '--suite','stream','--scaffold','belief-ms','--ports','27101'])
+                                  '--suite','stream','--scaffold',mode,'--ports','27101'])
     launcher.main()
     routes=json.loads((output/'routes.json').read_text())
-    assert routes['scaffold']=='belief-ms' and protocol(routes)['total_output_cap_per_native_call']==4096
+    assert routes['scaffold']==mode
+    assert protocol(routes).get('total_output_cap_per_native_call',protocol(routes).get('max_tokens'))==4096
     assert 'ms_max_tokens' not in routes
 
 
@@ -345,3 +353,22 @@ def test_first_turn_inbox_and_later_history_visible_before_belief(tmp_path):
         assert any(received in m['content'] for m in observations if m['role']=='user')
         assert received not in entry['actual_action_request']['messages'][-1]['content']
     assert 'Can we move meeting 1 from slot 1 to slot 2?' in str(entries['nonparticipant_communication']['actual_ms_request'])
+
+
+def test_inline_mode_keeps_native_requests_and_uses_one_call(tmp_path):
+    from examples.final_evaluation.export_calbench_ms import export
+    from examples.final_evaluation.interaction_scaffold import INLINE_MS_INSTRUCTION
+    artifact=export(tmp_path/'inline',mode='inline-ms')
+    for e in artifact['examples']:
+        request=e['actual_action_request']['messages'];native=e['native_messages']
+        assert e['actual_ms_request'] is None
+        assert request[:-1]==native[:-1]
+        assert request[-1]['content']==native[-1]['content']+'\n\n'+INLINE_MS_INSTRUCTION
+        assert e['native_history_after'][:-1]==native[1:]
+        assert json.loads(e['native_history_after'][-1]['content'])==e['synthetic_action']
+        assert e['actual_action_request']['max_tokens']==4096
+    assert not (tmp_path/'inline/ms').exists()
+    assert len((tmp_path/'inline/transport-agent-0.jsonl').read_text().splitlines())==8
+    snap=json.loads((tmp_path/'inline/pipeline_snapshot.json').read_text())
+    assert snap['contract']['mode']=='inline-ms'
+    assert snap['contract']['calls_per_native_request']==1
