@@ -1,0 +1,25 @@
+{
+  "game_id": "replan_uniform_s2",
+  "formal_test": true,
+  "engine_finished": false,
+  "healthy_transport": true,
+  "error_type": "ScaffoldFailure",
+  "error": "Agent 2: empty or unfinished prompt output",
+  "elapsed_seconds": 371.02192932739854,
+  "metrics": null,
+  "model_call_linkage": {
+    "schema": "calbench-call-linkage-retention-v1",
+    "physical_call_attempts": 31,
+    "physical_call_attempts_by_stage": {
+      "action": 31
+    },
+    "linked_call_ids": 31,
+    "native_environment_invocations_including_retries": 30,
+    "environment_start_events": 29,
+    "all_model_calls_linked": true,
+    "request_capture": "Each full outgoing JSON body is preserved unchanged in its transport record request field. Correlation identifiers and request URL metadata are stored outside that field.",
+    "direct_response_anchors": "turn_end/decide_end call_id exactly matches raw_api_response.id in the action transport response.",
+    "retry_association": "Agent-local call_index/native_call_index is aligned with ordered start events and native batch_rejected retries; each physical prompt attempt retains its own call_id.",
+    "action_stage_omissions_after_ms_failure": []
+  }
+}

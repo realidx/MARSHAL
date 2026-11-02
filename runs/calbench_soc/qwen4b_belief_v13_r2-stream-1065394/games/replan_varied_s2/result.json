@@ -1,0 +1,33 @@
+{
+  "game_id": "replan_varied_s2",
+  "formal_test": true,
+  "engine_finished": false,
+  "healthy_transport": true,
+  "error_type": "ScaffoldFailure",
+  "error": "Agent 2: empty or unfinished prompt output",
+  "elapsed_seconds": 467.7588202059269,
+  "metrics": null,
+  "healthy_scaffold": false,
+  "model_call_linkage": {
+    "schema": "calbench-call-linkage-retention-v1",
+    "physical_call_attempts": 72,
+    "physical_call_attempts_by_stage": {
+      "action": 35,
+      "belief_ms": 37
+    },
+    "linked_call_ids": 72,
+    "native_environment_invocations_including_retries": 36,
+    "environment_start_events": 35,
+    "all_model_calls_linked": true,
+    "request_capture": "Each full outgoing JSON body is preserved unchanged in its transport record request field. Correlation identifiers and request URL metadata are stored outside that field.",
+    "direct_response_anchors": "turn_end/decide_end call_id exactly matches raw_api_response.id in the action transport response.",
+    "retry_association": "Agent-local call_index/native_call_index is aligned with ordered start events and native batch_rejected retries; each physical prompt attempt retains its own call_id.",
+    "action_stage_omissions_after_ms_failure": [
+      {
+        "agent_id": 2,
+        "native_call_index": 12,
+        "scaffold_status": "request_failure"
+      }
+    ]
+  }
+}

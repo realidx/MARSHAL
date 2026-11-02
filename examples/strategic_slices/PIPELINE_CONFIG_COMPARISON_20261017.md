@@ -1,8 +1,8 @@
 # 9月与当前 pipeline 配置快照及逐项对照
 
-**2026-11-03重试合同修复与inline-MS v13（待审查）：**[审查示例](versions/general_ms_calbench_v13_retry_inline_20261103/EXAMPLE.md)、[独立MS完整请求](versions/general_ms_calbench_v13_retry_inline_20261103/preview/PROMPT_PREVIEW.md)、[inline完整请求](versions/general_ms_calbench_v13_retry_inline_20261103/inline-preview/PROMPT_PREVIEW.md)。
+**2026-11-03重试合同修复与inline-MS v13（快照待审查；已按用户授权完成四组真实模型评测）：**[审查示例](versions/general_ms_calbench_v13_retry_inline_20261103/EXAMPLE.md)、[独立MS完整请求](versions/general_ms_calbench_v13_retry_inline_20261103/preview/PROMPT_PREVIEW.md)、[inline完整请求](versions/general_ms_calbench_v13_retry_inline_20261103/inline-preview/PROMPT_PREVIEW.md)、[H100-47四组结果](../final_evaluation/CALBENCH_V13_RETRY_INLINE_H10047_20261103.md)。
 按用户授权恢复DECISION/VOLUNTARY重试的完整原生阶段要求，删除MS内容/格式检查（保留空响应、结束状态和预算检查）。新增显式inline-ms：原生system/history/user保留，只在最终user追加通用MS要求，在原生thinking/actions一次输出。独立MS文案不变。
-91项CPU检查通过，含24局三模式固定假响应对照；未调用模型/训练/测D。4096上限、题库/选择/hash、采样及失败prompt原地重试一次不变。inline分析进入原生assistant历史，独立MS仍不额外保存临时MS；两种条件明确区分。旧关闭快照和真实运行不改，native仍默认，生产active仍terminal readable v8。
+创建快照时91项CPU检查通过，含24局三模式固定假响应对照；当时未调用模型/训练/测D。随后按用户授权完成四组真实模型评测，详见上方H100-47结果。4096上限、题库/选择/hash、采样及失败prompt原地重试一次不变。inline分析进入原生assistant历史，独立MS仍不额外保存临时MS；两种条件明确区分。旧关闭快照和历史运行不改，native仍默认，生产active仍terminal readable v8。
 
 **2026-11-02首轮收件箱修复v12（待用户审查）：**[完整例子](versions/general_ms_calbench_v12_inbox_20261102/EXAMPLE.md)与[实际请求](versions/general_ms_calbench_v12_inbox_20261102/preview/PROMPT_PREVIEW.md)。
 修复原生首轮“开局题面＋收件箱”被错误整体移入ACTION的问题；已送达消息在MS生成前及后续MS历史中完整可见，只有行动指令移位。独立收件箱按完整原生结尾拆分，保留正文引用。
