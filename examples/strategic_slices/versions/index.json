@@ -405,6 +405,224 @@
       "pipeline_snapshot": "../../../new/three_player_walkthrough_20261029/run_v1/pipeline_snapshot.json",
       "evidence": "three_player_case_walkthrough_v1_20261029/EVIDENCE.json",
       "completed_on": "2026-10-29"
+    },
+    "calbench24-h10047-v8-prompt-retry-once-20261102": {
+      "source_version": "general-belief-ms-v8-prompt-retry-once",
+      "source_snapshot": "general_ms_calbench_v8_20261102/SNAPSHOT.json",
+      "status": "COMPLETED_ALL24_ATTEMPTED_20_ENGINE_FINISHED_PER_MODEL_4_MS_TRUNCATIONS_AFTER_IDENTICAL_RETRY",
+      "authorization": "User requested pulling the updated code, reviewing it, and submitting; existing H100-47 authorization covers the two Base+MS model conditions with a 3-hour limit.",
+      "conditions": [
+        {
+          "job_id": 1060433,
+          "condition": "Qwen3-4B-Instruct-2507 belief-MS v8",
+          "model_path": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+          "scaffold": "belief-ms",
+          "status": "ALL24_ATTEMPTED_20_ENGINE_AND_SCAFFOLD_FINISHED_4_MS_TRUNCATED",
+          "attempted_cases": 24,
+          "engine_finished_cases": 20,
+          "healthy_transport_cases": 24,
+          "healthy_scaffold_cases": 20,
+          "unresolved_cases": [
+            "blocked_uniform_s3",
+            "replan_uniform_s1",
+            "replan_uniform_s3",
+            "replan_varied_s1"
+          ],
+          "prompt_retries": 4,
+          "recovered_prompts": 0,
+          "exhausted_prompts": 4,
+          "failed_prompt_attempts": 8,
+          "all_retries_identical_to_first_output": true,
+          "pipeline_status": "COMPLETE_BATCH_CLEAN_CASES_PARTIAL",
+          "elapsed": "00:21:24",
+          "output": "../../../runs/calbench_soc/qwen3-4b-instruct-2507-belief-ms-v8-stream-1060433/",
+          "pipeline_snapshot": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/qwen_base_v8_1060433/pipeline_snapshot.json",
+          "diagnostic_data": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/qwen_base_v8_1060433/"
+        },
+        {
+          "job_id": 1060434,
+          "condition": "outcome-99 step99 belief-MS v8",
+          "model_path": "/home/e/e1300530/tmp/hf-exports-871623/outcome-step99",
+          "scaffold": "belief-ms",
+          "status": "ALL24_ATTEMPTED_20_ENGINE_AND_SCAFFOLD_FINISHED_4_MS_TRUNCATED",
+          "attempted_cases": 24,
+          "engine_finished_cases": 20,
+          "healthy_transport_cases": 24,
+          "healthy_scaffold_cases": 20,
+          "unresolved_cases": [
+            "loose_varied_s1",
+            "blocked_uniform_s1",
+            "blocked_varied_s3",
+            "replan_varied_s1"
+          ],
+          "prompt_retries": 4,
+          "recovered_prompts": 0,
+          "exhausted_prompts": 4,
+          "failed_prompt_attempts": 8,
+          "all_retries_identical_to_first_output": true,
+          "pipeline_status": "COMPLETE_BATCH_CLEAN_CASES_PARTIAL",
+          "elapsed": "00:19:21",
+          "output": "../../../runs/calbench_soc/outcome99-step99-belief-ms-v8-stream-1060434/",
+          "pipeline_snapshot": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/outcome99_v8_1060434/pipeline_snapshot.json",
+          "diagnostic_data": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/outcome99_v8_1060434/"
+        }
+      ],
+      "runtime_config": {
+        "partition": "gpu",
+        "gres": "gpu:h100-47:1",
+        "walltime": "03:00:00",
+        "cpus_per_task": 8,
+        "memory": "64G",
+        "vllm": "0.28.0",
+        "dtype": "bfloat16",
+        "max_model_len": 32768,
+        "max_num_seqs": 32,
+        "parallel_games": 8,
+        "gpu_memory_utilization": 0.65,
+        "enforce_eager": true,
+        "enable_prefix_caching": true,
+        "enable_chunked_prefill": false,
+        "cascade_attention": false,
+        "VLLM_BATCH_INVARIANT": "1",
+        "OMP_NUM_THREADS": 4,
+        "OPENBLAS_NUM_THREADS": 1,
+        "temperature": 0.0,
+        "max_tokens": 4096,
+        "budget_contract": "accepted MS and action share4096 per native action request; failed prompt retries add fully recorded actual compute"
+      },
+      "retry_policy": "At the current game position, immediately retry only the failed MS or action prompt once using identical request/seed/temperature/max_tokens; never append failed output or replay a completed stage/game. After exhaustion abort only that game and continue remaining cases. Native stream comparator follows the same request-retry policy; it was not submitted in this v8 batch.",
+      "suite": "Frozen calbench_stream_v1, 24 cases; v8 registered source and frozen manifest preflight passed in both workers.",
+      "startup_check": "Both jobs passed registered source and frozen-suite preflight; ran on separate H100 NVL MIG 3g.47 allocations. Initial startup had no completed cases; both jobs later completed the suite protocol.",
+      "production_changed": false,
+      "D": "NOT_MEASURED",
+      "training": "NOT_RUN",
+      "report": "../../final_evaluation/CALBENCH_BASE_PROMPT_AND_V8_H10047_20261102.md",
+      "response_length_audit": {
+        "Qwen_successful_accepted_MS_outputs": 842,
+        "Qwen_mean_completion_tokens": 220.02,
+        "Qwen_median_completion_tokens": 207,
+        "Qwen_mean_visible_characters": 974.8,
+        "Qwen_median_visible_characters": 913,
+        "outcome99_successful_accepted_MS_outputs": 785,
+        "outcome99_mean_completion_tokens": 218.0,
+        "outcome99_median_completion_tokens": 203,
+        "outcome99_mean_visible_characters": 958.7,
+        "outcome99_median_visible_characters": 900
+      },
+      "completed_case_metrics": {
+        "Qwen": {
+          "cases": 20,
+          "final_valid_meetings": 16,
+          "requested_meetings": 60,
+          "full_stream_cases": 1,
+          "semantic_invalid_actions": 31,
+          "strict_envelope_failures": 0
+        },
+        "outcome99": {
+          "cases": 20,
+          "final_valid_meetings": 17,
+          "requested_meetings": 60,
+          "full_stream_cases": 0,
+          "semantic_invalid_actions": 41,
+          "strict_envelope_failures": 1,
+          "native_schema_rejections": 0
+        },
+        "interpretation": "Completed-case subset only; 4 aborted games per model have missing outcomes, not zero scores. Do not claim full 24-case or paired all-case result."
+      },
+      "actual_physical_costs": {
+        "Qwen": {
+          "physical_calls": 1692,
+          "prompt_tokens": 6984435,
+          "completion_tokens": 298322,
+          "total_tokens": 7282757,
+          "missing_usage_calls": 0
+        },
+        "outcome99": {
+          "physical_calls": 1578,
+          "prompt_tokens": 6409467,
+          "completion_tokens": 276956,
+          "total_tokens": 6686423,
+          "missing_usage_calls": 0
+        },
+        "note": "Includes all discarded failed prompt outputs; generation totals can exceed the accepted 4096 MS+action budget."
+      },
+      "failure_audit": {
+        "stage": "MS only",
+        "reason": "finish_reason=length at 4096 completion tokens",
+        "transport_failures": 0,
+        "separate_reasoning_content": "null in all failed responses",
+        "completion_tokens_details": "null in all failed responses",
+        "retry_identity": "Every retry returned a body byte-identical to its first attempt.",
+        "repeated_8gram_occurrence_share_range": {
+          "Qwen": [
+            0.786,
+            0.9
+          ],
+          "outcome99": [
+            0.84,
+            0.89
+          ]
+        },
+        "metric_note": "Lowercased word/punctuation 8-gram recurrence diagnostic; not a token fraction."
+      },
+      "diagnostic_data_bundle": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/README.md"
+    },
+    "calbench24-h10047-native-base-prompt-20261102": {
+      "source_version": "calbench_stream_v1 native/base prompt (prompt_changed=false)",
+      "status": "COMPLETED_BOTH_NATIVE_BASE_PROMPT_RUNS_24_OF24_HEALTHY",
+      "authorization": "Existing native/base-prompt runs retained for the requested four-condition diagnostic comparison; no new model calls were made.",
+      "suite": "calbench_stream_v1; same case IDs, scenario seeds and game configuration across all four packaged conditions.",
+      "conditions": [
+        {
+          "job_id": 1059395,
+          "condition": "Qwen3-4B-Instruct-2507 native/base prompt",
+          "model_path": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+          "scaffold": "native",
+          "prompt_changed": false,
+          "status": "COMPLETED_24_OF24_HEALTHY_TRANSPORT",
+          "final_valid_meetings": 37,
+          "requested_meetings": 72,
+          "full_stream_cases": 5,
+          "realized_cost": 38,
+          "strict_envelope_failures": 6,
+          "native_schema_rejections": 0,
+          "semantic_invalid_actions": 28,
+          "pipeline_snapshot": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/qwen_base_prompt_1059395/pipeline_snapshot.json",
+          "diagnostic_data": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/qwen_base_prompt_1059395/"
+        },
+        {
+          "job_id": 872963,
+          "condition": "outcome-99 step99 native/base prompt",
+          "model_path": "/home/e/e1300530/tmp/hf-exports-871623/outcome-step99",
+          "scaffold": "native",
+          "prompt_changed": false,
+          "status": "COMPLETED_24_OF24_HEALTHY_TRANSPORT",
+          "final_valid_meetings": 38,
+          "requested_meetings": 72,
+          "full_stream_cases": 8,
+          "realized_cost": 53,
+          "strict_envelope_failures": 6,
+          "native_schema_rejections": 0,
+          "semantic_invalid_actions": 19,
+          "pipeline_snapshot": "未记录（原始归档未包含 pipeline_snapshot.json）",
+          "job_submission": "未记录（原始归档未包含 job_submission.json）",
+          "scheduler_profile": "H100-47, 8 CPUs, 64 GB, parallel-games 8, max_num_seqs 32, 45-minute limit; profile documented in prior report and original stdout archive.",
+          "diagnostic_data": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/outcome99_base_prompt_872963/"
+        }
+      ],
+      "resolved_config": {
+        "max_tokens": 4096,
+        "temperature": 0.0,
+        "execution_protocol": "reasoning-separated-v2-tokens-4096",
+        "prompt_changed": false,
+        "frozen_manifest": "calbench_stream_v1"
+      },
+      "comparison_note": "All four packaged manifests have equal case IDs, scenario seeds and game configuration. v8 results remain partial at 20/24 per model; missing cases are not zero-filled.",
+      "D": "NOT_MEASURED",
+      "training": "NOT_RUN",
+      "production_changed": false,
+      "report": "../../final_evaluation/CALBENCH_BASE_PROMPT_AND_V8_H10047_20261102.md",
+      "diagnostic_data_bundle": "../../../examples/final_evaluation/calbench_diagnostic_data/20261102/README.md"
     }
   },
   "prompting_systems": {

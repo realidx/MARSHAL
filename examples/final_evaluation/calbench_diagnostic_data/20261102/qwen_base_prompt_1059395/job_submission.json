@@ -1,0 +1,98 @@
+{
+  "run_label": "qwen3-4b-instruct-2507-base-native-v2",
+  "condition": {
+    "model": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+    "scaffold": "native"
+  },
+  "launch_argv": [
+    "python",
+    "-u",
+    "-m",
+    "examples.final_evaluation.launch_calbench_local",
+    "--runtime",
+    "soc",
+    "--suite",
+    "stream",
+    "--model",
+    "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+    "--max-tokens",
+    "4096",
+    "--max-model-len",
+    "32768",
+    "--max-num-seqs",
+    "32",
+    "--runner-python",
+    "/home/e/e1300530/tmp/MARSHAL-calbench-20260918/.venv-calbench/bin/python",
+    "--ports",
+    "29395",
+    "--parallel-games",
+    "8",
+    "--disable-chunked-prefill",
+    "--disable-cascade-attn",
+    "--scaffold",
+    "native",
+    "--output",
+    "/home/e/e1300530/MARSHAL/runs/calbench_soc/qwen3-4b-instruct-2507-base-native-v2-stream-1059395"
+  ],
+  "resolved_routes_if_launcher_fails": {
+    "local_only": true,
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "timeout_seconds": 600,
+    "execution_protocol": "reasoning-separated-v2-tokens-4096",
+    "endpoints": {
+      "focal": {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:29395/v1"
+      },
+      "q0": {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:29395/v1"
+      }
+    },
+    "equivalent_replicas": [
+      {
+        "model": "social-replica-0",
+        "base_url": "http://127.0.0.1:29395/v1"
+      }
+    ]
+  },
+  "runtime_profile": {
+    "partition": "gpu",
+    "gres": "gpu:h100-47:1",
+    "time_limit": "03:00:00",
+    "cpus_per_task": 8,
+    "memory": "64G",
+    "parallel_games": 8,
+    "max_num_seqs": 32,
+    "max_model_len": 32768,
+    "dtype": "bfloat16",
+    "gpu_memory_utilization": 0.65,
+    "enforce_eager": true,
+    "enable_prefix_caching": true,
+    "chunked_prefill": false,
+    "cascade_attention": false,
+    "VLLM_BATCH_INVARIANT": "1",
+    "OMP_NUM_THREADS": "4",
+    "OPENBLAS_NUM_THREADS": "1",
+    "temperature": 0.0,
+    "max_tokens": 4096
+  },
+  "submission": {
+    "job_id": "1059395",
+    "job_name": "cb24-qwen3-4b-instruct-2507-base-native-v2",
+    "partition": "gpu",
+    "nodelist": "xgpi13",
+    "cuda_visible_devices": "0",
+    "cpus_per_task": "8",
+    "time_limit_minutes": 180
+  },
+  "source": {
+    "git_head": "66a932a32f844b06ca27450d83871458d1922d20",
+    "execution_scripts_sha256": {
+      "examples/final_evaluation/submit_calbench_h10047.sh": "b59121f6ca020b53a4eca7cf76a7c975473698ab7fa782c92b7fd4b79f298bd0",
+      "examples/final_evaluation/sbatch_calbench_h10047.sh": "17964337f7c926be81ce7912f4a9fb37ec110928ee44f69285b197948db1c93a",
+      "examples/final_evaluation/finalize_calbench_pipeline_snapshot.py": "07b0765a02392908aaa63f0d19c5a98f932d5d4e9c72a7cd07965317724c7706"
+    }
+  }
+}
