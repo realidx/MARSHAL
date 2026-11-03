@@ -383,18 +383,13 @@ New messages received:
 CHEAP_TALK safety turn counter: turn 2 of 4. 2 turn(s) remain after this one. If all necessary coordination is complete, return [] to end cheap-talk.
 Only the "dm" tool(s) are valid right now. CHEAP_TALK phase is still active. Return a JSON object with "thinking" and "actions" keys. Use [] for actions to pass.
 
-Before your next action, briefly articulate your own mental states and
-your beliefs about the mental states of other participants.
-
-Write from your own perspective: what you believe, want, know, or intend,
-and what you think others believe, want, know, or intend. Include emotions
-only when relevant to the interaction.
-
+Before making a decision, briefly reason about what you want, know,
+and intend to do, and what you think others want, know, and are likely
+to do. Then consider what you should do to achieve your goals.
 Ground these judgments in the available context and history, without
-inventing hidden facts. Write one brief paragraph that can guide your
-next decision.
+inventing hidden facts.
 
-In the existing JSON response, first use the "thinking" string for this mental-state assessment and brief reasoning for your action, then provide the action list in "actions".
+In the existing JSON response, use the "thinking" string for this reasoning, then provide the action list in "actions".
 ```
 
 ### Native history after final action (no stage-local messages)

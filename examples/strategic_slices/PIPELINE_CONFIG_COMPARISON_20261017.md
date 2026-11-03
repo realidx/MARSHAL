@@ -1,5 +1,9 @@
 # 9月与当前 pipeline 配置快照及逐项对照
 
+**2026-11-03 inline精简文案v14（用户已确认文字）：**[完整示例](versions/general_ms_calbench_v14_inline_brief_20261103/EXAMPLE.md)与[实际完整请求](versions/general_ms_calbench_v14_inline_brief_20261103/inline-preview/PROMPT_PREVIEW.md)。
+仅将inline最终user后缀逐字替换为用户确认的“Before making a decision...”版本；仍在原生thinking中分析、actions中行动，一次调用。独立MS/ACTION原文、原生上下文/工具/历史/解析、4096、采样、重试及题库/hash不变。
+91项CPU检查通过；未调用模型/训练/测D，不继承v13模型成绩。旧关闭快照及用户正在编辑的旧预览不覆盖，native仍默认、生产active仍v8。
+
 **2026-11-03重试合同修复与inline-MS v13（快照待审查；已按用户授权完成四组真实模型评测）：**[审查示例](versions/general_ms_calbench_v13_retry_inline_20261103/EXAMPLE.md)、[独立MS完整请求](versions/general_ms_calbench_v13_retry_inline_20261103/preview/PROMPT_PREVIEW.md)、[inline完整请求](versions/general_ms_calbench_v13_retry_inline_20261103/inline-preview/PROMPT_PREVIEW.md)、[H100-47四组结果](../final_evaluation/CALBENCH_V13_RETRY_INLINE_H10047_20261103.md)。
 按用户授权恢复DECISION/VOLUNTARY重试的完整原生阶段要求，删除MS内容/格式检查（保留空响应、结束状态和预算检查）。新增显式inline-ms：原生system/history/user保留，只在最终user追加通用MS要求，在原生thinking/actions一次输出。独立MS文案不变。
 创建快照时91项CPU检查通过，含24局三模式固定假响应对照；当时未调用模型/训练/测D。随后按用户授权完成四组真实模型评测，详见上方H100-47结果。4096上限、题库/选择/hash、采样及失败prompt原地重试一次不变。inline分析进入原生assistant历史，独立MS仍不额外保存临时MS；两种条件明确区分。旧关闭快照和历史运行不改，native仍默认，生产active仍terminal readable v8。

@@ -1,7 +1,7 @@
 """Environment-independent private belief then action stage protocol."""
 from copy import deepcopy
 
-VERSION = 'general-ms-v13-retry-inline'
+VERSION = 'general-ms-v14-inline-brief'
 
 MS_CORE = 'Before your next action, briefly articulate your own mental states and\nyour beliefs about the mental states of other participants.\n\nWrite from your own perspective: what you believe, want, know, or intend,\nand what you think others believe, want, know, or intend. Include emotions\nonly when relevant to the interaction.\n\nGround these judgments in the available context and history, without\ninventing hidden facts. Write one brief paragraph that can guide your\nnext decision.\n\n'
 
@@ -12,9 +12,7 @@ Use the context and your preceding assessment to choose your next action.
 """
 
 
-INLINE_MS_INSTRUCTION = MS_CORE+('In the existing JSON response, first use the "thinking" string for this '
-    'mental-state assessment and brief reasoning for your action, then provide '
-    'the action list in "actions".')
+INLINE_MS_INSTRUCTION = 'Before making a decision, briefly reason about what you want, know,\nand intend to do, and what you think others want, know, and are likely\nto do. Then consider what you should do to achieve your goals.\nGround these judgments in the available context and history, without\ninventing hidden facts.\n\nIn the existing JSON response, use the "thinking" string for this reasoning, then provide the action list in "actions".'
 
 
 def inline_request(native_messages):

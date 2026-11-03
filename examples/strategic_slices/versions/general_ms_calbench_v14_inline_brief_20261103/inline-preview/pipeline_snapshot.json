@@ -1,0 +1,137 @@
+{
+  "schema": 1,
+  "version": "general-ms-v14-inline-brief",
+  "scope": "CalBench evaluation; production active unchanged",
+  "cli": {
+    "argv": [
+      "/Users/bruce/MARSHAL/examples/final_evaluation/export_calbench_ms.py",
+      "--mode",
+      "inline-ms",
+      "--output",
+      "examples/strategic_slices/versions/general_ms_calbench_v14_inline_brief_20261103/inline-preview"
+    ],
+    "mode": "offline HTTP fixture; no network/model"
+  },
+  "resolved_routes": {
+    "scaffold": "inline-ms",
+    "max_tokens": 4096,
+    "temperature": 0.0,
+    "local_only": true,
+    "endpoints": {
+      "focal": {
+        "base_url": "http://127.0.0.1:1/v1",
+        "model": "OFFLINE_FIXTURE_NOT_A_MODEL"
+      },
+      "q0": {
+        "base_url": "http://127.0.0.1:1/v1",
+        "model": "OFFLINE_FIXTURE_NOT_A_MODEL"
+      }
+    }
+  },
+  "game_config": {
+    "communication_protocol": "dm",
+    "decision_retries": 1,
+    "enable_fallback": false,
+    "enable_reflection": false,
+    "max_turns_per_round": 4,
+    "meeting_cost_level": 1,
+    "num_agents": 4,
+    "num_meetings": 3,
+    "num_participants": 3,
+    "num_slots": 8
+  },
+  "job": null,
+  "contract": {
+    "version": "general-ms-v14-inline-brief",
+    "mode": "inline-ms",
+    "calls_per_native_request": 1,
+    "max_tokens": 4096,
+    "prompt_retry_policy": {
+      "version": "calbench-prompt-retry-once-v8",
+      "max_attempts_per_prompt": 2,
+      "max_executions_per_case": 1,
+      "retry_trigger": "request/transport failure, empty or unfinished output; MS/action budget validation failure; native semantic/parser retries otherwise unchanged",
+      "restart": "only the failed prompt at the current game position, immediately; no whole-case or previous-stage replay",
+      "request": "identical messages/model/seed/temperature/max_tokens; failed output never appended",
+      "action_retry": "keep the accepted MS and retry only action with the same remaining cap",
+      "stop_on_case_failure": false,
+      "budget": "accepted MS + accepted action share configured cap (primary4096); failed-generation retries add fully recorded compute beyond that cap",
+      "exhausted": "after two failed attempts abort only this case and continue remaining cases",
+      "report": "one case result; preserve every physical prompt attempt, errors and all costs; incomplete utility remains missing"
+    },
+    "prompt": "unchanged native system/history/current user, append generic MS instruction to final user only",
+    "output": "native JSON thinking contains MS and action reasoning; native actions unchanged",
+    "persistence": "native original user plus final assistant JSON; no separate MS output/history",
+    "inline_instruction": "Before making a decision, briefly reason about what you want, know,\nand intend to do, and what you think others want, know, and are likely\nto do. Then consider what you should do to achieve your goals.\nGround these judgments in the available context and history, without\ninventing hidden facts.\n\nIn the existing JSON response, use the \"thinking\" string for this reasoning, then provide the action list in \"actions\".",
+    "training": false
+  },
+  "source_sha256": {
+    "examples/final_evaluation/interaction_scaffold.py": "36b51f147567d1dd16fb1efcda1c83f53df7b5d24308a744023931eb70fc98a3",
+    "examples/final_evaluation/calbench_stage_context.py": "504fcbd10e5d695aedf96c109e98469c7a94569f6821030b15dbd7bd60717d8a",
+    "examples/final_evaluation/calbench_scaffold.py": "36126183f0df12e45a73732d1febf4475094089761adf190b0207cdd8a2e4fa3",
+    "examples/final_evaluation/calbench_local.py": "2d4ac3185b0a75beda07064b58ef64bb933dbdf4cc3bebb5d253feba1114a687",
+    "examples/final_evaluation/calbench_retry.py": "fd8703726d0aba4fe36a200222e25987a5bea26f228efcb92893e3225e7400f9",
+    "examples/final_evaluation/export_calbench_ms.py": "866351889d876a56367f2bfccec6c326b2aaf1eb04ec65377bbc20c408bae802",
+    "examples/final_evaluation/launch_calbench_local.py": "eb9772bc727c0a031005680a24167f188dbc2b4157e1c16ee44b12c12623ee1f",
+    "examples/final_evaluation/calbench_stream.py": "8312dde916293602ff71f166174885024ca830397fd45610a5dda0602238e051",
+    "examples/final_evaluation/calbench_stream_metrics.py": "0ea3c227e27e4dd682b9e843a1b6844ab5be45c03ffb03aae9f17aec2e3b6106",
+    "examples/final_evaluation/calbench_formal.py": "c5ad0e05cfc1ffd6ace2f3d2c58394995b12b4b265db6a7c355e6bb1d6e8f659",
+    "tests/agentic/test_calbench_ms.py": "950c9c39ad5114c99a2350722981665be1c8d5d8cfc4652025935edf4d590a4f",
+    "tests/agentic/test_calbench_retry.py": "9a883a707ed5bfdff0fb99f4d72031a0d2e87c85ed072ddbce0842e5187ff5b5",
+    "tests/agentic/test_calbench_stage_contract.py": "b4e4900ea9c3406d9ccf3b0e01cbcf9ec434ec321c1ecee29cc3eafc302ec262"
+  },
+  "resolved_transport": {
+    "temperature": 0.0,
+    "timeout_seconds": 120,
+    "chat_template_kwargs": "native model template; no override",
+    "context_policy": "no adapter truncation; server rejects oversized requests",
+    "context_capacity": "see server_commands; external API capacity otherwise 未记录"
+  },
+  "input_sha256": {
+    "examples/final_evaluation/calbench_stream_v1/manifest.json": "87211ff5e8bf11eb287a04dfeb44713db0270092366895bd8dd13ba046abd84c",
+    "examples/final_evaluation/calbench_stream_v1/MANIFEST.sha256": "38408db9a785e5358a3e9cb5a26e77371c39529c853cfb2c3166e1b371261d44",
+    "examples/final_evaluation/calbench_source.json": "5c84fbe71bc21f7f3d5e07a3e60ebb453e101fa36d80d0a8090a21c11f8e404f"
+  },
+  "registered_snapshot_sha256": "a8c17bd11c6879017e550e7580732223fc6e249bbcf325de517610b03f02afda",
+  "registration_status": "registered MS",
+  "model_identity": "未记录（API model alias is not a weight hash）",
+  "runtime": {
+    "python": "3.12.2 | packaged by conda-forge | (main, Feb 16 2024, 20:54:21) [Clang 16.0.6 ]",
+    "executable": "/opt/anaconda3/bin/python",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "dependencies": {
+      "pydantic": "2.5.3",
+      "json-repair": "未记录（当前进程环境未安装）",
+      "ortools": "未记录（当前进程环境未安装）",
+      "opentelemetry-api": "1.38.0",
+      "opentelemetry-sdk": "1.38.0",
+      "opentelemetry-semantic-conventions": "0.59b0",
+      "pytest": "7.4.4",
+      "vllm": "未记录（当前进程环境未安装）",
+      "torch": "2.3.0",
+      "transformers": "未记录（当前进程环境未安装）"
+    },
+    "sys_path": [
+      "/Users/bruce/MARSHAL/third_party/calbench",
+      "/Users/bruce/MARSHAL/third_party/calbench/vendor/a2a-engine",
+      "/Users/bruce/MARSHAL",
+      "/private/tmp/calbench-ms-deps",
+      "/Users/bruce/MARSHAL",
+      "/opt/anaconda3/lib/python312.zip",
+      "/opt/anaconda3/lib/python3.12",
+      "/opt/anaconda3/lib/python3.12/lib-dynload",
+      "/Users/bruce/.local/lib/python3.12/site-packages",
+      "/opt/anaconda3/lib/python3.12/site-packages",
+      "/opt/anaconda3/lib/python3.12/site-packages/aeosa"
+    ],
+    "launcher_environment": "未记录",
+    "server_commands": "未记录"
+  },
+  "evaluation": "original native rules, all four seats, original final-state scoring; hindsight reference only",
+  "reward_advantage_training": "not applicable; no parameter updates",
+  "resume": "existing outputs cannot be overwritten; reruns use new output directories",
+  "execution_kind": "offline_request_export",
+  "model_sampling": false,
+  "synthetic_responses": true,
+  "dependency_scope": "CPU request construction, not model evaluation"
+}

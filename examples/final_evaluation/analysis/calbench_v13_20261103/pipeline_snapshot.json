@@ -1,0 +1,32 @@
+{
+  "version": "calbench-v13-readonly-result-audit-v1",
+  "date": "2026-11-03",
+  "execution": "CPU stdlib saved-log analysis; no model calls, no parameter or prompt changes",
+  "command": "/opt/anaconda3/bin/python examples/final_evaluation/analysis/calbench_v13_20261103/audit.py",
+  "source_commit": "641af147ee0a80005b10e6873835301e67dfd963",
+  "source_sha256": {
+    "audit.py": "fad0539e5923078578a936b58fc7b5cebd008596690ed47bc8211c3f1694200b"
+  },
+  "input_manifest_sha256": "7df5a31ddb7cec5212be68911c276fc193b22428f4754e72127bbb3b570fa56d",
+  "parameters": {
+    "cases": "all24 per new condition; unknown utilities remain null; matched completed subsets explicitly identified",
+    "models": "weights checked against supplied native identity files",
+    "metrics": "saved native results and actual resolution events; no current parser replay"
+  },
+  "runtime": {
+    "python": "3.12.2 | packaged by conda-forge | (main, Feb 16 2024, 20:54:21) [Clang 16.0.6 ]",
+    "platform": "macOS-26.5.2-arm64-arm-64bit"
+  },
+  "checks": {
+    "exact_initial_inline_native_pairs": 48,
+    "exact_shared_ms_action_pairs": 2114,
+    "complete_decision_retry_contracts": 52,
+    "identical_exhausted_retry_pairs": 11
+  },
+  "limitations": [
+    "Historical native failure policy differs from v13",
+    "No model-performance rerun, no full human MS annotation, no population effect claim",
+    "Root snapshots preserved; per-case snapshot files not present in supplied v13 minimal bundle"
+  ],
+  "production_active": "terminal-node-regret-grpo-readable-v8"
+}
