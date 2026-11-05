@@ -11,7 +11,9 @@
     "terminal-node-regret-grpo-readable-v8": "terminal_v8_readable_20261018/SNAPSHOT.json"
   },
   "drafts": {
-    "terminal-state-prompt-draft-v9": "terminal_v9_state_draft_20261021/SNAPSHOT.json"
+    "terminal-state-prompt-draft-v9": "terminal_v9_state_draft_20261021/SNAPSHOT.json",
+    "slice800-parent-curation-design-v1": "slice800_design_v1_20261104/SNAPSHOT.json",
+    "parent-pool-composition-65-35-v1": "parent_pool_composition_65_35_v1_20261104/SNAPSHOT.json"
   },
   "game_design_proposals": {
     "node-qsd-design-v1": "node_qsd_design_v1_20261021/SNAPSHOT.json",
@@ -56,7 +58,25 @@
     "A2H2-structure-answer-channel-audit-v4": "A2H2_structure_answer_channel_v4_20261026/SNAPSHOT.json",
     "three-player-structure-coverage-pilot-v1": "structure_pool_v1_20261026/SNAPSHOT.json",
     "structure-pool-return-audit-v1": "structure_pool_return_audit_v1_20261029/SNAPSHOT.json",
-    "three-player-case-walkthrough-v1": "three_player_case_walkthrough_v1_20261029/SNAPSHOT.json"
+    "three-player-case-walkthrough-v1": "three_player_case_walkthrough_v1_20261029/SNAPSHOT.json",
+    "qs-action-profile-audit-v1": "qs_action_profile_v1_20261104/SNAPSHOT.json",
+    "qs-action-profile-witness-v1": "qs_action_profile_witness_v1_20261104/SNAPSHOT.json",
+    "qs-action-profile-summary-v1": "qs_action_profile_summary_v1_20261104/SNAPSHOT.json",
+    "candidate-qs-profiles-sparse-v1": "candidate_qs_profiles_v1_20261104/SNAPSHOT.json",
+    "candidate-qs-profiles-sparse-v2": "candidate_qs_profiles_v2_20261104/SNAPSHOT.json",
+    "candidate-qs-profiles-sparse-v3": "candidate_qs_profiles_v3_20261104/SNAPSHOT.json",
+    "candidate-qs-parent-review-v1": "candidate_qs_parent_review_v1_20261104/SNAPSHOT.json",
+    "candidate-qs-parent-review-v2": "candidate_qs_parent_review_v2_20261104/SNAPSHOT.json",
+    "candidate-qs-parent-review-v3": "candidate_qs_parent_review_v3_20261104/SNAPSHOT.json",
+    "qualified-parent-pool-65-35-v1": "qualified_parents_65_35_v1_20261104/SNAPSHOT.json",
+    "qualified-parent-pool-review-v1": "qualified_parent_pool_review_v1_20261104/SNAPSHOT.json",
+    "qualified-parent-entry-supply-v1": "entry_supply_v1_20261104/SNAPSHOT.json",
+    "strict-query-answer-access-v1": "query_answer_access_v1_20261104/SNAPSHOT.json",
+    "strict-query-answer-chain-verification-v1": "query_answer_chain_v1_20261104/SNAPSHOT.json",
+    "slice800-coverage-selection-v1": "slice800_selection_v1_20261104/SNAPSHOT.json",
+    "slice800-coverage-selection-v2": "slice800_selection_v2_20261104/SNAPSHOT.json",
+    "slice800-coverage-selection-v3": "slice800_selection_v3_20261104/SNAPSHOT.json",
+    "slice800-native-export-v1": "slice800_native_export_v1_20261104/SNAPSHOT.json"
   },
   "execution_records": {
     "three-player-complexity-local-H2-33-v1": {
@@ -1456,10 +1476,418 @@
           }
         }
       }
+    },
+    "qs-action-profile-audit-v1": {
+      "method_snapshot": "qs_action_profile_v1_20261104/SNAPSHOT.json",
+      "status": "COMPLETED_ORIGINAL100_REQUESTED_99_MEASURED_25_MISSING_ALL_OLD_Q_S_POLICIES_MATCH",
+      "report": "../QS_ACTION_PROFILE_REVIEW_20261104.md",
+      "runs": [
+        "../../../new/qs_action_profile_20261104_runs/pilot_v1/pipeline_snapshot.json",
+        "../../../new/qs_action_profile_20261104_runs/remaining_v1/pipeline_snapshot.json"
+      ],
+      "production_changed": false,
+      "D": "NOT_MEASURED",
+      "selection800": "NOT_RUN",
+      "completed_on": "2026-11-04",
+      "evidence": "qs_action_profile_v1_20261104/EVIDENCE.json",
+      "summary": "../../../new/qs_action_profile_20261104_runs/summary_v1/SUMMARY.json"
+    },
+    "qs-action-profile-witness-v1": {
+      "method_snapshot": "qs_action_profile_witness_v1_20261104/SNAPSHOT.json",
+      "status": "COMPLETED_18_FORCED_ACTION_LP_MATCHES_THREE_CONTEXTS_AND_ANALYTIC_CHECKS",
+      "pipeline_snapshot": "../../../new/qs_action_profile_20261104_runs/witness_v1/pipeline_snapshot.json",
+      "production_changed": false,
+      "D": "NOT_MEASURED",
+      "evidence": "qs_action_profile_v1_20261104/EVIDENCE.json"
+    },
+    "qs-action-profile-summary-v1": {
+      "method_snapshot": "qs_action_profile_summary_v1_20261104/SNAPSHOT.json",
+      "status": "COMPLETED_HASH_VERIFIED_99_PARENT_UNION_AND_DESCRIPTIVE_STATISTICS",
+      "pipeline_snapshot": "../../../new/qs_action_profile_20261104_runs/summary_v1/pipeline_snapshot.json",
+      "evidence": "qs_action_profile_v1_20261104/EVIDENCE.json",
+      "production_changed": false,
+      "D": "NOT_MEASURED",
+      "selection800": "NOT_RUN"
+    },
+    "candidate-qs-profiles-sparse-v1": {
+      "status": "FAILED_PILOT_THREE_CASES_MISSING_ZERO_COUNTER_NO_LABEL_EXPORT",
+      "pipeline_snapshot": "../../../new/candidate_qs_profiles_20261104_runs/pilot_v1/pipeline_snapshot.json",
+      "production_changed": false,
+      "evidence": "candidate_qs_parent_review_v3_20261104/EVIDENCE.json"
+    },
+    "candidate-qs-profiles-sparse-v2": {
+      "status": "COMPLETED_THREE_PILOT_CASES_NINE_UNPRUNED_CHECKS",
+      "pipeline_snapshot": "../../../new/candidate_qs_profiles_20261104_runs/pilot_v2/pipeline_snapshot.json",
+      "production_changed": false,
+      "D": "NOT_MEASURED",
+      "evidence": "candidate_qs_parent_review_v3_20261104/EVIDENCE.json"
+    },
+    "candidate-qs-profiles-sparse-v3": {
+      "status": "COMPLETED_83_EXISTING_REFERENCES_ALL_OLD_S_POLICIES_MATCH_249_UNPRUNED_CHECKS",
+      "report": "../CANDIDATE_PARENT_LABEL_REVIEW_20261104.md",
+      "runs": [
+        "../../../new/candidate_qs_profiles_20261104_runs/pilot_v3/pipeline_snapshot.json",
+        "../../../new/candidate_qs_profiles_20261104_runs/remaining_v3/pipeline_snapshot.json"
+      ],
+      "CLI_overrides": {
+        "pilot_workers": 2,
+        "remaining_workers": 4
+      },
+      "production_changed": false,
+      "D": "NOT_MEASURED",
+      "selection800": "NOT_RUN",
+      "completed_on": "2026-11-04",
+      "evidence": "candidate_qs_parent_review_v3_20261104/EVIDENCE.json"
+    },
+    "candidate-qs-parent-review-v3": {
+      "status": "COMPLETED_83_CANDIDATE_99_BASELINE_DESCRIPTIVE_REVIEW_AND_PRIVATE_GROUP_BOUNDS",
+      "method_snapshot": "candidate_qs_parent_review_v3_20261104/SNAPSHOT.json",
+      "pipeline_snapshot": "../../../new/candidate_qs_profiles_20261104_runs/review_v3/pipeline_snapshot.json",
+      "report": "../CANDIDATE_PARENT_LABEL_REVIEW_20261104.md",
+      "evidence": "candidate_qs_parent_review_v3_20261104/EVIDENCE.json",
+      "production_changed": false,
+      "D": "NOT_MEASURED",
+      "new_parents": "NOT_GENERATED",
+      "selection800": "NOT_RUN"
+    },
+    "qualified-parent-pool-65-35-v1": {
+      "completed_on": "2026-11-04",
+      "report": "../QUALIFIED_PARENT_POOL_65_35_20261104.md",
+      "evidence": "qualified_parent_pool_review_v1_20261104/EVIDENCE.json",
+      "production_changed": false,
+      "D": "NOT_MEASURED",
+      "selection800": "NOT_RUN",
+      "test": "NOT_GENERATED",
+      "status": "COMPLETED_100_PARENTS_65_35_60_INFORMATION_LP_100_ALL_ACTION_Q_REPLAYS",
+      "method_snapshot": "qualified_parents_65_35_v1_20261104/SNAPSHOT.json",
+      "runs": [
+        "../../../new/qualified_parents_6535_20261104_runs/audit_v1/pipeline_snapshot.json",
+        "../../../new/qualified_parents_6535_20261104_runs/selection_v1/pipeline_snapshot.json",
+        "../../../new/qualified_parent_pool_65_35_20261104/v1/pipeline_snapshot.json"
+      ],
+      "parents": "../../../new/qualified_parent_pool_65_35_20261104/v1/parents.jsonl",
+      "manifest": "../../../new/qualified_parent_pool_65_35_20261104/v1/MANIFEST.json",
+      "parents_sha256": "5404947669e4a762ce8914eabd40dcfb060e921aadda0705b75dcfc6057cd3a2",
+      "manifest_sha256": "18ae72ed2328ac17266f02cc8cf10c470609187ac0670ad4110bbc9f196257a1",
+      "pre_snapshot_failure": "../../../new/qualified_parents_6535_20261104_runs/export_relative_path_preflight_failure.json",
+      "new_games_generated": 0,
+      "training_validation_split": "NOT_ASSIGNED"
+    },
+    "qualified-parent-pool-review-v1": {
+      "completed_on": "2026-11-04",
+      "report": "../QUALIFIED_PARENT_POOL_65_35_20261104.md",
+      "evidence": "qualified_parent_pool_review_v1_20261104/EVIDENCE.json",
+      "production_changed": false,
+      "D": "NOT_MEASURED",
+      "selection800": "NOT_RUN",
+      "test": "NOT_GENERATED",
+      "status": "COMPLETED_100_QUALITY_INVARIANTS_200_ASSET_IDENTITIES_AND_READABLE_ROSTER",
+      "method_snapshot": "qualified_parent_pool_review_v1_20261104/SNAPSHOT.json",
+      "pipeline_snapshot": "../../../new/qualified_parents_6535_20261104_runs/review_v1/pipeline_snapshot.json",
+      "summary": "../../../new/qualified_parents_6535_20261104_runs/review_v1/SUMMARY.json",
+      "roster": "../../../new/qualified_parents_6535_20261104_runs/review_v1/INDEX.md"
+    },
+    "qualified-parent-entry-supply-v1": {
+      "status": "COMPLETED_ALL100_526569_OBSERVABLE_ENTRIES_589_NATIVE_HORIZON_CHECKS",
+      "completed_on": "2026-11-04",
+      "method_snapshot": "entry_supply_v1_20261104/SNAPSHOT.json",
+      "report": "../ENTRY_SUPPLY_AUDIT_20261104.md",
+      "evidence": "entry_supply_v1_20261104/EVIDENCE.json",
+      "runs": [
+        "../../../new/entry_supply_20261104_runs/pilot_v1/pipeline_snapshot.json",
+        "../../../new/entry_supply_20261104_runs/all100_v1/pipeline_snapshot.json"
+      ],
+      "summary": "../../../new/entry_supply_20261104_runs/all100_v1/SUMMARY.json",
+      "table": "../../../new/entry_supply_20261104_runs/all100_v1/PARENT_SUPPLY.md",
+      "inventory_validation": "../../../new/entry_supply_20261104_runs/all100_v1/closure_validation.json",
+      "input_parent_manifest_sha256": "18ae72ed2328ac17266f02cc8cf10c470609187ac0670ad4110bbc9f196257a1",
+      "production_changed": false,
+      "Q_S_changed": false,
+      "acquisition_causality": "NOT_VERIFIED",
+      "D": "NOT_MEASURED",
+      "selection800": "NOT_RUN",
+      "split_membership": "NOT_ASSIGNED",
+      "test": "NOT_GENERATED"
+    },
+    "strict-query-answer-access-v1": {
+      "completed_on": "2026-11-04",
+      "report": "../QUERY_ANSWER_ACCESS_20261104.md",
+      "evidence": "query_answer_chain_v1_20261104/EVIDENCE.json",
+      "production_changed": false,
+      "Q_S_changed": false,
+      "selection800": "NOT_RUN",
+      "split_membership": "NOT_ASSIGNED",
+      "test": "NOT_GENERATED",
+      "D": "NOT_MEASURED",
+      "status": "COMPLETED_235_ENTRIES_353_QUERY_ACTIONS_706_LP_CHECKS_CLASS109_39_87",
+      "method_snapshot": "query_answer_access_v1_20261104/SNAPSHOT.json",
+      "runs": [
+        "../../../new/query_answer_access_20261104_runs/pilot_v1/pipeline_snapshot.json",
+        "../../../new/query_answer_access_20261104_runs/all51_v1/pipeline_snapshot.json"
+      ],
+      "summary": "../../../new/query_answer_access_20261104_runs/all51_v1/SUMMARY.json",
+      "entries_table": "../QUERY_ANSWER_ACCESS_ENTRIES_20261104.md",
+      "acquisition_causality_scope": "Fixed-reference access to current query private answer; not pure public-signal causal attribution"
+    },
+    "strict-query-answer-chain-verification-v1": {
+      "completed_on": "2026-11-04",
+      "report": "../QUERY_ANSWER_ACCESS_20261104.md",
+      "evidence": "query_answer_chain_v1_20261104/EVIDENCE.json",
+      "production_changed": false,
+      "Q_S_changed": false,
+      "selection800": "NOT_RUN",
+      "split_membership": "NOT_ASSIGNED",
+      "test": "NOT_GENERATED",
+      "D": "NOT_MEASURED",
+      "status": "COMPLETED_353_QUERY_BRANCHES_3522_POSTCONTEXT_OCCURRENCES_BELIEF_AND_WEIGHTED_PRIVATE_S_MATCH",
+      "method_snapshot": "query_answer_chain_v1_20261104/SNAPSHOT.json",
+      "pipeline_snapshot": "../../../new/query_answer_chain_20261104_runs/all51_v1/pipeline_snapshot.json",
+      "summary": "../../../new/query_answer_chain_20261104_runs/all51_v1/SUMMARY.json"
+    },
+    "slice800-coverage-selection-v1": {
+      "status": "FAILED_PRE_IMPORT_SYNTAX_NO_CANDIDATES",
+      "failure": "../../../new/slice800_selection_20261104_runs/v1_pre_snapshot_failure.json",
+      "production_changed": false
+    },
+    "slice800-coverage-selection-v2": {
+      "status": "PREPARE_COMPLETE_SELECT_LOG_SERIALIZATION_FAILURE_AFTER_PROVED_FEASIBILITY",
+      "runs": [
+        "../../../new/slice800_selection_20261104_runs/prepare_v2/pipeline_snapshot.json",
+        "../../../new/slice800_selection_20261104_runs/select_v2/pipeline_snapshot.json"
+      ],
+      "failure": "../../../new/slice800_selection_20261104_runs/select_v2/FAILURE.json",
+      "production_changed": false
+    },
+    "slice800-coverage-selection-v3": {
+      "completed_on": "2026-11-04",
+      "report": "../SLICE800_COVERAGE_SELECTION_20261104.md",
+      "evidence": "slice800_native_export_v1_20261104/EVIDENCE.json",
+      "production_changed": false,
+      "Q_S_changed": false,
+      "D": "NOT_MEASURED",
+      "test": "NOT_GENERATED",
+      "final_training100": "NOT_SELECTED",
+      "status": "COMPLETED_800_HARD_COVERAGE_CONSTRAINTS_TIME_LIMITED_DIVERSITY_FEASIBLE",
+      "method_snapshot": "slice800_selection_v3_20261104/SNAPSHOT.json",
+      "pipeline_snapshot": "../../../new/slice800_selection_20261104_runs/select_v3/pipeline_snapshot.json",
+      "selection": "../../../new/slice800_selection_20261104_runs/select_v3/SELECTION.json",
+      "optimization": "../../../new/slice800_selection_20261104_runs/select_v3/OPTIMIZATION.json",
+      "global_optimality": "NOT_CLAIMED",
+      "role_coverage": 362,
+      "actor_coverage": 232
+    },
+    "slice800-native-export-v1": {
+      "completed_on": "2026-11-04",
+      "report": "../SLICE800_COVERAGE_SELECTION_20261104.md",
+      "evidence": "slice800_native_export_v1_20261104/EVIDENCE.json",
+      "production_changed": false,
+      "Q_S_changed": false,
+      "D": "NOT_MEASURED",
+      "test": "NOT_GENERATED",
+      "final_training100": "NOT_SELECTED",
+      "status": "COMPLETED_ALL800_NATIVE_VISIBILITY_ROLE_AND_COVERAGE_CHECKS_600_200_PARENT_DISJOINT",
+      "method_snapshot": "slice800_native_export_v1_20261104/SNAPSHOT.json",
+      "pipeline_snapshot": "../../../new/slice800_candidates_20261104/v1/pipeline_snapshot.json",
+      "manifest": "../../../new/slice800_candidates_20261104/v1/MANIFEST.json",
+      "manifest_sha256": "866070bc90f322a10fa849c2b7049bf6509f7efcb6859b6f5da84064e3807841",
+      "train": "../../../new/slice800_candidates_20261104/v1/train.jsonl",
+      "validation": "../../../new/slice800_candidates_20261104/v1/validation.jsonl",
+      "final_prompt": "NOT_FINALIZED",
+      "response_protocol_scoring": "PENDING_ALIGNMENT",
+      "training": "NOT_CONNECTED"
+    },
+    "native800-prompt-score-v1": {
+      "completed_on": "2026-11-05",
+      "report": "../NATIVE800_PROMPT_SCORE_20261105.md",
+      "evidence": "native800_prompt_score_v2_20261105/EVIDENCE.json",
+      "production_changed": false,
+      "main_Q_S_changed": false,
+      "GRPO_changed": false,
+      "D": "NOT_MEASURED",
+      "GPU": "NOT_USED",
+      "training": "NOT_MIGRATED_NOT_STARTED",
+      "status": "CPU800_REQUEST_SCORE_PASS_OLD_GRAMMAR_PRESERVED",
+      "method_snapshot": "native800_prompt_score_v1_20261105/SNAPSHOT.json",
+      "pipeline_snapshot": "../../../new/native800_prompt_score_20261105_runs/cpu_v1/pipeline_snapshot.json",
+      "preview": "native800_prompt_score_v1_20261105/PROMPT_PREVIEW.md"
+    },
+    "native800-prompt-score-v2": {
+      "completed_on": "2026-11-05",
+      "report": "../NATIVE800_PROMPT_SCORE_20261105.md",
+      "evidence": "native800_prompt_score_v2_20261105/EVIDENCE.json",
+      "production_changed": false,
+      "main_Q_S_changed": false,
+      "GRPO_changed": false,
+      "D": "NOT_MEASURED",
+      "GPU": "NOT_USED",
+      "training": "NOT_MIGRATED_NOT_STARTED",
+      "status": "CPU800_REQUEST_SCORE_ALIGNED_FULL_D_AND_TRAIN_RUNNER_PENDING",
+      "method_snapshot": "native800_prompt_score_v2_20261105/SNAPSHOT.json",
+      "pipeline_snapshot": "../../../new/native800_prompt_score_20261105_runs/cpu_v2/pipeline_snapshot.json",
+      "preview": "native800_prompt_score_v2_20261105/PROMPT_PREVIEW.md",
+      "data_binding": "native800_prompt_score_v2_20261105/DATA_BINDING.json",
+      "prompt_version": "native800-readable-prompt-v2",
+      "scoring_version": "native800-response-lexicographic-regret-v1",
+      "real_model_runs": "NOT_RUN",
+      "old_v8_registration_gate": "PASSED_UNCHANGED"
+    },
+    "native800-prompt-score-v3": {
+      "status": "CPU800_PUBLIC_GOAL_BOOKKEEPING_AND_TRIMMED_REQUEST_PASS_SCORING_UNCHANGED",
+      "completed_on": "2026-11-05",
+      "method_snapshot": "native800_prompt_score_v3_20261105/SNAPSHOT.json",
+      "pipeline_snapshot": "../../../new/native800_prompt_score_20261105_runs/cpu_v3/pipeline_snapshot.json",
+      "report": "../PROMPT_REVIEW_NATIVE800_20261105.md",
+      "preview": "native800_prompt_score_v3_20261105/PROMPT_PREVIEW.md",
+      "data_binding": "native800_prompt_score_v3_20261105/DATA_BINDING.json",
+      "evidence": "native800_prompt_score_v3_20261105/EVIDENCE.json",
+      "prompt_version": "native800-readable-prompt-v3",
+      "scoring_version": "native800-response-lexicographic-regret-v1",
+      "production_changed": false,
+      "main_Q_S_changed": false,
+      "scoring_changed": false,
+      "GRPO_changed": false,
+      "D": "NOT_MEASURED",
+      "GPU": "NOT_USED",
+      "training": "NOT_MIGRATED_NOT_STARTED"
+    },
+    "native800-prompt-score-v4": {
+      "status": "CPU800_COMMON_SYSTEM_MERGED_GOALS_AND_NATIVE_OFFER_HISTORY_PASS",
+      "completed_on": "2026-11-05",
+      "parent": "native800-prompt-score-v3",
+      "method_snapshot": "native800_prompt_score_v4_20261105/SNAPSHOT.json",
+      "evidence": "native800_prompt_score_v4_20261105/EVIDENCE.json",
+      "pipeline_snapshot": "../../../new/native800_prompt_score_20261105_runs/cpu_v4_attempt2/pipeline_snapshot.json",
+      "report": "../PROMPT_USER_LAYOUT_REVIEW_20261105.md",
+      "preview": "native800_prompt_score_v4_20261105/PROMPT_PREVIEW.md",
+      "data_binding": "native800_prompt_score_v4_20261105/DATA_BINDING.json",
+      "prompt_version": "native800-readable-prompt-v4",
+      "scoring_version": "native800-response-lexicographic-regret-v1",
+      "changes_from_parent": [
+        "Move unchanged game protocol from user to system; common rules system and per-instance facts user replace previous shortsystem by latest user draft",
+        "Polish introduction; remove broad cooperation objective and explicitly refer to response tie rule; preserve others-sum qualifier",
+        "Merge complete goal requirements and current status: retain each required action with committed/missing flag, plus completion; unused-action state fallback",
+        "One public native opportunity per history entry: unresolved offer not-yet-binding; resolved offer replaces that clause with response and resulting binding status",
+        "Remove redundant historic before/after commitment tables; retain original opportunity numbers and audit information equivalence for main single-event omissions"
+      ],
+      "authorization": [
+        "User supplied edited complete system/user draft and asked to combine each offer with its response and merge goal requirements/current status",
+        "User explicitly confirmed: preserve existing response-only own-payoff tie rule; expression change only"
+      ],
+      "parameters": {
+        "system": "Common game rules in system; current instance facts user",
+        "message_roles": [
+          "system",
+          "user"
+        ],
+        "tools": "Unchanged named schema for actual native legal menu",
+        "reward": "Node-axis own negative regret, socialsum negative regret only if both responses own-optimal",
+        "tie_tolerance": 1e-09,
+        "old_correctness_epsilon": 1e-07,
+        "protocol_penalty": 0.2,
+        "advantage": "UNCHANGED same-node sample-std GRPO",
+        "mainQ_S": "UNCHANGED",
+        "workers": 2,
+        "threads": 1,
+        "model_D": "NOT_MEASURED",
+        "training": "NOT_MIGRATED_NOT_STARTED",
+        "current_goal_status": "Merged full requirements plus current bits and completion; pending excluded",
+        "history": "One native event per entry; original opportunity numbers; full direct answers persist",
+        "history_omission_scope": "ONE event as in main S; no claim for joint multi-event diagnostic"
+      },
+      "production_changed": false,
+      "main_Q_S_changed": false,
+      "scoring_changed": false,
+      "GRPO_changed": false,
+      "D": "NOT_MEASURED",
+      "GPU": "NOT_USED",
+      "training": "NOT_MIGRATED_NOT_STARTED",
+      "cpu_validation": {
+        "goal_status_history_omission_invariance": 2046,
+        "goal_status_native_matches": 800,
+        "complete_current_commitment_bits_preserved": 800,
+        "unused_action_fallback_entries": 0,
+        "single_event_omission_historic_states_recovered": 2046,
+        "same_visible_world_requests": 3044,
+        "legal_tool_roundtrips": 5493,
+        "entries": 800,
+        "response_entries": 194,
+        "social_entries_nonzero_existing_GRPO": 40
+      },
+      "implementation_failure_retained": "../../../new/native800_prompt_score_20261105_runs/cpu_v4/FAILED.json",
+      "old_v3_user_edited_preview": "PRESERVED; canonical original retained in cpu_v3/previews"
+    },
+    "native800-terminal-D-v1": {
+      "status": "IMPLEMENTED_PACKAGED_NOT_VALIDATED_BY_USER_REQUEST",
+      "created_on": "2026-11-05",
+      "parent": "native800-prompt-score-v4",
+      "method_snapshot": "native800_d_runner_v1_20261105/SNAPSHOT.json",
+      "evidence": "native800_d_runner_v1_20261105/EVIDENCE.json",
+      "report": "../NATIVE800_D_REMOTE_20261105.md",
+      "parameters": {
+        "data": "new/slice800_candidates_20261104/v1",
+        "pool": "new/qualified_parent_pool_65_35_20261104/v1",
+        "dataset_manifest_sha256": "866070bc90f322a10fa849c2b7049bf6509f7efcb6859b6f5da84064e3807841",
+        "parents_sha256": "5404947669e4a762ce8914eabd40dcfb060e921aadda0705b75dcfc6057cd3a2",
+        "model": null,
+        "served_model": "native800-base-D",
+        "replicas": 8,
+        "seed": 42,
+        "temperature": 0.8,
+        "top_p": 1.0,
+        "top_k": -1,
+        "repetition_penalty": 1.0,
+        "max_tokens": 4096,
+        "context": 16384,
+        "workers": 32,
+        "gpu_memory_utilization": 0.4,
+        "port": 18083,
+        "http_timeout_seconds": 300,
+        "startup_timeout_seconds": 900,
+        "tensor_parallel_size": 1,
+        "dtype": "bfloat16",
+        "tool_call_parser": "hermes",
+        "scheduler": "completion-refill-v1",
+        "control_end": "NATIVE_TERMINAL",
+        "reference_loading": "ONE_PARENT_AT_A_TIME",
+        "transport_log": "gzip_jsonl",
+        "runtime_validation": "Hash/identity/context/native-transition guards during actual run; no preflight experiment",
+        "pre_remote_tests": "NOT_RUN_BY_USER_REQUEST",
+        "automatic_generation_retries": 0
+      },
+      "authorization": [
+        "User authorized integration for remote server execution",
+        "User explicitly said no validation; no CPU/GPU/mock/smoke or model run performed"
+      ],
+      "changes_from_parent": [
+        "Add complete native800 D dataset loader bound to existing 800 and 65/35 parent identities",
+        "Focal player controls every later decision to native terminal, opponents saved certified reference; replaces legacy fixed k rollout boundary",
+        "Eight independent posterior resets per entry; 32 completion-refill requests within each parent; parents sequential to bound reference memory",
+        "Persist each terminal/invalid/truncated replica atomically, strict source/model/config/endpoint resume; no automatic answer retries",
+        "Entry scorer-v1 used only as separate own/protocol diagnostics, terminal D remains own utility; later decisions decoded but not freshly Oracle-scored",
+        "Separate launcher for standalone one-GPU server or existing endpoint, generic Slurm wrapper and self-contained input/source transfer archive",
+        "Implementation-only delivery without validation; original prompt/scorer, mainQ/S, dataset memberships and old production untouched"
+      ],
+      "bundle": "../../../new/native800_d_remote_20261105/native800-D-v1.tar.gz",
+      "bundle_sha256": "119361cee325789484f263563e5b4e77f3d9fa790574b06558490695fdd0721a",
+      "prompt_version": "native800-readable-prompt-v4",
+      "scoring_version": "native800-response-lexicographic-regret-v1",
+      "source_registration_sha256": "d82b99f155205f0680cfaaec858a053b7805562376658de63d77706e304197bd",
+      "validation": "NOT_RUN_BY_EXPLICIT_USER_REQUEST",
+      "CPU": "NOT_RUN",
+      "GPU": "NOT_RUN",
+      "D": "NOT_MEASURED",
+      "production_changed": false,
+      "prompt_changed": false,
+      "main_Q_S_changed": false,
+      "scoring_changed": false,
+      "GRPO_changed": false,
+      "training": "NOT_MIGRATED_NOT_STARTED",
+      "final100": "NOT_SELECTED"
     }
   },
   "maintenance_versions": {
-    "calbench-native-stream-snapshot-v1": "calbench_native_snapshot_v1_20261102/SNAPSHOT.json"
+    "calbench-native-stream-snapshot-v1": "calbench_native_snapshot_v1_20261102/SNAPSHOT.json",
+    "native800-terminal-D-v1": "native800_d_runner_v1_20261105/SNAPSHOT.json"
   },
   "prompting_systems": {
     "general-belief-ms-v9-stage-contract": "general_ms_calbench_v9_stage_contract_20261102/SNAPSHOT.json",
@@ -1467,6 +1895,10 @@
     "general-belief-ms-v11-minimal": "general_ms_calbench_v11_minimal_20261102/SNAPSHOT.json",
     "general-belief-ms-v12-inbox": "general_ms_calbench_v12_inbox_20261102/SNAPSHOT.json",
     "general-ms-v13-retry-inline": "general_ms_calbench_v13_retry_inline_20261103/SNAPSHOT.json",
-    "general-ms-v14-inline-brief": "general_ms_calbench_v14_inline_brief_20261103/SNAPSHOT.json"
+    "general-ms-v14-inline-brief": "general_ms_calbench_v14_inline_brief_20261103/SNAPSHOT.json",
+    "native800-prompt-score-v1": "native800_prompt_score_v1_20261105/SNAPSHOT.json",
+    "native800-prompt-score-v2": "native800_prompt_score_v2_20261105/SNAPSHOT.json",
+    "native800-prompt-score-v3": "native800_prompt_score_v3_20261105/SNAPSHOT.json",
+    "native800-prompt-score-v4": "native800_prompt_score_v4_20261105/SNAPSHOT.json"
   }
 }

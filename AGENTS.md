@@ -113,3 +113,136 @@ advantage、训练参数、采样、评测、保存/恢复或运行环境的改�
   当前已实现的节点Q/S不等于已导出新版800slices；模型控制长度/退出续接、最终prompt与response评分对齐、D仍需审查，不将旧k=1/2/3分布自动激活为新设置。
   用户流程为父游戏池→800候选slices→D→100训练slices，不能将最终100混写为100父游戏；本轮不生成候选、不测模型、不改游戏/prompt/reward/训练，active v8。
   独立走读v1保存source/input/实际pipeline_snapshot与验证证据；先完成用户审查，再推进数据与训练配置。
+
+- 2026-11-04用户授权审阅行动分布型Q/S，并已同意slice入口起控制当前玩家至原生终局（训练代码未激活）。
+  独立profile v1保留旧Q/标量own S，新增遗漏主观Q、真实入口下遗漏后续行动Q、相对regret向量、canonical完整/遗漏分布与TV/JS；
+  S精确分为当前动作与后续损失，不用softmax/温度猜LLM，不把canonical分布变化当D或直接难度排序。
+  原20261021父池100请求、99终局reference补算/重新认证，25仍缺失；全部旧Q/S/已保存遗漏分布逐项匹配。
+  260971可测context：主S正1452、相对Q变化17614、canonical分布变化8786；3278829零CF仍不可测。
+  16,204个全主S零context仍有相对Q变化，7,491个有分布变化；含平局/社会次级，不等于模型学习信号。
+  原三人33局只有12个正own S；H2/A2H2及结构24保持独立身份，未冻结升级正式100。
+  结构24index10的448节点/3答案复核及18次强制动作LP匹配；只限固定reference，不证明所有平局/跨均衡稳健。
+  见`examples/strategic_slices/QS_ACTION_PROFILE_REVIEW_20261104.md`与三个独立快照/实际pipeline_snapshot。
+  不按新描述直接挑800，不混用旧D；prompt、response评分对齐及正式来源/去重/覆盖仍待审查，生产active v8。
+
+- 2026-11-04用户再次明确：制作合适父游戏允许依据结构/Oracle标签迭代保留、淘汰、重抽和补充，
+  不沿用“首批100必须不变”的限制；每批身份、接受/拒绝/失败与替换关系留痕，不把失败当低S。
+  800包含训练候选与验证；测试来自最终100父游戏之外的新父游戏，不占800。最终100训练slice仅由训练候选D选择。
+  train/validation数量及是否按父隔离、测试规模未定，不能默认旧504/96/200或800全训练。
+  Q/S具体公式/门槛/配额在观察候选父标签后再讨论；场景覆盖方向基本认可，不等于固定比例获准。
+  新设计记录`examples/strategic_slices/versions/slice800_design_v1_20261104/DESIGN.md`给出相对行动价值、
+  分布效用加权及regret/TV关系；不是已激活指标、数据生成或selection，生产仍v8。
+
+- 2026-11-04用户同意继续统一候选父标签：H2/A2H2/结构24共90已整批尝试版本，83已有reference全部补齐profile，
+  7缺失保留；H3原33未整批求解，不混入。原100新版99独立复用、25未解决。
+  完整Q复用hash核对旧标签；同一保存reference逐条重放全部旧S/遗漏策略，均匹配；249个实际裁剪forest与
+  不裁剪原生展开的全部root行动Q/策略一致。仅裁固定对手下严格零CF分支，所有可到达自身动作保留；
+  继承原认证/重载证据，未新做均衡搜索或全树认证。v1零计数字段失败保留，v2修计数，v3仅child缓存；
+  三题v2/v3解压labels逐字节相同。pilot workers2、remaining workers4均线程1，实际snapshot/CLI完整留痕。
+  H2/A2H2/结构池正own S49/636/114，正父9/31、10/30、14/22；相对Q变化12710/23170/12623。
+  辅助私人组LB=sum(w maxQ)-max(sum(wQ))，当前后恢复完整信息的放松问题；逐组核对LB<=当前损失<=全S。
+  私人LB正父6/31、7/30、11/22；结构11父来自9种geometry且无公开全want，A2正组约94.8%集中62/78。
+  LB非新主S/筛选阈值，仍依赖固定reference/CF权重，不是跨均衡或模型D。结构位置/计分关联仍小样不作因果。
+  见`examples/strategic_slices/CANDIDATE_PARENT_LABEL_REVIEW_20261104.md`及独立快照/EVIDENCE；
+  目前仅完成标签与重抽方向审阅，未生成新父游戏/正式100/800/测试、未定门槛比例、未测D或训练，active v8。
+
+- 2026-11-04用户提出父池65两人/35三人，替代助手未激活50/50建议，作为制作目标记录。
+  60/20/20能力目的配额仍是助手草案（两人40/15/10、三人20/5/10），未最终确认或激活。
+  现有两人66可测，40正own S，26zero-own-S均有相对Q变化；26中22有静态/动态报价差异，只是规划待审来源。
+  原三人/H2/A2按原index每组计一个，16组有正own S；结构池按pair计11组，共27组可供信息用途审查。
+  更窄私人当前LB正来源为12+9=21组；保守分组仅估容量，不合并变体/历史/信念，不宣称已验收。
+  先审现有供给，按实际缺口补抽；25仍挑战/缺失。见`examples/strategic_slices/versions/parent_pool_composition_65_35_v1_20261104/DESIGN.md`。
+  无新生成/选题/D/训练，active v8，800仍train候选+validation，test在父100之外。
+
+- 2026-11-04用户授权制作合格65/35，不足时新生成/重算后补入；qualified-parent-pool-65-35-v1已完成。
+  182份已有可测profile验收，选65两人/35三人，主用途信息/估值/规划40/15/10与20/5/10；现有供给足够，无新生成。
+  100canonical/100来源组，90种typed geometry、同种最多3；同原index变体/结构pair各至多一个，不按Q/S大小排名。
+  60信息见证独立完整/遗漏LP，所有own最优遗漏策略上的保守S下界均>1e-8；100题见证全部行动终局Q重放通过，200资产hash通过。
+  估值入口要求Q非平、单条S零且相对regret变化；规划入口要求调查仍合法但严格次优，15后续机会/5回应取舍见证。
+  继承原reference认证/重载，不是新搜索100均衡或跨reference证明；实际62局有正own S，不保证任意入口有模型信号。
+  数据new/qualified_parent_pool_65_35_20261104/v1，parents SHA5404947669e4a762ce8914eabd40dcfb060e921aadda0705b75dcfc6057cd3a2。
+  原25及其他缺失保留挑战/未测身份；82未选来源有逐项理由。逐题索引及关闭证据见QUALIFIED_PARENT_POOL_65_35_20261104.md。
+  仅完成D前父池，800/train-validation/test/prompt/训练仍未接通，D未测；生产active v8不变。旧关闭快照不覆盖。
+
+- 2026-11-04用户同意先做800入口供给表；qualified-parent-entry-supply-v1完成100父全扫描。
+  保存1832020行中1305451零CF fallback排除，526569正CF观察context精确去重后无额外重复；不同隐藏world不算多入口。
+  正own S1684（私人1083/历史681可交叉），对应405物理骨架；骨架仅诊断集中度，不能合并历史/信念。
+  两人正S前两父占46.1%，三人59.8%；1124正S入口仅剩一次本人决策，340保证至少两次、220视未来回应而增加。
+  235个调查严格最优候选、189保证至少两次本人决策，但答案因果收益未验，不等同合格信息获取题或新D。
+  估值24049/规划1803沿用父池谓词；回应社会遗漏846另列，不混入own S。60指定见证继承LP，不称全部1684新LP认证。
+  原生所有合法路径本人决策次数min/max（包括当前proposal/response）已589小子树枚举匹配，非reference期望或模型长度。
+  两题pilot库存与整批解压字节相同，526569库存重读/身份/计数通过；新code与每run完整pipeline_snapshot留痕。
+  供给报告ENTRY_SUPPLY_AUDIT_20261104.md；优先核验235调查答案收益、保护链条与限制父/骨架集中，再定800配额。
+  600训练候选/200验证、80/20父隔离为拟采用划分，成员未定；不自动每父8个或把65/35当800硬比例。
+  未选800/分配split/生成test、未改Q/S/solver/prompt/reward/训练，D未测，active v8；旧关闭快照不覆盖。
+
+- 2026-11-04用户授权继续235调查入口核验：strict-query-answer-access-v1完成51父/235入口/全部353合法调查目标。
+  同一公开调查/回合额度/reference保留，仅屏蔽该目标后续私人答案；完整收益全匹配旧调查Q，706独立full/blind序列LP一致。
+  F=max_query full，B=max_query blind，N=保存最佳非调查Q（允许之后正常调查）。109答案对严格调查优势必需，39有增益但B>N，87无当前答案仍达F。
+  109来自25父/50物理骨架、104保证至少两次本人决定；三人16仅来自5父/10骨架，11保证至少两次本人决定。
+  A+B共148入口/33父/70骨架，不把剩余B-N全称纯公开信号，也不据C判游戏/调查/全部信息无用。
+  strict-query-answer-chain-verification-v1另从原生历史走到首次本人决定，353分支/3522次后继context条件belief匹配，
+  full-blind=概率加权既有private S全通过，误差约1e-15；是事前答案访问与已有S的衔接核验，不替换主S或泛化所有历史S。
+  200调查分支有正加权private S是分支数，不与148入口混用；109/39/87仅query_gap>0子集，不代表三人仅5父有信息价值。
+  方法/CLI/source/CPU workers2与线程1/hash/LP及235逐题索引已留痕，报告QUERY_ANSWER_ACCESS_20261104.md与独立关闭证据。
+  下一步按强获取/混合动机/已有信息利用/估值规划/回应确定800覆盖与重复限制；800/split/test未选，D未测，游戏/主Q/S/prompt/reward/训练未改，active v8。
+
+- 2026-11-04用户“继续1”授权确定并制作800覆盖/重复/split；slice800-coverage-selection-v3与slice800-native-export-v1已完成。
+  600训练候选/80父（52二人28三人）、200验证/20父（13二人7三人），按父人数×原主要用途各20%留验证；入口/父无交叉。
+  主用途总配额A60/B20/正ownS利用320/估值160/规划160/回应own40/social40；各split3:1，非Q/S大小或模型D排名。
+  各split三人入口30-40%，实际训练377/223、验证137/63；训练每父≤12、验证≤16，A每父≤6/B≤4/信息利用≤10，同父物理骨架≤3。
+  保护100父原主用途见证（60信息见证继承LP），至少25%保证多步；实际255保证≥2次本人决定，357恰1次、188视后续回应增加。
+  信息利用320中多步82、私人211/历史112可交叉、仅后续损失42；所有800原生观察ID/动作/答案/条件支持/角色/覆盖通过。
+  从526569库存确定性缩减26492proposal候选；全部稀缺获取/正S/规划及见证保留，海量角色按登记hash分层缩减，不称全库存全局最优。
+  v1预import语法失败、v2第一阶段364覆盖后np.int64写日志失败保留；v3只修日志并固定v2rank命名空间，三次候选hash一致。
+  v3时限解362父×用途/232父×actor，阶段status1/0/1/1，不宣称最大多样性/最优负载；有限时限重跑名单可能不同，实际hash冻结。
+  数据new/slice800_candidates_20261104/v1，trainSHA9e327dcdb84d001d21ed9270043d1e1544a155f1bfaf1f335d578ca6aee139ad，
+  validationSHA15eb6363da844699ef9c0eeea196f9580d76021495f3fb0f331a7389d496b5a8；manifest866070bc90f322a10fa849c2b7049bf6509f7efcb6859b6f5da84064e3807841。
+  model_facts与oracle_annotation分开，后者posterior/隐藏world/Q/S不得进入模型；条件world不重置父先验，完整终局focal控制合同尚未接入训练。
+  typed geometry有3类跨split共享，不称family隔离；40social回应需正式D前接通protocol评分/prompt，own-only不能表达该差异。
+  报告SLICE800_COVERAGE_SELECTION_20261104.md与800索引/父split/完整snapshot/独立关闭证据保留；最终prompt/D/最终100训练slice/测试/训练未做，active v8不变。
+
+- 2026-11-05用户授权先修改prompt与回应评分，并明确保留9月短system＋user＋具名tools。
+  native800-prompt-score-v2已实现新800专用request/decode/score接口（examples/strategic_slices/native800/decision_v2.py），旧v8生产文件不改、注册门禁通过。
+  system逐字保留9月D；各phase完整规则/目标/公开与本人私有事实/先验/历史/生效承诺/顺序/调查与offer额度，pending不混作已生效。
+  说明OFFER提出即扣额度不退、调查消耗proposal且只查非public/本人未直接查过的他人偏好；不按推断删目标。
+  原公共树不保存实际答案，request克隆actor视图按本人直接调查slot重建累计真实答案；不显示对手私答/推断真相/来源标签，不加assistant解释memory。
+  全体仅response自身预期终局Q平局时favor其他玩家总收益，不扩展proposal，也不声称保存reference剩余平局均匀。
+  评分沿用同续接Q/Q_others：节点统一选轴，proposal和非平局response用own负regret，own-tied两响应才用others-sum负regret；不加权牺牲own。
+  正确集合用既有helper/profile的1e-9（旧v8正确性1e-7保留历史身份），无效/截断当前轴最差reward另-0.2，GRPO组内sample-std不改，主ownQ/S不改。
+  v1完整CPU通过，v2仅单复数文案、scorer-v1不改；两次快照/完整实际request均保留。800/5493合法调用/3044world对照通过（含原world800，额外不同world2244）。
+  42响应入口正确集合相对own-optimal纠正，含40social题；40构造合法组均给原GRPO正负advantage，不代表真实模型训练有信号。
+  原两人1局CPU三本人决策轨迹证实调查Blair/Library答案在后续proposal与response仍披露；非模型采样分布/效果验证。
+  完整预览versions/native800_prompt_score_v2_20261105/PROMPT_PREVIEW.md，原始JSON无Q/S/后验，预览的评分小节仅供人审不进模型。
+  DATA_BINDING.json显式关联800manifest866070...与prompt-v2/response-lex-score-v1，不覆盖原800导出pending字段或历史D。
+  own terminalD与protocol/social指标需分列，不能用ownD单独评价social题；没有激活混合D排名。
+  新800request/score适配器已完成，但完整D runner/训练collector/SP臂未迁移，未GPU/模型D/训练，旧active仍v8；见NATIVE800_PROMPT_SCORE_20261105.md和v2关闭证据。
+
+- 2026-11-05用户8点题面审阅后native800-prompt-score-v3完成：保留9月短system/user/namedtools，scoring-v1逐字不改。
+  删“A preference you inferred...”与“OFFER takes...”整个参数重复段；schema/实际合法动作/decoder不改，不按推断删调查目标。
+  Response用“favours the other players more overall (a higher total expected final score for them)”保留复数/总收益，避免三人局单一other player歧义。
+  新CURRENT GOAL STATUS逐goal列各玩家met/required、共享completion、missing承诺；只当前已接受状态，不含pending/预期Q/推断偏好。
+  新表=f(publicrules,currentcommitments)，两者原S所有遗漏条件始终保留，所以非新可消融S信息项，不重算Q/S；可能改变模型D，须绑定新题面测量。
+  CURRENT COMMITMENTS重命名旧ALREADY ACCEPTED；历史直接编号actor行动，去Observed标记，但历史动作/回应/参数/承诺before-after表完整保留，不擅自删影响历史S口径的物理快照。
+  保留精确binary/linear/want+1/neutral0/avoid-1与expected finalscore，不强制输出数值/枚举终局；起始独立均匀先验压短但不删。
+  800目标完成度与原生环境一致、2046单事件历史删除与每节点私有结果清空时目标表不变；800/5493tool/3044同信息world（额外2244）及既有评分单测通过。
+  实际预览versions/native800_prompt_score_v3_20261105/PROMPT_PREVIEW.md、DATA_BINDING显式绑定800及prompt-v3/scorer-v1；v1/v2和历史D保持身份。
+  逐项解释PROMPT_REVIEW_NATIVE800_20261105.md；完整D/collector未迁移、未模型/GPU/D/训练，旧active v8不变。
+
+- 2026-11-05用户完整题面草案后native800-prompt-score-v4：共同规则system＋具体状态user＋原具名tools，最新草案覆盖此前短system偏好；用户明确只改表达，response自身平局时比较others-sum不变，proposal不扩展合作。
+  目标完整要求与当前状态合表，required commitment逐项标committed/missing＋共享completion；pending不计入。当前100行动均被目标覆盖，未用行动提供状态fallback，不丢当前物理状态。
+  一笔offer＋response合一条，pending仅not-yet-binding，解决后替换回应及生效结果；原机会编号保留。删历史冗余物理表后，2046单事件遗漏中其余历史before/after可从完整当前状态/其余accepted NEW additions/缺口编号恢复；只对主S逐条遗漏，不推广联合多条历史诊断。
+  800/5493工具评分/3044同信息world（2244不同world）和7评分测试通过，三本人决策累计答案持续；工具逐项等于v3，scorer-v1/主Q/S/GRPO及800身份不改。
+  首轮CPU适配失败因PrivateQueryEvent.action仅存在于序列化，失败snapshot/source保留cpu_v4；使用to_dict字段后cpu_v4_attempt2全量通过，无模型/求解效果结论。
+  用户手工修改v3预览首例保留，旧实际v3请求以cpu_v3/previews和原EVIDENCE为准；不把手稿称旧实际请求。新预览versions/native800_prompt_score_v4_20261105/PROMPT_PREVIEW.md与独立EVIDENCE，详见PROMPT_USER_LAYOUT_REVIEW_20261105.md。
+  新prompt需重新测D，尚未模型/GPU/D/训练，完整D/collector/SP未迁移，旧active v8不变。
+
+- 2026-11-05用户授权接入新800远端D runner，明确不做验证。native800-terminal-D-v1仅实现并打包，未CPU单测/语法验证/mock/GPU smoke/模型执行，不能继承prompt-v4检查当runner验证。
+  新run_native800_d(.py/.sh)独立于旧入口；使用v4原prompt/scorer-v1、冻结800和65/35父reference，不改主Q/S/GRPO/旧active。
+  每题8独立条件posterior world draws，focal每次决定到原生终局，对手reference；非旧k=1/2/3。父内32 completion-refill，父间顺序以限制reference内存，不声称跨父满载。
+  每个决策完整状态/历史/本人调查答案重建，无Oracle入prompt。入口scorer输出own/protocol分列；后续节点仅合法性记录，不新求Q/S，非训练collector。
+  own D=max入口ownQ-实际终局均值，不截零；任一未完成则D=null并保留缺失界/完成样本估计。非法/截断不自动重试；HTTP/环境失败停机留证，不记为模型零分。
+  每完成replica原子gzip保存；strict source/model/config/endpoint/data resume；未完replica同seed重来。运行/attempt完整pipeline_snapshot写实际CLI、环境、模型/input/source身份。
+  远端通用单GPU/外部endpoint和Slurm入口，无个人conda路径、无下载/安装/自动提交；模型路径必须用户指定。完整说明NATIVE800_D_REMOTE_20261105.md。
+  transfer包new/native800_d_remote_20261105/native800-D-v1.tar.gz约8.2MB/748文件，SHA119361cee325789484f263563e5b4e77f3d9fa790574b06558490695fdd0721a；含源码/冻结入口/reference/native job，不含模型/完整profiles/旧日志。
+  实现快照versions/native800_d_runner_v1_20261105/SNAPSHOT.json与独立EVIDENCE标未验证；打包有独立pipeline_snapshot，不是D测量。尚未远端实际执行、最终100未选，训练collector/SP训练未迁移。

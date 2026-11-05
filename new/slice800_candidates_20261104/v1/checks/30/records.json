@@ -1,0 +1,8143 @@
+[
+  {
+    "id": "c26ed88dcd375122bad423d4",
+    "entry_id": "353c16570095ea47c1f051830208512a038f42d8a8965ee217f843f90ff9c4d4",
+    "parent_id": "c3b2ff228c1bc59c57173780",
+    "parent_index": 30,
+    "source_key": "original2P-75",
+    "split": "train",
+    "primary_role": "information_use",
+    "all_coverage_tags": [
+      "information_use",
+      "information_current",
+      "information_history"
+    ],
+    "features": {
+      "multi": false,
+      "single": false,
+      "private": false,
+      "history": true,
+      "future_only": false
+    },
+    "focal_decisions_to_native_terminal": {
+      "min": 1,
+      "max": 2,
+      "scheduled_focal_proposals": 1,
+      "current_response": 0,
+      "optional_future_responses": 1
+    },
+    "physical_skeleton": "87c1a4497ddec31315b6bf592283170b389ba98b81be686ef9a46ea3bd5d69cf",
+    "model_facts": {
+      "actor": 0,
+      "turn": 2,
+      "commitments": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "query_used": [
+        0,
+        1
+      ],
+      "offer_used": [
+        0,
+        0
+      ],
+      "pending": null,
+      "history": [
+        {
+          "turn_index": 0,
+          "proposer_id": 0,
+          "action": "PASS",
+          "partner_id": null,
+          "offer": null,
+          "response": null,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "invalid_action": false
+        },
+        {
+          "turn_index": 1,
+          "proposer_id": 1,
+          "action": "INVESTIGATE",
+          "player": 0,
+          "goal": 2,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        }
+      ],
+      "legal": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0
+        }
+      ],
+      "phase": "proposal",
+      "own_preferences": [
+        -1,
+        1,
+        1
+      ],
+      "own_direct_answers": [],
+      "public_preferences": [
+        [
+          -1,
+          null,
+          null
+        ],
+        [
+          null,
+          0,
+          1
+        ]
+      ],
+      "game_rules": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": true,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget": 1,
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "offer_budget": 1,
+        "round_robin": [
+          0,
+          1,
+          0,
+          1
+        ]
+      },
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "protocol": "Response own final utility first; only own ties maximize sum of others final utilities",
+      "scope": "Native visible facts, not a rendered system/user/tools request; Oracle fields must not enter model context"
+    },
+    "oracle_annotation": {
+      "node": 1816,
+      "actor": 0,
+      "phase": "proposal",
+      "turn": 2,
+      "own_type": [
+        -1,
+        1,
+        1
+      ],
+      "private_answers": [],
+      "world_ids": [
+        0,
+        1,
+        2
+      ],
+      "posterior": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "counterfactual_mass": 0.003367003367003367,
+      "reference_mass": 0.0,
+      "belief": "reference_counterfactual",
+      "Q_scope": "contingent_BR",
+      "actions": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0
+        }
+      ],
+      "Q": [
+        0.16666666666666666,
+        0.20833333333333331,
+        0.3333333333333333,
+        0.14285714285714288,
+        0.14285714285714288,
+        0.14285714285714288,
+        0.33333333333333337,
+        0.3958333333333333,
+        0.5833333333333334,
+        0.16666666666666666
+      ],
+      "Q_others": [
+        -0.05555555555555555,
+        -0.06944444444444445,
+        -0.02777777777777779,
+        0.0,
+        0.0,
+        0.0,
+        -0.02777777777777779,
+        -0.02777777777777779,
+        -0.02777777777777779,
+        -0.05555555555555555
+      ],
+      "Q_reference": [
+        0.16666666666666666,
+        0.20833333333333331,
+        0.3333333333333333,
+        0.14285714285714288,
+        0.14285714285714288,
+        0.14285714285714288,
+        0.33333333333333337,
+        0.3958333333333333,
+        0.5833333333333334,
+        0.16666666666666666
+      ],
+      "optimal": [
+        8
+      ],
+      "own_optimal": [
+        8
+      ],
+      "span": 0.44047619047619047,
+      "best_minus_next_distinct": 0.18750000000000006,
+      "query_gap": -0.41666666666666674,
+      "immediate_child_utility": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "immediate_optimal_overlap": true,
+      "S_private": 0.0,
+      "S_history": 0.18750000000000006,
+      "S_items": [
+        {
+          "omitted": [
+            "history",
+            0
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.16666666666666666,
+            0.20833333333333331,
+            0.3333333333333333,
+            0.14285714285714288,
+            0.14285714285714288,
+            0.14285714285714288,
+            0.33333333333333337,
+            0.3958333333333333,
+            0.5833333333333334,
+            0.16666666666666666
+          ],
+          "Q_omitted_evaluated_true": [
+            0.16666666666666666,
+            0.20833333333333331,
+            0.3333333333333333,
+            0.14285714285714288,
+            0.14285714285714288,
+            0.14285714285714288,
+            0.33333333333333337,
+            0.3958333333333333,
+            0.5833333333333334,
+            0.16666666666666666
+          ],
+          "omitted_protocol_optimal": [
+            8
+          ],
+          "omitted_own_optimal": [
+            8
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.41666666666666674,
+            0.37500000000000006,
+            0.25000000000000006,
+            0.44047619047619047,
+            0.44047619047619047,
+            0.44047619047619047,
+            0.25,
+            0.18750000000000006,
+            0.0,
+            0.41666666666666674
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            8
+          ],
+          "common_protocol_optimal": [
+            8
+          ]
+        },
+        {
+          "omitted": [
+            "history",
+            1
+          ],
+          "S": 0.18750000000000006,
+          "V_full": 0.5833333333333334,
+          "V_omitted": 0.3958333333333333,
+          "full_contexts": 2,
+          "forest_public_roots": 2,
+          "replay_verified": true,
+          "response_secondary_loss": null,
+          "action_Q_method": "Captured omitted-optimal continuation child values; no extra equilibrium solve",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.15476190476190477,
+            0.22916666666666666,
+            0.2380952380952381,
+            0.14285714285714288,
+            0.14285714285714288,
+            0.14285714285714288,
+            0.41666666666666674,
+            0.5312499999999999,
+            0.36309523809523814,
+            0.14583333333333331
+          ],
+          "Q_omitted_evaluated_true": [
+            0.16666666666666666,
+            0.20833333333333331,
+            0.3333333333333333,
+            0.14285714285714288,
+            0.14285714285714288,
+            0.14285714285714288,
+            0.33333333333333337,
+            0.3958333333333333,
+            0.5833333333333334,
+            0.16666666666666666
+          ],
+          "omitted_protocol_optimal": [
+            7
+          ],
+          "omitted_own_optimal": [
+            7
+          ],
+          "chosen_probability_outside_full_optimal": 1.0,
+          "action_regret": [
+            0.41666666666666674,
+            0.37500000000000006,
+            0.25000000000000006,
+            0.44047619047619047,
+            0.44047619047619047,
+            0.44047619047619047,
+            0.25,
+            0.18750000000000006,
+            0.0,
+            0.41666666666666674
+          ],
+          "own_current_loss": 0.18750000000000006,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 1.0,
+          "policy_JS_nats": 0.6931471805599453,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            -0.04017857142857162,
+            -0.0729166666666668,
+            0.043154761904761696,
+            -0.05208333333333348,
+            -0.05208333333333348,
+            -0.05208333333333348,
+            -0.13541666666666685,
+            -0.18750000000000006,
+            0.16815476190476175,
+            -0.03125000000000017
+          ],
+          "relative_Q_change_Linf": 0.18750000000000006,
+          "common_own_optimal": [],
+          "common_protocol_optimal": []
+        }
+      ],
+      "unavailable_S_items": 0,
+      "offers": [
+        {
+          "action": 1,
+          "acceptance": 0.5,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.08333333333333334,
+          "Q_accept": 0.25,
+          "Q_reject": 0.16666666666666666,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 2,
+          "acceptance": 0.5,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.33333333333333337,
+          "Q_accept": 0.5,
+          "Q_reject": 0.16666666666666666,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 3,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": -0.3928571428571429,
+          "Q_accept": -0.25,
+          "Q_reject": 0.14285714285714288,
+          "static_accepted_utility": -0.5
+        },
+        {
+          "action": 4,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.3571428571428571,
+          "Q_accept": 0.5,
+          "Q_reject": 0.14285714285714288,
+          "static_accepted_utility": -0.5
+        },
+        {
+          "action": 5,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.6071428571428571,
+          "Q_accept": 0.75,
+          "Q_reject": 0.14285714285714288,
+          "static_accepted_utility": -0.5
+        },
+        {
+          "action": 6,
+          "acceptance": 0.5,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.3333333333333335,
+          "Q_accept": 0.5000000000000001,
+          "Q_reject": 0.16666666666666666,
+          "static_accepted_utility": 0.5
+        },
+        {
+          "action": 7,
+          "acceptance": 0.5,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.45833333333333337,
+          "Q_accept": 0.625,
+          "Q_reject": 0.16666666666666666,
+          "static_accepted_utility": 0.5
+        },
+        {
+          "action": 8,
+          "acceptance": 0.5,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.8333333333333334,
+          "Q_accept": 1.0,
+          "Q_reject": 0.16666666666666666,
+          "static_accepted_utility": 0.5
+        }
+      ],
+      "offer_static_dynamic_disjoint": false,
+      "cell": 0,
+      "canonical_full_action_probabilities": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ]
+    },
+    "source": {
+      "parent_pool": "new/qualified_parent_pool_65_35_20261104/v1",
+      "parent_raw_sha256": "987bb8eed4a70194d7ebb9053dd46a49c73fc20ddc38553ff086e23109cde5a5",
+      "reference": {
+        "bytes": 22056,
+        "path": "assets/30/reference.npz",
+        "sha256": "9f07dd0424e4992c4280e37683d58581a492058a9b204f2d58119cd9674ec098"
+      },
+      "profile": {
+        "bytes": 1020150,
+        "path": "assets/30/labels.jsonl.gz",
+        "sha256": "8175ac0c5032d53958a0c46381768cc0a97b2b494036e4d3affc2773460dfc02"
+      }
+    },
+    "control": {
+      "player": 0,
+      "start": "CURRENT_ENTRY",
+      "end": "NATIVE_TERMINAL",
+      "opponents": "SAME_FROZEN_CERTIFIED_REFERENCE",
+      "world_sampling": "Conditional posterior in oracle_annotation; not independently reset to parent prior"
+    },
+    "D": "NOT_MEASURED",
+    "prompt": "NOT_FINALIZED",
+    "response_scoring": "NOT_CHANGED_BY_EXPORT"
+  },
+  {
+    "id": "396429d6f1704b853772d0ae",
+    "entry_id": "94af9004754f957feba11d650db32587610d9cc10dc324655819275eafac27c4",
+    "parent_id": "c3b2ff228c1bc59c57173780",
+    "parent_index": 30,
+    "source_key": "original2P-75",
+    "split": "train",
+    "primary_role": "planning",
+    "all_coverage_tags": [
+      "valuation_verified_predicate",
+      "planning_verified_predicate"
+    ],
+    "features": {
+      "multi": false,
+      "single": true,
+      "private": false,
+      "history": false,
+      "future_only": false
+    },
+    "focal_decisions_to_native_terminal": {
+      "min": 1,
+      "max": 1,
+      "scheduled_focal_proposals": 1,
+      "current_response": 0,
+      "optional_future_responses": 0
+    },
+    "physical_skeleton": "e9dfc9d52275a1d5165023ca195fc480eba291eb9b3dfbd011140177bbe31905",
+    "model_facts": {
+      "actor": 1,
+      "turn": 3,
+      "commitments": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "query_used": [
+        1,
+        0
+      ],
+      "offer_used": [
+        1,
+        0
+      ],
+      "pending": null,
+      "history": [
+        {
+          "turn_index": 0,
+          "proposer_id": 0,
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "turn_index": 1,
+          "proposer_id": 1,
+          "action": "PASS",
+          "partner_id": null,
+          "offer": null,
+          "response": null,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "invalid_action": false
+        },
+        {
+          "turn_index": 2,
+          "proposer_id": 0,
+          "action": "OFFER",
+          "partner_id": 1,
+          "offer": {
+            "partner_id": 1,
+            "proposer_action": [
+              0,
+              1
+            ],
+            "partner_action": [
+              0,
+              0
+            ]
+          },
+          "response": "REJECT",
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "invalid_action": false
+        }
+      ],
+      "legal": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "INVESTIGATE",
+          "player": 0,
+          "goal": 1
+        },
+        {
+          "action": "INVESTIGATE",
+          "player": 0,
+          "goal": 2
+        }
+      ],
+      "phase": "proposal",
+      "own_preferences": [
+        1,
+        0,
+        1
+      ],
+      "own_direct_answers": [],
+      "public_preferences": [
+        [
+          -1,
+          null,
+          null
+        ],
+        [
+          null,
+          0,
+          1
+        ]
+      ],
+      "game_rules": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": true,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget": 1,
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "offer_budget": 1,
+        "round_robin": [
+          0,
+          1,
+          0,
+          1
+        ]
+      },
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "protocol": "Response own final utility first; only own ties maximize sum of others final utilities",
+      "scope": "Native visible facts, not a rendered system/user/tools request; Oracle fields must not enter model context"
+    },
+    "oracle_annotation": {
+      "node": 6336,
+      "actor": 1,
+      "phase": "proposal",
+      "turn": 3,
+      "own_type": [
+        1,
+        0,
+        1
+      ],
+      "private_answers": [],
+      "world_ids": [
+        0,
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24
+      ],
+      "posterior": [
+        0.0,
+        0.41666666666666663,
+        0.41666666666666663,
+        0.04166666666666667,
+        0.0625,
+        0.0625,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "counterfactual_mass": 0.02962962962962963,
+      "reference_mass": 0.0,
+      "belief": "reference_counterfactual",
+      "Q_scope": "contingent_BR",
+      "actions": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "INVESTIGATE",
+          "player": 0,
+          "goal": 1
+        },
+        {
+          "action": "INVESTIGATE",
+          "player": 0,
+          "goal": 2
+        }
+      ],
+      "Q": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.41666666666666663,
+        0.0,
+        0.41666666666666663,
+        0.0,
+        0.0
+      ],
+      "Q_others": [
+        0.0,
+        0.0,
+        0.41666666666666663,
+        0.0,
+        0.0,
+        0.41666666666666663,
+        0.0,
+        0.0,
+        0.41666666666666663,
+        0.0,
+        0.0
+      ],
+      "Q_reference": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.41666666666666663,
+        0.0,
+        0.41666666666666663,
+        0.0,
+        0.0
+      ],
+      "optimal": [
+        6,
+        8
+      ],
+      "own_optimal": [
+        6,
+        8
+      ],
+      "span": 0.41666666666666663,
+      "best_minus_next_distinct": 0.41666666666666663,
+      "query_gap": -0.41666666666666663,
+      "immediate_child_utility": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "immediate_optimal_overlap": true,
+      "S_private": 0.0,
+      "S_history": 0.0,
+      "S_items": [
+        {
+          "omitted": [
+            "history",
+            0
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5,
+            0.0,
+            0.5,
+            0.0,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.41666666666666663,
+            0.0,
+            0.41666666666666663,
+            0.0,
+            0.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.41666666666666663,
+            0.0,
+            0.41666666666666663,
+            0.0,
+            0.0
+          ],
+          "omitted_protocol_optimal": [
+            6,
+            8
+          ],
+          "omitted_own_optimal": [
+            6,
+            8
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.41666666666666663,
+            0.41666666666666663,
+            0.41666666666666663,
+            0.41666666666666663,
+            0.41666666666666663,
+            0.41666666666666663,
+            0.0,
+            0.41666666666666663,
+            0.0,
+            0.41666666666666663,
+            0.41666666666666663
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            6,
+            8
+          ],
+          "common_protocol_optimal": [
+            6,
+            8
+          ]
+        },
+        {
+          "omitted": [
+            "history",
+            1
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5,
+            0.0,
+            0.5,
+            0.0,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.41666666666666663,
+            0.0,
+            0.41666666666666663,
+            0.0,
+            0.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.41666666666666663,
+            0.0,
+            0.41666666666666663,
+            0.0,
+            0.0
+          ],
+          "omitted_protocol_optimal": [
+            6,
+            8
+          ],
+          "omitted_own_optimal": [
+            6,
+            8
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.41666666666666663,
+            0.41666666666666663,
+            0.41666666666666663,
+            0.41666666666666663,
+            0.41666666666666663,
+            0.41666666666666663,
+            0.0,
+            0.41666666666666663,
+            0.0,
+            0.41666666666666663,
+            0.41666666666666663
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            6,
+            8
+          ],
+          "common_protocol_optimal": [
+            6,
+            8
+          ]
+        },
+        {
+          "omitted": [
+            "history",
+            2
+          ],
+          "S": 0.0,
+          "V_full": 0.41666666666666663,
+          "V_omitted": 0.41666666666666663,
+          "full_contexts": 4,
+          "forest_public_roots": 4,
+          "replay_verified": true,
+          "response_secondary_loss": null,
+          "action_Q_method": "Captured omitted-optimal continuation child values; no extra equilibrium solve",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5,
+            0.0,
+            0.5,
+            0.0,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.34090909090909094,
+            0.0,
+            0.34090909090909094,
+            0.0,
+            0.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.41666666666666663,
+            0.0,
+            0.41666666666666663,
+            0.0,
+            0.0
+          ],
+          "omitted_protocol_optimal": [
+            6,
+            8
+          ],
+          "omitted_own_optimal": [
+            6,
+            8
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.41666666666666663,
+            0.41666666666666663,
+            0.41666666666666663,
+            0.41666666666666663,
+            0.41666666666666663,
+            0.41666666666666663,
+            0.0,
+            0.41666666666666663,
+            0.0,
+            0.41666666666666663,
+            0.41666666666666663
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            -0.07575757575757569,
+            -0.07575757575757569,
+            -0.07575757575757569,
+            -0.07575757575757569,
+            -0.07575757575757569,
+            -0.07575757575757569,
+            0.0,
+            -0.07575757575757569,
+            0.0,
+            -0.07575757575757569,
+            -0.07575757575757569
+          ],
+          "relative_Q_change_Linf": 0.07575757575757569,
+          "common_own_optimal": [
+            6,
+            8
+          ],
+          "common_protocol_optimal": [
+            6,
+            8
+          ]
+        }
+      ],
+      "unavailable_S_items": 0,
+      "offers": [
+        {
+          "action": 1,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.49999999999999994,
+          "Q_accept": 0.49999999999999994,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.49999999999999994
+        },
+        {
+          "action": 2,
+          "acceptance": 0.8333333333333333,
+          "acceptance_type_range": 1.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 3,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 4,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.49999999999999994,
+          "Q_accept": 0.49999999999999994,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.49999999999999994
+        },
+        {
+          "action": 5,
+          "acceptance": 0.8333333333333333,
+          "acceptance_type_range": 1.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 6,
+          "acceptance": 0.8333333333333333,
+          "acceptance_type_range": 1.0,
+          "own_accept_minus_reject": 0.49999999999999994,
+          "Q_accept": 0.49999999999999994,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.49999999999999994
+        },
+        {
+          "action": 7,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.9999999999999999,
+          "Q_accept": 0.9999999999999999,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.9999999999999999
+        },
+        {
+          "action": 8,
+          "acceptance": 0.8333333333333333,
+          "acceptance_type_range": 1.0,
+          "own_accept_minus_reject": 0.49999999999999994,
+          "Q_accept": 0.49999999999999994,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.49999999999999994
+        }
+      ],
+      "offer_static_dynamic_disjoint": true,
+      "cell": 0,
+      "canonical_full_action_probabilities": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.5,
+        0.0,
+        0.5,
+        0.0,
+        0.0
+      ]
+    },
+    "source": {
+      "parent_pool": "new/qualified_parent_pool_65_35_20261104/v1",
+      "parent_raw_sha256": "987bb8eed4a70194d7ebb9053dd46a49c73fc20ddc38553ff086e23109cde5a5",
+      "reference": {
+        "bytes": 22056,
+        "path": "assets/30/reference.npz",
+        "sha256": "9f07dd0424e4992c4280e37683d58581a492058a9b204f2d58119cd9674ec098"
+      },
+      "profile": {
+        "bytes": 1020150,
+        "path": "assets/30/labels.jsonl.gz",
+        "sha256": "8175ac0c5032d53958a0c46381768cc0a97b2b494036e4d3affc2773460dfc02"
+      }
+    },
+    "control": {
+      "player": 1,
+      "start": "CURRENT_ENTRY",
+      "end": "NATIVE_TERMINAL",
+      "opponents": "SAME_FROZEN_CERTIFIED_REFERENCE",
+      "world_sampling": "Conditional posterior in oracle_annotation; not independently reset to parent prior"
+    },
+    "D": "NOT_MEASURED",
+    "prompt": "NOT_FINALIZED",
+    "response_scoring": "NOT_CHANGED_BY_EXPORT"
+  },
+  {
+    "id": "700a3abf68af2706bced5c26",
+    "entry_id": "80d8e3558980f422c0a5cf8755c93478e9df3d1ee5bbfc8b54c2beb0d79655ba",
+    "parent_id": "c3b2ff228c1bc59c57173780",
+    "parent_index": 30,
+    "source_key": "original2P-75",
+    "split": "train",
+    "primary_role": "information_use",
+    "all_coverage_tags": [
+      "information_use",
+      "information_future",
+      "information_private",
+      "response_own_choice"
+    ],
+    "features": {
+      "multi": true,
+      "single": false,
+      "private": true,
+      "history": false,
+      "future_only": true
+    },
+    "focal_decisions_to_native_terminal": {
+      "min": 2,
+      "max": 2,
+      "scheduled_focal_proposals": 1,
+      "current_response": 1,
+      "optional_future_responses": 0
+    },
+    "physical_skeleton": "2a8f485c964a37e8ecaafc8a184ac3b41fd0e96e8f5e4dc5c20e00466ad519ac",
+    "model_facts": {
+      "actor": 0,
+      "turn": 1,
+      "commitments": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "query_used": [
+        1,
+        0
+      ],
+      "offer_used": [
+        0,
+        1
+      ],
+      "pending": {
+        "partner_id": 0,
+        "proposer_action": [
+          1,
+          0
+        ],
+        "partner_action": [
+          1,
+          0
+        ]
+      },
+      "history": [
+        {
+          "turn_index": 0,
+          "proposer_id": 0,
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        }
+      ],
+      "legal": [
+        {
+          "response": "REJECT"
+        },
+        {
+          "response": "ACCEPT"
+        }
+      ],
+      "phase": "response",
+      "own_preferences": [
+        -1,
+        1,
+        0
+      ],
+      "own_direct_answers": [
+        [
+          1,
+          0,
+          -1
+        ]
+      ],
+      "public_preferences": [
+        [
+          -1,
+          null,
+          null
+        ],
+        [
+          null,
+          0,
+          1
+        ]
+      ],
+      "game_rules": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": true,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget": 1,
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "offer_budget": 1,
+        "round_robin": [
+          0,
+          1,
+          0,
+          1
+        ]
+      },
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "protocol": "Response own final utility first; only own ties maximize sum of others final utilities",
+      "scope": "Native visible facts, not a rendered system/user/tools request; Oracle fields must not enter model context"
+    },
+    "oracle_annotation": {
+      "node": 6851,
+      "actor": 0,
+      "phase": "response",
+      "turn": 1,
+      "own_type": [
+        -1,
+        1,
+        0
+      ],
+      "private_answers": [
+        [
+          1,
+          0,
+          -1
+        ]
+      ],
+      "world_ids": [
+        5
+      ],
+      "posterior": [
+        1.0
+      ],
+      "counterfactual_mass": 0.003703703703703704,
+      "reference_mass": 0.003703703703703704,
+      "belief": "reference_counterfactual",
+      "Q_scope": "contingent_BR",
+      "actions": [
+        {
+          "response": "REJECT"
+        },
+        {
+          "response": "ACCEPT"
+        }
+      ],
+      "Q": [
+        0.5,
+        0.0
+      ],
+      "Q_others": [
+        0.0,
+        0.0
+      ],
+      "Q_reference": [
+        0.5,
+        0.0
+      ],
+      "optimal": [
+        0
+      ],
+      "own_optimal": [
+        0
+      ],
+      "span": 0.5,
+      "best_minus_next_distinct": 0.5,
+      "query_gap": null,
+      "immediate_child_utility": [
+        0.0,
+        -0.5
+      ],
+      "immediate_optimal_overlap": true,
+      "S_private": 0.5,
+      "S_history": 0.0,
+      "S_items": [
+        {
+          "omitted": [
+            "history",
+            0
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            1.0,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.5,
+            0.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.5,
+            0.0
+          ],
+          "omitted_protocol_optimal": [
+            0
+          ],
+          "omitted_own_optimal": [
+            0
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.0,
+            0.5
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            0
+          ],
+          "common_protocol_optimal": [
+            0
+          ]
+        },
+        {
+          "omitted": [
+            "private",
+            1,
+            0
+          ],
+          "S": 0.5,
+          "V_full": 0.5,
+          "V_omitted": 0.0,
+          "full_contexts": 3,
+          "forest_public_roots": 1,
+          "replay_verified": true,
+          "response_secondary_loss": null,
+          "action_Q_method": "Captured omitted-optimal continuation child values; no extra equilibrium solve",
+          "omitted_action_probabilities": [
+            1.0,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.4166666666666667,
+            0.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0
+          ],
+          "omitted_protocol_optimal": [
+            0
+          ],
+          "omitted_own_optimal": [
+            0
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.0,
+            0.5
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.5,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            -0.08333333333333331
+          ],
+          "relative_Q_change_Linf": 0.08333333333333331,
+          "common_own_optimal": [
+            0
+          ],
+          "common_protocol_optimal": [
+            0
+          ]
+        }
+      ],
+      "unavailable_S_items": 0,
+      "cell": 5,
+      "canonical_full_action_probabilities": [
+        1.0,
+        0.0
+      ]
+    },
+    "source": {
+      "parent_pool": "new/qualified_parent_pool_65_35_20261104/v1",
+      "parent_raw_sha256": "987bb8eed4a70194d7ebb9053dd46a49c73fc20ddc38553ff086e23109cde5a5",
+      "reference": {
+        "bytes": 22056,
+        "path": "assets/30/reference.npz",
+        "sha256": "9f07dd0424e4992c4280e37683d58581a492058a9b204f2d58119cd9674ec098"
+      },
+      "profile": {
+        "bytes": 1020150,
+        "path": "assets/30/labels.jsonl.gz",
+        "sha256": "8175ac0c5032d53958a0c46381768cc0a97b2b494036e4d3affc2773460dfc02"
+      }
+    },
+    "control": {
+      "player": 0,
+      "start": "CURRENT_ENTRY",
+      "end": "NATIVE_TERMINAL",
+      "opponents": "SAME_FROZEN_CERTIFIED_REFERENCE",
+      "world_sampling": "Conditional posterior in oracle_annotation; not independently reset to parent prior"
+    },
+    "D": "NOT_MEASURED",
+    "prompt": "NOT_FINALIZED",
+    "response_scoring": "NOT_CHANGED_BY_EXPORT"
+  },
+  {
+    "id": "98d737a5552fc1975b18e266",
+    "entry_id": "b2b9e4b3a89cf5204dd4894ac25291e610231306742b935b3d1f0f7bcd826909",
+    "parent_id": "c3b2ff228c1bc59c57173780",
+    "parent_index": 30,
+    "source_key": "original2P-75",
+    "split": "train",
+    "primary_role": "information_use",
+    "all_coverage_tags": [
+      "information_use",
+      "information_future",
+      "information_private",
+      "response_own_choice"
+    ],
+    "features": {
+      "multi": true,
+      "single": false,
+      "private": true,
+      "history": false,
+      "future_only": true
+    },
+    "focal_decisions_to_native_terminal": {
+      "min": 2,
+      "max": 2,
+      "scheduled_focal_proposals": 1,
+      "current_response": 1,
+      "optional_future_responses": 0
+    },
+    "physical_skeleton": "2a8f485c964a37e8ecaafc8a184ac3b41fd0e96e8f5e4dc5c20e00466ad519ac",
+    "model_facts": {
+      "actor": 0,
+      "turn": 1,
+      "commitments": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "query_used": [
+        1,
+        0
+      ],
+      "offer_used": [
+        0,
+        1
+      ],
+      "pending": {
+        "partner_id": 0,
+        "proposer_action": [
+          1,
+          0
+        ],
+        "partner_action": [
+          1,
+          0
+        ]
+      },
+      "history": [
+        {
+          "turn_index": 0,
+          "proposer_id": 0,
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        }
+      ],
+      "legal": [
+        {
+          "response": "REJECT"
+        },
+        {
+          "response": "ACCEPT"
+        }
+      ],
+      "phase": "response",
+      "own_preferences": [
+        -1,
+        1,
+        -1
+      ],
+      "own_direct_answers": [
+        [
+          1,
+          0,
+          -1
+        ]
+      ],
+      "public_preferences": [
+        [
+          -1,
+          null,
+          null
+        ],
+        [
+          null,
+          0,
+          1
+        ]
+      ],
+      "game_rules": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": true,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget": 1,
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "offer_budget": 1,
+        "round_robin": [
+          0,
+          1,
+          0,
+          1
+        ]
+      },
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "protocol": "Response own final utility first; only own ties maximize sum of others final utilities",
+      "scope": "Native visible facts, not a rendered system/user/tools request; Oracle fields must not enter model context"
+    },
+    "oracle_annotation": {
+      "node": 6851,
+      "actor": 0,
+      "phase": "response",
+      "turn": 1,
+      "own_type": [
+        -1,
+        1,
+        -1
+      ],
+      "private_answers": [
+        [
+          1,
+          0,
+          -1
+        ]
+      ],
+      "world_ids": [
+        8
+      ],
+      "posterior": [
+        1.0
+      ],
+      "counterfactual_mass": 0.003703703703703704,
+      "reference_mass": 0.003703703703703704,
+      "belief": "reference_counterfactual",
+      "Q_scope": "contingent_BR",
+      "actions": [
+        {
+          "response": "REJECT"
+        },
+        {
+          "response": "ACCEPT"
+        }
+      ],
+      "Q": [
+        0.5,
+        -0.25
+      ],
+      "Q_others": [
+        0.0,
+        -0.5
+      ],
+      "Q_reference": [
+        0.5,
+        -0.25
+      ],
+      "optimal": [
+        0
+      ],
+      "own_optimal": [
+        0
+      ],
+      "span": 0.75,
+      "best_minus_next_distinct": 0.75,
+      "query_gap": null,
+      "immediate_child_utility": [
+        0.0,
+        -0.5
+      ],
+      "immediate_optimal_overlap": true,
+      "S_private": 0.5,
+      "S_history": 0.0,
+      "S_items": [
+        {
+          "omitted": [
+            "history",
+            0
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            1.0,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.5,
+            -0.25
+          ],
+          "Q_omitted_evaluated_true": [
+            0.5,
+            -0.25
+          ],
+          "omitted_protocol_optimal": [
+            0
+          ],
+          "omitted_own_optimal": [
+            0
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.0,
+            0.75
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            0
+          ],
+          "common_protocol_optimal": [
+            0
+          ]
+        },
+        {
+          "omitted": [
+            "private",
+            1,
+            0
+          ],
+          "S": 0.5,
+          "V_full": 0.5,
+          "V_omitted": 0.0,
+          "full_contexts": 3,
+          "forest_public_roots": 1,
+          "replay_verified": true,
+          "response_secondary_loss": null,
+          "action_Q_method": "Captured omitted-optimal continuation child values; no extra equilibrium solve",
+          "omitted_action_probabilities": [
+            1.0,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.4166666666666667,
+            -0.25
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            -0.25
+          ],
+          "omitted_protocol_optimal": [
+            0
+          ],
+          "omitted_own_optimal": [
+            0
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.0,
+            0.75
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.5,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            -0.08333333333333326
+          ],
+          "relative_Q_change_Linf": 0.08333333333333326,
+          "common_own_optimal": [
+            0
+          ],
+          "common_protocol_optimal": [
+            0
+          ]
+        }
+      ],
+      "unavailable_S_items": 0,
+      "cell": 8,
+      "canonical_full_action_probabilities": [
+        1.0,
+        0.0
+      ]
+    },
+    "source": {
+      "parent_pool": "new/qualified_parent_pool_65_35_20261104/v1",
+      "parent_raw_sha256": "987bb8eed4a70194d7ebb9053dd46a49c73fc20ddc38553ff086e23109cde5a5",
+      "reference": {
+        "bytes": 22056,
+        "path": "assets/30/reference.npz",
+        "sha256": "9f07dd0424e4992c4280e37683d58581a492058a9b204f2d58119cd9674ec098"
+      },
+      "profile": {
+        "bytes": 1020150,
+        "path": "assets/30/labels.jsonl.gz",
+        "sha256": "8175ac0c5032d53958a0c46381768cc0a97b2b494036e4d3affc2773460dfc02"
+      }
+    },
+    "control": {
+      "player": 0,
+      "start": "CURRENT_ENTRY",
+      "end": "NATIVE_TERMINAL",
+      "opponents": "SAME_FROZEN_CERTIFIED_REFERENCE",
+      "world_sampling": "Conditional posterior in oracle_annotation; not independently reset to parent prior"
+    },
+    "D": "NOT_MEASURED",
+    "prompt": "NOT_FINALIZED",
+    "response_scoring": "NOT_CHANGED_BY_EXPORT"
+  },
+  {
+    "id": "25ea2cc40637724d0ff1fbd9",
+    "entry_id": "f6c0c6768c525488ad036f3a7d038be515cda2438b3a814de43dae9ee36bcdf9",
+    "parent_id": "c3b2ff228c1bc59c57173780",
+    "parent_index": 30,
+    "source_key": "original2P-75",
+    "split": "train",
+    "primary_role": "information_use",
+    "all_coverage_tags": [
+      "information_use",
+      "information_current",
+      "information_private"
+    ],
+    "features": {
+      "multi": false,
+      "single": true,
+      "private": true,
+      "history": false,
+      "future_only": false
+    },
+    "focal_decisions_to_native_terminal": {
+      "min": 1,
+      "max": 1,
+      "scheduled_focal_proposals": 1,
+      "current_response": 0,
+      "optional_future_responses": 0
+    },
+    "physical_skeleton": "489620949500bdd724374031c41a04c4b02283705a58259036b8515249c2af30",
+    "model_facts": {
+      "actor": 0,
+      "turn": 2,
+      "commitments": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "query_used": [
+        1,
+        0
+      ],
+      "offer_used": [
+        0,
+        1
+      ],
+      "pending": null,
+      "history": [
+        {
+          "turn_index": 0,
+          "proposer_id": 0,
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "turn_index": 1,
+          "proposer_id": 1,
+          "action": "OFFER",
+          "partner_id": 0,
+          "offer": {
+            "partner_id": 0,
+            "proposer_action": [
+              0,
+              1
+            ],
+            "partner_action": [
+              0,
+              0
+            ]
+          },
+          "response": "REJECT",
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "invalid_action": false
+        }
+      ],
+      "legal": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        }
+      ],
+      "phase": "proposal",
+      "own_preferences": [
+        -1,
+        1,
+        0
+      ],
+      "own_direct_answers": [
+        [
+          1,
+          0,
+          -1
+        ]
+      ],
+      "public_preferences": [
+        [
+          -1,
+          null,
+          null
+        ],
+        [
+          null,
+          0,
+          1
+        ]
+      ],
+      "game_rules": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": true,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget": 1,
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "offer_budget": 1,
+        "round_robin": [
+          0,
+          1,
+          0,
+          1
+        ]
+      },
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "protocol": "Response own final utility first; only own ties maximize sum of others final utilities",
+      "scope": "Native visible facts, not a rendered system/user/tools request; Oracle fields must not enter model context"
+    },
+    "oracle_annotation": {
+      "node": 7072,
+      "actor": 0,
+      "phase": "proposal",
+      "turn": 2,
+      "own_type": [
+        -1,
+        1,
+        0
+      ],
+      "private_answers": [
+        [
+          1,
+          0,
+          -1
+        ]
+      ],
+      "world_ids": [
+        5
+      ],
+      "posterior": [
+        1.0
+      ],
+      "counterfactual_mass": 0.003703703703703704,
+      "reference_mass": 0.003703703703703704,
+      "belief": "reference_counterfactual",
+      "Q_scope": "contingent_BR",
+      "actions": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        }
+      ],
+      "Q": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.5,
+        0.5,
+        0.0
+      ],
+      "Q_others": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "Q_reference": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.5,
+        0.5,
+        0.0
+      ],
+      "optimal": [
+        6,
+        7
+      ],
+      "own_optimal": [
+        6,
+        7
+      ],
+      "span": 0.5,
+      "best_minus_next_distinct": 0.5,
+      "query_gap": null,
+      "immediate_child_utility": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "immediate_optimal_overlap": true,
+      "S_private": 0.5,
+      "S_history": 0.0,
+      "S_items": [
+        {
+          "omitted": [
+            "history",
+            0
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5,
+            0.5,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5,
+            0.5,
+            0.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5,
+            0.5,
+            0.0
+          ],
+          "omitted_protocol_optimal": [
+            6,
+            7
+          ],
+          "omitted_own_optimal": [
+            6,
+            7
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.0,
+            0.0,
+            0.5
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            6,
+            7
+          ],
+          "common_protocol_optimal": [
+            6,
+            7
+          ]
+        },
+        {
+          "omitted": [
+            "history",
+            1
+          ],
+          "S": 0.0,
+          "V_full": 0.5,
+          "V_omitted": 0.5,
+          "full_contexts": 7,
+          "forest_public_roots": 7,
+          "replay_verified": true,
+          "response_secondary_loss": null,
+          "action_Q_method": "Captured omitted-optimal continuation child values; no extra equilibrium solve",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5,
+            0.5,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.4285714285714286,
+            0.4285714285714286,
+            0.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5,
+            0.5,
+            0.0
+          ],
+          "omitted_protocol_optimal": [
+            6,
+            7
+          ],
+          "omitted_own_optimal": [
+            6,
+            7
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.0,
+            0.0,
+            0.5
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            -0.0714285714285714,
+            -0.0714285714285714,
+            -0.0714285714285714,
+            -0.0714285714285714,
+            -0.0714285714285714,
+            -0.0714285714285714,
+            0.0,
+            0.0,
+            -0.0714285714285714
+          ],
+          "relative_Q_change_Linf": 0.0714285714285714,
+          "common_own_optimal": [
+            6,
+            7
+          ],
+          "common_protocol_optimal": [
+            6,
+            7
+          ]
+        },
+        {
+          "omitted": [
+            "private",
+            1,
+            0
+          ],
+          "S": 0.5,
+          "V_full": 0.5,
+          "V_omitted": 0.0,
+          "full_contexts": 3,
+          "forest_public_roots": 1,
+          "replay_verified": true,
+          "response_secondary_loss": null,
+          "action_Q_method": "Captured omitted-optimal continuation child values; no extra equilibrium solve",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            -0.20833333333333334,
+            -0.20833333333333334,
+            -0.20833333333333334,
+            0.3958333333333333,
+            0.3958333333333333,
+            0.4166666666666667
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5,
+            0.5,
+            0.0
+          ],
+          "omitted_protocol_optimal": [
+            8
+          ],
+          "omitted_own_optimal": [
+            8
+          ],
+          "chosen_probability_outside_full_optimal": 1.0,
+          "action_regret": [
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.0,
+            0.0,
+            0.5
+          ],
+          "own_current_loss": 0.5,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 1.0,
+          "policy_JS_nats": 0.6931471805599453,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            -0.08333333333333331,
+            -0.08333333333333331,
+            -0.08333333333333331,
+            0.125,
+            0.125,
+            0.125,
+            0.02083333333333337,
+            0.02083333333333337,
+            -0.5
+          ],
+          "relative_Q_change_Linf": 0.5,
+          "common_own_optimal": [],
+          "common_protocol_optimal": []
+        }
+      ],
+      "unavailable_S_items": 0,
+      "offers": [
+        {
+          "action": 1,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 2,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 3,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": -0.5,
+          "Q_accept": -0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": -0.5
+        },
+        {
+          "action": 4,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": -0.5,
+          "Q_accept": -0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": -0.5
+        },
+        {
+          "action": 5,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": -0.5,
+          "Q_accept": -0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": -0.5
+        },
+        {
+          "action": 6,
+          "acceptance": 1.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.5,
+          "Q_accept": 0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.5
+        },
+        {
+          "action": 7,
+          "acceptance": 1.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.5,
+          "Q_accept": 0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.5
+        },
+        {
+          "action": 8,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.5,
+          "Q_accept": 0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.5
+        }
+      ],
+      "offer_static_dynamic_disjoint": false,
+      "cell": 5,
+      "canonical_full_action_probabilities": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.5,
+        0.5,
+        0.0
+      ]
+    },
+    "source": {
+      "parent_pool": "new/qualified_parent_pool_65_35_20261104/v1",
+      "parent_raw_sha256": "987bb8eed4a70194d7ebb9053dd46a49c73fc20ddc38553ff086e23109cde5a5",
+      "reference": {
+        "bytes": 22056,
+        "path": "assets/30/reference.npz",
+        "sha256": "9f07dd0424e4992c4280e37683d58581a492058a9b204f2d58119cd9674ec098"
+      },
+      "profile": {
+        "bytes": 1020150,
+        "path": "assets/30/labels.jsonl.gz",
+        "sha256": "8175ac0c5032d53958a0c46381768cc0a97b2b494036e4d3affc2773460dfc02"
+      }
+    },
+    "control": {
+      "player": 0,
+      "start": "CURRENT_ENTRY",
+      "end": "NATIVE_TERMINAL",
+      "opponents": "SAME_FROZEN_CERTIFIED_REFERENCE",
+      "world_sampling": "Conditional posterior in oracle_annotation; not independently reset to parent prior"
+    },
+    "D": "NOT_MEASURED",
+    "prompt": "NOT_FINALIZED",
+    "response_scoring": "NOT_CHANGED_BY_EXPORT"
+  },
+  {
+    "id": "dfb89d888f89f3cddc5c5bc5",
+    "entry_id": "69b2d51aba2a83a411d3711a732648eb3ac45a43258a99797d25b85ae6b917f2",
+    "parent_id": "c3b2ff228c1bc59c57173780",
+    "parent_index": 30,
+    "source_key": "original2P-75",
+    "split": "train",
+    "primary_role": "valuation",
+    "all_coverage_tags": [
+      "valuation_verified_predicate",
+      "response_own_choice"
+    ],
+    "features": {
+      "multi": true,
+      "single": false,
+      "private": false,
+      "history": false,
+      "future_only": false
+    },
+    "focal_decisions_to_native_terminal": {
+      "min": 2,
+      "max": 2,
+      "scheduled_focal_proposals": 1,
+      "current_response": 1,
+      "optional_future_responses": 0
+    },
+    "physical_skeleton": "66591f9336cdb84c9577ec502b4223d3647c94c2942f51c68b05ccd75a641fd6",
+    "model_facts": {
+      "actor": 0,
+      "turn": 1,
+      "commitments": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "query_used": [
+        1,
+        0
+      ],
+      "offer_used": [
+        0,
+        1
+      ],
+      "pending": {
+        "partner_id": 0,
+        "proposer_action": [
+          0,
+          1
+        ],
+        "partner_action": [
+          1,
+          0
+        ]
+      },
+      "history": [
+        {
+          "turn_index": 0,
+          "proposer_id": 0,
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        }
+      ],
+      "legal": [
+        {
+          "response": "REJECT"
+        },
+        {
+          "response": "ACCEPT"
+        }
+      ],
+      "phase": "response",
+      "own_preferences": [
+        -1,
+        1,
+        0
+      ],
+      "own_direct_answers": [
+        [
+          1,
+          0,
+          1
+        ]
+      ],
+      "public_preferences": [
+        [
+          -1,
+          null,
+          null
+        ],
+        [
+          null,
+          0,
+          1
+        ]
+      ],
+      "game_rules": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": true,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget": 1,
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "offer_budget": 1,
+        "round_robin": [
+          0,
+          1,
+          0,
+          1
+        ]
+      },
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "protocol": "Response own final utility first; only own ties maximize sum of others final utilities",
+      "scope": "Native visible facts, not a rendered system/user/tools request; Oracle fields must not enter model context"
+    },
+    "oracle_annotation": {
+      "node": 7199,
+      "actor": 0,
+      "phase": "response",
+      "turn": 1,
+      "own_type": [
+        -1,
+        1,
+        0
+      ],
+      "private_answers": [
+        [
+          1,
+          0,
+          1
+        ]
+      ],
+      "world_ids": [
+        3
+      ],
+      "posterior": [
+        1.0
+      ],
+      "counterfactual_mass": 0.009259259259259259,
+      "reference_mass": 0.009259259259259259,
+      "belief": "reference_counterfactual",
+      "Q_scope": "contingent_BR",
+      "actions": [
+        {
+          "response": "REJECT"
+        },
+        {
+          "response": "ACCEPT"
+        }
+      ],
+      "Q": [
+        0.5,
+        0.0
+      ],
+      "Q_others": [
+        0.5,
+        2.0
+      ],
+      "Q_reference": [
+        0.5,
+        0.0
+      ],
+      "optimal": [
+        0
+      ],
+      "own_optimal": [
+        0
+      ],
+      "span": 0.5,
+      "best_minus_next_distinct": 0.5,
+      "query_gap": null,
+      "immediate_child_utility": [
+        0.0,
+        -0.5
+      ],
+      "immediate_optimal_overlap": true,
+      "S_private": 0.0,
+      "S_history": 0.0,
+      "S_items": [
+        {
+          "omitted": [
+            "history",
+            0
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            1.0,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.5,
+            0.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.5,
+            0.0
+          ],
+          "omitted_protocol_optimal": [
+            0
+          ],
+          "omitted_own_optimal": [
+            0
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.0,
+            0.5
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            0
+          ],
+          "common_protocol_optimal": [
+            0
+          ]
+        },
+        {
+          "omitted": [
+            "private",
+            1,
+            0
+          ],
+          "S": 0.0,
+          "V_full": 0.5,
+          "V_omitted": 0.5,
+          "full_contexts": 3,
+          "forest_public_roots": 1,
+          "replay_verified": true,
+          "response_secondary_loss": 0.0,
+          "action_Q_method": "Captured omitted-optimal continuation child values; no extra equilibrium solve",
+          "omitted_action_probabilities": [
+            1.0,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.4166666666666667,
+            0.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.5,
+            0.0
+          ],
+          "omitted_protocol_optimal": [
+            0
+          ],
+          "omitted_own_optimal": [
+            0
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.0,
+            0.5
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            -0.08333333333333331
+          ],
+          "relative_Q_change_Linf": 0.08333333333333331,
+          "common_own_optimal": [
+            0
+          ],
+          "common_protocol_optimal": [
+            0
+          ]
+        }
+      ],
+      "unavailable_S_items": 0,
+      "cell": 3,
+      "canonical_full_action_probabilities": [
+        1.0,
+        0.0
+      ]
+    },
+    "source": {
+      "parent_pool": "new/qualified_parent_pool_65_35_20261104/v1",
+      "parent_raw_sha256": "987bb8eed4a70194d7ebb9053dd46a49c73fc20ddc38553ff086e23109cde5a5",
+      "reference": {
+        "bytes": 22056,
+        "path": "assets/30/reference.npz",
+        "sha256": "9f07dd0424e4992c4280e37683d58581a492058a9b204f2d58119cd9674ec098"
+      },
+      "profile": {
+        "bytes": 1020150,
+        "path": "assets/30/labels.jsonl.gz",
+        "sha256": "8175ac0c5032d53958a0c46381768cc0a97b2b494036e4d3affc2773460dfc02"
+      }
+    },
+    "control": {
+      "player": 0,
+      "start": "CURRENT_ENTRY",
+      "end": "NATIVE_TERMINAL",
+      "opponents": "SAME_FROZEN_CERTIFIED_REFERENCE",
+      "world_sampling": "Conditional posterior in oracle_annotation; not independently reset to parent prior"
+    },
+    "D": "NOT_MEASURED",
+    "prompt": "NOT_FINALIZED",
+    "response_scoring": "NOT_CHANGED_BY_EXPORT"
+  },
+  {
+    "id": "6ca14bbeea8f2885fa970cb9",
+    "entry_id": "81c650589b1c03a7b05a0d65af65dabdde60a5b21e19ff695a03abb5f7967968",
+    "parent_id": "c3b2ff228c1bc59c57173780",
+    "parent_index": 30,
+    "source_key": "original2P-75",
+    "split": "train",
+    "primary_role": "information_use",
+    "all_coverage_tags": [
+      "information_use",
+      "information_current",
+      "information_private"
+    ],
+    "features": {
+      "multi": false,
+      "single": true,
+      "private": true,
+      "history": false,
+      "future_only": false
+    },
+    "focal_decisions_to_native_terminal": {
+      "min": 1,
+      "max": 1,
+      "scheduled_focal_proposals": 1,
+      "current_response": 0,
+      "optional_future_responses": 0
+    },
+    "physical_skeleton": "489620949500bdd724374031c41a04c4b02283705a58259036b8515249c2af30",
+    "model_facts": {
+      "actor": 0,
+      "turn": 2,
+      "commitments": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "query_used": [
+        1,
+        0
+      ],
+      "offer_used": [
+        0,
+        1
+      ],
+      "pending": null,
+      "history": [
+        {
+          "turn_index": 0,
+          "proposer_id": 0,
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "turn_index": 1,
+          "proposer_id": 1,
+          "action": "OFFER",
+          "partner_id": 0,
+          "offer": {
+            "partner_id": 0,
+            "proposer_action": [
+              0,
+              1
+            ],
+            "partner_action": [
+              1,
+              0
+            ]
+          },
+          "response": "REJECT",
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "invalid_action": false
+        }
+      ],
+      "legal": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        }
+      ],
+      "phase": "proposal",
+      "own_preferences": [
+        -1,
+        1,
+        -1
+      ],
+      "own_direct_answers": [
+        [
+          1,
+          0,
+          -1
+        ]
+      ],
+      "public_preferences": [
+        [
+          -1,
+          null,
+          null
+        ],
+        [
+          null,
+          0,
+          1
+        ]
+      ],
+      "game_rules": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": true,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget": 1,
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "offer_budget": 1,
+        "round_robin": [
+          0,
+          1,
+          0,
+          1
+        ]
+      },
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "protocol": "Response own final utility first; only own ties maximize sum of others final utilities",
+      "scope": "Native visible facts, not a rendered system/user/tools request; Oracle fields must not enter model context"
+    },
+    "oracle_annotation": {
+      "node": 7200,
+      "actor": 0,
+      "phase": "proposal",
+      "turn": 2,
+      "own_type": [
+        -1,
+        1,
+        -1
+      ],
+      "private_answers": [
+        [
+          1,
+          0,
+          -1
+        ]
+      ],
+      "world_ids": [
+        8
+      ],
+      "posterior": [
+        1.0
+      ],
+      "counterfactual_mass": 0.003703703703703704,
+      "reference_mass": 0.003703703703703704,
+      "belief": "reference_counterfactual",
+      "Q_scope": "contingent_BR",
+      "actions": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        }
+      ],
+      "Q": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.5,
+        0.5,
+        0.0
+      ],
+      "Q_others": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "Q_reference": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.5,
+        0.5,
+        0.0
+      ],
+      "optimal": [
+        6,
+        7
+      ],
+      "own_optimal": [
+        6,
+        7
+      ],
+      "span": 0.5,
+      "best_minus_next_distinct": 0.5,
+      "query_gap": null,
+      "immediate_child_utility": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "immediate_optimal_overlap": true,
+      "S_private": 0.5,
+      "S_history": 0.0,
+      "S_items": [
+        {
+          "omitted": [
+            "history",
+            0
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5,
+            0.5,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5,
+            0.5,
+            0.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5,
+            0.5,
+            0.0
+          ],
+          "omitted_protocol_optimal": [
+            6,
+            7
+          ],
+          "omitted_own_optimal": [
+            6,
+            7
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.0,
+            0.0,
+            0.5
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            6,
+            7
+          ],
+          "common_protocol_optimal": [
+            6,
+            7
+          ]
+        },
+        {
+          "omitted": [
+            "history",
+            1
+          ],
+          "S": 0.0,
+          "V_full": 0.5,
+          "V_omitted": 0.5,
+          "full_contexts": 7,
+          "forest_public_roots": 7,
+          "replay_verified": true,
+          "response_secondary_loss": null,
+          "action_Q_method": "Captured omitted-optimal continuation child values; no extra equilibrium solve",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5,
+            0.5,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.4285714285714286,
+            0.4285714285714286,
+            0.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5,
+            0.5,
+            0.0
+          ],
+          "omitted_protocol_optimal": [
+            6,
+            7
+          ],
+          "omitted_own_optimal": [
+            6,
+            7
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.0,
+            0.0,
+            0.5
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            -0.0714285714285714,
+            -0.0714285714285714,
+            -0.0714285714285714,
+            -0.0714285714285714,
+            -0.0714285714285714,
+            -0.0714285714285714,
+            0.0,
+            0.0,
+            -0.0714285714285714
+          ],
+          "relative_Q_change_Linf": 0.0714285714285714,
+          "common_own_optimal": [
+            6,
+            7
+          ],
+          "common_protocol_optimal": [
+            6,
+            7
+          ]
+        },
+        {
+          "omitted": [
+            "private",
+            1,
+            0
+          ],
+          "S": 0.5,
+          "V_full": 0.5,
+          "V_omitted": 0.0,
+          "full_contexts": 3,
+          "forest_public_roots": 1,
+          "replay_verified": true,
+          "response_secondary_loss": null,
+          "action_Q_method": "Captured omitted-optimal continuation child values; no extra equilibrium solve",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            -0.20833333333333334,
+            -0.20833333333333334,
+            -0.20833333333333334,
+            0.3958333333333333,
+            0.3958333333333333,
+            0.4166666666666667
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.5,
+            0.5,
+            0.0
+          ],
+          "omitted_protocol_optimal": [
+            8
+          ],
+          "omitted_own_optimal": [
+            8
+          ],
+          "chosen_probability_outside_full_optimal": 1.0,
+          "action_regret": [
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.0,
+            0.0,
+            0.5
+          ],
+          "own_current_loss": 0.5,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 1.0,
+          "policy_JS_nats": 0.6931471805599453,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            -0.08333333333333331,
+            -0.08333333333333331,
+            -0.08333333333333331,
+            0.125,
+            0.125,
+            0.125,
+            0.02083333333333337,
+            0.02083333333333337,
+            -0.5
+          ],
+          "relative_Q_change_Linf": 0.5,
+          "common_own_optimal": [],
+          "common_protocol_optimal": []
+        }
+      ],
+      "unavailable_S_items": 0,
+      "offers": [
+        {
+          "action": 1,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 2,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 3,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": -0.5,
+          "Q_accept": -0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": -0.5
+        },
+        {
+          "action": 4,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": -0.5,
+          "Q_accept": -0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": -0.5
+        },
+        {
+          "action": 5,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": -0.5,
+          "Q_accept": -0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": -0.5
+        },
+        {
+          "action": 6,
+          "acceptance": 1.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.5,
+          "Q_accept": 0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.5
+        },
+        {
+          "action": 7,
+          "acceptance": 1.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.5,
+          "Q_accept": 0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.5
+        },
+        {
+          "action": 8,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.5,
+          "Q_accept": 0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.5
+        }
+      ],
+      "offer_static_dynamic_disjoint": false,
+      "cell": 8,
+      "canonical_full_action_probabilities": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.5,
+        0.5,
+        0.0
+      ]
+    },
+    "source": {
+      "parent_pool": "new/qualified_parent_pool_65_35_20261104/v1",
+      "parent_raw_sha256": "987bb8eed4a70194d7ebb9053dd46a49c73fc20ddc38553ff086e23109cde5a5",
+      "reference": {
+        "bytes": 22056,
+        "path": "assets/30/reference.npz",
+        "sha256": "9f07dd0424e4992c4280e37683d58581a492058a9b204f2d58119cd9674ec098"
+      },
+      "profile": {
+        "bytes": 1020150,
+        "path": "assets/30/labels.jsonl.gz",
+        "sha256": "8175ac0c5032d53958a0c46381768cc0a97b2b494036e4d3affc2773460dfc02"
+      }
+    },
+    "control": {
+      "player": 0,
+      "start": "CURRENT_ENTRY",
+      "end": "NATIVE_TERMINAL",
+      "opponents": "SAME_FROZEN_CERTIFIED_REFERENCE",
+      "world_sampling": "Conditional posterior in oracle_annotation; not independently reset to parent prior"
+    },
+    "D": "NOT_MEASURED",
+    "prompt": "NOT_FINALIZED",
+    "response_scoring": "NOT_CHANGED_BY_EXPORT"
+  },
+  {
+    "id": "308502afc50344507020bd88",
+    "entry_id": "4c30190d6c28c412524317fca86d46b29ee1930dc98f27332518a0639c24711e",
+    "parent_id": "c3b2ff228c1bc59c57173780",
+    "parent_index": 30,
+    "source_key": "original2P-75",
+    "split": "train",
+    "primary_role": "information_use",
+    "all_coverage_tags": [
+      "information_use",
+      "information_current",
+      "information_private"
+    ],
+    "features": {
+      "multi": false,
+      "single": true,
+      "private": true,
+      "history": false,
+      "future_only": false
+    },
+    "focal_decisions_to_native_terminal": {
+      "min": 1,
+      "max": 1,
+      "scheduled_focal_proposals": 1,
+      "current_response": 0,
+      "optional_future_responses": 0
+    },
+    "physical_skeleton": "489620949500bdd724374031c41a04c4b02283705a58259036b8515249c2af30",
+    "model_facts": {
+      "actor": 0,
+      "turn": 2,
+      "commitments": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "query_used": [
+        1,
+        0
+      ],
+      "offer_used": [
+        0,
+        1
+      ],
+      "pending": null,
+      "history": [
+        {
+          "turn_index": 0,
+          "proposer_id": 0,
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "turn_index": 1,
+          "proposer_id": 1,
+          "action": "OFFER",
+          "partner_id": 0,
+          "offer": {
+            "partner_id": 0,
+            "proposer_action": [
+              0,
+              1
+            ],
+            "partner_action": [
+              0,
+              1
+            ]
+          },
+          "response": "REJECT",
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "invalid_action": false
+        }
+      ],
+      "legal": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        }
+      ],
+      "phase": "proposal",
+      "own_preferences": [
+        -1,
+        1,
+        1
+      ],
+      "own_direct_answers": [
+        [
+          1,
+          0,
+          1
+        ]
+      ],
+      "public_preferences": [
+        [
+          -1,
+          null,
+          null
+        ],
+        [
+          null,
+          0,
+          1
+        ]
+      ],
+      "game_rules": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": true,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget": 1,
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "offer_budget": 1,
+        "round_robin": [
+          0,
+          1,
+          0,
+          1
+        ]
+      },
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "protocol": "Response own final utility first; only own ties maximize sum of others final utilities",
+      "scope": "Native visible facts, not a rendered system/user/tools request; Oracle fields must not enter model context"
+    },
+    "oracle_annotation": {
+      "node": 7310,
+      "actor": 0,
+      "phase": "proposal",
+      "turn": 2,
+      "own_type": [
+        -1,
+        1,
+        1
+      ],
+      "private_answers": [
+        [
+          1,
+          0,
+          1
+        ]
+      ],
+      "world_ids": [
+        0
+      ],
+      "posterior": [
+        1.0
+      ],
+      "counterfactual_mass": 0.009259259259259259,
+      "reference_mass": 0.0,
+      "belief": "reference_counterfactual",
+      "Q_scope": "contingent_BR",
+      "actions": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        }
+      ],
+      "Q": [
+        0.0,
+        0.0,
+        0.0,
+        -0.5,
+        -0.5,
+        -0.5,
+        0.25,
+        0.25,
+        0.5
+      ],
+      "Q_others": [
+        0.0,
+        0.0,
+        0.5,
+        0.5,
+        0.5,
+        1.0,
+        0.0,
+        0.0,
+        0.5
+      ],
+      "Q_reference": [
+        0.0,
+        0.0,
+        0.0,
+        -0.5,
+        -0.5,
+        -0.5,
+        0.25,
+        0.25,
+        0.5
+      ],
+      "optimal": [
+        8
+      ],
+      "own_optimal": [
+        8
+      ],
+      "span": 1.0,
+      "best_minus_next_distinct": 0.25,
+      "query_gap": null,
+      "immediate_child_utility": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "immediate_optimal_overlap": true,
+      "S_private": 0.16666666666666669,
+      "S_history": 0.0,
+      "S_items": [
+        {
+          "omitted": [
+            "history",
+            0
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            -0.5,
+            -0.5,
+            -0.5,
+            0.25,
+            0.25,
+            0.5
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            -0.5,
+            -0.5,
+            -0.5,
+            0.25,
+            0.25,
+            0.5
+          ],
+          "omitted_protocol_optimal": [
+            8
+          ],
+          "omitted_own_optimal": [
+            8
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.5,
+            0.5,
+            0.5,
+            1.0,
+            1.0,
+            1.0,
+            0.25,
+            0.25,
+            0.0
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            8
+          ],
+          "common_protocol_optimal": [
+            8
+          ]
+        },
+        {
+          "omitted": [
+            "history",
+            1
+          ],
+          "S": 0.0,
+          "V_full": 0.5,
+          "V_omitted": 0.5,
+          "full_contexts": 4,
+          "forest_public_roots": 4,
+          "replay_verified": true,
+          "response_secondary_loss": null,
+          "action_Q_method": "Captured omitted-optimal continuation child values; no extra equilibrium solve",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            -0.5,
+            -0.5,
+            -0.5,
+            0.25,
+            0.25,
+            0.5
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            -0.5,
+            -0.5,
+            -0.5,
+            0.25,
+            0.25,
+            0.5
+          ],
+          "omitted_protocol_optimal": [
+            8
+          ],
+          "omitted_own_optimal": [
+            8
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.5,
+            0.5,
+            0.5,
+            1.0,
+            1.0,
+            1.0,
+            0.25,
+            0.25,
+            0.0
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            8
+          ],
+          "common_protocol_optimal": [
+            8
+          ]
+        },
+        {
+          "omitted": [
+            "private",
+            1,
+            0
+          ],
+          "S": 0.16666666666666669,
+          "V_full": 0.5,
+          "V_omitted": 0.3333333333333333,
+          "full_contexts": 2,
+          "forest_public_roots": 1,
+          "replay_verified": true,
+          "response_secondary_loss": null,
+          "action_Q_method": "Captured omitted-optimal continuation child values; no extra equilibrium solve",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.3333333333333333,
+            0.3333333333333333,
+            0.3333333333333333
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            -0.25,
+            -0.25,
+            -0.25,
+            0.25,
+            0.25,
+            0.25
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            -0.5,
+            -0.5,
+            -0.5,
+            0.25,
+            0.25,
+            0.5
+          ],
+          "omitted_protocol_optimal": [
+            6,
+            7,
+            8
+          ],
+          "omitted_own_optimal": [
+            6,
+            7,
+            8
+          ],
+          "chosen_probability_outside_full_optimal": 0.6666666666666666,
+          "action_regret": [
+            0.5,
+            0.5,
+            0.5,
+            1.0,
+            1.0,
+            1.0,
+            0.25,
+            0.25,
+            0.0
+          ],
+          "own_current_loss": 0.16666666666666666,
+          "own_future_loss": 2.7755575615628914e-17,
+          "policy_total_variation": 0.6666666666666667,
+          "policy_JS_nats": 0.3182570841474064,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            -0.25,
+            -0.25,
+            -0.25,
+            -0.5,
+            -0.5,
+            -0.5,
+            -0.25,
+            -0.25,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.5,
+          "common_own_optimal": [
+            8
+          ],
+          "common_protocol_optimal": [
+            8
+          ]
+        }
+      ],
+      "unavailable_S_items": 0,
+      "offers": [
+        {
+          "action": 1,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 2,
+          "acceptance": 1.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.0,
+          "Q_accept": 0.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 3,
+          "acceptance": 1.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": -0.5,
+          "Q_accept": -0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": -0.5
+        },
+        {
+          "action": 4,
+          "acceptance": 1.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": -0.5,
+          "Q_accept": -0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": -0.5
+        },
+        {
+          "action": 5,
+          "acceptance": 1.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": -0.5,
+          "Q_accept": -0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": -0.5
+        },
+        {
+          "action": 6,
+          "acceptance": 0.5,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.5,
+          "Q_accept": 0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.5
+        },
+        {
+          "action": 7,
+          "acceptance": 0.5,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.5,
+          "Q_accept": 0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.5
+        },
+        {
+          "action": 8,
+          "acceptance": 1.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.5,
+          "Q_accept": 0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.5
+        }
+      ],
+      "offer_static_dynamic_disjoint": false,
+      "cell": 0,
+      "canonical_full_action_probabilities": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "source": {
+      "parent_pool": "new/qualified_parent_pool_65_35_20261104/v1",
+      "parent_raw_sha256": "987bb8eed4a70194d7ebb9053dd46a49c73fc20ddc38553ff086e23109cde5a5",
+      "reference": {
+        "bytes": 22056,
+        "path": "assets/30/reference.npz",
+        "sha256": "9f07dd0424e4992c4280e37683d58581a492058a9b204f2d58119cd9674ec098"
+      },
+      "profile": {
+        "bytes": 1020150,
+        "path": "assets/30/labels.jsonl.gz",
+        "sha256": "8175ac0c5032d53958a0c46381768cc0a97b2b494036e4d3affc2773460dfc02"
+      }
+    },
+    "control": {
+      "player": 0,
+      "start": "CURRENT_ENTRY",
+      "end": "NATIVE_TERMINAL",
+      "opponents": "SAME_FROZEN_CERTIFIED_REFERENCE",
+      "world_sampling": "Conditional posterior in oracle_annotation; not independently reset to parent prior"
+    },
+    "D": "NOT_MEASURED",
+    "prompt": "NOT_FINALIZED",
+    "response_scoring": "NOT_CHANGED_BY_EXPORT"
+  },
+  {
+    "id": "0cb92c3ec61f3d18543caf2c",
+    "entry_id": "ecb885cf03ac6f6559580fcf57013eaa02cd9e50848f06b43b948653485e856a",
+    "parent_id": "c3b2ff228c1bc59c57173780",
+    "parent_index": 30,
+    "source_key": "original2P-75",
+    "split": "train",
+    "primary_role": "information_use",
+    "all_coverage_tags": [
+      "information_use",
+      "information_current",
+      "information_history"
+    ],
+    "features": {
+      "multi": false,
+      "single": false,
+      "private": false,
+      "history": true,
+      "future_only": false
+    },
+    "focal_decisions_to_native_terminal": {
+      "min": 1,
+      "max": 2,
+      "scheduled_focal_proposals": 1,
+      "current_response": 0,
+      "optional_future_responses": 1
+    },
+    "physical_skeleton": "b8d95fcb8584ce789c35f82fb5c39a3556011c6f15ca2ee87d479079a2c61367",
+    "model_facts": {
+      "actor": 0,
+      "turn": 2,
+      "commitments": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "query_used": [
+        1,
+        1
+      ],
+      "offer_used": [
+        0,
+        0
+      ],
+      "pending": null,
+      "history": [
+        {
+          "turn_index": 0,
+          "proposer_id": 0,
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "turn_index": 1,
+          "proposer_id": 1,
+          "action": "INVESTIGATE",
+          "player": 0,
+          "goal": 1,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        }
+      ],
+      "legal": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        }
+      ],
+      "phase": "proposal",
+      "own_preferences": [
+        -1,
+        1,
+        1
+      ],
+      "own_direct_answers": [
+        [
+          1,
+          0,
+          -1
+        ]
+      ],
+      "public_preferences": [
+        [
+          -1,
+          null,
+          null
+        ],
+        [
+          null,
+          0,
+          1
+        ]
+      ],
+      "game_rules": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": true,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget": 1,
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "offer_budget": 1,
+        "round_robin": [
+          0,
+          1,
+          0,
+          1
+        ]
+      },
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "protocol": "Response own final utility first; only own ties maximize sum of others final utilities",
+      "scope": "Native visible facts, not a rendered system/user/tools request; Oracle fields must not enter model context"
+    },
+    "oracle_annotation": {
+      "node": 7419,
+      "actor": 0,
+      "phase": "proposal",
+      "turn": 2,
+      "own_type": [
+        -1,
+        1,
+        1
+      ],
+      "private_answers": [
+        [
+          1,
+          0,
+          -1
+        ]
+      ],
+      "world_ids": [
+        2
+      ],
+      "posterior": [
+        1.0
+      ],
+      "counterfactual_mass": 0.003703703703703704,
+      "reference_mass": 0.0,
+      "belief": "reference_counterfactual",
+      "Q_scope": "contingent_BR",
+      "actions": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            1,
+            0
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 1,
+          "proposer_action": [
+            0,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        }
+      ],
+      "Q": [
+        0.125,
+        0.2,
+        0.125,
+        0.125,
+        0.125,
+        0.125,
+        0.5,
+        0.625,
+        0.125
+      ],
+      "Q_others": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "Q_reference": [
+        0.125,
+        0.2,
+        0.125,
+        0.125,
+        0.125,
+        0.125,
+        0.5,
+        0.625,
+        0.125
+      ],
+      "optimal": [
+        7
+      ],
+      "own_optimal": [
+        7
+      ],
+      "span": 0.5,
+      "best_minus_next_distinct": 0.125,
+      "query_gap": null,
+      "immediate_child_utility": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "immediate_optimal_overlap": true,
+      "S_private": 0.0,
+      "S_history": 0.5,
+      "S_items": [
+        {
+          "omitted": [
+            "history",
+            0
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.125,
+            0.2,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.5,
+            0.625,
+            0.125
+          ],
+          "Q_omitted_evaluated_true": [
+            0.125,
+            0.2,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.5,
+            0.625,
+            0.125
+          ],
+          "omitted_protocol_optimal": [
+            7
+          ],
+          "omitted_own_optimal": [
+            7
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.5,
+            0.425,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.125,
+            0.0,
+            0.5
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            7
+          ],
+          "common_protocol_optimal": [
+            7
+          ]
+        },
+        {
+          "omitted": [
+            "history",
+            1
+          ],
+          "S": 0.5,
+          "V_full": 0.625,
+          "V_omitted": 0.125,
+          "full_contexts": 2,
+          "forest_public_roots": 2,
+          "replay_verified": true,
+          "response_secondary_loss": null,
+          "action_Q_method": "Captured omitted-optimal continuation child values; no extra equilibrium solve",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "Q_omitted_subjective": [
+            0.14583333333333334,
+            0.20416666666666666,
+            0.22916666666666666,
+            0.125,
+            0.125,
+            0.125,
+            0.41666666666666663,
+            0.5104166666666666,
+            0.5625
+          ],
+          "Q_omitted_evaluated_true": [
+            0.125,
+            0.2,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.5,
+            0.625,
+            0.125
+          ],
+          "omitted_protocol_optimal": [
+            8
+          ],
+          "omitted_own_optimal": [
+            8
+          ],
+          "chosen_probability_outside_full_optimal": 1.0,
+          "action_regret": [
+            0.5,
+            0.425,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.125,
+            0.0,
+            0.5
+          ],
+          "own_current_loss": 0.5,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 1.0,
+          "policy_JS_nats": 0.6931471805599453,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            -0.08333333333333337,
+            -0.06666666666666665,
+            -0.16666666666666663,
+            -0.0625,
+            -0.0625,
+            -0.0625,
+            0.02083333333333337,
+            0.05208333333333337,
+            -0.5
+          ],
+          "relative_Q_change_Linf": 0.5,
+          "common_own_optimal": [],
+          "common_protocol_optimal": []
+        },
+        {
+          "omitted": [
+            "private",
+            1,
+            0
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.125,
+            0.2,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.5,
+            0.625,
+            0.125
+          ],
+          "Q_omitted_evaluated_true": [
+            0.125,
+            0.2,
+            0.125,
+            0.125,
+            0.125,
+            0.125,
+            0.5,
+            0.625,
+            0.125
+          ],
+          "omitted_protocol_optimal": [
+            7
+          ],
+          "omitted_own_optimal": [
+            7
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            0.5,
+            0.425,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.125,
+            0.0,
+            0.5
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            7
+          ],
+          "common_protocol_optimal": [
+            7
+          ]
+        }
+      ],
+      "unavailable_S_items": 0,
+      "offers": [
+        {
+          "action": 1,
+          "acceptance": 1.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.07500000000000001,
+          "Q_accept": 0.2,
+          "Q_reject": 0.125,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 2,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.375,
+          "Q_accept": 0.5,
+          "Q_reject": 0.125,
+          "static_accepted_utility": 0.0
+        },
+        {
+          "action": 3,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": -0.42500000000000004,
+          "Q_accept": -0.30000000000000004,
+          "Q_reject": 0.125,
+          "static_accepted_utility": -0.5
+        },
+        {
+          "action": 4,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.625,
+          "Q_accept": 0.75,
+          "Q_reject": 0.125,
+          "static_accepted_utility": -0.5
+        },
+        {
+          "action": 5,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.625,
+          "Q_accept": 0.75,
+          "Q_reject": 0.125,
+          "static_accepted_utility": -0.5
+        },
+        {
+          "action": 6,
+          "acceptance": 1.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.375,
+          "Q_accept": 0.5,
+          "Q_reject": 0.125,
+          "static_accepted_utility": 0.5
+        },
+        {
+          "action": 7,
+          "acceptance": 1.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.5,
+          "Q_accept": 0.625,
+          "Q_reject": 0.125,
+          "static_accepted_utility": 0.5
+        },
+        {
+          "action": 8,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.875,
+          "Q_accept": 1.0,
+          "Q_reject": 0.125,
+          "static_accepted_utility": 0.5
+        }
+      ],
+      "offer_static_dynamic_disjoint": false,
+      "cell": 2,
+      "canonical_full_action_probabilities": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ]
+    },
+    "source": {
+      "parent_pool": "new/qualified_parent_pool_65_35_20261104/v1",
+      "parent_raw_sha256": "987bb8eed4a70194d7ebb9053dd46a49c73fc20ddc38553ff086e23109cde5a5",
+      "reference": {
+        "bytes": 22056,
+        "path": "assets/30/reference.npz",
+        "sha256": "9f07dd0424e4992c4280e37683d58581a492058a9b204f2d58119cd9674ec098"
+      },
+      "profile": {
+        "bytes": 1020150,
+        "path": "assets/30/labels.jsonl.gz",
+        "sha256": "8175ac0c5032d53958a0c46381768cc0a97b2b494036e4d3affc2773460dfc02"
+      }
+    },
+    "control": {
+      "player": 0,
+      "start": "CURRENT_ENTRY",
+      "end": "NATIVE_TERMINAL",
+      "opponents": "SAME_FROZEN_CERTIFIED_REFERENCE",
+      "world_sampling": "Conditional posterior in oracle_annotation; not independently reset to parent prior"
+    },
+    "D": "NOT_MEASURED",
+    "prompt": "NOT_FINALIZED",
+    "response_scoring": "NOT_CHANGED_BY_EXPORT"
+  },
+  {
+    "id": "07658ab181f58e76626f94e5",
+    "entry_id": "e85f6b0813a6d29f7712adbdb919710a15de7596c86bbefbdd4c78c6d119d5c2",
+    "parent_id": "c3b2ff228c1bc59c57173780",
+    "parent_index": 30,
+    "source_key": "original2P-75",
+    "split": "train",
+    "primary_role": "information_use",
+    "all_coverage_tags": [
+      "information_use",
+      "information_future",
+      "information_private",
+      "response_own_choice"
+    ],
+    "features": {
+      "multi": true,
+      "single": false,
+      "private": true,
+      "history": false,
+      "future_only": true
+    },
+    "focal_decisions_to_native_terminal": {
+      "min": 2,
+      "max": 2,
+      "scheduled_focal_proposals": 1,
+      "current_response": 1,
+      "optional_future_responses": 0
+    },
+    "physical_skeleton": "9cc8ac1cabf6c6ae8f6da87ed06a0ff553a8fa292d8b99072889192cf1f0cbbe",
+    "model_facts": {
+      "actor": 1,
+      "turn": 2,
+      "commitments": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "query_used": [
+        1,
+        1
+      ],
+      "offer_used": [
+        1,
+        0
+      ],
+      "pending": {
+        "partner_id": 1,
+        "proposer_action": [
+          0,
+          1
+        ],
+        "partner_action": [
+          1,
+          0
+        ]
+      },
+      "history": [
+        {
+          "turn_index": 0,
+          "proposer_id": 0,
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "turn_index": 1,
+          "proposer_id": 1,
+          "action": "INVESTIGATE",
+          "player": 0,
+          "goal": 1,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        }
+      ],
+      "legal": [
+        {
+          "response": "REJECT"
+        },
+        {
+          "response": "ACCEPT"
+        }
+      ],
+      "phase": "response",
+      "own_preferences": [
+        1,
+        0,
+        1
+      ],
+      "own_direct_answers": [
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "public_preferences": [
+        [
+          -1,
+          null,
+          null
+        ],
+        [
+          null,
+          0,
+          1
+        ]
+      ],
+      "game_rules": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": true,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget": 1,
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "offer_budget": 1,
+        "round_robin": [
+          0,
+          1,
+          0,
+          1
+        ]
+      },
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "protocol": "Response own final utility first; only own ties maximize sum of others final utilities",
+      "scope": "Native visible facts, not a rendered system/user/tools request; Oracle fields must not enter model context"
+    },
+    "oracle_annotation": {
+      "node": 7698,
+      "actor": 1,
+      "phase": "response",
+      "turn": 2,
+      "own_type": [
+        1,
+        0,
+        1
+      ],
+      "private_answers": [
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "world_ids": [
+        9,
+        12,
+        15
+      ],
+      "posterior": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "counterfactual_mass": 0.000771604938271605,
+      "reference_mass": 0.0,
+      "belief": "reference_counterfactual",
+      "Q_scope": "contingent_BR",
+      "actions": [
+        {
+          "response": "REJECT"
+        },
+        {
+          "response": "ACCEPT"
+        }
+      ],
+      "Q": [
+        0.0,
+        2.0
+      ],
+      "Q_others": [
+        0.0,
+        0.0
+      ],
+      "Q_reference": [
+        0.0,
+        2.0
+      ],
+      "optimal": [
+        1
+      ],
+      "own_optimal": [
+        1
+      ],
+      "span": 2.0,
+      "best_minus_next_distinct": 2.0,
+      "query_gap": null,
+      "immediate_child_utility": [
+        0.0,
+        0.0
+      ],
+      "immediate_optimal_overlap": true,
+      "S_private": 2.0,
+      "S_history": 0.0,
+      "S_items": [
+        {
+          "omitted": [
+            "history",
+            0
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            1.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            2.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            2.0
+          ],
+          "omitted_protocol_optimal": [
+            1
+          ],
+          "omitted_own_optimal": [
+            1
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            2.0,
+            0.0
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            1
+          ],
+          "common_protocol_optimal": [
+            1
+          ]
+        },
+        {
+          "omitted": [
+            "history",
+            1
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            1.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            2.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            2.0
+          ],
+          "omitted_protocol_optimal": [
+            1
+          ],
+          "omitted_own_optimal": [
+            1
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            2.0,
+            0.0
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            1
+          ],
+          "common_protocol_optimal": [
+            1
+          ]
+        },
+        {
+          "omitted": [
+            "private",
+            0,
+            1
+          ],
+          "S": 2.0,
+          "V_full": 2.0,
+          "V_omitted": 0.0,
+          "full_contexts": 3,
+          "forest_public_roots": 1,
+          "replay_verified": true,
+          "response_secondary_loss": null,
+          "action_Q_method": "Captured omitted-optimal continuation child values; no extra equilibrium solve",
+          "omitted_action_probabilities": [
+            0.0,
+            1.0
+          ],
+          "Q_omitted_subjective": [
+            0.3555555555555555,
+            0.3555555555555555
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0
+          ],
+          "omitted_protocol_optimal": [
+            1
+          ],
+          "omitted_own_optimal": [
+            0,
+            1
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            2.0,
+            0.0
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 2.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            -2.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 2.0,
+          "common_own_optimal": [
+            1
+          ],
+          "common_protocol_optimal": [
+            1
+          ]
+        }
+      ],
+      "unavailable_S_items": 0,
+      "cell": 3,
+      "canonical_full_action_probabilities": [
+        0.0,
+        1.0
+      ]
+    },
+    "source": {
+      "parent_pool": "new/qualified_parent_pool_65_35_20261104/v1",
+      "parent_raw_sha256": "987bb8eed4a70194d7ebb9053dd46a49c73fc20ddc38553ff086e23109cde5a5",
+      "reference": {
+        "bytes": 22056,
+        "path": "assets/30/reference.npz",
+        "sha256": "9f07dd0424e4992c4280e37683d58581a492058a9b204f2d58119cd9674ec098"
+      },
+      "profile": {
+        "bytes": 1020150,
+        "path": "assets/30/labels.jsonl.gz",
+        "sha256": "8175ac0c5032d53958a0c46381768cc0a97b2b494036e4d3affc2773460dfc02"
+      }
+    },
+    "control": {
+      "player": 1,
+      "start": "CURRENT_ENTRY",
+      "end": "NATIVE_TERMINAL",
+      "opponents": "SAME_FROZEN_CERTIFIED_REFERENCE",
+      "world_sampling": "Conditional posterior in oracle_annotation; not independently reset to parent prior"
+    },
+    "D": "NOT_MEASURED",
+    "prompt": "NOT_FINALIZED",
+    "response_scoring": "NOT_CHANGED_BY_EXPORT"
+  },
+  {
+    "id": "06a930556d7898175c73eb6c",
+    "entry_id": "ecb0562dc7471e3c10290a3cf86761dc65932a3ed8ed037245f2707433b37eb5",
+    "parent_id": "c3b2ff228c1bc59c57173780",
+    "parent_index": 30,
+    "source_key": "original2P-75",
+    "split": "train",
+    "primary_role": "information_use",
+    "all_coverage_tags": [
+      "information_use",
+      "information_current",
+      "information_private",
+      "information_LP_witness"
+    ],
+    "features": {
+      "multi": false,
+      "single": true,
+      "private": true,
+      "history": false,
+      "future_only": false
+    },
+    "focal_decisions_to_native_terminal": {
+      "min": 1,
+      "max": 1,
+      "scheduled_focal_proposals": 1,
+      "current_response": 0,
+      "optional_future_responses": 0
+    },
+    "physical_skeleton": "8526b9f4519da1a2038905ebd9634a6a114ee261906385f56dc39268af75eeae",
+    "model_facts": {
+      "actor": 1,
+      "turn": 3,
+      "commitments": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "query_used": [
+        1,
+        1
+      ],
+      "offer_used": [
+        1,
+        0
+      ],
+      "pending": null,
+      "history": [
+        {
+          "turn_index": 0,
+          "proposer_id": 0,
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "turn_index": 1,
+          "proposer_id": 1,
+          "action": "INVESTIGATE",
+          "player": 0,
+          "goal": 1,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "turn_index": 2,
+          "proposer_id": 0,
+          "action": "OFFER",
+          "partner_id": 1,
+          "offer": {
+            "partner_id": 1,
+            "proposer_action": [
+              0,
+              1
+            ],
+            "partner_action": [
+              1,
+              0
+            ]
+          },
+          "response": "ACCEPT",
+          "commitments_after": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "invalid_action": false
+        }
+      ],
+      "legal": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            1
+          ],
+          "partner_action": [
+            1,
+            1
+          ]
+        }
+      ],
+      "phase": "proposal",
+      "own_preferences": [
+        1,
+        0,
+        1
+      ],
+      "own_direct_answers": [
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "public_preferences": [
+        [
+          -1,
+          null,
+          null
+        ],
+        [
+          null,
+          0,
+          1
+        ]
+      ],
+      "game_rules": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": true,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget": 1,
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "offer_budget": 1,
+        "round_robin": [
+          0,
+          1,
+          0,
+          1
+        ]
+      },
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "protocol": "Response own final utility first; only own ties maximize sum of others final utilities",
+      "scope": "Native visible facts, not a rendered system/user/tools request; Oracle fields must not enter model context"
+    },
+    "oracle_annotation": {
+      "node": 7725,
+      "actor": 1,
+      "phase": "proposal",
+      "turn": 3,
+      "own_type": [
+        1,
+        0,
+        1
+      ],
+      "private_answers": [
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "world_ids": [
+        9,
+        12,
+        15
+      ],
+      "posterior": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "counterfactual_mass": 0.000771604938271605,
+      "reference_mass": 0.0,
+      "belief": "reference_counterfactual",
+      "Q_scope": "contingent_BR",
+      "actions": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            1
+          ],
+          "partner_action": [
+            1,
+            1
+          ]
+        }
+      ],
+      "Q": [
+        0.0,
+        0.0,
+        0.0,
+        2.0
+      ],
+      "Q_others": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "Q_reference": [
+        0.0,
+        0.0,
+        0.0,
+        2.0
+      ],
+      "optimal": [
+        3
+      ],
+      "own_optimal": [
+        3
+      ],
+      "span": 2.0,
+      "best_minus_next_distinct": 2.0,
+      "query_gap": null,
+      "immediate_child_utility": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "immediate_optimal_overlap": true,
+      "S_private": 2.0,
+      "S_history": 0.0,
+      "S_items": [
+        {
+          "omitted": [
+            "history",
+            0
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            2.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            2.0
+          ],
+          "omitted_protocol_optimal": [
+            3
+          ],
+          "omitted_own_optimal": [
+            3
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            2.0,
+            2.0,
+            2.0,
+            0.0
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            3
+          ],
+          "common_protocol_optimal": [
+            3
+          ]
+        },
+        {
+          "omitted": [
+            "history",
+            1
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            2.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            2.0
+          ],
+          "omitted_protocol_optimal": [
+            3
+          ],
+          "omitted_own_optimal": [
+            3
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            2.0,
+            2.0,
+            2.0,
+            0.0
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            3
+          ],
+          "common_protocol_optimal": [
+            3
+          ]
+        },
+        {
+          "omitted": [
+            "history",
+            2
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            2.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            2.0
+          ],
+          "omitted_protocol_optimal": [
+            3
+          ],
+          "omitted_own_optimal": [
+            3
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            2.0,
+            2.0,
+            2.0,
+            0.0
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            3
+          ],
+          "common_protocol_optimal": [
+            3
+          ]
+        },
+        {
+          "omitted": [
+            "private",
+            0,
+            1
+          ],
+          "S": 2.0,
+          "V_full": 2.0,
+          "V_omitted": 0.0,
+          "full_contexts": 3,
+          "forest_public_roots": 1,
+          "replay_verified": true,
+          "response_secondary_loss": null,
+          "action_Q_method": "Captured omitted-optimal continuation child values; no extra equilibrium solve",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.3555555555555555,
+            0.044444444444444446
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            2.0
+          ],
+          "omitted_protocol_optimal": [
+            2
+          ],
+          "omitted_own_optimal": [
+            2
+          ],
+          "chosen_probability_outside_full_optimal": 1.0,
+          "action_regret": [
+            2.0,
+            2.0,
+            2.0,
+            0.0
+          ],
+          "own_current_loss": 2.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 1.0,
+          "policy_JS_nats": 0.6931471805599453,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            -1.6444444444444444,
+            -1.6444444444444444,
+            -2.0,
+            0.31111111111111106
+          ],
+          "relative_Q_change_Linf": 2.0,
+          "common_own_optimal": [],
+          "common_protocol_optimal": []
+        }
+      ],
+      "unavailable_S_items": 0,
+      "offers": [
+        {
+          "action": 1,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.5,
+          "Q_accept": 0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.5
+        },
+        {
+          "action": 2,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.5,
+          "Q_accept": 0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.5
+        },
+        {
+          "action": 3,
+          "acceptance": 1.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 2.0,
+          "Q_accept": 2.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 2.0
+        }
+      ],
+      "offer_static_dynamic_disjoint": false,
+      "cell": 3,
+      "canonical_full_action_probabilities": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "source": {
+      "parent_pool": "new/qualified_parent_pool_65_35_20261104/v1",
+      "parent_raw_sha256": "987bb8eed4a70194d7ebb9053dd46a49c73fc20ddc38553ff086e23109cde5a5",
+      "reference": {
+        "bytes": 22056,
+        "path": "assets/30/reference.npz",
+        "sha256": "9f07dd0424e4992c4280e37683d58581a492058a9b204f2d58119cd9674ec098"
+      },
+      "profile": {
+        "bytes": 1020150,
+        "path": "assets/30/labels.jsonl.gz",
+        "sha256": "8175ac0c5032d53958a0c46381768cc0a97b2b494036e4d3affc2773460dfc02"
+      }
+    },
+    "control": {
+      "player": 1,
+      "start": "CURRENT_ENTRY",
+      "end": "NATIVE_TERMINAL",
+      "opponents": "SAME_FROZEN_CERTIFIED_REFERENCE",
+      "world_sampling": "Conditional posterior in oracle_annotation; not independently reset to parent prior"
+    },
+    "D": "NOT_MEASURED",
+    "prompt": "NOT_FINALIZED",
+    "response_scoring": "NOT_CHANGED_BY_EXPORT"
+  },
+  {
+    "id": "7f44273c91f7990ec53207ed",
+    "entry_id": "5be39f79ca9dd0a7869fd296cf1709948e6b72671db49d8c4f506889c46fac9b",
+    "parent_id": "c3b2ff228c1bc59c57173780",
+    "parent_index": 30,
+    "source_key": "original2P-75",
+    "split": "train",
+    "primary_role": "information_use",
+    "all_coverage_tags": [
+      "information_use",
+      "information_current",
+      "information_private"
+    ],
+    "features": {
+      "multi": false,
+      "single": true,
+      "private": true,
+      "history": false,
+      "future_only": false
+    },
+    "focal_decisions_to_native_terminal": {
+      "min": 1,
+      "max": 1,
+      "scheduled_focal_proposals": 1,
+      "current_response": 0,
+      "optional_future_responses": 0
+    },
+    "physical_skeleton": "8526b9f4519da1a2038905ebd9634a6a114ee261906385f56dc39268af75eeae",
+    "model_facts": {
+      "actor": 1,
+      "turn": 3,
+      "commitments": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "query_used": [
+        1,
+        1
+      ],
+      "offer_used": [
+        1,
+        0
+      ],
+      "pending": null,
+      "history": [
+        {
+          "turn_index": 0,
+          "proposer_id": 0,
+          "action": "INVESTIGATE",
+          "player": 1,
+          "goal": 0,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "turn_index": 1,
+          "proposer_id": 1,
+          "action": "INVESTIGATE",
+          "player": 0,
+          "goal": 2,
+          "commitments_after": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        {
+          "turn_index": 2,
+          "proposer_id": 0,
+          "action": "OFFER",
+          "partner_id": 1,
+          "offer": {
+            "partner_id": 1,
+            "proposer_action": [
+              0,
+              1
+            ],
+            "partner_action": [
+              1,
+              0
+            ]
+          },
+          "response": "ACCEPT",
+          "commitments_after": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "invalid_action": false
+        }
+      ],
+      "legal": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            1
+          ],
+          "partner_action": [
+            1,
+            1
+          ]
+        }
+      ],
+      "phase": "proposal",
+      "own_preferences": [
+        1,
+        0,
+        1
+      ],
+      "own_direct_answers": [
+        [
+          0,
+          2,
+          1
+        ]
+      ],
+      "public_preferences": [
+        [
+          -1,
+          null,
+          null
+        ],
+        [
+          null,
+          0,
+          1
+        ]
+      ],
+      "game_rules": {
+        "goals": [
+          {
+            "binary": false,
+            "goal_id": 0,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": false,
+            "goal_id": 1,
+            "required_actions": [
+              {
+                "action_id": 1,
+                "player_id": 0
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          },
+          {
+            "binary": true,
+            "goal_id": 2,
+            "required_actions": [
+              {
+                "action_id": 0,
+                "player_id": 0
+              },
+              {
+                "action_id": 0,
+                "player_id": 1
+              },
+              {
+                "action_id": 1,
+                "player_id": 1
+              }
+            ]
+          }
+        ],
+        "investigation_budget": 1,
+        "max_changes": 1,
+        "menu_enabled": false,
+        "n_actions_per_player": [
+          2,
+          2
+        ],
+        "n_players": 2,
+        "offer_budget": 1,
+        "round_robin": [
+          0,
+          1,
+          0,
+          1
+        ]
+      },
+      "background_prior": {
+        "name": "balanced",
+        "version": "public-prior-margin-v1",
+        "weights": {
+          "avoid": 1,
+          "neutral": 1,
+          "want": 1
+        }
+      },
+      "protocol": "Response own final utility first; only own ties maximize sum of others final utilities",
+      "scope": "Native visible facts, not a rendered system/user/tools request; Oracle fields must not enter model context"
+    },
+    "oracle_annotation": {
+      "node": 8080,
+      "actor": 1,
+      "phase": "proposal",
+      "turn": 3,
+      "own_type": [
+        1,
+        0,
+        1
+      ],
+      "private_answers": [
+        [
+          0,
+          2,
+          1
+        ]
+      ],
+      "world_ids": [
+        0,
+        9,
+        18
+      ],
+      "posterior": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "counterfactual_mass": 0.0010288065843621402,
+      "reference_mass": 0.0,
+      "belief": "reference_counterfactual",
+      "Q_scope": "contingent_BR",
+      "actions": [
+        {
+          "action": "PASS"
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            0
+          ],
+          "partner_action": [
+            1,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            1
+          ],
+          "partner_action": [
+            0,
+            1
+          ]
+        },
+        {
+          "action": "OFFER",
+          "partner_id": 0,
+          "proposer_action": [
+            1,
+            1
+          ],
+          "partner_action": [
+            1,
+            1
+          ]
+        }
+      ],
+      "Q": [
+        0.0,
+        0.0,
+        0.0,
+        2.0
+      ],
+      "Q_others": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "Q_reference": [
+        0.0,
+        0.0,
+        0.0,
+        2.0
+      ],
+      "optimal": [
+        3
+      ],
+      "own_optimal": [
+        3
+      ],
+      "span": 2.0,
+      "best_minus_next_distinct": 2.0,
+      "query_gap": null,
+      "immediate_child_utility": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "immediate_optimal_overlap": true,
+      "S_private": 2.0,
+      "S_history": 0.0,
+      "S_items": [
+        {
+          "omitted": [
+            "history",
+            0
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            2.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            2.0
+          ],
+          "omitted_protocol_optimal": [
+            3
+          ],
+          "omitted_own_optimal": [
+            3
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            2.0,
+            2.0,
+            2.0,
+            0.0
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            3
+          ],
+          "common_protocol_optimal": [
+            3
+          ]
+        },
+        {
+          "omitted": [
+            "history",
+            1
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            2.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            2.0
+          ],
+          "omitted_protocol_optimal": [
+            3
+          ],
+          "omitted_own_optimal": [
+            3
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            2.0,
+            2.0,
+            2.0,
+            0.0
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            3
+          ],
+          "common_protocol_optimal": [
+            3
+          ]
+        },
+        {
+          "omitted": [
+            "history",
+            2
+          ],
+          "S": 0.0,
+          "full_contexts": 1,
+          "note": "Retained evidence/support identifies the full entry context",
+          "action_Q_method": "Information-redundant singleton: own-Q equals full-Q",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.0,
+            2.0
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            2.0
+          ],
+          "omitted_protocol_optimal": [
+            3
+          ],
+          "omitted_own_optimal": [
+            3
+          ],
+          "chosen_probability_outside_full_optimal": 0.0,
+          "action_regret": [
+            2.0,
+            2.0,
+            2.0,
+            0.0
+          ],
+          "own_current_loss": 0.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 0.0,
+          "policy_JS_nats": 0.0,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_Q_change_Linf": 0.0,
+          "common_own_optimal": [
+            3
+          ],
+          "common_protocol_optimal": [
+            3
+          ]
+        },
+        {
+          "omitted": [
+            "private",
+            0,
+            2
+          ],
+          "S": 2.0,
+          "V_full": 2.0,
+          "V_omitted": 0.0,
+          "full_contexts": 3,
+          "forest_public_roots": 1,
+          "replay_verified": true,
+          "response_secondary_loss": null,
+          "action_Q_method": "Captured omitted-optimal continuation child values; no extra equilibrium solve",
+          "omitted_action_probabilities": [
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          "Q_omitted_subjective": [
+            0.0,
+            0.0,
+            0.4195804195804196,
+            0.06993006993006995
+          ],
+          "Q_omitted_evaluated_true": [
+            0.0,
+            0.0,
+            0.0,
+            2.0
+          ],
+          "omitted_protocol_optimal": [
+            2
+          ],
+          "omitted_own_optimal": [
+            2
+          ],
+          "chosen_probability_outside_full_optimal": 1.0,
+          "action_regret": [
+            2.0,
+            2.0,
+            2.0,
+            0.0
+          ],
+          "own_current_loss": 2.0,
+          "own_future_loss": 0.0,
+          "policy_total_variation": 1.0,
+          "policy_JS_nats": 0.6931471805599453,
+          "distribution_identity": "Canonical Oracle ties, NOT target-model distribution",
+          "relative_Q_change": [
+            -1.5804195804195804,
+            -1.5804195804195804,
+            -2.0,
+            0.34965034965034963
+          ],
+          "relative_Q_change_Linf": 2.0,
+          "common_own_optimal": [],
+          "common_protocol_optimal": []
+        }
+      ],
+      "unavailable_S_items": 0,
+      "offers": [
+        {
+          "action": 1,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.5,
+          "Q_accept": 0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.5
+        },
+        {
+          "action": 2,
+          "acceptance": 0.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 0.5,
+          "Q_accept": 0.5,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 0.5
+        },
+        {
+          "action": 3,
+          "acceptance": 1.0,
+          "acceptance_type_range": 0.0,
+          "own_accept_minus_reject": 2.0,
+          "Q_accept": 2.0,
+          "Q_reject": 0.0,
+          "static_accepted_utility": 2.0
+        }
+      ],
+      "offer_static_dynamic_disjoint": false,
+      "cell": 0,
+      "canonical_full_action_probabilities": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "source": {
+      "parent_pool": "new/qualified_parent_pool_65_35_20261104/v1",
+      "parent_raw_sha256": "987bb8eed4a70194d7ebb9053dd46a49c73fc20ddc38553ff086e23109cde5a5",
+      "reference": {
+        "bytes": 22056,
+        "path": "assets/30/reference.npz",
+        "sha256": "9f07dd0424e4992c4280e37683d58581a492058a9b204f2d58119cd9674ec098"
+      },
+      "profile": {
+        "bytes": 1020150,
+        "path": "assets/30/labels.jsonl.gz",
+        "sha256": "8175ac0c5032d53958a0c46381768cc0a97b2b494036e4d3affc2773460dfc02"
+      }
+    },
+    "control": {
+      "player": 1,
+      "start": "CURRENT_ENTRY",
+      "end": "NATIVE_TERMINAL",
+      "opponents": "SAME_FROZEN_CERTIFIED_REFERENCE",
+      "world_sampling": "Conditional posterior in oracle_annotation; not independently reset to parent prior"
+    },
+    "D": "NOT_MEASURED",
+    "prompt": "NOT_FINALIZED",
+    "response_scoring": "NOT_CHANGED_BY_EXPORT"
+  }
+]

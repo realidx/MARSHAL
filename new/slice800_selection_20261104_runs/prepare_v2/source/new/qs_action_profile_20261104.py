@@ -1,0 +1,354 @@
+"""Versioned action-value/distribution descriptors; frozen opponents, native terminal.
+
+This supplements (never replaces) the 2026-10-23 omission-loss contract.
+No Boltzmann policy, temperature, model call, or training/selection change.
+"""
+import os
+THREAD_KEYS = ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS',
+               'VECLIB_MAXIMUM_THREADS', 'NUMEXPR_NUM_THREADS')
+for _key in THREAD_KEYS:
+    os.environ[_key] = '1'
+
+import argparse
+from collections import Counter, defaultdict
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import gzip
+import hashlib
+import json
+from pathlib import Path
+import platform
+import shutil
+import sys
+import time
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path[:0] = [str(ROOT), str(ROOT/'third_party/negotiation_benchmark/src')]
+import numpy as np
+import scipy
+from new.node_qs_audit_v1_20261023 import metrics as old
+from new.node_qs_audit_v1_20261023 import run as legacy
+from new.sparse_solver_v1_20261023.common import POOL, parents, sha, write
+from new.sparse_solver_v1_20261023.probe import build
+from training.b_sft.decision_policy import optimal_indices
+from training.b_sft.social_private_teacher import observed_slots
+from training.strategic_slices.equilibrium import _reach, certify_policy
+
+VERSION = 'qs-action-profile-audit-v1'
+REG = ROOT/'examples/strategic_slices/versions/qs_action_profile_v1_20261104/SNAPSHOT.json'
+OLD = ROOT/'new/node_qs_audit_v1_20261023/terminal99_v1'
+EPS, TOL = old.EPS, old.TOL
+
+
+def distribution_stats(q, p_full, p_omit, total_loss=None):
+    q, pf, pm = map(lambda x: np.asarray(x, dtype=float), (q, p_full, p_omit))
+    assert q.shape == pf.shape == pm.shape
+    assert np.all(pf >= 0) and np.all(pm >= 0)
+    np.testing.assert_allclose([pf.sum(), pm.sum()], [1., 1.], atol=1e-9)
+    regret = q.max()-q
+    now = float(pm@regret)
+    mid = (pf+pm)/2
+    def kl_mid(p):
+        ids = p > 0
+        return float(np.sum(p[ids]*np.log(p[ids]/mid[ids])))
+    return dict(action_regret=regret.tolist(),
+        own_current_loss=now,
+        own_future_loss=None if total_loss is None else float(total_loss-now),
+        policy_total_variation=float(np.abs(pf-pm).sum()/2),
+        policy_JS_nats=(kl_mid(pf)+kl_mid(pm))/2,
+        distribution_identity='Canonical Oracle ties, NOT target-model distribution')
+
+
+def forest_with_actions(tree, focal, roots, *, omitted, observations):
+    """Same DP as legacy forest_response, additionally expose root action values.
+
+    Legacy roots/policies/observations/ties are preserved. Capturing child
+    values avoids re-solving once per forced current action.
+    """
+    total = sum(float(m.sum()) for m in roots.values())
+    assert total > 0
+    reach = {i: m.copy()/total for i, m in roots.items()}
+    last = {i: np.zeros(tree.w, dtype=int) for i in roots}
+    nodes, seen, stack = [], set(), list(roots)
+    while stack:
+        i = stack.pop()
+        assert i not in seen, 'Forest roots must have disjoint subtrees'
+        seen.add(i); nodes.append(i); stack.extend(tree.entries[i].children)
+    order = sorted(nodes, key=lambda i: old.stage(tree.entries[i]))
+    cells, by_stage, nseq = {}, defaultdict(list), 1
+    for i in order:
+        entry = tree.entries[i]
+        by_stage[old.stage(entry)].append(i)
+        if entry.actor is None:
+            continue
+        for child in entry.children:
+            last[child] = last[i].copy()
+        if entry.actor == focal:
+            for wi in np.flatnonzero(reach[i] > 0):
+                key = (int(last[i][wi]), observations.key(i, int(wi), omitted))
+                if key not in cells:
+                    seqs = tuple(range(nseq, nseq+len(entry.actions)))
+                    nseq += len(entry.actions)
+                    cells[key] = dict(seqs=seqs, members=[], actions=entry.actions,
+                                      stage=old.stage(entry))
+                cell = cells[key]
+                assert cell['stage'] == old.stage(entry) and cell['actions'] == entry.actions
+                cell['members'].append((i, int(wi)))
+                for ai, child in enumerate(entry.children):
+                    last[child][wi] = cell['seqs'][ai]
+        for ai, child in enumerate(entry.children):
+            reach[child] = reach[i].copy() if entry.actor == focal else reach[i]*tree.policy[i][ai]
+    cells_by_stage = defaultdict(list)
+    for cell in cells.values():
+        cells_by_stage[cell['stage']].append(cell)
+    values, policies = {}, {}
+    for level in sorted(by_stage, reverse=True):
+        for i in by_stage[level]:
+            entry = tree.entries[i]
+            if entry.actor is None:
+                values[i] = entry.payoff
+            elif entry.actor != focal:
+                values[i] = np.einsum('aw,awp->wp', tree.policy[i],
+                    np.stack([values[ch] for ch in entry.children]))
+            else:
+                policies[i] = np.zeros_like(tree.policy[i])
+        for cell in cells_by_stage[level]:
+            mean = np.zeros((len(cell['actions']), tree.n)); mass = 0.
+            for i, wi in cell['members']:
+                weight = reach[i][wi]; mass += weight
+                mean += weight*np.stack([values[ch][wi] for ch in tree.entries[i].children])
+            mean /= mass
+            best = optimal_indices(mean, focal, cell['actions'], TOL)
+            p = np.zeros(len(cell['actions'])); p[best] = 1./len(best)
+            for i, wi in cell['members']:
+                policies[i][:, wi] = p
+        for i in by_stage[level]:
+            if tree.entries[i].actor == focal:
+                values[i] = np.einsum('aw,awp->wp', policies[i],
+                    np.stack([values[ch] for ch in tree.entries[i].children]))
+    replay = {}
+    for i in sorted(nodes, reverse=True):
+        entry = tree.entries[i]
+        replay[i] = entry.payoff if entry.actor is None else np.einsum('aw,awp->wp',
+            policies.get(i, tree.policy[i]), np.stack([replay[ch] for ch in entry.children]))
+    for i in roots:
+        np.testing.assert_allclose(values[i], replay[i], atol=1e-10, rtol=0)
+    return dict(values={i: values[i] for i in roots},
+        root_policy={i: policies[i] for i in roots},
+        root_action_values={i: np.stack([values[ch] for ch in tree.entries[i].children])
+                            for i in roots}, nodes=len(nodes), replay_verified=True)
+
+
+def measure(tree):
+    reference_values = tree.evaluate()
+    joint = [None]*len(tree.entries); joint[0] = tree.world_weights.copy()
+    for i, entry in enumerate(tree.entries):
+        for ai, child in enumerate(entry.children):
+            joint[child] = joint[i]*tree.policy[i][ai]
+    rows, operations = [], Counter()
+    for focal in range(tree.n):
+        reach = _reach(tree, focal)
+        values = old.contingent_values(tree, focal, reach)
+        obs = old.Observations(tree, focal)
+        tasks = defaultdict(lambda: defaultdict(list))
+        focal_rows = []
+        for i, entry in enumerate(tree.entries):
+            if entry.actor != focal:
+                continue
+            for cell, ids in enumerate(tree.information_groups[i]):
+                row = old.full_context(tree, i, ids, reach[i], joint[i], values, reference_values)
+                row['cell'] = cell; focal_rows.append(row)
+                masks = [('private', p, g) for p, g in observed_slots(entry.node, focal)]
+                masks += [('history', event.turn_index) for event in entry.node.state.transcript]
+                if row['counterfactual_mass'] == 0:
+                    row['unavailable_S_items'] = len(masks)
+                    continue
+                canonical = np.zeros(len(entry.actions)); canonical[row['optimal']] = 1./len(row['optimal'])
+                row['canonical_full_action_probabilities'] = canonical.tolist()
+                for mask in masks:
+                    tasks[mask][obs.key(i, int(ids[0]), mask)].append(row)
+        for mask, groups in sorted(tasks.items()):
+            for members in groups.values():
+                operations['forests'] += 1
+                result = None
+                roots = {}
+                if len(members) > 1:
+                    for row in members:
+                        roots.setdefault(row['node'], np.zeros(tree.w))[row['world_ids']] = reach[row['node']][row['world_ids']]
+                    result = forest_with_actions(tree, focal, roots, omitted=mask, observations=obs)
+                    operations['nontrivial_forests'] += 1
+                    operations['forest_nodes'] += result['nodes']
+                    group_mass = sum(m.sum() for m in roots.values())
+                    subjective = sum(np.einsum('awp,w->ap', result['root_action_values'][i], mass)
+                                     for i, mass in roots.items())/group_mass
+                    omitted_best = optimal_indices(subjective, focal, tree.entries[members[0]['node']].actions, TOL).tolist()
+                for row in members:
+                    q = np.array(row['Q']); pf = np.array(row['canonical_full_action_probabilities'])
+                    if result is None:
+                        qm_true = q.copy(); qm = q.copy(); pm = pf.copy(); loss = 0.
+                        item = dict(omitted=list(mask), S=0., full_contexts=1,
+                            note='Retained evidence/support identifies the full entry context',
+                            action_Q_method='Information-redundant singleton: own-Q equals full-Q')
+                        om_best = row['optimal']
+                    else:
+                        i = row['node']; ids = row['world_ids']; posterior = np.array(row['posterior'])
+                        true_value = posterior@result['values'][i][ids]
+                        qm_true = np.einsum('aw,w->a', result['root_action_values'][i][:, ids, focal], posterior)
+                        qm = subjective[:, focal]
+                        pm = result['root_policy'][i][:, ids[int(np.flatnonzero(posterior > 0)[0])]]
+                        np.testing.assert_allclose(pm@qm_true, true_value[focal], atol=1e-9, rtol=0)
+                        loss = float(q.max()-true_value[focal]); assert loss >= -EPS
+                        loss = max(0., loss); om_best = omitted_best
+                        item = dict(omitted=list(mask), S=loss, V_full=float(q.max()),
+                            V_omitted=float(true_value[focal]), full_contexts=len(members),
+                            forest_public_roots=len(roots), replay_verified=True,
+                            response_secondary_loss=(max(0., max(row['Q_others'][a] for a in row['own_optimal'])
+                                -float(true_value.sum()-true_value[focal]))
+                                if row['phase']=='response' and loss <= EPS else None),
+                            action_Q_method='Captured omitted-optimal continuation child values; no extra equilibrium solve')
+                    item.update(omitted_action_probabilities=pm.tolist(),
+                        Q_omitted_subjective=qm.tolist(), Q_omitted_evaluated_true=qm_true.tolist(),
+                        omitted_protocol_optimal=om_best,
+                        omitted_own_optimal=np.flatnonzero(qm >= qm.max()-TOL).tolist(),
+                        chosen_probability_outside_full_optimal=float(sum(pm[a] for a in range(len(pm)) if a not in row['optimal'])))
+                    item.update(distribution_stats(q, pf, pm, loss))
+                    assert item['own_future_loss'] >= -EPS
+                    residual = float(pm@(q-qm_true))
+                    np.testing.assert_allclose(residual, item['own_future_loss'], atol=1e-8, rtol=0)
+                    item['relative_Q_change'] = ((qm.max()-qm)-(q.max()-q)).tolist()
+                    item['relative_Q_change_Linf'] = float(np.abs(item['relative_Q_change']).max())
+                    item['common_own_optimal'] = sorted(set(row['own_optimal']) & set(item['omitted_own_optimal']))
+                    item['common_protocol_optimal'] = sorted(set(row['optimal']) & set(om_best))
+                    # Scalar S remains historical own terminal-policy loss. The
+                    # richer profile is not a new selector or model distribution.
+                    row['S_items'].append(item)
+                    channel = 'S_private' if mask[0] == 'private' else 'S_history'
+                    row[channel] = max(row[channel], loss)
+        rows.extend(focal_rows)
+    rows.sort(key=lambda r: (r['node'], r['cell']))
+    return rows, dict(operations)
+
+
+def compare_legacy(rows, index):
+    path = OLD/'cases'/str(index)/'labels.jsonl.gz'
+    n = 0
+    with gzip.open(path, 'rt') as stream:
+        for row, line in zip(rows, stream, strict=True):
+            before = json.loads(line); n += 1
+            assert (row['node'], row['cell'], row['actions']) == (before['node'], before['cell'], before['actions'])
+            np.testing.assert_allclose(row['Q'], before['Q'], atol=1e-9, rtol=0)
+            assert len(row['S_items']) == len(before['S_items'])
+            for item, prior in zip(row['S_items'], before['S_items'], strict=True):
+                assert item['omitted'] == prior['omitted']
+                np.testing.assert_allclose(item['S'], prior['S'], atol=1e-9, rtol=0)
+                if 'omitted_action_probabilities' in prior:
+                    np.testing.assert_allclose(item['omitted_action_probabilities'], prior['omitted_action_probabilities'], atol=1e-9, rtol=0)
+    return dict(all_contexts=n, all_Q_and_S_match=True, all_saved_omitted_policies_match=True)
+
+
+def profile_summary(rows):
+    cf = [r for r in rows if r['counterfactual_mass'] > 0]
+    items = [x for r in cf for x in r['S_items']]
+    return dict(contexts=len(cf), zero_CF_contexts=len(rows)-len(cf), items=len(items),
+        positive_S_contexts=sum(any(x['S'] > EPS for x in r['S_items']) for r in cf),
+        distribution_changed_contexts=sum(any(x['policy_total_variation'] > EPS for x in r['S_items']) for r in cf),
+        relative_Q_changed_contexts=sum(any(x['relative_Q_change_Linf'] > EPS for x in r['S_items']) for r in cf),
+        changed_distribution_zero_S_items=sum(x['policy_total_variation'] > EPS and x['S'] <= EPS for x in items),
+        changed_Q_zero_S_items=sum(x['relative_Q_change_Linf'] > EPS and x['S'] <= EPS for x in items),
+        positive_current_loss_items=sum(x['own_current_loss'] > EPS for x in items),
+        positive_future_loss_items=sum(x['own_future_loss'] > EPS for x in items),
+        own_optimal_disjoint_items=sum(not x['common_own_optimal'] for x in items),
+        protocol_optimal_disjoint_items=sum(not x['common_protocol_optimal'] for x in items))
+
+
+def worker(index, parent, identity, out):
+    start = time.monotonic(); folder = out/'cases'/str(index); folder.mkdir(parents=True)
+    result = dict(index=index, parent_id=parent['id'], players=parent['configuration']['players'],
+        reference_sha256=identity['sha256'], status='started')
+    try:
+        assert sha(identity['path']) == identity['sha256']
+        tree = build(parent, seconds=60)
+        with np.load(identity['path']) as data:
+            flat = data['probabilities']
+        offset = 0
+        for policy in tree.policy:
+            if policy is not None:
+                policy[:] = flat[offset:offset+policy.size].reshape(policy.shape); offset += policy.size
+        assert offset == len(flat) and not tree.cutoff_leaves
+        tree.deadline = time.monotonic()+180
+        cert = certify_policy(tree, epsilon=EPS)
+        assert cert is not None, tree.equilibrium_audit
+        tree.deadline = float('inf')
+        rows, operations = measure(tree)
+        result['legacy_comparison'] = compare_legacy(rows, index)
+        with gzip.open(folder/'labels.jsonl.gz', 'wt') as stream:
+            for row in rows:
+                stream.write(json.dumps(row, separators=(',', ':'))+'\n')
+        result.update(status='measured', nodes=len(tree.entries), cutoff_leaves=0,
+            certificate=cert['certificate'], summary=profile_summary(rows), operations=operations,
+            labels_sha256=sha(folder/'labels.jsonl.gz'))
+    except Exception as exc:
+        import traceback
+        result.update(status='error', error=f'{type(exc).__name__}: {exc}', traceback=traceback.format_exc())
+    result['elapsed_seconds'] = time.monotonic()-start; write(folder/'result.json', result)
+    print(dict(index=index, status=result['status'], seconds=round(result['elapsed_seconds'], 2), error=result.get('error')), flush=True)
+    return result
+
+
+def snapshot(out, config, identities):
+    reg = json.loads(REG.read_text()); assert reg['version'] == VERSION
+    for path, digest in reg['source_hashes'].items():
+        assert sha(ROOT/path) == digest, path
+    out.mkdir(parents=True, exist_ok=False)
+    for path in reg['source_hashes']:
+        target = out/'source'/path; target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT/path, target)
+    shutil.copyfile(REG, out/'registered_snapshot_at_start.json')
+    write(out/'pipeline_snapshot.json', dict(version=VERSION, date='2026-11-04', actual_argv=sys.argv,
+        resolved_config=config, source_hashes=reg['source_hashes'], registration_sha256=sha(REG),
+        parent_pool=dict(path=str(POOL.relative_to(ROOT)), sha256=sha(POOL)),
+        references={str(i): dict(path=str(x['path'].relative_to(ROOT)), sha256=x['sha256']) for i, x in identities.items()},
+        legacy_labels={str(i): dict(path=str((OLD/'cases'/str(i)/'labels.jsonl.gz').relative_to(ROOT)),
+            sha256=sha(OLD/'cases'/str(i)/'labels.jsonl.gz')) for i in identities},
+        environment=dict(python=sys.version, executable=sys.executable, numpy=np.__version__, scipy=scipy.__version__,
+            platform=platform.platform(), threads={k: os.environ.get(k, 'NOT_RECORDED') for k in THREAD_KEYS}),
+        model='NOT_USED', prompt_tools='NOT_CHANGED_NOT_USED', D='NOT_MEASURED',
+        sampling_reward_advantage_training='NOT_CHANGED_NOT_USED', production_active='terminal-node-regret-grpo-readable-v8'))
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--indices', default='all')
+    parser.add_argument('--workers', type=int, default=2)
+    args = parser.parse_args(); args.output = args.output.resolve()
+    requested = list(range(100)) if args.indices == 'all' else list(map(int, args.indices.split(',')))
+    assert len(set(requested)) == len(requested) and all(0 <= i < 100 for i in requested)
+    identities = legacy.inputs('terminal'); selected = [i for i in requested if i in identities]
+    config = dict(requested=requested, selected=selected, missing=[i for i in requested if i not in identities],
+        workers=args.workers, max_nodes=100000, construct_seconds=60, reaudit_seconds=180,
+        metric_time_budget='NO_INTERNAL_TIME_LIMIT', epsilon=EPS, tie_tolerance=TOL,
+        endpoint='NATIVE_TERMINAL; cutoff leaves must be zero', reference='EXISTING_SAVED_NO_SEARCH',
+        Q='UNCHANGED full-information own-BR', S='UNCHANGED true-context total omission-policy loss',
+        new_profiles=['subjective omitted Q', 'true-context omitted-continuation action Q', 'relative regret-vector change',
+                      'canonical full/omitted policies', 'TV and JS diagnostics', 'current/future loss decomposition'],
+        canonical_policy='Uniform over own optimal; response own-tie then others-sum; not LLM behavior',
+        continuation='Omitted forest keeps masking old evidence; retains all new observations and post-entry perfect recall',
+        selection='NOT_RUN_NO_THRESHOLDS_OR_QUOTAS', model_D='NOT_MEASURED', production='UNCHANGED_V8')
+    snapshot(args.output, config, {i: identities[i] for i in selected})
+    pool = parents(); results = []
+    with ProcessPoolExecutor(max_workers=args.workers) as executor:
+        tasks = [executor.submit(worker, i, pool[i], identities[i], args.output) for i in selected]
+        for future in as_completed(tasks):
+            results.append(future.result()); results.sort(key=lambda r: r['index'])
+            write(args.output/'results.json', results)
+    totals = Counter()
+    for row in results:
+        if row['status'] == 'measured':
+            totals.update(row['summary'])
+    write(args.output/'COMPLETE.json', dict(requested=len(requested), measured=sum(r['status']=='measured' for r in results),
+        missing=config['missing'], errors=[r['index'] for r in results if r['status']!='measured'],
+        totals=dict(totals), pipeline_snapshot_sha256=sha(args.output/'pipeline_snapshot.json'), results_sha256=sha(args.output/'results.json')))
+
+
+if __name__ == '__main__':
+    main()

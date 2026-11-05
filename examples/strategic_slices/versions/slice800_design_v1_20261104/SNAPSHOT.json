@@ -1,0 +1,52 @@
+{
+  "version": "slice800-parent-curation-design-v1",
+  "status": "USER_CLARIFICATIONS_RECORDED_SELECTION_PARAMETERS_PENDING_NOT_EXECUTED",
+  "created_on": "2026-11-04",
+  "parent": "qs-action-profile-audit-v1",
+  "authorization": "User four-point correction: parent games may be curated/resampled; validation inside800, test outside100parents; math review before choosing Q/S criteria; scene coverage direction accepted",
+  "changes_from_parent": [
+    "Permit iterative Oracle/structure-informed parent curation and resampling with provenance",
+    "800 now includes train candidates and validation only; test parents outside eventual100",
+    "Record linear action-value / regret / TV mathematical relations, not a new selection scalar",
+    "Defer numerical criteria and quotas until candidate parent-label review"
+  ],
+  "confirmed_parameters": {
+    "target_parents": 100,
+    "target_train_candidate_plus_validation_slices": 800,
+    "final_training_slices": 100,
+    "validation_inside800": true,
+    "test_parents_outside100": true,
+    "parent_resampling": "ALLOWED_WITH_VERSIONED_RECORD",
+    "slice_endpoint": "NATIVE_TERMINAL"
+  },
+  "pending_parameters": {
+    "parent_generation_distribution": "NOT_FIXED",
+    "acceptance_criteria": "PENDING_LABEL_REVIEW",
+    "train_validation_sizes": "NOT_FIXED",
+    "train_validation_split_unit": "NOT_FIXED",
+    "test_parent_count": "NOT_FIXED",
+    "test_slice_count": "NOT_FIXED",
+    "Q_S_selector_formula": "NOT_FIXED",
+    "thresholds_weights_quotas": "NOT_FIXED",
+    "seed": "NOT_FIXED",
+    "D_model_prompt_sampling": "NOT_FIXED"
+  },
+  "design": {
+    "path": "examples/strategic_slices/versions/slice800_design_v1_20261104/DESIGN.md",
+    "sha256": "614074f3c3556b5e34d592c56c7f7a64709a1410ee8b3a348ffd1f45f0218a1b"
+  },
+  "input_identity": {
+    "examples/strategic_slices/versions/qs_action_profile_v1_20261104/SNAPSHOT.json": "3a4142005a0f91b62715d6a2366249e919e335fab5b2275af876819602073724",
+    "examples/strategic_slices/versions/qs_action_profile_v1_20261104/EVIDENCE.json": "c5e4bdf4c936d10c0d82afdc0d6e38f2a8998d7317e38888debc76ca33846251",
+    "new/qs_action_profile_20261104_runs/summary_v1/SUMMARY.json": "e1ccf69b5d05e87ea6728ede2b36bf67ecfb704a04a8412aa40a5eb35968c56b"
+  },
+  "execution": {
+    "dataset_generated": false,
+    "labels_recomputed": false,
+    "selection800": false,
+    "model_D": "NOT_MEASURED",
+    "training": "NOT_RUN",
+    "production_active": "terminal-node-regret-grpo-readable-v8"
+  },
+  "note": "Documentation only; no pipeline execution, no new runtime defaults, no old closed snapshot overwritten"
+}

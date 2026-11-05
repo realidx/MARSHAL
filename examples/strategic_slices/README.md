@@ -1,5 +1,65 @@
 # Consequence-selected slices versus complete self-play
 
+**2026-11-05新800远端D入口已接入并打包，未验证：**[完整远端命令与配置](NATIVE800_D_REMOTE_20261105.md)。
+用户明确不做验证，本轮没有执行CPU/mock/GPU/模型测试。新入口run_native800_d使用已审阅prompt-v4/scorer-v1及既有800/100父reference，独立于旧run_terminal_d。
+每题8独立posterior resets、当前玩家控制到native terminal、对手冻结reference、父内32并发完成即补位；own terminalD和入口protocol/social分数分列，不自动选最终100。
+逐轨迹原子gzip保存与严格身份恢复；后续决策不新求Q/S。传输包new/native800_d_remote_20261105/native800-D-v1.tar.gz含748个文件、约8.2MB，不含模型或完整profile。
+新注册native800-terminal-D-v1完整记录CLI/默认参数/无验证状态，实际远端执行将写pipeline_snapshot；旧prompt/Q/S/scoring/GRPO及active v8不改。训练collector/SP训练臂仍未迁移。
+
+**2026-11-05题面v4采用用户布局：**[修改与证据](PROMPT_USER_LAYOUT_REVIEW_20261105.md)、[完整实际system/user/tools](versions/native800_prompt_score_v4_20261105/PROMPT_PREVIEW.md)。
+共同规则移入system，当前状态保留user；这是用户最新草案对此前短system选择的更新。用户明确回应平局规则不变，开头不扩展合作目标。
+目标要求＋当前状态合表，全部required actions标committed/missing；一笔offer＋response为一条历史，pending文字在回应后替换，原机会编号保留。
+800当前状态与工具、5493合法调用/评分、3044world对照、7原评分测试通过；2046单事件遗漏下历史物理状态可恢复，主Q/S与scorer-v1/GRPO不变。
+首轮适配检查失败及源码保留，修正调查事件序列化读取后第二轮通过；未模型D/GPU/训练，完整runner未迁移，旧active v8不变。
+用户对旧v3预览的手工修改保留，旧实际请求仍以cpu_v3归档为准；本版另存v4。
+
+**2026-11-05题面v3按8项审阅改进：**[逐项说明](PROMPT_REVIEW_NATIVE800_20261105.md)、[完整新预览](versions/native800_prompt_score_v3_20261105/PROMPT_PREVIEW.md)。
+保留9月短system＋user＋具名tools；删inferred-query提示与工具参数重复段，回应改自然说法但保留其他玩家总收益限定。
+新增当前goal逐玩家要求满足数/完成度/缺少承诺，CURRENT COMMITMENTS与直接编号历史更易读；历史物理快照保留。
+800完成度对照与2046历史遗漏不变性通过；表仅由原先强制保留的公开规则/当前承诺计算，不改Q/S或scorer-v1/GRPO。
+数值效用和起始独立1/3先验保留但不强制输出算式。未模型D/训练，完整runner未迁移，旧active v8不变。
+
+**2026-11-05新800题面与回应评分CPU对齐完成：**[修改与验证](NATIVE800_PROMPT_SCORE_20261105.md)、[完整system/user/tools预览](versions/native800_prompt_score_v2_20261105/PROMPT_PREVIEW.md)。
+按用户选择保留9月短system＋user＋具名tools；各状态完整规则/偏好/历史/额度/生效承诺，累计本人调查答案每次重建，pending独立说明。
+回应仅自身Q平局时使用others-sum负regret；proposal不favor，主Q/S与GRPO不改。800入口、5493合法工具、3044同信息world对照（额外不同world2244）通过；42回应集合较own-only纠正。
+新800适配器及显式data binding已实现，40social题在构造组下有原GRPO信号；非模型训练结果。完整D/collector/SP迁移未完成，D未测，旧active v8不变。
+
+**2026-11-04新版800候选已筛选并原生核对：**[覆盖配额、重复限制与结果](SLICE800_COVERAGE_SELECTION_20261104.md)。
+600训练候选/80父、200验证/20父，父与入口无交叉；获取信息A60/B20、已有信息利用320、估值160、规划160、回应80。
+255入口保证至少两次本人决定；100父验收见证与60信息LP见证保留，同父物理骨架≤3；800可见事实/合法行动/答案支持与角色检查通过。
+[800索引](../../new/slice800_candidates_20261104/v1/ENTRY_INDEX.md)和[父游戏划分](SLICE800_PARENT_SPLIT_20261104.md)可审查。
+实际时限优化362父×用途/232父×actor，不宣称全局最优；3种typed结构跨split共享。仍须固定最终prompt/回应评分再测新D，未选最终100或训练，active v8。
+
+**2026-11-04调查答案访问与前后S链条已核验：**[109/39/87分类与数学对接](QUERY_ANSWER_ACCESS_20261104.md)。
+235入口/51父的353个合法调查目标全部full/blind核验，整批706次独立LP通过。
+109入口的调查严格优势依赖答案，39答案有增益但无答案仍严格更优，87无当前答案仍达原最优收益；不能混算信息获取覆盖。
+353分支的答案增益与下一次本人context的既有私人S概率加权和一致，3522次条件belief对照通过。
+三人答案必需16入口来自5父，需控制集中度；仅完成独立诊断，800/split/D/test未执行，生产active v8不变。
+
+**2026-11-04入口供给审计完成：**[800之前的实际供给与集中度](ENTRY_SUPPLY_AUDIT_20261104.md)。
+100父全扫描，526569个正CF信息入口；1684个正own S、235个调查严格最优候选（答案因果收益未核验）。
+正S中1124个只剩一次本人决策；两人/三人前两父各占正S46.1%/59.8%，应保护多步链条并限制重复结构。
+589个原生小子树长度核对及全库存重读/旧计数对照通过。[逐父供给表](../../new/entry_supply_20261104_runs/all100_v1/PARENT_SUPPLY.md)。
+仅完成库存，800配额、train/validation成员、D/test尚未执行；生产active v8不变。
+
+**2026-11-04合格65/35父池已完成：**[验收结果与完整入口](QUALIFIED_PARENT_POOL_65_35_20261104.md)。
+65两人/35三人，信息/估值/规划主用途分别40/15/10与20/5/10；现有182份profile足够填满，本轮未生成新题。
+100个canonical父游戏、100来源组、90种目标结构；60个信息见证独立LP与100题见证全部行动Q重放通过，200资产hash核对通过。
+实际62局有正own S；这是D前父池，不保证任意入口有训练信号。[逐题索引](../../new/qualified_parents_6535_20261104_runs/review_v1/INDEX.md)保留参数、事实、Q及入选证明。
+800/train-validation/test/prompt/D仍待接通，生产active v8不变。下方各阶段记录保留当时身份。
+
+**2026-11-04父池目标65/35：**[组成草案与现有供给](versions/parent_pool_composition_65_35_v1_20261104/DESIGN.md)。按用户偏好以65两人/35三人为目标；两人已有66可测、40有own S；三人保守去同源后27组有own S。60/20/20能力用途仍为提案，规划见证需审查，正式父100/800未选，生产不改。
+
+**2026-11-04候选父游戏标签统一审阅完成：**[输入范围、方法与结果](CANDIDATE_PARENT_LABEL_REVIEW_20261104.md)。H2/A2H2/结构覆盖83份profile补齐，7缺失保留；旧S/分布全对照及249个不裁剪森林核验通过。
+私人答案迫使当前选择改变的父游戏为6/31、7/30、11/22；结构池覆盖9种图形、无公开全want角色，A2仍集中62/78。原100基线不混改，正式父100/800标准与D未定。
+
+**2026-11-04父池/800范围澄清：**[用户决定与数学说明](versions/slice800_design_v1_20261104/DESIGN.md)。父游戏允许按结构/标签迭代重抽；800含训练候选和验证，测试来自最终100之外的新父游戏。Q/S公式、门槛、比例待观察候选标签后讨论；仅设计记录，未生成/筛选或更改生产。
+
+**2026-11-04 Q/S定义审阅与补算完成：**[方法、文献及原100范围](QS_ACTION_PROFILE_REVIEW_20261104.md)。
+补充遗漏后的完整行动Q、真实条件评价、相对Q表及明示Oracle行动分布变化；保留旧标量S，并分解当前/后续损失。
+原100终局99份reference补算通过，旧Q/S/遗漏分布逐项匹配，25缺失；260971可测context中正S1452、相对Q变化17614、canonical分布变化8786。
+H2/A2H2/结构24不混成新100；三人448节点例18项强制动作LP通过。模型D/800未做；用户同意slice入口起控制到终局，训练尚未接入，active仍v8。
+
 **2026-10-29用户审查：**[真实三人游戏完整走读](THREE_PLAYER_WALKTHROUGH_20261029.md)。
 明确[1,1,2]为研究实例规模、非原框架固定规则；以新24池index10的实际[1,2,1]展示生成/9world/公开历史/私有答案/Q/S/终局分支。
 原生448节点后续重放核对三个答案Q/S，独立LP给本例S区间[5/18,5/18]；17/18的Q含reference在proposal剩余平局上的混合，非唯一均衡标签。
