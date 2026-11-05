@@ -1,0 +1,106 @@
+{
+  "version": "native800-terminal-D-v1",
+  "status": "FAILED_BEFORE_MODEL_CALL",
+  "authorization": "User asked to pull/review current code and then submit the native800 D run.",
+  "slurm": {
+    "job_id": "1077848",
+    "submission_cluster_host": "xcnc31",
+    "requested_partition": "gpu-long",
+    "requested_gpu": "gpu:h100-47:1",
+    "requested_cpus_per_task": 8,
+    "requested_memory": "64G",
+    "requested_time_limit": "3-00:00:00",
+    "stdout": "/home/e/e1300530/MARSHAL/new/native800_d_remote_20261105/native800-D-v1-package/slurm-native800-D-v1-1077848.out",
+    "stderr": "/home/e/e1300530/MARSHAL/new/native800_d_remote_20261105/native800-D-v1-package/slurm-native800-D-v1-1077848.err",
+    "sbatch_response": "1077848"
+  },
+  "model": {
+    "served_model": "native800-base-D",
+    "path": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+    "selection_basis": "Remote guide calls for the local base model; reuses the established Qwen3-4B-Instruct-2507 base model."
+  },
+  "dataset": {
+    "entries": 800,
+    "train": 600,
+    "validation": 200,
+    "replicas_per_entry": 8,
+    "trajectories": 6400,
+    "manifest_sha256": "866070bc90f322a10fa849c2b7049bf6509f7efcb6859b6f5da84064e3807841",
+    "parent_pool_sha256": "5404947669e4a762ce8914eabd40dcfb060e921aadda0705b75dcfc6057cd3a2"
+  },
+  "sampling": {
+    "seed": 42,
+    "temperature": 0.8,
+    "top_p": 1.0,
+    "top_k": -1,
+    "repetition_penalty": 1.0,
+    "max_tokens": 4096,
+    "context": 16384,
+    "workers": 32,
+    "gpu_memory_utilization": 0.4,
+    "tensor_parallel_size": 1,
+    "dtype": "bfloat16",
+    "tool_call_parser": "hermes",
+    "automatic_generation_retries": 0
+  },
+  "bundle": {
+    "path": "/home/e/e1300530/MARSHAL/new/native800_d_remote_20261105/native800-D-v1.tar.gz",
+    "sha256": "119361cee325789484f263563e5b4e77f3d9fa790574b06558490695fdd0721a"
+  },
+  "paths": {
+    "package_root": "/home/e/e1300530/MARSHAL/new/native800_d_remote_20261105/native800-D-v1-package",
+    "run_output": "/home/e/e1300530/MARSHAL/new/native800_d_remote_20261105/native800-D-v1-package/runs/native800-D-v1"
+  },
+  "environment": {
+    "conda_prefix": "/home/e/e1300530/tmp/marshal-vllm09",
+    "python": "/home/e/e1300530/tmp/marshal-vllm09/bin/python",
+    "python_version": "3.10.21 (main, Aug 27 2026, 14:42:07) [GCC 14.3.0]",
+    "nvcc": "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/nvidia/cu13/bin/nvcc",
+    "cuda_home": "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/nvidia/cu13",
+    "cuda_runtime_libraries": "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages",
+    "cudnn_frontend_cudart_lib_name": "libcudart.so.13",
+    "unset_inherited_cuda_visible_devices": true,
+    "selected_package_versions": {
+      "vllm": "0.28.0",
+      "torch": "2.13.0+cu130",
+      "transformers": "5.16.1",
+      "numpy": "2.2.6",
+      "scipy": "1.15.3"
+    }
+  },
+  "evaluation_contract": {
+    "prompt": "native800-readable-prompt-v4",
+    "entry_score": "native800-response-lexicographic-regret-v1",
+    "control": "focal player through native terminal; opponents use frozen reference",
+    "D": "max entry own-Q minus mean terminal own utility; unclipped; null unless all 8 replicas complete",
+    "training": "NOT_STARTED",
+    "final100": "NOT_SELECTED"
+  },
+  "submission_argv": [
+    "sbatch",
+    "--export=ALL",
+    "--partition=gpu-long",
+    "--gres=gpu:h100-47:1",
+    "--cpus-per-task=8",
+    "--mem=64G",
+    "--time=3-00:00:00",
+    "--job-name=native800-D-v1",
+    "examples/strategic_slices/sbatch_native800_d.sh",
+    "--model",
+    "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+    "--output",
+    "/home/e/e1300530/MARSHAL/new/native800_d_remote_20261105/native800-D-v1-package/runs/native800-D-v1"
+  ],
+  "failure": {
+    "slurm_state": "FAILED",
+    "node": "xgpi18",
+    "elapsed_seconds": 8,
+    "exit_code": "1:0",
+    "stage": "Python launcher import, before dataset/model initialization",
+    "error": "ModuleNotFoundError: No module named examples.strategic_slices.run_terminal_d",
+    "model_requests": 0,
+    "D": "NOT_MEASURED",
+    "output_root_created": false,
+    "stderr": "/home/e/e1300530/MARSHAL/new/native800_d_remote_20261105/native800-D-v1-package/slurm-native800-D-v1-1077848.err"
+  }
+}

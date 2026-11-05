@@ -1,0 +1,29 @@
+{
+  "version": "native800-terminal-D-v1.1",
+  "prior_attempt": {
+    "job_id": "1077848",
+    "partition": "gpu-long",
+    "node": "xgpi18",
+    "elapsed_seconds": 8,
+    "exit_code": "1:0",
+    "stderr": "ModuleNotFoundError: No module named examples.strategic_slices.run_terminal_d",
+    "stage": "launcher import before dataset/model initialization",
+    "model_requests": 0,
+    "dataset_output_created": false,
+    "D": "NOT_MEASURED"
+  },
+  "cause": "The v1 transfer archive selected runtime files from SNAPSHOT.source_hashes; run_native800_d.py imports run_terminal_d.py, but that dependency was absent from the source hash map and archive.",
+  "repair": "Add a versioned runner and launcher targeting the v1.1 registration, add run_terminal_d.py to source_hashes, and package it in a new immutable archive. Preserve v1 archive and output identity.",
+  "unchanged": [
+    "prompt-v4",
+    "response-scoring-v1",
+    "800-entry data and parent-reference hashes",
+    "D formula",
+    "8 posterior resets",
+    "temperature/top-p/top-k/repetition/max tokens/context/seed",
+    "32 within-parent workers",
+    "reference opponents and native-terminal focal control",
+    "no training/final100 selection"
+  ],
+  "preparation_checks": "Static source existence and SHA-256/package manifest checks only; no runtime imports or tests."
+}

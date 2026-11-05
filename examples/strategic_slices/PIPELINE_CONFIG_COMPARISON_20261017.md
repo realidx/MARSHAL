@@ -1,5 +1,10 @@
 # 9月与当前 pipeline 配置快照及逐项对照
 
+
+**2026-11-05 native800 D最终结果：**v1.1作业1078141于15:41:59 +08在xgpi19正常完成，运行1:41:43、退出码0。800个入口、6400条真实模型轨迹全部生成；541个入口有完整终局D，259个入口因至少一个replica未完成而保留D=null，不补成0。训练集416/600完整、完整项均值0.3122；验证集125/200完整、完整项均值0.2812。另有598个入口记录了独立protocol/social诊断。最终100未选择、训练未开始，生产active仍v8。结果包[下载](../../new/native800_d_remote_20261105/native800-D-v1.1-package/native800-D-results.tar.gz)，排除了所有名为source的目录，83,724,773字节，SHA-256 `4047389febd8ed3ac6c6ba885fb2e61b18959761c8dfd95057c83bae479700ad`。完整运行记录见[NATIVE800 D H100报告](NATIVE800_D_H10047_20261105.md)。
+
+**2026-11-05 native800 D执行状态更新：**v1作业1077848因独立包遗漏run_terminal_d.py，在Python导入阶段8秒后失败；0模型调用、无D或pipeline输出。v1原包和日志保留。新增native800-terminal-D-v1.1，仅修复并登记该source dependency，不改题面、工具、scorer、题库、D公式或采样。v1.1包756文件的静态哈希核对全通过，archive SHA cbbeabae84471b53fd89ce95c543f970a9b7d361e0d39e21e97f4ba63ba22da9。作业1078141已在xgpi19的H100 NVL MIG 3g.47gb运行，实际attempt/evaluation pipeline snapshot、模型hash和轨迹记录已写；截至14:02 +08累计1/100父汇总、10/800入口、83/6400终局replica，尚无全量summary/D。训练未开始，active仍v8；执行细节见[NATIVE800 D H100记录](NATIVE800_D_H10047_20261105.md)及[版本索引](versions/index.json)。
+
 **2026-11-05新800远端D入口已接入并打包，未验证：**[完整远端命令与配置](NATIVE800_D_REMOTE_20261105.md)。
 用户明确不做验证，本轮没有执行CPU/mock/GPU/模型测试。新入口run_native800_d使用已审阅prompt-v4/scorer-v1及既有800/100父reference，独立于旧run_terminal_d。
 每题8独立posterior resets、当前玩家控制到native terminal、对手冻结reference、父内32并发完成即补位；own terminalD和入口protocol/social分数分列，不自动选最终100。
@@ -385,3 +390,9 @@ v6实际训练不是“完全没提升”：base window成功49/96；119更新72
 3. 完成CPU检查后运行 `python -m examples.strategic_slices.freeze_pipeline_version`，冻结默认值、所有profiles、YAML、合同、source哈希和review文件哈希；拒绝覆盖旧版本。
 4. 正式训练及source打包入口检查注册快照，源码或已冻结prompt变了但没登记时直接失败。每次实际运行再保存 `pipeline_snapshot.json`，包含所有CLI实际覆盖、resolved config、模型/数据/source合同。
 5. 临时CLI覆盖不改代码版本，但它本身形成新的run快照；有意更改协议或默认值必须建新pipeline版本。运行结果、checkpoint及日志绑定其真实版本，不能回填到另一个版本。
+
+
+**14:05 +08 native800 D进度：**作业1078141仍在xgpi19运行。3/100父游戏、34/800入口已有parent汇总；30题8/8完成而D可计算，4题因至少一条invalid/truncated replica主D为null。全局已保存308/6400条：303 terminal、3 invalid-action、2 truncated。全量summary尚未生成，不能作为800题结果。
+
+
+**14:45 +08 native800 D进度：**作业1078141仍在xgpi19运行。35/100父游戏、367/800入口已有汇总；281题8/8轨迹完成、86题主D为null。已保存3006/6400条轨迹：2877 terminal、80 invalid-action、49 truncated。全量summary尚未生成。

@@ -1,0 +1,141 @@
+{
+  "version": "native800-terminal-D-v1.1",
+  "status": "RUNNING_VLLM_AND_EVALUATION",
+  "authorization": "Continuation of user-authorized native800 D evaluation after job 1077848 failed before model invocation.",
+  "prior_attempt": {
+    "job_id": "1077848",
+    "status": "FAILED_BEFORE_MODEL_CALL",
+    "model_requests": 0
+  },
+  "slurm": {
+    "job_id": "1078141",
+    "submission_cluster_host": "xcnc31",
+    "requested_partition": "gpu-long",
+    "requested_gpu": "gpu:h100-47:1",
+    "requested_cpus_per_task": 8,
+    "requested_memory": "64G",
+    "requested_time_limit": "3-00:00:00",
+    "stdout": "/home/e/e1300530/MARSHAL/new/native800_d_remote_20261105/native800-D-v1.1-package/slurm-native800-D-v1.1-1078141.out",
+    "stderr": "/home/e/e1300530/MARSHAL/new/native800_d_remote_20261105/native800-D-v1.1-package/slurm-native800-D-v1.1-1078141.err",
+    "sbatch_response": "1078141",
+    "actual_node": "xgpi19",
+    "started_at": "2026-11-05T14:00:16+08:00",
+    "state_at_last_check": "RUNNING"
+  },
+  "model": {
+    "served_model": "native800-base-D",
+    "path": "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+    "selection_basis": "Remote guide specifies a local base model; reuses the established Qwen3-4B-Instruct-2507 base model."
+  },
+  "dataset": {
+    "entries": 800,
+    "train": 600,
+    "validation": 200,
+    "replicas_per_entry": 8,
+    "trajectories": 6400,
+    "manifest_sha256": "866070bc90f322a10fa849c2b7049bf6509f7efcb6859b6f5da84064e3807841",
+    "parent_pool_sha256": "5404947669e4a762ce8914eabd40dcfb060e921aadda0705b75dcfc6057cd3a2"
+  },
+  "sampling": {
+    "seed": 42,
+    "temperature": 0.8,
+    "top_p": 1.0,
+    "top_k": -1,
+    "repetition_penalty": 1.0,
+    "max_tokens": 4096,
+    "context": 16384,
+    "workers": 32,
+    "gpu_memory_utilization": 0.4,
+    "tensor_parallel_size": 1,
+    "dtype": "bfloat16",
+    "tool_call_parser": "hermes",
+    "automatic_generation_retries": 0
+  },
+  "bundle": {
+    "path": "/home/e/e1300530/MARSHAL/new/native800_d_remote_20261105/native800-D-v1.1.tar.gz",
+    "sha256": "cbbeabae84471b53fd89ce95c543f970a9b7d361e0d39e21e97f4ba63ba22da9",
+    "source_registration_sha256": "1398311d28f77985174dbbdfa851c4ec55040d313c925059bde06187122b6b28"
+  },
+  "paths": {
+    "package_root": "/home/e/e1300530/MARSHAL/new/native800_d_remote_20261105/native800-D-v1.1-package",
+    "run_output": "/home/e/e1300530/MARSHAL/new/native800_d_remote_20261105/native800-D-v1.1-package/runs/native800-D-v1.1"
+  },
+  "environment": {
+    "conda_prefix": "/home/e/e1300530/tmp/marshal-vllm09",
+    "python": "/home/e/e1300530/tmp/marshal-vllm09/bin/python",
+    "python_version": "3.10.21 (main, Aug 27 2026, 14:42:07) [GCC 14.3.0]",
+    "nvcc": "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/nvidia/cu13/bin/nvcc",
+    "cuda_home": "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages/nvidia/cu13",
+    "cuda_runtime_libraries": "/home/e/e1300530/tmp/marshal-vllm09/lib/python3.10/site-packages",
+    "cudnn_frontend_cudart_lib_name": "libcudart.so.13",
+    "unset_inherited_cuda_visible_devices": true,
+    "selected_package_versions": {
+      "vllm": "0.28.0",
+      "torch": "2.13.0+cu130",
+      "transformers": "5.16.1",
+      "numpy": "2.2.6",
+      "scipy": "1.15.3"
+    }
+  },
+  "evaluation_contract": {
+    "prompt": "native800-readable-prompt-v4",
+    "entry_score": "native800-response-lexicographic-regret-v1",
+    "control": "focal player through native terminal; opponents use frozen reference",
+    "D": "max entry own-Q minus mean terminal own utility; unclipped; null unless all 8 replicas complete",
+    "training": "NOT_STARTED",
+    "final100": "NOT_SELECTED"
+  },
+  "submission_argv": [
+    "sbatch",
+    "--export=ALL",
+    "--partition=gpu-long",
+    "--gres=gpu:h100-47:1",
+    "--cpus-per-task=8",
+    "--mem=64G",
+    "--time=3-00:00:00",
+    "--job-name=native800-D-v1.1",
+    "examples/strategic_slices/sbatch_native800_d_v1_1.sh",
+    "--model",
+    "/home/e/e1300530/models/Qwen3-4B-Instruct-2507",
+    "--output",
+    "/home/e/e1300530/MARSHAL/new/native800_d_remote_20261105/native800-D-v1.1-package/runs/native800-D-v1.1"
+  ],
+  "runtime_observed": {
+    "gpu": "NVIDIA H100 NVL MIG 3g.47gb",
+    "model_checkpoint_sha256": "7b02eb257244557a4aee188169fc5a7f9954e7e6982e2d3ccbbdb9971e6d7ed4",
+    "attempt_pipeline_snapshot": "/home/e/e1300530/MARSHAL/new/native800_d_remote_20261105/native800-D-v1.1-package/runs/native800-D-v1.1/attempt-1793858437199854574/pipeline_snapshot.json",
+    "evaluation_pipeline_snapshot": "/home/e/e1300530/MARSHAL/new/native800_d_remote_20261105/native800-D-v1.1-package/runs/native800-D-v1.1/evaluation/pipeline_snapshot.json",
+    "vllm_server": "Qwen3ForCausalLM loaded; chat-completion requests return HTTP 200.",
+    "progress_at_2026_11_05_140218": {
+      "parent_summaries": 1,
+      "entries_summarized": 10,
+      "terminal_replicas_saved": 83,
+      "total_replicas": 6400
+    },
+    "D": "No complete batch summary yet.",
+    "progress_at_2026_11_05_140558": {
+      "parent_summaries": 3,
+      "entries_summarized": 34,
+      "complete_D_entries": 30,
+      "null_D_entries": 4,
+      "replica_files": 308,
+      "terminal_replicas": 303,
+      "invalid_action_replicas": 3,
+      "truncated_replicas": 2,
+      "total_replicas": 6400,
+      "summary_json_created": false
+    },
+    "progress_at_2026_11_05_144526": {
+      "parent_summaries": 35,
+      "entries_summarized": 367,
+      "entries_with_complete_D": 281,
+      "entries_D_null": 86,
+      "replica_files": 3006,
+      "terminal_replicas": 2877,
+      "invalid_action_replicas": 80,
+      "truncated_replicas": 49,
+      "total_replicas": 6400,
+      "summary_json_created": false
+    }
+  }
+}
